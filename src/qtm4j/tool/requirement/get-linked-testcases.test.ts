@@ -1,14 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ToolError } from "../../../common/tools.ts";
+import type { Qtm4jClient } from "../../client.ts";
 import { ENDPOINTS } from "../../config/constants.ts";
 import { ResolverKeys } from "../../config/field-resolution.types.ts";
 import { GetLinkedTestCasesForRequirement } from "./get-linked-testcases.ts";
 
 describe("GetLinkedTestCasesForRequirement", () => {
-  let mockClient: any;
-  let mockApiClient: any;
-  let mockRegistry: any;
-  let mockReqResolver: any;
+  let mockClient: {
+    getApiClient: ReturnType<typeof vi.fn>;
+    getResolverRegistry: ReturnType<typeof vi.fn>;
+  };
+  let mockApiClient: { post: ReturnType<typeof vi.fn> };
+  let mockRegistry: {
+    requireProjectContext: ReturnType<typeof vi.fn>;
+    getResolver: ReturnType<typeof vi.fn>;
+  };
+  let mockReqResolver: { resolveAndReturn: ReturnType<typeof vi.fn> };
   let instance: GetLinkedTestCasesForRequirement;
 
   const mockContext = {
@@ -55,7 +62,9 @@ describe("GetLinkedTestCasesForRequirement", () => {
       getResolverRegistry: vi.fn().mockReturnValue(mockRegistry),
     };
 
-    instance = new GetLinkedTestCasesForRequirement(mockClient as any);
+    instance = new GetLinkedTestCasesForRequirement(
+      mockClient as unknown as Qtm4jClient,
+    );
   });
 
   describe("specification", () => {

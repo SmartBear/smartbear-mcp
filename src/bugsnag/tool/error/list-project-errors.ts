@@ -67,6 +67,7 @@ export class ListProjectErrors extends Tool<BugsnagClient> {
         description: "Get the next 50 results",
         parameters: {
           nextUrl:
+            // biome-ignore lint/security/noSecrets: example dashboard URL, not a secret
             "https://api.bugsnag.com/projects/515fb9337c1074f6fd000003/errors?base=2025-08-29T13%3A11%3A37Z&direction=desc&filters%5Berror.status%5D%5B%5D%5Btype%5D=eq&filters%5Berror.status%5D%5B%5D%5Bvalue%5D=open&offset=10&per_page=10&sort=users",
           perPage: 50,
         },

@@ -27,7 +27,7 @@ export function handleInitializeMessage(
     return;
   }
 
-  const params = (message as { params?: Record<string, unknown> }).params;
+  const { params } = message as { params?: Record<string, unknown> };
 
   const identity = toClientIdentity(
     params?.clientInfo as { name?: string; version?: string } | undefined,

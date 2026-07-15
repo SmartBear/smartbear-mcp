@@ -1,5 +1,14 @@
+// biome-ignore-all lint/style/noExcessiveLinesPerFile: this module cohesively covers one QMetry API area (client operations, tool definitions, or shared schema fields); splitting it would scatter closely related, frequently cross-referenced declarations
+// biome-ignore-all lint/security/noSecrets: this file contains many high-entropy API action-name / wire-format / fixture string constants that trip the noSecrets entropy heuristic; none are real secrets
 import { z } from "zod";
 import { QMETRY_DEFAULTS } from "../config/constants.ts";
+
+// MARK: Regex
+// Base64 regex: matches typical base64 strings (not perfect, but covers most cases)
+const BASE64_PATTERN =
+  /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
+// File path regex: ends with .json, .xml, or .zip (case-insensitive)
+const FILE_PATH_PATTERN = /\.(json|xml|zip)$/i;
 
 /**
  * QMetry API Request Configuration
@@ -16,7 +25,7 @@ export interface RequestOptions {
   token: string;
   project?: string; // Sent as HTTP header, not in body
   baseUrl: string; // Used for URL construction, not in body
-  body?: any; // Only contains business logic parameters
+  body?: unknown; // Only contains business logic parameters
   scopeId?: number; // Sent as "scope" HTTP header (numeric project ID from currentProjectId)
   orgCode?: string; // Sent as "orgcode" HTTP header (from clientCode in project info response)
   extraHeaders?: Record<string, string>; // Additional HTTP headers for specific endpoints
@@ -41,6 +50,7 @@ export interface FolderPayload {
   folderSortColumn?: string;
   folderSortOrder?: "ASC" | "DESC";
   restoreDefaultColumns?: boolean;
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   folderID?: number | null;
 }
 
@@ -60,6 +70,7 @@ export const DEFAULT_SORT: Required<SortPayload> = {
 
 export const DEFAULT_FOLDER_OPTIONS: Required<
   Omit<FolderPayload, "folderID">
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
 > & { folderID: null } = {
   scope: "project",
   showRootOnly: false,
@@ -68,6 +79,7 @@ export const DEFAULT_FOLDER_OPTIONS: Required<
   folderSortColumn: "name",
   folderSortOrder: "ASC",
   restoreDefaultColumns: false,
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   folderID: null,
 };
 
@@ -124,6 +136,7 @@ export const CommonFields = {
     .optional()
     .describe("Number of records (default 10).")
     .default(10),
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tcID: z.coerce
     .number()
     .describe(
@@ -146,6 +159,7 @@ export const CommonFields = {
       "Test Case version number. " +
         "This is the internal numeric identifier for the version.",
     ),
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tcVersionID: z
     .number()
     .describe(
@@ -159,6 +173,7 @@ export const CommonFields = {
       "Test Case version number (optional, defaults to 1). " +
         "This is the internal numeric identifier for the version.",
     ),
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   rqID: z
     .number()
     .describe(
@@ -217,6 +232,7 @@ export const CommonFields = {
         'Only specify if user wants specific folder like "Automation/Regression".',
     )
     .default(""),
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   folderID: z
     .number()
     .optional()
@@ -225,6 +241,7 @@ export const CommonFields = {
         "Use this to target a specific folder within the project hierarchy. " +
         "Applies to any entity type (test cases, requirements, test suites, etc.).",
     ),
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tsFolderID: z.coerce
     .number()
     .describe(
@@ -233,6 +250,7 @@ export const CommonFields = {
         "Get from project info response → rootFolders.TS.id. " +
         "Use FETCH_PROJECT_INFO tool first if not provided by user.",
     ),
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tsID: z.coerce
     .number()
     .describe(
@@ -272,6 +290,7 @@ export const CommonFields = {
         "System will fetch project info using the projectKey and extract latestViews.TS.viewId automatically. " +
         "Manual viewId only needed if you want to override the automatic resolution.",
     ),
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tsrunID: z.coerce
     .string()
     .describe(
@@ -447,6 +466,7 @@ export const CreateReleaseArgsSchema = z.object({
       .describe(
         "Release target/end date in format DD-MM-YYYY or MM-DD-YYYY (depends on QMetry instance date format configuration)",
       ),
+    // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
     projectID: z
       .number()
       .optional()
@@ -487,12 +507,14 @@ export const CreateCycleArgsSchema = z.object({
       .describe(
         "Cycle target/end date in format DD-MM-YYYY or MM-DD-YYYY (depends on QMetry instance date format configuration)",
       ),
+    // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
     projectID: z
       .number()
       .optional()
       .describe(
         "Project ID (optional, can be auto-resolved from project key if not provided)",
       ),
+    // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
     releaseID: z
       .number()
       .describe("Release ID (required) - the release this cycle belongs to"),
@@ -516,6 +538,7 @@ export const UpdateCycleArgsSchema = z.object({
       .describe(
         "Cycle target/end date in format DD-MM-YYYY or MM-DD-YYYY (depends on QMetry instance date format configuration)",
       ),
+    // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
     buildID: z
       .number()
       .describe(
@@ -523,6 +546,7 @@ export const UpdateCycleArgsSchema = z.object({
           "To get the buildID - Call API 'Cycle/List' (FETCH_RELEASES_CYCLES tool). " +
           "From the response, get value of following attribute -> data[<index>].buildID",
       ),
+    // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
     releaseID: z
       .number()
       .describe(
@@ -539,13 +563,18 @@ export const CreateTestCaseStepSchema = z.object({
   inputData: z.string().optional(),
   expectedOutcome: z.string().optional(),
   UDF: z.record(z.string(), z.string()).optional(),
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tcStepID: z.number().optional(), // Required for updating existing steps, omit for new steps
 });
 
 export const UpdateTestCaseRemoveStepSchema = z.object({
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tcID: z.number(),
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   projectID: z.number(),
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tcStepID: z.number(),
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tcVersionID: z.number(),
   tcVersion: z.number(),
   tcsAttCount: z.number(),
@@ -559,6 +588,7 @@ export const UpdateTestCaseRemoveStepSchema = z.object({
 });
 
 export const CreateTestCaseArgsSchema = z.object({
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tcFolderID: z
     .string()
     .optional()
@@ -593,7 +623,9 @@ export const CreateTestCaseArgsSchema = z.object({
 export const UpdateTestCaseArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
   baseUrl: CommonFields.baseUrl,
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tcID: CommonFields.tcID,
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tcVersionID: CommonFields.tcVersionID,
   tcVersion: z
     .number()
@@ -670,6 +702,7 @@ export const TestCaseListArgsSchema = z.object({
   baseUrl: CommonFields.baseUrl,
   viewId: CommonFields.tcViewId,
   folderPath: CommonFields.tcFolderPath,
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   folderID: CommonFields.folderID,
   start: CommonFields.start,
   page: CommonFields.page,
@@ -688,6 +721,7 @@ export const TestCaseListArgsSchema = z.object({
 export const TestCaseDetailsArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
   baseUrl: CommonFields.baseUrl,
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tcID: CommonFields.tcID,
   start: CommonFields.start,
   page: CommonFields.page,
@@ -768,6 +802,7 @@ export const RequirementDetailsArgsSchema = z.object({
 export const RequirementsLinkedToTestCaseArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
   baseUrl: CommonFields.baseUrl,
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tcID: CommonFields.tcID,
   getLinked: z
     .boolean()
@@ -786,6 +821,7 @@ export const RequirementsLinkedToTestCaseArgsSchema = z.object({
 });
 
 export const LinkRequirementToTestCaseArgsSchema = z.object({
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tcID: z.string().describe("EntityKey of Testcase (e.g. 'COD-TC-29')"),
   tcVersionId: CommonFields.tcVersionID,
   rqVersionIds: z
@@ -798,6 +834,7 @@ export const LinkRequirementToTestCaseArgsSchema = z.object({
 export const TestCasesLinkedToRequirementArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
   baseUrl: CommonFields.baseUrl,
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   rqID: CommonFields.rqID,
   getLinked: z
     .boolean()
@@ -828,6 +865,7 @@ export const TestCasesLinkedToRequirementArgsSchema = z.object({
         'Use empty string "" for root folder or specify path like "/Sample Template".',
     )
     .default(""),
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   releaseID: z.coerce
     .string()
     .optional()
@@ -835,6 +873,7 @@ export const TestCasesLinkedToRequirementArgsSchema = z.object({
       "Filter test cases by release ID. Accepts a string or number. " +
         "Get release IDs from FETCH_RELEASES_AND_CYCLES tool.",
     ),
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   cycleID: z.coerce
     .string()
     .optional()
@@ -874,6 +913,7 @@ export const CreateTestSuiteArgsSchema = z.object({
   releaseCycleMapping: z
     .array(
       z.object({
+        // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
         buildID: z.number(),
         releaseId: z.number(),
       }),
@@ -883,6 +923,7 @@ export const CreateTestSuiteArgsSchema = z.object({
 
 export const UpdateTestSuiteArgsSchema = z.object({
   id: z.number().describe("Id of Test Suite to be updated (required)"),
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   TsFolderID: z
     .number()
     .optional()
@@ -925,6 +966,7 @@ export const TestSuiteListArgsSchema = z.object({
 export const TestSuitesForTestCaseArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
   baseUrl: CommonFields.baseUrl,
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tsFolderID: CommonFields.tsFolderID.optional(),
   viewId: CommonFields.tsfeViewId,
   start: CommonFields.start,
@@ -936,11 +978,13 @@ export const TestSuitesForTestCaseArgsSchema = z.object({
 
 export const LinkTestCasesToTestSuiteArgsSchema = z
   .object({
+    // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
     tsID: z.coerce
       .number()
       .describe(
         "Id of Test Suite (required). CRITICAL: parameter name is 'tsID' — do NOT use 'testSuiteId', 'testSuiteID', or other variants.",
       ),
+    // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
     tcvdIDs: z
       .array(z.coerce.number())
       .describe(
@@ -955,11 +999,13 @@ export const LinkTestCasesToTestSuiteArgsSchema = z
 
 export const RequirementsLinkedTestCasesToTestSuiteArgsSchema = z
   .object({
+    // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
     tsID: z.coerce
       .number()
       .describe(
         "Id of Test Suite (required). CRITICAL: parameter name is 'tsID' — do NOT use 'testSuiteId', 'testSuiteID', or other variants.",
       ),
+    // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
     tcvdIDs: z
       .array(z.coerce.number())
       .describe(
@@ -975,6 +1021,7 @@ export const RequirementsLinkedTestCasesToTestSuiteArgsSchema = z
 export const IssuesLinkedToTestCaseArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
   baseUrl: CommonFields.baseUrl,
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tcID: CommonFields.tcID,
   getLinked: CommonFields.getLinked.optional().default(true),
   start: CommonFields.start,
@@ -986,6 +1033,7 @@ export const IssuesLinkedToTestCaseArgsSchema = z.object({
 export const TestCasesByTestSuiteArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
   baseUrl: CommonFields.baseUrl,
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tsID: CommonFields.tsID,
   getLinked: CommonFields.getLinked.optional().default(true),
   start: CommonFields.start,
@@ -997,7 +1045,9 @@ export const TestCasesByTestSuiteArgsSchema = z.object({
 export const ExecutionsByTestSuiteArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
   baseUrl: CommonFields.baseUrl,
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tsID: CommonFields.tsID, // API payload param - sent in request body (REQUIRED)
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tsFolderID: CommonFields.tsFolderID.optional(),
   gridName: CommonFields.gridName,
   viewId: CommonFields.teViewId,
@@ -1010,6 +1060,7 @@ export const ExecutionsByTestSuiteArgsSchema = z.object({
 export const TestCaseRunsByTestSuiteRunArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
   baseUrl: CommonFields.baseUrl,
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tsrunID: CommonFields.tsrunID, // API payload param - sent in request body (REQUIRED)
   viewId: CommonFields.teViewId, // auto-resolved via SYSTEM if not provided
   start: CommonFields.start,
@@ -1063,6 +1114,7 @@ export const CreateIssueArgsSchema = z.object({
     .array(z.number())
     .optional()
     .describe("Cycle IDs affected by this issue"),
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tcRunID: z
     .number()
     .optional()
@@ -1165,6 +1217,7 @@ export const IssueExecutionsArgsSchema = z.object({
   start: CommonFields.start,
   page: CommonFields.page,
   limit: CommonFields.limit,
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   platformID: z
     .string()
     .optional()
@@ -1205,6 +1258,7 @@ export const LinkPlatformsToTestSuiteArgsSchema = z.object({
 export const BulkUpdateExecutionStatusArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
   baseUrl: CommonFields.baseUrl,
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   entityIDs: z.coerce
     .string()
     .describe(
@@ -1225,6 +1279,7 @@ export const BulkUpdateExecutionStatusArgsSchema = z.object({
         "Accepts a number or string. " +
         "To get the qmTsRunId - Call API 'Execution/Fetch Executions'. From the response, get value -> data[<index>].tsRunID",
     ),
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   runStatusID: z
     .number()
     .describe(
@@ -1233,6 +1288,7 @@ export const BulkUpdateExecutionStatusArgsSchema = z.object({
         "From the response, get value of following attribute -> allstatus[<index>].id " +
         "Common statuses: Pass, Fail, Not Run, Blocked, WIP, etc.",
     ),
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   dropID: z
     .union([z.number(), z.string()])
     .optional()
@@ -1290,20 +1346,10 @@ export const ImportAutomationResultsPayloadSchema = z.object({
   // REQUIRED: File data as base64 string or file path
   file: z
     .string()
-    .refine(
-      (val) => {
-        // Base64 regex: matches typical base64 strings (not perfect, but covers most cases)
-        const base64Regex =
-          /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
-        // File path regex: ends with .json, .xml, or .zip (case-insensitive)
-        const filePathRegex = /\.(json|xml|zip)$/i;
-        return base64Regex.test(val) || filePathRegex.test(val);
-      },
-      {
-        message:
-          "Must be a valid base64 string or a file path ending with .json, .xml, or .zip",
-      },
-    )
+    .refine((val) => BASE64_PATTERN.test(val) || FILE_PATH_PATTERN.test(val), {
+      message:
+        "Must be a valid base64 string or a file path ending with .json, .xml, or .zip",
+    })
     .describe(
       "Base64 encoded file content or file path. User must upload result file (.json, .xml, .zip up to 30 MB)",
     ),
@@ -1356,12 +1402,14 @@ export const ImportAutomationResultsPayloadSchema = z.object({
     ),
 
   // OPTIONAL: Platform ID or name
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   platformID: z
     .string()
     .optional()
     .describe("Platform ID or Platform Name. Default: 'No Platform'"),
 
   // OPTIONAL: Project ID or key (overrides header project)
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   projectID: z
     .string()
     .optional()
@@ -1370,12 +1418,14 @@ export const ImportAutomationResultsPayloadSchema = z.object({
     ),
 
   // OPTIONAL: Release ID or name
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   releaseID: z
     .string()
     .optional()
     .describe("Release ID or Release name. Requires projectID if provided"),
 
   // OPTIONAL: Cycle ID or name
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   cycleID: z
     .string()
     .optional()
@@ -1384,6 +1434,7 @@ export const ImportAutomationResultsPayloadSchema = z.object({
     ),
 
   // OPTIONAL: Build ID or name
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   buildID: z.string().optional().describe("Build ID or Build name"),
 
   // OPTIONAL: Test case fields (JSON format)
@@ -1419,6 +1470,7 @@ export const ImportAutomationResultsPayloadSchema = z.object({
 export const FetchAutomationStatusPayloadSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
   baseUrl: CommonFields.baseUrl,
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   requestID: z.coerce
     .number()
     .describe(

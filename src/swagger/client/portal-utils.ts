@@ -1,5 +1,10 @@
 import { ToolError } from "../../common/tools.ts";
 
+const FALLBACK_ID_LENGTH = 8;
+const SUFFIX_ID_LENGTH = 4;
+const HTTP_CONFLICT = 409;
+const TRAILING_HYPHENS_REGEX = /-+$/;
+
 // Length constraints enforced by the Portal API. Reused across portal and
 // product helpers so the limits live in a single place.
 export const SUBDOMAIN_MIN_LENGTH = 3;
@@ -31,7 +36,7 @@ export function slugify(value: string, maxLength: number): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, maxLength)
-    .replace(/-+$/, "");
+    .replace(TRAILING_HYPHENS_REGEX, "");
 }
 
 /**
@@ -46,7 +51,7 @@ export function buildSubdomainCandidate(
   const fallback = `portal-${organizationId
     .toLowerCase()
     .replace(/[^a-z0-9]/g, "")
-    .slice(0, 8)}`;
+    .slice(0, FALLBACK_ID_LENGTH)}`;
 
   if (!organizationName) {
     return fallback;
@@ -69,11 +74,11 @@ export function buildSuffixedSubdomain(
   const idSuffix = organizationId
     .toLowerCase()
     .replace(/[^a-z0-9]/g, "")
-    .slice(0, 4);
+    .slice(0, SUFFIX_ID_LENGTH);
 
   const trimmedBase = baseSubdomain
     .slice(0, SUBDOMAIN_MAX_LENGTH - idSuffix.length - 1)
-    .replace(/-+$/, "");
+    .replace(TRAILING_HYPHENS_REGEX, "");
 
   return `${trimmedBase}-${idSuffix}`;
 }
@@ -94,8 +99,8 @@ export function buildPortalName(organizationName?: string): string | undefined {
 export function isConflictError(error: unknown): boolean {
   return (
     error instanceof ToolError &&
-    (error.metadata?.get("status") === 409 ||
-      error.message.startsWith("HTTP 409"))
+    (error.metadata?.get("status") === HTTP_CONFLICT ||
+      error.message.startsWith(`HTTP ${HTTP_CONFLICT}`))
   );
 }
 

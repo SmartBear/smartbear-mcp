@@ -1,14 +1,14 @@
 import { type FilterObject, toUrlSearchParams } from "../filters.ts";
-import { type ApiResponse, BaseAPI } from "./base.ts";
 import {
   type ErrorApiView,
   ErrorsApiFetchParamCreator,
   type ErrorUpdateRequest,
   type EventApiView,
   type PivotApiView,
-} from "./index.ts";
+} from "./api.ts";
+import { type ApiResponse, BaseApi } from "./base.ts";
 
-export class ErrorAPI extends BaseAPI {
+export class ErrorApi extends BaseApi {
   static filterFields: string[] = ["url", "project_url", "events_url"];
 
   /**
@@ -32,6 +32,7 @@ export class ErrorAPI extends BaseAPI {
    * Get the latest Event in a Project, with optional filters
    * GET /projects/{project_id}/events
    */
+  // biome-ignore lint/complexity/useMaxParams: mirrors the positional params of the generated ErrorsApiFetchParamCreator.listEventsOnProject
   async listEventsOnProject(
     projectId: string,
     base?: Date | null,
@@ -42,19 +43,17 @@ export class ErrorAPI extends BaseAPI {
     fullReports?: boolean,
     nextUrl?: string,
   ): Promise<ApiResponse<EventApiView[]>> {
-    if (nextUrl) {
-      // Don't allow override of these params when using nextUrl
-      direction = undefined;
-      sort = undefined;
-      base = undefined;
-    }
+    // Don't allow override of these params when using nextUrl
+    const effectiveBase = nextUrl ? undefined : base;
+    const effectiveSort = nextUrl ? undefined : sort;
+    const effectiveDirection = nextUrl ? undefined : direction;
     const localVarFetchArgs = ErrorsApiFetchParamCreator(
       this.configuration,
     ).listEventsOnProject(
       projectId,
-      base ?? undefined,
-      sort,
-      direction,
+      effectiveBase ?? undefined,
+      effectiveSort,
+      effectiveDirection,
       perPage,
       undefined, // Filters are encoded separately below
       fullReports,
@@ -71,9 +70,9 @@ export class ErrorAPI extends BaseAPI {
     }
     if (!nextUrl && filters) {
       // Apply our own encoding of filters
-      toUrlSearchParams(filters).forEach((value, key) => {
+      for (const [key, value] of toUrlSearchParams(filters)) {
         url.searchParams.append(key, value);
-      });
+      }
     }
     return await this.requestArray<EventApiView>(
       url.toString(),
@@ -103,6 +102,7 @@ export class ErrorAPI extends BaseAPI {
    * List the Errors on a Project
    * GET /projects/{project_id}/errors
    */
+  // biome-ignore lint/complexity/useMaxParams: mirrors the positional params of the generated ErrorsApiFetchParamCreator.listProjectErrors
   async listProjectErrors(
     projectId: string,
     base?: Date | null,
@@ -112,19 +112,17 @@ export class ErrorAPI extends BaseAPI {
     filters?: FilterObject,
     nextUrl?: string,
   ): Promise<ApiResponse<ErrorApiView[]>> {
-    if (nextUrl) {
-      // Don't allow override of these params when using nextUrl
-      direction = undefined;
-      sort = undefined;
-      base = undefined;
-    }
+    // Don't allow override of these params when using nextUrl
+    const effectiveBase = nextUrl ? undefined : base;
+    const effectiveSort = nextUrl ? undefined : sort;
+    const effectiveDirection = nextUrl ? undefined : direction;
     const localVarFetchArgs = ErrorsApiFetchParamCreator(
       this.configuration,
     ).listProjectErrors(
       projectId,
-      base ?? undefined,
-      sort,
-      direction,
+      effectiveBase ?? undefined,
+      effectiveSort,
+      effectiveDirection,
       undefined,
       undefined, // Filters are encoded separately below
       undefined,
@@ -141,9 +139,9 @@ export class ErrorAPI extends BaseAPI {
     }
     if (!nextUrl && filters) {
       // Apply our own encoding of filters
-      toUrlSearchParams(filters).forEach((value, key) => {
+      for (const [key, value] of toUrlSearchParams(filters)) {
         url.searchParams.append(key, value);
-      });
+      }
     }
     return await this.requestArray<ErrorApiView>(
       url.toString(),
@@ -156,6 +154,7 @@ export class ErrorAPI extends BaseAPI {
    * List the Events on an Error
    * GET /projects/{project_id}/errors/{error_id}/events
    */
+  // biome-ignore lint/complexity/useMaxParams: mirrors the positional params of the generated ErrorsApiFetchParamCreator.listEventsOnError
   async listErrorEvents(
     projectId: string,
     errorId: string,
@@ -166,20 +165,18 @@ export class ErrorAPI extends BaseAPI {
     filters?: FilterObject,
     nextUrl?: string,
   ): Promise<ApiResponse<EventApiView[]>> {
-    if (nextUrl) {
-      // Don't allow override of these params when using nextUrl
-      direction = undefined;
-      sort = undefined;
-      base = undefined;
-    }
+    // Don't allow override of these params when using nextUrl
+    const effectiveBase = nextUrl ? undefined : base;
+    const effectiveSort = nextUrl ? undefined : sort;
+    const effectiveDirection = nextUrl ? undefined : direction;
     const localVarFetchArgs = ErrorsApiFetchParamCreator(
       this.configuration,
     ).listEventsOnError(
       projectId,
       errorId,
-      base ?? undefined,
-      sort,
-      direction,
+      effectiveBase ?? undefined,
+      effectiveSort,
+      effectiveDirection,
       undefined,
       undefined, // Filters are encoded separately below
       undefined,
@@ -196,9 +193,9 @@ export class ErrorAPI extends BaseAPI {
     }
     if (!nextUrl && filters) {
       // Apply our own encoding of filters
-      toUrlSearchParams(filters).forEach((value, key) => {
+      for (const [key, value] of toUrlSearchParams(filters)) {
         url.searchParams.append(key, value);
-      });
+      }
     }
     return await this.requestArray<ErrorApiView>(
       url.toString(),
@@ -229,12 +226,13 @@ export class ErrorAPI extends BaseAPI {
    * List Pivots on an Error
    * GET /projects/{project_id}/errors/{error_id}/pivots
    */
+  // biome-ignore lint/complexity/useMaxParams: mirrors the positional params of the generated ErrorsApiFetchParamCreator.listPivotsOnAnError
   async getPivotValuesOnAnError(
     projectId: string,
     errorId: string,
     filters?: FilterObject,
     summarySize?: number,
-    pivots?: Array<string>,
+    pivots?: string[],
     perPage?: number,
   ): Promise<ApiResponse<PivotApiView[]>> {
     const localVarFetchArgs = ErrorsApiFetchParamCreator(
@@ -255,9 +253,9 @@ export class ErrorAPI extends BaseAPI {
     }
     if (filters) {
       // Apply our own encoding of filters
-      toUrlSearchParams(filters).forEach((value, key) => {
+      for (const [key, value] of toUrlSearchParams(filters)) {
         url.searchParams.append(key, value);
-      });
+      }
     }
 
     return await this.requestArray<PivotApiView>(

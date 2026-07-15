@@ -1,21 +1,23 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import {
   ListTestCasesCursorPaginatedQueryParams,
   ListTestCasesCursorPaginated200Response as ListTestCasesCursorPaginatedResponse,
 } from "../../common/rest-api-schemas.ts";
+import {
+  asZephyrClient,
+  createMockZephyrClient,
+  fakeExtra,
+  type MockZephyrClient,
+} from "../../common/test-helpers.ts";
 import { GetTestCases } from "./get-test-cases.ts";
 
 describe("GetTestCases", () => {
-  let mockClient: any;
+  let mockClient: MockZephyrClient;
   let instance: GetTestCases;
 
   beforeEach(() => {
-    mockClient = {
-      getApiClient: vi.fn().mockReturnValue({
-        get: vi.fn(),
-      }),
-    };
-    instance = new GetTestCases(mockClient as any);
+    mockClient = createMockZephyrClient();
+    instance = new GetTestCases(asZephyrClient(mockClient));
   });
 
   it("should set specification correctly", () => {
@@ -67,7 +69,9 @@ describe("GetTestCases", () => {
             self: "https://api.example.com/folders/10006",
           },
           owner: {
+            // biome-ignore lint/security/noSecrets: fixture Jira/Atlassian account ID and URL used in test data, not a secret
             self: "https://jira.example.com/rest/api/2/user?accountId=5b10a2844c20165700ede21g",
+            // biome-ignore lint/security/noSecrets: fixture Jira/Atlassian account ID and URL used in test data, not a secret
             accountId: "5b10a2844c20165700ede21g",
           },
           testScript: {
@@ -109,7 +113,7 @@ describe("GetTestCases", () => {
     };
     mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
     const args = { limit: 10, startAtId: 0 };
-    const result = await instance.handle(args, {} as any);
+    const result = await instance.handle(args, fakeExtra);
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/testcases/nextgen",
       args,
@@ -151,7 +155,9 @@ describe("GetTestCases", () => {
             self: "https://api.example.com/folders/10006",
           },
           owner: {
+            // biome-ignore lint/security/noSecrets: fixture Jira/Atlassian account ID and URL used in test data, not a secret
             self: "https://jira.example.com/rest/api/2/user?accountId=5b10a2844c20165700ede21g",
+            // biome-ignore lint/security/noSecrets: fixture Jira/Atlassian account ID and URL used in test data, not a secret
             accountId: "5b10a2844c20165700ede21g",
           },
           testScript: {
@@ -192,7 +198,7 @@ describe("GetTestCases", () => {
       ],
     };
     mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
-    const result = await instance.handle({}, {} as any);
+    const result = await instance.handle({}, fakeExtra);
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/testcases/nextgen",
       {
@@ -205,14 +211,14 @@ describe("GetTestCases", () => {
 
   it("should handle apiClient.get throwing error", async () => {
     mockClient.getApiClient().get.mockRejectedValueOnce(new Error("API error"));
-    await expect(instance.handle({ limit: 1 }, {} as any)).rejects.toThrow(
+    await expect(instance.handle({ limit: 1 }, fakeExtra)).rejects.toThrow(
       "API error",
     );
   });
 
   it("should handle apiClient.get returning unexpected data", async () => {
     mockClient.getApiClient().get.mockResolvedValueOnce(undefined);
-    const result = await instance.handle({ limit: 1 }, {} as any);
+    const result = await instance.handle({ limit: 1 }, fakeExtra);
     expect(result.structuredContent).toBeUndefined();
   });
 });

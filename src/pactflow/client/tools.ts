@@ -1,3 +1,5 @@
+// biome-ignore-all lint/style/noExcessiveLinesPerFile: single flat TOOLS registry array; each entry is a self-contained tool definition and splitting it up would obscure the full set of available tools.
+// biome-ignore-all lint/security/noSecrets: this file contains many high-entropy API action-name / wire-format / fixture string constants that trip the noSecrets entropy heuristic; none are real secrets
 /**
  * TOOLS
  *
@@ -10,6 +12,7 @@
  * and registered with their corresponding handler.
  */
 
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import type { ToolParams } from "../../common/types.ts";
 import { GenerationInputSchema, RefineInputSchema } from "./ai.ts";
@@ -18,7 +21,7 @@ import {
   AdminTeamIdSchema,
   AdminUserIdSchema,
   AuditSchema,
-  CanIDeploySchema,
+  CanIdeploySchema,
   CreateAdminUserSchema,
   CreateEnvironmentSchema,
   CreatePacticipantSchema,
@@ -81,9 +84,9 @@ export type ClientType = "pactflow" | "pact_broker";
 export interface PactflowToolParams extends ToolParams {
   handler: string;
   clients: ClientType[];
-  formatResponse?: (result: any) => any;
+  formatResponse?: (result: unknown) => CallToolResult;
   enableElicitation?: boolean;
-  tags?: Array<string>;
+  tags?: string[];
 }
 
 export const TOOLS: PactflowToolParams[] = [
@@ -144,8 +147,8 @@ export const TOOLS: PactflowToolParams[] = [
       "Performs a comprehensive compatibility check to determine whether a specific version of a service (pacticipant) can be safely deployed into a given environment. It analyzes the complete contract matrix of consumer-provider relationships to confirm that all required integrations are verified and compatible.",
     purpose:
       "To serve as a deployment safety check within the PactBroker and PactFlow ecosystem, leveraging contract testing results to validate whether a specific service / pacticipant version is compatible with all integrated services. This feature prevents unsafe releases, reduces integration risks, and enables teams to confidently automate deployments across environments with a clear, auditable record of verification results.",
-    inputSchema: CanIDeploySchema,
-    handler: "canIDeploy",
+    inputSchema: CanIdeploySchema,
+    handler: "canIdeploy",
     readOnly: true,
     destructive: false,
     idempotent: true,
@@ -189,7 +192,7 @@ export const TOOLS: PactflowToolParams[] = [
       "Troubleshoot PactFlow AI access issues by retrieving current entitlement status and credit balance",
       "Provide detailed error context when PactFlow AI features are unavailable due to account limitations",
     ],
-    handler: "checkAIEntitlements",
+    handler: "checkAiEntitlements",
     readOnly: true,
     destructive: false,
     idempotent: true,

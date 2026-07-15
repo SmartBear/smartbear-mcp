@@ -1,19 +1,21 @@
-import { QMetryToolsHandlers } from "../../config/constants.ts";
+// biome-ignore-all lint/style/noMagicNumbers: these are illustrative example IDs/values shown to the LLM in tool descriptions, not computational constants
+// biome-ignore-all lint/style/noExcessiveLinesPerFile: this module cohesively lists all tool definitions, descriptions, and usage examples for one QMetry API area; splitting it would scatter closely related declarations
+import { QmetryToolsHandlers } from "../../config/constants.ts";
 import {
   BulkUpdateTestRunUdfsArgsSchema,
   FetchCascadeChildValuesArgsSchema,
   FetchTestRunUdfMetadataArgsSchema,
   FetchTestRunUdfValuesArgsSchema,
 } from "../../types/udf.ts";
-import type { QMetryToolParams } from "./types.ts";
+import type { QmetryToolParams } from "./types.ts";
 
-export const UDF_TOOLS: QMetryToolParams[] = [
+export const UDF_TOOLS: QmetryToolParams[] = [
   {
     title: "Bulk Update Test Run UDFs",
     toolset: "UDF",
     summary:
       "Bulk update User Defined Field (UDF) values for one or more Test Case Runs in a test execution. Runs asynchronously in the background.",
-    handler: QMetryToolsHandlers.BULK_UPDATE_TEST_RUN_UDFS,
+    handler: QmetryToolsHandlers.BULK_UPDATE_TEST_RUN_UDFS,
     inputSchema: BulkUpdateTestRunUdfsArgsSchema,
     purpose:
       "Updates UDF (custom field) values for one or more Test Case Runs in bulk. " +
@@ -40,9 +42,11 @@ export const UDF_TOOLS: QMetryToolParams[] = [
       {
         description: "Bulk update a STRING UDF for multiple test runs",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcRunIDs: [41_572_006, 41_572_009, 41_572_013],
           UDF: {
             "8190_String": {
+              // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
               fieldID: 229_241,
               value: "regression-v2.1",
             },
@@ -55,9 +59,11 @@ export const UDF_TOOLS: QMetryToolParams[] = [
         description:
           "Bulk update a DATE UDF field for multiple test runs (MM-DD-YYYY format)",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcRunIDs: [41_572_006, 41_572_009],
           UDF: {
             KN_DATE: {
+              // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
               fieldID: 229_255,
               value: "06-20-2026",
             },
@@ -69,9 +75,11 @@ export const UDF_TOOLS: QMetryToolParams[] = [
       {
         description: "Bulk update a NUMBER UDF field for multiple test runs",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcRunIDs: [41_572_006, 41_572_009, 41_572_013, 41_572_015],
           UDF: {
             defaultNum: {
+              // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
               fieldID: 229_003,
               value: 5,
             },
@@ -84,9 +92,11 @@ export const UDF_TOOLS: QMetryToolParams[] = [
         description:
           "Bulk update a single-select LOOKUPLIST UDF for multiple test runs",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcRunIDs: [41_572_006, 41_572_009],
           UDF: {
             "8260LUP": {
+              // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
               fieldID: 228_563,
               value: 5_108_697,
             },
@@ -99,9 +109,11 @@ export const UDF_TOOLS: QMetryToolParams[] = [
         description:
           "Bulk update a MULTILOOKUPLIST UDF — APPEND new values to existing selections",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcRunIDs: [41_572_006, 41_572_009, 41_572_013],
           UDF: {
             m_selections: {
+              // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
               fieldID: 229_223,
               value: [5_158_524, 5_158_525],
               multiSelectAction: "append",
@@ -115,9 +127,11 @@ export const UDF_TOOLS: QMetryToolParams[] = [
         description:
           "Bulk update a MULTILOOKUPLIST UDF — REPLACE existing selections with new values",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcRunIDs: [41_572_006, 41_572_009],
           UDF: {
             mullt_env: {
+              // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
               fieldID: 229_425,
               value: [5_108_697, 5_108_698],
               multiSelectAction: "replace",
@@ -131,9 +145,11 @@ export const UDF_TOOLS: QMetryToolParams[] = [
         description:
           "Bulk update a CASCADINGLIST UDF (parent + child) for multiple test runs",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcRunIDs: [41_572_006, 41_572_009, 41_572_013],
           UDF: {
             cascade_mcp: {
+              // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
               fieldID: 229_426,
               value: { parent: 5_126_498, child: 5_126_499 },
             },
@@ -146,37 +162,45 @@ export const UDF_TOOLS: QMetryToolParams[] = [
         description:
           "Bulk update multiple UDF fields of different types in a single operation",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcRunIDs: [
             41_572_006, 41_572_009, 41_572_013, 41_572_015, 41_579_875,
           ],
           UDF: {
             "8190_String": {
+              // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
               fieldID: 229_241,
               value: "smoke-test",
             },
             KN_DATE: {
+              // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
               fieldID: 229_255,
               value: "06-20-2026",
             },
             defaultNum: {
+              // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
               fieldID: 229_003,
               value: 3,
             },
             "8260LUP": {
+              // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
               fieldID: 228_563,
               value: 5_108_697,
             },
             m_selections: {
+              // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
               fieldID: 229_223,
               value: [5_158_524, 5_158_525],
               multiSelectAction: "append",
             },
             mullt_env: {
+              // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
               fieldID: 229_425,
               value: [5_108_697, 5_108_698],
               multiSelectAction: "replace",
             },
             cascade_mcp: {
+              // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
               fieldID: 229_426,
               value: { parent: 5_126_498, child: 5_126_499 },
             },
@@ -235,8 +259,9 @@ export const UDF_TOOLS: QMetryToolParams[] = [
     toolset: "UDF",
     summary:
       "Fetch the metadata (field definitions) for all Test Run UDF (User Defined Fields) configured in this QMetry project. " +
+      // biome-ignore lint/security/noSecrets: high-entropy false positive; this is a descriptive string (error message, parameter name, or API action name), not a credential
       "Returns each field's name, display label, type, and numeric fieldID (projectUserFieldID) required for bulk updates.",
-    handler: QMetryToolsHandlers.FETCH_TEST_RUN_UDF_METADATA,
+    handler: QmetryToolsHandlers.FETCH_TEST_RUN_UDF_METADATA,
     inputSchema: FetchTestRunUdfMetadataArgsSchema,
     purpose:
       "Retrieves the full list of Test Run UDF field definitions from QMetry's admin metadata endpoint. " +
@@ -279,7 +304,7 @@ export const UDF_TOOLS: QMetryToolParams[] = [
       "Returns each run's UDF values enriched with field label and type information from metadata. " +
       "Use this tool for test suite run UDF values (sourceContext='testSuiteRun'). " +
       "Do NOT use this tool for test case executions — 'Fetch Test Case Executions' already calls metadata internally and returns 'testRunUdfs' in every execution row.",
-    handler: QMetryToolsHandlers.FETCH_TEST_RUN_UDF_VALUES,
+    handler: QmetryToolsHandlers.FETCH_TEST_RUN_UDF_VALUES,
     inputSchema: FetchTestRunUdfValuesArgsSchema,
     purpose:
       "Retrieves the test case runs for a test suite run and extracts their Test Run UDF field values. " +
@@ -298,6 +323,7 @@ export const UDF_TOOLS: QMetryToolParams[] = [
       {
         description: "Fetch UDF values for all runs in test suite run 731600",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tsrunID: "731600",
           sourceContext: "testSuiteRun",
         },
@@ -338,7 +364,7 @@ export const UDF_TOOLS: QMetryToolParams[] = [
     summary:
       "Fetch the child values of a CASCADINGLIST UDF field for a given parent item ID. " +
       "Use this before bulk-updating a CASCADINGLIST Test Run UDF to discover valid child item IDs.",
-    handler: QMetryToolsHandlers.FETCH_CASCADE_CHILD_VALUES,
+    handler: QmetryToolsHandlers.FETCH_CASCADE_CHILD_VALUES,
     inputSchema: FetchCascadeChildValuesArgsSchema,
     purpose:
       "Retrieves the available child items for a selected parent item in a CASCADINGLIST UDF field. " +
@@ -361,7 +387,7 @@ export const UDF_TOOLS: QMetryToolParams[] = [
           id: 5_173_534,
         },
         expectedOutput:
-          '{ parentId: 5173534, parentName: "India", children: [{ id: 5173535, name: "i1", uniqueLabel: "i1", isArchived: false }, ...], _note: "Use \'id\' from \'children\' as the \'child\' value in the CASCADINGLIST update." }',
+          '{ parentId: 5173534, parentName: "India", children: [{ id: 5173535, name: "i1", uniqueLabel: "i1", isArchived: false }, ...], note: "Use \'id\' from \'children\' as the \'child\' value in the CASCADINGLIST update." }',
       },
       {
         description:
@@ -371,11 +397,12 @@ export const UDF_TOOLS: QMetryToolParams[] = [
           isArchReq: true,
         },
         expectedOutput:
-          '{ parentId: 5126498, parentName: "abc", children: [...], _note: "..." }',
+          '{ parentId: 5126498, parentName: "abc", children: [...], note: "..." }',
       },
     ],
     hints: [
       "MANDATORY WORKFLOW for CASCADINGLIST bulk update:\n" +
+        // biome-ignore lint/security/noSecrets: high-entropy false positive; this is a descriptive string (error message, parameter name, or API action name), not a credential
         "  1. Call 'Fetch Test Run UDF Metadata' → get the CASCADINGLIST field's 'fieldID' (projectUserFieldID) " +
         "     and parent item options from 'lookupOptions'.\n" +
         "  2. Call this tool ('Fetch Cascade Child Values') with a parent item 'id' from step 1 → get child item IDs.\n" +
@@ -392,7 +419,7 @@ export const UDF_TOOLS: QMetryToolParams[] = [
     ],
     outputDescription:
       "JSON object with 'parentId' (the input ID), 'parentName' (the parent item's display name), " +
-      "'children' array (each item has id, name, uniqueLabel, isArchived), and a '_note' explaining how to use the IDs.",
+      "'children' array (each item has id, name, uniqueLabel, isArchived), and a 'note' explaining how to use the IDs.",
     readOnly: true,
     destructive: false,
     idempotent: true,

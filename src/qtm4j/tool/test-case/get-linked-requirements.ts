@@ -52,7 +52,7 @@ export class GetLinkedRequirements extends Tool<Qtm4jClient> {
       "Paginated list with total, startAt, maxResults, and data array of linked requirement objects (id, key, summary, status, priority, issueType).",
   };
 
-  handle = async (rawArgs: any) => {
+  handle = async (rawArgs: unknown) => {
     const args = GetLinkedRequirementsBody.parse(rawArgs);
     const fieldResolver = this.client.getResolverRegistry();
     const context = fieldResolver.requireProjectContext();

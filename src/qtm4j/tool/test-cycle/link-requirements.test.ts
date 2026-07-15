@@ -1,15 +1,36 @@
+import type { Mock } from "vitest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ToolError } from "../../../common/tools.ts";
+import type { Qtm4jClient } from "../../client.ts";
 import { ENDPOINTS } from "../../config/constants.ts";
 import { ResolverKeys } from "../../config/field-resolution.types.ts";
 import { LinkRequirementsToCycle } from "./link-requirements.ts";
 
+interface MockApiClient {
+  post: Mock;
+}
+
+interface MockFieldResolver {
+  resolveAndReturn: Mock;
+}
+
+interface MockRegistry {
+  requireProjectContext: Mock;
+  getResolver: Mock;
+}
+
+interface MockClient {
+  getApiClient: Mock;
+  getResolverRegistry: Mock;
+}
+
+// biome-ignore lint/security/noSecrets: test suite name, not a secret
 describe("LinkRequirementsToCycle", () => {
-  let mockClient: any;
-  let mockApiClient: any;
-  let mockRegistry: any;
-  let mockCycleResolver: any;
-  let mockReqResolver: any;
+  let mockClient: MockClient;
+  let mockApiClient: MockApiClient;
+  let mockRegistry: MockRegistry;
+  let mockCycleResolver: MockFieldResolver;
+  let mockReqResolver: MockFieldResolver;
   let instance: LinkRequirementsToCycle;
 
   const mockContext = {
@@ -27,10 +48,12 @@ describe("LinkRequirementsToCycle", () => {
     mockRegistry = {
       requireProjectContext: vi.fn().mockReturnValue(mockContext),
       getResolver: vi.fn().mockImplementation((key: string) => {
-        if (key === ResolverKeys.SearchableField.TEST_CYCLE_KEY_TO_UID)
+        if (key === ResolverKeys.SearchableField.TEST_CYCLE_KEY_TO_UID) {
           return mockCycleResolver;
-        if (key === ResolverKeys.SearchableField.REQUIREMENT_KEY_TO_ID)
+        }
+        if (key === ResolverKeys.SearchableField.REQUIREMENT_KEY_TO_ID) {
           return mockReqResolver;
+        }
         throw new Error(`Unexpected resolver key: ${key}`);
       }),
     };
@@ -41,7 +64,9 @@ describe("LinkRequirementsToCycle", () => {
       getResolverRegistry: vi.fn().mockReturnValue(mockRegistry),
     };
 
-    instance = new LinkRequirementsToCycle(mockClient as any);
+    instance = new LinkRequirementsToCycle(
+      mockClient as unknown as Qtm4jClient,
+    );
   });
 
   describe("specification", () => {

@@ -1,3 +1,4 @@
+// biome-ignore-all lint/performance/useTopLevelRegex: each regex here is a one-off assertion matcher used once per test; hoisting dozens of single-use patterns would hurt readability without any real perf benefit
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   fetchTestCaseDetails,
@@ -18,7 +19,7 @@ describe("testcase API clients", () => {
     vi.resetAllMocks();
   });
 
-  const mockOk = (data: any) => ({
+  const mockOk = <T>(data: T) => ({
     ok: true,
     json: async () => data,
   });
@@ -43,11 +44,11 @@ describe("testcase API clients", () => {
       ],
     };
 
-    global.fetch = vi.fn().mockResolvedValue(mockOk(mockResponse));
+    globalThis.fetch = vi.fn().mockResolvedValue(mockOk(mockResponse));
 
     const result = await fetchTestCases(token, baseUrl, projectKey, payload);
 
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(globalThis.fetch).toHaveBeenCalledWith(
       `${baseUrl}/rest/testcases/list/viewColumns`,
       expect.objectContaining({
         method: "POST",
@@ -68,6 +69,7 @@ describe("testcase API clients", () => {
       ...DEFAULT_FETCH_TESTCASES_PAYLOAD,
       folderPath: "/",
     };
+    // biome-ignore lint/suspicious/noExplicitAny: intentionally invalid fixture missing 'viewId' to exercise the runtime validation error
     const payload = invalidPayload as any;
 
     await expect(
@@ -77,6 +79,7 @@ describe("testcase API clients", () => {
 
   it("fetchTestCases should throw on missing folderPath", async () => {
     const invalidPayload = { ...DEFAULT_FETCH_TESTCASES_PAYLOAD, viewId: 1 };
+    // biome-ignore lint/suspicious/noExplicitAny: intentionally invalid fixture missing 'folderPath' to exercise the runtime validation error
     const payload = invalidPayload as any;
 
     await expect(
@@ -88,7 +91,7 @@ describe("testcase API clients", () => {
     const payload = { tcID: 123 };
     const mockResponse = { id: "TC-123", name: "Login Test Case" };
 
-    global.fetch = vi.fn().mockResolvedValue(mockOk(mockResponse));
+    globalThis.fetch = vi.fn().mockResolvedValue(mockOk(mockResponse));
 
     const result = await fetchTestCaseDetails(
       token,
@@ -97,7 +100,7 @@ describe("testcase API clients", () => {
       payload,
     );
 
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(globalThis.fetch).toHaveBeenCalledWith(
       `${baseUrl}/rest/testcases/getVersionDetail`,
       expect.objectContaining({
         method: "POST",
@@ -116,7 +119,7 @@ describe("testcase API clients", () => {
     const payload = { id: 123, version: 2 };
     const mockResponse = { id: 123, version: 2, name: "Version Test" };
 
-    global.fetch = vi.fn().mockResolvedValue(mockOk(mockResponse));
+    globalThis.fetch = vi.fn().mockResolvedValue(mockOk(mockResponse));
 
     const result = await fetchTestCaseVersionDetails(
       token,
@@ -125,7 +128,7 @@ describe("testcase API clients", () => {
       payload,
     );
 
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(globalThis.fetch).toHaveBeenCalledWith(
       `${baseUrl}/rest/testcases/list`,
       expect.objectContaining({
         method: "POST",
@@ -144,7 +147,7 @@ describe("testcase API clients", () => {
     const payload = { id: 123, version: 1 };
     const mockResponse = { steps: [{ step: "Login" }, { step: "Navigate" }] };
 
-    global.fetch = vi.fn().mockResolvedValue(mockOk(mockResponse));
+    globalThis.fetch = vi.fn().mockResolvedValue(mockOk(mockResponse));
 
     const result = await fetchTestCaseSteps(
       token,
@@ -153,7 +156,7 @@ describe("testcase API clients", () => {
       payload,
     );
 
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(globalThis.fetch).toHaveBeenCalledWith(
       `${baseUrl}/rest/testcases/steps/list`,
       expect.objectContaining({
         method: "POST",
@@ -166,11 +169,13 @@ describe("testcase API clients", () => {
     );
 
     expect(result).toHaveProperty("steps");
-    expect((result as any).steps).toHaveLength(2);
+    expect((result as { steps: unknown[] }).steps).toHaveLength(2);
   });
 
   it("should throw on bad response with correct error format", async () => {
-    global.fetch = vi.fn().mockResolvedValue(mockFail(400, "Invalid request"));
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValue(mockFail(400, "Invalid request"));
 
     await expect(
       fetchTestCases(token, baseUrl, projectKey, {
@@ -184,7 +189,7 @@ describe("testcase API clients", () => {
 
   it("should handle JSON error responses", async () => {
     const errorResponse = { error: "Validation failed", code: 400 };
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: false,
       status: 400,
       headers: new Map([["content-type", "application/json"]]),
@@ -200,6 +205,7 @@ describe("testcase API clients", () => {
     ).rejects.toThrow(/QMetry API request failed \(400\):/);
   });
 
+  // biome-ignore lint/security/noSecrets: high-entropy false positive; this is a descriptive string (error message, parameter name, or API action name), not a credential
   describe("fetchTestCasesLinkedToRequirement", () => {
     it("should POST with correct URL and headers for linked test cases", async () => {
       const mockResponse = {
@@ -218,7 +224,7 @@ describe("testcase API clients", () => {
         total: 2,
       };
 
-      global.fetch = vi.fn().mockResolvedValue(mockOk(mockResponse));
+      globalThis.fetch = vi.fn().mockResolvedValue(mockOk(mockResponse));
 
       const payload = { rqID: 2_499_315, getLinked: true };
       const result = await fetchTestCasesLinkedToRequirement(
@@ -228,7 +234,7 @@ describe("testcase API clients", () => {
         payload,
       );
 
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(globalThis.fetch).toHaveBeenCalledWith(
         `${baseUrl}/rest/testcases/list/forRQ`,
         expect.objectContaining({
           method: "POST",
@@ -242,8 +248,9 @@ describe("testcase API clients", () => {
       );
 
       expect(result).toHaveProperty("data");
-      expect((result as any).data).toHaveLength(2);
-      expect((result as any).total).toBe(2);
+      const typedResult = result as { data: unknown[]; total: number };
+      expect(typedResult.data).toHaveLength(2);
+      expect(typedResult.total).toBe(2);
     });
 
     it("should throw error when rqID is missing", async () => {
@@ -254,9 +261,11 @@ describe("testcase API clients", () => {
           token,
           baseUrl,
           projectKey,
+          // biome-ignore lint/suspicious/noExplicitAny: intentionally invalid fixture missing 'rqID' to exercise the runtime validation error
           payload as any,
         ),
       ).rejects.toThrow(
+        // biome-ignore lint/security/noSecrets: high-entropy false positive; this is a descriptive string (error message, parameter name, or API action name), not a credential
         "[fetchTestCasesLinkedToRequirement] Missing or invalid required parameter: 'rqID'.",
       );
     });
@@ -269,9 +278,11 @@ describe("testcase API clients", () => {
           token,
           baseUrl,
           projectKey,
+          // biome-ignore lint/suspicious/noExplicitAny: intentionally invalid fixture with a non-numeric 'rqID' to exercise the runtime validation error
           payload as any,
         ),
       ).rejects.toThrow(
+        // biome-ignore lint/security/noSecrets: high-entropy false positive; this is a descriptive string (error message, parameter name, or API action name), not a credential
         "[fetchTestCasesLinkedToRequirement] Missing or invalid required parameter: 'rqID'.",
       );
     });
@@ -288,7 +299,7 @@ describe("testcase API clients", () => {
         total: 1,
       };
 
-      global.fetch = vi.fn().mockResolvedValue(mockOk(mockResponse));
+      globalThis.fetch = vi.fn().mockResolvedValue(mockOk(mockResponse));
 
       const payload = { rqID: 2_499_315, getLinked: false };
       const result = await fetchTestCasesLinkedToRequirement(
@@ -298,7 +309,7 @@ describe("testcase API clients", () => {
         payload,
       );
 
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(globalThis.fetch).toHaveBeenCalledWith(
         `${baseUrl}/rest/testcases/list/forRQ`,
         expect.objectContaining({
           method: "POST",
@@ -307,11 +318,11 @@ describe("testcase API clients", () => {
       );
 
       expect(result).toHaveProperty("data");
-      expect((result as any).data).toHaveLength(1);
+      expect((result as { data: unknown[] }).data).toHaveLength(1);
     });
 
     it("should handle API errors gracefully", async () => {
-      global.fetch = vi
+      globalThis.fetch = vi
         .fn()
         .mockResolvedValue(mockFail(404, "Requirement not found"));
 
@@ -352,7 +363,7 @@ describe("testcase API clients", () => {
         totalCount: 2,
       };
 
-      global.fetch = vi.fn().mockResolvedValue(mockOk(mockResponse));
+      globalThis.fetch = vi.fn().mockResolvedValue(mockOk(mockResponse));
 
       const result = await fetchTestCaseExecutions(
         token,
@@ -361,7 +372,7 @@ describe("testcase API clients", () => {
         payload,
       );
 
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(globalThis.fetch).toHaveBeenCalledWith(
         `${baseUrl}/rest/testcases/execution`,
         expect.objectContaining({
           method: "POST",
@@ -375,15 +386,19 @@ describe("testcase API clients", () => {
       );
 
       expect(result).toHaveProperty("data");
-      expect((result as any).data).toHaveLength(2);
-      expect((result as any).data[0]).toHaveProperty("executionStatus", "PASS");
-      expect((result as any).data[1]).toHaveProperty("executionStatus", "FAIL");
+      const typedResult = result as {
+        data: Array<{ executionStatus: string }>;
+      };
+      expect(typedResult.data).toHaveLength(2);
+      expect(typedResult.data[0]).toHaveProperty("executionStatus", "PASS");
+      expect(typedResult.data[1]).toHaveProperty("executionStatus", "FAIL");
     });
 
     it("should include optional parameters in the request", async () => {
       const payload = {
         tcid: 1_223_922,
         tcversion: 3,
+        // biome-ignore lint/security/noSecrets: high-entropy false positive; this is a descriptive string (error message, parameter name, or API action name), not a credential
         filter: '[{"value":["PASS"],"type":"list","field":"executionStatus"}]',
         limit: 5,
         page: 2,
@@ -404,7 +419,7 @@ describe("testcase API clients", () => {
         totalCount: 1,
       };
 
-      global.fetch = vi.fn().mockResolvedValue(mockOk(mockResponse));
+      globalThis.fetch = vi.fn().mockResolvedValue(mockOk(mockResponse));
 
       const result = await fetchTestCaseExecutions(
         token,
@@ -413,21 +428,21 @@ describe("testcase API clients", () => {
         payload,
       );
 
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(globalThis.fetch).toHaveBeenCalledWith(
         `${baseUrl}/rest/testcases/execution`,
         expect.objectContaining({
           method: "POST",
           body: expect.stringContaining('"tcversion":3'),
         }),
       );
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(globalThis.fetch).toHaveBeenCalledWith(
         `${baseUrl}/rest/testcases/execution`,
         expect.objectContaining({
           method: "POST",
           body: expect.stringContaining('"scope":"release"'),
         }),
       );
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(globalThis.fetch).toHaveBeenCalledWith(
         `${baseUrl}/rest/testcases/execution`,
         expect.objectContaining({
           method: "POST",
@@ -436,12 +451,15 @@ describe("testcase API clients", () => {
       );
 
       expect(result).toHaveProperty("data");
-      expect((result as any).data).toHaveLength(1);
-      expect((result as any).data[0]).toHaveProperty("executionStatus", "PASS");
+      const typedResult = result as {
+        data: Array<{ executionStatus: string }>;
+      };
+      expect(typedResult.data).toHaveLength(1);
+      expect(typedResult.data[0]).toHaveProperty("executionStatus", "PASS");
     });
 
     it("should handle API errors gracefully", async () => {
-      global.fetch = vi
+      globalThis.fetch = vi
         .fn()
         .mockResolvedValue(mockFail(404, "Test case not found"));
 
@@ -455,7 +473,8 @@ describe("testcase API clients", () => {
     });
 
     it("should throw error when tcid is missing", async () => {
-      const payload = {} as any; // Missing required tcid
+      // biome-ignore lint/suspicious/noExplicitAny: intentionally invalid fixture missing 'tcid' to exercise the runtime validation error
+      const payload = {} as any;
 
       await expect(
         fetchTestCaseExecutions(token, baseUrl, projectKey, payload),

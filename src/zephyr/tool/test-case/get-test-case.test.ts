@@ -1,21 +1,23 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import {
   GetTestCaseParams,
   GetTestCase200Response as GetTestCaseResponse,
 } from "../../common/rest-api-schemas.ts";
+import {
+  asZephyrClient,
+  createMockZephyrClient,
+  fakeExtra,
+  type MockZephyrClient,
+} from "../../common/test-helpers.ts";
 import { GetTestCase } from "./get-test-case.ts";
 
 describe("GetTestCase", () => {
-  let mockClient: any;
+  let mockClient: MockZephyrClient;
   let instance: GetTestCase;
 
   beforeEach(() => {
-    mockClient = {
-      getApiClient: vi.fn().mockReturnValue({
-        get: vi.fn(),
-      }),
-    };
-    instance = new GetTestCase(mockClient as any);
+    mockClient = createMockZephyrClient();
+    instance = new GetTestCase(asZephyrClient(mockClient));
   });
 
   it("should set specification correctly", () => {
@@ -60,7 +62,9 @@ describe("GetTestCase", () => {
         self: "https://<api-base-url>/folders/10006",
       },
       owner: {
+        // biome-ignore lint/security/noSecrets: fixture Jira/Atlassian account ID and URL used in test data, not a secret
         self: "https://<jira-instance>.atlassian.net/rest/api/2/user?accountId=5b10a2844c20165700ede21g",
+        // biome-ignore lint/security/noSecrets: fixture Jira/Atlassian account ID and URL used in test data, not a secret
         accountId: "5b10a2844c20165700ede21g",
       },
       testScript: {
@@ -100,7 +104,7 @@ describe("GetTestCase", () => {
     };
     mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
     const args = { testCaseKey: "SA-T10" };
-    const result = await instance.handle(args, {} as any);
+    const result = await instance.handle(args, fakeExtra);
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/testcases/SA-T10",
     );
@@ -110,17 +114,17 @@ describe("GetTestCase", () => {
   it("should handle apiClient.get throwing error", async () => {
     mockClient.getApiClient().get.mockRejectedValueOnce(new Error("API error"));
     await expect(
-      instance.handle({ testCaseKey: "SA-T10" }, {} as any),
+      instance.handle({ testCaseKey: "SA-T10" }, fakeExtra),
     ).rejects.toThrow("API error");
   });
 
   it("should handle apiClient.get returning unexpected data", async () => {
     mockClient.getApiClient().get.mockResolvedValueOnce(undefined);
-    const result = await instance.handle({ testCaseKey: "SA-T10" }, {} as any);
+    const result = await instance.handle({ testCaseKey: "SA-T10" }, fakeExtra);
     expect(result.structuredContent).toBeUndefined();
   });
 
   it("should throw validation error if testCaseKey is missing", async () => {
-    await expect(instance.handle({}, {} as any)).rejects.toThrow();
+    await expect(instance.handle({}, fakeExtra)).rejects.toThrow();
   });
 });

@@ -1,6 +1,7 @@
+// biome-ignore-all lint/security/noSecrets: this file contains many high-entropy API action-name / wire-format / fixture string constants that trip the noSecrets entropy heuristic; none are real secrets
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  BaseAPI,
+  BaseApi,
   ensureFullUrl,
   getNextUrlPathFromHeader,
   getQueryParams,
@@ -26,7 +27,7 @@ describe("base.ts", () => {
     });
 
     it("should handle null objects", () => {
-      const obj = null;
+      const obj: null = null;
       const keys = ["a", "b"];
       const result = pickFields(obj, keys);
       expect(result).toEqual({});
@@ -87,7 +88,7 @@ describe("base.ts", () => {
     });
 
     it("should handle empty arrays", () => {
-      const arr: any[] = [];
+      const arr: unknown[] = [];
       const keys = ["a", "b"];
       const result = pickFieldsFromArray(arr, keys);
       expect(result).toEqual([]);
@@ -197,6 +198,7 @@ describe("base.ts", () => {
 
     it("should handle null headers", () => {
       const result = getNextUrlPathFromHeader(
+        // biome-ignore lint/suspicious/noExplicitAny: intentionally-invalid input to test defensive null handling
         null as any,
         "http://localhost/api/v1",
       );
@@ -205,6 +207,7 @@ describe("base.ts", () => {
 
     it("should handle undefined headers", () => {
       const result = getNextUrlPathFromHeader(
+        // biome-ignore lint/suspicious/noExplicitAny: intentionally-invalid input to test defensive undefined handling
         undefined as any,
         "http://localhost/api/v1",
       );
@@ -352,7 +355,7 @@ describe("base.ts", () => {
     });
   });
 
-  describe("BaseAPI", () => {
+  describe("BaseApi", () => {
     const configuration = new Configuration({
       apiKey: "test-token",
       basePath: "http://localhost:3000",
@@ -360,7 +363,7 @@ describe("base.ts", () => {
     });
 
     it("should construct with the correct configuration", () => {
-      const baseApi = new BaseAPI(configuration);
+      const baseApi = new BaseApi(configuration);
       // biome-ignore lint/complexity/useLiteralKeys: reading internal field for testing
       const configuredObj = baseApi["configuration"];
       expect(configuredObj).toBe(configuration);
@@ -372,19 +375,19 @@ describe("base.ts", () => {
 
     it("should construct with filterFields", () => {
       const filterFields = ["sensitive", "private"];
-      const baseApi = new BaseAPI(configuration, filterFields);
+      const baseApi = new BaseApi(configuration, filterFields);
       // biome-ignore lint/complexity/useLiteralKeys: reading internal field for testing
       expect(baseApi["filterFields"]).toEqual(filterFields);
     });
 
     it("should construct with empty filterFields when not provided", () => {
-      const baseApi = new BaseAPI(configuration);
+      const baseApi = new BaseApi(configuration);
       // biome-ignore lint/complexity/useLiteralKeys: reading internal field for testing
       expect(baseApi["filterFields"]).toEqual([]);
     });
 
     describe("requestObject", () => {
-      const baseApi = new BaseAPI(configuration);
+      const baseApi = new BaseApi(configuration);
 
       beforeEach(() => {
         vi.restoreAllMocks();
@@ -400,11 +403,11 @@ describe("base.ts", () => {
             .mockResolvedValue({ error_id: "123", error_class: "TestError" }),
           text: vi.fn(),
         };
-        global.fetch = vi.fn().mockResolvedValue(mockResponse);
+        globalThis.fetch = vi.fn().mockResolvedValue(mockResponse);
 
         const result = await baseApi.requestObject("/test", { method: "GET" });
 
-        expect(global.fetch).toHaveBeenCalledWith(
+        expect(globalThis.fetch).toHaveBeenCalledWith(
           "http://localhost:3000/test",
           {
             method: "GET",
@@ -424,7 +427,7 @@ describe("base.ts", () => {
           status: 404,
           text: vi.fn().mockResolvedValue("Not Found"),
         };
-        global.fetch = vi.fn().mockResolvedValue(mockResponse);
+        globalThis.fetch = vi.fn().mockResolvedValue(mockResponse);
 
         await expect(
           baseApi.requestObject("/test", { method: "GET" }),
@@ -441,7 +444,7 @@ describe("base.ts", () => {
             .mockResolvedValue({ id: "123", name: "Test", secret: "hidden" }),
           text: vi.fn(),
         };
-        global.fetch = vi.fn().mockResolvedValue(mockResponse);
+        globalThis.fetch = vi.fn().mockResolvedValue(mockResponse);
 
         const result = await baseApi.requestObject("/test", { method: "GET" }, [
           "id",
@@ -452,7 +455,7 @@ describe("base.ts", () => {
       });
 
       it("should sanitize response when filterFields are configured", async () => {
-        const apiWithFilter = new BaseAPI(configuration, ["secret", "private"]);
+        const apiWithFilter = new BaseApi(configuration, ["secret", "private"]);
         const mockResponse = {
           ok: true,
           status: 200,
@@ -465,7 +468,7 @@ describe("base.ts", () => {
           }),
           text: vi.fn(),
         };
-        global.fetch = vi.fn().mockResolvedValue(mockResponse);
+        globalThis.fetch = vi.fn().mockResolvedValue(mockResponse);
 
         const result = await apiWithFilter.requestObject("/test", {
           method: "GET",
@@ -476,7 +479,7 @@ describe("base.ts", () => {
     });
 
     describe("requestArray", () => {
-      const baseApi = new BaseAPI(configuration);
+      const baseApi = new BaseApi(configuration);
 
       beforeEach(() => {
         vi.restoreAllMocks();
@@ -493,11 +496,11 @@ describe("base.ts", () => {
           ]),
           text: vi.fn(),
         };
-        global.fetch = vi.fn().mockResolvedValue(mockResponse);
+        globalThis.fetch = vi.fn().mockResolvedValue(mockResponse);
 
         const result = await baseApi.requestArray("/test", { method: "GET" });
 
-        expect(global.fetch).toHaveBeenCalledWith(
+        expect(globalThis.fetch).toHaveBeenCalledWith(
           "http://localhost:3000/test",
           {
             method: "GET",
@@ -532,7 +535,7 @@ describe("base.ts", () => {
           text: vi.fn(),
         };
 
-        global.fetch = vi
+        globalThis.fetch = vi
           .fn()
           .mockResolvedValueOnce(mockResponse1)
           .mockResolvedValueOnce(mockResponse2);
@@ -543,7 +546,7 @@ describe("base.ts", () => {
           true,
         );
 
-        expect(global.fetch).toHaveBeenCalledTimes(2);
+        expect(globalThis.fetch).toHaveBeenCalledTimes(2);
         expect(result.body).toEqual([{ id: "1" }, { id: "2" }]);
         expect(result.status).toBe(200);
         expect(result.totalCount).toBeNull();
@@ -561,7 +564,7 @@ describe("base.ts", () => {
           text: vi.fn(),
         };
 
-        global.fetch = vi.fn().mockResolvedValue(mockResponse);
+        globalThis.fetch = vi.fn().mockResolvedValue(mockResponse);
 
         const result = await baseApi.requestArray(
           "/test",
@@ -569,7 +572,7 @@ describe("base.ts", () => {
           false,
         );
 
-        expect(global.fetch).toHaveBeenCalledTimes(1);
+        expect(globalThis.fetch).toHaveBeenCalledTimes(1);
         expect(result.body).toEqual([{ id: "1" }]);
         expect(result.nextUrl).toBe("/test?page=2");
         expect(result.status).toBe(200);
@@ -586,7 +589,7 @@ describe("base.ts", () => {
           json: vi.fn().mockResolvedValue([{ id: "1" }]),
           text: vi.fn(),
         };
-        global.fetch = vi.fn().mockResolvedValue(mockResponse);
+        globalThis.fetch = vi.fn().mockResolvedValue(mockResponse);
 
         const result = await baseApi.requestArray("/test", { method: "GET" });
 
@@ -603,7 +606,7 @@ describe("base.ts", () => {
           json: vi.fn().mockResolvedValue([{ id: "1" }]),
           text: vi.fn(),
         };
-        global.fetch = vi.fn().mockResolvedValue(mockResponse);
+        globalThis.fetch = vi.fn().mockResolvedValue(mockResponse);
 
         const result = await baseApi.requestArray("/test", { method: "GET" });
 
@@ -618,7 +621,7 @@ describe("base.ts", () => {
           json: vi.fn(),
           text: () => "Not Found",
         };
-        global.fetch = vi.fn().mockResolvedValue(mockResponse);
+        globalThis.fetch = vi.fn().mockResolvedValue(mockResponse);
 
         await expect(
           baseApi.requestArray("/test", { method: "GET" }),
@@ -633,7 +636,7 @@ describe("base.ts", () => {
           json: vi.fn().mockResolvedValue({ error: "not an array" }),
           text: vi.fn(),
         };
-        global.fetch = vi.fn().mockResolvedValue(mockResponse);
+        globalThis.fetch = vi.fn().mockResolvedValue(mockResponse);
 
         await expect(
           baseApi.requestArray("/test", { method: "GET" }),
@@ -651,7 +654,7 @@ describe("base.ts", () => {
           ]),
           text: vi.fn(),
         };
-        global.fetch = vi.fn().mockResolvedValue(mockResponse);
+        globalThis.fetch = vi.fn().mockResolvedValue(mockResponse);
 
         const result = await baseApi.requestArray(
           "/test",
@@ -667,7 +670,7 @@ describe("base.ts", () => {
       });
 
       it("should sanitize array items when filterFields are configured", async () => {
-        const apiWithFilter = new BaseAPI(configuration, ["secret"]);
+        const apiWithFilter = new BaseApi(configuration, ["secret"]);
         const mockResponse = {
           ok: true,
           status: 200,
@@ -678,7 +681,7 @@ describe("base.ts", () => {
           ]),
           text: vi.fn(),
         };
-        global.fetch = vi.fn().mockResolvedValue(mockResponse);
+        globalThis.fetch = vi.fn().mockResolvedValue(mockResponse);
 
         const result = await apiWithFilter.requestArray("/test", {
           method: "GET",

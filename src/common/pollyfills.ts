@@ -6,6 +6,42 @@ import type {
 import type { SmartBearMcpServer } from "./server.ts";
 import { ToolError } from "./tools.ts";
 
+/**
+ * Creates a polyfill result that instructs the host AI application to
+ * execute the prompt and re-request the tool.
+ *
+ * @param prompt - The prompt to be executed
+ * @returns A polyfill result object
+ */
+function createPolyfillResult(prompt: string): SamplingPolyfillResult {
+  return {
+    requiresPromptExecution: true,
+    prompt,
+    instructions:
+      "Please execute the above prompt using your AI capabilities and re-request this tool with the result. " +
+      "Include the prompt result in your next request to continue the operation.",
+  };
+}
+
+/**
+ * Creates a polyfill result that instructs the host AI application to
+ * collect the requested input and re-request the tool.
+ *
+ * @param params - The elicitation request parameters
+ * @returns A polyfill result object
+ */
+function createElicitationPolyfillResult(
+  params: ElicitRequest["params"],
+): ElicitationPolyfillResult {
+  return {
+    requiresInputCollection: true,
+    inputRequest: params,
+    instructions:
+      "Please collect the requested input from the user and re-request this tool with the collected values. " +
+      "Include the input results in your next request to continue the operation.",
+  };
+}
+
 export interface SamplingPolyfillResult {
   requiresPromptExecution: true;
   prompt: string;
@@ -52,7 +88,7 @@ export async function executeSamplingOrPolyfill(
       maxTokens,
     });
 
-    const content = response.content;
+    const { content } = response;
     if (content.type !== "text") {
       throw new ToolError(
         `Received unexpected response type from sampling: ${content.type}`,
@@ -61,26 +97,10 @@ export async function executeSamplingOrPolyfill(
 
     return content.text;
   } catch (error) {
+    // biome-ignore lint/suspicious/noConsole: surfaces unexpected sampling failures for operators
     console.error(error);
     return createPolyfillResult(prompt);
   }
-}
-
-/**
- * Creates a polyfill result that instructs the host AI application to
- * execute the prompt and re-request the tool.
- *
- * @param prompt - The prompt to be executed
- * @returns A polyfill result object
- */
-function createPolyfillResult(prompt: string): SamplingPolyfillResult {
-  return {
-    requiresPromptExecution: true,
-    prompt,
-    instructions:
-      "Please execute the above prompt using your AI capabilities and re-request this tool with the result. " +
-      "Include the prompt result in your next request to continue the operation.",
-  };
 }
 
 /**
@@ -123,28 +143,10 @@ export async function executeElicitationOrPolyfill(
   try {
     return await server.server.elicitInput(params, options);
   } catch (error) {
+    // biome-ignore lint/suspicious/noConsole: surfaces unexpected elicitation failures for operators
     console.error(error);
     return createElicitationPolyfillResult(params);
   }
-}
-
-/**
- * Creates a polyfill result that instructs the host AI application to
- * collect the requested input and re-request the tool.
- *
- * @param params - The elicitation request parameters
- * @returns A polyfill result object
- */
-function createElicitationPolyfillResult(
-  params: ElicitRequest["params"],
-): ElicitationPolyfillResult {
-  return {
-    requiresInputCollection: true,
-    inputRequest: params,
-    instructions:
-      "Please collect the requested input from the user and re-request this tool with the collected values. " +
-      "Include the input results in your next request to continue the operation.",
-  };
 }
 
 /**

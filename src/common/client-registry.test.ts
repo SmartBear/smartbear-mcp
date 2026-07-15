@@ -1,3 +1,4 @@
+// process.env is used to set up/tear down MCP_ALLOWED_ENDPOINTS between test cases.
 import process from "node:process";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
@@ -8,7 +9,7 @@ import type { Client } from "./types.ts";
 describe("ClientRegistry", () => {
   let mockServer: SmartBearMcpServer;
   let mockClient: Client;
-  let consoleWarnSpy: any;
+  let consoleWarnSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     // Clear the registry before each test
@@ -18,10 +19,12 @@ describe("ClientRegistry", () => {
     mockServer = {
       addClient: vi.fn(),
       isClientEnabled: vi.fn().mockReturnValue(true),
-    } as any;
+    } as unknown as SmartBearMcpServer;
 
     // Spy on console.warn to verify warning messages
-    consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {
+      // Intentionally suppress console output during tests.
+    });
 
     // Clear environment variables
     delete process.env.MCP_ALLOWED_ENDPOINTS;
@@ -36,7 +39,7 @@ describe("ClientRegistry", () => {
    */
   function createMockClient(
     name: string,
-    configSchema: z.ZodObject<any>,
+    configSchema: z.ZodObject<{ [key: string]: z.ZodType }>,
   ): Client {
     return {
       name,
@@ -315,6 +318,7 @@ describe("ClientRegistry", () => {
 
       it("should allow URL matching regex with alternatives", async () => {
         process.env.MCP_ALLOWED_ENDPOINTS =
+          // biome-ignore lint/security/noSecrets: an allowed-endpoint regex pattern, not a secret
           "/^https:\\/\\/api\\.(bugsnag|swaggerhub|pactflow)\\.com$/";
 
         mockClient = createMockClient(

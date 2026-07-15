@@ -1,3 +1,4 @@
+import type { CreateMessageResult } from "@modelcontextprotocol/sdk/types.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   type ElicitationPolyfillResult,
@@ -10,6 +11,7 @@ import {
 import type { SmartBearMcpServer } from "./server.ts";
 
 describe("Polyfills", () => {
+  // biome-ignore lint/security/noSecrets: test suite name (function name), not a secret
   describe("executeSamplingOrPolyfill", () => {
     let mockServer: SmartBearMcpServer;
 
@@ -102,11 +104,13 @@ describe("Polyfills", () => {
           type: "image",
           data: "...",
         },
-      } as any);
+      } as CreateMessageResult);
 
       const consoleErrorSpy = vi
         .spyOn(console, "error")
-        .mockImplementation(() => {});
+        .mockImplementation(() => {
+          // Intentionally suppress console output during tests.
+        });
 
       const prompt = "Test prompt";
       const result = await executeSamplingOrPolyfill(mockServer, prompt);
@@ -129,7 +133,9 @@ describe("Polyfills", () => {
 
       const consoleErrorSpy = vi
         .spyOn(console, "error")
-        .mockImplementation(() => {});
+        .mockImplementation(() => {
+          // Intentionally suppress console output during tests.
+        });
 
       const prompt = "Test prompt";
       const result = await executeSamplingOrPolyfill(mockServer, prompt);
@@ -191,7 +197,10 @@ describe("Polyfills", () => {
     it("should return false for ElicitationPolyfillResult", () => {
       const result: ElicitationPolyfillResult = {
         requiresInputCollection: true,
-        inputRequest: { message: "Test", requestedSchema: {} as any },
+        inputRequest: {
+          message: "Test",
+          requestedSchema: { type: "object", properties: {} },
+        },
         instructions: "Instructions",
       };
 
@@ -304,7 +313,9 @@ describe("Polyfills", () => {
 
       const consoleErrorSpy = vi
         .spyOn(console, "error")
-        .mockImplementation(() => {});
+        .mockImplementation(() => {
+          // Intentionally suppress console output during tests.
+        });
 
       const params = {
         message: "Enter your name",

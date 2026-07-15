@@ -1,4 +1,5 @@
 import { z } from "zod";
+// biome-ignore lint/suspicious/noImportCycles: utils.ts needs the OpenApi/RemoteOpenApiDocument schemas defined here, and this file needs its transform helper; splitting them would require a third shared module for no functional benefit.
 import { addOpenAPISpecToSchema } from "./utils.ts";
 
 // Type definitions for PactFlow AI API
@@ -74,7 +75,7 @@ export const FileInputSchema = z.object({
     .describe("Complete file contents - client code, models, test files, etc."),
 });
 
-export const OpenAPISchema = z
+export const OpenApiSchema = z
   .object({
     openapi: z
       .string()
@@ -132,7 +133,7 @@ export const EndpointMatcherSchema = z
     "REQUIRED: Matcher to specify which endpoints from the OpenAPI document to generate tests for. At least one matcher field must be provided",
   );
 
-export const RemoteOpenAPIDocumentSchema = z
+export const RemoteOpenApiDocumentSchema = z
   .object({
     authToken: z
       .string()
@@ -155,13 +156,13 @@ export const RemoteOpenAPIDocumentSchema = z
   })
   .describe("Use this schema to fetch openapi documents present over a url.");
 
-export const OpenAPIWithMatcherSchema = z
+export const OpenApiWithMatcherSchema = z
   .object({
-    document: OpenAPISchema.describe(
+    document: OpenApiSchema.describe(
       "The OpenAPI document describing the API being tested. if document is not provided, don't add the field if remoteOpenAPIDocument is provided.",
     ).optional(),
     matcher: EndpointMatcherSchema,
-    remoteDocument: RemoteOpenAPIDocumentSchema.optional().describe(
+    remoteDocument: RemoteOpenApiDocumentSchema.optional().describe(
       "The remote OpenAPI document to use for the review/generation in case openapi document is not provided. If provided do not include the document field under openapi.",
     ),
   })
@@ -192,7 +193,7 @@ export const RefineInputSchema = z.object({
       "Optional error output from failed contract test runs. These can be used to better understand the context or failures observed and guide the recommendations toward resolving specific issues.",
     )
     .optional(),
-  openapi: OpenAPIWithMatcherSchema.optional(),
+  openapi: OpenApiWithMatcherSchema.optional(),
 });
 
 export const RequestResponsePairSchema = z
@@ -218,7 +219,7 @@ export const GenerationInputSchema = z.object({
     .describe(
       "Collection of source code files to analyze and extract API interactions from. Include client code, data models, existing tests, or any code that makes API calls",
     ),
-  openapi: OpenAPIWithMatcherSchema.optional(),
+  openapi: OpenApiWithMatcherSchema.optional(),
   additionalInstructions: z
     .string()
     .optional()
@@ -273,12 +274,12 @@ export const EntitlementsSchema = z
 // types inferred from schemas
 export type RefineInput = z.infer<typeof RefineInputSchema>;
 export type FileInput = z.infer<typeof FileInputSchema>;
-export type OpenAPI = z.infer<typeof OpenAPISchema>;
+export type OpenApi = z.infer<typeof OpenApiSchema>;
 export type EndpointMatcher = z.infer<typeof EndpointMatcherSchema>;
-export type OpenApiWithMatcher = z.infer<typeof OpenAPIWithMatcherSchema>;
+export type OpenApiWithMatcher = z.infer<typeof OpenApiWithMatcherSchema>;
 export type GenerationInput = z.infer<typeof GenerationInputSchema>;
 export type RequestResponsePair = z.infer<typeof RequestResponsePairSchema>;
-export type RemoteOpenAPIDocument = z.infer<typeof RemoteOpenAPIDocumentSchema>;
+export type RemoteOpenApiDocument = z.infer<typeof RemoteOpenApiDocumentSchema>;
 export type MatcherRecommendations = z.infer<
   typeof MatcherRecommendationInputSchema
 >;

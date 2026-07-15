@@ -21,12 +21,27 @@
  */
 
 import process from "node:process";
-export type ShutdownHandler = () => Promise<void> | void;
+import { getEnv } from "./env.ts";
 
 interface RegisteredHandler {
   name: string;
   fn: ShutdownHandler;
 }
+
+const DEFAULT_TIMEOUT_MS = 25_000;
+
+function defaultTimeout(): number {
+  const fromEnv = getEnv("MCP_SHUTDOWN_TIMEOUT_MS");
+  if (fromEnv) {
+    const parsed = Number.parseInt(fromEnv, 10);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      return parsed;
+    }
+  }
+  return DEFAULT_TIMEOUT_MS;
+}
+
+export type ShutdownHandler = () => Promise<void> | void;
 
 export interface ShutdownManagerOptions {
   /** Signals to listen for. Defaults to ['SIGTERM', 'SIGINT']. */
@@ -48,21 +63,8 @@ export interface DrainResult {
   remainingHandlers: string[];
 }
 
-const DEFAULT_TIMEOUT_MS = 25_000;
-
-function defaultTimeout(): number {
-  const fromEnv = process.env.MCP_SHUTDOWN_TIMEOUT_MS;
-  if (fromEnv) {
-    const parsed = Number.parseInt(fromEnv, 10);
-    if (Number.isFinite(parsed) && parsed > 0) {
-      return parsed;
-    }
-  }
-  return DEFAULT_TIMEOUT_MS;
-}
-
 export class ShutdownManager {
-  private handlers: RegisteredHandler[] = [];
+  private readonly handlers: RegisteredHandler[] = [];
   private state: "idle" | "draining" | "complete" = "idle";
   private signalsInstalled = false;
   private installedSignalListeners: Array<{
@@ -109,7 +111,12 @@ export class ShutdownManager {
    * is a no-op.
    */
   installSignalHandlers(): void {
-    if (this.signalsInstalled) return;
+    // Mutated to true below and reset to false by uninstallSignalHandlers(); biome's
+    // narrower type inference (unlike tsc) sees only the initial `false` literal.
+    // biome-ignore lint/suspicious/noUnnecessaryConditions: see above
+    if (this.signalsInstalled) {
+      return;
+    }
     this.signalsInstalled = true;
 
     for (const signal of this.signals) {
@@ -153,6 +160,9 @@ export class ShutdownManager {
     const drainPromise = (async () => {
       for (const h of reversed) {
         try {
+          // Handlers must run strictly sequentially in LIFO order (documented
+          // teardown ordering guarantee), so Promise.all is not applicable here.
+          // biome-ignore lint/performance/noAwaitInLoops: sequential LIFO drain order required
           await h.fn();
         } catch (err) {
           // Errors in one handler must not prevent others from running.
@@ -176,7 +186,9 @@ export class ShutdownManager {
       timeoutPromise,
     ]);
 
-    if (timeoutHandle) clearTimeout(timeoutHandle);
+    if (timeoutHandle) {
+      clearTimeout(timeoutHandle);
+    }
     this.state = "complete";
 
     const durationMs = Date.now() - start;
@@ -220,6 +232,7 @@ export class ShutdownManager {
       .catch((err) => {
         // drain() catches per-handler errors; this branch should not happen.
         this.logger.error(
+          // biome-ignore lint/security/noSecrets: log message text, not a secret
           "[MCP][shutdown] Unexpected error from drain():",
           err,
         );

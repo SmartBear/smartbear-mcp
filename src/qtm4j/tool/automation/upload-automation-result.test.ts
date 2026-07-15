@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ToolError } from "../../../common/tools.ts";
+import type { Qtm4jClient } from "../../client.ts";
 import { AUTOMATION_LIMITS, ENDPOINTS } from "../../config/constants.ts";
+import type { ApiClient } from "../../http/api-client.ts";
 import { UploadAutomationResult } from "../test-automation/upload-automation-result.ts";
 
 vi.mock("node:fs/promises", () => ({
@@ -12,8 +14,11 @@ import { readFile } from "node:fs/promises";
 const mockReadFile = vi.mocked(readFile);
 
 describe("UploadAutomationResult", () => {
-  let mockClient: any;
-  let mockApiClient: any;
+  let mockClient: Qtm4jClient;
+  let mockApiClient: {
+    postAutomation: ReturnType<typeof vi.fn>;
+    uploadFileMultipart: ReturnType<typeof vi.fn>;
+  };
   let instance: UploadAutomationResult;
 
   const fakeBuffer = Buffer.from("<testsuites></testsuites>");
@@ -33,12 +38,14 @@ describe("UploadAutomationResult", () => {
     };
 
     mockClient = {
-      getApiClient: vi.fn().mockReturnValue(mockApiClient),
-    };
+      getApiClient: vi
+        .fn()
+        .mockReturnValue(mockApiClient as unknown as ApiClient),
+    } as unknown as Qtm4jClient;
 
-    mockReadFile.mockResolvedValue(fakeBuffer as any);
+    mockReadFile.mockResolvedValue(fakeBuffer);
 
-    instance = new UploadAutomationResult(mockClient as any);
+    instance = new UploadAutomationResult(mockClient);
   });
 
   // ─── Specification ────────────────────────────────────────────────────────
@@ -398,7 +405,7 @@ describe("UploadAutomationResult", () => {
       const oversizedBuffer = Buffer.alloc(
         AUTOMATION_LIMITS.MAX_FILE_SIZE_BYTES + 1,
       );
-      mockReadFile.mockResolvedValue(oversizedBuffer as any);
+      mockReadFile.mockResolvedValue(oversizedBuffer);
 
       await expect(
         instance.handle({ filePath: "./results/large.xml", format: "junit" }),
@@ -411,7 +418,7 @@ describe("UploadAutomationResult", () => {
 
     it("accepts a file exactly at the maximum size limit", async () => {
       const exactBuffer = Buffer.alloc(AUTOMATION_LIMITS.MAX_FILE_SIZE_BYTES);
-      mockReadFile.mockResolvedValue(exactBuffer as any);
+      mockReadFile.mockResolvedValue(exactBuffer);
 
       await expect(
         instance.handle({ filePath: "./results/exact.xml", format: "junit" }),

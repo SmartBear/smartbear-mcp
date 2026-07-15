@@ -59,7 +59,8 @@ export class UnlinkRequirementsFromCycle extends Tool<Qtm4jClient> {
       "Confirmation with the cycle key and unlinked: true. Warnings are included if any requirements could not be resolved or unlinked.",
   };
 
-  handle = async (rawArgs: any) => {
+  // biome-ignore lint/complexity/noExcessiveLinesPerFunction: single sequential tool handler; splitting would fragment one linear resolve→request→respond flow
+  handle = async (rawArgs: unknown) => {
     const args = UnlinkRequirementsFromCycleBody.parse(rawArgs);
     const fieldResolver = this.client.getResolverRegistry();
     const context = fieldResolver.requireProjectContext();
@@ -84,7 +85,7 @@ export class UnlinkRequirementsFromCycle extends Tool<Qtm4jClient> {
 
     if (args.unLinkAll) {
       body.unLinkAll = true;
-    } else if (args.requirementKeys?.length) {
+    } else if (args.requirementKeys && args.requirementKeys.length > 0) {
       // Resolve requirement keys → numeric IDs
       const reqMap = (await fieldResolver
         .getResolver(ResolverKeys.SearchableField.REQUIREMENT_KEY_TO_ID)
@@ -105,7 +106,9 @@ export class UnlinkRequirementsFromCycle extends Tool<Qtm4jClient> {
         }
       }
 
-      if (requirementIds.length > 0) body.requirementIds = requirementIds;
+      if (requirementIds.length > 0) {
+        body.requirementIds = requirementIds;
+      }
     }
 
     await this.client

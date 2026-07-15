@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
+import type { SmartBearMcpServer } from "../common/server.ts";
 import { TOOLS } from "./client/tools/index.ts";
 import { QmetryClient } from "./client.ts";
 
@@ -11,7 +12,7 @@ async function createConfiguredClient(
   baseUrl = "https://qmetry.example",
 ): Promise<QmetryClient> {
   const client = new QmetryClient();
-  await client.configure({} as any, {
+  await client.configure({} as unknown as SmartBearMcpServer, {
     api_key: apiKey,
     base_url: baseUrl,
   });

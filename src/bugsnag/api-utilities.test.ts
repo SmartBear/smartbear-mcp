@@ -40,6 +40,7 @@ describe("API Utilities", () => {
     });
   });
 
+  // biome-ignore lint/security/noSecrets: describe block name, not a secret
   describe("getNextUrlPathFromHeader", () => {
     it("should extract next URL path from Link header", () => {
       const headers = new Headers();

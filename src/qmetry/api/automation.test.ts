@@ -1,3 +1,4 @@
+import type { Mock } from "vitest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   getAutomationStatus,
@@ -14,7 +15,7 @@ describe("automation API clients", () => {
     vi.resetAllMocks();
   });
 
-  const mockOk = (data: any) => ({
+  const mockOk = <T>(data: T) => ({
     ok: true,
     json: async () => data,
   });
@@ -45,7 +46,7 @@ describe("automation API clients", () => {
       );
 
       expect(globalThis.fetch).toHaveBeenCalledTimes(1);
-      const [url, options] = (globalThis.fetch as any).mock.calls[0];
+      const [url, options] = (globalThis.fetch as Mock).mock.calls[0];
 
       expect(url).toBe(`${baseUrl}/rest/import/createandscheduletestresults/1`);
       expect(options.method).toBe("POST");
@@ -85,7 +86,7 @@ describe("automation API clients", () => {
       expect(result).toEqual(mockResponse);
       expect(globalThis.fetch).toHaveBeenCalledTimes(1);
 
-      const [, options] = (globalThis.fetch as any).mock.calls[0];
+      const [, options] = (globalThis.fetch as Mock).mock.calls[0];
       expect(options.body).toBeInstanceOf(FormData);
     });
   });
@@ -143,6 +144,7 @@ describe("automation API clients", () => {
         token,
         baseUrl,
         projectKey,
+        // biome-ignore lint/suspicious/noExplicitAny: deliberately passing a malformed requestID shape to exercise the function's runtime type-guard fallback
         requestIdObj as any,
       );
 

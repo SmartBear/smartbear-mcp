@@ -3,12 +3,17 @@ import type {
   ServerNotification,
   ServerRequest,
 } from "@modelcontextprotocol/sdk/types.js";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { GetTestCaseTestScript200Response as GetTestScriptResponse } from "../../common/rest-api-schemas.ts";
+import {
+  asZephyrClient,
+  createMockZephyrClient,
+  type MockZephyrClient,
+} from "../../common/test-helpers.ts";
 import { GetTestScript } from "./get-test-script.ts";
 
 describe("GetTestScript", () => {
-  let mockClient: any;
+  let mockClient: MockZephyrClient;
   let instance: GetTestScript;
 
   const ExtraRequestHandler: RequestHandlerExtra<
@@ -26,12 +31,8 @@ describe("GetTestScript", () => {
   };
 
   beforeEach(() => {
-    mockClient = {
-      getApiClient: vi.fn().mockReturnValue({
-        get: vi.fn(),
-      }),
-    };
-    instance = new GetTestScript(mockClient as any);
+    mockClient = createMockZephyrClient();
+    instance = new GetTestScript(asZephyrClient(mockClient));
   });
 
   it("should set specification correctly", () => {

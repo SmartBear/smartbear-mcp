@@ -3,7 +3,7 @@ import type { ZodRawShape } from "zod";
 import { z } from "zod";
 import { Tool, ToolError } from "../../../common/tools.ts";
 import type { ToolParams } from "../../../common/types.ts";
-import type { BearQClient } from "../../client.ts";
+import type { BearqClient } from "../../client.ts";
 
 const inputSchema = z.object({
   functionalAreas: z
@@ -12,7 +12,7 @@ const inputSchema = z.object({
     .describe("Functional areas to target, by ID or name."),
 });
 
-export class RefineTestsInFunctionalAreas extends Tool<BearQClient> {
+export class RefineTestsInFunctionalAreas extends Tool<BearqClient> {
   specification: ToolParams = {
     title: "Refine Tests in Functional Areas",
     toolset: "Tasks",
@@ -32,10 +32,11 @@ export class RefineTestsInFunctionalAreas extends Tool<BearQClient> {
         functionalAreas,
       }),
     });
-    if (!res.ok)
+    if (!res.ok) {
       throw new ToolError(
         `POST /tasks failed: ${res.status} ${res.statusText}`,
       );
+    }
     return {
       content: [{ type: "text", text: JSON.stringify(await res.json()) }],
     };

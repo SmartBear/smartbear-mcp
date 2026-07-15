@@ -3,15 +3,20 @@ import type {
   ServerNotification,
   ServerRequest,
 } from "@modelcontextprotocol/sdk/types.js";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import {
   CreateTestExecutionBody,
   CreateTestExecution201Response as CreateTestExecutionResponse,
 } from "../../common/rest-api-schemas.ts";
+import {
+  asZephyrClient,
+  createMockZephyrClient,
+  type MockZephyrClient,
+} from "../../common/test-helpers.ts";
 import { CreateTestExecution } from "./create-test-execution.ts";
 
 describe("CreateTestExecution", () => {
-  let mockClient: any;
+  let mockClient: MockZephyrClient;
   let instance: CreateTestExecution;
 
   const ExtraRequestHandler: RequestHandlerExtra<
@@ -29,13 +34,9 @@ describe("CreateTestExecution", () => {
   };
 
   beforeEach(() => {
-    mockClient = {
-      getApiClient: vi.fn().mockReturnValue({
-        post: vi.fn(),
-      }),
-    };
+    mockClient = createMockZephyrClient();
 
-    instance = new CreateTestExecution(mockClient as any);
+    instance = new CreateTestExecution(asZephyrClient(mockClient));
   });
 
   it("should set specification correctly", () => {

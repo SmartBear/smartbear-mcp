@@ -93,7 +93,7 @@ export class CreateTestCycle extends Tool<Qtm4jClient> {
 
   // ─── Handle Implementation ──────────────────────────────────────────────────
 
-  handle = async (rawArgs: any) => {
+  handle = async (rawArgs: unknown) => {
     const fieldResolver = this.client.getResolverRegistry();
     const context = fieldResolver.requireProjectContext();
 

@@ -60,7 +60,8 @@ export class LinkRequirementsToCycle extends Tool<Qtm4jClient> {
       "Confirmation with the cycle key and linked: true. Warnings are included if any requirements could not be resolved or linked.",
   };
 
-  handle = async (rawArgs: any) => {
+  // biome-ignore lint/complexity/noExcessiveLinesPerFunction: single sequential tool handler; splitting would fragment one linear resolve→request→respond flow
+  handle = async (rawArgs: unknown) => {
     const args = LinkRequirementsToCycleBody.parse(rawArgs);
     const fieldResolver = this.client.getResolverRegistry();
     const context = fieldResolver.requireProjectContext();
@@ -84,7 +85,7 @@ export class LinkRequirementsToCycle extends Tool<Qtm4jClient> {
     const body: Record<string, unknown> = {};
 
     // Resolve requirement keys → numeric IDs
-    if (args.requirementKeys?.length) {
+    if (args.requirementKeys && args.requirementKeys.length > 0) {
       const reqMap = (await fieldResolver
         .getResolver(ResolverKeys.SearchableField.REQUIREMENT_KEY_TO_ID)
         .resolveAndReturn(context.projectId, args.requirementKeys)) as Record<
@@ -104,7 +105,9 @@ export class LinkRequirementsToCycle extends Tool<Qtm4jClient> {
         }
       }
 
-      if (requirementIds.length > 0) body.requirementIds = requirementIds;
+      if (requirementIds.length > 0) {
+        body.requirementIds = requirementIds;
+      }
     }
 
     if (args.filter) {

@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ZodRawShape } from "zod";
 import { z } from "zod";
@@ -22,16 +21,19 @@ export class AddSegment extends Tool<ReflectClient> {
 
   handle: ToolCallback<ZodRawShape> = async (args) => {
     const { sessionId, segmentId } = args as {
-      sessionId: string;
-      segmentId: number;
+      sessionId?: string;
+      segmentId?: number;
     };
-    if (!sessionId) throw new ToolError("sessionId argument is required");
-    if (segmentId === undefined || segmentId === null)
+    if (!sessionId) {
+      throw new ToolError("sessionId argument is required");
+    }
+    if (segmentId === undefined || segmentId === null) {
       throw new ToolError("segmentId argument is required");
+    }
 
     const wsManager = this.client.getConnectedSession(sessionId);
 
-    const id = randomUUID();
+    const id = globalThis.crypto.randomUUID();
     const responsePromise = wsManager.waitForResponse(id);
     await wsManager.sendMcpMessage({
       type: "mcp:add-segment",

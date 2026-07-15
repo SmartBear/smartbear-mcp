@@ -41,7 +41,7 @@ export async function fetchRequirements(
     );
   }
 
-  return qmetryRequest<unknown>({
+  return await qmetryRequest<unknown>({
     method: "POST",
     path: QMETRY_PATHS.REQUIREMENT.GET_RQ_LIST,
     token,
@@ -73,16 +73,18 @@ export async function fetchRequirementDetails(
 
   if (typeof body.id !== "number") {
     throw new Error(
+      // biome-ignore lint/security/noSecrets: high-entropy false positive; this is a descriptive string (error message, parameter name, or API action name), not a credential
       "[fetchRequirementDetails] Missing or invalid required parameter: 'id'.",
     );
   }
   if (typeof body.version !== "number") {
     throw new Error(
+      // biome-ignore lint/security/noSecrets: high-entropy false positive; this is a descriptive string (error message, parameter name, or API action name), not a credential
       "[fetchRequirementDetails] Missing or invalid required parameter: 'version'.",
     );
   }
 
-  return qmetryRequest<unknown>({
+  return await qmetryRequest<unknown>({
     method: "POST",
     path: QMETRY_PATHS.REQUIREMENT.GET_RQ_DETAILS,
     token,
@@ -114,11 +116,12 @@ export async function fetchRequirementsLinkedToTestCase(
 
   if (typeof body.tcID !== "number") {
     throw new Error(
+      // biome-ignore lint/security/noSecrets: high-entropy false positive; this is a descriptive string (error message, parameter name, or API action name), not a credential
       "[fetchRequirementsLinkedToTestCase] Missing or invalid required parameter: 'tcID'.",
     );
   }
 
-  return qmetryRequest<unknown>({
+  return await qmetryRequest<unknown>({
     method: "POST",
     path: QMETRY_PATHS.REQUIREMENT.GET_RQ_LINKED_TO_TC,
     token,

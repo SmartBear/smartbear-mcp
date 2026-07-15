@@ -1,3 +1,4 @@
+// biome-ignore-all lint/style/noExcessiveLinesPerFile: single generated-style SwaggerApi facade covering Portal/Registry/User-Management HTTP methods; splitting per-resource would fragment shared response-parsing helpers used by all of them
 import { appendClientIdentity } from "../../common/info.ts";
 import { ToolError } from "../../common/tools.ts";
 import type { SwaggerConfiguration } from "./configuration.ts";
@@ -77,6 +78,10 @@ import {
 const SWAGGER_URL_REGEX =
   /\/(apis|domains|templates)\/([^/]+)\/([^/]+)\/([^/]+)/;
 
+const HTTP_NO_CONTENT = 204;
+const HTTP_CREATED = 201;
+const MAX_TITLE_LENGTH = 255;
+
 /**
  * Type guard to check if a value has an 'id' property
  */
@@ -118,9 +123,9 @@ function isStandardizationResult(
   );
 }
 
-export class SwaggerAPI {
-  private config: SwaggerConfiguration;
-  private userAgent: string;
+export class SwaggerApi {
+  private readonly config: SwaggerConfiguration;
+  private readonly userAgent: string;
 
   constructor(config: SwaggerConfiguration, userAgent: string) {
     this.config = config;
@@ -145,7 +150,7 @@ export class SwaggerAPI {
     defaultReturn: D = {} as D,
   ): Promise<T | D | FallbackResponse> {
     // Handle 204 No Content responses
-    if (response.status === 204) {
+    if (response.status === HTTP_NO_CONTENT) {
       return defaultReturn;
     }
 
@@ -164,6 +169,7 @@ export class SwaggerAPI {
       try {
         return (await response.json()) as T;
       } catch (error) {
+        // biome-ignore lint/suspicious/noConsole: best-effort JSON parsing fallback; surfacing the parse failure is useful for diagnosing malformed API responses
         console.warn("Failed to parse JSON response (declared JSON):", error);
         return defaultReturn;
       }
@@ -171,13 +177,16 @@ export class SwaggerAPI {
 
     // Fallback: read text and attempt heuristic JSON parse
     const text = await response.text();
-    if (!text) return defaultReturn;
+    if (!text) {
+      return defaultReturn;
+    }
     const trimmed = text.trim();
-    const firstChar = trimmed[0];
+    const [firstChar] = trimmed;
     if (firstChar === "{" || firstChar === "[") {
       try {
         return JSON.parse(trimmed) as T;
       } catch (error) {
+        // biome-ignore lint/suspicious/noConsole: best-effort JSON parsing fallback; surfacing the parse failure is useful for diagnosing malformed API responses
         console.warn("Heuristic JSON parse failed:", error);
         return { message: text };
       }
@@ -241,13 +250,21 @@ export class SwaggerAPI {
   ): Promise<OrganizationsListResponse> {
     // Build query string if parameters are provided
     const searchParams = new URLSearchParams();
-    if (params?.q) searchParams.append("q", params.q);
-    if (params?.sortBy) searchParams.append("sortBy", params.sortBy);
-    if (params?.order) searchParams.append("order", params.order);
-    if (params?.page !== undefined)
+    if (params?.q) {
+      searchParams.append("q", params.q);
+    }
+    if (params?.sortBy) {
+      searchParams.append("sortBy", params.sortBy);
+    }
+    if (params?.order) {
+      searchParams.append("order", params.order);
+    }
+    if (params?.page !== undefined) {
       searchParams.append("page", params.page.toString());
-    if (params?.pageSize)
+    }
+    if (params?.pageSize) {
       searchParams.append("pageSize", params.pageSize.toString());
+    }
 
     const queryString = searchParams.toString();
     const url = `${this.config.userManagementBasePath}/orgs${queryString ? `?${queryString}` : ""}`;
@@ -331,9 +348,8 @@ export class SwaggerAPI {
     let portalCreated = false;
 
     if (!portal) {
-      const created = await this.createPortalForOrganization(organizationId);
-      portal = created.portal;
-      portalCreated = created.created;
+      ({ portal, created: portalCreated } =
+        await this.createPortalForOrganization(organizationId));
     }
 
     const products = this.extractListItems<Product>(
@@ -395,7 +411,8 @@ export class SwaggerAPI {
     const maxPages = 20;
     const target = organizationId.toLowerCase();
 
-    for (let page = 1; page <= maxPages; page++) {
+    for (let page = 1; page <= maxPages; page += 1) {
+      // biome-ignore lint/performance/noAwaitInLoops: pages must be scanned sequentially since we stop as soon as a match is found or a short page indicates the end of the list
       const response = await fetch(
         `${this.config.portalBasePath}/portals?page=${page}&size=${size}`,
         {
@@ -431,7 +448,8 @@ export class SwaggerAPI {
     const maxPages = 10;
     const target = organizationId.toLowerCase();
 
-    for (let page = 0; page < maxPages; page++) {
+    for (let page = 0; page < maxPages; page += 1) {
+      // biome-ignore lint/performance/noAwaitInLoops: pages must be scanned sequentially since we stop as soon as a match is found or a short page indicates the end of the list
       const result = await this.getOrganizations({ page, pageSize });
       const items = result.items ?? [];
 
@@ -450,6 +468,7 @@ export class SwaggerAPI {
    * derived from the organization name; on a subdomain conflict a candidate
    * suffixed with part of the organization UUID is retried.
    */
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: subdomain retry + conflict resolution (existing portal vs. permission-denied) requires the branching to stay together for correctness
   private async createPortalForOrganization(
     organizationId: string,
   ): Promise<{ portal: Portal; created: boolean }> {
@@ -468,6 +487,7 @@ export class SwaggerAPI {
     let lastError: unknown;
     for (const subdomain of candidates) {
       try {
+        // biome-ignore lint/performance/noAwaitInLoops: each candidate is only tried after the previous one fails with a conflict, so the retries are inherently sequential
         const created = await this.createPortal({
           subdomain,
           swaggerHubOrganizationId: organizationId,
@@ -497,6 +517,7 @@ export class SwaggerAPI {
         if (isOrganizationPortalConflict(error)) {
           throw new ToolError(
             `Access denied: a portal already exists for organization ${organizationId}, but you do not have permission to view it. A portal owner or designer role is required.`,
+            { cause: error },
           );
         }
       }
@@ -597,6 +618,8 @@ export class SwaggerAPI {
    * @param tableOfContentsId - Optional table of contents UUID or identifier
    * @returns Publication metadata with optional fields based on what could be fetched
    */
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: sequential three-step (product/portal/section) graceful-degradation flow; splitting would scatter the shared warning/return shape across helpers
+  // biome-ignore lint/complexity/noExcessiveLinesPerFunction: same reason as above
   private async preparePublicationMetadata(
     productId: string,
     preview: boolean,
@@ -619,6 +642,7 @@ export class SwaggerAPI {
     try {
       productDetails = await this.getPortalProduct(productId);
     } catch (error) {
+      // biome-ignore lint/suspicious/noConsole: publish already succeeded; this only degrades the returned URL, so the failure is logged rather than thrown
       console.warn("Failed to fetch product details:", error);
       return {
         publicationUrl: null,
@@ -635,6 +659,7 @@ export class SwaggerAPI {
       try {
         portalDetails = await this.getPortal(String(productDetails.portalId));
       } catch (error) {
+        // biome-ignore lint/suspicious/noConsole: publish already succeeded; this only degrades the returned URL, so the failure is logged rather than thrown
         console.warn("Failed to fetch portal details:", error);
       }
     }
@@ -664,6 +689,7 @@ export class SwaggerAPI {
         embed: ["tableOfContents", "tableOfContents.swaggerhubApi"],
       });
     } catch (error) {
+      // biome-ignore lint/suspicious/noConsole: publish already succeeded; this only degrades the returned URL, so the failure is logged rather than thrown
       console.warn("Failed to fetch sections:", error);
     }
 
@@ -678,14 +704,13 @@ export class SwaggerAPI {
         : null;
 
     // Build URL with available data (product + portal required, section + toc optional)
-    const publicationUrl = buildPortalLiveUrl(
-      this.config,
-      portalDetails,
-      productDetails.slug,
-      targetSection,
-      targetTocItem,
+    const publicationUrl = buildPortalLiveUrl(this.config, {
+      portal: portalDetails,
+      productSlug: productDetails.slug,
+      section: targetSection,
+      tocItem: targetTocItem,
       preview,
-    );
+    });
 
     return {
       publicationUrl,
@@ -772,6 +797,7 @@ export class SwaggerAPI {
           : {}),
       } as PublishPortalProductResponse;
     } catch (error) {
+      // biome-ignore lint/suspicious/noConsole: publish already succeeded; this only degrades the returned URL, so the failure is logged rather than thrown
       console.warn(
         "Failed to build publication metadata — returning publish success with empty URL:",
         error,
@@ -961,6 +987,7 @@ export class SwaggerAPI {
     return { success: true };
   }
 
+  // biome-ignore lint/complexity/noExcessiveLinesPerFunction: single validation + fetch/create/update pipeline for a documentation page; splitting would spread validation from the steps it guards
   async createDocumentationPage(
     args: CreateDocumentationPageArgs,
   ): Promise<CreateDocumentationPageResult> {
@@ -988,7 +1015,7 @@ export class SwaggerAPI {
 
     const portal = await this.getPortal(portalId);
     const product = await this.getPortalProduct(productId);
-    const productSlug = (product as Record<string, unknown>)?.slug as string;
+    const productSlug = (product as Record<string, unknown>).slug as string;
 
     const sections = await this.getPortalProductSections(productId, {});
 
@@ -997,10 +1024,10 @@ export class SwaggerAPI {
         `Product ${productId} has no sections. Create a section first before adding documentation pages.`,
       );
     }
-    const section = sections.items[0];
+    const [section] = sections.items;
 
     const resolvedPageSlug = pageSlug || normalizeSlug(pageTitle);
-    const normalizedTitle = pageTitle.slice(0, 255);
+    const normalizedTitle = pageTitle.slice(0, MAX_TITLE_LENGTH);
 
     const tocItem = await this.createTableOfContents(section.id, {
       type: "new",
@@ -1013,7 +1040,7 @@ export class SwaggerAPI {
         source,
       },
     });
-    const documentId = tocItem.documentId;
+    const { documentId } = tocItem;
 
     if (pageContent !== undefined) {
       await this.updateDocument({
@@ -1099,17 +1126,33 @@ export class SwaggerAPI {
   async searchApis(params: ApiSearchParams = {}): Promise<ApiSearchResponse> {
     const searchParams = new URLSearchParams();
 
-    if (params.query) searchParams.append("query", params.query);
-    if (params.state) searchParams.append("state", params.state);
-    if (params.tag) searchParams.append("tag", params.tag);
-    if (params.offset !== undefined)
+    if (params.query) {
+      searchParams.append("query", params.query);
+    }
+    if (params.state) {
+      searchParams.append("state", params.state);
+    }
+    if (params.tag) {
+      searchParams.append("tag", params.tag);
+    }
+    if (params.offset !== undefined) {
       searchParams.append("offset", params.offset.toString());
-    if (params.limit !== undefined)
+    }
+    if (params.limit !== undefined) {
       searchParams.append("limit", params.limit.toString());
-    if (params.sort) searchParams.append("sort", params.sort);
-    if (params.order) searchParams.append("order", params.order);
-    if (params.owner) searchParams.append("owner", params.owner);
-    if (params.specType) searchParams.append("specType", params.specType);
+    }
+    if (params.sort) {
+      searchParams.append("sort", params.sort);
+    }
+    if (params.order) {
+      searchParams.append("order", params.order);
+    }
+    if (params.owner) {
+      searchParams.append("owner", params.owner);
+    }
+    if (params.specType) {
+      searchParams.append("specType", params.specType);
+    }
 
     const url = `${this.config.registryBasePath}/specs${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
 
@@ -1148,13 +1191,15 @@ export class SwaggerAPI {
 
       // Extract owner, name, and version from the Swagger URL using the regex constant
       const swaggerUrl = getProperty("Swagger") || "";
-      const urlMatch = RegExp(SWAGGER_URL_REGEX).exec(swaggerUrl);
+      const urlMatch = new RegExp(SWAGGER_URL_REGEX).exec(swaggerUrl);
 
       return {
+        // biome-ignore lint/suspicious/noUnnecessaryConditions: RegExp.exec() returns RegExpExecArray | null, and swaggerUrl may not match the expected pattern
         owner: urlMatch?.[2] || "",
         name: spec.name || "",
         description: spec.description || "",
         summary: spec.summary || "",
+        // biome-ignore lint/suspicious/noUnnecessaryConditions: RegExp.exec() returns RegExpExecArray | null, and swaggerUrl may not match the expected pattern
         version: getProperty("X-Version") || urlMatch?.[4] || "",
         specification: getProperty("X-Specification") || "",
         created: getProperty("X-Created"),
@@ -1179,10 +1224,12 @@ export class SwaggerAPI {
   ): Promise<unknown> {
     const searchParams = new URLSearchParams();
 
-    if (params.resolved !== undefined)
+    if (params.resolved !== undefined) {
       searchParams.append("resolved", params.resolved.toString());
-    if (params.flatten !== undefined)
+    }
+    if (params.flatten !== undefined) {
       searchParams.append("flatten", params.flatten.toString());
+    }
 
     const url = `${this.config.registryBasePath}/apis/${encodeURIComponent(params.owner)}/${encodeURIComponent(params.api)}/${encodeURIComponent(params.version)}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
 
@@ -1213,30 +1260,14 @@ export class SwaggerAPI {
    * @returns Created or updated API metadata with URL. HTTP 201 indicates creation, HTTP 200 indicates update
    */
   async createOrUpdateApi(params: CreateApiParams): Promise<CreateApiResponse> {
-    // Determine the format of the definition
-    let contentType: string;
-    let requestBody: string;
-
-    // Auto-detect format from the definition content
+    // Auto-detect format from the definition content, then build the request
+    // body accordingly (YAML is sent as-is, JSON is parsed and re-stringified
+    // to ensure it is valid).
     const format = this.detectDefinitionFormat(params.definition);
-
-    if (format === "yaml") {
-      contentType = "application/yaml";
-      requestBody = params.definition; // Send YAML as-is
-    } else {
-      contentType = "application/json";
-      // For JSON, parse and stringify to ensure valid JSON
-      try {
-        const parsedDefinition = JSON.parse(params.definition);
-        requestBody = JSON.stringify(parsedDefinition);
-      } catch (error) {
-        throw new ToolError(
-          `Invalid JSON format in definition: ${
-            error instanceof Error ? error.message : "Unknown error"
-          }`,
-        );
-      }
-    }
+    const { contentType, requestBody } = this.buildApiRequestBody(
+      params.definition,
+      format,
+    );
 
     // Construct the URL with query parameters
     // Fixed values: visibility=private, automock=false, version=1.0.0
@@ -1265,7 +1296,7 @@ export class SwaggerAPI {
     }
 
     // Determine operation type based on HTTP status code
-    const operation = response.status === 201 ? "create" : "update";
+    const operation = response.status === HTTP_CREATED ? "create" : "update";
 
     // Extract version from X-Version header
     const version = response.headers.get("X-Version") || "1.0.0";
@@ -1316,7 +1347,7 @@ export class SwaggerAPI {
 
     // Determine operation type based on HTTP status code
     // 201 = new API created, 200 = existing API updated, 205 = API saved and should be reloaded
-    const operation = response.status === 201 ? "create" : "update";
+    const operation = response.status === HTTP_CREATED ? "create" : "update";
 
     // Extract version from X-Version header
     const version = response.headers.get("X-Version");
@@ -1354,6 +1385,35 @@ export class SwaggerAPI {
   }
 
   /**
+   * Build the request content type and body for an API definition, based on
+   * its auto-detected format. YAML is sent as-is; JSON is parsed and
+   * re-stringified to ensure it is valid before sending.
+   */
+  private buildApiRequestBody(
+    definition: string,
+    format: "json" | "yaml",
+  ): { contentType: string; requestBody: string } {
+    if (format === "yaml") {
+      return { contentType: "application/yaml", requestBody: definition };
+    }
+
+    try {
+      const parsedDefinition = JSON.parse(definition);
+      return {
+        contentType: "application/json",
+        requestBody: JSON.stringify(parsedDefinition),
+      };
+    } catch (error) {
+      throw new ToolError(
+        `Invalid JSON format in definition: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`,
+        { cause: error },
+      );
+    }
+  }
+
+  /**
    * Run a standardization scan against an API definition
    * @param params Parameters including organization name and API definition
    * @returns Standardization result with validation errors
@@ -1361,29 +1421,13 @@ export class SwaggerAPI {
   async scanStandardization(
     params: ScanStandardizationParams,
   ): Promise<StandardizationResult | FallbackResponse> {
-    // Auto-detect format from the definition content
+    // Auto-detect format from the definition content, then build the request
+    // body accordingly.
     const format = this.detectDefinitionFormat(params.definition);
-
-    let contentType: string;
-    let requestBody: string;
-
-    if (format === "yaml") {
-      contentType = "application/yaml";
-      requestBody = params.definition; // Send YAML as-is
-    } else {
-      contentType = "application/json";
-      // For JSON, parse and stringify to ensure valid JSON
-      try {
-        const parsedDefinition = JSON.parse(params.definition);
-        requestBody = JSON.stringify(parsedDefinition);
-      } catch (error) {
-        throw new ToolError(
-          `Invalid JSON format in definition: ${
-            error instanceof Error ? error.message : "Unknown error"
-          }`,
-        );
-      }
-    }
+    const { contentType, requestBody } = this.buildApiRequestBody(
+      params.definition,
+      format,
+    );
 
     const url = `${this.config.registryBasePath}/standardization/${encodeURIComponent(
       params.orgName,
@@ -1461,7 +1505,9 @@ export class SwaggerAPI {
     params: StandardizeApiParams,
   ): Promise<StandardizeApiResponse> {
     const searchParams = new URLSearchParams();
-    if (params.newVersion) searchParams.set("newVersion", params.newVersion);
+    if (params.newVersion) {
+      searchParams.set("newVersion", params.newVersion);
+    }
     const queryString = searchParams.toString();
     const url = `${this.config.registryBasePath}/apis/${encodeURIComponent(
       params.owner,

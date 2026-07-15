@@ -3,7 +3,7 @@ import type { ZodRawShape } from "zod";
 import { z } from "zod";
 import { Tool, ToolError } from "../../../common/tools.ts";
 import type { ToolParams } from "../../../common/types.ts";
-import type { BearQClient } from "../../client.ts";
+import type { BearqClient } from "../../client.ts";
 
 const inputSchema = z.object({
   instruction: z
@@ -14,7 +14,7 @@ const inputSchema = z.object({
     ),
 });
 
-export class ChatWithQaLead extends Tool<BearQClient> {
+export class ChatWithQaLead extends Tool<BearqClient> {
   specification: ToolParams = {
     title: "Chat with QA Lead",
     toolset: "Tasks",
@@ -30,10 +30,11 @@ export class ChatWithQaLead extends Tool<BearQClient> {
       headers: this.client.getHeaders(),
       body: JSON.stringify({ agent: "qa-lead", instruction }),
     });
-    if (!res.ok)
+    if (!res.ok) {
       throw new ToolError(
         `POST /tasks failed: ${res.status} ${res.statusText}`,
       );
+    }
     return {
       content: [{ type: "text", text: JSON.stringify(await res.json()) }],
     };

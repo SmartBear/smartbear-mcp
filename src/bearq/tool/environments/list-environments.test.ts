@@ -1,12 +1,19 @@
+import type { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/protocol.js";
+import type {
+  ServerNotification,
+  ServerRequest,
+  TextContent,
+} from "@modelcontextprotocol/sdk/types.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
+import type { BearqClient } from "../../client.ts";
 import { ListEnvironments } from "./list-environments.ts";
 
 const fetchMock = createFetchMock(vi);
 fetchMock.enableMocks();
 
 describe("ListEnvironments", () => {
-  let mockClient: any;
+  let mockClient: Pick<BearqClient, "getBaseUrl" | "getHeaders">;
   let instance: ListEnvironments;
 
   beforeEach(() => {
@@ -18,7 +25,7 @@ describe("ListEnvironments", () => {
         "Content-Type": "application/json",
       }),
     };
-    instance = new ListEnvironments(mockClient);
+    instance = new ListEnvironments(mockClient as unknown as BearqClient);
   });
 
   it("should set specification correctly", () => {
@@ -36,7 +43,10 @@ describe("ListEnvironments", () => {
       }),
     );
 
-    const result = await instance.handle({}, {} as any);
+    const result = await instance.handle(
+      {},
+      {} as unknown as RequestHandlerExtra<ServerRequest, ServerNotification>,
+    );
 
     expect(fetchMock).toHaveBeenCalledWith(
       "https://api.bearq.smartbear.com/environments",
@@ -48,15 +58,18 @@ describe("ListEnvironments", () => {
       }),
     );
 
-    const parsed = JSON.parse((result.content[0] as any).text);
+    const parsed = JSON.parse((result.content[0] as TextContent).text);
     expect(parsed.environments).toHaveLength(2);
     expect(parsed.environments[0].name).toBe("Staging");
   });
 
   it("should throw ToolError on non-2xx response", async () => {
     fetchMock.mockResponseOnce("Unauthorized", { status: 401 });
-    await expect(instance.handle({}, {} as any)).rejects.toThrow(
-      "GET /environments failed: 401",
-    );
+    await expect(
+      instance.handle(
+        {},
+        {} as unknown as RequestHandlerExtra<ServerRequest, ServerNotification>,
+      ),
+    ).rejects.toThrow("GET /environments failed: 401");
   });
 });

@@ -1,6 +1,15 @@
+// biome-ignore-all lint/security/noSecrets: this file contains many high-entropy API action-name / wire-format / fixture string constants that trip the noSecrets entropy heuristic; none are real secrets
+import type { Mock } from "vitest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { USER_AGENT } from "../common/info.ts";
+import type { SmartBearMcpServer } from "../common/server.ts";
 import { ToolError } from "../common/tools.ts";
+import type {
+  GetInputFunction,
+  RegisterResourceFunction,
+  RegisterToolsFunction,
+  ToolParams,
+} from "../common/types.ts";
 import type {
   ErrorApiView,
   EventApiView,
@@ -10,9 +19,9 @@ import type {
   SpanGroup,
   TraceField,
 } from "./client/api/api.ts";
-import type { BaseAPI } from "./client/api/base.ts";
-import type { CurrentUserAPI, ErrorAPI } from "./client/api/index.ts";
-import type { ProjectAPI } from "./client/api/Project.ts";
+import type { BaseApi } from "./client/api/base.ts";
+import type { CurrentUserApi, ErrorApi } from "./client/api/index.ts";
+import type { ProjectApi } from "./client/api/project.ts";
 import { BugsnagClient } from "./client.ts";
 import {
   getMockError,
@@ -30,7 +39,7 @@ import {
 const mockCurrentUserApi = {
   listUserOrganizations: vi.fn(),
   getOrganizationProjects: vi.fn(),
-} satisfies Omit<CurrentUserAPI, keyof BaseAPI>;
+} satisfies Omit<CurrentUserApi, keyof BaseApi>;
 
 const mockErrorApi = {
   viewErrorOnProject: vi.fn(),
@@ -40,7 +49,7 @@ const mockErrorApi = {
   listErrorEvents: vi.fn(),
   updateErrorOnProject: vi.fn(),
   getPivotValuesOnAnError: vi.fn(),
-} satisfies Omit<ErrorAPI, keyof BaseAPI>;
+} satisfies Omit<ErrorApi, keyof BaseApi>;
 
 const mockProjectApi = {
   listProjectEventFields: vi.fn(),
@@ -57,7 +66,7 @@ const mockProjectApi = {
   listProjectTraceFields: vi.fn(),
   listSpansBySpanGroupId: vi.fn(),
   listSpansByTraceId: vi.fn(),
-} satisfies Omit<ProjectAPI, keyof BaseAPI>;
+} satisfies Omit<ProjectApi, keyof BaseApi>;
 
 const mockCache = {
   set: vi.fn(),
@@ -65,16 +74,16 @@ const mockCache = {
   del: vi.fn(),
 };
 
-vi.mock("./client/api/CurrentUser.ts", () => ({
-  CurrentUserAPI: vi.fn().mockImplementation(() => mockCurrentUserApi),
+vi.mock("./client/api/current-user.ts", () => ({
+  CurrentUserApi: vi.fn().mockImplementation(() => mockCurrentUserApi),
 }));
 
-vi.mock("./client/api/Error.ts", () => ({
-  ErrorAPI: vi.fn().mockImplementation(() => mockErrorApi),
+vi.mock("./client/api/error.ts", () => ({
+  ErrorApi: vi.fn().mockImplementation(() => mockErrorApi),
 }));
 
-vi.mock("./client/api/Project.ts", () => ({
-  ProjectAPI: vi.fn().mockImplementation(() => mockProjectApi),
+vi.mock("./client/api/project.ts", () => ({
+  ProjectApi: vi.fn().mockImplementation(() => mockProjectApi),
 }));
 
 vi.mock("./client/api/configuration.ts", () => ({
@@ -116,12 +125,17 @@ const mockConsole = {
   debug: vi.fn(),
 };
 
-// Store original console methods
+// Store original console methods, so they can be restored after mocking them below.
 const originalConsole = {
+  // biome-ignore lint/suspicious/noConsole: capturing the real console method reference to restore it later, not logging
   error: console.error,
+  // biome-ignore lint/suspicious/noConsole: capturing the real console method reference to restore it later, not logging
   warn: console.warn,
+  // biome-ignore lint/suspicious/noConsole: capturing the real console method reference to restore it later, not logging
   log: console.log,
+  // biome-ignore lint/suspicious/noConsole: capturing the real console method reference to restore it later, not logging
   info: console.info,
+  // biome-ignore lint/suspicious/noConsole: capturing the real console method reference to restore it later, not logging
   debug: console.debug,
 };
 
@@ -132,7 +146,9 @@ async function createConfiguredClient(
   endpoint?: string,
 ): Promise<BugsnagClient> {
   const client = new BugsnagClient();
-  const mockServer = { getCache: () => mockCache } as any;
+  const mockServer = {
+    getCache: () => mockCache,
+  } as unknown as SmartBearMcpServer;
   await client.configure(mockServer, {
     auth_token: authToken,
     project_api_key: projectApiKey,
@@ -142,11 +158,36 @@ async function createConfiguredClient(
   return client;
 }
 
+type ToolHandlerFn = (
+  input: Record<string, unknown>,
+  extra?: Record<string, unknown>,
+) => Promise<{ content: Array<{ text: string }> }>;
+
+type ResourceHandlerFn = (
+  uri: { href: string },
+  variables: Record<string, unknown>,
+) => Promise<{ contents: Array<{ uri: string; text: string }> }>;
+
+// Locate the handler registered for a tool by its title, from a mocked RegisterToolsFunction.
+function getToolHandler(
+  registerMock: Mock<RegisterToolsFunction>,
+  title: string,
+): ToolHandlerFn {
+  const call = registerMock.mock.calls.find(
+    ([params]: [ToolParams, ...unknown[]]) => params.title === title,
+  );
+  if (!call) {
+    throw new Error(`Tool "${title}" was not registered`);
+  }
+  const [, handler] = call;
+  return handler as unknown as ToolHandlerFn;
+}
+
 describe("BugsnagClient", () => {
   let client: BugsnagClient;
   let clientWithNoApiKey: BugsnagClient;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks();
     // Reset mock implementations to ensure no persistent return values affect tests
     mockCache.get.mockReset();
@@ -178,9 +219,9 @@ describe("BugsnagClient", () => {
   });
 
   describe("constructor", () => {
-    it("should create client instance with proper dependencies", async () => {
-      const client = new BugsnagClient();
-      expect(client).toBeInstanceOf(BugsnagClient);
+    it("should create client instance with proper dependencies", () => {
+      const testClient = new BugsnagClient();
+      expect(testClient).toBeInstanceOf(BugsnagClient);
     });
 
     it("should configure endpoints correctly during construction", async () => {
@@ -203,83 +244,86 @@ describe("BugsnagClient", () => {
       );
 
       // Verify the apiKey function returns the expected token
-      const configCall = MockedConfiguration.mock.calls[0][0];
+      const [[configCall]] = MockedConfiguration.mock.calls;
       const apiKeyFunc = configCall.apiKey as (name: string) => string;
       expect(apiKeyFunc("any")).toBe("token test-token");
     });
 
     it("should set project API key when provided", async () => {
-      const client = await createConfiguredClient(
+      const testClient = await createConfiguredClient(
         "test-token",
         "test-project-key",
       );
-      expect(client).toBeInstanceOf(BugsnagClient);
+      expect(testClient).toBeInstanceOf(BugsnagClient);
     });
   });
 
   describe("getAuthToken", () => {
     it("should return token from Bugsnag-Auth-Token header with 'token' prefix", async () => {
-      const client = await createConfiguredClient("configured-token");
+      const testClient = await createConfiguredClient("configured-token");
       const { requestContextStorage } = await import(
         "../common/request-context.ts"
       );
       const result = requestContextStorage.run(
         { headers: { "Bugsnag-Auth-Token": "my-pat" } },
-        () => client.getAuthToken(),
+        () => testClient.getAuthToken(),
       );
       expect(result).toBe("token my-pat");
     });
 
     it("should strip existing 'token ' prefix from header value", async () => {
-      const client = await createConfiguredClient("configured-token");
+      const testClient = await createConfiguredClient("configured-token");
       const { requestContextStorage } = await import(
         "../common/request-context.ts"
       );
       const result = requestContextStorage.run(
         { headers: { "Bugsnag-Auth-Token": "token already-prefixed" } },
-        () => client.getAuthToken(),
+        () => testClient.getAuthToken(),
       );
       expect(result).toBe("token already-prefixed");
     });
 
     it("should fall back to Authorization Bearer header for OAuth", async () => {
-      const client = await createConfiguredClient();
+      const testClient = await createConfiguredClient();
       const { requestContextStorage } = await import(
         "../common/request-context.ts"
       );
       const result = requestContextStorage.run(
         { headers: { authorization: "Bearer oauth-jwt-token" } },
-        () => client.getAuthToken(),
+        () => testClient.getAuthToken(),
       );
       expect(result).toBe("Bearer oauth-jwt-token");
     });
 
     it("should fall back to configured auth_token with 'token' prefix", async () => {
-      const client = await createConfiguredClient("my-configured-pat");
+      const testClient = await createConfiguredClient("my-configured-pat");
       const { requestContextStorage } = await import(
         "../common/request-context.ts"
       );
       const result = requestContextStorage.run({ headers: {} }, () =>
-        client.getAuthToken(),
+        testClient.getAuthToken(),
       );
       expect(result).toBe("token my-configured-pat");
     });
 
     it("should return null when no auth is available", async () => {
-      const client = new BugsnagClient();
-      const mockServer = { getCache: () => mockCache } as any;
-      await client.configure(mockServer, {} as any);
+      const testClient = new BugsnagClient();
+      const mockServer = {
+        getCache: () => mockCache,
+      } as unknown as SmartBearMcpServer;
+      // biome-ignore lint/suspicious/noExplicitAny: deliberately invalid config (missing required auth_token) to test the no-auth-available path
+      await testClient.configure(mockServer, {} as any);
       const { requestContextStorage } = await import(
         "../common/request-context.ts"
       );
       const result = requestContextStorage.run({ headers: {} }, () =>
-        client.getAuthToken(),
+        testClient.getAuthToken(),
       );
       expect(result).toBeNull();
     });
 
     it("should prefer Bugsnag-Auth-Token over Authorization header", async () => {
-      const client = await createConfiguredClient("configured-token");
+      const testClient = await createConfiguredClient("configured-token");
       const { requestContextStorage } = await import(
         "../common/request-context.ts"
       );
@@ -290,19 +334,19 @@ describe("BugsnagClient", () => {
             authorization: "Bearer oauth-value",
           },
         },
-        () => client.getAuthToken(),
+        () => testClient.getAuthToken(),
       );
       expect(result).toBe("token pat-value");
     });
 
     it("should handle array header values", async () => {
-      const client = await createConfiguredClient();
+      const testClient = await createConfiguredClient();
       const { requestContextStorage } = await import(
         "../common/request-context.ts"
       );
       const result = requestContextStorage.run(
         { headers: { "Bugsnag-Auth-Token": ["first-token", "second-token"] } },
-        () => client.getAuthToken(),
+        () => testClient.getAuthToken(),
       );
       expect(result).toBe("token first-token");
     });
@@ -310,42 +354,42 @@ describe("BugsnagClient", () => {
 
   describe("getBearerToken", () => {
     it("should extract Bearer token from Authorization header", async () => {
-      const client = await createConfiguredClient();
+      const testClient = await createConfiguredClient();
       const { requestContextStorage } = await import(
         "../common/request-context.ts"
       );
       const result = requestContextStorage.run(
         { headers: { authorization: "Bearer my-jwt" } },
-        () => client.getBearerToken(),
+        () => testClient.getBearerToken(),
       );
       expect(result).toBe("Bearer my-jwt");
     });
 
     it("should add Bearer prefix when not present", async () => {
-      const client = await createConfiguredClient();
+      const testClient = await createConfiguredClient();
       const { requestContextStorage } = await import(
         "../common/request-context.ts"
       );
       const result = requestContextStorage.run(
         { headers: { authorization: "raw-token-value" } },
-        () => client.getBearerToken(),
+        () => testClient.getBearerToken(),
       );
       expect(result).toBe("Bearer raw-token-value");
     });
 
     it("should return null when no Authorization header", async () => {
-      const client = await createConfiguredClient();
+      const testClient = await createConfiguredClient();
       const { requestContextStorage } = await import(
         "../common/request-context.ts"
       );
       const result = requestContextStorage.run({ headers: {} }, () =>
-        client.getBearerToken(),
+        testClient.getBearerToken(),
       );
       expect(result).toBeNull();
     });
 
     it("should handle array Authorization header values", async () => {
-      const client = await createConfiguredClient();
+      const testClient = await createConfiguredClient();
       const { requestContextStorage } = await import(
         "../common/request-context.ts"
       );
@@ -355,72 +399,73 @@ describe("BugsnagClient", () => {
             authorization: ["Bearer first", "Bearer second"],
           },
         },
-        () => client.getBearerToken(),
+        () => testClient.getBearerToken(),
       );
       expect(result).toBe("Bearer first");
     });
   });
 
   describe("getEndpoint method", () => {
-    const client = new BugsnagClient();
+    const testClient = new BugsnagClient();
     describe("without custom endpoint", () => {
       describe("with Hub API key (00000 prefix)", () => {
-        it("should return Hub domain for api subdomain", async () => {
-          const result = client.getEndpoint("api", "00000hub-key");
+        it("should return Hub domain for api subdomain", () => {
+          const result = testClient.getEndpoint("api", "00000hub-key");
           expect(result).toBe("https://api.bugsnag.smartbear.com");
         });
 
-        it("should return Hub domain for app subdomain", async () => {
-          const result = client.getEndpoint("app", "00000test-key");
+        it("should return Hub domain for app subdomain", () => {
+          const result = testClient.getEndpoint("app", "00000test-key");
           expect(result).toBe("https://app.bugsnag.smartbear.com");
         });
 
-        it("should return Hub domain for custom subdomain", async () => {
-          const result = client.getEndpoint("custom", "00000key");
+        it("should return Hub domain for custom subdomain", () => {
+          const result = testClient.getEndpoint("custom", "00000key");
           expect(result).toBe("https://custom.bugsnag.smartbear.com");
         });
 
-        it("should handle empty string after prefix", async () => {
-          const result = client.getEndpoint("api", "00000");
+        it("should handle empty string after prefix", () => {
+          const result = testClient.getEndpoint("api", "00000");
           expect(result).toBe("https://api.bugsnag.smartbear.com");
         });
       });
 
       describe("with regular API key (non-Hub)", () => {
-        it("should return Bugsnag domain for api subdomain", async () => {
-          const result = client.getEndpoint("api", "regular-key");
+        it("should return Bugsnag domain for api subdomain", () => {
+          const result = testClient.getEndpoint("api", "regular-key");
           expect(result).toBe("https://api.bugsnag.com");
         });
 
-        it("should return Bugsnag domain for app subdomain", async () => {
-          const result = client.getEndpoint("app", "abc123def");
+        it("should return Bugsnag domain for app subdomain", () => {
+          const result = testClient.getEndpoint("app", "abc123def");
           expect(result).toBe("https://app.bugsnag.com");
         });
 
-        it("should return Bugsnag domain for custom subdomain", async () => {
-          const result = client.getEndpoint("custom", "test-key-123");
+        it("should return Bugsnag domain for custom subdomain", () => {
+          const result = testClient.getEndpoint("custom", "test-key-123");
           expect(result).toBe("https://custom.bugsnag.com");
         });
 
-        it("should handle API key with 00000 in middle", async () => {
-          const result = client.getEndpoint("api", "key-00000-middle");
+        it("should handle API key with 00000 in middle", () => {
+          const result = testClient.getEndpoint("api", "key-00000-middle");
           expect(result).toBe("https://api.bugsnag.com");
         });
       });
 
       describe("without API key", () => {
-        it("should return Bugsnag domain when API key is undefined", async () => {
-          const result = client.getEndpoint("api", undefined);
+        it("should return Bugsnag domain when API key is undefined", () => {
+          const result = testClient.getEndpoint("api", undefined);
           expect(result).toBe("https://api.bugsnag.com");
         });
 
-        it("should return Bugsnag domain when API key is empty string", async () => {
-          const result = client.getEndpoint("api", "");
+        it("should return Bugsnag domain when API key is empty string", () => {
+          const result = testClient.getEndpoint("api", "");
           expect(result).toBe("https://api.bugsnag.com");
         });
 
-        it("should return Bugsnag domain when API key is null", async () => {
-          const result = client.getEndpoint("api", null as any);
+        it("should return Bugsnag domain when API key is null", () => {
+          // biome-ignore lint/suspicious/noExplicitAny: deliberately invalid input (null where a string is expected) to test defensive handling
+          const result = testClient.getEndpoint("api", null as any);
           expect(result).toBe("https://api.bugsnag.com");
         });
       });
@@ -428,8 +473,8 @@ describe("BugsnagClient", () => {
 
     describe("with custom endpoint", () => {
       describe("Hub domain endpoints (always normalized)", () => {
-        it("should normalize to HTTPS subdomain for exact hub domain match", async () => {
-          const result = client.getEndpoint(
+        it("should normalize to HTTPS subdomain for exact hub domain match", () => {
+          const result = testClient.getEndpoint(
             "api",
             "00000key",
             "https://api.bugsnag.smartbear.com",
@@ -437,8 +482,8 @@ describe("BugsnagClient", () => {
           expect(result).toBe("https://api.bugsnag.smartbear.com");
         });
 
-        it("should normalize to HTTPS subdomain regardless of input protocol", async () => {
-          const result = client.getEndpoint(
+        it("should normalize to HTTPS subdomain regardless of input protocol", () => {
+          const result = testClient.getEndpoint(
             "api",
             "00000key",
             "http://app.bugsnag.smartbear.com",
@@ -446,8 +491,8 @@ describe("BugsnagClient", () => {
           expect(result).toBe("https://api.bugsnag.smartbear.com");
         });
 
-        it("should normalize to HTTPS subdomain regardless of input subdomain", async () => {
-          const result = client.getEndpoint(
+        it("should normalize to HTTPS subdomain regardless of input subdomain", () => {
+          const result = testClient.getEndpoint(
             "app",
             "00000key",
             "https://api.bugsnag.smartbear.com",
@@ -455,8 +500,8 @@ describe("BugsnagClient", () => {
           expect(result).toBe("https://app.bugsnag.smartbear.com");
         });
 
-        it("should normalize hub domain with port", async () => {
-          const result = client.getEndpoint(
+        it("should normalize hub domain with port", () => {
+          const result = testClient.getEndpoint(
             "api",
             "00000key",
             "https://custom.bugsnag.smartbear.com:8080",
@@ -464,8 +509,8 @@ describe("BugsnagClient", () => {
           expect(result).toBe("https://api.bugsnag.smartbear.com");
         });
 
-        it("should normalize hub domain with path", async () => {
-          const result = client.getEndpoint(
+        it("should normalize hub domain with path", () => {
+          const result = testClient.getEndpoint(
             "api",
             "00000key",
             "https://custom.bugsnag.smartbear.com/path",
@@ -473,8 +518,8 @@ describe("BugsnagClient", () => {
           expect(result).toBe("https://api.bugsnag.smartbear.com");
         });
 
-        it("should normalize complex subdomains to standard format", async () => {
-          const result = client.getEndpoint(
+        it("should normalize complex subdomains to standard format", () => {
+          const result = testClient.getEndpoint(
             "api",
             "00000key",
             "https://staging.app.bugsnag.smartbear.com",
@@ -484,8 +529,8 @@ describe("BugsnagClient", () => {
       });
 
       describe("Bugsnag domain endpoints (always normalized)", () => {
-        it("should normalize to HTTPS subdomain for exact bugsnag domain match", async () => {
-          const result = client.getEndpoint(
+        it("should normalize to HTTPS subdomain for exact bugsnag domain match", () => {
+          const result = testClient.getEndpoint(
             "api",
             "regular-key",
             "https://api.bugsnag.com",
@@ -493,8 +538,8 @@ describe("BugsnagClient", () => {
           expect(result).toBe("https://api.bugsnag.com");
         });
 
-        it("should normalize to HTTPS subdomain regardless of input protocol", async () => {
-          const result = client.getEndpoint(
+        it("should normalize to HTTPS subdomain regardless of input protocol", () => {
+          const result = testClient.getEndpoint(
             "api",
             "regular-key",
             "http://app.bugsnag.com",
@@ -502,8 +547,8 @@ describe("BugsnagClient", () => {
           expect(result).toBe("https://api.bugsnag.com");
         });
 
-        it("should normalize bugsnag domain with port", async () => {
-          const result = client.getEndpoint(
+        it("should normalize bugsnag domain with port", () => {
+          const result = testClient.getEndpoint(
             "app",
             "regular-key",
             "https://api.bugsnag.com:9000",
@@ -511,8 +556,8 @@ describe("BugsnagClient", () => {
           expect(result).toBe("https://app.bugsnag.com");
         });
 
-        it("should normalize bugsnag domain with path", async () => {
-          const result = client.getEndpoint(
+        it("should normalize bugsnag domain with path", () => {
+          const result = testClient.getEndpoint(
             "app",
             "regular-key",
             "https://api.bugsnag.com/v2",
@@ -522,15 +567,19 @@ describe("BugsnagClient", () => {
       });
 
       describe("Custom domain endpoints (used as-is)", () => {
-        it("should return custom endpoint exactly as provided", async () => {
+        it("should return custom endpoint exactly as provided", () => {
           const customEndpoint = "https://custom.api.com";
-          const result = client.getEndpoint("api", "00000key", customEndpoint);
+          const result = testClient.getEndpoint(
+            "api",
+            "00000key",
+            customEndpoint,
+          );
           expect(result).toBe(customEndpoint);
         });
 
-        it("should return custom endpoint as-is regardless of API key type", async () => {
+        it("should return custom endpoint as-is regardless of API key type", () => {
           const customEndpoint = "https://my-custom-domain.com/api";
-          const result = client.getEndpoint(
+          const result = testClient.getEndpoint(
             "api",
             "regular-key",
             customEndpoint,
@@ -538,47 +587,67 @@ describe("BugsnagClient", () => {
           expect(result).toBe(customEndpoint);
         });
 
-        it("should preserve HTTP protocol for custom domains", async () => {
+        it("should preserve HTTP protocol for custom domains", () => {
           const customEndpoint = "http://localhost:3000";
-          const result = client.getEndpoint("api", "00000key", customEndpoint);
+          const result = testClient.getEndpoint(
+            "api",
+            "00000key",
+            customEndpoint,
+          );
           expect(result).toBe(customEndpoint);
         });
 
-        it("should preserve custom domain with ports and paths", async () => {
+        it("should preserve custom domain with ports and paths", () => {
           const customEndpoint = "https://192.168.1.100:8080/api/v1";
-          const result = client.getEndpoint("api", "00000key", customEndpoint);
+          const result = testClient.getEndpoint(
+            "api",
+            "00000key",
+            customEndpoint,
+          );
           expect(result).toBe(customEndpoint);
         });
 
-        it("should preserve custom domain with query parameters", async () => {
+        it("should preserve custom domain with query parameters", () => {
           const customEndpoint = "https://custom.domain.com/api?version=1";
-          const result = client.getEndpoint("api", "00000key", customEndpoint);
+          const result = testClient.getEndpoint(
+            "api",
+            "00000key",
+            customEndpoint,
+          );
           expect(result).toBe(customEndpoint);
         });
 
-        it("should preserve custom domain with fragments", async () => {
+        it("should preserve custom domain with fragments", () => {
           const customEndpoint = "https://custom.domain.com/api#section";
-          const result = client.getEndpoint("api", "00000key", customEndpoint);
+          const result = testClient.getEndpoint(
+            "api",
+            "00000key",
+            customEndpoint,
+          );
           expect(result).toBe(customEndpoint);
         });
       });
 
       describe("edge cases", () => {
-        it("should handle malformed custom endpoints gracefully", async () => {
+        it("should handle malformed custom endpoints gracefully", () => {
           // This should throw due to invalid URL, which is expected behavior
           expect(() => {
-            client.getEndpoint("api", "00000key", "not-a-valid-url");
+            testClient.getEndpoint("api", "00000key", "not-a-valid-url");
           }).toThrow();
         });
 
-        it("should preserve custom endpoints with userinfo", async () => {
+        it("should preserve custom endpoints with userinfo", () => {
           const customEndpoint = "https://user:pass@custom.domain.com";
-          const result = client.getEndpoint("api", "00000key", customEndpoint);
+          const result = testClient.getEndpoint(
+            "api",
+            "00000key",
+            customEndpoint,
+          );
           expect(result).toBe(customEndpoint);
         });
 
-        it("should normalize known domains even with userinfo", async () => {
-          const result = client.getEndpoint(
+        it("should normalize known domains even with userinfo", () => {
+          const result = testClient.getEndpoint(
             "api",
             "00000key",
             "https://user:pass@app.bugsnag.smartbear.com",
@@ -589,24 +658,24 @@ describe("BugsnagClient", () => {
     });
 
     describe("subdomain validation", () => {
-      it("should handle empty subdomain", async () => {
-        const result = client.getEndpoint("", "00000key");
+      it("should handle empty subdomain", () => {
+        const result = testClient.getEndpoint("", "00000key");
         expect(result).toBe("https://.bugsnag.smartbear.com");
       });
 
-      it("should handle subdomain with special characters", async () => {
-        const result = client.getEndpoint("test-api_v2", "00000key");
+      it("should handle subdomain with special characters", () => {
+        const result = testClient.getEndpoint("test-api_v2", "00000key");
         expect(result).toBe("https://test-api_v2.bugsnag.smartbear.com");
       });
 
-      it("should handle numeric subdomain", async () => {
-        const result = client.getEndpoint("v1", "regular-key");
+      it("should handle numeric subdomain", () => {
+        const result = testClient.getEndpoint("v1", "regular-key");
         expect(result).toBe("https://v1.bugsnag.com");
       });
 
-      it("should handle very long subdomains", async () => {
+      it("should handle very long subdomains", () => {
         const longSubdomain = "very-long-subdomain-name-with-many-characters";
-        const result = client.getEndpoint(longSubdomain, "00000key");
+        const result = testClient.getEndpoint(longSubdomain, "00000key");
         expect(result).toBe(`https://${longSubdomain}.bugsnag.smartbear.com`);
       });
     });
@@ -614,31 +683,25 @@ describe("BugsnagClient", () => {
 
   describe("static utility methods", () => {
     // Test static methods if they exist in the class
-    it("should have proper class structure", async () => {
-      const client = new BugsnagClient();
+    it("should have proper class structure", () => {
+      const testClient = new BugsnagClient();
 
-      // Verify the client has expected methods
-      expect(typeof client.configure).toBe("function");
-      expect(typeof client.registerTools).toBe("function");
-      expect(typeof client.registerResources).toBe("function");
+      // Verify the testClient has expected methods
+      expect(typeof testClient.configure).toBe("function");
+      expect(typeof testClient.registerTools).toBe("function");
+      expect(typeof testClient.registerResources).toBe("function");
     });
   });
 
   describe("error handling", () => {
-    it("should handle invalid tokens gracefully during construction", async () => {
-      expect(() => {
-        new BugsnagClient();
-      }).not.toThrow();
+    it("should handle invalid tokens gracefully during construction", () => {
+      expect(() => new BugsnagClient()).not.toThrow();
 
-      expect(() => {
-        new BugsnagClient();
-      }).not.toThrow();
+      expect(() => new BugsnagClient()).not.toThrow();
     });
 
-    it("should handle special characters in project API key", async () => {
-      expect(() => {
-        new BugsnagClient();
-      }).not.toThrow();
+    it("should handle special characters in project API key", () => {
+      expect(() => new BugsnagClient()).not.toThrow();
     });
   });
 
@@ -658,9 +721,9 @@ describe("BugsnagClient", () => {
 
       // Verify the apiKey function returns the expected token
       const configCall = MockedConfiguration.mock.calls.find(
-        (call) =>
-          (call[0] as any).basePath === "https://api.bugsnag.com" &&
-          typeof (call[0] as any).apiKey === "function",
+        ([params]) =>
+          params.basePath === "https://api.bugsnag.com" &&
+          typeof params.apiKey === "function",
       )?.[0];
       expect(configCall).toBeDefined();
       const apiKeyFunc = configCall?.apiKey as (name: string) => string;
@@ -673,7 +736,7 @@ describe("BugsnagClient", () => {
 
       await createConfiguredClient("test-token");
 
-      const configCall = MockedConfiguration.mock.calls[0][0];
+      const [[configCall]] = MockedConfiguration.mock.calls;
       expect(configCall?.headers).toEqual({
         "User-Agent": USER_AGENT,
         "Content-Type": "application/json",
@@ -685,13 +748,15 @@ describe("BugsnagClient", () => {
 
   describe("API client initialization", () => {
     it("should initialize all required API clients", async () => {
-      const { CurrentUserAPI, ErrorAPI, ProjectAPI } = await import(
-        "./client/api/index.ts"
-      );
+      const {
+        CurrentUserApi: CurrentUserApiClass,
+        ErrorApi: ErrorApiClass,
+        ProjectApi: ProjectApiClass,
+      } = await import("./client/api/index.ts");
 
-      const MockedCurrentUserApi = vi.mocked(CurrentUserAPI);
-      const MockedErrorApi = vi.mocked(ErrorAPI);
-      const MockedProjectApi = vi.mocked(ProjectAPI);
+      const MockedCurrentUserApi = vi.mocked(CurrentUserApiClass);
+      const MockedErrorApi = vi.mocked(ErrorApiClass);
+      const MockedProjectApi = vi.mocked(ProjectApiClass);
 
       // Clear previous calls from beforeEach and other tests
       MockedCurrentUserApi.mockClear();
@@ -706,12 +771,12 @@ describe("BugsnagClient", () => {
     });
 
     it("should use cache from server.getCache()", async () => {
-      const client = new BugsnagClient();
+      const testClient = new BugsnagClient();
       const mockServer = {
         getCache: vi.fn().mockReturnValue(mockCache),
-      } as any;
+      } as unknown as SmartBearMcpServer;
 
-      await client.configure(mockServer, {
+      await testClient.configure(mockServer, {
         auth_token: "test-token",
       });
 
@@ -728,7 +793,7 @@ describe("BugsnagClient", () => {
         body: mockProjects,
       });
 
-      await client.getProjects();
+      await testClient.getProjects();
 
       expect(mockServer.getCache).toHaveBeenCalled();
       expect(mockCache.set).toHaveBeenCalledWith("bugsnag_org", mockOrg);
@@ -741,27 +806,33 @@ describe("BugsnagClient", () => {
 
   describe("initialization", () => {
     it("should initialize with API key", async () => {
-      const client = new BugsnagClient();
+      const testClient = new BugsnagClient();
 
-      await client.configure({ getCache: () => mockCache } as any, {
-        auth_token: "test-token",
-        project_api_key: "project-api-key",
-      });
+      await testClient.configure(
+        { getCache: () => mockCache } as unknown as SmartBearMcpServer,
+        {
+          auth_token: "test-token",
+          project_api_key: "project-api-key",
+        },
+      );
 
-      expect(client.isConfigured()).toBe(true);
+      expect(testClient.isConfigured()).toBe(true);
     });
     it("should initialize without project API key", async () => {
-      const client = new BugsnagClient();
+      const testClient = new BugsnagClient();
 
-      await client.configure({ getCache: () => mockCache } as any, {
-        auth_token: "test-token",
-      });
+      await testClient.configure(
+        { getCache: () => mockCache } as unknown as SmartBearMcpServer,
+        {
+          auth_token: "test-token",
+        },
+      );
 
-      expect(client.isConfigured()).toBe(true);
+      expect(testClient.isConfigured()).toBe(true);
     });
   });
 
-  describe("API methods", async () => {
+  describe("API methods", () => {
     beforeEach(async () => {
       client = await createConfiguredClient("test-token", "test-project-key");
     });
@@ -859,19 +930,19 @@ describe("BugsnagClient", () => {
   });
 
   describe("tool registration", () => {
-    let registerToolsSpy: any;
-    let getInputFunctionSpy: any;
+    let registerToolsSpy: Mock<RegisterToolsFunction>;
+    let getInputFunctionSpy: Mock<GetInputFunction>;
 
     beforeEach(() => {
       registerToolsSpy = vi.fn();
       getInputFunctionSpy = vi.fn();
     });
 
-    it("should register common tools", async () => {
+    it("should register common tools", () => {
       client.registerTools(registerToolsSpy, getInputFunctionSpy);
 
       const registeredTools = registerToolsSpy.mock.calls.map(
-        (call: any) => call[0].title,
+        ([params]) => params.title,
       );
       expect(registeredTools).toContain("Get Current Project");
       expect(registeredTools).toContain("List Projects");
@@ -897,7 +968,7 @@ describe("BugsnagClient", () => {
   });
 
   describe("resource registration", () => {
-    let registerResourcesSpy: any;
+    let registerResourcesSpy: Mock<RegisterResourceFunction>;
 
     beforeEach(() => {
       registerResourcesSpy = vi.fn();
@@ -918,8 +989,8 @@ describe("BugsnagClient", () => {
   });
 
   describe("tool handlers", () => {
-    let registerToolsSpy: any;
-    let getInputFunctionSpy: any;
+    let registerToolsSpy: Mock<RegisterToolsFunction>;
+    let getInputFunctionSpy: Mock<GetInputFunction>;
 
     beforeEach(async () => {
       registerToolsSpy = vi.fn();
@@ -950,9 +1021,10 @@ describe("BugsnagClient", () => {
         });
 
         clientWithNoApiKey.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "List Project Errors",
-        )[1];
+        const toolHandler = getToolHandler(
+          registerToolsSpy,
+          "List Project Errors",
+        );
 
         await toolHandler({
           projectId: "proj-1",
@@ -983,9 +1055,7 @@ describe("BugsnagClient", () => {
         mockCache.get.mockReturnValue(mockProjects);
 
         clientWithNoApiKey.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "List Projects",
-        )[1];
+        const toolHandler = getToolHandler(registerToolsSpy, "List Projects");
 
         const result = await toolHandler({});
 
@@ -1000,9 +1070,7 @@ describe("BugsnagClient", () => {
         mockCache.get.mockReturnValue([]);
 
         clientWithNoApiKey.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "List Projects",
-        )[1];
+        const toolHandler = getToolHandler(registerToolsSpy, "List Projects");
 
         await expect(toolHandler({})).rejects.toThrow(
           "No BugSnag projects found for the current user.",
@@ -1017,9 +1085,7 @@ describe("BugsnagClient", () => {
         mockCache.get.mockReturnValue(mockProjects);
 
         clientWithNoApiKey.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "List Projects",
-        )[1];
+        const toolHandler = getToolHandler(registerToolsSpy, "List Projects");
 
         const result = await toolHandler({ apiKey: "key-2" });
         const expectedResult = {
@@ -1034,9 +1100,7 @@ describe("BugsnagClient", () => {
         mockCache.get.mockReturnValue(mockProjects);
 
         clientWithNoApiKey.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "List Projects",
-        )[1];
+        const toolHandler = getToolHandler(registerToolsSpy, "List Projects");
 
         const result = await toolHandler({ apiKey: "key-x" });
         const expectedResult = {
@@ -1090,9 +1154,7 @@ describe("BugsnagClient", () => {
         });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Get Error",
-        )[1];
+        const toolHandler = getToolHandler(registerToolsSpy, "Get Error");
 
         const result = await toolHandler({ errorId: "error-1" });
 
@@ -1133,9 +1195,7 @@ describe("BugsnagClient", () => {
         });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Get Error",
-        )[1];
+        const toolHandler = getToolHandler(registerToolsSpy, "Get Error");
 
         const result = await toolHandler({ errorId: "error-1" });
 
@@ -1159,9 +1219,7 @@ describe("BugsnagClient", () => {
           .mockReturnValueOnce(mockOrg);
         mockErrorApi.viewErrorOnProject.mockResolvedValue({ body: null });
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Get Error",
-        )[1];
+        const toolHandler = getToolHandler(registerToolsSpy, "Get Error");
         await expect(
           toolHandler({ errorId: "non-existent-id" }),
         ).rejects.toThrow(
@@ -1184,9 +1242,7 @@ describe("BugsnagClient", () => {
         mockErrorApi.viewEventById.mockResolvedValue({ body: mockEvent });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Get Event",
-        )[1];
+        const toolHandler = getToolHandler(registerToolsSpy, "Get Event");
 
         const result = await toolHandler({
           projectId: "proj-1",
@@ -1215,10 +1271,10 @@ describe("BugsnagClient", () => {
         mockErrorApi.viewEventById.mockResolvedValue({ body: mockEvent });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) =>
-            call[0].title === "Get Event Details From Dashboard URL",
-        )[1];
+        const toolHandler = getToolHandler(
+          registerToolsSpy,
+          "Get Event Details From Dashboard URL",
+        );
 
         const result = await toolHandler({
           link: "https://app.bugsnag.com/my-org/my-project/errors/error-123?event_id=event-1",
@@ -1233,10 +1289,10 @@ describe("BugsnagClient", () => {
 
       it("should throw error when link is invalid", async () => {
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) =>
-            call[0].title === "Get Event Details From Dashboard URL",
-        )[1];
+        const toolHandler = getToolHandler(
+          registerToolsSpy,
+          "Get Event Details From Dashboard URL",
+        );
 
         await expect(toolHandler({ link: "invalid-url" })).rejects.toThrow();
       });
@@ -1247,10 +1303,10 @@ describe("BugsnagClient", () => {
         ]);
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) =>
-            call[0].title === "Get Event Details From Dashboard URL",
-        )[1];
+        const toolHandler = getToolHandler(
+          registerToolsSpy,
+          "Get Event Details From Dashboard URL",
+        );
 
         await expect(
           toolHandler({
@@ -1261,10 +1317,10 @@ describe("BugsnagClient", () => {
 
       it("should throw error when URL is missing required parameters", async () => {
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) =>
-            call[0].title === "Get Event Details From Dashboard URL",
-        )[1];
+        const toolHandler = getToolHandler(
+          registerToolsSpy,
+          "Get Event Details From Dashboard URL",
+        );
 
         await expect(
           toolHandler({
@@ -1304,9 +1360,10 @@ describe("BugsnagClient", () => {
         });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "List Project Errors",
-        )[1];
+        const toolHandler = getToolHandler(
+          registerToolsSpy,
+          "List Project Errors",
+        );
 
         const result = await toolHandler({
           filters,
@@ -1357,9 +1414,10 @@ describe("BugsnagClient", () => {
         });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "List Project Errors",
-        )[1];
+        const toolHandler = getToolHandler(
+          registerToolsSpy,
+          "List Project Errors",
+        );
 
         const defaultFilterResult = await toolHandler({
           sort: "last_seen",
@@ -1402,9 +1460,10 @@ describe("BugsnagClient", () => {
           .mockReturnValueOnce(mockEventFields);
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "List Project Errors",
-        )[1];
+        const toolHandler = getToolHandler(
+          registerToolsSpy,
+          "List Project Errors",
+        );
 
         await expect(toolHandler({ filters })).rejects.toThrow(
           "Invalid filter key: invalid.field",
@@ -1415,9 +1474,10 @@ describe("BugsnagClient", () => {
         mockCache.get.mockReturnValueOnce(null);
 
         clientWithNoApiKey.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "List Project Errors",
-        )[1];
+        const toolHandler = getToolHandler(
+          registerToolsSpy,
+          "List Project Errors",
+        );
 
         await expect(toolHandler({ projectId: "no-match" })).rejects.toThrow(
           "Project with ID no-match not found.",
@@ -1444,9 +1504,10 @@ describe("BugsnagClient", () => {
         });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Get Events on an Error",
-        )[1];
+        const toolHandler = getToolHandler(
+          registerToolsSpy,
+          "Get Events on an Error",
+        );
 
         const result = await toolHandler({
           errorId: "error-1",
@@ -1489,9 +1550,10 @@ describe("BugsnagClient", () => {
           .mockReturnValueOnce(mockEventFields);
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "List Project Event Filters",
-        )[1];
+        const toolHandler = getToolHandler(
+          registerToolsSpy,
+          "List Project Event Filters",
+        );
 
         const result = await toolHandler({});
 
@@ -1510,9 +1572,10 @@ describe("BugsnagClient", () => {
         );
         mockCache.get.mockReturnValueOnce(mockProject);
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Get Current Project",
-        )[1];
+        const toolHandler = getToolHandler(
+          registerToolsSpy,
+          "Get Current Project",
+        );
         const result = await toolHandler({});
         expect(result.content[0].text).toBe(JSON.stringify(mockProject));
       });
@@ -1520,9 +1583,10 @@ describe("BugsnagClient", () => {
       it("should throw error when no current project is configured", async () => {
         mockCache.get.mockReturnValueOnce(null);
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Get Current Project",
-        )[1];
+        const toolHandler = getToolHandler(
+          registerToolsSpy,
+          "Get Current Project",
+        );
         await expect(toolHandler({})).rejects.toThrow(ToolError);
       });
     });
@@ -1567,9 +1631,7 @@ describe("BugsnagClient", () => {
           body: basicBuild,
         });
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Get Build",
-        )[1];
+        const toolHandler = getToolHandler(registerToolsSpy, "Get Build");
 
         const result = await toolHandler({ buildId: "rel-1" });
 
@@ -1605,9 +1667,7 @@ describe("BugsnagClient", () => {
           body: basicBuild,
         });
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Get Build",
-        )[1];
+        const toolHandler = getToolHandler(registerToolsSpy, "Get Build");
 
         const result = await toolHandler({ buildId: "rel-1" });
 
@@ -1652,9 +1712,7 @@ describe("BugsnagClient", () => {
           body: basicBuild,
         });
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Get Build",
-        )[1];
+        const toolHandler = getToolHandler(registerToolsSpy, "Get Build");
 
         const result = await toolHandler({ buildId: "rel-1" });
 
@@ -1693,9 +1751,7 @@ describe("BugsnagClient", () => {
         });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Get Build",
-        )[1];
+        const toolHandler = getToolHandler(registerToolsSpy, "Get Build");
 
         const result = await toolHandler({
           projectId: "proj-1",
@@ -1727,9 +1783,7 @@ describe("BugsnagClient", () => {
         mockProjectApi.getProjectReleaseById.mockResolvedValue({ body: null });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Get Build",
-        )[1];
+        const toolHandler = getToolHandler(registerToolsSpy, "Get Build");
 
         await expect(
           toolHandler({ buildId: "non-existent-release-id" }),
@@ -1740,9 +1794,7 @@ describe("BugsnagClient", () => {
         mockCache.get.mockReturnValue(null);
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Get Build",
-        )[1];
+        const toolHandler = getToolHandler(registerToolsSpy, "Get Build");
 
         await expect(toolHandler({ buildId: "rel-1" })).rejects.toThrow(
           "No current project found. Please provide a projectId or configure a project API key.",
@@ -1783,9 +1835,7 @@ describe("BugsnagClient", () => {
         });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "List Releases",
-        )[1];
+        const toolHandler = getToolHandler(registerToolsSpy, "List Releases");
 
         const result = await toolHandler({
           releaseStage: "production",
@@ -1839,9 +1889,7 @@ describe("BugsnagClient", () => {
         });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "List Releases",
-        )[1];
+        const toolHandler = getToolHandler(registerToolsSpy, "List Releases");
 
         const result = await toolHandler({
           projectId: "proj-2",
@@ -1882,9 +1930,7 @@ describe("BugsnagClient", () => {
         mockProjectApi.listProjectReleaseGroups.mockResolvedValue({ body: [] });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "List Releases",
-        )[1];
+        const toolHandler = getToolHandler(registerToolsSpy, "List Releases");
 
         const result = await toolHandler({
           visibleOnly: true,
@@ -1907,9 +1953,7 @@ describe("BugsnagClient", () => {
         mockCache.get.mockReturnValue(null);
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "List Releases",
-        )[1];
+        const toolHandler = getToolHandler(registerToolsSpy, "List Releases");
 
         await expect(toolHandler({})).rejects.toThrow(
           "No current project found. Please provide a projectId or configure a project API key.",
@@ -1964,9 +2008,7 @@ describe("BugsnagClient", () => {
         });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Get Release",
-        )[1];
+        const toolHandler = getToolHandler(registerToolsSpy, "Get Release");
 
         const result = await toolHandler({
           projectId: "proj-2",
@@ -2011,9 +2053,7 @@ describe("BugsnagClient", () => {
         mockProjectApi.getReleaseGroup.mockResolvedValue({ body: null });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Get Release",
-        )[1];
+        const toolHandler = getToolHandler(registerToolsSpy, "Get Release");
 
         await expect(
           toolHandler({ releaseId: "non-existent-release-id" }),
@@ -2029,9 +2069,7 @@ describe("BugsnagClient", () => {
         mockErrorApi.updateErrorOnProject.mockResolvedValue({ status: 200 });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Update Error",
-        )[1];
+        const toolHandler = getToolHandler(registerToolsSpy, "Update Error");
 
         const result = await toolHandler({
           errorId: "error-1",
@@ -2056,9 +2094,7 @@ describe("BugsnagClient", () => {
         mockErrorApi.updateErrorOnProject.mockResolvedValue({ status: 200 });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Update Error",
-        )[1];
+        const toolHandler = getToolHandler(registerToolsSpy, "Update Error");
 
         const result = await toolHandler({
           errorId: "error-1",
@@ -2080,9 +2116,7 @@ describe("BugsnagClient", () => {
         mockErrorApi.updateErrorOnProject.mockResolvedValue({ status: 200 });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Update Error",
-        )[1];
+        const toolHandler = getToolHandler(registerToolsSpy, "Update Error");
 
         const result = await toolHandler({
           errorId: "error-1",
@@ -2112,9 +2146,7 @@ describe("BugsnagClient", () => {
         mockErrorApi.updateErrorOnProject.mockResolvedValue({ status: 200 });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Update Error",
-        )[1];
+        const toolHandler = getToolHandler(registerToolsSpy, "Update Error");
 
         const result = await toolHandler({
           errorId: "error-1",
@@ -2144,9 +2176,7 @@ describe("BugsnagClient", () => {
         mockErrorApi.updateErrorOnProject.mockResolvedValue({ status: 200 });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Update Error",
-        )[1];
+        const toolHandler = getToolHandler(registerToolsSpy, "Update Error");
 
         const result = await toolHandler({
           errorId: "error-1",
@@ -2176,9 +2206,7 @@ describe("BugsnagClient", () => {
         mockErrorApi.updateErrorOnProject.mockResolvedValue({ status: 200 });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Update Error",
-        )[1];
+        const toolHandler = getToolHandler(registerToolsSpy, "Update Error");
 
         const result = await toolHandler({
           errorId: "error-1",
@@ -2210,9 +2238,7 @@ describe("BugsnagClient", () => {
         mockErrorApi.updateErrorOnProject.mockResolvedValue({ status: 200 });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Update Error",
-        )[1];
+        const toolHandler = getToolHandler(registerToolsSpy, "Update Error");
 
         const result = await toolHandler({
           errorId: "error-1",
@@ -2236,9 +2262,7 @@ describe("BugsnagClient", () => {
         mockErrorApi.updateErrorOnProject.mockResolvedValue({ status: 204 });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Update Error",
-        )[1];
+        const toolHandler = getToolHandler(registerToolsSpy, "Update Error");
 
         const result = await toolHandler({
           projectId: "proj-1",
@@ -2262,14 +2286,13 @@ describe("BugsnagClient", () => {
         mockErrorApi.updateErrorOnProject.mockResolvedValue({ status: 200 });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Update Error",
-        )[1];
+        const toolHandler = getToolHandler(registerToolsSpy, "Update Error");
 
         for (const operation of operations) {
+          // biome-ignore lint/performance/noAwaitInLoops: each iteration asserts on the mock call before the next operation runs, so it must be sequential
           await toolHandler({
             errorId: "error-1",
-            operation: operation as any,
+            operation,
           });
 
           expect(mockErrorApi.updateErrorOnProject).toHaveBeenCalledWith(
@@ -2294,9 +2317,7 @@ describe("BugsnagClient", () => {
         mockErrorApi.updateErrorOnProject.mockResolvedValue({ status: 200 });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Update Error",
-        )[1];
+        const toolHandler = getToolHandler(registerToolsSpy, "Update Error");
 
         const result = await toolHandler({
           errorId: "error-1",
@@ -2329,16 +2350,14 @@ describe("BugsnagClient", () => {
 
       it("should handle override_severity operation when elicitInput is rejected", async () => {
         getInputFunctionSpy.mockResolvedValue({
-          action: "reject",
+          action: "decline",
         });
 
         mockCache.get.mockReturnValue(mockProject);
         mockErrorApi.updateErrorOnProject.mockResolvedValue({ status: 200 });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Update Error",
-        )[1];
+        const toolHandler = getToolHandler(registerToolsSpy, "Update Error");
 
         const result = await toolHandler({
           errorId: "error-1",
@@ -2358,9 +2377,7 @@ describe("BugsnagClient", () => {
         mockErrorApi.updateErrorOnProject.mockResolvedValue({ status: 400 });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Update Error",
-        )[1];
+        const toolHandler = getToolHandler(registerToolsSpy, "Update Error");
 
         const result = await toolHandler({
           errorId: "error-1",
@@ -2374,9 +2391,7 @@ describe("BugsnagClient", () => {
         mockCache.get.mockReturnValue(null);
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Update Error",
-        )[1];
+        const toolHandler = getToolHandler(registerToolsSpy, "Update Error");
 
         await expect(
           toolHandler({
@@ -2394,9 +2409,7 @@ describe("BugsnagClient", () => {
         mockCache.get.mockReturnValueOnce(null).mockReturnValueOnce(mockOrg);
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Update Error",
-        )[1];
+        const toolHandler = getToolHandler(registerToolsSpy, "Update Error");
 
         await expect(
           toolHandler({
@@ -2425,9 +2438,10 @@ describe("BugsnagClient", () => {
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
 
-        const listSpanGroupsHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "List Span Groups",
-        )[1];
+        const listSpanGroupsHandler = getToolHandler(
+          registerToolsSpy,
+          "List Span Groups",
+        );
 
         const result = await listSpanGroupsHandler({});
 
@@ -2478,9 +2492,10 @@ describe("BugsnagClient", () => {
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
 
-        const listSpanGroupsHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "List Span Groups",
-        )[1];
+        const listSpanGroupsHandler = getToolHandler(
+          registerToolsSpy,
+          "List Span Groups",
+        );
 
         const result = await listSpanGroupsHandler({
           sort: "duration_p95",
@@ -2542,9 +2557,10 @@ describe("BugsnagClient", () => {
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
 
-        const getSpanGroupHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Get Span Group",
-        )[1];
+        const getSpanGroupHandler = getToolHandler(
+          registerToolsSpy,
+          "Get Span Group",
+        );
 
         const result = await getSpanGroupHandler({
           spanGroupId: "span-group-1",
@@ -2616,9 +2632,7 @@ describe("BugsnagClient", () => {
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
 
-        const listSpansHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "List Spans",
-        )[1];
+        const listSpansHandler = getToolHandler(registerToolsSpy, "List Spans");
 
         const result = await listSpansHandler({
           spanGroupId: "span-group-1",
@@ -2675,9 +2689,7 @@ describe("BugsnagClient", () => {
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
 
-        const getTraceHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Get Trace",
-        )[1];
+        const getTraceHandler = getToolHandler(registerToolsSpy, "Get Trace");
 
         const result = await getTraceHandler({
           traceId: "trace-abc",
@@ -2732,9 +2744,10 @@ describe("BugsnagClient", () => {
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
 
-        const listTraceFieldsHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "List Trace Fields",
-        )[1];
+        const listTraceFieldsHandler = getToolHandler(
+          registerToolsSpy,
+          "List Trace Fields",
+        );
 
         const result = await listTraceFieldsHandler({});
 
@@ -2756,7 +2769,7 @@ describe("BugsnagClient", () => {
       });
 
       it("should use cached trace fields when available", async () => {
-        const mockProject = { id: "proj-1", name: "Project 1" };
+        const cachedProject = { id: "proj-1", name: "Project 1" };
         const mockPerformanceFilters: TraceField[] = [
           getMockTrace("cached.field", "string"),
           getMockTrace("another.field", "number"),
@@ -2768,15 +2781,16 @@ describe("BugsnagClient", () => {
             return mockCachedFilters;
           }
           if (key === "bugsnag_current_project") {
-            return mockProject;
+            return cachedProject;
           }
         });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
 
-        const listTraceFieldsHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "List Trace Fields",
-        )[1];
+        const listTraceFieldsHandler = getToolHandler(
+          registerToolsSpy,
+          "List Trace Fields",
+        );
 
         const result = await listTraceFieldsHandler({});
 
@@ -2812,9 +2826,10 @@ describe("BugsnagClient", () => {
 
         clientWithNoApiKey.registerTools(registerToolsSpy, getInputFunctionSpy);
 
-        const listTraceFieldsHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "List Trace Fields",
-        )[1];
+        const listTraceFieldsHandler = getToolHandler(
+          registerToolsSpy,
+          "List Trace Fields",
+        );
 
         const result = await listTraceFieldsHandler({
           projectId: "proj-2",
@@ -2843,9 +2858,10 @@ describe("BugsnagClient", () => {
     describe("Get Network Endpoint Groupings tool handler", () => {
       it("should get network grouping rules with project from cache", async () => {
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const getNetworkGroupingHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Get Network Endpoint Groupings",
-        )?.[1];
+        const getNetworkGroupingHandler = getToolHandler(
+          registerToolsSpy,
+          "Get Network Endpoint Groupings",
+        );
 
         const mockProject = { id: "proj-1", name: "Project 1" };
         const mockRuleset = {
@@ -2874,9 +2890,10 @@ describe("BugsnagClient", () => {
 
       it("should get network grouping rules with explicit project ID", async () => {
         clientWithNoApiKey.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const getNetworkGroupingHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Get Network Endpoint Groupings",
-        )?.[1];
+        const getNetworkGroupingHandler = getToolHandler(
+          registerToolsSpy,
+          "Get Network Endpoint Groupings",
+        );
 
         const mockProjects = [
           { id: "proj-1", name: "Project 1" },
@@ -2907,9 +2924,10 @@ describe("BugsnagClient", () => {
 
       it("should return empty array when no endpoints configured", async () => {
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const getNetworkGroupingHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Get Network Endpoint Groupings",
-        )?.[1];
+        const getNetworkGroupingHandler = getToolHandler(
+          registerToolsSpy,
+          "Get Network Endpoint Groupings",
+        );
 
         const mockProject = { id: "proj-1", name: "Project 1" };
         const mockRuleset = {
@@ -2929,9 +2947,10 @@ describe("BugsnagClient", () => {
 
       it("should throw error when no project ID available", async () => {
         clientWithNoApiKey.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const getNetworkGroupingHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Get Network Endpoint Groupings",
-        )?.[1];
+        const getNetworkGroupingHandler = getToolHandler(
+          registerToolsSpy,
+          "Get Network Endpoint Groupings",
+        );
 
         mockCache.get.mockReturnValueOnce(null);
 
@@ -2944,9 +2963,10 @@ describe("BugsnagClient", () => {
     describe("Set Network Endpoint Groupings tool handler", () => {
       it("should update network grouping rules with project from cache", async () => {
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const setNetworkGroupingHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Set Network Endpoint Groupings",
-        )?.[1];
+        const setNetworkGroupingHandler = getToolHandler(
+          registerToolsSpy,
+          "Set Network Endpoint Groupings",
+        );
 
         const mockProject = { id: "proj-1", name: "Project 1" };
         const endpoints = [
@@ -2978,9 +2998,10 @@ describe("BugsnagClient", () => {
 
       it("should update network grouping rules with explicit project ID", async () => {
         clientWithNoApiKey.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const setNetworkGroupingHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Set Network Endpoint Groupings",
-        )?.[1];
+        const setNetworkGroupingHandler = getToolHandler(
+          registerToolsSpy,
+          "Set Network Endpoint Groupings",
+        );
 
         const mockProjects = [
           { id: "proj-1", name: "Project 1" },
@@ -3016,9 +3037,10 @@ describe("BugsnagClient", () => {
 
       it("should handle 204 status as success", async () => {
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const setNetworkGroupingHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Set Network Endpoint Groupings",
-        )?.[1];
+        const setNetworkGroupingHandler = getToolHandler(
+          registerToolsSpy,
+          "Set Network Endpoint Groupings",
+        );
 
         const mockProject = { id: "proj-1", name: "Project 1" };
         const endpoints = ["/api/{version}/items/{itemId}"];
@@ -3037,9 +3059,10 @@ describe("BugsnagClient", () => {
 
       it("should update with empty endpoints array", async () => {
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const setNetworkGroupingHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Set Network Endpoint Groupings",
-        )?.[1];
+        const setNetworkGroupingHandler = getToolHandler(
+          registerToolsSpy,
+          "Set Network Endpoint Groupings",
+        );
 
         const mockProject = { id: "proj-1", name: "Project 1" };
         const endpoints: string[] = [];
@@ -3062,9 +3085,10 @@ describe("BugsnagClient", () => {
 
       it("should handle complex endpoint patterns", async () => {
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const setNetworkGroupingHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Set Network Endpoint Groupings",
-        )?.[1];
+        const setNetworkGroupingHandler = getToolHandler(
+          registerToolsSpy,
+          "Set Network Endpoint Groupings",
+        );
 
         const mockProject = { id: "proj-1", name: "Project 1" };
         const endpoints = [
@@ -3091,9 +3115,10 @@ describe("BugsnagClient", () => {
 
       it("should throw error when no project ID available", async () => {
         clientWithNoApiKey.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const setNetworkGroupingHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Set Network Endpoint Groupings",
-        )?.[1];
+        const setNetworkGroupingHandler = getToolHandler(
+          registerToolsSpy,
+          "Set Network Endpoint Groupings",
+        );
 
         mockCache.get.mockReturnValueOnce(null);
 
@@ -3105,7 +3130,7 @@ describe("BugsnagClient", () => {
   });
 
   describe("resource handlers", () => {
-    let registerResourcesSpy: any;
+    let registerResourcesSpy: Mock<RegisterResourceFunction>;
 
     beforeEach(() => {
       registerResourcesSpy = vi.fn();
@@ -3120,7 +3145,8 @@ describe("BugsnagClient", () => {
         mockErrorApi.viewEventById.mockResolvedValue({ body: mockEvent });
 
         await client.registerResources(registerResourcesSpy);
-        const resourceHandler = registerResourcesSpy.mock.calls[0][1];
+        const [[, handler]] = registerResourcesSpy.mock.calls;
+        const resourceHandler = handler as unknown as ResourceHandlerFn;
 
         const result = await resourceHandler(
           { href: "bugsnag://event/event-1" },

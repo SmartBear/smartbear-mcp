@@ -1,4 +1,12 @@
+// biome-ignore-all lint/style/noExcessiveLinesPerFile: single cohesive module of Portal API zod schemas and their inferred types; splitting would separate each schema from its paired type
 import { z } from "zod";
+
+const PageSchema = z.object({
+  number: z.number().optional(),
+  size: z.number().optional(),
+  totalElements: z.number().optional(),
+  totalPages: z.number().optional(),
+});
 
 // Zod schemas for Portal API validation
 export const PortalArgsSchema = z.object({
@@ -49,12 +57,10 @@ export const GetTableOfContentsArgsSchema = z.object({
     .describe(
       "Section ID - unique identifier for the section within the product",
     ),
-  embed: z
-    .array(z.string())
-    .optional()
-    .describe(
-      "List of related entities to embed in the response - e.g., ['swaggerhubApi'] to include SwaggerHub API details",
-    ),
+  embed: z.array(z.string()).optional().describe(
+    // biome-ignore lint/security/noSecrets: false positive; this is API-parameter documentation text, not a secret
+    "List of related entities to embed in the response - e.g., ['swaggerhubApi'] to include SwaggerHub API details",
+  ),
   page: z
     .number()
     .optional()
@@ -158,7 +164,7 @@ export const CreateTableOfContentsArgsSchema = z.object({
     })
     .optional()
     .describe("Content configuration for the table of contents item")
-    .refine((content) => content?.type !== "apiUrl" || !!content.url, {
+    .refine((content) => content?.type !== "apiUrl" || Boolean(content.url), {
       message: "URL is required when content type is 'apiUrl'",
       path: ["url"],
     })
@@ -490,9 +496,9 @@ export type FallbackResponse =
     }
   | Record<string, never>;
 
-export type SuccessResponse = {
+export interface SuccessResponse {
   success: boolean;
-};
+}
 
 // Common Swagger response entities
 export interface Portal {
@@ -569,7 +575,7 @@ export interface MarkdownContent {
 export type ContentReference = ApiUrlContent | HtmlContent | MarkdownContent;
 
 export interface TableOfContentsItemSwaggerhubApi {
-  _private: boolean;
+  isPrivate: boolean;
 }
 
 // Response type for the Resolve Organization Portal tool. Product keys follow
@@ -685,13 +691,6 @@ export interface CreateDocumentationPageResult {
 }
 
 // Output schemas for MCP tool responses — all fields optional to tolerate partial API responses
-const PageSchema = z.object({
-  number: z.number().optional(),
-  size: z.number().optional(),
-  totalElements: z.number().optional(),
-  totalPages: z.number().optional(),
-});
-
 export const PortalOutputSchema = z.looseObject({
   id: z.string().optional(),
   name: z.string().optional(),

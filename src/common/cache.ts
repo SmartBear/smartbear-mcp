@@ -1,5 +1,7 @@
-import process from "node:process";
 import NodeCache from "node-cache";
+import { getEnv } from "./env.ts";
+
+const DEFAULT_CACHE_TTL_SECONDS = 86_400; // 24 hours
 
 /**
  * Common cache service that can be shared across all clients.
@@ -7,18 +9,21 @@ import NodeCache from "node-cache";
  * Reads CACHE_ENABLED and CACHE_TTL environment variables for configuration.
  */
 export class CacheService {
-  private cache: NodeCache | null;
-  private enabled: boolean;
+  private readonly cache: NodeCache | null;
+  private readonly enabled: boolean;
 
   constructor() {
     // Read configuration from environment variables
-    this.enabled = process.env.CACHE_ENABLED !== "false";
-    const ttl = process.env.CACHE_TTL
-      ? Number.parseInt(process.env.CACHE_TTL, 10)
-      : 86_400; // Default 24 hours
+    this.enabled = getEnv("CACHE_ENABLED") !== "false";
+    const cacheTtl = getEnv("CACHE_TTL");
+    const ttl = cacheTtl
+      ? Number.parseInt(cacheTtl, 10)
+      : DEFAULT_CACHE_TTL_SECONDS;
 
     this.cache = this.enabled
       ? new NodeCache({
+          // `stdTTL` is the NodeCache constructor option name, dictated by the library.
+          // biome-ignore lint/style/useNamingConvention: see above
           stdTTL: ttl,
         })
       : null;

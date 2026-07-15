@@ -1,15 +1,9 @@
-import process from "node:process";
 import packageJson from "../../package.json" with { type: "json" };
 import {
   getCurrentClientIdentity,
   type McpClientIdentity,
 } from "./client-identity.ts";
-
-export const MCP_SERVER_NAME = packageJson.config.mcpServerName;
-export const MCP_SERVER_VERSION = packageJson.version;
-export const MCP_TRANSPORT =
-  process.env.MCP_TRANSPORT?.toLowerCase().trim() || "stdio";
-export const USER_AGENT = `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION} ${MCP_TRANSPORT}`;
+import { getEnv } from "./env.ts";
 
 /**
  * Sanitize a value for safe inclusion in a User-Agent comment segment by
@@ -33,6 +27,12 @@ function clientIdentitySuffix(identity?: McpClientIdentity): string {
     : "unknown";
   return ` (client: ${clientName}; clientVersion: ${version})`;
 }
+
+export const MCP_SERVER_NAME = packageJson.config.mcpServerName;
+export const MCP_SERVER_VERSION = packageJson.version;
+export const MCP_TRANSPORT =
+  getEnv("MCP_TRANSPORT")?.toLowerCase().trim() || "stdio";
+export const USER_AGENT = `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION} ${MCP_TRANSPORT}`;
 
 /**
  * Append the identified MCP client (from the `initialize` handshake) to a base

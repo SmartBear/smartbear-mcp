@@ -1,12 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
-import { SwaggerAPI } from "./client/api.ts";
+import { SwaggerApi } from "./client/api.ts";
 import { SwaggerConfiguration } from "./client/configuration.ts";
 
 const fetchMock = createFetchMock(vi);
 
-describe("SwaggerAPI", () => {
-  let api: SwaggerAPI;
+const SCAN_STANDARDIZATION_FAILED_REGEX =
+  /scanStandardization failed - status: 400 Bad Request/;
+const GET_API_DEFINITION_FAILED_REGEX =
+  /getApiDefinition failed - status: 404 Not Found/;
+const HTTP_400_REGEX = /^HTTP 400$/;
+
+describe("SwaggerApi", () => {
+  let api: SwaggerApi;
   let config: SwaggerConfiguration;
 
   beforeEach(() => {
@@ -15,7 +21,7 @@ describe("SwaggerAPI", () => {
     fetchMock.resetMocks();
 
     config = new SwaggerConfiguration({ token: "test-token" });
-    api = new SwaggerAPI(config, "SmartBear-MCP/1.0.0");
+    api = new SwaggerApi(config, "SmartBear-MCP/1.0.0");
   });
 
   afterEach(() => {
@@ -293,10 +299,11 @@ describe("SwaggerAPI", () => {
           orgName: "orgname",
           definition: JSON.stringify({ openapi: "3.0.0" }),
         }),
-      ).rejects.toThrow(/scanStandardization failed - status: 400 Bad Request/);
+      ).rejects.toThrow(SCAN_STANDARDIZATION_FAILED_REGEX);
     });
   });
 
+  // biome-ignore lint/security/noSecrets: false positive; this is the SwaggerApi method name under test, not a secret
   describe("scanApiStandardizationFromRegistry", () => {
     const definition = { openapi: "3.0.0", info: { title: "Pets" } };
 
@@ -359,7 +366,7 @@ describe("SwaggerAPI", () => {
           apiName: "missing",
           version: "1.0.0",
         }),
-      ).rejects.toThrow(/getApiDefinition failed - status: 404 Not Found/);
+      ).rejects.toThrow(GET_API_DEFINITION_FAILED_REGEX);
     });
   });
 
@@ -1074,7 +1081,7 @@ describe("SwaggerAPI", () => {
 
       await expect(
         api.updatePortal("portal-123", { name: "Bad Value" }),
-      ).rejects.toThrow(/^HTTP 400$/);
+      ).rejects.toThrow(HTTP_400_REGEX);
     });
   });
 
@@ -1083,8 +1090,8 @@ describe("SwaggerAPI", () => {
     const jsonHeaders = { "content-type": "application/json" };
 
     it("should return portal details and products for an existing portal", async () => {
-      fetchMock.mockResponse(async (req) => {
-        const url = req.url;
+      fetchMock.mockResponse((req) => {
+        const { url } = req;
         if (url.includes("/portals?page=1")) {
           return {
             body: JSON.stringify({
@@ -1145,8 +1152,8 @@ describe("SwaggerAPI", () => {
     });
 
     it("should include customDomain when the existing portal has one", async () => {
-      fetchMock.mockResponse(async (req) => {
-        const url = req.url;
+      fetchMock.mockResponse((req) => {
+        const { url } = req;
         if (url.includes("/portals?page=1")) {
           return {
             body: JSON.stringify({
@@ -1182,9 +1189,9 @@ describe("SwaggerAPI", () => {
     });
 
     it("should create a portal when the organization has none", async () => {
-      let createBody: any;
+      let createBody: unknown;
       fetchMock.mockResponse(async (req) => {
-        const url = req.url;
+        const { url } = req;
         if (url.includes("/portals?page=1")) {
           return { body: JSON.stringify({ items: [] }), headers: jsonHeaders };
         }
@@ -1230,9 +1237,9 @@ describe("SwaggerAPI", () => {
     });
 
     it("should fall back to a UUID-derived subdomain when the organization is not found", async () => {
-      let createBody: any;
+      let createBody: unknown;
       fetchMock.mockResponse(async (req) => {
-        const url = req.url;
+        const { url } = req;
         if (url.includes("/portals?page=1")) {
           return { body: JSON.stringify({ items: [] }), headers: jsonHeaders };
         }
@@ -1273,10 +1280,10 @@ describe("SwaggerAPI", () => {
 
     it("should reuse the portal found on re-check after a 409 conflict", async () => {
       let portalListCalls = 0;
-      fetchMock.mockResponse(async (req) => {
-        const url = req.url;
+      fetchMock.mockResponse((req) => {
+        const { url } = req;
         if (url.includes("/portals?page=1")) {
-          portalListCalls++;
+          portalListCalls += 1;
           // Empty on the first check, present on the re-check after 409
           if (portalListCalls === 1) {
             return {
@@ -1331,9 +1338,9 @@ describe("SwaggerAPI", () => {
     });
 
     it("should retry with a suffixed subdomain when the subdomain is taken", async () => {
-      const createBodies: any[] = [];
+      const createBodies: Record<string, unknown>[] = [];
       fetchMock.mockResponse(async (req) => {
-        const url = req.url;
+        const { url } = req;
         if (url.includes("/portals?page=1")) {
           return { body: JSON.stringify({ items: [] }), headers: jsonHeaders };
         }
@@ -1378,8 +1385,8 @@ describe("SwaggerAPI", () => {
     });
 
     it("should propagate non-conflict errors from portal creation", async () => {
-      fetchMock.mockResponse(async (req) => {
-        const url = req.url;
+      fetchMock.mockResponse((req) => {
+        const { url } = req;
         if (url.includes("/portals?page=1")) {
           return { body: JSON.stringify({ items: [] }), headers: jsonHeaders };
         }
@@ -1410,9 +1417,9 @@ describe("SwaggerAPI", () => {
     });
 
     it("should surface an access error when a portal exists for the organization but is not visible to the caller", async () => {
-      const createCalls: any[] = [];
+      const createCalls: unknown[] = [];
       fetchMock.mockResponse(async (req) => {
-        const url = req.url;
+        const { url } = req;
         // A consumer-role user cannot see the organization's portal, so the
         // list is always empty for them.
         if (url.includes("/portals?page=1")) {

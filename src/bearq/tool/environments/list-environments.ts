@@ -3,11 +3,11 @@ import type { ZodRawShape } from "zod";
 import { z } from "zod";
 import { Tool, ToolError } from "../../../common/tools.ts";
 import type { ToolParams } from "../../../common/types.ts";
-import type { BearQClient } from "../../client.ts";
+import type { BearqClient } from "../../client.ts";
 
 const inputSchema = z.object({});
 
-export class ListEnvironments extends Tool<BearQClient> {
+export class ListEnvironments extends Tool<BearqClient> {
   specification: ToolParams = {
     title: "List Environments",
     toolset: "Environments",
@@ -22,10 +22,11 @@ export class ListEnvironments extends Tool<BearQClient> {
       method: "GET",
       headers: this.client.getHeaders(),
     });
-    if (!res.ok)
+    if (!res.ok) {
       throw new ToolError(
         `GET /environments failed: ${res.status} ${res.statusText}`,
       );
+    }
     return {
       content: [{ type: "text", text: JSON.stringify(await res.json()) }],
     };

@@ -1,6 +1,22 @@
+import type { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/protocol.js";
+import type {
+  ServerNotification,
+  ServerRequest,
+  TextContent,
+} from "@modelcontextprotocol/sdk/types.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
+import type { ReflectClient } from "../../client.ts";
 import { GetTestDetail } from "./get-test-detail.ts";
+
+type Extra = RequestHandlerExtra<ServerRequest, ServerNotification>;
+
+interface TestStepFixture {
+  type: string;
+  url?: string;
+  selector?: string;
+  inputText?: string;
+}
 
 const fetchMock = createFetchMock(vi);
 fetchMock.enableMocks();
@@ -44,7 +60,7 @@ const testDetailMock = {
 };
 
 describe("GetTestDetail", () => {
-  let mockClient: any;
+  let mockClient: Pick<ReflectClient, "getHeaders">;
   let instance: GetTestDetail;
 
   beforeEach(() => {
@@ -57,7 +73,7 @@ describe("GetTestDetail", () => {
       }),
     };
 
-    instance = new GetTestDetail(mockClient as any);
+    instance = new GetTestDetail(mockClient as unknown as ReflectClient);
   });
 
   describe("specification", () => {
@@ -78,7 +94,7 @@ describe("GetTestDetail", () => {
     it("should call the correct URL with GET method and auth headers", async () => {
       fetchMock.mockResponseOnce(JSON.stringify(testDetailMock));
 
-      await instance.handle({ testId: "1" }, {} as any);
+      await instance.handle({ testId: "1" }, {} as unknown as Extra);
 
       expect(fetchMock).toHaveBeenCalledWith(
         "https://api.reflect.run/v1/tests/1",
@@ -92,9 +108,12 @@ describe("GetTestDetail", () => {
     it("should return test id and name in the response", async () => {
       fetchMock.mockResponseOnce(JSON.stringify(testDetailMock));
 
-      const result = await instance.handle({ testId: "1" }, {} as any);
+      const result = await instance.handle(
+        { testId: "1" },
+        {} as unknown as Extra,
+      );
 
-      const parsed = JSON.parse((result.content[0] as any).text);
+      const parsed = JSON.parse((result.content[0] as TextContent).text);
       expect(parsed.id).toBe(1);
       expect(parsed.name).toBe("Sauce Demo");
     });
@@ -102,20 +121,26 @@ describe("GetTestDetail", () => {
     it("should return the full steps array in the response", async () => {
       fetchMock.mockResponseOnce(JSON.stringify(testDetailMock));
 
-      const result = await instance.handle({ testId: "1" }, {} as any);
+      const result = await instance.handle(
+        { testId: "1" },
+        {} as unknown as Extra,
+      );
 
-      const parsed = JSON.parse((result.content[0] as any).text);
+      const parsed = JSON.parse((result.content[0] as TextContent).text);
       expect(parsed.steps).toHaveLength(7);
     });
 
     it("should include direct-navigation step with correct url", async () => {
       fetchMock.mockResponseOnce(JSON.stringify(testDetailMock));
 
-      const result = await instance.handle({ testId: "1" }, {} as any);
+      const result = await instance.handle(
+        { testId: "1" },
+        {} as unknown as Extra,
+      );
 
-      const parsed = JSON.parse((result.content[0] as any).text);
+      const parsed = JSON.parse((result.content[0] as TextContent).text);
       const navStep = parsed.steps.find(
-        (s: any) => s.type === "direct-navigation",
+        (s: TestStepFixture) => s.type === "direct-navigation",
       );
       expect(navStep?.url).toBe("https://www.saucedemo.com/");
     });
@@ -123,11 +148,14 @@ describe("GetTestDetail", () => {
     it("should include input step with inputText", async () => {
       fetchMock.mockResponseOnce(JSON.stringify(testDetailMock));
 
-      const result = await instance.handle({ testId: "1" }, {} as any);
+      const result = await instance.handle(
+        { testId: "1" },
+        {} as unknown as Extra,
+      );
 
-      const parsed = JSON.parse((result.content[0] as any).text);
+      const parsed = JSON.parse((result.content[0] as TextContent).text);
       const inputStep = parsed.steps.find(
-        (s: any) =>
+        (s: TestStepFixture) =>
           s.type === "input" && s.selector === '[data-test="username"]',
       );
       expect(inputStep?.inputText).toBe("error_user");
@@ -136,61 +164,64 @@ describe("GetTestDetail", () => {
     it("should return content as a text node", async () => {
       fetchMock.mockResponseOnce(JSON.stringify(testDetailMock));
 
-      const result = await instance.handle({ testId: "1" }, {} as any);
+      const result = await instance.handle(
+        { testId: "1" },
+        {} as unknown as Extra,
+      );
 
-      expect(result.content[0].type).toBe("text");
+      expect(result.content[0]?.type).toBe("text");
     });
   });
 
   describe("handle – error cases", () => {
     it("should throw ToolError if testId is missing (empty string)", async () => {
-      await expect(instance.handle({ testId: "" }, {} as any)).rejects.toThrow(
-        "testId argument is required",
-      );
+      await expect(
+        instance.handle({ testId: "" }, {} as unknown as Extra),
+      ).rejects.toThrow("testId argument is required");
     });
 
     it("should throw ToolError if testId is not provided at all", async () => {
-      await expect(instance.handle({}, {} as any)).rejects.toThrow(
+      await expect(instance.handle({}, {} as unknown as Extra)).rejects.toThrow(
         "testId argument is required",
       );
     });
 
     it("should throw ToolError if testId is whitespace-only", async () => {
       await expect(
-        instance.handle({ testId: "   " }, {} as any),
+        instance.handle({ testId: "   " }, {} as unknown as Extra),
       ).rejects.toThrow("testId argument is required");
     });
 
     it("should throw ToolError on 401 Unauthorized", async () => {
       fetchMock.mockResponseOnce("Unauthorized", { status: 401 });
 
-      await expect(instance.handle({ testId: "1" }, {} as any)).rejects.toThrow(
-        "Failed to get test detail",
-      );
+      await expect(
+        instance.handle({ testId: "1" }, {} as unknown as Extra),
+      ).rejects.toThrow("Failed to get test detail");
     });
 
     it("should throw ToolError on 404 Not Found", async () => {
       fetchMock.mockResponseOnce("Not Found", { status: 404 });
 
       await expect(
-        instance.handle({ testId: "999" }, {} as any),
+        instance.handle({ testId: "999" }, {} as unknown as Extra),
       ).rejects.toThrow("Failed to get test detail");
     });
 
     it("should throw ToolError on 500 Internal Server Error", async () => {
       fetchMock.mockResponseOnce("Server Error", { status: 500 });
 
-      await expect(instance.handle({ testId: "1" }, {} as any)).rejects.toThrow(
-        "Failed to get test detail",
-      );
+      await expect(
+        instance.handle({ testId: "1" }, {} as unknown as Extra),
+      ).rejects.toThrow("Failed to get test detail");
     });
 
     it("should include HTTP status in the error message", async () => {
       fetchMock.mockResponseOnce("Not Found", { status: 404 });
 
-      await expect(instance.handle({ testId: "1" }, {} as any)).rejects.toThrow(
-        "404",
-      );
+      await expect(
+        instance.handle({ testId: "1" }, {} as unknown as Extra),
+      ).rejects.toThrow("404");
     });
   });
 });

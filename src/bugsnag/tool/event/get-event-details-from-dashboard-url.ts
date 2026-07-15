@@ -32,6 +32,7 @@ export class GetEventDetailsFromDashboardUrl extends Tool<BugsnagClient> {
       {
         description: "Get event details from a dashboard URL",
         parameters: {
+          // biome-ignore lint/security/noSecrets: example dashboard URL, not a secret
           link: "https://app.bugsnag.com/my-org/my-project/errors/6863e2af8c857c0a5023b411?event_id=6863e2af012caf1d5c320000",
         },
         expectedOutput:
@@ -48,15 +49,16 @@ export class GetEventDetailsFromDashboardUrl extends Tool<BugsnagClient> {
     const params = inputSchema.parse(args);
     const url = new URL(params.link);
     const eventId = url.searchParams.get("event_id");
-    const projectSlug = url.pathname.split("/")[2];
-    if (!(projectSlug && eventId))
+    const [, , projectSlug] = url.pathname.split("/");
+    if (!(projectSlug && eventId)) {
       throw new ToolError(
         "Both projectSlug and eventId must be present in the link",
       );
+    }
 
     // get the project id from list of projects
     const projects = await this.client.getProjects();
-    const projectId = projects.find((p: any) => p.slug === projectSlug)?.id;
+    const projectId = projects.find((p) => p.slug === projectSlug)?.id;
     if (!projectId) {
       throw new ToolError("Project with the specified slug not found.");
     }

@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import type { CacheService } from "../common/cache.ts";
 import { getUserAgent } from "../common/info.ts";
 import { getRequestHeader } from "../common/request-context.ts";
 import type { SmartBearMcpServer } from "../common/server.ts";
@@ -38,15 +39,17 @@ const ConfigurationSchema = z.object({
   api_token: z.string().describe("Reflect API authentication token"),
 });
 
+const BEARER_PREFIX_LENGTH = "Bearer ".length;
+
 // ReflectClient class implementing the Client interface
 export class ReflectClient implements Client {
   private _apiToken: string | undefined;
-  private activeConnections = new Map<string, WebSocketManager>();
-  private sessionStates = new Map<
+  private readonly activeConnections = new Map<string, WebSocketManager>();
+  private readonly sessionStates = new Map<
     string,
     { platform: TestPlatform; test: { name: string } }
   >();
-  private mcpSessionConnections = new Map<string, Set<string>>();
+  private readonly mcpSessionConnections = new Map<string, Set<string>>();
 
   name = "Reflect";
   capabilityPrefix = "reflect";
@@ -54,12 +57,13 @@ export class ReflectClient implements Client {
 
   config = ConfigurationSchema;
 
-  async configure(
+  configure(
     _server: SmartBearMcpServer,
     config: z.infer<typeof ConfigurationSchema>,
-    _cache?: any,
+    _cache?: CacheService,
   ): Promise<void> {
     this._apiToken = config.api_token;
+    return Promise.resolve();
   }
 
   getAuthToken(): string | null {
@@ -76,7 +80,7 @@ export class ReflectClient implements Client {
 
       // Handle Bearer or token prefix if present
       if (token.startsWith("Bearer ")) {
-        token = token.substring(7);
+        token = token.slice(BEARER_PREFIX_LENGTH);
       }
       return token;
     }
@@ -89,7 +93,7 @@ export class ReflectClient implements Client {
     return true; // Configured by default to support dynamic OAuth tokens
   }
 
-  isOAuthRequest(): boolean {
+  isOauthRequest(): boolean {
     if (
       getRequestHeader(REFLECT_API_TOKEN_HEADER) ||
       getRequestHeader(API_KEY_HEADER)
@@ -109,7 +113,7 @@ export class ReflectClient implements Client {
     if (!token) {
       throw new Error("Reflect API token not found");
     }
-    if (this.isOAuthRequest()) {
+    if (this.isOauthRequest()) {
       return { Authorization: `Bearer ${token}` };
     }
     return { [API_KEY_HEADER]: token };
@@ -161,20 +165,24 @@ export class ReflectClient implements Client {
 
   async cleanupSession(mcpSessionId: string): Promise<void> {
     const reflectSessionIds = this.mcpSessionConnections.get(mcpSessionId);
-    if (!reflectSessionIds) return;
-
-    for (const reflectSessionId of reflectSessionIds) {
-      const ws = this.activeConnections.get(reflectSessionId);
-      if (ws) {
-        await ws.disconnect();
-        this.activeConnections.delete(reflectSessionId);
-        this.sessionStates.delete(reflectSessionId);
-      }
+    if (!reflectSessionIds) {
+      return;
     }
+
+    await Promise.all(
+      Array.from(reflectSessionIds).map(async (reflectSessionId) => {
+        const ws = this.activeConnections.get(reflectSessionId);
+        if (ws) {
+          await ws.disconnect();
+          this.activeConnections.delete(reflectSessionId);
+          this.sessionStates.delete(reflectSessionId);
+        }
+      }),
+    );
     this.mcpSessionConnections.delete(mcpSessionId);
   }
 
-  async registerTools(
+  registerTools(
     register: RegisterToolsFunction,
     _getInput: GetInputFunction,
   ): Promise<void> {
@@ -201,20 +209,22 @@ export class ReflectClient implements Client {
       new AddSegment(this),
     ];
 
-    const tools = this.isOAuthRequest()
+    const tools = this.isOauthRequest()
       ? oAuthAndApiSupportedTools
       : [...oAuthAndApiSupportedTools, ...apiOnlyTools];
 
     for (const tool of tools) {
       register(tool.specification, tool.handle);
     }
+    return Promise.resolve();
   }
 
-  async registerPrompts(register: RegisterPromptFunction): Promise<void> {
+  registerPrompts(register: RegisterPromptFunction): Promise<void> {
     const prompts = [new SapTest(this)];
 
     for (const prompt of prompts) {
       register(prompt.specification, prompt.callback);
     }
+    return Promise.resolve();
   }
 }

@@ -72,7 +72,8 @@ export class LinkTestCasesToRequirement extends Tool<Qtm4jClient> {
       "Confirmation with the requirement key and linked: true. Warnings included if any test cases could not be resolved or linked.",
   };
 
-  handle = async (rawArgs: any) => {
+  // biome-ignore lint/complexity/noExcessiveLinesPerFunction: single sequential tool handler; splitting would fragment one linear flow
+  handle = async (rawArgs: unknown) => {
     const args = LinkTestCasesToRequirementBody.parse(rawArgs);
     const fieldResolver = this.client.getResolverRegistry();
     const context = fieldResolver.requireProjectContext();
@@ -97,7 +98,7 @@ export class LinkTestCasesToRequirement extends Tool<Qtm4jClient> {
     const body: Record<string, unknown> = {};
 
     // Resolve test case keys → [{id, versionNo}]
-    if (args.testCaseKeys?.length) {
+    if (args.testCaseKeys && args.testCaseKeys.length > 0) {
       const uidMap = (await fieldResolver
         .getResolver(ResolverKeys.SearchableField.TEST_CASE_KEY_TO_UID)
         .resolveAndReturn(context.projectId, args.testCaseKeys)) as Record<
@@ -120,7 +121,9 @@ export class LinkTestCasesToRequirement extends Tool<Qtm4jClient> {
         }
       }
 
-      if (testcases.length > 0) body.testcases = testcases;
+      if (testcases.length > 0) {
+        body.testcases = testcases;
+      }
     }
 
     // Pass filter with auto-injected projectId
@@ -128,7 +131,9 @@ export class LinkTestCasesToRequirement extends Tool<Qtm4jClient> {
       body.filter = { ...args.filter, projectId: context.projectId };
     }
 
-    if (args.sort) body.sort = args.sort;
+    if (args.sort) {
+      body.sort = args.sort;
+    }
 
     await this.client
       .getApiClient()

@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 
+// biome-ignore-all lint/style/noExcessiveLinesPerFile: single self-contained admin CLI script for a one-off registry migration; splitting into modules would fragment an otherwise cohesive, rarely-touched tool.
+// biome-ignore-all lint/suspicious/noUnnecessaryConditions: false positive — args.* properties are assigned their real values inside applyFlag()'s switch (a separate function called from parseArgs), so Biome's flow analysis only sees each property's initial literal (undefined/false) and reports the later guard checks as always-truthy/always-falsy.
+
 /**
  * registry-remove-remote.js
  *
@@ -54,10 +57,61 @@ const TOKEN_FILE = path.join(
   "mcp-publisher",
   "token.json",
 );
+const TRAILING_SLASHES_REGEX = /\/+$/;
+const YES_ANSWER_REGEX = /^y(es)?$/i;
 
 // ---------------------------------------------------------------------------
 // Argument parsing
 // ---------------------------------------------------------------------------
+
+/** Handles a single flag, mutating `args` in place. Returns the next index to resume from. */
+function applyFlag(args, flags, index) {
+  const flag = flags[index];
+  let i = index;
+  const next = () => {
+    i += 1;
+    const value = flags[i];
+    if (value === undefined) {
+      fail(`Missing value for ${flag}`);
+    }
+    return value;
+  };
+  switch (flag) {
+    case "--server":
+      args.server = next();
+      break;
+    case "--remote-url":
+      args.remoteUrl = next();
+      break;
+    case "--versions":
+      args.versions = next()
+        .split(",")
+        .map((v) => v.trim())
+        .filter(Boolean);
+      break;
+    case "--registry":
+      args.registry = next().replace(TRAILING_SLASHES_REGEX, "");
+      break;
+    case "--token":
+      args.token = next();
+      break;
+    case "--apply":
+      args.apply = true;
+      break;
+    case "--yes":
+    case "-y":
+      args.yes = true;
+      break;
+    case "--help":
+    case "-h":
+      printHelp();
+      process.exit(0);
+      break;
+    default:
+      fail(`Unknown argument: ${flag}`);
+  }
+  return i;
+}
 
 function parseArgs(argv) {
   const args = {
@@ -71,54 +125,16 @@ function parseArgs(argv) {
   };
 
   const flags = argv.slice(2);
-  for (let i = 0; i < flags.length; i++) {
-    const flag = flags[i];
-    const next = () => {
-      const value = flags[++i];
-      if (value === undefined) {
-        fail(`Missing value for ${flag}`);
-      }
-      return value;
-    };
-    switch (flag) {
-      case "--server":
-        args.server = next();
-        break;
-      case "--remote-url":
-        args.remoteUrl = next();
-        break;
-      case "--versions":
-        args.versions = next()
-          .split(",")
-          .map((v) => v.trim())
-          .filter(Boolean);
-        break;
-      case "--registry":
-        args.registry = next().replace(/\/+$/, "");
-        break;
-      case "--token":
-        args.token = next();
-        break;
-      case "--apply":
-        args.apply = true;
-        break;
-      case "--yes":
-      case "-y":
-        args.yes = true;
-        break;
-      case "--help":
-      case "-h":
-        printHelp();
-        process.exit(0);
-        break;
-      default:
-        fail(`Unknown argument: ${flag}`);
-    }
+  for (let i = 0; i < flags.length; i += 1) {
+    i = applyFlag(args, flags, i);
   }
 
-  if (!args.server)
+  if (!args.server) {
     fail("--server is required (e.g. com.smartbear/smartbear-mcp)");
-  if (!args.remoteUrl) fail("--remote-url is required");
+  }
+  if (!args.remoteUrl) {
+    fail("--remote-url is required");
+  }
   return args;
 }
 
@@ -147,12 +163,18 @@ function fail(message) {
 // ---------------------------------------------------------------------------
 
 function resolveToken(cliToken) {
-  if (cliToken) return cliToken;
-  if (process.env.MCP_REGISTRY_TOKEN) return process.env.MCP_REGISTRY_TOKEN;
+  if (cliToken) {
+    return cliToken;
+  }
+  if (process.env.MCP_REGISTRY_TOKEN) {
+    return process.env.MCP_REGISTRY_TOKEN;
+  }
   if (fs.existsSync(TOKEN_FILE)) {
     try {
       const data = JSON.parse(fs.readFileSync(TOKEN_FILE, "utf-8"));
-      if (data.token) return data.token;
+      if (data.token) {
+        return data.token;
+      }
     } catch (error) {
       fail(`Failed to read ${TOKEN_FILE}: ${error.message}`);
     }
@@ -195,7 +217,10 @@ async function fetchAllVersions(registry, server) {
   let cursor;
   do {
     const url = new URL(`${registry}/v0/servers/${encoded}/versions`);
-    if (cursor) url.searchParams.set("cursor", cursor);
+    if (cursor) {
+      url.searchParams.set("cursor", cursor);
+    }
+    // biome-ignore lint/performance/noAwaitInLoops: pagination is inherently sequential — each request needs the previous page's cursor.
     const page = await registryFetch(url.toString());
     const servers = page.servers ?? page.data ?? [];
     results.push(...servers);
@@ -205,7 +230,12 @@ async function fetchAllVersions(registry, server) {
 }
 
 function isServerRecord(rec) {
-  return rec != null && typeof rec.server === "object" && rec.server !== null;
+  return (
+    rec !== null &&
+    rec !== undefined &&
+    typeof rec.server === "object" &&
+    rec.server !== null
+  );
 }
 
 function serverHasRemote(serverJson, remoteUrl) {
@@ -227,19 +257,14 @@ async function confirm(question) {
   });
   const answer = await new Promise((resolve) => rl.question(question, resolve));
   rl.close();
-  return /^y(es)?$/i.test(answer.trim());
+  return YES_ANSWER_REGEX.test(answer.trim());
 }
 
-async function main() {
-  const args = parseArgs(process.argv);
-  // A dry run is read-only, so only demand a token when we're actually writing.
-  const token = args.apply ? resolveToken(args.token) : undefined;
-
-  console.log(`Registry : ${args.registry}`);
-  console.log(`Server   : ${args.server}`);
-  console.log(`Remote   : ${args.remoteUrl}`);
-  console.log(`Mode     : ${args.apply ? "APPLY" : "dry-run"}\n`);
-
+/**
+ * Fetch every version and narrow it down to the candidates that still
+ * reference `args.remoteUrl`, honoring an explicit `--versions` restriction.
+ */
+async function gatherCandidates(args) {
   const allVersions = await fetchAllVersions(args.registry, args.server);
   if (allVersions.length === 0) {
     fail(`No versions found for ${args.server}`);
@@ -258,28 +283,95 @@ async function main() {
   }
 
   // Candidate = version whose server JSON still lists the remote URL.
-  let candidates = allVersions.filter((rec) =>
+  const candidates = allVersions.filter((rec) =>
     serverHasRemote(rec.server, args.remoteUrl),
   );
 
-  // Restrict to an explicit version list if provided.
-  if (args.versions) {
-    const wanted = new Set(args.versions);
-    const matched = candidates.filter((rec) => wanted.has(rec.server.version));
-    const found = new Set(matched.map((rec) => rec.server.version));
-    for (const v of args.versions) {
-      if (!found.has(v)) {
-        // Distinguish "version doesn't have the URL" from "version doesn't exist".
-        const exists = allVersions.some((rec) => rec.server.version === v);
-        console.warn(
-          exists
-            ? `⚠️  ${v}: does not reference ${args.remoteUrl}, skipping`
-            : `⚠️  ${v}: no such version, skipping`,
-        );
-      }
-    }
-    candidates = matched;
+  if (!args.versions) {
+    return candidates;
   }
+
+  // Restrict to an explicit version list if provided.
+  const wanted = new Set(args.versions);
+  const matched = candidates.filter((rec) => wanted.has(rec.server.version));
+  const found = new Set(matched.map((rec) => rec.server.version));
+  for (const v of args.versions) {
+    if (!found.has(v)) {
+      // Distinguish "version doesn't have the URL" from "version doesn't exist".
+      const exists = allVersions.some((rec) => rec.server.version === v);
+      console.warn(
+        exists
+          ? `⚠️  ${v}: does not reference ${args.remoteUrl}, skipping`
+          : `⚠️  ${v}: no such version, skipping`,
+      );
+    }
+  }
+  return matched;
+}
+
+function printCandidates(candidates, remoteUrl) {
+  console.log(`Versions to edit (${candidates.length}):`);
+  for (const rec of candidates) {
+    const status = statusOf(rec) ?? "unknown";
+    const remaining = (rec.server.remotes ?? [])
+      .filter((r) => r.url !== remoteUrl)
+      .map((r) => r.url);
+    console.log(
+      `  • ${rec.server.version} [${status}]  remotes after edit: ` +
+        `${remaining.length > 0 ? remaining.join(", ") : "(none)"}`,
+    );
+  }
+  console.log("");
+}
+
+/**
+ * PUTs the edited server JSON for each candidate version, sequentially: the
+ * registry API has no batch endpoint and calling it sequentially keeps the
+ * per-version success/failure log in a predictable, readable order.
+ * @returns {Promise<number>} number of failed edits.
+ */
+async function applyEdits(args, candidates, token) {
+  const encoded = encodeURIComponent(args.server);
+  let failures = 0;
+  for (const rec of candidates) {
+    const { version } = rec.server;
+    const updated = {
+      ...rec.server,
+      remotes: (rec.server.remotes ?? []).filter(
+        (r) => r.url !== args.remoteUrl,
+      ),
+    };
+    const url = `${args.registry}/v0/servers/${encoded}/versions/${encodeURIComponent(version)}`;
+    try {
+      // biome-ignore lint/performance/noAwaitInLoops: edits are applied one at a time (not Promise.all) so failures are reported per-version in a stable order and one bad edit doesn't abort the others.
+      await registryFetch(url, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updated),
+      });
+      console.log(`  ✅ ${version} updated`);
+    } catch (error) {
+      failures += 1;
+      console.error(`  ❌ ${version} failed: ${error.message}`);
+    }
+  }
+  return failures;
+}
+
+async function main() {
+  const args = parseArgs(process.argv);
+  // A dry run is read-only, so only demand a token when we're actually writing.
+  const token = args.apply ? resolveToken(args.token) : undefined;
+
+  console.log(`Registry : ${args.registry}`);
+  console.log(`Server   : ${args.server}`);
+  console.log(`Remote   : ${args.remoteUrl}`);
+  console.log(`Mode     : ${args.apply ? "APPLY" : "dry-run"}\n`);
+
+  const candidates = await gatherCandidates(args);
 
   if (candidates.length === 0) {
     console.log(
@@ -288,18 +380,7 @@ async function main() {
     return;
   }
 
-  console.log(`Versions to edit (${candidates.length}):`);
-  for (const rec of candidates) {
-    const status = statusOf(rec) ?? "unknown";
-    const remaining = (rec.server.remotes ?? [])
-      .filter((r) => r.url !== args.remoteUrl)
-      .map((r) => r.url);
-    console.log(
-      `  • ${rec.server.version} [${status}]  remotes after edit: ` +
-        `${remaining.length ? remaining.join(", ") : "(none)"}`,
-    );
-  }
-  console.log("");
+  printCandidates(candidates, args.remoteUrl);
 
   if (!args.apply) {
     console.log("Dry run — re-run with --apply to perform these edits.");
@@ -314,32 +395,7 @@ async function main() {
     }
   }
 
-  const encoded = encodeURIComponent(args.server);
-  let failures = 0;
-  for (const rec of candidates) {
-    const version = rec.server.version;
-    const updated = {
-      ...rec.server,
-      remotes: (rec.server.remotes ?? []).filter(
-        (r) => r.url !== args.remoteUrl,
-      ),
-    };
-    const url = `${args.registry}/v0/servers/${encoded}/versions/${encodeURIComponent(version)}`;
-    try {
-      await registryFetch(url, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(updated),
-      });
-      console.log(`  ✅ ${version} updated`);
-    } catch (error) {
-      failures++;
-      console.error(`  ❌ ${version} failed: ${error.message}`);
-    }
-  }
+  const failures = await applyEdits(args, candidates, token);
 
   if (failures > 0) {
     fail(

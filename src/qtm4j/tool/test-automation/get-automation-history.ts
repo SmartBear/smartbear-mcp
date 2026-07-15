@@ -67,7 +67,7 @@ export class GetAutomationHistory extends Tool<Qtm4jClient> {
       "Render as individual cards separated by dividers, NOT a table. Show '1–N of total' count above. Never show raw fileName.",
   };
 
-  handle = async (rawArgs: any) => {
+  handle = async (rawArgs: unknown) => {
     const args = GetAutomationHistoryBody.parse(rawArgs);
     const apiClient = this.client.getApiClient();
 

@@ -1,3 +1,4 @@
+// biome-ignore-all lint/style/noExcessiveLinesPerFile: central client orchestrator wiring config, caching, and every tool registration; splitting would scatter one cohesive responsibility
 import { z } from "zod";
 import type { CacheService } from "../common/cache.ts";
 import { getUserAgent } from "../common/info.ts";
@@ -10,18 +11,19 @@ import type {
   RegisterResourceFunction,
   RegisterToolsFunction,
 } from "../common/types.ts";
-import { CurrentUserAPI } from "./client/api/CurrentUser.ts";
 import { Configuration } from "./client/api/configuration.ts";
-import { ErrorAPI } from "./client/api/Error.ts";
+import { CurrentUserApi } from "./client/api/current-user.ts";
+import { ErrorApi } from "./client/api/error.ts";
 import type {
   Build,
+  EventApiView,
   EventField,
   Organization,
   Project,
   Release,
   TraceField,
 } from "./client/api/index.ts";
-import { ProjectAPI } from "./client/api/Project.ts";
+import { ProjectApi } from "./client/api/project.ts";
 import type { FilterObject } from "./client/filters.ts";
 import { GetError } from "./tool/error/get-error.ts";
 import { ListProjectErrors } from "./tool/error/list-project-errors.ts";
@@ -80,29 +82,37 @@ export class BugsnagClient implements Client {
   private cache?: CacheService;
   private _projectApiKey?: string;
   private _isConfigured = false;
-  private _currentUserApi: CurrentUserAPI | undefined;
-  private _errorsApi: ErrorAPI | undefined;
-  private _projectApi: ProjectAPI | undefined;
+  private _currentUserApi: CurrentUserApi | undefined;
+  private _errorsApi: ErrorApi | undefined;
+  private _projectApi: ProjectApi | undefined;
   private _appEndpoint: string | undefined;
   private _authToken?: string;
 
-  get currentUserApi(): CurrentUserAPI {
-    if (!this._currentUserApi) throw new Error("Client not configured");
+  get currentUserApi(): CurrentUserApi {
+    if (!this._currentUserApi) {
+      throw new Error("Client not configured");
+    }
     return this._currentUserApi;
   }
 
-  get errorsApi(): ErrorAPI {
-    if (!this._errorsApi) throw new Error("Client not configured");
+  get errorsApi(): ErrorApi {
+    if (!this._errorsApi) {
+      throw new Error("Client not configured");
+    }
     return this._errorsApi;
   }
 
-  get projectApi(): ProjectAPI {
-    if (!this._projectApi) throw new Error("Client not configured");
+  get projectApi(): ProjectApi {
+    if (!this._projectApi) {
+      throw new Error("Client not configured");
+    }
     return this._projectApi;
   }
 
   get appEndpoint(): string {
-    if (!this._appEndpoint) throw new Error("Client not configured");
+    if (!this._appEndpoint) {
+      throw new Error("Client not configured");
+    }
     return this._appEndpoint;
   }
 
@@ -112,7 +122,7 @@ export class BugsnagClient implements Client {
   config = ConfigurationSchema;
   defaultToolsets = ["Projects"];
 
-  async configure(
+  configure(
     server: SmartBearMcpServer,
     config: z.infer<typeof ConfigurationSchema>,
   ): Promise<void> {
@@ -127,7 +137,8 @@ export class BugsnagClient implements Client {
     this._authToken = config.auth_token;
 
     // Initialize APIs even if auth_token is missing, to allow request-level auth
-    await this.initializeApis(config);
+    this.initializeApis(config);
+    return Promise.resolve();
   }
 
   getAuthToken(): string | null {
@@ -138,8 +149,9 @@ export class BugsnagClient implements Client {
         : contextHeader;
 
       // Handle token prefix if present
-      if (token.startsWith("token ")) {
-        token = token.substring(6);
+      const tokenPrefix = "token ";
+      if (token.startsWith(tokenPrefix)) {
+        token = token.slice(tokenPrefix.length);
       }
 
       return `token ${token}`;
@@ -164,8 +176,9 @@ export class BugsnagClient implements Client {
         : contextHeader;
 
       // Handle Bearer prefix if present
-      if (token.startsWith("Bearer ")) {
-        token = token.substring(7);
+      const bearerPrefix = "Bearer ";
+      if (token.startsWith(bearerPrefix)) {
+        token = token.slice(bearerPrefix.length);
       }
 
       return `Bearer ${token}`;
@@ -174,7 +187,7 @@ export class BugsnagClient implements Client {
     return null;
   }
 
-  private async initializeApis(config: z.infer<typeof ConfigurationSchema>) {
+  private initializeApis(config: z.infer<typeof ConfigurationSchema>): void {
     const apiConfig = new Configuration({
       apiKey: (_name: string) => {
         const authToken = this.getAuthToken();
@@ -198,9 +211,9 @@ export class BugsnagClient implements Client {
         config.endpoint,
       ),
     });
-    this._currentUserApi = new CurrentUserAPI(apiConfig);
-    this._errorsApi = new ErrorAPI(apiConfig);
-    this._projectApi = new ProjectAPI(apiConfig);
+    this._currentUserApi = new CurrentUserApi(apiConfig);
+    this._errorsApi = new ErrorApi(apiConfig);
+    this._projectApi = new ProjectApi(apiConfig);
     this._isConfigured = true;
   }
 
@@ -259,7 +272,7 @@ export class BugsnagClient implements Client {
       if (!orgs || orgs.length === 0) {
         throw new Error("No organizations found for the current user.");
       }
-      org = orgs[0];
+      [org] = orgs;
       this.cache?.set(cacheKeys.ORG, org);
     }
     return org;
@@ -333,19 +346,24 @@ export class BugsnagClient implements Client {
     return projectFiltersCache[project.id];
   }
 
-  async getEvent(eventId: string, projectId?: string): Promise<any> {
+  async getEvent(
+    eventId: string,
+    projectId?: string,
+  ): Promise<EventApiView | null> {
     const projectIds = projectId
       ? [projectId]
       : (await this.getProjects()).map((p) => p.id);
     const projectEvents = await Promise.all(
-      projectIds.map((projectId: string) =>
-        this.errorsApi.viewEventById(projectId, eventId).catch((_e) => null),
+      projectIds.map((pid: string) =>
+        this.errorsApi.viewEventById(pid, eventId).catch((_e) => null),
       ),
     );
-    return projectEvents.find((event) => event && !!event.body)?.body || null;
+    return (
+      projectEvents.find((event) => event && Boolean(event.body))?.body || null
+    );
   }
 
-  public async validateEventFields(project: Project, fields?: FilterObject) {
+  async validateEventFields(project: Project, fields?: FilterObject) {
     if (fields) {
       const eventFields = await this.getProjectEventFields(project);
       const validKeys = new Set(eventFields.map((f) => f.display_id));
@@ -357,7 +375,7 @@ export class BugsnagClient implements Client {
     }
   }
 
-  public async getInputProject(projectId?: unknown | string): Promise<Project> {
+  async getInputProject(projectId?: unknown | string): Promise<Project> {
     if (typeof projectId === "string") {
       const maybeProject = await this.getProject(projectId);
       if (!maybeProject) {
@@ -378,7 +396,7 @@ export class BugsnagClient implements Client {
     return currentProject;
   }
 
-  public addStabilityData<T extends Release | Build>(
+  addStabilityData<T extends Release | Build>(
     source: T,
     project: Project,
   ): T & StabilityData {
@@ -424,7 +442,7 @@ export class BugsnagClient implements Client {
     };
   }
 
-  async registerTools(
+  registerTools(
     register: RegisterToolsFunction,
     getInput: GetInputFunction,
   ): Promise<void> {
@@ -453,9 +471,10 @@ export class BugsnagClient implements Client {
     for (const tool of tools) {
       register(tool.specification, tool.handle);
     }
+    return Promise.resolve();
   }
 
-  async registerResources(register: RegisterResourceFunction): Promise<void> {
+  registerResources(register: RegisterResourceFunction): Promise<void> {
     register(
       {
         title: "Event",
@@ -471,5 +490,6 @@ export class BugsnagClient implements Client {
         ],
       }),
     );
+    return Promise.resolve();
   }
 }

@@ -1,7 +1,67 @@
 {
   "linter": {
     "enabled": true,
-    "rules": { "preset": "all" }
+    // Disable rules for frameworks/tools this project does not use. `preset: all`
+    // would otherwise enable framework-specific domains (e.g. Qwik's
+    // useQwikValidLexicalScope) that have no bearing on an MCP server.
+    "domains": {
+      "drizzle": "none",
+      "react": "none",
+      "reactNative": "none",
+      "solid": "none",
+      "next": "none",
+      "qwik": "none",
+      "svelte": "none",
+      "vue": "none",
+      "tailwind": "none",
+      "turborepo": "none",
+      "playwright": "none"
+    },
+    "rules": {
+      "preset": "all",
+      "correctness": {
+        // This is a Node.js server/CLI, not browser or isomorphic code, so
+        // importing Node built-ins is expected. Keeping this on also conflicts
+        // with noProcessGlobal (which requires `import process from "node:process"`).
+        "noNodejsModules": "off"
+      },
+      "style": {
+        // Ternary expressions are idiomatic and used throughout the codebase.
+        "noTernary": "off",
+        "useNamingConvention": {
+          "level": "on",
+          "options": {
+            // Enforce strict casing: acronyms follow the case (SwaggerApi, not
+            // SwaggerAPI; validateApis, not validateAPIs).
+            "strictCase": true,
+            // Object and type properties routinely mirror external JSON API wire
+            // formats (api_token, issue_number, Authorization, SOURCE_APPLICATION).
+            // Renaming them would break the actual requests/responses, so allow
+            // the shapes those APIs dictate.
+            "conventions": [
+              {
+                "selector": { "kind": "objectLiteralProperty" },
+                "formats": [
+                  "camelCase",
+                  "snake_case",
+                  "CONSTANT_CASE",
+                  "PascalCase"
+                ]
+              },
+              {
+                "selector": { "kind": "typeProperty" },
+                "formats": [
+                  "camelCase",
+                  "snake_case",
+                  "CONSTANT_CASE",
+                  "PascalCase"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    }
   },
   "assist": {
     "enabled": true,
@@ -19,5 +79,110 @@
     "enabled": true,
     "clientKind": "git",
     "useIgnoreFile": true
-  }
+  },
+  "overrides": [
+    {
+      // Build/tooling scripts run in Node and legitimately use Node builtins,
+      // the console for output, and read configuration from the environment.
+      "includes": ["scripts/**", "docs/scripts/**"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noNodejsModules": "off"
+          },
+          "suspicious": {
+            "noConsole": "off"
+          },
+          "style": {
+            "noProcessEnv": "off"
+          }
+        }
+      }
+    },
+    {
+      // Auto-generated API clients: bugsnag's swagger-codegen client and zephyr's
+      // orval-generated zod schemas. Their shape is dictated by the generator, not
+      // our style guide, and would be overwritten on regeneration, so exempt them
+      // from all rules rather than annotating generated output.
+      "includes": [
+        "src/bugsnag/client/api/api.ts",
+        "src/zephyr/common/rest-api-schemas.ts"
+      ],
+      "linter": {
+        "rules": {
+          "preset": "none"
+        }
+      }
+    },
+    {
+      // Config files must use a default export by convention.
+      "includes": ["*.config.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noDefaultExport": "off"
+          }
+        }
+      }
+    },
+    {
+      // The single module permitted to touch process.env; all other code routes
+      // environment access through it.
+      "includes": ["src/common/env.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noProcessEnv": "off"
+          }
+        }
+      }
+    },
+    {
+      // The CLI entry point legitimately writes startup/fatal messages to the
+      // console: that is its user-facing output, not application logging.
+      "includes": ["src/index.ts"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noConsole": "off"
+          }
+        }
+      }
+    },
+    {
+      // SVG assets legitimately use hex colour literals.
+      "includes": ["**/*.svg"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noHexColors": "off"
+          }
+        }
+      }
+    },
+    {
+      // Test files: long describe/it blocks and inline literal fixtures are
+      // idiomatic and not worth flagging.
+      "includes": ["**/*.test.ts"],
+      "linter": {
+        "rules": {
+          "complexity": {
+            "noExcessiveLinesPerFunction": "off",
+            "noExcessiveCognitiveComplexity": "off"
+          },
+          "style": {
+            "noExcessiveLinesPerFile": "off",
+            "noMagicNumbers": "off",
+            // Tests legitimately set/read process.env to exercise configuration
+            // parsing under different environments.
+            "noProcessEnv": "off",
+            // Test fixtures replicate external API wire shapes (e.g. HAL
+            // `_links`/`_embedded`) and deliberately reach into private members
+            // (`_authToken`), neither of which follow our naming conventions.
+            "useNamingConvention": "off"
+          }
+        }
+      }
+    }
+  ]
 }

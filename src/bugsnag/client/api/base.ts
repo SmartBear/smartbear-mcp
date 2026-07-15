@@ -1,6 +1,31 @@
 import { ToolError } from "../../../common/tools.ts";
 import type { Configuration } from "./configuration.ts";
 
+// The generated api.ts client (see api.ts) types fetch options as `any`,
+// so these interfaces only need to describe the shape this module reads/writes.
+interface RequestOptions extends Record<string, unknown> {
+  headers?: Record<string, string>;
+}
+
+interface QueryOptions {
+  query?: Record<string, unknown>;
+}
+
+const NEXT_LINK_REGEX = /<([^>]+)>;\s*rel="next"/;
+
+// Utility to extract total count from headers
+function getTotalCountFromHeader(headers: Headers): number | null {
+  if (!headers) {
+    return null;
+  }
+  const totalCount = headers.get("X-Total-Count");
+  if (!totalCount) {
+    return null;
+  }
+  const parsed = Number.parseInt(totalCount, 10);
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
 export interface ApiResponse<T> {
   status: number;
   headers: Headers;
@@ -10,19 +35,22 @@ export interface ApiResponse<T> {
 }
 
 // Utility to pick only allowed fields from an object
-export function pickFields<T>(obj: any, keys: (keyof T)[]): T {
+export function pickFields<T>(obj: unknown, keys: (keyof T)[]): T {
   const result = {} as T;
-  if (!obj) return result;
+  if (!obj || typeof obj !== "object") {
+    return result;
+  }
+  const record = obj as Record<string, unknown>;
   for (const key of keys) {
-    if (key in obj) {
-      result[key] = obj[key];
+    if (key in record) {
+      result[key] = record[key as string] as T[keyof T];
     }
   }
   return result;
 }
 
 // Utility to pick only allowed fields from an array of objects
-export function pickFieldsFromArray<T>(arr: any[], keys: (keyof T)[]): T[] {
+export function pickFieldsFromArray<T>(arr: unknown[], keys: (keyof T)[]): T[] {
   return arr.map((obj) => pickFields<T>(obj, keys));
 }
 
@@ -31,21 +59,18 @@ export function getNextUrlPathFromHeader(
   headers: Headers,
   basePath: string,
 ): string | null {
-  if (!headers) return null;
+  if (!headers) {
+    return null;
+  }
   const link = headers.get("link") || headers.get("Link");
-  if (!link) return null;
-  const match = link.match(/<([^>]+)>;\s*rel="next"/)?.[1];
-  if (!match) return null;
+  if (!link) {
+    return null;
+  }
+  const match = link.match(NEXT_LINK_REGEX)?.[1];
+  if (!match) {
+    return null;
+  }
   return match.replace(basePath, "");
-}
-
-// Utility to extract total count from headers
-function getTotalCountFromHeader(headers: Headers): number | null {
-  if (!headers) return null;
-  const totalCount = headers.get("X-Total-Count");
-  if (!totalCount) return null;
-  const parsed = Number.parseInt(totalCount, 10);
-  return Number.isNaN(parsed) ? null : parsed;
 }
 
 // Ensure URL is absolute
@@ -58,9 +83,9 @@ export function ensureFullUrl(url: string, basePath: string) {
 // Merge nextUrl query parameters with options query parameters (usually filters)
 export function getQueryParams(
   nextUrl?: string | null,
-  options?: Record<string, any>,
-): Record<string, any> {
-  const nextOptions = { query: {} as Record<string, any> };
+  options?: QueryOptions,
+): Required<QueryOptions> {
+  const nextOptions: Required<QueryOptions> = { query: {} };
   if (nextUrl) {
     nextOptions.query = {};
     if (!nextUrl.includes("?")) {
@@ -76,7 +101,7 @@ export function getQueryParams(
   return nextOptions;
 }
 
-export class BaseAPI {
+export class BaseApi {
   protected configuration: Configuration;
   protected filterFields: string[];
 
@@ -85,9 +110,9 @@ export class BaseAPI {
     this.filterFields = filterFields || [];
   }
 
-  async requestObject<T extends Record<string, any>>(
+  async requestObject<T>(
     url: string,
-    options: Record<string, any> = {},
+    options: RequestOptions = {},
     fields?: (keyof T)[],
   ): Promise<ApiResponse<T>> {
     if (!this.configuration.basePath) {
@@ -116,7 +141,7 @@ export class BaseAPI {
       );
     }
 
-    const apiResponse = {
+    const apiResponse: ApiResponse<T> = {
       status: response.status,
       headers: response.headers,
       body: await response.json(),
@@ -126,7 +151,7 @@ export class BaseAPI {
       apiResponse.body = pickFields<T>(apiResponse.body, fields);
     }
 
-    if (this.filterFields) {
+    if (this.filterFields.length > 0) {
       this.sanitizeResponse(apiResponse.body);
     }
 
@@ -136,7 +161,7 @@ export class BaseAPI {
   /**
    * Fetches an array of resources from the API with support for pagination and field filtering.
    *
-   * @template T - The type of objects in the response array, must extend Record<string, any>
+   * @template T - The type of objects in the response array
    * @param url - The API endpoint URL to fetch data from
    * @param options - Optional request configuration including headers and other fetch options
    * @param fetchAll - Whether to automatically fetch all pages of paginated results (default: false)
@@ -152,9 +177,9 @@ export class BaseAPI {
    * console.log(response.body); // Array of User objects with only id and name fields
    * ```
    */
-  async requestArray<T extends Record<string, any>>(
+  async requestArray<T>(
     url: string,
-    options: Record<string, any> = {},
+    options: RequestOptions = {},
     fetchAll = true,
     fields?: (keyof T)[],
   ): Promise<ApiResponse<T[]>> {
@@ -163,6 +188,7 @@ export class BaseAPI {
     let apiResponse: ApiResponse<T[]>;
     do {
       nextUrl = ensureFullUrl(nextUrl, this.configuration.basePath);
+      // biome-ignore lint/performance/noAwaitInLoops: sequential pagination, next URL depends on previous response
       const response: Response = await fetch(nextUrl, {
         ...options,
         headers: {
@@ -177,7 +203,7 @@ export class BaseAPI {
         );
       }
 
-      const data: T = await response.json();
+      const data: T[] = await response.json();
       nextUrl = getNextUrlPathFromHeader(
         response.headers,
         this.configuration.basePath,
@@ -200,20 +226,23 @@ export class BaseAPI {
       apiResponse.body = pickFieldsFromArray<T>(apiResponse.body, fields);
     }
 
-    if (this.filterFields) {
-      apiResponse.body.forEach((item) => {
+    if (this.filterFields.length > 0) {
+      for (const item of apiResponse.body) {
         this.sanitizeResponse(item);
-      });
+      }
     }
 
     return apiResponse;
   }
 
-  private sanitizeResponse<T extends Record<string, any>>(data: T): void {
-    if (!data) return;
+  private sanitizeResponse<T>(data: T): void {
+    if (!data) {
+      return;
+    }
+    const record = data as Record<string, unknown>;
     for (const key of this.filterFields) {
-      if (key in data) {
-        delete data[key];
+      if (key in record) {
+        delete record[key];
       }
     }
   }

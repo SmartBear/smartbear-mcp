@@ -69,7 +69,8 @@ export class UnlinkTestCasesFromCycle extends Tool<Qtm4jClient> {
       "Confirmation with the cycle key and unlinked: true. Warnings included if any test cases could not be resolved or unlinked.",
   };
 
-  handle = async (rawArgs: any) => {
+  // biome-ignore lint/complexity/noExcessiveLinesPerFunction: single sequential tool handler; splitting would fragment one linear resolve→request→respond flow
+  handle = async (rawArgs: unknown) => {
     const args = UnlinkTestCasesFromCycleBody.parse(rawArgs);
     const fieldResolver = this.client.getResolverRegistry();
     const context = fieldResolver.requireProjectContext();
@@ -94,7 +95,7 @@ export class UnlinkTestCasesFromCycle extends Tool<Qtm4jClient> {
 
     if (args.unlinkAll) {
       body.unlinkAll = true;
-    } else if (args.testCaseKeys?.length) {
+    } else if (args.testCaseKeys && args.testCaseKeys.length > 0) {
       // Resolve test case keys → [{id: uid, versionNo}]
       const uidMap = (await fieldResolver
         .getResolver(ResolverKeys.SearchableField.TEST_CASE_KEY_TO_UID)
@@ -118,7 +119,9 @@ export class UnlinkTestCasesFromCycle extends Tool<Qtm4jClient> {
         }
       }
 
-      if (testCases.length > 0) body.testCases = testCases;
+      if (testCases.length > 0) {
+        body.testCases = testCases;
+      }
     }
 
     // Pass filter with auto-injected projectId

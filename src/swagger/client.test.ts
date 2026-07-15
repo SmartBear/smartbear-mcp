@@ -1,10 +1,20 @@
+import type { IncomingMessage } from "node:http";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
 import { withRequestContext } from "../common/request-context.ts";
-import { SwaggerClient } from "./client/index.ts";
+import type { SmartBearMcpServer } from "../common/server.ts";
 import { TOOLS } from "./client/tools.ts";
+import { SwaggerClient } from "./client.ts";
 
 const fetchMock = createFetchMock(vi);
+
+const mockServer = {} as unknown as SmartBearMcpServer;
+
+function fakeRequest(
+  headers: Record<string, string | string[] | undefined>,
+): IncomingMessage {
+  return { headers } as unknown as IncomingMessage;
+}
 
 describe("SwaggerClient", () => {
   let client: SwaggerClient;
@@ -15,7 +25,7 @@ describe("SwaggerClient", () => {
     fetchMock.resetMocks();
 
     client = new SwaggerClient();
-    await client.configure({} as any, { api_key: "test-token" });
+    await client.configure(mockServer, { api_key: "test-token" });
   });
 
   afterEach(() => {
@@ -37,15 +47,15 @@ describe("SwaggerClient", () => {
   });
 
   describe("configure (authentication)", () => {
-    const registeredTitles = (client: SwaggerClient) => {
+    const registeredTitles = (swaggerClient: SwaggerClient) => {
       const mockRegister = vi.fn();
-      client.registerTools(mockRegister, vi.fn());
+      swaggerClient.registerTools(mockRegister, vi.fn());
       return mockRegister.mock.calls.map((call) => call[0].title);
     };
 
     it("registers Portal/Studio tools when configured with an api_key", async () => {
       const freshClient = new SwaggerClient();
-      await freshClient.configure({} as any, { api_key: "test-token" });
+      await freshClient.configure(mockServer, { api_key: "test-token" });
 
       expect(freshClient.isConfigured()).toBe(true);
       expect(registeredTitles(freshClient)).toContain("List Portals");
@@ -54,8 +64,8 @@ describe("SwaggerClient", () => {
     it("registers Portal/Studio tools when an OAuth bearer token is present", async () => {
       const freshClient = new SwaggerClient();
       await withRequestContext(
-        { headers: { authorization: "Bearer oauth-token" } } as any,
-        () => freshClient.configure({} as any, {}),
+        fakeRequest({ authorization: "Bearer oauth-token" }),
+        () => freshClient.configure(mockServer, {}),
       );
 
       expect(freshClient.isConfigured()).toBe(true);
@@ -65,8 +75,8 @@ describe("SwaggerClient", () => {
     it("registers Portal/Studio tools when a Swagger-Api-Key header is present", async () => {
       const freshClient = new SwaggerClient();
       await withRequestContext(
-        { headers: { "swagger-api-key": "header-key" } } as any,
-        () => freshClient.configure({} as any, {}),
+        fakeRequest({ "swagger-api-key": "header-key" }),
+        () => freshClient.configure(mockServer, {}),
       );
 
       expect(freshClient.isConfigured()).toBe(true);
@@ -75,7 +85,7 @@ describe("SwaggerClient", () => {
 
     it("does not register Portal/Studio tools when only an FT token is configured", async () => {
       const freshClient = new SwaggerClient();
-      await freshClient.configure({} as any, {
+      await freshClient.configure(mockServer, {
         functional_testing_api_token: "ft-token",
       });
 
@@ -85,7 +95,7 @@ describe("SwaggerClient", () => {
 
     it("is not configured when no auth is supplied", async () => {
       const freshClient = new SwaggerClient();
-      await freshClient.configure({} as any, {});
+      await freshClient.configure(mockServer, {});
 
       expect(freshClient.isConfigured()).toBe(false);
     });
@@ -184,7 +194,7 @@ describe("SwaggerClient", () => {
 
   describe("registerTools", () => {
     it("should register all tools from TOOLS array when FT token is configured", async () => {
-      await client.configure({} as any, {
+      await client.configure(mockServer, {
         api_key: "test-token",
         functional_testing_api_token: "ft-test-token",
       });
@@ -269,7 +279,7 @@ describe("SwaggerClient", () => {
       });
     });
 
-    it("should handle tool execution with formatResponse for delete operations", async () => {
+    it("should handle tool execution with formatResponse for delete operations", () => {
       const mockRegister = vi.fn();
       const mockGetInput = vi.fn();
 
@@ -290,8 +300,7 @@ describe("SwaggerClient", () => {
       client.registerTools(mockRegister, mockGetInput);
 
       // Find any tool handler
-      const toolCall = mockRegister.mock.calls[0];
-      const handler = toolCall[1];
+      const [, handler] = mockRegister.mock.calls[0];
       const result = await handler({}, {});
 
       expect(result).toEqual({
@@ -349,6 +358,7 @@ describe("SwaggerClient", () => {
         summary: "Invalid tool for testing",
         parameters: [],
         handler: "nonExistentMethod",
+        // biome-ignore lint/suspicious/noExplicitAny: intentionally-incomplete fixture (missing required SwaggerToolParams fields) to test the unknown-handler error path
       } as any);
 
       client.registerTools(mockRegister, mockGetInput);

@@ -1,15 +1,15 @@
 import z from "zod";
 
-/** Resolved test case reference sent to the API: internal UID + version number. */
-export const TestCaseVersionRef = z.object({
-  id: z.string(),
-  versionNo: z.number().int(),
-});
-
 /** Sprint filter item: board name + sprint name. */
 const SprintFilter = z.object({
   boardName: z.string(),
   sprintName: z.string(),
+});
+
+/** Resolved test case reference sent to the API: internal UID + version number. */
+export const TestCaseVersionRef = z.object({
+  id: z.string(),
+  versionNo: z.number().int(),
 });
 
 /**

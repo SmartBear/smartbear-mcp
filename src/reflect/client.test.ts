@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { requestContextStorage } from "../common/request-context.ts";
+import type { SmartBearMcpServer } from "../common/server.ts";
 import { ReflectClient } from "./client.ts";
+import type { WebSocketManager } from "./websocket-manager.ts";
 
 describe("ReflectClient", () => {
   let client: ReflectClient;
@@ -14,7 +16,9 @@ describe("ReflectClient", () => {
   });
 
   it("should be configured after configure()", async () => {
-    await client.configure({} as any, { api_token: "test-token" });
+    await client.configure({} as SmartBearMcpServer, {
+      api_token: "test-token",
+    });
     expect(client.isConfigured()).toBe(true);
   });
 
@@ -27,7 +31,9 @@ describe("ReflectClient", () => {
   });
 
   it("should register and retrieve connection", () => {
-    const mockWs = { isConnected: vi.fn().mockReturnValue(true) } as any;
+    const mockWs = {
+      isConnected: vi.fn().mockReturnValue(true),
+    } as unknown as WebSocketManager;
     client.registerConnection("session-1", mockWs, {
       platform: "web",
       test: { name: "Test 1" },
@@ -49,11 +55,11 @@ describe("ReflectClient", () => {
     expect(client.configPrefix).toBe("Reflect");
   });
 
-  describe("isOAuthRequest", () => {
+  describe("isOauthRequest", () => {
     it("should return true when Authorization header starts with Bearer", () => {
       const result = requestContextStorage.run(
         { headers: { Authorization: "Bearer oauth-token" } },
-        () => client.isOAuthRequest(),
+        () => client.isOauthRequest(),
       );
       expect(result).toBe(true);
     });
@@ -61,14 +67,14 @@ describe("ReflectClient", () => {
     it("should return true when authorization header uses lowercase bearer scheme", () => {
       const result = requestContextStorage.run(
         { headers: { authorization: "bearer oauth-token" } },
-        () => client.isOAuthRequest(),
+        () => client.isOauthRequest(),
       );
       expect(result).toBe(true);
     });
 
     it("should return false when no Authorization header", () => {
       const result = requestContextStorage.run({ headers: {} }, () =>
-        client.isOAuthRequest(),
+        client.isOauthRequest(),
       );
       expect(result).toBe(false);
     });
@@ -76,7 +82,7 @@ describe("ReflectClient", () => {
     it("should return false when Authorization header does not start with Bearer", () => {
       const result = requestContextStorage.run(
         { headers: { Authorization: "Basic abc123" } },
-        () => client.isOAuthRequest(),
+        () => client.isOauthRequest(),
       );
       expect(result).toBe(false);
     });
@@ -89,7 +95,7 @@ describe("ReflectClient", () => {
             Authorization: "Bearer oauth-token",
           },
         },
-        () => client.isOAuthRequest(),
+        () => client.isOauthRequest(),
       );
       expect(result).toBe(false);
     });
@@ -113,7 +119,9 @@ describe("ReflectClient", () => {
     });
 
     it("should return X-API-KEY header when falling back to configured token", async () => {
-      await client.configure({} as any, { api_token: "configured-token" });
+      await client.configure({} as SmartBearMcpServer, {
+        api_token: "configured-token",
+      });
       const result = requestContextStorage.run({ headers: {} }, () =>
         client.getAuthHeader(),
       );

@@ -3,7 +3,7 @@ import { ToolError } from "../../common/tools.ts";
 import { ApiClient } from "../http/api-client.ts";
 
 // Mock fetch globally
-global.fetch = vi.fn();
+globalThis.fetch = vi.fn();
 
 describe("ApiClient", () => {
   beforeEach(() => {
@@ -61,15 +61,15 @@ describe("ApiClient", () => {
     const client = new ApiClient(tokenProvider, "https://api.example.com");
 
     expect(() => {
-      // Access private method through any type
-      (client as any).getHeaders();
+      // Access private method through a narrow structural type
+      (client as unknown as { getHeaders: () => unknown }).getHeaders();
     }).toThrow(ToolError);
   });
 
   it("should handle successful GET request", async () => {
     const mockResponse = { data: "test" };
     const mockText = JSON.stringify(mockResponse);
-    (global.fetch as any).mockResolvedValueOnce({
+    vi.mocked(globalThis.fetch).mockResolvedValueOnce({
       ok: true,
       status: 200,
       headers: {
@@ -77,13 +77,13 @@ describe("ApiClient", () => {
       },
       text: async () => mockText,
       json: async () => mockResponse,
-    });
+    } as unknown as Response);
 
     const client = new ApiClient("token", "https://api.example.com");
     const result = await client.get("/endpoint");
 
     expect(result).toEqual(mockResponse);
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(globalThis.fetch).toHaveBeenCalledWith(
       "https://api.example.com/endpoint",
       expect.objectContaining({
         method: "GET",
@@ -97,7 +97,7 @@ describe("ApiClient", () => {
     const requestBody = { name: "test" };
     const mockText = JSON.stringify(mockResponse);
 
-    (global.fetch as any).mockResolvedValueOnce({
+    vi.mocked(globalThis.fetch).mockResolvedValueOnce({
       ok: true,
       status: 200,
       headers: {
@@ -105,13 +105,13 @@ describe("ApiClient", () => {
       },
       text: async () => mockText,
       json: async () => mockResponse,
-    });
+    } as unknown as Response);
 
     const client = new ApiClient("token", "https://api.example.com");
     const result = await client.post("/endpoint", requestBody);
 
     expect(result).toEqual(mockResponse);
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(globalThis.fetch).toHaveBeenCalledWith(
       "https://api.example.com/endpoint",
       expect.objectContaining({
         method: "POST",
@@ -125,7 +125,7 @@ describe("ApiClient", () => {
     const requestBody = { name: "updated" };
     const mockText = JSON.stringify(mockResponse);
 
-    (global.fetch as any).mockResolvedValueOnce({
+    vi.mocked(globalThis.fetch).mockResolvedValueOnce({
       ok: true,
       status: 200,
       headers: {
@@ -133,7 +133,7 @@ describe("ApiClient", () => {
       },
       text: async () => mockText,
       json: async () => mockResponse,
-    });
+    } as unknown as Response);
 
     const client = new ApiClient("token", "https://api.example.com");
     const result = await client.put("/endpoint", requestBody);
@@ -142,7 +142,7 @@ describe("ApiClient", () => {
   });
 
   it("should handle 204 No Content response", async () => {
-    (global.fetch as any).mockResolvedValueOnce({
+    vi.mocked(globalThis.fetch).mockResolvedValueOnce({
       ok: true,
       status: 204,
       headers: {
@@ -150,7 +150,7 @@ describe("ApiClient", () => {
       },
       text: async () => "",
       json: async () => ({}),
-    });
+    } as unknown as Response);
 
     const client = new ApiClient("token", "https://api.example.com");
     const result = await client.post("/endpoint", {});
@@ -159,14 +159,14 @@ describe("ApiClient", () => {
   });
 
   it("should throw ToolError on failed request", async () => {
-    (global.fetch as any).mockResolvedValueOnce({
+    vi.mocked(globalThis.fetch).mockResolvedValueOnce({
       ok: false,
       status: 400,
       headers: {
         get: () => null,
       },
       text: async () => "Bad Request",
-    });
+    } as unknown as Response);
 
     const client = new ApiClient("token", "https://api.example.com");
 
@@ -174,7 +174,9 @@ describe("ApiClient", () => {
   });
 
   it("should handle network errors", async () => {
-    (global.fetch as any).mockRejectedValueOnce(new Error("Network error"));
+    vi.mocked(globalThis.fetch).mockRejectedValueOnce(
+      new Error("Network error"),
+    );
 
     const client = new ApiClient("token", "https://api.example.com");
 

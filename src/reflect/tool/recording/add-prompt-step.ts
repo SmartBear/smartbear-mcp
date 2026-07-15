@@ -1,11 +1,10 @@
-import { randomUUID } from "node:crypto";
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ZodRawShape } from "zod";
 import { z } from "zod";
 import { Tool, ToolError } from "../../../common/tools.ts";
 import type { ToolParams } from "../../../common/types.ts";
 import type { ReflectClient } from "../../client.ts";
-import type { MCPAddPromptStepSuccessResponse } from "../../types/mcp.ts";
+import type { McpAddPromptStepSuccessResponse } from "../../types/mcp.ts";
 
 export class AddPromptStep extends Tool<ReflectClient> {
   specification: ToolParams = {
@@ -30,12 +29,16 @@ export class AddPromptStep extends Tool<ReflectClient> {
       sessionId: string;
       prompt: string;
     };
-    if (!sessionId) throw new ToolError("sessionId argument is required");
-    if (!prompt) throw new ToolError("prompt argument is required");
+    if (!sessionId) {
+      throw new ToolError("sessionId argument is required");
+    }
+    if (!prompt) {
+      throw new ToolError("prompt argument is required");
+    }
 
     const wsManager = this.client.getConnectedSession(sessionId);
 
-    const id = randomUUID();
+    const id = globalThis.crypto.randomUUID();
     const responsePromise = wsManager.waitForResponse(id);
     await wsManager.sendMcpMessage({
       type: "mcp:add-prompt-step",
@@ -43,8 +46,8 @@ export class AddPromptStep extends Tool<ReflectClient> {
       prompt,
     });
 
-    const response = (await responsePromise) as MCPAddPromptStepSuccessResponse;
-    const result = response.result;
+    const { result } =
+      (await responsePromise) as McpAddPromptStepSuccessResponse;
 
     return {
       content: [

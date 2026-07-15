@@ -1,40 +1,8 @@
 import z from "zod";
+import { PAGINATION } from "../config/constants.ts";
 import { SearchTestCaseResponse } from "./get-test-case.schema.ts";
 
 // ─── Get Linked Requirements ──────────────────────────────────────────────────
-
-/** User-facing input for retrieving requirements linked to a test case. */
-export const GetLinkedRequirementsBody = z.object({
-  key: z
-    .string()
-    .describe(
-      "Test case key in '{PROJECT_KEY}-TC-{number}' format (e.g., 'SCRUM-TC-145'). Required.",
-    ),
-  versionNo: z
-    .number()
-    .int()
-    .optional()
-    .describe(
-      "Test case version number to retrieve linked requirements for. Defaults to the latest version.",
-    ),
-  maxResults: z
-    .number()
-    .int()
-    .min(1)
-    .max(100)
-    .optional()
-    .describe("Maximum results per page (1-100). Default: 50."),
-  startAt: z
-    .number()
-    .int()
-    .min(0)
-    .optional()
-    .describe("Zero-indexed offset for pagination. Default: 0."),
-  sort: z
-    .string()
-    .optional()
-    .describe("Sort pattern in 'field:asc|desc' format. Default: 'key:desc'."),
-});
 
 /** A single Jira requirement linked to a test case. */
 const LinkedRequirementSchema = z
@@ -72,6 +40,45 @@ const LinkedRequirementSchema = z
   })
   .passthrough();
 
+/** Sprint filter item shared across requirement-linked test case queries. */
+const SprintFilter = z.object({
+  boardName: z.string(),
+  sprintName: z.string(),
+});
+
+/** User-facing input for retrieving requirements linked to a test case. */
+export const GetLinkedRequirementsBody = z.object({
+  key: z
+    .string()
+    .describe(
+      "Test case key in '{PROJECT_KEY}-TC-{number}' format (e.g., 'SCRUM-TC-145'). Required.",
+    ),
+  versionNo: z
+    .number()
+    .int()
+    .optional()
+    .describe(
+      "Test case version number to retrieve linked requirements for. Defaults to the latest version.",
+    ),
+  maxResults: z
+    .number()
+    .int()
+    .min(PAGINATION.MIN_ALLOWED_RESULTS)
+    .max(PAGINATION.MAX_ALLOWED_RESULTS)
+    .optional()
+    .describe("Maximum results per page (1-100). Default: 50."),
+  startAt: z
+    .number()
+    .int()
+    .min(0)
+    .optional()
+    .describe("Zero-indexed offset for pagination. Default: 0."),
+  sort: z
+    .string()
+    .optional()
+    .describe("Sort pattern in 'field:asc|desc' format. Default: 'key:desc'."),
+});
+
 /** Paginated response for linked requirements. */
 export const GetLinkedRequirementsResponse = z.object({
   startAt: z.number().int(),
@@ -86,12 +93,6 @@ export const GetLinkedRequirementsResponse = z.object({
 });
 
 // ─── Get Linked Test Cases for Requirement ────────────────────────────────────
-
-/** Sprint filter item shared across requirement-linked test case queries. */
-const SprintFilter = z.object({
-  boardName: z.string(),
-  sprintName: z.string(),
-});
 
 /**
  * Filter object for retrieving test cases linked to a requirement.
@@ -171,8 +172,8 @@ export const GetLinkedTestCasesForRequirementBody = z.object({
   maxResults: z
     .number()
     .int()
-    .min(1)
-    .max(100)
+    .min(PAGINATION.MIN_ALLOWED_RESULTS)
+    .max(PAGINATION.MAX_ALLOWED_RESULTS)
     .optional()
     .describe("Maximum results per page (1-100). Default: 50."),
   startAt: z
@@ -189,5 +190,5 @@ export const GetLinkedTestCasesForRequirementBody = z.object({
     ),
 });
 
-/** Re-export SearchTestCaseResponse for use as linked test cases response. */
-export { SearchTestCaseResponse as GetLinkedTestCasesResponse };
+/** SearchTestCaseResponse doubles as the linked test cases response shape. */
+export const GetLinkedTestCasesResponse = SearchTestCaseResponse;

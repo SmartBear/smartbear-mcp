@@ -1,12 +1,13 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { requestContextStorage } from "../common/request-context.ts";
-import { BearQClient } from "./client.ts";
+import type { SmartBearMcpServer } from "../common/server.ts";
+import { BearqClient } from "./client.ts";
 
-describe("BearQClient", () => {
-  let client: BearQClient;
+describe("BearqClient", () => {
+  let client: BearqClient;
 
   beforeEach(() => {
-    client = new BearQClient();
+    client = new BearqClient();
   });
 
   it("isConfigured() is true by default", () => {
@@ -22,18 +23,21 @@ describe("BearQClient", () => {
   });
 
   it("getBaseUrl() returns default URL when api_base_url is omitted", async () => {
-    await client.configure({} as any, { api_token: "tok" });
+    await client.configure({} as unknown as SmartBearMcpServer, {
+      api_token: "tok",
+    });
     expect(client.getBaseUrl()).toBe("https://api.bearq.smartbear.com");
   });
 
   it("getBaseUrl() returns custom URL when api_base_url is set", async () => {
-    await client.configure({} as any, {
+    await client.configure({} as unknown as SmartBearMcpServer, {
       api_token: "tok",
       api_base_url: "http://localhost:4000",
     });
     expect(client.getBaseUrl()).toBe("http://localhost:4000");
   });
 
+  // biome-ignore lint/security/noSecrets: false positive, this is a test suite name, not a secret
   describe("getAuthToken()", () => {
     it("returns token from Authorization header (strips 'Bearer ' prefix)", () => {
       const token = requestContextStorage.run(
@@ -44,7 +48,9 @@ describe("BearQClient", () => {
     });
 
     it("request-context header wins over configured token", async () => {
-      await client.configure({} as any, { api_token: "configured-token" });
+      await client.configure({} as unknown as SmartBearMcpServer, {
+        api_token: "configured-token",
+      });
       const token = requestContextStorage.run(
         { headers: { authorization: "Bearer header-token" } },
         () => client.getAuthToken(),
@@ -53,7 +59,9 @@ describe("BearQClient", () => {
     });
 
     it("falls back to configured token when no header", async () => {
-      await client.configure({} as any, { api_token: "configured-token" });
+      await client.configure({} as unknown as SmartBearMcpServer, {
+        api_token: "configured-token",
+      });
       const token = requestContextStorage.run({ headers: {} }, () =>
         client.getAuthToken(),
       );
@@ -70,7 +78,9 @@ describe("BearQClient", () => {
 
   describe("getHeaders()", () => {
     it("returns Authorization Bearer header when token is configured", async () => {
-      await client.configure({} as any, { api_token: "my-token" });
+      await client.configure({} as unknown as SmartBearMcpServer, {
+        api_token: "my-token",
+      });
       const headers = requestContextStorage.run({ headers: {} }, () =>
         client.getHeaders(),
       );

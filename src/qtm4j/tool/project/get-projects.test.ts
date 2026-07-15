@@ -1,10 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { Qtm4jClient } from "../../client.ts";
 import { ENDPOINTS } from "../../config/constants.ts";
 import { GetProjectsResponse } from "../../schema/project.schema.ts";
 import { GetProjects } from "./get-projects.ts";
 
+type HandleExtra = Parameters<GetProjects["handle"]>[1];
+
 describe("GetProjects", () => {
-  let mockClient: any;
+  let mockClient: { getApiClient: ReturnType<typeof vi.fn> };
   let instance: GetProjects;
 
   beforeEach(() => {
@@ -13,7 +16,7 @@ describe("GetProjects", () => {
         post: vi.fn(),
       }),
     };
-    instance = new GetProjects(mockClient as any);
+    instance = new GetProjects(mockClient as unknown as Qtm4jClient);
   });
 
   it("should set specification correctly", () => {
@@ -42,7 +45,7 @@ describe("GetProjects", () => {
     };
     mockClient.getApiClient().post.mockResolvedValueOnce(responseMock);
     const args = { maxResults: 10, startAt: 0 };
-    const result = await instance.handle(args, {} as any);
+    const result = await instance.handle(args, {} as unknown as HandleExtra);
     expect(mockClient.getApiClient().post).toHaveBeenCalledWith(
       ENDPOINTS.PROJECTS,
       {
@@ -59,7 +62,7 @@ describe("GetProjects", () => {
       data: [],
     };
     mockClient.getApiClient().post.mockResolvedValueOnce(responseMock);
-    const result = await instance.handle({}, {} as any);
+    const result = await instance.handle({}, {} as unknown as HandleExtra);
     expect(mockClient.getApiClient().post).toHaveBeenCalledWith(
       ENDPOINTS.PROJECTS,
       {
@@ -83,7 +86,7 @@ describe("GetProjects", () => {
       maxResults: 50,
       startAt: 10,
     };
-    const result = await instance.handle(args, {} as any);
+    const result = await instance.handle(args, {} as unknown as HandleExtra);
     expect(mockClient.getApiClient().post).toHaveBeenCalledWith(
       ENDPOINTS.PROJECTS,
       {
@@ -101,9 +104,9 @@ describe("GetProjects", () => {
     mockClient
       .getApiClient()
       .post.mockRejectedValueOnce(new Error("API error"));
-    await expect(instance.handle({ maxResults: 1 }, {} as any)).rejects.toThrow(
-      "API error",
-    );
+    await expect(
+      instance.handle({ maxResults: 1 }, {} as unknown as HandleExtra),
+    ).rejects.toThrow("API error");
   });
 
   it("should reject when apiClient.post returns invalid data (schema validation)", async () => {
@@ -112,7 +115,7 @@ describe("GetProjects", () => {
       total: 1,
     });
     await expect(
-      instance.handle({ maxResults: 1 }, {} as any),
+      instance.handle({ maxResults: 1 }, {} as unknown as HandleExtra),
     ).rejects.toThrow();
   });
 
@@ -125,7 +128,7 @@ describe("GetProjects", () => {
       ],
     };
     mockClient.getApiClient().post.mockResolvedValueOnce(validResponse);
-    const result = await instance.handle({}, {} as any);
+    const result = await instance.handle({}, {} as unknown as HandleExtra);
     const parsed = GetProjectsResponse.parse(result.structuredContent);
     expect(parsed.total).toBe(2);
     expect(parsed.data).toHaveLength(2);
@@ -138,7 +141,7 @@ describe("GetProjects", () => {
     };
     mockClient.getApiClient().post.mockResolvedValueOnce(responseMock);
     const args = { projectId: 0 };
-    await instance.handle(args, {} as any);
+    await instance.handle(args, {} as unknown as HandleExtra);
     expect(mockClient.getApiClient().post).toHaveBeenCalledWith(
       ENDPOINTS.PROJECTS,
       expect.objectContaining({
@@ -158,8 +161,8 @@ describe("GetProjects", () => {
       search: undefined,
       qmetryEnabled: undefined,
     };
-    await instance.handle(args, {} as any);
-    const callArgs = mockClient.getApiClient().post.mock.calls[0][1];
+    await instance.handle(args, {} as unknown as HandleExtra);
+    const [[, callArgs]] = mockClient.getApiClient().post.mock.calls;
     expect(callArgs).not.toHaveProperty("projectId");
     expect(callArgs).not.toHaveProperty("search");
     expect(callArgs).not.toHaveProperty("qmetryEnabled");
@@ -172,7 +175,7 @@ describe("GetProjects", () => {
     };
     mockClient.getApiClient().post.mockResolvedValueOnce(responseMock);
     const args = { qmetryEnabled: false };
-    await instance.handle(args, {} as any);
+    await instance.handle(args, {} as unknown as HandleExtra);
     expect(mockClient.getApiClient().post).toHaveBeenCalledWith(
       ENDPOINTS.PROJECTS,
       expect.objectContaining({

@@ -1,14 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ToolError } from "../../../common/tools.ts";
+import type { Qtm4jClient } from "../../client.ts";
 import { ENDPOINTS } from "../../config/constants.ts";
 import { ResolverKeys } from "../../config/field-resolution.types.ts";
 import { UpdateTestCase } from "./update-test-case.ts";
 
 describe("UpdateTestCase", () => {
-  let mockClient: any;
-  let mockApiClient: any;
-  let mockRegistry: any;
-  let mockUidResolver: any;
+  let mockClient: Partial<Qtm4jClient>;
+  let mockApiClient: { put: ReturnType<typeof vi.fn> };
+  let mockRegistry: {
+    requireProjectContext: ReturnType<typeof vi.fn>;
+    getResolver: ReturnType<typeof vi.fn>;
+  };
+  let mockUidResolver: { resolveAndReturn: ReturnType<typeof vi.fn> };
   let instance: UpdateTestCase;
 
   const mockContext = {
@@ -20,36 +24,37 @@ describe("UpdateTestCase", () => {
   // Returns a mock resolver that resolves names → numeric IDs (via body mutation)
   function makeResolverMock(idMap: Record<string, number> = {}) {
     return {
-      resolve: vi
-        .fn()
-        .mockImplementation(
-          async (
-            inputField: string,
-            _resolverKey: string,
-            body: Record<string, unknown>,
-            _context: unknown,
-            warnings: string[],
-          ) => {
-            const raw = body[inputField];
-            if (raw == null) return;
-            const isArray = Array.isArray(raw);
-            const names = isArray ? (raw as string[]) : [raw as string];
-            const ids: number[] = [];
-            for (const name of names) {
-              const id = idMap[name];
-              if (id === undefined) {
-                warnings.push(
-                  `Skipped ${inputField} '${name}' — not available in the current project.`,
-                );
-              } else {
-                ids.push(id);
-              }
+      resolve: vi.fn().mockImplementation(
+        // biome-ignore lint/complexity/useMaxParams: mirrors the real Resolver.resolve signature it mocks
+        (
+          inputField: string,
+          _resolverKey: string,
+          body: Record<string, unknown>,
+          _context: unknown,
+          warnings: string[],
+        ) => {
+          const raw = body[inputField];
+          if (raw === null || raw === undefined) {
+            return;
+          }
+          const isArray = Array.isArray(raw);
+          const names = isArray ? (raw as string[]) : [raw as string];
+          const ids: number[] = [];
+          for (const name of names) {
+            const id = idMap[name];
+            if (id === undefined) {
+              warnings.push(
+                `Skipped ${inputField} '${name}' — not available in the current project.`,
+              );
+            } else {
+              ids.push(id);
             }
-            if (ids.length > 0) {
-              body[inputField] = isArray ? ids : ids[0];
-            }
-          },
-        ),
+          }
+          if (ids.length > 0) {
+            body[inputField] = isArray ? ids : ids[0];
+          }
+        },
+      ),
     };
   }
 
@@ -77,7 +82,7 @@ describe("UpdateTestCase", () => {
       getResolverRegistry: vi.fn().mockReturnValue(mockRegistry),
     };
 
-    instance = new UpdateTestCase(mockClient as any);
+    instance = new UpdateTestCase(mockClient as Qtm4jClient);
   });
 
   describe("specification", () => {
@@ -162,10 +167,12 @@ describe("UpdateTestCase", () => {
 
     it("should resolve priority name to ID", async () => {
       mockRegistry.getResolver.mockImplementation((key: string) => {
-        if (key === ResolverKeys.SearchableField.TEST_CASE_KEY_TO_UID)
+        if (key === ResolverKeys.SearchableField.TEST_CASE_KEY_TO_UID) {
           return mockUidResolver;
-        if (key === ResolverKeys.CommonAttribute.PRIORITY)
+        }
+        if (key === ResolverKeys.CommonAttribute.PRIORITY) {
           return makeResolverMock({ High: 1035 });
+        }
         return makeResolverMock();
       });
 
@@ -179,10 +186,12 @@ describe("UpdateTestCase", () => {
 
     it("should resolve status name to ID", async () => {
       mockRegistry.getResolver.mockImplementation((key: string) => {
-        if (key === ResolverKeys.SearchableField.TEST_CASE_KEY_TO_UID)
+        if (key === ResolverKeys.SearchableField.TEST_CASE_KEY_TO_UID) {
           return mockUidResolver;
-        if (key === ResolverKeys.CommonAttribute.TESTCASE_STATUS)
+        }
+        if (key === ResolverKeys.CommonAttribute.TESTCASE_STATUS) {
           return makeResolverMock({ Done: 10 });
+        }
         return makeResolverMock();
       });
 
@@ -196,10 +205,12 @@ describe("UpdateTestCase", () => {
 
     it("should resolve labels.add and labels.delete names to IDs", async () => {
       mockRegistry.getResolver.mockImplementation((key: string) => {
-        if (key === ResolverKeys.SearchableField.TEST_CASE_KEY_TO_UID)
+        if (key === ResolverKeys.SearchableField.TEST_CASE_KEY_TO_UID) {
           return mockUidResolver;
-        if (key === ResolverKeys.SearchableField.LABEL)
+        }
+        if (key === ResolverKeys.SearchableField.LABEL) {
           return makeResolverMock({ Release_2: 100, Release_1: 99 });
+        }
         return makeResolverMock();
       });
 
@@ -216,10 +227,12 @@ describe("UpdateTestCase", () => {
 
     it("should resolve components.add and components.delete names to IDs", async () => {
       mockRegistry.getResolver.mockImplementation((key: string) => {
-        if (key === ResolverKeys.SearchableField.TEST_CASE_KEY_TO_UID)
+        if (key === ResolverKeys.SearchableField.TEST_CASE_KEY_TO_UID) {
           return mockUidResolver;
-        if (key === ResolverKeys.SearchableField.COMPONENTS)
+        }
+        if (key === ResolverKeys.SearchableField.COMPONENTS) {
           return makeResolverMock({ UI: 200, Backend: 201 });
+        }
         return makeResolverMock();
       });
 
@@ -247,14 +260,15 @@ describe("UpdateTestCase", () => {
         type: "text",
         text: expect.stringContaining("InvalidPriority"),
       });
-      const calledBody = mockApiClient.put.mock.calls[0][1];
+      const [, calledBody] = mockApiClient.put.mock.calls[0];
       expect(calledBody).not.toHaveProperty("priority");
     });
 
     it("should skip labels body field when all names fail to resolve", async () => {
       mockRegistry.getResolver.mockImplementation((key: string) => {
-        if (key === ResolverKeys.SearchableField.TEST_CASE_KEY_TO_UID)
+        if (key === ResolverKeys.SearchableField.TEST_CASE_KEY_TO_UID) {
           return mockUidResolver;
+        }
         return makeResolverMock({}); // all resolutions fail
       });
 
@@ -263,7 +277,7 @@ describe("UpdateTestCase", () => {
         labels: { add: ["NonExistent"] },
       });
 
-      const calledBody = mockApiClient.put.mock.calls[0][1];
+      const [, calledBody] = mockApiClient.put.mock.calls[0];
       expect(calledBody).not.toHaveProperty("labels");
       expect(result.content).toHaveLength(1);
       expect(result.content[0].text).toContain("NonExistent");
@@ -272,7 +286,7 @@ describe("UpdateTestCase", () => {
     it("should only include provided fields in the PUT body", async () => {
       await instance.handle({ key: "SCRUM-TC-145", summary: "Only summary" });
 
-      const calledBody = mockApiClient.put.mock.calls[0][1];
+      const [, calledBody] = mockApiClient.put.mock.calls[0];
       expect(calledBody).toHaveProperty("summary", "Only summary");
       expect(calledBody).not.toHaveProperty("description");
       expect(calledBody).not.toHaveProperty("priority");

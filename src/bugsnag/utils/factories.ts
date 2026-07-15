@@ -1,13 +1,17 @@
-import type {
-  ErrorApiView,
-  EventApiView,
-  ReleaseApiView,
-  ReleaseGroup,
-  Span,
-  SpanGroup,
-  TraceField,
+import {
+  type ErrorApiView,
+  type EventApiView,
+  type ReleaseApiView,
+  type ReleaseGroup,
+  type Span,
+  type SpanGroup,
+  type TraceField,
+  TraceFieldOptions,
 } from "../client/api/api.ts";
 import type { EventField, Organization, Project } from "../client/api/index.ts";
+
+const MOCK_SPAN_DURATION_MS = 1000;
+const MOCK_SPAN_START_TIME_OFFSET_MS = 1000;
 
 export function getMockOrganization(
   id: string,
@@ -105,11 +109,12 @@ export function getMockSpanGroup(
     id: `span-group-${id}`,
     name: `span-name-${name}`,
     display_name: name,
-    category: <any>category,
+    category: category as unknown as SpanGroup["category"],
     ...extra,
   };
 }
 
+// biome-ignore lint/complexity/useMaxParams: mock factory mirrors Span's required fields; consolidating into an options object would require touching call sites in test files owned by other in-flight work
 export function getMockSpan(
   traceId: string,
   id: number,
@@ -123,12 +128,15 @@ export function getMockSpan(
     id: `span-${id}`,
     name: `span-name-${name}`,
     display_name: name,
-    category: <any>category,
+    category,
     is_first_class: isFirstClass,
-    duration: Math.round(Math.random() * 1000),
+    duration: Math.round(Math.random() * MOCK_SPAN_DURATION_MS),
     timestamp: new Date(Date.now()).toISOString(),
-    start_time: new Date(Date.now() - 1000).toISOString(),
-    time_adjustment_type: <any>"unadjusted",
+    start_time: new Date(
+      Date.now() - MOCK_SPAN_START_TIME_OFFSET_MS,
+    ).toISOString(),
+    time_adjustment_type:
+      "unadjusted" as unknown as Span["time_adjustment_type"],
     ...extra,
   };
 }
@@ -136,12 +144,12 @@ export function getMockSpan(
 export function getMockTrace(name: string, type: string): TraceField {
   return {
     display_id: name,
-    field_type: <any>type,
+    field_type: type as unknown as TraceField.FieldTypeEnum,
     filter_options: {
       name,
       description: "Cached field",
       searchable: true,
-      match_types: [<any>"eq"],
+      match_types: [TraceFieldOptions.MatchTypesEnum.Eq],
     },
     custom: true,
   };

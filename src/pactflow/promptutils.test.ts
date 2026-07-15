@@ -7,6 +7,7 @@ import {
 } from "./client/prompt-utils.ts";
 
 describe("Prompt Utils", () => {
+  // biome-ignore lint/security/noSecrets: descriptive test suite name, not a secret
   describe("getOADMatcherRecommendations tests", () => {
     it("returns matcher recommendations", async () => {
       const openApiSpec = {
@@ -221,6 +222,7 @@ describe("Prompt Utils", () => {
 
       const consoleErrorSpy = vi
         .spyOn(console, "error")
+        // biome-ignore lint/suspicious/noEmptyBlockStatements: intentionally swallows console.error output for this error-path test
         .mockImplementation(() => {});
 
       const result = await getOADMatcherRecommendations(

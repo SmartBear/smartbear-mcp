@@ -3,11 +3,11 @@ import type { ZodRawShape } from "zod";
 import { z } from "zod";
 import { Tool, ToolError } from "../../../common/tools.ts";
 import type { ToolParams } from "../../../common/types.ts";
-import type { BearQClient } from "../../client.ts";
+import type { BearqClient } from "../../client.ts";
 
 const inputSchema = z.object({});
 
-export class RefineAllDraftTests extends Tool<BearQClient> {
+export class RefineAllDraftTests extends Tool<BearqClient> {
   specification: ToolParams = {
     title: "Refine All Draft Tests",
     toolset: "Tasks",
@@ -22,10 +22,11 @@ export class RefineAllDraftTests extends Tool<BearQClient> {
       headers: this.client.getHeaders(),
       body: JSON.stringify({ agent: "tester", mode: "refine" }),
     });
-    if (!res.ok)
+    if (!res.ok) {
       throw new ToolError(
         `POST /tasks failed: ${res.status} ${res.statusText}`,
       );
+    }
     return {
       content: [{ type: "text", text: JSON.stringify(await res.json()) }],
     };

@@ -1,3 +1,5 @@
+// biome-ignore-all lint/style/noExcessiveLinesPerFile: registers many independent Collaborator API tools; splitting registerTools across files would obscure the mapping to the single API client and isn't warranted by this lint pass
+// biome-ignore-all lint/complexity/noExcessiveLinesPerFunction: registerTools is a flat sequence of independent `register(...)` calls, one per tool; each is simple, and splitting it up would add indirection without reducing complexity
 import { z } from "zod";
 import { getUserAgent } from "../common/info.ts";
 import { getRequestHeader } from "../common/request-context.ts";
@@ -7,6 +9,11 @@ import type {
   GetInputFunction,
   RegisterToolsFunction,
 } from "../common/types.ts";
+
+interface CollaboratorCommand {
+  command: string;
+  args: Record<string, unknown>;
+}
 
 const ConfigurationSchema = z.object({
   base_url: z.url().describe("Collaborator server base URL"),
@@ -30,10 +37,10 @@ export class CollaboratorClient implements Client {
   private username: string | undefined;
   private loginTicket: string | undefined;
 
+  // biome-ignore lint/suspicious/useAwait: must return Promise<void> to satisfy the Client interface's configure signature; this implementation has no async work to do
   async configure(
     _server: SmartBearMcpServer,
     config: z.infer<typeof ConfigurationSchema>,
-    _cache?: any,
   ): Promise<void> {
     this.baseUrl = config.base_url;
     this.username = config.username;
@@ -49,7 +56,7 @@ export class CollaboratorClient implements Client {
    * @param commands Array of Collaborator API commands (excluding authentication)
    * @returns Raw Collaborator API response
    */
-  async call(commands: any[]): Promise<any> {
+  async call(commands: CollaboratorCommand[]): Promise<unknown> {
     const url = `${this.baseUrl}/services/json/v1`;
 
     let login = this.username;
@@ -92,6 +99,7 @@ export class CollaboratorClient implements Client {
   /**
    * Registers the Collaborator API tool with the MCP server. Accepts commands (excluding authentication).
    */
+  // biome-ignore lint/suspicious/useAwait: must return Promise<void> to satisfy the Client interface's registerTools signature; registration itself is synchronous
   async registerTools(
     register: RegisterToolsFunction,
     _getInput: GetInputFunction,
@@ -110,6 +118,7 @@ export class CollaboratorClient implements Client {
         const { reviewId } = args;
         const commands = [
           {
+            // biome-ignore lint/security/noSecrets: Collaborator API command name, not a secret
             command: "ReviewService.findReviewById",
             args: { reviewId },
           },
@@ -154,13 +163,19 @@ export class CollaboratorClient implements Client {
         }),
       },
       async (args, _extra) => {
-        const commandArgs: any = {};
-        if (args.creator !== undefined) commandArgs.creator = args.creator;
-        if (args.title !== undefined) commandArgs.title = args.title;
-        if (args.templateName !== undefined)
+        const commandArgs: Record<string, unknown> = {};
+        if (args.creator !== undefined) {
+          commandArgs.creator = args.creator;
+        }
+        if (args.title !== undefined) {
+          commandArgs.title = args.title;
+        }
+        if (args.templateName !== undefined) {
           commandArgs.templateName = args.templateName;
-        if (args.accessPolicy !== undefined)
+        }
+        if (args.accessPolicy !== undefined) {
           commandArgs.accessPolicy = args.accessPolicy;
+        }
         const commands = [
           {
             command: "ReviewService.createReview",
@@ -219,12 +234,17 @@ export class CollaboratorClient implements Client {
             "reopen",
             "uncancel",
           ]),
-          args: z.record(z.string(), z.any()),
+          args: z.record(z.string(), z.unknown()),
         }),
       },
       async (params, _extra) => {
         const { action, args } = params;
-        const commands = [{ command: `ReviewService.${action}`, args }];
+        const commands: CollaboratorCommand[] = [
+          {
+            command: `ReviewService.${action}`,
+            args: args as Record<string, unknown>,
+          },
+        ];
         const result = await this.call(commands);
         return {
           content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
@@ -271,15 +291,28 @@ export class CollaboratorClient implements Client {
         }),
       },
       async (args, _extra) => {
-        const reviewArgs: any = {};
-        if (args.login !== undefined) reviewArgs.login = args.login;
-        if (args.role !== undefined) reviewArgs.role = args.role;
-        if (args.creator !== undefined) reviewArgs.creator = args.creator;
-        if (args.reviewPhase !== undefined)
+        const reviewArgs: Record<string, unknown> = {};
+        if (args.login !== undefined) {
+          reviewArgs.login = args.login;
+        }
+        if (args.role !== undefined) {
+          reviewArgs.role = args.role;
+        }
+        if (args.creator !== undefined) {
+          reviewArgs.creator = args.creator;
+        }
+        if (args.reviewPhase !== undefined) {
           reviewArgs.reviewPhase = args.reviewPhase;
-        if (args.fullInfo !== undefined) reviewArgs.fullInfo = args.fullInfo;
-        if (args.fromDate !== undefined) reviewArgs.fromDate = args.fromDate;
-        if (args.toDate !== undefined) reviewArgs.toDate = args.toDate;
+        }
+        if (args.fullInfo !== undefined) {
+          reviewArgs.fullInfo = args.fullInfo;
+        }
+        if (args.fromDate !== undefined) {
+          reviewArgs.fromDate = args.fromDate;
+        }
+        if (args.toDate !== undefined) {
+          reviewArgs.toDate = args.toDate;
+        }
         const commands = [
           {
             command: "ReviewService.getReviews",
@@ -320,8 +353,10 @@ export class CollaboratorClient implements Client {
       },
       async (args, _extra) => {
         const { token, title, config, reviewTemplateId } = args;
-        const commandArgs: any = { token, title, config };
-        if (reviewTemplateId) commandArgs.reviewTemplateId = reviewTemplateId;
+        const commandArgs: Record<string, unknown> = { token, title, config };
+        if (reviewTemplateId) {
+          commandArgs.reviewTemplateId = reviewTemplateId;
+        }
         const commands = [
           {
             command: "AdminRemoteSystemService.createIntegration",
@@ -363,10 +398,16 @@ export class CollaboratorClient implements Client {
       },
       async (args, _extra) => {
         const { id, title, config, reviewTemplateId } = args;
-        const commandArgs: any = { id };
-        if (title) commandArgs.title = title;
-        if (config) commandArgs.config = config;
-        if (reviewTemplateId) commandArgs.reviewTemplateId = reviewTemplateId;
+        const commandArgs: Record<string, unknown> = { id };
+        if (title) {
+          commandArgs.title = title;
+        }
+        if (config) {
+          commandArgs.config = config;
+        }
+        if (reviewTemplateId) {
+          commandArgs.reviewTemplateId = reviewTemplateId;
+        }
         const commands = [
           {
             command: "AdminRemoteSystemService.editIntegration",
@@ -394,12 +435,13 @@ export class CollaboratorClient implements Client {
         }),
       },
       async (args, _extra) => {
-        const commandArgs: any = {};
-        if (args.id !== undefined)
+        const commandArgs: Record<string, unknown> = {};
+        if (args.id !== undefined) {
           commandArgs.id =
             typeof args.id === "string" && !Number.isNaN(Number(args.id))
               ? Number(args.id)
               : args.id;
+        }
         const commands = [
           {
             command: "AdminRemoteSystemService.deleteIntegration",
@@ -428,12 +470,13 @@ export class CollaboratorClient implements Client {
         }),
       },
       async (args, _extra) => {
-        const commandArgs: any = {};
-        if (args.id !== undefined)
+        const commandArgs: Record<string, unknown> = {};
+        if (args.id !== undefined) {
           commandArgs.id =
             typeof args.id === "string" && !Number.isNaN(Number(args.id))
               ? Number(args.id)
               : args.id;
+        }
         const commands = [
           {
             command: "AdminRemoteSystemService.updateWebhook",
@@ -463,12 +506,13 @@ export class CollaboratorClient implements Client {
         }),
       },
       async (args, _extra) => {
-        const commandArgs: any = {};
-        if (args.id !== undefined)
+        const commandArgs: Record<string, unknown> = {};
+        if (args.id !== undefined) {
           commandArgs.id =
             typeof args.id === "string" && !Number.isNaN(Number(args.id))
               ? Number(args.id)
               : args.id;
+        }
         const commands = [
           {
             command: "AdminRemoteSystemService.testConnection",

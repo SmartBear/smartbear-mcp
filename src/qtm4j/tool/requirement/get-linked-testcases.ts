@@ -69,7 +69,7 @@ export class GetLinkedTestCasesForRequirement extends Tool<Qtm4jClient> {
       "Paginated response with total, startAt, maxResults, and data array of linked test case objects.",
   };
 
-  handle = async (rawArgs: any) => {
+  handle = async (rawArgs: unknown) => {
     const args = GetLinkedTestCasesForRequirementBody.parse(rawArgs);
     const fieldResolver = this.client.getResolverRegistry();
     const context = fieldResolver.requireProjectContext();

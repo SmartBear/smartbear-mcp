@@ -1,3 +1,4 @@
+// biome-ignore-all lint/style/noExcessiveLinesPerFile: this module cohesively covers one QMetry API area (client operations, tool definitions, or shared schema fields); splitting it would scatter closely related, frequently cross-referenced declarations
 import { QMETRY_PATHS } from "../config/rest-endpoints.ts";
 import {
   type CreateIssuePayload,
@@ -13,8 +14,9 @@ import {
   type LinkIssuesToTestcaseRunPayload,
   type UpdateIssuePayload,
 } from "../types/issues.ts";
+import type { UdfFieldDefinition } from "../types/udf.ts";
 import { qmetryRequest } from "./api/client-api.ts";
-import { resolveDefaults } from "./utils.ts";
+import { resolveDefaults, stripHtml } from "./utils.ts";
 
 /**
  * Create Defect/Issue.
@@ -52,7 +54,7 @@ export async function createIssue(
     );
   }
 
-  return qmetryRequest<unknown>({
+  return await qmetryRequest<unknown>({
     method: "POST",
     path: QMETRY_PATHS.ISSUES.CREATE_UPDATE_ISSUE,
     token,
@@ -88,7 +90,7 @@ export async function updateIssue(
     );
   }
 
-  return qmetryRequest<unknown>({
+  return await qmetryRequest<unknown>({
     method: "PUT",
     path: QMETRY_PATHS.ISSUES.CREATE_UPDATE_ISSUE,
     token,
@@ -124,7 +126,7 @@ export async function fetchIssues(
     );
   }
 
-  return qmetryRequest<unknown>({
+  return await qmetryRequest<unknown>({
     method: "POST",
     path: QMETRY_PATHS.ISSUES.GET_ISSUES_LIST,
     token,
@@ -156,11 +158,12 @@ export async function fetchIssuesLinkedToTestCase(
 
   if (typeof body.tcID !== "number") {
     throw new Error(
+      // biome-ignore lint/security/noSecrets: high-entropy false positive; this is a descriptive string (error message, parameter name, or API action name), not a credential
       "[fetchIssuesLinkedToTestCase] Missing or invalid required parameter: 'tcID'.",
     );
   }
 
-  return qmetryRequest<unknown>({
+  return await qmetryRequest<unknown>({
     method: "POST",
     path: QMETRY_PATHS.ISSUES.GET_ISSUES_LINKED_TO_TC,
     token,
@@ -176,6 +179,7 @@ export async function fetchIssuesLinkedToTestCase(
  * ALL available Test Run UDF fields, including fields with no value set (null).
  * @throws If linkedAssetId or linkedAsset.id is missing/invalid.
  */
+// biome-ignore lint/complexity/noExcessiveLinesPerFunction: resolves the linked asset, fetches executions, then fetches and merges UDF metadata into each execution row as one cohesive enrichment flow
 export async function fetchIssueExecutions(
   token: string,
   baseUrl: string,
@@ -191,8 +195,9 @@ export async function fetchIssueExecutions(
     project,
   );
 
-  const { linkedAssetId, ...rest } = payload as any;
+  const { linkedAssetId, ...rest } = payload as Record<string, unknown>;
   const resolvedLinkedAsset =
+    // biome-ignore lint/suspicious/noUnnecessaryConditions: the cast makes TS treat `linkedAsset` as always present, but at runtime `payload` may be the other union member (the `linkedAssetId`-only shape) where it is absent
     (payload as FetchIssueExecutionsPayload).linkedAsset ??
     (typeof linkedAssetId === "number"
       ? { type: "DF" as const, id: linkedAssetId }
@@ -210,7 +215,7 @@ export async function fetchIssueExecutions(
     linkedAsset: resolvedLinkedAsset,
   };
 
-  const result = await qmetryRequest<Record<string, any>>({
+  const result = await qmetryRequest<Record<string, unknown>>({
     method: "POST",
     path: QMETRY_PATHS.ISSUES.GET_ISSUE_EXECUTIONS,
     token,
@@ -234,10 +239,11 @@ export async function fetchIssueExecutions(
   }
 
   // Fetch UDF metadata once — field definitions are project-wide and identical across all executions
-  let fieldDefs: Record<string, any> = {};
+  let fieldDefs: Record<string, UdfFieldDefinition> = {};
   try {
     const meta = await qmetryRequest<{
-      qmUDF?: { TCR?: Record<string, any> };
+      // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
+      qmUDF?: { TCR?: Record<string, UdfFieldDefinition> };
     }>({
       method: "POST",
       path: QMETRY_PATHS.UDF.TEST_RUN_UDF_METADATA,
@@ -256,69 +262,44 @@ export async function fetchIssueExecutions(
   }
 
   const hasMetadata = Object.keys(fieldDefs).length > 0;
-  const rows: any[] = result.data ?? [];
+  const rows: Record<string, unknown>[] =
+    (result.data as Record<string, unknown>[] | undefined) ?? [];
 
-  const enrichedData = rows.map((row: any) => {
+  const enrichedData = rows.map((row) => {
     let rawUdfs: Record<string, unknown> = {};
     if (row.udfjson) {
       try {
-        rawUdfs = JSON.parse(row.udfjson);
+        rawUdfs = JSON.parse(row.udfjson as string);
       } catch {
         rawUdfs = {};
       }
     }
 
-    let testRunUdfs: any;
+    let testRunUdfs: unknown;
     if (hasMetadata) {
       // Show ALL project-defined UDF fields; value is null when not set on this execution
-      testRunUdfs = Object.values(fieldDefs).map((def: any) => {
-        let value: unknown = Object.hasOwn(rawUdfs, def.name)
-          ? rawUdfs[def.name]
+      testRunUdfs = Object.values(fieldDefs).map((def) => {
+        const rawValue = Object.hasOwn(rawUdfs, def.name ?? "")
+          ? rawUdfs[def.name ?? ""]
           : null;
-        // Strip HTML from rich text (LARGETEXT) field values
-        if (typeof value === "string" && /<[^>]+>/.test(value)) {
-          value = value
-            .replace(/<[^>]*>/g, " ")
-            .replace(/&(nbsp|amp|lt|gt|quot);/g, (_, entity) => {
-              if (entity === "nbsp") return " ";
-              if (entity === "amp") return "&";
-              if (entity === "lt") return "<";
-              if (entity === "gt") return ">";
-              if (entity === "quot") return '"';
-              return `&${entity};`;
-            })
-            .replace(/\s+/g, " ")
-            .trim();
-        }
+        const value =
+          typeof rawValue === "string" ? stripHtml(rawValue) : rawValue;
         return {
-          name: def.name as string,
-          label: def.fieldLabel as string,
-          fieldID: def.projectUserFieldID as number,
-          fieldType: def.fieldTypeName as string,
+          name: def.name,
+          label: def.fieldLabel,
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
+          fieldID: def.projectUserFieldID,
+          fieldType: def.fieldTypeName,
           value,
         };
       });
     } else {
       // Fallback: metadata unavailable — parse udfjson keys directly
       testRunUdfs = Object.fromEntries(
-        Object.entries(rawUdfs).map(([key, val]) => {
-          if (typeof val === "string" && /<[^>]+>/.test(val)) {
-            const text = val
-              .replace(/<[^>]*>/g, " ")
-              .replace(/&(nbsp|amp|lt|gt|quot);/g, (_, entity) => {
-                if (entity === "nbsp") return " ";
-                if (entity === "amp") return "&";
-                if (entity === "lt") return "<";
-                if (entity === "gt") return ">";
-                if (entity === "quot") return '"';
-                return `&${entity};`;
-              })
-              .replace(/\s+/g, " ")
-              .trim();
-            return [key, text];
-          }
-          return [key, val];
-        }),
+        Object.entries(rawUdfs).map(([key, val]) => [
+          key,
+          typeof val === "string" ? stripHtml(val) : val,
+        ]),
       );
     }
 
@@ -364,7 +345,7 @@ export async function linkIssuesToTestcaseRun(
     );
   }
 
-  return qmetryRequest<unknown>({
+  return await qmetryRequest<unknown>({
     method: "PUT",
     path: QMETRY_PATHS.ISSUES.LINK_ISSUES_TO_TESTCASE_RUN,
     token,

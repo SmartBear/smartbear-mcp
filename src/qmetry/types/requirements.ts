@@ -34,6 +34,7 @@ export interface FetchRequirementDetailsPayload {
 export interface FetchRequirementsLinkedToTestCasePayload
   extends PaginationPayload,
     FilterPayload {
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tcID: number; // required - Test Case numeric ID
   getLinked?: boolean; // true to get linked requirements, false to get unlinked
   rqFolderPath?: string; // folder path for requirements

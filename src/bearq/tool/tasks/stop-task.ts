@@ -3,13 +3,13 @@ import type { ZodRawShape } from "zod";
 import { z } from "zod";
 import { Tool, ToolError } from "../../../common/tools.ts";
 import type { ToolParams } from "../../../common/types.ts";
-import type { BearQClient } from "../../client.ts";
+import type { BearqClient } from "../../client.ts";
 
 const inputSchema = z.object({
   taskId: z.number().int().positive().describe("BearQ task ID to cancel."),
 });
 
-export class StopTask extends Tool<BearQClient> {
+export class StopTask extends Tool<BearqClient> {
   specification: ToolParams = {
     title: "Stop Task",
     toolset: "Tasks",
@@ -23,10 +23,11 @@ export class StopTask extends Tool<BearQClient> {
       method: "DELETE",
       headers: this.client.getHeaders(),
     });
-    if (!res.ok)
+    if (!res.ok) {
       throw new ToolError(
         `DELETE /tasks/${taskId} failed: ${res.status} ${res.statusText}`,
       );
+    }
     return {
       content: [{ type: "text", text: JSON.stringify(await res.json()) }],
     };

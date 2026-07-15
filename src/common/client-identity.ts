@@ -1,6 +1,13 @@
 import { getRequestContext } from "./request-context.ts";
 
 /**
+ * Process-wide fallback identity, used by stdio transport where there is a
+ * single connection for the process lifetime and no per-request AsyncLocalStorage
+ * context. Safe because stdio handles exactly one client.
+ */
+let processClientIdentity: McpClientIdentity | undefined;
+
+/**
  * Client identity captured from the MCP `initialize` handshake.
  *
  * `clientInfo` is protocol-guaranteed for conforming clients but self-reported:
@@ -29,13 +36,6 @@ export function toClientIdentity(
     protocolVersion,
   };
 }
-
-/**
- * Process-wide fallback identity, used by stdio transport where there is a
- * single connection for the process lifetime and no per-request AsyncLocalStorage
- * context. Safe because stdio handles exactly one client.
- */
-let processClientIdentity: McpClientIdentity | undefined;
 
 /** Set (or clear) the process-wide client identity (stdio transport). */
 export function setProcessClientIdentity(

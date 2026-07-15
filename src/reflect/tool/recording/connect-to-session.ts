@@ -1,11 +1,10 @@
-import { randomUUID } from "node:crypto";
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ZodRawShape } from "zod";
 import { z } from "zod";
 import { Tool, ToolError } from "../../../common/tools.ts";
 import type { ToolParams } from "../../../common/types.ts";
 import type { ReflectClient } from "../../client.ts";
-import type { MCPConnectToSessionSuccessResponse } from "../../types/mcp.ts";
+import type { McpConnectToSessionSuccessResponse } from "../../types/mcp.ts";
 import { WebSocketManager } from "../../websocket-manager.ts";
 
 export class ConnectToSession extends Tool<ReflectClient> {
@@ -32,22 +31,36 @@ export class ConnectToSession extends Tool<ReflectClient> {
 
   handle: ToolCallback<ZodRawShape> = async (args, extra) => {
     const { sessionId } = args as { sessionId: string };
-    if (!sessionId) throw new ToolError("sessionId argument is required");
-
-    if (this.client.isSessionConnected(sessionId)) {
-      const state = this.client.getSessionState(sessionId);
-      if (!state) throw new ToolError("Failed to get session state");
-      const { platform, test } = state;
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify({ success: true, sessionId, platform, test }),
-          },
-        ],
-      };
+    if (!sessionId) {
+      throw new ToolError("sessionId argument is required");
     }
 
+    if (this.client.isSessionConnected(sessionId)) {
+      return this.buildExistingSessionResult(sessionId);
+    }
+
+    // This identifies the MCP session, rather than the Reflect recording session.
+    // There can be multiple MCP sessions if we're running in HTTP mode.
+    return await this.connectNewSession(sessionId, extra?.sessionId);
+  };
+
+  private buildExistingSessionResult(sessionId: string) {
+    const state = this.client.getSessionState(sessionId);
+    if (!state) {
+      throw new ToolError("Failed to get session state");
+    }
+    const { platform, test } = state;
+    return {
+      content: [
+        {
+          type: "text" as const,
+          text: JSON.stringify({ success: true, sessionId, platform, test }),
+        },
+      ],
+    };
+  }
+
+  private async connectNewSession(sessionId: string, mcpSessionId?: string) {
     const wsManager = new WebSocketManager(
       sessionId,
       this.client.getAuthHeader(),
@@ -58,29 +71,12 @@ export class ConnectToSession extends Tool<ReflectClient> {
     } catch (error) {
       throw new ToolError(
         `Failed to connect to session: ${(error as Error).message}`,
+        { cause: error },
       );
     }
 
-    const connectId = randomUUID();
-    let connectResponse: MCPConnectToSessionSuccessResponse;
-    try {
-      const connectResponsePromise = wsManager.waitForResponse(connectId);
-      await wsManager.sendMcpMessage({
-        type: "mcp:connect-to-session",
-        id: connectId,
-      });
-      connectResponse =
-        (await connectResponsePromise) as MCPConnectToSessionSuccessResponse;
-    } catch (connectError) {
-      await wsManager.disconnect();
-      throw new ToolError(
-        `MCP connect-to-session failed: ${connectError instanceof Error ? connectError.message : String(connectError)}`,
-      );
-    }
+    const connectResponse = await this.performConnectHandshake(wsManager);
 
-    // This identifies the MCP session, rather than the Reflect recording session.
-    // There can be multiple MCP sessions if we're running in HTTP mode.
-    const mcpSessionId = extra?.sessionId;
     const { platform, test } = connectResponse;
     this.client.registerConnection(
       sessionId,
@@ -92,10 +88,30 @@ export class ConnectToSession extends Tool<ReflectClient> {
     return {
       content: [
         {
-          type: "text",
+          type: "text" as const,
           text: JSON.stringify({ success: true, sessionId, platform, test }),
         },
       ],
     };
-  };
+  }
+
+  private async performConnectHandshake(
+    wsManager: WebSocketManager,
+  ): Promise<McpConnectToSessionSuccessResponse> {
+    const connectId = globalThis.crypto.randomUUID();
+    try {
+      const connectResponsePromise = wsManager.waitForResponse(connectId);
+      await wsManager.sendMcpMessage({
+        type: "mcp:connect-to-session",
+        id: connectId,
+      });
+      return (await connectResponsePromise) as McpConnectToSessionSuccessResponse;
+    } catch (connectError) {
+      await wsManager.disconnect();
+      throw new ToolError(
+        `MCP connect-to-session failed: ${connectError instanceof Error ? connectError.message : String(connectError)}`,
+        { cause: connectError },
+      );
+    }
+  }
 }

@@ -4,7 +4,7 @@ import { Tool } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { ZephyrClient } from "../../client";
 import {
-  type GetTestCase200Response,
+  GetTestCase200Response,
   UpdateTestCaseBody,
   UpdateTestCaseParams,
 } from "../../common/rest-api-schemas";
@@ -97,7 +97,7 @@ export class UpdateTestCase extends Tool<ZephyrClient> {
 
     const { testCaseKey, ...rawUpdates } = parsed;
 
-    const nullValuesObject: Record<string, any> = {};
+    const nullValuesObject: Record<string, unknown> = {};
 
     if (rawUpdates.folder) {
       //do nothing when null or undefined
@@ -121,7 +121,9 @@ export class UpdateTestCase extends Tool<ZephyrClient> {
     // This is necessary because Zephyr's PUT endpoints requires the complete resource
     // and will delete any properties that are not included in the request
     const existingTestCase: zod.infer<typeof GetTestCase200Response> =
-      await this.client.getApiClient().get(`/testcases/${testCaseKey}`);
+      GetTestCase200Response.parse(
+        await this.client.getApiClient().get(`/testcases/${testCaseKey}`),
+      );
 
     // Deep merge the updates with the existing test case
     // For nested objects like customFields, we merge instead of replacing

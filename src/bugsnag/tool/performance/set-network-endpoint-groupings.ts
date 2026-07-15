@@ -6,6 +6,9 @@ import type { ToolParams } from "../../../common/types.ts";
 import type { BugsnagClient } from "../../client.ts";
 import { toolInputParameters } from "../../input-schemas.ts";
 
+const HTTP_STATUS_OK = 200;
+const HTTP_STATUS_NO_CONTENT = 204;
+
 const inputSchema = z.object({
   projectId: toolInputParameters.projectId,
   endpoints: z
@@ -72,6 +75,7 @@ export class SetNetworkEndpointGroupings extends Tool<BugsnagClient> {
     hints: [
       "Use Get Network Grouping first to see current patterns",
       "Use OpenAPI path templating with curly braces for path parameters: /users/{userId}, /orders/{orderId}/items/{itemId}",
+      // biome-ignore lint/security/noSecrets: documentation hint text, not a secret
       "Convert colon-prefixed parameters to curly braces: :organizationSlug becomes {organizationSlug}, :projectSlug becomes {projectSlug}",
       "Wildcards (*) can be used in domains to match subdomains: https://*.example.com/api",
       "This replaces all existing patterns - include all patterns you want to keep",
@@ -94,7 +98,9 @@ export class SetNetworkEndpointGroupings extends Tool<BugsnagClient> {
         {
           type: "text",
           text: JSON.stringify({
-            success: result.status === 200 || result.status === 204,
+            success:
+              result.status === HTTP_STATUS_OK ||
+              result.status === HTTP_STATUS_NO_CONTENT,
             projectId: project.id,
             endpoints: params.endpoints,
           }),

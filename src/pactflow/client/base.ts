@@ -1,8 +1,38 @@
+// biome-ignore-all lint/style/noExcessiveLinesPerFile: single cohesive module of Pact Broker/PactFlow zod schemas and their inferred types; splitting would separate each schema from its paired type and hurt readability.
 import { z } from "zod";
+
+// MARK: Constants
+
+/** Maximum number of matrix results returned by a single Matrix query. */
+const MAX_MATRIX_LIMIT = 1000;
+/** Default number of matrix results returned when no limit is specified. */
+const DEFAULT_MATRIX_LIMIT = 100;
+/** Maximum number of audit log results returned per page. */
+const MAX_AUDIT_PAGE_SIZE = 100;
+
+const WebhookRequestSchema = z.object({
+  method: z.literal("POST").describe("HTTP method (must be POST)"),
+  url: z.string().url().describe("URL to send the webhook request to"),
+  body: z.any().optional().describe("Request body to send"),
+  headers: z
+    .record(z.string(), z.string())
+    .optional()
+    .describe("HTTP headers to include"),
+  username: z.string().optional().describe("Username for basic auth"),
+  password: z.string().optional().describe("Password for basic auth"),
+});
+
+const WebhookEventSchema = z.object({
+  name: z
+    .string()
+    .describe(
+      "Event name (e.g. 'contract_content_changed', 'provider_verification_published')",
+    ),
+});
 
 export interface ProviderState {
   name: string;
-  params?: Record<string, any> | null;
+  params?: Record<string, unknown> | null;
   consumers: string[];
 }
 
@@ -10,7 +40,7 @@ export interface ProviderStatesResponse {
   providerStates: ProviderState[];
 }
 
-export const CanIDeploySchema = z.object({
+export const CanIdeploySchema = z.object({
   pacticipant: z
     .string()
     .describe(
@@ -28,12 +58,12 @@ export const CanIDeploySchema = z.object({
     ),
 });
 
-export interface CanIDeployResponse {
+export interface CanIdeployResponse {
   matrix: Array<{
-    consumer: Record<string, any>;
-    pact: Record<string, any>;
-    provider: Record<string, any>;
-    verificationResult: Record<string, any>;
+    consumer: Record<string, unknown>;
+    pact: Record<string, unknown>;
+    provider: Record<string, unknown>;
+    verificationResult: Record<string, unknown>;
   }>;
   notices: Array<{
     text: string;
@@ -58,8 +88,8 @@ export const MatrixSchema = z.object({
   limit: z
     .number()
     .min(1)
-    .max(1000)
-    .default(100)
+    .max(MAX_MATRIX_LIMIT)
+    .default(DEFAULT_MATRIX_LIMIT)
     .optional()
     .describe(
       "The limit on the number of results to return (1-1000, default: 100)",
@@ -107,14 +137,14 @@ export const MatrixSchema = z.object({
 
 export interface MatrixResponse {
   matrix: Array<{
-    consumer: Record<string, any> | null;
-    pact: Record<string, any> | null;
-    provider: Record<string, any> | null;
-    verificationResult: Record<string, any> | null;
+    consumer: Record<string, unknown> | null;
+    pact: Record<string, unknown> | null;
+    provider: Record<string, unknown> | null;
+    verificationResult: Record<string, unknown> | null;
   }>;
   notices: Array<{
     text: string | null;
-    type: Record<string, any> | null;
+    type: Record<string, unknown> | null;
   }>;
   summary: {
     deployable: boolean; // The property that indicates whether or not the pacticipant version is safe to deploy.
@@ -125,7 +155,7 @@ export interface MatrixResponse {
   };
 }
 
-export type CanIDeployInput = z.infer<typeof CanIDeploySchema>;
+export type CanIdeployInput = z.infer<typeof CanIdeploySchema>;
 export type MatrixInput = z.infer<typeof MatrixSchema>;
 
 export const GetPacticipantSchema = z.object({
@@ -493,25 +523,6 @@ export const DeleteIntegrationSchema = z.object({
   consumerName: z.string().describe("Name of the consumer"),
 });
 export type DeleteIntegrationInput = z.infer<typeof DeleteIntegrationSchema>;
-const WebhookRequestSchema = z.object({
-  method: z.literal("POST").describe("HTTP method (must be POST)"),
-  url: z.string().url().describe("URL to send the webhook request to"),
-  body: z.any().optional().describe("Request body to send"),
-  headers: z
-    .record(z.string(), z.string())
-    .optional()
-    .describe("HTTP headers to include"),
-  username: z.string().optional().describe("Username for basic auth"),
-  password: z.string().optional().describe("Password for basic auth"),
-});
-
-const WebhookEventSchema = z.object({
-  name: z
-    .string()
-    .describe(
-      "Event name (e.g. 'contract_content_changed', 'provider_verification_published')",
-    ),
-});
 
 export const CreateWebhookSchema = z.object({
   description: z.string().describe("Human-readable description of the webhook"),
@@ -637,7 +648,7 @@ export const AuditSchema = z.object({
     .number()
     .int()
     .min(1)
-    .max(100)
+    .max(MAX_AUDIT_PAGE_SIZE)
     .optional()
     .describe("Results per page (max 100)"),
 });
@@ -869,32 +880,33 @@ export type GetPacticipantNetworkInput = z.infer<
   typeof GetPacticipantNetworkSchema
 >;
 
-interface CountMetric {
+export interface CountMetric {
   count: number;
 }
 
-interface CountWithDateRangeMetric {
+export interface CountWithDateRangeMetric {
   count: number;
   first: string | null;
   last: string | null;
 }
 
-interface CountWithSuccessFailureMetric extends CountWithDateRangeMetric {
+export interface CountWithSuccessFailureMetric
+  extends CountWithDateRangeMetric {
   successCount: number;
   failureCount: number;
 }
 
-interface DeployedVersionsMetric {
+export interface DeployedVersionsMetric {
   count: number;
   currentlyDeployedCount: number;
 }
 
-interface ReleasedVersionsMetric {
+export interface ReleasedVersionsMetric {
   count: number;
   currentlySupportedCount: number;
 }
 
-interface UsersMetric {
+export interface UsersMetric {
   activeRegularCount: number;
   activeSystemCount: number;
 }

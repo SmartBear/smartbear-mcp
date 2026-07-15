@@ -4,7 +4,7 @@ import { Tool } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { ZephyrClient } from "../../client";
 import {
-  type GetTestCycle200Response,
+  GetTestCycle200Response,
   UpdateTestCycleBody,
   UpdateTestCycleParams,
 } from "../../common/rest-api-schemas";
@@ -97,7 +97,7 @@ export class UpdateTestCycle extends Tool<ZephyrClient> {
     ).parse(args);
 
     const { testCycleIdOrKey, ...rawUpdates } = parsed;
-    const nullValuesObject: Record<string, any> = {};
+    const nullValuesObject: Record<string, unknown> = {};
 
     if (rawUpdates.folder) {
       //do nothing when null or undefined
@@ -125,7 +125,9 @@ export class UpdateTestCycle extends Tool<ZephyrClient> {
     // Fetch the existing test cycle to ensure we have all properties.
     // Zephyr's PUT endpoints require the complete resource and clear unspecified fields.
     const existingTestCycle: zod.infer<typeof GetTestCycle200Response> =
-      await this.client.getApiClient().get(`/testcycles/${testCycleIdOrKey}`);
+      GetTestCycle200Response.parse(
+        await this.client.getApiClient().get(`/testcycles/${testCycleIdOrKey}`),
+      );
 
     // Merge updates into the existing resource so unspecified fields remain unchanged.
     const mergedBody = deepMerge(existingTestCycle, updates);

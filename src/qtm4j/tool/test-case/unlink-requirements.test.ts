@@ -1,15 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ToolError } from "../../../common/tools.ts";
+import type { Qtm4jClient } from "../../client.ts";
 import { ENDPOINTS } from "../../config/constants.ts";
 import { ResolverKeys } from "../../config/field-resolution.types.ts";
 import { UnlinkRequirements } from "./unlink-requirements.ts";
 
+type MockMethods = Record<string, ReturnType<typeof vi.fn>>;
+
 describe("UnlinkRequirements", () => {
-  let mockClient: any;
-  let mockApiClient: any;
-  let mockRegistry: any;
-  let mockTcResolver: any;
-  let mockReqResolver: any;
+  let mockClient: Partial<Qtm4jClient>;
+  let mockApiClient: MockMethods;
+  let mockRegistry: MockMethods;
+  let mockTcResolver: MockMethods;
+  let mockReqResolver: MockMethods;
   let instance: UnlinkRequirements;
 
   const mockContext = {
@@ -27,10 +30,12 @@ describe("UnlinkRequirements", () => {
     mockRegistry = {
       requireProjectContext: vi.fn().mockReturnValue(mockContext),
       getResolver: vi.fn().mockImplementation((key: string) => {
-        if (key === ResolverKeys.SearchableField.TEST_CASE_KEY_TO_UID)
+        if (key === ResolverKeys.SearchableField.TEST_CASE_KEY_TO_UID) {
           return mockTcResolver;
-        if (key === ResolverKeys.SearchableField.REQUIREMENT_KEY_TO_ID)
+        }
+        if (key === ResolverKeys.SearchableField.REQUIREMENT_KEY_TO_ID) {
           return mockReqResolver;
+        }
         throw new Error(`Unexpected resolver key: ${key}`);
       }),
     };
@@ -41,7 +46,7 @@ describe("UnlinkRequirements", () => {
       getResolverRegistry: vi.fn().mockReturnValue(mockRegistry),
     };
 
-    instance = new UnlinkRequirements(mockClient as any);
+    instance = new UnlinkRequirements(mockClient as Qtm4jClient);
   });
 
   describe("specification", () => {

@@ -1,3 +1,5 @@
+// biome-ignore-all lint/style/noExcessiveLinesPerFile: this module cohesively covers one QMetry API area (client operations, tool definitions, or shared schema fields); splitting it would scatter closely related, frequently cross-referenced declarations
+// biome-ignore-all lint/security/noSecrets: this file contains many high-entropy API action-name / wire-format / fixture string constants that trip the noSecrets entropy heuristic; none are real secrets
 import { UDF_FIELD_TYPES, UDF_MODULES } from "../config/constants.ts";
 import { QMETRY_PATHS } from "../config/rest-endpoints.ts";
 import type {
@@ -5,26 +7,24 @@ import type {
   FetchCascadeChildValuesPayload,
   FetchTestRunUdfMetadataPayload,
   FetchTestRunUdfValuesPayload,
+  UdfFieldDefinition,
+  UdfFieldValue,
 } from "../types/udf.ts";
 import { qmetryRequest } from "./api/client-api.ts";
-import { resolveDefaults } from "./utils.ts";
+import { resolveDefaults, stripHtml } from "./utils.ts";
+
+// MARK: Pagination defaults
+const DEFAULT_PAGE = 1;
+const DEFAULT_PAGE_SIZE = 50;
 
 type TestRunUdfSourceContext = NonNullable<
   FetchTestRunUdfValuesPayload["sourceContext"]
 >;
 
-type UdfFieldDefinition = {
-  name?: string;
-  fieldLabel?: string;
-  projectUserFieldID?: number;
-  fieldTypeName?: string;
-  qmListName?: string;
-};
-
-type DisplayColumn = {
+interface DisplayColumn {
   header: string;
   fields: string[];
-};
+}
 
 const TEST_RUN_UDF_DISPLAY_COLUMNS: Record<
   TestRunUdfSourceContext,
@@ -67,23 +67,7 @@ const TEST_RUN_UDF_DISPLAY_COLUMNS: Record<
   ],
 };
 
-function stripHtml(value: string) {
-  if (!/<[^>]+>/.test(value)) return value;
-  return value
-    .replace(/<[^>]*>/g, " ")
-    .replace(/&(nbsp|amp|lt|gt|quot);/g, (_, entity) => {
-      if (entity === "nbsp") return " ";
-      if (entity === "amp") return "&";
-      if (entity === "lt") return "<";
-      if (entity === "gt") return ">";
-      if (entity === "quot") return '"';
-      return `&${entity};`;
-    })
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function readFirstAvailable(row: Record<string, any>, fields: string[]) {
+function readFirstAvailable(row: Record<string, unknown>, fields: string[]) {
   for (const field of fields) {
     if (Object.hasOwn(row, field) && row[field] !== null && row[field] !== "") {
       return row[field];
@@ -93,8 +77,12 @@ function readFirstAvailable(row: Record<string, any>, fields: string[]) {
 }
 
 function formatTableValue(value: unknown): string {
-  if (value === null || value === undefined || value === "") return "-";
-  if (Array.isArray(value)) return value.length ? value.join(", ") : "-";
+  if (value === null || value === undefined || value === "") {
+    return "-";
+  }
+  if (Array.isArray(value)) {
+    return value.length > 0 ? value.join(", ") : "-";
+  }
   if (typeof value === "object") {
     const objectValue = value as Record<string, unknown>;
     if ("parent" in objectValue || "child" in objectValue) {
@@ -107,20 +95,23 @@ function formatTableValue(value: unknown): string {
   return String(value);
 }
 
-function parseRawUdfs(row: Record<string, any>): Record<string, unknown> {
+function parseRawUdfs(row: Record<string, unknown>): Record<string, unknown> {
   if (Array.isArray(row.testRunUdfs)) {
     return Object.fromEntries(
-      row.testRunUdfs.map((udf: any) => [udf.name, udf.value]),
+      (row.testRunUdfs as Record<string, unknown>[]).map((udf) => [
+        udf.name,
+        udf.value,
+      ]),
     );
   }
 
   if (row.testRunUdfs && typeof row.testRunUdfs === "object") {
-    return row.testRunUdfs;
+    return row.testRunUdfs as Record<string, unknown>;
   }
 
   if (row.udfjson) {
     try {
-      return JSON.parse(row.udfjson);
+      return JSON.parse(row.udfjson as string);
     } catch {
       return {};
     }
@@ -130,13 +121,15 @@ function parseRawUdfs(row: Record<string, any>): Record<string, unknown> {
 }
 
 function enrichUdfsForRow(
-  row: Record<string, any>,
+  row: Record<string, unknown>,
   fieldDefs: Record<string, UdfFieldDefinition>,
 ) {
   const rawUdfs = parseRawUdfs(row);
   const hasMetadata = Object.keys(fieldDefs).length > 0;
 
-  if (!hasMetadata && Array.isArray(row.testRunUdfs)) return row.testRunUdfs;
+  if (!hasMetadata && Array.isArray(row.testRunUdfs)) {
+    return row.testRunUdfs;
+  }
 
   if (hasMetadata) {
     return Object.values(fieldDefs).map((def) => {
@@ -149,6 +142,7 @@ function enrichUdfsForRow(
       return {
         name: fieldName,
         label: def.fieldLabel ?? fieldName,
+        // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
         fieldID: def.projectUserFieldID ?? null,
         fieldType: def.fieldTypeName ?? "UNKNOWN",
         value,
@@ -159,6 +153,7 @@ function enrichUdfsForRow(
   return Object.entries(rawUdfs).map(([name, rawValue]) => ({
     name,
     label: name,
+    // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
     fieldID: null,
     fieldType: "UNKNOWN",
     value: typeof rawValue === "string" ? stripHtml(rawValue) : rawValue,
@@ -166,7 +161,7 @@ function enrichUdfsForRow(
 }
 
 function buildUnifiedTableRows(
-  rows: any[],
+  rows: Record<string, unknown>[],
   sourceContext: TestRunUdfSourceContext,
 ) {
   const contextColumns = TEST_RUN_UDF_DISPLAY_COLUMNS[sourceContext];
@@ -179,8 +174,11 @@ function buildUnifiedTableRows(
       );
     }
 
-    for (const udf of row.testRunUdfs ?? []) {
-      tableRow[udf.label ?? udf.name] = formatTableValue(udf.value);
+    const testRunUdfs =
+      (row.testRunUdfs as Record<string, unknown>[] | undefined) ?? [];
+    for (const udf of testRunUdfs) {
+      const key = (udf.label ?? udf.name) as string;
+      tableRow[key] = formatTableValue(udf.value);
     }
 
     return tableRow;
@@ -209,6 +207,7 @@ export async function bulkUpdateTestRunUdfs(
   }
 
   if (
+    // biome-ignore lint/suspicious/noUnnecessaryConditions: UDF is declared as required, but MCP tool callers are not statically type-checked, so this guards against it being missing at runtime
     !payload.UDF ||
     typeof payload.UDF !== "object" ||
     Object.keys(payload.UDF).length === 0
@@ -219,9 +218,10 @@ export async function bulkUpdateTestRunUdfs(
   }
 
   // Apply default multiSelectAction for all UDF field entries
-  const normalizedUdf: Record<string, any> = {};
+  const normalizedUdf: Record<string, UdfFieldValue> = {};
   for (const [fieldName, fieldEntry] of Object.entries(payload.UDF)) {
-    const entry: Record<string, any> = {
+    const entry: UdfFieldValue = {
+      // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
       fieldID: fieldEntry.fieldID,
       value: fieldEntry.value,
     };
@@ -232,11 +232,12 @@ export async function bulkUpdateTestRunUdfs(
   }
 
   const body = {
+    // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
     tcRunIDs: payload.tcRunIDs,
     UDF: normalizedUdf,
   };
 
-  return qmetryRequest<unknown>({
+  return await qmetryRequest<unknown>({
     method: "PUT",
     path: QMETRY_PATHS.UDF.BULK_UPDATE_TEST_RUN_UDFS,
     token,
@@ -254,6 +255,7 @@ export async function bulkUpdateTestRunUdfs(
  * Response is an object keyed by the parent item name, containing an array of child items.
  * Normalizes the response into a flat { parentName, children } shape for easy LLM consumption.
  */
+// biome-ignore lint/complexity/noExcessiveLinesPerFunction: fetches raw cascade data and normalizes the parent-keyed response into a flat shape as one cohesive transformation
 export async function fetchCascadeChildValues(
   token: string,
   baseUrl: string,
@@ -307,7 +309,7 @@ export async function fetchCascadeChildValues(
       parentId: payload.id,
       parentName: null,
       children: [],
-      _note: "No child values found for this parent cascade item.",
+      note: "No child values found for this parent cascade item.",
     };
   }
 
@@ -321,7 +323,7 @@ export async function fetchCascadeChildValues(
       uniqueLabel: c.uniqueLabel,
       isArchived: c.isArchived,
     })),
-    _note:
+    note:
       "Use 'id' from 'children' as the 'child' value in the CASCADINGLIST update: " +
       "{ parent: <parentId>, child: <children[].id> }",
   };
@@ -332,10 +334,12 @@ export async function fetchCascadeChildValues(
  * Uses the built-in constant as the source of truth.
  * If the API returns new field types not present in the constant, merges them in.
  */
+// biome-ignore lint/suspicious/useAwait: must match the Promise<any>-returning QmetryHandler signature used by every entry in QMETRY_HANDLER_MAP
 export async function fetchUdfFieldTypes() {
   return [...UDF_FIELD_TYPES];
 }
 
+// biome-ignore lint/suspicious/useAwait: must match the Promise<any>-returning QmetryHandler signature used by every entry in QMETRY_HANDLER_MAP
 export async function fetchUdfModules() {
   return [...UDF_MODULES];
 }
@@ -361,9 +365,12 @@ export async function fetchTestRunUdfMetadata(
   );
 
   const raw = await qmetryRequest<{
-    qmUDF?: { TCR?: Record<string, any> };
-    qmUDFList?: Record<string, any[]>;
-    qmSDF?: Record<string, any>;
+    // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
+    qmUDF?: { TCR?: Record<string, UdfFieldDefinition> };
+    // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
+    qmUDFList?: Record<string, unknown[]>;
+    // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
+    qmSDF?: Record<string, unknown>;
   }>({
     method: "POST",
     path: QMETRY_PATHS.UDF.TEST_RUN_UDF_METADATA,
@@ -383,19 +390,21 @@ export async function fetchTestRunUdfMetadata(
   const tcrFields = raw.qmUDF?.TCR ?? {};
   const fields = Object.entries(tcrFields).map(([key, def]) => ({
     fieldKey: key, // e.g. "FLD.planned_execution_date"
+    // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
     fieldID: def.projectUserFieldID as number, // use as fieldID in bulk update
     name: def.name as string,
     label: def.fieldLabel as string,
     fieldType: def.fieldTypeName as string,
     allowBlank: def.allowBlank as boolean,
     ...(def.qmListName ? { listName: def.qmListName as string } : {}),
+    // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
     ...(def.listMasterID ? { listMasterID: def.listMasterID as number } : {}),
   }));
 
   return {
     fields,
     lookupOptions: raw.qmUDFList ?? {},
-    _note:
+    note:
       "Use 'fieldID' (projectUserFieldID) when calling 'Bulk Update Test Run UDFs'. " +
       "For LOOKUPLIST/MULTILOOKUPLIST/CASCADINGLIST fields, use IDs from 'lookupOptions' as the value.",
   };
@@ -410,6 +419,8 @@ export async function fetchTestRunUdfMetadata(
  *    and enriches each run's UDF values with field label and type information.
  * @throws If tsrunID or viewId are missing.
  */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: validates inputs, fetches test case runs, conditionally fetches and merges UDF metadata, and builds unified table rows — steps are sequential and interdependent
+// biome-ignore lint/complexity/noExcessiveLinesPerFunction: see above — one cohesive multi-step enrichment flow documented in the function's own comment
 export async function fetchTestRunUdfValues(
   token: string,
   baseUrl: string,
@@ -443,37 +454,40 @@ export async function fetchTestRunUdfValues(
   const usingSourceRows =
     Array.isArray(payload.sourceRows) && payload.sourceRows.length > 0;
 
-  const runsResponse = usingSourceRows
-    ? {
-        data: payload.sourceRows,
-        hasTcRunUdf: true,
-        total: payload.sourceRows?.length ?? 0,
-      }
-    : await qmetryRequest<Record<string, any>>({
-        method: "POST",
-        path: QMETRY_PATHS.TESTSUITE.GET_TESTCASE_RUNS_BY_TESTSUITE_RUN,
-        token,
-        project: resolvedProject,
-        baseUrl: resolvedBaseUrl,
-        body: {
-          tsrunID: payload.tsrunID,
-          viewId: payload.viewId,
-          start: payload.startIndex ?? 0,
-          page: 1,
-          limit: payload.size ?? 50,
-        },
-        scopeId: payload.scopeId,
-        orgCode: payload.orgCode,
-      });
+  const runsResponse =
+    usingSourceRows && Array.isArray(payload.sourceRows)
+      ? {
+          data: payload.sourceRows,
+          hasTcRunUdf: true,
+          total: payload.sourceRows.length,
+        }
+      : await qmetryRequest<Record<string, unknown>>({
+          method: "POST",
+          path: QMETRY_PATHS.TESTSUITE.GET_TESTCASE_RUNS_BY_TESTSUITE_RUN,
+          token,
+          project: resolvedProject,
+          baseUrl: resolvedBaseUrl,
+          body: {
+            // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
+            tsrunID: payload.tsrunID,
+            viewId: payload.viewId,
+            start: payload.startIndex ?? 0,
+            page: DEFAULT_PAGE,
+            limit: payload.size ?? DEFAULT_PAGE_SIZE,
+          },
+          scopeId: payload.scopeId,
+          orgCode: payload.orgCode,
+        });
 
   // Step 2: check hasTcRunUdf flag
   if (runsResponse.hasTcRunUdf === false) {
     return {
+      // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
       tsRunID: payload.tsrunID,
       hasTcRunUdf: false,
       total: runsResponse.total ?? 0,
       runs: [],
-      _note:
+      note:
         "No Test Run UDFs are configured for this project. " +
         "A project administrator must define Test Run UDF fields before values can be fetched.",
     };
@@ -481,11 +495,13 @@ export async function fetchTestRunUdfValues(
 
   // Step 3: fetch UDF metadata to enrich values
   let fieldDefs: Record<string, UdfFieldDefinition> = {};
-  let lookupOptions: Record<string, any[]> = {};
+  let lookupOptions: Record<string, unknown[]> = {};
   try {
     const meta = await qmetryRequest<{
+      // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
       qmUDF?: { TCR?: Record<string, UdfFieldDefinition> };
-      qmUDFList?: Record<string, any[]>;
+      // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
+      qmUDFList?: Record<string, unknown[]>;
     }>({
       method: "POST",
       path: QMETRY_PATHS.UDF.TEST_RUN_UDF_METADATA,
@@ -509,8 +525,9 @@ export async function fetchTestRunUdfValues(
   // Step 4: extract and enrich UDF values from each run
   // When metadata is available, ALL project-defined UDF fields are included (null for unset fields).
   // This ensures every run shows the full set of available UDF fields, not just those with values.
-  const rows: any[] = runsResponse.data ?? [];
-  const runs = rows.map((row: any) => {
+  const rows: Record<string, unknown>[] =
+    (runsResponse.data as Record<string, unknown>[] | undefined) ?? [];
+  const runs = rows.map((row) => {
     const { udfjson: _udfjson, ...rowWithoutRawUdfJson } = row;
     const enrichedUdfs = enrichUdfsForRow(row, fieldDefs);
 
@@ -525,6 +542,7 @@ export async function fetchTestRunUdfValues(
   );
 
   return {
+    // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
     tsRunID: payload.tsrunID,
     sourceContext,
     hasTcRunUdf: runsResponse.hasTcRunUdf ?? true,
@@ -535,7 +553,8 @@ export async function fetchTestRunUdfValues(
     udfColumns,
     unifiedTableRows,
     runs,
-    availableUdfFields: Object.values(fieldDefs).map((def: any) => ({
+    availableUdfFields: Object.values(fieldDefs).map((def) => ({
+      // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
       fieldID: def.projectUserFieldID,
       name: def.name,
       label: def.fieldLabel,

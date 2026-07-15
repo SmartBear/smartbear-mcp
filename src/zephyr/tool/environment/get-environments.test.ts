@@ -1,8 +1,14 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import {
   ListEnvironmentsQueryParams,
   ListEnvironments200Response as ListEnvironmentsResponse,
 } from "../../common/rest-api-schemas.ts";
+import {
+  asZephyrClient,
+  createMockZephyrClient,
+  fakeExtra,
+  type MockZephyrClient,
+} from "../../common/test-helpers.ts";
 import { GetEnvironments } from "./get-environments.ts";
 
 const responseFromSpecificProjectMock = {
@@ -81,16 +87,12 @@ const responseFromAllProjectsMock = {
 };
 
 describe("GetEnvironments", () => {
-  let mockClient: any;
+  let mockClient: MockZephyrClient;
   let instance: GetEnvironments;
 
   beforeEach(() => {
-    mockClient = {
-      getApiClient: vi.fn().mockReturnValue({
-        get: vi.fn(),
-      }),
-    };
-    instance = new GetEnvironments(mockClient as any);
+    mockClient = createMockZephyrClient();
+    instance = new GetEnvironments(asZephyrClient(mockClient));
   });
 
   it("should set specification correctly", () => {
@@ -109,7 +111,7 @@ describe("GetEnvironments", () => {
       .getApiClient()
       .get.mockResolvedValueOnce(responseFromSpecificProjectMock);
     const args = { projectKey: "PROJ", startAt: 0, maxResults: 10 };
-    const result = await instance.handle(args, {} as any);
+    const result = await instance.handle(args, fakeExtra);
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/environments",
       args,
@@ -122,7 +124,7 @@ describe("GetEnvironments", () => {
       .getApiClient()
       .get.mockResolvedValueOnce(responseFromAllProjectsMock);
     const args = { startAt: 0, maxResults: 10 };
-    const result = await instance.handle(args, {} as any);
+    const result = await instance.handle(args, fakeExtra);
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/environments",
       args,
@@ -135,7 +137,7 @@ describe("GetEnvironments", () => {
       .getApiClient()
       .get.mockResolvedValueOnce(responseFromSpecificProjectMock);
     const args = { projectKey: "PROJ", maxResults: 10 };
-    const result = await instance.handle(args, {} as any);
+    const result = await instance.handle(args, fakeExtra);
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/environments",
       { ...args, startAt: 0 },
@@ -149,7 +151,7 @@ describe("GetEnvironments", () => {
       .get.mockResolvedValueOnce(responseFromSpecificProjectMock);
     const result = await instance.handle(
       { projectKey: "PROJ", startAt: 0 },
-      {} as any,
+      fakeExtra,
     );
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/environments",
@@ -164,14 +166,14 @@ describe("GetEnvironments", () => {
 
   it("should handle apiClient.get throwing error", async () => {
     mockClient.getApiClient().get.mockRejectedValueOnce(new Error("API error"));
-    await expect(instance.handle({ maxResults: 1 }, {} as any)).rejects.toThrow(
+    await expect(instance.handle({ maxResults: 1 }, fakeExtra)).rejects.toThrow(
       "API error",
     );
   });
 
   it("should handle apiClient.get returning unexpected data", async () => {
     mockClient.getApiClient().get.mockResolvedValueOnce(undefined);
-    const result = await instance.handle({ maxResults: 1 }, {} as any);
+    const result = await instance.handle({ maxResults: 1 }, fakeExtra);
     expect(result.structuredContent).toBeUndefined();
   });
 });

@@ -1,3 +1,4 @@
+// biome-ignore-all lint/style/noExcessiveLinesPerFile: single Functional Testing HTTP client; splitting per-endpoint would fragment the shared ftFetch/error-mapping helpers used by all of them
 import { appendClientIdentity } from "../../common/info.ts";
 import { ToolError } from "../../common/tools.ts";
 import type {
@@ -12,17 +13,49 @@ import type {
 } from "./functional-testing-types.ts";
 
 const API_HOSTNAME = "api.reflect.run";
+const HTTP_UNAUTHORIZED = 401;
+const HTTP_FORBIDDEN = 403;
+const HTTP_NOT_FOUND = 404;
+const HTTP_CONFLICT = 409;
+
+function suiteExecutionsErrorMessage(response: Response): string {
+  switch (response.status) {
+    // Defensive: the Reflect API currently returns 200 with an empty
+    // `executions.data` list for an unknown suiteId rather than a 404, so this
+    // branch is not expected to fire today. Kept in case the API starts
+    // returning 404 for missing suites.
+    case HTTP_NOT_FOUND:
+      return "Test suite not found. Verify the suiteId is correct and belongs to your workspace.";
+    default:
+      return `Failed to list suite executions: ${response.status} ${response.statusText}`;
+  }
+}
+
+function cancelSuiteExecutionErrorMessage(response: Response): string {
+  switch (response.status) {
+    case HTTP_NOT_FOUND:
+      return "Suite execution not found. Verify the suiteId and executionId are correct and belong to your workspace.";
+    case HTTP_CONFLICT:
+      return "Suite execution cannot be cancelled because it has already finished.";
+    default:
+      return `Failed to cancel suite execution: ${response.status} ${response.statusText}`;
+  }
+}
 
 export const FUNCTIONAL_TESTING_API_KEY_HEADER = "X-API-KEY";
 
-export class FunctionalTestingAPI {
+export class FunctionalTestingApi {
   private readonly baseUrl: string;
+  private readonly getToken: () => string | null;
+  private readonly userAgent: string;
 
   constructor(
-    private readonly getToken: () => string | null,
-    private readonly userAgent: string,
+    getToken: () => string | null,
+    userAgent: string,
     baseUrl?: string,
   ) {
+    this.getToken = getToken;
+    this.userAgent = userAgent;
     this.baseUrl = baseUrl || `https://${API_HOSTNAME}/v1`;
   }
 
@@ -42,13 +75,17 @@ export class FunctionalTestingAPI {
     let response: Response;
     try {
       response = await fetch(input, init);
-    } catch {
+    } catch (error) {
       throw new ToolError(
         "Swagger Functional Testing service is currently unreachable. Retry after a moment.",
+        { cause: error },
       );
     }
 
-    if (response.status === 401 || response.status === 403) {
+    if (
+      response.status === HTTP_UNAUTHORIZED ||
+      response.status === HTTP_FORBIDDEN
+    ) {
       throw new ToolError(
         "Authentication failed. Verify your API token is valid and has not expired.",
       );
@@ -73,7 +110,9 @@ export class FunctionalTestingAPI {
   }
 
   async runTest(args: RunFunctionalTestingTestParams): Promise<unknown> {
-    if (!args.testId) throw new ToolError("testId argument is required");
+    if (!args.testId) {
+      throw new ToolError("testId argument is required");
+    }
 
     const response = await this.ftFetch(
       `${this.baseUrl}/tests/${encodeURIComponent(args.testId)}/executions`,
@@ -119,7 +158,7 @@ export class FunctionalTestingAPI {
       for (const test of data.tests as Record<string, unknown>[]) {
         const run = test.run as Record<string, unknown> | undefined;
         if (run) {
-          delete run.videoUrl;
+          run.videoUrl = undefined;
         }
       }
     }
@@ -129,7 +168,9 @@ export class FunctionalTestingAPI {
   async listSuiteExecutions(
     args: ListFunctionalTestingSuiteExecutionsParams,
   ): Promise<ListSuiteExecutionsResponse> {
-    if (!args.suiteId) throw new ToolError("suiteId argument is required");
+    if (!args.suiteId) {
+      throw new ToolError("suiteId argument is required");
+    }
 
     const response = await this.ftFetch(
       `${this.baseUrl}/suites/${encodeURIComponent(args.suiteId)}/executions`,
@@ -176,7 +217,9 @@ export class FunctionalTestingAPI {
   async cancelSuiteExecution(
     args: CancelFunctionalTestingSuiteExecutionParams,
   ): Promise<unknown> {
-    if (!args.suiteId) throw new ToolError("suiteId argument is required");
+    if (!args.suiteId) {
+      throw new ToolError("suiteId argument is required");
+    }
     if (!args.executionId) {
       throw new ToolError("executionId argument is required");
     }
@@ -197,7 +240,9 @@ export class FunctionalTestingAPI {
   }
 
   async runSuite(args: RunFunctionalTestingSuiteParams): Promise<unknown> {
-    if (!args.suiteId) throw new ToolError("suiteId argument is required");
+    if (!args.suiteId) {
+      throw new ToolError("suiteId argument is required");
+    }
 
     const body = args.tunnelAgentName
       ? JSON.stringify({
@@ -215,13 +260,17 @@ export class FunctionalTestingAPI {
           body,
         },
       );
-    } catch {
+    } catch (error) {
       throw new ToolError(
         "Swagger Functional Testing service is currently unreachable. Retry after a moment.",
+        { cause: error },
       );
     }
 
-    if (response.status === 401 || response.status === 403) {
+    if (
+      response.status === HTTP_UNAUTHORIZED ||
+      response.status === HTTP_FORBIDDEN
+    ) {
       throw new ToolError(
         "Authentication failed. Verify your API token is valid and has not expired.",
       );
@@ -241,7 +290,9 @@ export class FunctionalTestingAPI {
   async getSuiteExecution(
     args: GetFunctionalTestingSuiteExecutionParams,
   ): Promise<unknown> {
-    if (!args.suiteId) throw new ToolError("suiteId argument is required");
+    if (!args.suiteId) {
+      throw new ToolError("suiteId argument is required");
+    }
     if (!args.executionId) {
       throw new ToolError("executionId argument is required");
     }
@@ -255,13 +306,17 @@ export class FunctionalTestingAPI {
           headers: this.getFtHeaders(),
         },
       );
-    } catch {
+    } catch (error) {
       throw new ToolError(
         "Swagger Functional Testing service is currently unreachable. Retry after a moment.",
+        { cause: error },
       );
     }
 
-    if (response.status === 401 || response.status === 403) {
+    if (
+      response.status === HTTP_UNAUTHORIZED ||
+      response.status === HTTP_FORBIDDEN
+    ) {
       throw new ToolError(
         "Authentication failed. Verify your API token is valid and has not expired.",
       );
@@ -277,16 +332,7 @@ export class FunctionalTestingAPI {
     // We remove it for now, but will bring it back corrected in scope of https://smartbear.atlassian.net/browse/RF-5271.
     const data = await this.withoutField("url", response);
     // Reflect API returns video recording URL for each test run within suite, which SFT does not need so we remove it.
-    const testsData = (data.tests as Record<string, unknown> | undefined)?.data;
-    if (Array.isArray(testsData)) {
-      for (const test of testsData as Record<string, unknown>[]) {
-        if (Array.isArray(test.runs)) {
-          for (const run of test.runs as Record<string, unknown>[]) {
-            delete run.videoUrl;
-          }
-        }
-      }
-    }
+    this.stripSuiteVideoUrls(data);
     return data;
   }
 
@@ -298,28 +344,22 @@ export class FunctionalTestingAPI {
     delete data[field];
     return data;
   }
-}
 
-function suiteExecutionsErrorMessage(response: Response): string {
-  switch (response.status) {
-    // Defensive: the Reflect API currently returns 200 with an empty
-    // `executions.data` list for an unknown suiteId rather than a 404, so this
-    // branch is not expected to fire today. Kept in case the API starts
-    // returning 404 for missing suites.
-    case 404:
-      return "Test suite not found. Verify the suiteId is correct and belongs to your workspace.";
-    default:
-      return `Failed to list suite executions: ${response.status} ${response.statusText}`;
-  }
-}
-
-function cancelSuiteExecutionErrorMessage(response: Response): string {
-  switch (response.status) {
-    case 404:
-      return "Suite execution not found. Verify the suiteId and executionId are correct and belong to your workspace.";
-    case 409:
-      return "Suite execution cannot be cancelled because it has already finished.";
-    default:
-      return `Failed to cancel suite execution: ${response.status} ${response.statusText}`;
+  /**
+   * Remove the video recording URL from each test run within a suite
+   * execution's tests, which SFT does not need.
+   */
+  private stripSuiteVideoUrls(data: Record<string, unknown>): void {
+    const testsData = (data.tests as Record<string, unknown> | undefined)?.data;
+    if (!Array.isArray(testsData)) {
+      return;
+    }
+    for (const test of testsData as Record<string, unknown>[]) {
+      if (Array.isArray(test.runs)) {
+        for (const run of test.runs as Record<string, unknown>[]) {
+          run.videoUrl = undefined;
+        }
+      }
+    }
   }
 }

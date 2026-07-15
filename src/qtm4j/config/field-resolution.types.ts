@@ -42,7 +42,9 @@ export const ResolverKeys = {
   SearchableField: {
     LABEL: "label",
     COMPONENTS: "components",
+    // biome-ignore lint/security/noSecrets: camelCase field-key identifier, not a secret
     TEST_CASE_KEY_TO_UID: "testCaseKeyToUid",
+    // biome-ignore lint/security/noSecrets: camelCase field-key identifier, not a secret
     TEST_CYCLE_KEY_TO_UID: "testCycleKeyToUid",
     REQUIREMENT_KEY_TO_ID: "requirementKeyToId",
   } as const,
@@ -66,10 +68,12 @@ export type SearchableFieldKey =
  * Input field names as they appear in tool schemas.
  * Maps user-facing parameter names to resolver field keys.
  */
-export enum InputField {
-  PRIORITY = "priority",
-  STATUS = "status",
-  COMPONENTS = "components",
-  LABELS = "labels",
-  FOLDER = "folderId",
-}
+export const InputField = {
+  PRIORITY: "priority",
+  STATUS: "status",
+  COMPONENTS: "components",
+  LABELS: "labels",
+  FOLDER: "folderId",
+} as const;
+
+export type InputField = (typeof InputField)[keyof typeof InputField];

@@ -1,21 +1,24 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import {
   GetIssueLinkTestCyclesParams as GetIssueLinkTestCyclesPathParam,
   GetIssueLinkTestCycles200Response as GetIssueLinkTestCyclesResponse,
 } from "../../common/rest-api-schemas.ts";
+import {
+  asZephyrClient,
+  createMockZephyrClient,
+  fakeExtra,
+  type MockZephyrClient,
+} from "../../common/test-helpers.ts";
 import { GetTestCycles } from "./get-test-cycles.ts";
 
+// biome-ignore lint/security/noSecrets: test describe name, not a secret
 describe("GetIssueLinkTestCycles", () => {
-  let mockClient: any;
+  let mockClient: MockZephyrClient;
   let instance: GetTestCycles;
 
   beforeEach(() => {
-    mockClient = {
-      getApiClient: vi.fn().mockReturnValue({
-        get: vi.fn(),
-      }),
-    };
-    instance = new GetTestCycles(mockClient as any);
+    mockClient = createMockZephyrClient();
+    instance = new GetTestCycles(asZephyrClient(mockClient));
   });
 
   it("should set specification correctly", () => {
@@ -50,7 +53,7 @@ describe("GetIssueLinkTestCycles", () => {
     mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
 
     const args = { issueKey: "PROJ-123" };
-    const result = await instance.handle(args, {} as any);
+    const result = await instance.handle(args, fakeExtra);
 
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/issuelinks/PROJ-123/testcycles",
@@ -62,7 +65,7 @@ describe("GetIssueLinkTestCycles", () => {
   it("should handle empty list response", async () => {
     mockClient.getApiClient().get.mockResolvedValueOnce([]);
 
-    const result = await instance.handle({ issueKey: "PROJ-123" }, {} as any);
+    const result = await instance.handle({ issueKey: "PROJ-123" }, fakeExtra);
 
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/issuelinks/PROJ-123/testcycles",
@@ -75,24 +78,24 @@ describe("GetIssueLinkTestCycles", () => {
     mockClient.getApiClient().get.mockRejectedValueOnce(new Error("API error"));
 
     await expect(
-      instance.handle({ issueKey: "PROJ-123" }, {} as any),
+      instance.handle({ issueKey: "PROJ-123" }, fakeExtra),
     ).rejects.toThrow("API error");
   });
 
   it("should handle apiClient.get returning unexpected data", async () => {
     mockClient.getApiClient().get.mockResolvedValueOnce(undefined);
 
-    const result = await instance.handle({ issueKey: "PROJ-123" }, {} as any);
+    const result = await instance.handle({ issueKey: "PROJ-123" }, fakeExtra);
     expect(result.structuredContent).toEqual({ testCycles: undefined });
   });
 
   it("should throw validation error if issueKey is missing", async () => {
-    await expect(instance.handle({}, {} as any)).rejects.toThrow();
+    await expect(instance.handle({}, fakeExtra)).rejects.toThrow();
   });
 
   it("should throw validation error if issueKey format is invalid", async () => {
     await expect(
-      instance.handle({ issueKey: "PROJT!" }, {} as any),
+      instance.handle({ issueKey: "PROJT!" }, fakeExtra),
     ).rejects.toThrow();
   });
 
@@ -100,7 +103,7 @@ describe("GetIssueLinkTestCycles", () => {
     const responseMock = { id: 1 };
     mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
 
-    const result = await instance.handle({ issueKey: "PROJ-123" }, {} as any);
+    const result = await instance.handle({ issueKey: "PROJ-123" }, fakeExtra);
     expect(result.structuredContent).toEqual({ testCycles: responseMock });
   });
 });

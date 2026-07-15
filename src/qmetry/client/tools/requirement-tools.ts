@@ -1,4 +1,6 @@
-import { QMetryToolsHandlers } from "../../config/constants.ts";
+// biome-ignore-all lint/style/noExcessiveLinesPerFile: this module cohesively covers one QMetry API area (client operations, tool definitions, or shared schema fields); splitting it would scatter closely related, frequently cross-referenced declarations
+// biome-ignore-all lint/security/noSecrets: this file contains many high-entropy API action-name / wire-format / fixture string constants that trip the noSecrets entropy heuristic; none are real secrets
+import { QmetryToolsHandlers } from "../../config/constants.ts";
 import {
   LinkRequirementToTestCaseArgsSchema,
   RequirementDetailsArgsSchema,
@@ -6,15 +8,15 @@ import {
   RequirementsLinkedToTestCaseArgsSchema,
   TestCasesLinkedToRequirementArgsSchema,
 } from "../../types/common.ts";
-import type { QMetryToolParams } from "./types.ts";
+import type { QmetryToolParams } from "./types.ts";
 
-export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
+export const REQUIREMENT_TOOLS: QmetryToolParams[] = [
   {
     title: "Fetch Requirements",
     toolset: "Requirements",
     summary:
       "Fetch QMetry requirements - automatically handles viewId resolution based on project",
-    handler: QMetryToolsHandlers.FETCH_REQUIREMENTS,
+    handler: QmetryToolsHandlers.FETCH_REQUIREMENTS,
     inputSchema: RequirementListArgsSchema,
     purpose:
       "Get requirements from QMetry. System automatically gets correct requirement viewId from project info if not provided.",
@@ -212,7 +214,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
     toolset: "Requirements",
     summary:
       "Get detailed information for a specific QMetry requirement by numeric ID",
-    handler: QMetryToolsHandlers.FETCH_REQUIREMENT_DETAILS,
+    handler: QmetryToolsHandlers.FETCH_REQUIREMENT_DETAILS,
     inputSchema: RequirementDetailsArgsSchema,
     purpose:
       "Retrieve comprehensive requirement information including metadata, status, and all fields for a specific requirement",
@@ -250,7 +252,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
     toolset: "Requirements",
     summary:
       "Link one or more requirements to a test case by entityKey and version IDs.",
-    handler: QMetryToolsHandlers.LINK_REQUIREMENT_TO_TESTCASE,
+    handler: QmetryToolsHandlers.LINK_REQUIREMENT_TO_TESTCASE,
     inputSchema: LinkRequirementToTestCaseArgsSchema,
     purpose:
       "Link requirements to a test case using the test case entityKey, version ID, and requirement version IDs. " +
@@ -264,6 +266,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Link requirements to test case VT-TC-26",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcID: "VT-TC-26",
           tcVersionId: 5_448_515,
           rqVersionIds: "5009939,5009937,4970699",
@@ -289,7 +292,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
     toolset: "Requirements",
     summary:
       "Get test cases that are linked (or not linked) to a specific requirement in QMetry",
-    handler: QMetryToolsHandlers.FETCH_TESTCASES_LINKED_TO_REQUIREMENT,
+    handler: QmetryToolsHandlers.FETCH_TESTCASES_LINKED_TO_REQUIREMENT,
     inputSchema: TestCasesLinkedToRequirementArgsSchema,
     purpose:
       "Retrieve test cases that have traceability links to a specific requirement. " +
@@ -311,18 +314,21 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
     examples: [
       {
         description: "Get all test cases linked to requirement ID 4791316",
+        // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
         parameters: { rqID: 4_791_316 },
         expectedOutput:
           "List of test cases that are linked to requirement MAC-RQ-1011",
       },
       {
         description: "Get test cases NOT linked to requirement (gap analysis)",
+        // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
         parameters: { rqID: 4_791_316, getLinked: false },
         expectedOutput:
           "List of test cases that are NOT linked to requirement MAC-RQ-1011",
       },
       {
         description: "Get linked test cases filtered by specific release",
+        // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
         parameters: { rqID: 4_791_316, releaseID: "55178" },
         expectedOutput:
           "Linked test cases associated with Release 8.12 (ID: 55178)",
@@ -330,8 +336,11 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Get linked test cases filtered by release and cycle",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           rqID: 4_791_316,
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           releaseID: "55178",
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           cycleID: "111577",
           showEntityWithReleaseCycle: true,
         },
@@ -340,6 +349,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Get linked test cases from specific folder",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           rqID: 4_791_316,
           tcFolderPath: "/Sample Template",
         },
@@ -349,6 +359,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Search linked test cases by entity key",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           rqID: 4_791_316,
           filter:
             '[{"type":"string","value":"MAC-TC-1684,MAC-TC-1685","field":"entityKeyId"}]',
@@ -358,6 +369,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter linked test cases by priority",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           rqID: 4_791_316,
           filter: '[{"type":"list","value":[1,2],"field":"priorityAlias"}]',
         },
@@ -366,6 +378,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter linked test cases by status",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           rqID: 4_791_316,
           filter:
             '[{"type":"list","value":[1,2],"field":"testCaseStateAlias"}]',
@@ -375,6 +388,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter linked test cases by test case type",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           rqID: 4_791_316,
           filter: '[{"type":"list","value":[1],"field":"testCaseTypeAlias"}]',
         },
@@ -383,6 +397,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter linked test cases by testing type (automation)",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           rqID: 4_791_316,
           filter: '[{"type":"list","value":[2],"field":"testingTypeAlias"}]',
         },
@@ -391,6 +406,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Get only parameterized linked test cases",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           rqID: 4_791_316,
           filter: '[{"type":"list","value":[1],"field":"isParameterized"}]',
         },
@@ -400,6 +416,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter linked test cases by archive status",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           rqID: 4_791_316,
           filter: '[{"type":"list","value":[0],"field":"isArchived"}]',
         },
@@ -408,6 +425,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Search linked test cases by summary content",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           rqID: 4_791_316,
           filter: '[{"type":"string","value":"login","field":"summary"}]',
         },
@@ -416,6 +434,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter linked test cases by requirement version",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           rqID: 4_791_316,
           filter: '[{"type":"string","value":"1","field":"rqVersion"}]',
         },
@@ -425,6 +444,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
         description:
           "Complex filter: Active, high priority, automated test cases",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           rqID: 4_791_316,
           filter:
             '[{"type":"list","value":[0],"field":"isArchived"},{"type":"list","value":[1],"field":"priorityAlias"},{"type":"list","value":[2],"field":"testingTypeAlias"}]',
@@ -469,7 +489,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
     toolset: "Requirements",
     summary:
       "Get requirements that are linked (or not linked) to a specific test case in QMetry",
-    handler: QMetryToolsHandlers.FETCH_REQUIREMENTS_LINKED_TO_TESTCASE,
+    handler: QmetryToolsHandlers.FETCH_REQUIREMENTS_LINKED_TO_TESTCASE,
     inputSchema: RequirementsLinkedToTestCaseArgsSchema,
     purpose:
       "Retrieve requirements that have traceability links to a specific test case. " +
@@ -491,12 +511,14 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
     examples: [
       {
         description: "Get all requirements linked to test case ID 594294",
+        // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
         parameters: { tcID: 594_294 },
         expectedOutput:
           "List of requirements that are linked to test case MAC-TC-1684",
       },
       {
         description: "Get requirements NOT linked to test case (gap analysis)",
+        // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
         parameters: { tcID: 594_294, getLinked: false },
         expectedOutput:
           "List of requirements that are NOT linked to test case MAC-TC-1684",
@@ -504,6 +526,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Get linked requirements from specific folder",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcID: 594_294,
           rqFolderPath: "/CodeSnippets",
         },
@@ -513,6 +536,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Search linked requirements by entity key",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcID: 594_294,
           filter:
             '[{"type":"string","value":"MAC-RQ-730,MAC-RQ-731","field":"entityKeyId"}]',
@@ -522,6 +546,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter linked requirements by status",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcID: 594_294,
           filter:
             '[{"type":"list","value":[1,2],"field":"requirementStateAlias"}]',
@@ -531,6 +556,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter linked requirements by priority",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcID: 594_294,
           filter: '[{"type":"list","value":[1],"field":"priorityAlias"}]',
         },
@@ -539,6 +565,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter linked requirements by archive status",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcID: 594_294,
           filter: '[{"type":"list","value":[0],"field":"isArchived"}]',
         },
@@ -547,6 +574,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Search linked requirements by name content",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcID: 594_294,
           filter: '[{"type":"string","value":"authentication","field":"name"}]',
         },
@@ -556,6 +584,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter linked requirements by test case version",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcID: 594_294,
           filter: '[{"type":"string","value":"1","field":"tcVersion"}]',
         },
@@ -564,6 +593,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter linked requirements by release and cycle",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcID: 594_294,
           filter:
             '[{"type":"list","value":[55178],"field":"release"},{"type":"list","value":[111577],"field":"cycle"}]',

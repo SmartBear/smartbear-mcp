@@ -3,15 +3,21 @@ import type {
   ServerNotification,
   ServerRequest,
 } from "@modelcontextprotocol/sdk/types.js";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import {
   GetTestCycleLinksParams,
   GetTestCycleLinks200Response as GetTestCycleLinksResponse,
 } from "../../common/rest-api-schemas.ts";
+import {
+  asZephyrClient,
+  createMockZephyrClient,
+  type MockZephyrClient,
+} from "../../common/test-helpers.ts";
 import { GetTestCycleLinks } from "./get-links.ts";
 
+// biome-ignore lint/security/noSecrets: test describe name, not a secret
 describe("GetTestCycleLinks", () => {
-  let mockClient: any;
+  let mockClient: MockZephyrClient;
   let instance: GetTestCycleLinks;
 
   const ExtraRequestHandler: RequestHandlerExtra<
@@ -29,12 +35,8 @@ describe("GetTestCycleLinks", () => {
   };
 
   beforeEach(() => {
-    mockClient = {
-      getApiClient: vi.fn().mockReturnValue({
-        get: vi.fn(),
-      }),
-    };
-    instance = new GetTestCycleLinks(mockClient as any);
+    mockClient = createMockZephyrClient();
+    instance = new GetTestCycleLinks(asZephyrClient(mockClient));
   });
 
   it("should set specification correctly", () => {

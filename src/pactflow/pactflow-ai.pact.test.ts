@@ -5,6 +5,8 @@
  * returned by the API and is not tested here.
  */
 
+// node:path / node:process are required to build the pact output directory
+// (dir: path.resolve(process.cwd(), "pacts")) for the Pact mock-server contract tests.
 import path from "node:path";
 import process from "node:process";
 import { Matchers, PactV4 } from "@pact-foundation/pact";

@@ -1,5 +1,15 @@
+import type { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/protocol.js";
+import type {
+  ProgressNotification,
+  ServerNotification,
+  ServerRequest,
+  TextContent,
+} from "@modelcontextprotocol/sdk/types.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { BearqClient } from "../../client.ts";
 import { WaitForTask } from "./wait-for-task.ts";
+
+type Extra = RequestHandlerExtra<ServerRequest, ServerNotification>;
 
 function makeStream(...chunks: string[]): ReadableStream<Uint8Array> {
   const encoder = new TextEncoder();
@@ -18,7 +28,7 @@ function sseFrame(event: string, data: unknown): string {
 }
 
 describe("WaitForTask", () => {
-  let mockClient: any;
+  let mockClient: Pick<BearqClient, "getBaseUrl" | "getHeaders">;
   let instance: WaitForTask;
 
   beforeEach(() => {
@@ -30,7 +40,7 @@ describe("WaitForTask", () => {
         "Content-Type": "application/json",
       }),
     };
-    instance = new WaitForTask(mockClient);
+    instance = new WaitForTask(mockClient as unknown as BearqClient);
   });
 
   it("should set specification correctly", () => {
@@ -47,7 +57,7 @@ describe("WaitForTask", () => {
     const entries2 = [{ kind: "message", text: "step 2" }];
     const done = { status: "completed", result: "all passed" };
 
-    vi.spyOn(global, "fetch").mockResolvedValueOnce(
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
       new Response(
         makeStream(
           sseFrame("metadata", metadata),
@@ -59,8 +69,8 @@ describe("WaitForTask", () => {
       ),
     );
 
-    const result = await instance.handle({ taskId: 1 }, {} as any);
-    const parsed = JSON.parse((result.content[0] as any).text);
+    const result = await instance.handle({ taskId: 1 }, {} as unknown as Extra);
+    const parsed = JSON.parse((result.content[0] as TextContent).text);
 
     expect(parsed.events).toEqual([
       { event: "metadata", data: metadata },
@@ -79,12 +89,12 @@ describe("WaitForTask", () => {
       sseFrame("activityLogEntries", entries) +
       sseFrame("done", done);
 
-    vi.spyOn(global, "fetch").mockResolvedValueOnce(
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
       new Response(makeStream(allAtOnce), { status: 200 }),
     );
 
-    const result = await instance.handle({ taskId: 5 }, {} as any);
-    const parsed = JSON.parse((result.content[0] as any).text);
+    const result = await instance.handle({ taskId: 5 }, {} as unknown as Extra);
+    const parsed = JSON.parse((result.content[0] as TextContent).text);
 
     expect(parsed.events).toEqual([
       { event: "metadata", data: metadata },
@@ -100,7 +110,7 @@ describe("WaitForTask", () => {
       message: "task killed",
     };
     const fetchSpy = vi
-      .spyOn(global, "fetch")
+      .spyOn(globalThis, "fetch")
       .mockResolvedValueOnce(
         new Response(
           makeStream(
@@ -111,8 +121,8 @@ describe("WaitForTask", () => {
         ),
       );
 
-    const result = await instance.handle({ taskId: 2 }, {} as any);
-    const parsed = JSON.parse((result.content[0] as any).text);
+    const result = await instance.handle({ taskId: 2 }, {} as unknown as Extra);
+    const parsed = JSON.parse((result.content[0] as TextContent).text);
 
     expect(parsed.events).toEqual([
       { event: "metadata", data: metadata },
@@ -122,7 +132,7 @@ describe("WaitForTask", () => {
   });
 
   it("should throw when stream closes without done or timeout", async () => {
-    vi.spyOn(global, "fetch").mockResolvedValueOnce(
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
       new Response(
         makeStream(
           sseFrame("metadata", { taskId: 4 }),
@@ -132,23 +142,23 @@ describe("WaitForTask", () => {
       ),
     );
 
-    await expect(instance.handle({ taskId: 4 }, {} as any)).rejects.toThrow(
-      "closed without a done or timeout event",
-    );
+    await expect(
+      instance.handle({ taskId: 4 }, {} as unknown as Extra),
+    ).rejects.toThrow("closed without a done or timeout event");
   });
 
   it("should throw ToolError on non-2xx response", async () => {
-    vi.spyOn(global, "fetch").mockResolvedValueOnce(
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
       new Response("Unauthorized", { status: 401, statusText: "Unauthorized" }),
     );
 
-    await expect(instance.handle({ taskId: 3 }, {} as any)).rejects.toThrow(
-      "GET /tasks/3/stream failed: 401",
-    );
+    await expect(
+      instance.handle({ taskId: 3 }, {} as unknown as Extra),
+    ).rejects.toThrow("GET /tasks/3/stream failed: 401");
   });
 
   it("should ignore ping comment lines", async () => {
-    vi.spyOn(global, "fetch").mockResolvedValueOnce(
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
       new Response(
         makeStream(
           sseFrame("metadata", { taskId: 6 }),
@@ -159,8 +169,8 @@ describe("WaitForTask", () => {
       ),
     );
 
-    const result = await instance.handle({ taskId: 6 }, {} as any);
-    const parsed = JSON.parse((result.content[0] as any).text);
+    const result = await instance.handle({ taskId: 6 }, {} as unknown as Extra);
+    const parsed = JSON.parse((result.content[0] as TextContent).text);
     expect(parsed.events.at(-1)).toEqual({
       event: "done",
       data: { status: "completed", result: null },
@@ -171,7 +181,7 @@ describe("WaitForTask", () => {
     const entries1 = [{ id: 1 }, { id: 2 }];
     const entries2 = [{ id: 3 }];
     const done = { status: "completed", result: "ok" };
-    vi.spyOn(global, "fetch").mockResolvedValueOnce(
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
       new Response(
         makeStream(
           sseFrame("metadata", { taskId: 9 }),
@@ -183,18 +193,20 @@ describe("WaitForTask", () => {
       ),
     );
 
-    const notifications: any[] = [];
+    const notifications: ProgressNotification[] = [];
     const extra = {
       _meta: { progressToken: "tok-1" },
-      sendNotification: vi.fn(async (n) => {
+      sendNotification: vi.fn((n: ProgressNotification) => {
         notifications.push(n);
       }),
     };
 
-    await instance.handle({ taskId: 9 }, extra as any);
+    await instance.handle({ taskId: 9 }, extra as unknown as Extra);
 
     expect(notifications.map((n) => n.params.progress)).toEqual([1, 2, 3, 4]);
-    expect(notifications.map((n) => JSON.parse(n.params.message))).toEqual([
+    expect(
+      notifications.map((n) => JSON.parse(n.params.message ?? "")),
+    ).toEqual([
       { event: "metadata", data: { taskId: 9 } },
       { event: "activityLogEntries", data: entries1 },
       { event: "activityLogEntries", data: entries2 },
@@ -206,7 +218,7 @@ describe("WaitForTask", () => {
   });
 
   it("should not call sendNotification when progressToken is absent", async () => {
-    vi.spyOn(global, "fetch").mockResolvedValueOnce(
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
       new Response(
         makeStream(
           sseFrame("metadata", { taskId: 10 }),
@@ -221,7 +233,7 @@ describe("WaitForTask", () => {
     await instance.handle({ taskId: 10 }, {
       _meta: {},
       sendNotification,
-    } as any);
+    } as unknown as Extra);
 
     expect(sendNotification).not.toHaveBeenCalled();
   });

@@ -1,3 +1,5 @@
+const PORTAL_UI_DOMAIN_REGEX = /https?:\/\/api(\..*\.portal\.swaggerhub\.com)/;
+
 export interface SwaggerConfigurationParameters {
   token: string | (() => string | null); // API auth token or provider
   portalBasePath?: string; // Base path for Portal API requests
@@ -8,7 +10,7 @@ export interface SwaggerConfigurationParameters {
 }
 
 export class SwaggerConfiguration {
-  private tokenProvider: () => string | null;
+  private readonly tokenProvider: () => string | null;
   portalBasePath: string;
   registryBasePath: string;
   uiBasePath: string;
@@ -54,9 +56,7 @@ export class SwaggerConfiguration {
   }
 
   getPortalUiDomainSuffix(): string {
-    const match = this.portalBasePath.match(
-      /https?:\/\/api(\..*\.portal\.swaggerhub\.com)/,
-    );
+    const match = this.portalBasePath.match(PORTAL_UI_DOMAIN_REGEX);
     if (match?.[1]) {
       return match[1];
     }

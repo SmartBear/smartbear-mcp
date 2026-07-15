@@ -1,12 +1,25 @@
+// This module implements the raw Node HTTP server transport for HTTP mode:
+// Node builtins (crypto/http/process/querystring) are inherent to that purpose,
+// and console output is the operator-facing logging mechanism for this
+// long-running server process (no injectable logger threads through here).
+// This single module also cohesively owns the whole HTTP transport lifecycle
+// (probes, StreamableHTTP, legacy SSE, header/config plumbing); splitting it
+// purely to satisfy a line-count limit would fragment tightly-coupled request
+// handling across files with little readability benefit.
+// biome-ignore-all lint/suspicious/noConsole: see above
+// biome-ignore-all lint/style/noExcessiveLinesPerFile: see above
 import { randomUUID } from "node:crypto";
 import type { IncomingMessage, Server, ServerResponse } from "node:http";
 import { createServer } from "node:http";
-import process from "node:process";
 import querystring from "node:querystring";
+// SSEServerTransport is deprecated upstream but intentionally kept here for
+// backwards compatibility with older MCP clients (see handleLegacySseRequest).
+// biome-ignore lint/suspicious/noDeprecatedImports: see above
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { clientRegistry } from "./client-registry.ts";
+import { getEnv } from "./env.ts";
 import { handleInitializeMessage } from "./initialize.ts";
 import { setRequestMcpClient, withRequestContext } from "./request-context.ts";
 import { SmartBearMcpServer } from "./server.ts";
@@ -14,10 +27,10 @@ import { isDraining, registerShutdownHandler } from "./shutdown.ts";
 import { getEnvVarName } from "./transport-stdio.ts";
 import { getTypeDescription, isOptionalType } from "./zod-utils.ts";
 
-type SessionEntry = {
+interface SessionEntry {
   server: SmartBearMcpServer;
   transport: StreamableHTTPServerTransport | SSEServerTransport;
-};
+}
 
 /**
  * Common cache-control headers for probe endpoints.
@@ -27,247 +40,22 @@ const PROBE_HEADERS = {
   "Cache-Control": "no-store",
 } as const;
 
-/**
- * Liveness probe handler. Returns 200 unconditionally as long as the HTTP
- * server is responsive.
- */
-export function handleHealthRequest(res: ServerResponse): void {
-  res.writeHead(200, PROBE_HEADERS);
-  res.end(
-    JSON.stringify({ status: "ok", timestamp: new Date().toISOString() }),
-  );
-}
-
-/**
- * Readiness probe handler. Returns 200 normally, 503 once the process has
- * received SIGTERM and started draining.
- */
-export function handleReadyRequest(
-  res: ServerResponse,
-  draining: () => boolean = isDraining,
-): void {
-  if (draining()) {
-    res.writeHead(503, PROBE_HEADERS);
-    res.end(
-      JSON.stringify({
-        status: "draining",
-        timestamp: new Date().toISOString(),
-      }),
-    );
-    return;
-  }
-  res.writeHead(200, PROBE_HEADERS);
-  res.end(
-    JSON.stringify({ status: "ready", timestamp: new Date().toISOString() }),
-  );
-}
-
-/**
- * Helper to construct the base URL from the request, respecting proxy headers.
- * This is critical for cloud deployments where SSL termination happens at the load balancer.
- * If BASE_URL env var is set, it takes precedence over request headers.
- */
-export function getBaseUrl(req: IncomingMessage): string {
-  const baseUrlOverride = process.env.BASE_URL;
-  if (baseUrlOverride) {
-    return baseUrlOverride;
-  }
-  const protocol = (req.headers["x-forwarded-proto"] as string) || "http";
-  const host = (req.headers["x-forwarded-host"] as string) || req.headers.host;
-  return `${protocol}://${host}`;
-}
-
-/**
- * Run server in HTTP mode with Streamable HTTP transport
- * Supports both SSE (legacy) and StreamableHTTP transports for backwards compatibility
- */
-export async function runHttpMode() {
-  const Port = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 3000;
-  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [
-    "http://localhost:3000",
-  ];
-
-  // Store transports by session ID
-  const transports = new Map<string, SessionEntry>();
-
-  // Get dynamic list of allowed headers from registered clients
-  const allowedAuthHeaders = getHttpHeaders();
-  const allowedHeaders = [
-    "Content-Type",
-    "Authorization",
-    "MCP-Session-Id", // Required for StreamableHTTP
-    "x-custom-auth-headers", // used by mcp-inspector
-    "mcp-protocol-version",
-    ...allowedAuthHeaders,
-  ].join(", ");
-
-  const httpServer = createServer(
-    async (req: IncomingMessage, res: ServerResponse) => {
-      // Enable CORS
-      const origin = req.headers.origin || "";
-      if (allowedOrigins.includes(origin)) {
-        res.setHeader("Access-Control-Allow-Origin", origin);
-      }
-      res.setHeader(
-        "Access-Control-Allow-Methods",
-        "GET, POST, DELETE, OPTIONS",
-      );
-      res.setHeader("Access-Control-Allow-Headers", allowedHeaders);
-      res.setHeader("Access-Control-Expose-Headers", "MCP-Session-Id");
-
-      if (req.method === "OPTIONS") {
-        res.writeHead(200);
-        res.end();
-        return;
-      }
-
-      // Determine the public URL of this server
-      const baseUrl = getBaseUrl(req);
-      const url = new URL(req.url || "/", baseUrl);
-
-      // LIVENESS PROBE — always 200 if the process is responsive.
-      if (req.method === "GET" && url.pathname === "/health") {
-        handleHealthRequest(res);
-        return;
-      }
-
-      // READINESS PROBE — 200 normally, 503 once draining has started.
-      if (req.method === "GET" && url.pathname === "/ready") {
-        handleReadyRequest(res);
-        return;
-      }
-
-      // PROTECTED RESOURCE METADATA ENDPOINT (RFC 9293)
-      // This endpoint tells the client where to find the Authorization Server.
-      if (
-        req.method === "GET" &&
-        (url.pathname === "/.well-known/oauth-protected-resource" ||
-          url.pathname === "/.well-known/oauth-protected-resource/mcp")
-      ) {
-        // Point the client to the Authorization Server so it can fetch the metadata document
-        const authServerUrl =
-          process.env.OAUTH_AUTHORIZATION_SERVER_URL || "http://localhost:7070";
-
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(
-          JSON.stringify({
-            resource: `${baseUrl}/mcp`,
-            authorization_servers: [authServerUrl],
-          }),
-        );
-        return;
-      }
-
-      // STREAMABLE HTTP ENDPOINT (modern, preferred)
-      if (url.pathname === "/mcp") {
-        await handleStreamableHttpRequest(req, res, transports);
-        return;
-      }
-
-      // LEGACY SSE ENDPOINT (for backwards compatibility)
-      if (req.method === "GET" && url.pathname === "/sse") {
-        await handleLegacySseRequest(req, res, transports);
-        return;
-      }
-
-      if (req.method === "POST" && url.pathname === "/message") {
-        await handleLegacyMessageRequest(req, res, url, transports);
-        return;
-      }
-
-      res.writeHead(404, { "Content-Type": "text/plain" });
-      res.end("Not found");
-    },
-  );
-
-  httpServer.listen(Port, () => {
-    console.log(`[MCP HTTP Server] Listening on http://localhost:${Port}`);
-    console.log(`[MCP HTTP Server] Liveness:  http://localhost:${Port}/health`);
-    console.log(`[MCP HTTP Server] Readiness: http://localhost:${Port}/ready`);
-    console.log(
-      `[MCP HTTP Server] Modern endpoint: http://localhost:${Port}/mcp (Streamable HTTP)`,
-    );
-    console.log(
-      `[MCP HTTP Server] Legacy endpoint: http://localhost:${Port}/sse (SSE)`,
-    );
-
-    const headerHelp = getHttpHeadersHelp();
-    if (headerHelp.length > 0) {
-      console.log(
-        `[MCP HTTP Server] Send configuration headers:\n${headerHelp.join("\n")}`,
-      );
-    } else {
-      console.warn(
-        "[MCP HTTP Server] No clients support HTTP header configuration",
-      );
-    }
-  });
-
-  // Register graceful shutdown. Tears down active
-  // transports before any subsystem registered earlier (e.g. logging).
-  registerShutdownHandler("http-transport", async () => {
-    await drainHttpTransport(httpServer, transports);
-  });
-}
-
-/**
- * Drain the HTTP transport. Called by the shutdown manager on SIGTERM.
- *
- * Sequence:
- *   1. Stop accepting new TCP connections (httpServer.close).
- *      This does NOT close existing keep-alive / SSE connections.
- *   2. Close idle keep-alive connections immediately.
- *   3. Close every active transport, which fires transport.onclose →
- *      cleanupSession(sessionId) → per-client cleanupSession (e.g. Reflect
- *      WebSockets).
- *   4. Wait for httpServer.close() to fully resolve, then force-close any
- *      remaining keep-alive connections as a backstop.
- */
-export async function drainHttpTransport(
-  httpServer: Server,
-  transports: Map<string, SessionEntry>,
-): Promise<void> {
-  console.log(
-    `[MCP][shutdown] Draining HTTP transport (${transports.size} active session(s))`,
-  );
-
-  // Stop accepting new connections.
-  const serverClosed = new Promise<void>((resolve) => {
-    httpServer.close(() => resolve());
-  });
-
-  // Close idle keep-alive sockets right away — no in-flight work to lose.
-  httpServer.closeIdleConnections?.();
-
-  // Close every active transport. transport.close() ends SSE streams and
-  // triggers the existing onclose -> cleanupSession chain.
-  const transportCloses = [...transports.values()].map(async (entry) => {
-    try {
-      await entry.transport.close();
-    } catch (err) {
-      console.error("[MCP][shutdown] Error closing transport:", err);
-    }
-  });
-
-  await Promise.all(transportCloses);
-
-  // Backstop: force-close any TCP connections still hanging around so
-  // httpServer.close() can resolve. Safe to call after transport.close()
-  // because all session-aware teardown has already run.
-  httpServer.closeAllConnections?.();
-
-  await serverClosed;
-  console.log("[MCP][shutdown] HTTP transport drained");
-}
+const DEFAULT_HTTP_PORT = 3000;
+const HTTP_OK = 200;
+const HTTP_BAD_REQUEST = 400;
+const HTTP_UNAUTHORIZED = 401;
+const HTTP_NOT_FOUND = 404;
+const HTTP_INTERNAL_SERVER_ERROR = 500;
+const HTTP_SERVICE_UNAVAILABLE = 503;
 
 /**
  * Parse request body for POST requests
  * Reads the request stream and parses it as JSON
  * @returns Parsed JSON object or undefined if not a POST request or parsing fails
  */
-async function parseRequestBody(req: IncomingMessage): Promise<unknown> {
+function parseRequestBody(req: IncomingMessage): Promise<unknown> {
   if (req.method !== "POST") {
-    return;
+    return Promise.resolve(undefined);
   }
 
   let body = "";
@@ -309,7 +97,7 @@ function getExistingTransport(
   }
 
   // Session doesn't exist or is using a different transport (e.g., SSE)
-  res.writeHead(400, { "Content-Type": "application/json" });
+  res.writeHead(HTTP_BAD_REQUEST, { "Content-Type": "application/json" });
   res.end(
     JSON.stringify({
       jsonrpc: "2.0",
@@ -373,115 +161,6 @@ async function createNewTransport(
 }
 
 /**
- * Handle modern Streamable HTTP requests
- * This is the main endpoint (/mcp) for the modern MCP StreamableHTTP transport.
- *
- * Request flow:
- * 1. First request (initialize): No session ID, body contains initialize request
- *    - Creates new server + transport, generates session ID
- * 2. Subsequent requests: Include MCP-Session-Id header
- *    - Routes to existing transport for the session
- *    - Unknown session IDs return 404 per spec, prompting the client to
- *      re-initialize (important for multi-pod deployments where a session
- *      may not be known to every pod).
- */
-export async function handleStreamableHttpRequest(
-  req: IncomingMessage,
-  res: ServerResponse,
-  transports: Map<
-    string,
-    {
-      server: SmartBearMcpServer;
-      transport: StreamableHTTPServerTransport | SSEServerTransport;
-    }
-  >,
-) {
-  try {
-    const sessionId = req.headers["mcp-session-id"] as string | undefined;
-
-    // Case 1: Unknown session - per MCP Streamable HTTP spec, return 404 so
-    // clients know to re-run `initialize` (e.g. after a pod restart drops the
-    // in-memory session map) rather than treating this as a permanent error.
-    // Reject before buffering the body so a junk session id can't force JSON
-    // parsing of an arbitrary payload; drain the stream so keep-alive sockets
-    // aren't left half-read.
-    if (sessionId && !transports.has(sessionId)) {
-      req.resume();
-      res.writeHead(404, { "Content-Type": "application/json" });
-      res.end(
-        JSON.stringify({
-          jsonrpc: "2.0",
-          error: {
-            code: -32_001,
-            message: "Session not found",
-          },
-          id: null,
-        }),
-      );
-      return;
-    }
-
-    const parsedBody = await parseRequestBody(req);
-
-    let transport: StreamableHTTPServerTransport;
-
-    // Case 2: Existing session - route to existing transport
-    if (sessionId) {
-      const existingTransport = getExistingTransport(
-        sessionId,
-        transports,
-        res,
-      );
-      if (!existingTransport) return;
-      transport = existingTransport;
-    }
-    // Case 3: New session - must be an initialize request
-    else if (
-      req.method === "POST" &&
-      parsedBody &&
-      isInitializeRequest(parsedBody)
-    ) {
-      const newTransport = await createNewTransport(req, res, transports);
-      if (!newTransport) return;
-      transport = newTransport;
-    }
-    // Case 4: Invalid request
-    else {
-      res.writeHead(400, { "Content-Type": "application/json" });
-      res.end(
-        JSON.stringify({
-          jsonrpc: "2.0",
-          error: {
-            code: -32_000,
-            message: "Bad Request: Invalid request",
-          },
-          id: null,
-        }),
-      );
-      return;
-    }
-
-    // Delegate to transport to handle the MCP protocol message. For requests on
-    // an established session, surface the client identity captured at
-    // `initialize` so downstream API calls (User-Agent) can forward it. New
-    // (initialize) requests have no identity yet and make no downstream calls.
-    const sessionServer = sessionId
-      ? transports.get(sessionId)?.server
-      : undefined;
-    await withRequestContext(req, async () => {
-      if (sessionServer) {
-        setRequestMcpClient(sessionServer.getMcpClientIdentity());
-      }
-      return await transport.handleRequest(req, res, parsedBody);
-    });
-  } catch (error) {
-    console.error("Error handling StreamableHTTP request:", error);
-    res.writeHead(500, { "Content-Type": "text/plain" });
-    res.end("Internal server error");
-  }
-}
-
-/**
  * Handle legacy SSE connection requests (GET /sse)
  *
  * SSE (Server-Sent Events) transport maintains a long-lived connection
@@ -538,7 +217,7 @@ async function handleLegacySseRequest(
  *
  * New integrations should use the modern StreamableHTTP transport (/mcp).
  */
-async function handleLegacyMessageRequest(
+function handleLegacyMessageRequest(
   req: IncomingMessage,
   res: ServerResponse,
   url: URL,
@@ -554,7 +233,7 @@ async function handleLegacyMessageRequest(
   const sessionId = url.searchParams.get("sessionId");
 
   if (!sessionId) {
-    res.writeHead(400, { "Content-Type": "text/plain" });
+    res.writeHead(HTTP_BAD_REQUEST, { "Content-Type": "text/plain" });
     res.end("Missing sessionId parameter");
     return;
   }
@@ -562,14 +241,14 @@ async function handleLegacyMessageRequest(
   // Find the session created by the SSE connection
   const session = transports.get(sessionId);
   if (!session) {
-    res.writeHead(404, { "Content-Type": "text/plain" });
+    res.writeHead(HTTP_NOT_FOUND, { "Content-Type": "text/plain" });
     res.end("Session not found");
     return;
   }
 
   // Validate this session is using SSE transport
   if (!(session.transport instanceof SSEServerTransport)) {
-    res.writeHead(400, { "Content-Type": "text/plain" });
+    res.writeHead(HTTP_BAD_REQUEST, { "Content-Type": "text/plain" });
     res.end("Invalid transport for this endpoint");
     return;
   }
@@ -593,7 +272,9 @@ async function handleLegacyMessageRequest(
       });
     } catch (error) {
       console.error("Error handling POST message:", error);
-      res.writeHead(500, { "Content-Type": "text/plain" });
+      res.writeHead(HTTP_INTERNAL_SERVER_ERROR, {
+        "Content-Type": "text/plain",
+      });
       res.end("Internal server error");
     }
   });
@@ -624,7 +305,488 @@ function getConfigValue(
 
   // 3. Fall back to environment variable
   const envVarName = getEnvVarName(clientPrefix, key);
-  return process.env[envVarName] || null;
+  return getEnv(envVarName) || null;
+}
+
+/**
+ * Get all HTTP headers that clients support for authentication
+ * Returns a list of header names (in kebab-case) that should be allowed
+ */
+function getHttpHeaders(): string[] {
+  const headers = new Set<string>();
+
+  // Use getAll() to respect client filtering
+  for (const entry of clientRegistry.getAll()) {
+    for (const configKey of Object.keys(entry.config.shape)) {
+      headers.add(getHeaderName(entry.configPrefix, configKey));
+    }
+  }
+
+  return Array.from(headers).sort((a, b) => a.localeCompare(b));
+}
+
+/**
+ * Get human-readable list of HTTP headers for logging/error messages
+ * Organized by client
+ */
+function getHttpHeadersHelp(): string[] {
+  const messages: string[] = [];
+  for (const entry of clientRegistry.getAll()) {
+    messages.push(` - ${entry.name}:`);
+    for (const [configKey, requirement] of Object.entries(entry.config.shape)) {
+      const headerName = getHeaderName(entry.configPrefix, configKey);
+      const requiredTag = isOptionalType(requirement)
+        ? " (optional)"
+        : " (required)";
+      messages.push(
+        `    - ${headerName}${requiredTag}: ${getTypeDescription(requirement)}`,
+      );
+    }
+  }
+
+  return messages;
+}
+
+/**
+ * Liveness probe handler. Returns 200 unconditionally as long as the HTTP
+ * server is responsive.
+ */
+
+/**
+ * Set CORS headers for an HTTP request/response pair.
+ */
+function applyCorsHeaders(
+  req: IncomingMessage,
+  res: ServerResponse,
+  allowedOrigins: string[],
+  allowedHeaders: string,
+): void {
+  const origin = req.headers.origin || "";
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", allowedHeaders);
+  res.setHeader("Access-Control-Expose-Headers", "MCP-Session-Id");
+}
+
+/**
+ * PROTECTED RESOURCE METADATA ENDPOINT (RFC 9293).
+ * This endpoint tells the client where to find the Authorization Server.
+ */
+function handleOauthProtectedResourceRequest(
+  res: ServerResponse,
+  baseUrl: string,
+): void {
+  // Point the client to the Authorization Server so it can fetch the metadata document
+  const authServerUrl =
+    getEnv("OAUTH_AUTHORIZATION_SERVER_URL") || "http://localhost:7070";
+
+  res.writeHead(HTTP_OK, { "Content-Type": "application/json" });
+  res.end(
+    JSON.stringify({
+      resource: `${baseUrl}/mcp`,
+      authorization_servers: [authServerUrl],
+    }),
+  );
+}
+
+/**
+ * Route a single HTTP request to the appropriate handler based on method/path.
+ */
+async function routeHttpRequest(
+  req: IncomingMessage,
+  res: ServerResponse,
+  context: {
+    allowedOrigins: string[];
+    allowedHeaders: string;
+    transports: Map<string, SessionEntry>;
+  },
+): Promise<void> {
+  applyCorsHeaders(req, res, context.allowedOrigins, context.allowedHeaders);
+
+  if (req.method === "OPTIONS") {
+    res.writeHead(HTTP_OK);
+    res.end();
+    return;
+  }
+
+  // Determine the public URL of this server
+  const baseUrl = getBaseUrl(req);
+  const url = new URL(req.url || "/", baseUrl);
+
+  // LIVENESS PROBE — always 200 if the process is responsive.
+  if (req.method === "GET" && url.pathname === "/health") {
+    handleHealthRequest(res);
+    return;
+  }
+
+  // READINESS PROBE — 200 normally, 503 once draining has started.
+  if (req.method === "GET" && url.pathname === "/ready") {
+    handleReadyRequest(res);
+    return;
+  }
+
+  if (
+    req.method === "GET" &&
+    (url.pathname === "/.well-known/oauth-protected-resource" ||
+      url.pathname === "/.well-known/oauth-protected-resource/mcp")
+  ) {
+    handleOauthProtectedResourceRequest(res, baseUrl);
+    return;
+  }
+
+  // STREAMABLE HTTP ENDPOINT (modern, preferred)
+  if (url.pathname === "/mcp") {
+    await handleStreamableHttpRequest(req, res, context.transports);
+    return;
+  }
+
+  // LEGACY SSE ENDPOINT (for backwards compatibility)
+  if (req.method === "GET" && url.pathname === "/sse") {
+    await handleLegacySseRequest(req, res, context.transports);
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname === "/message") {
+    await handleLegacyMessageRequest(req, res, url, context.transports);
+    return;
+  }
+
+  res.writeHead(HTTP_NOT_FOUND, { "Content-Type": "text/plain" });
+  res.end("Not found");
+}
+
+/**
+ * Resolve (or create) the transport for a Streamable HTTP request: routes to
+ * an existing session's transport, or creates a new one for an initialize
+ * request. Sends the appropriate error response and returns `null` if neither
+ * applies.
+ */
+async function resolveStreamableTransport(
+  req: IncomingMessage,
+  res: ServerResponse,
+  requestState: {
+    sessionId: string | undefined;
+    parsedBody: unknown;
+    transports: Map<
+      string,
+      {
+        server: SmartBearMcpServer;
+        transport: StreamableHTTPServerTransport | SSEServerTransport;
+      }
+    >;
+  },
+): Promise<StreamableHTTPServerTransport | null> {
+  const { sessionId, parsedBody, transports } = requestState;
+  // Existing session - route to existing transport
+  if (sessionId) {
+    return getExistingTransport(sessionId, transports, res);
+  }
+  // New session - must be an initialize request
+  if (req.method === "POST" && parsedBody && isInitializeRequest(parsedBody)) {
+    return await createNewTransport(req, res, transports);
+  }
+  // Invalid request
+  res.writeHead(HTTP_BAD_REQUEST, { "Content-Type": "application/json" });
+  res.end(
+    JSON.stringify({
+      jsonrpc: "2.0",
+      error: {
+        code: -32_000,
+        message: "Bad Request: Invalid request",
+      },
+      id: null,
+    }),
+  );
+  return null;
+}
+
+/**
+ * Send the 401 response for a failed server configuration attempt, including
+ * helpful header documentation and a WWW-Authenticate hint for OAuth discovery.
+ */
+function sendConfigurationFailedResponse(
+  req: IncomingMessage,
+  res: ServerResponse,
+  error: unknown,
+): void {
+  const headerHelp = getHttpHeadersHelp();
+  const errorMessage =
+    headerHelp.length > 0
+      ? `Configuration error: ${error instanceof Error ? error.message : String(error)}. Please provide valid headers:\n${headerHelp.join("\n")}`
+      : "No clients support HTTP header configuration.";
+
+  const headers: Record<string, string> = {
+    "Content-Type": "text/plain",
+  };
+
+  // Add WWW-Authenticate header to support OAuth discovery flow
+  // This points the client to the Protected Resource Metadata endpoint
+  if (req.headers.host) {
+    headers["WWW-Authenticate"] =
+      `OAuth resource_metadata="http://${req.headers.host}/.well-known/oauth-protected-resource"`;
+  }
+
+  res.writeHead(HTTP_UNAUTHORIZED, headers);
+  res.end(errorMessage);
+}
+
+/**
+ * Check if any configured client actually has auth credentials for this request.
+ * Some clients (e.g., Bugsnag, Reflect) configure successfully with optional auth
+ * and resolve tokens per-request.
+ */
+function hasAuthenticatedClient(
+  req: IncomingMessage,
+  server: SmartBearMcpServer,
+): boolean {
+  return withRequestContext(req, () =>
+    server.getClients().some((client) => {
+      // Client doesn't support dynamic auth — auth was provided at config time
+      if (!client.getAuthToken) {
+        return true;
+      }
+      // Client supports dynamic auth — check if a token is available
+      return client.getAuthToken() !== null;
+    }),
+  );
+}
+
+export function handleHealthRequest(res: ServerResponse): void {
+  res.writeHead(HTTP_OK, PROBE_HEADERS);
+  res.end(
+    JSON.stringify({ status: "ok", timestamp: new Date().toISOString() }),
+  );
+}
+
+/**
+ * Readiness probe handler. Returns 200 normally, 503 once the process has
+ * received SIGTERM and started draining.
+ */
+export function handleReadyRequest(
+  res: ServerResponse,
+  draining: () => boolean = isDraining,
+): void {
+  if (draining()) {
+    res.writeHead(HTTP_SERVICE_UNAVAILABLE, PROBE_HEADERS);
+    res.end(
+      JSON.stringify({
+        status: "draining",
+        timestamp: new Date().toISOString(),
+      }),
+    );
+    return;
+  }
+  res.writeHead(HTTP_OK, PROBE_HEADERS);
+  res.end(
+    JSON.stringify({ status: "ready", timestamp: new Date().toISOString() }),
+  );
+}
+
+/**
+ * Helper to construct the base URL from the request, respecting proxy headers.
+ * This is critical for cloud deployments where SSL termination happens at the load balancer.
+ * If BASE_URL env var is set, it takes precedence over request headers.
+ */
+export function getBaseUrl(req: IncomingMessage): string {
+  const baseUrlOverride = getEnv("BASE_URL");
+  if (baseUrlOverride) {
+    return baseUrlOverride;
+  }
+  const protocol = (req.headers["x-forwarded-proto"] as string) || "http";
+  const host = (req.headers["x-forwarded-host"] as string) || req.headers.host;
+  return `${protocol}://${host}`;
+}
+
+/**
+ * Run server in HTTP mode with Streamable HTTP transport
+ * Supports both SSE (legacy) and StreamableHTTP transports for backwards compatibility
+ */
+export function runHttpMode(): void {
+  const portEnv = getEnv("PORT");
+  const port = portEnv ? Number.parseInt(portEnv, 10) : DEFAULT_HTTP_PORT;
+  const allowedOrigins = getEnv("ALLOWED_ORIGINS")?.split(",") || [
+    "http://localhost:3000",
+  ];
+
+  // Store transports by session ID
+  const transports = new Map<string, SessionEntry>();
+
+  // Get dynamic list of allowed headers from registered clients
+  const allowedAuthHeaders = getHttpHeaders();
+  const allowedHeaders = [
+    "Content-Type",
+    "Authorization",
+    "MCP-Session-Id", // Required for StreamableHTTP
+    "x-custom-auth-headers", // used by mcp-inspector
+    "mcp-protocol-version",
+    ...allowedAuthHeaders,
+  ].join(", ");
+
+  const httpServer = createServer((req: IncomingMessage, res: ServerResponse) =>
+    routeHttpRequest(req, res, { allowedOrigins, allowedHeaders, transports }),
+  );
+
+  httpServer.listen(port, () => {
+    console.log(`[MCP HTTP Server] Listening on http://localhost:${port}`);
+    console.log(`[MCP HTTP Server] Liveness:  http://localhost:${port}/health`);
+    console.log(`[MCP HTTP Server] Readiness: http://localhost:${port}/ready`);
+    console.log(
+      `[MCP HTTP Server] Modern endpoint: http://localhost:${port}/mcp (Streamable HTTP)`,
+    );
+    console.log(
+      `[MCP HTTP Server] Legacy endpoint: http://localhost:${port}/sse (SSE)`,
+    );
+
+    const headerHelp = getHttpHeadersHelp();
+    if (headerHelp.length > 0) {
+      console.log(
+        `[MCP HTTP Server] Send configuration headers:\n${headerHelp.join("\n")}`,
+      );
+    } else {
+      console.warn(
+        "[MCP HTTP Server] No clients support HTTP header configuration",
+      );
+    }
+  });
+
+  // Register graceful shutdown. Tears down active
+  // transports before any subsystem registered earlier (e.g. logging).
+  registerShutdownHandler("http-transport", async () => {
+    await drainHttpTransport(httpServer, transports);
+  });
+}
+
+/**
+ * Drain the HTTP transport. Called by the shutdown manager on SIGTERM.
+ *
+ * Sequence:
+ *   1. Stop accepting new TCP connections (httpServer.close).
+ *      This does NOT close existing keep-alive / SSE connections.
+ *   2. Close idle keep-alive connections immediately.
+ *   3. Close every active transport, which fires transport.onclose →
+ *      cleanupSession(sessionId) → per-client cleanupSession (e.g. Reflect
+ *      WebSockets).
+ *   4. Wait for httpServer.close() to fully resolve, then force-close any
+ *      remaining keep-alive connections as a backstop.
+ */
+export async function drainHttpTransport(
+  httpServer: Server,
+  transports: Map<string, SessionEntry>,
+): Promise<void> {
+  console.log(
+    `[MCP][shutdown] Draining HTTP transport (${transports.size} active session(s))`,
+  );
+
+  // Stop accepting new connections.
+  const serverClosed = new Promise<void>((resolve) => {
+    httpServer.close(() => resolve());
+  });
+
+  // Close idle keep-alive sockets right away — no in-flight work to lose.
+  httpServer.closeIdleConnections?.();
+
+  // Close every active transport. transport.close() ends SSE streams and
+  // triggers the existing onclose -> cleanupSession chain.
+  const transportCloses = [...transports.values()].map(async (entry) => {
+    try {
+      await entry.transport.close();
+    } catch (err) {
+      // biome-ignore lint/security/noSecrets: log message text, not a secret
+      console.error("[MCP][shutdown] Error closing transport:", err);
+    }
+  });
+
+  await Promise.all(transportCloses);
+
+  // Backstop: force-close any TCP connections still hanging around so
+  // httpServer.close() can resolve. Safe to call after transport.close()
+  // because all session-aware teardown has already run.
+  httpServer.closeAllConnections?.();
+
+  await serverClosed;
+  // biome-ignore lint/security/noSecrets: log message text, not a secret
+  console.log("[MCP][shutdown] HTTP transport drained");
+}
+
+/**
+ * Handle modern Streamable HTTP requests
+ * This is the main endpoint (/mcp) for the modern MCP StreamableHTTP transport.
+ *
+ * Request flow:
+ * 1. First request (initialize): No session ID, body contains initialize request
+ *    - Creates new server + transport, generates session ID
+ * 2. Subsequent requests: Include MCP-Session-Id header
+ *    - Routes to existing transport for the session
+ *    - Unknown session IDs return 404 per spec, prompting the client to
+ *      re-initialize (important for multi-pod deployments where a session
+ *      may not be known to every pod).
+ */
+export async function handleStreamableHttpRequest(
+  req: IncomingMessage,
+  res: ServerResponse,
+  transports: Map<
+    string,
+    {
+      server: SmartBearMcpServer;
+      transport: StreamableHTTPServerTransport | SSEServerTransport;
+    }
+  >,
+) {
+  try {
+    const sessionId = req.headers["mcp-session-id"] as string | undefined;
+
+    // Unknown session - per MCP Streamable HTTP spec, return 404 so clients
+    // know to re-run `initialize` (e.g. after a pod restart drops the
+    // in-memory session map) rather than treating this as a permanent error.
+    // Reject before buffering the body so a junk session id can't force JSON
+    // parsing of an arbitrary payload; drain the stream so keep-alive sockets
+    // aren't left half-read.
+    if (sessionId && !transports.has(sessionId)) {
+      req.resume();
+      res.writeHead(HTTP_NOT_FOUND, { "Content-Type": "application/json" });
+      res.end(
+        JSON.stringify({
+          jsonrpc: "2.0",
+          error: {
+            code: -32_001,
+            message: "Session not found",
+          },
+          id: null,
+        }),
+      );
+      return;
+    }
+
+    const parsedBody = await parseRequestBody(req);
+    const transport = await resolveStreamableTransport(req, res, {
+      sessionId,
+      parsedBody,
+      transports,
+    });
+    if (!transport) {
+      return;
+    }
+
+    // Delegate to transport to handle the MCP protocol message. For requests on
+    // an established session, surface the client identity captured at
+    // `initialize` so downstream API calls (User-Agent) can forward it. New
+    // (initialize) requests have no identity yet and make no downstream calls.
+    const sessionServer = sessionId
+      ? transports.get(sessionId)?.server
+      : undefined;
+    await withRequestContext(req, async () => {
+      if (sessionServer) {
+        setRequestMcpClient(sessionServer.getMcpClientIdentity());
+      }
+      return await transport.handleRequest(req, res, parsedBody);
+    });
+  } catch (error) {
+    console.error("Error handling StreamableHTTP request:", error);
+    res.writeHead(HTTP_INTERNAL_SERVER_ERROR, { "Content-Type": "text/plain" });
+    res.end("Internal server error");
+  }
 }
 
 /**
@@ -666,44 +828,13 @@ export async function newServer(
       );
     }
 
-    // Check if any configured client actually has auth credentials for this request.
-    // Some clients (e.g., Bugsnag, Reflect) configure successfully with optional auth
-    // and resolve tokens per-request. If none of them have auth, trigger OAuth flow.
-    const hasAuth = withRequestContext(req, () =>
-      server.getClients().some((client) => {
-        // Client doesn't support dynamic auth — auth was provided at config time
-        if (!client.getAuthToken) return true;
-        // Client supports dynamic auth — check if a token is available
-        return client.getAuthToken() !== null;
-      }),
-    );
-
-    if (!hasAuth) {
+    if (!hasAuthenticatedClient(req, server)) {
       throw new Error(
         "No clients have valid authentication credentials. Please authenticate via OAuth or provide alternative auth headers (e.g. API key or personal auth token).",
       );
     }
-  } catch (error: any) {
-    // Configuration failed - provide helpful error message
-    const headerHelp = getHttpHeadersHelp();
-    const errorMessage =
-      headerHelp.length > 0
-        ? `Configuration error: ${error instanceof Error ? error.message : String(error)}. Please provide valid headers:\n${headerHelp.join("\n")}`
-        : "No clients support HTTP header configuration.";
-
-    const headers: Record<string, string> = {
-      "Content-Type": "text/plain",
-    };
-
-    // Add WWW-Authenticate header to support OAuth discovery flow
-    // This points the client to the Protected Resource Metadata endpoint
-    if (req.headers.host) {
-      headers["WWW-Authenticate"] =
-        `OAuth resource_metadata="http://${req.headers.host}/.well-known/oauth-protected-resource"`;
-    }
-
-    res.writeHead(401, headers);
-    res.end(errorMessage);
+  } catch (error) {
+    sendConfigurationFailedResponse(req, res, error);
     return null;
   }
   return server;
@@ -741,43 +872,4 @@ export function getQueryStringName(clientPrefix: string, key: string): string {
         part.charAt(0).toUpperCase() + part.slice(1).toLowerCase(),
     )
     .join("")}`;
-}
-
-/**
- * Get all HTTP headers that clients support for authentication
- * Returns a list of header names (in kebab-case) that should be allowed
- */
-function getHttpHeaders(): string[] {
-  const headers = new Set<string>();
-
-  // Use getAll() to respect client filtering
-  for (const entry of clientRegistry.getAll()) {
-    for (const configKey of Object.keys(entry.config.shape)) {
-      headers.add(getHeaderName(entry.configPrefix, configKey));
-    }
-  }
-
-  return Array.from(headers).sort((a, b) => a.localeCompare(b));
-}
-
-/**
- * Get human-readable list of HTTP headers for logging/error messages
- * Organized by client
- */
-function getHttpHeadersHelp(): string[] {
-  const messages: string[] = [];
-  for (const entry of clientRegistry.getAll()) {
-    messages.push(` - ${entry.name}:`);
-    for (const [configKey, requirement] of Object.entries(entry.config.shape)) {
-      const headerName = getHeaderName(entry.configPrefix, configKey);
-      const requiredTag = isOptionalType(requirement)
-        ? " (optional)"
-        : " (required)";
-      messages.push(
-        `    - ${headerName}${requiredTag}: ${getTypeDescription(requirement)}`,
-      );
-    }
-  }
-
-  return messages;
 }

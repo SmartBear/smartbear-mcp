@@ -26,6 +26,7 @@ export class GetEvent extends Tool<BugsnagClient> {
       {
         description: "Get event details of an event",
         parameters: {
+          // biome-ignore lint/security/noSecrets: example event ID, not a secret
           eventId: "6863e2af012caf1d5c320000",
         },
         expectedOutput:

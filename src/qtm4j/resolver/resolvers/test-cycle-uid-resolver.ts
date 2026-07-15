@@ -28,6 +28,7 @@ export class TestCycleUidResolver extends Resolver {
     this.apiClient = apiClient;
   }
 
+  // biome-ignore lint/complexity/useMaxParams: implements the shared Resolver.resolve() base-class signature used across resolver and tool call sites
   async resolve(
     _inputField: string,
     _resolverKey: string,
@@ -42,7 +43,9 @@ export class TestCycleUidResolver extends Resolver {
     projectId: number,
     keys: string[],
   ): Promise<Record<string, ResolvedTestCycle>> {
-    if (keys.length === 0) return {};
+    if (keys.length === 0) {
+      return {};
+    }
 
     const response = await this.apiClient.get(
       ENDPOINTS.RESOLVE_TEST_CYCLE_IDS(projectId),

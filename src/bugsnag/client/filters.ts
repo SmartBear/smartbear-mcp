@@ -29,7 +29,7 @@ interface FilterValue {
  *   "error.status": [{ "type": "empty", "value": "true" }]
  * }
  */
-export interface FilterObject extends Record<string, any> {
+export interface FilterObject {
   [fieldName: string]: FilterValue[];
 }
 
@@ -42,12 +42,12 @@ export interface FilterObject extends Record<string, any> {
 export function toUrlSearchParams(filters: FilterObject): URLSearchParams {
   const params = new URLSearchParams();
 
-  Object.entries(filters).forEach(([field, filterValues]) => {
-    filterValues.forEach((filterValue) => {
+  for (const [field, filterValues] of Object.entries(filters)) {
+    for (const filterValue of filterValues) {
       params.append(`filters[${field}][][type]`, filterValue.type);
       params.append(`filters[${field}][][value]`, filterValue.value.toString());
-    });
-  });
+    }
+  }
 
   return params;
 }

@@ -56,7 +56,7 @@ export class GetLinkedRequirementsForCycle extends Tool<Qtm4jClient> {
       "Paginated result with total, startAt, maxResults, and data array of linked requirement objects (id, key, summary, status, priority, issueType).",
   };
 
-  handle = async (rawArgs: any) => {
+  handle = async (rawArgs: unknown) => {
     const args = GetLinkedRequirementsForCycleBody.parse(rawArgs);
     const fieldResolver = this.client.getResolverRegistry();
     const context = fieldResolver.requireProjectContext();

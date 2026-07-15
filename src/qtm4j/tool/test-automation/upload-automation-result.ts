@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { extname } from "node:path";
+import zod from "zod";
 import { Tool, ToolError } from "../../../common/tools.ts";
 import type { ToolParams } from "../../../common/types.ts";
 import type { Qtm4jClient } from "../../client.ts";
@@ -18,6 +19,17 @@ import {
 
 /** Supported file extensions */
 const SUPPORTED_EXTENSIONS = new Set([".xml", ".json", ".zip"]);
+
+/** Bytes per megabyte, for formatting file size error messages */
+// biome-ignore lint/style/noMagicNumbers: this literal IS the named constant's definition (1024 * 1024 bytes/MB)
+const BYTES_PER_MB = 1024 * 1024;
+
+/** Response from the automation import initiation endpoint (pre-signed upload URL + trackingId) */
+const AutomationImportInitResponse = zod.object({
+  url: zod.string(),
+  trackingId: zod.string(),
+  message: zod.string().optional(),
+});
 
 export class UploadAutomationResult extends Tool<Qtm4jClient> {
   specification: ToolParams = {
@@ -107,7 +119,8 @@ export class UploadAutomationResult extends Tool<Qtm4jClient> {
       "trackingId to poll import status, a message from the API, the filePath uploaded, and the format used.",
   };
 
-  handle = async (rawArgs: any) => {
+  // biome-ignore lint/complexity/noExcessiveLinesPerFunction: single sequential upload flow (validate → read → init → upload → respond); splitting would fragment one linear procedure
+  handle = async (rawArgs: unknown) => {
     const args = UploadAutomationResultBody.parse(rawArgs);
     const { filePath, format, isZip, fields, ...rest } = args;
 
@@ -130,15 +143,16 @@ export class UploadAutomationResult extends Tool<Qtm4jClient> {
     let fileBuffer: Buffer;
     try {
       fileBuffer = await readFile(filePath);
-    } catch (err: any) {
-      throw new ToolError(
-        `Could not read file at '${filePath}': ${err.message}`,
-      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new ToolError(`Could not read file at '${filePath}': ${message}`, {
+        cause: err,
+      });
     }
 
     // Enforce maximum file size
     if (fileBuffer.byteLength > AUTOMATION_LIMITS.MAX_FILE_SIZE_BYTES) {
-      const sizeMb = (fileBuffer.byteLength / (1024 * 1024)).toFixed(2);
+      const sizeMb = (fileBuffer.byteLength / BYTES_PER_MB).toFixed(2);
       throw new ToolError(
         `File is too large (${sizeMb} MB). Maximum allowed size is 10 MB.`,
       );
@@ -154,19 +168,20 @@ export class UploadAutomationResult extends Tool<Qtm4jClient> {
       ...(fields ? { fields } : {}),
     };
 
-    const initResponse = await apiClient.postAutomation(
+    const rawInitResponse = await apiClient.postAutomation(
       ENDPOINTS.AUTOMATION_IMPORT,
       importBody,
     );
 
-    const uploadUrl: string | undefined = initResponse?.url;
-    const trackingId: string | undefined = initResponse?.trackingId;
-
-    if (!(uploadUrl && trackingId)) {
+    const initParseResult =
+      AutomationImportInitResponse.safeParse(rawInitResponse);
+    if (!initParseResult.success) {
       throw new ToolError(
         "QTM4J did not return a valid upload URL. Check your API key and project configuration.",
       );
     }
+    const initResponse = initParseResult.data;
+    const { url: uploadUrl, trackingId } = initResponse;
 
     // Step 2 — PUT file as raw binary with Content-Type: multipart/form-data to the pre-signed S3 URL
     await apiClient.uploadFileMultipart(uploadUrl, fileBuffer);

@@ -1,3 +1,4 @@
+// biome-ignore-all lint/style/noExcessiveLinesPerFile: PactflowClient is a single cohesive facade over the whole PactFlow/Pact Broker REST API; each method is a thin, self-contained wrapper and splitting the class across files would fragment its public surface.
 import z from "zod";
 
 import { USER_AGENT } from "../common/info.ts";
@@ -23,8 +24,8 @@ import type {
   StatusResponse,
 } from "./client/ai.ts";
 import type {
-  CanIDeployInput,
-  CanIDeployResponse,
+  CanIdeployInput,
+  CanIdeployResponse,
   GetBiDirectionalConsumerProviderVersionInput,
   GetBiDirectionalProviderVersionInput,
   GetBranchVersionsInput,
@@ -60,6 +61,25 @@ import {
 import { PROMPTS } from "./client/prompts.ts";
 import { type ClientType, TOOLS } from "./client/tools.ts";
 
+// MARK: Constants
+
+/** HTTP 200: request succeeded. */
+const HTTP_STATUS_OK = 200;
+/** HTTP 202: the async operation has been accepted and is still processing. */
+const HTTP_STATUS_ACCEPTED = 202;
+/** HTTP 204: request succeeded with no response body. */
+const HTTP_STATUS_NO_CONTENT = 204;
+/** HTTP 404: the requested resource was not found. */
+const HTTP_STATUS_NOT_FOUND = 404;
+/** HTTP 500: generic fallback status used for unexpected (non-HTTP) errors. */
+const HTTP_STATUS_INTERNAL_SERVER_ERROR = 500;
+/** Timeout for polling an async PactFlow AI operation to completion, in milliseconds. */
+const POLL_TIMEOUT_MS = 120_000;
+/** Interval between polls of an async PactFlow AI operation, in milliseconds. */
+const POLL_INTERVAL_MS = 1000;
+/** Divisor to convert milliseconds to seconds for the poll-timeout error message. */
+const MS_PER_SECOND = 1000;
+
 const ConfigurationSchema = z.object({
   base_url: z.url().describe("Pact Broker or PactFlow base URL"),
   token: z
@@ -90,7 +110,9 @@ export class PactflowClient implements Client {
 
   /** Returns the configured MCP server instance. @throws Error if not yet configured. */
   get server(): SmartBearMcpServer {
-    if (!this._server) throw new Error("Server not configured");
+    if (!this._server) {
+      throw new Error("Server not configured");
+    }
     return this._server;
   }
 
@@ -102,6 +124,7 @@ export class PactflowClient implements Client {
    * @param server - The MCP server instance to bind to.
    * @param config - Connection config (base_url + token OR username/password).
    */
+  // biome-ignore lint/suspicious/useAwait: must satisfy the shared `Client.configure` interface (Promise<void>), matching the async signature used by every other client implementation, even though this one has no network call to await.
   async configure(
     server: SmartBearMcpServer,
     config: z.infer<typeof ConfigurationSchema>,
@@ -242,7 +265,7 @@ export class PactflowClient implements Client {
    *   entitlements, and user entitlements.
    * @throws Error if the request fails or returns a non-OK response.
    */
-  async checkAIEntitlements(): Promise<Entitlement | null> {
+  async checkAiEntitlements(): Promise<Entitlement | null> {
     if (this.aiBaseUrl) {
       return await this.fetchJson<Entitlement>(
         `${this.aiBaseUrl}/entitlement`,
@@ -271,7 +294,7 @@ export class PactflowClient implements Client {
 
     return {
       status: response.status,
-      isComplete: response.status === 200,
+      isComplete: response.status === HTTP_STATUS_OK,
     };
   }
 
@@ -281,7 +304,7 @@ export class PactflowClient implements Client {
       getRequestHeader("Pact-Token") || getRequestHeader("Authorization");
 
     if (Array.isArray(contextToken)) {
-      contextToken = contextToken[0];
+      [contextToken] = contextToken;
     }
 
     const clientInfo = this._server?.getClientInfo();
@@ -334,6 +357,8 @@ export class PactflowClient implements Client {
         ...sourceApplicationHeader,
       };
     }
+    // biome-ignore lint/complexity/noUselessUndefined: explicit return keeps this branch's control flow symmetric with the others and satisfies useGetterReturn.
+    return undefined;
   }
 
   /**
@@ -370,10 +395,11 @@ export class PactflowClient implements Client {
   ): Promise<T> {
     // Polling for completion
     const startTime = Date.now();
-    const timeout = 120_000; // 120 seconds
-    const pollInterval = 1000; // 1 second
+    const timeout = POLL_TIMEOUT_MS;
+    const pollInterval = POLL_INTERVAL_MS;
 
     while (Date.now() - startTime < timeout) {
+      // biome-ignore lint/performance/noAwaitInLoops: each poll must wait for the previous one's HTTP response before checking elapsed time and deciding whether to poll again; iterations are inherently sequential.
       const statusCheck = await this.getStatus(statusResponse.status_url);
 
       if (statusCheck.isComplete) {
@@ -381,7 +407,7 @@ export class PactflowClient implements Client {
         return await this.getResult<T>(statusResponse.result_url);
       }
 
-      if (statusCheck.status !== 202) {
+      if (statusCheck.status !== HTTP_STATUS_ACCEPTED) {
         throw new ToolError(
           `${operationName} failed with status: ${statusCheck.status}`,
         );
@@ -392,7 +418,7 @@ export class PactflowClient implements Client {
     }
 
     throw new ToolError(
-      `${operationName} timed out after ${timeout / 1000} seconds`,
+      `${operationName} timed out after ${timeout / MS_PER_SECOND} seconds`,
     );
   }
 
@@ -408,7 +434,7 @@ export class PactflowClient implements Client {
     url: string,
     options: {
       method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
-      body?: any;
+      body?: unknown;
       errorContext?: string;
     },
   ): Promise<T> {
@@ -418,7 +444,7 @@ export class PactflowClient implements Client {
       const response = await fetch(url, {
         method,
         headers: this.requestHeaders,
-        ...(body && { body: JSON.stringify(body) }),
+        ...(body ? { body: JSON.stringify(body) } : {}),
       });
 
       if (!response.ok) {
@@ -432,7 +458,7 @@ export class PactflowClient implements Client {
         );
       }
 
-      if (response.status === 204) {
+      if (response.status === HTTP_STATUS_NO_CONTENT) {
         return undefined as unknown as T;
       }
 
@@ -443,11 +469,14 @@ export class PactflowClient implements Client {
       }
       const errorMessage =
         error instanceof Error ? error.message : String(error);
+      // biome-ignore lint/suspicious/noConsole: surfaces unexpected (non-HTTP) errors for operators before re-throwing as a ToolError
       console.error(`[${errorContext}] Unexpected error: ${error}\n`);
       throw new ToolError(
         `${errorContext} Failed - ${errorMessage}`,
-        undefined,
-        new Map<string, number>([["responseStatus", 500]]),
+        { cause: error },
+        new Map<string, number>([
+          ["responseStatus", HTTP_STATUS_INTERNAL_SERVER_ERROR],
+        ]),
       );
     }
   }
@@ -461,7 +490,7 @@ export class PactflowClient implements Client {
    */
   private async submitHttpCallback(
     endpoint: string,
-    body: any,
+    body: GenerationInput | RefineInput,
   ): Promise<StatusResponse> {
     return await this.fetchJson<StatusResponse>(
       `${this.aiBaseUrl}${endpoint}`,
@@ -505,10 +534,10 @@ export class PactflowClient implements Client {
    *   - `pacticipant`: The name of the service (pacticipant).
    *   - `version`: The version of the pacticipant being evaluated for deployment.
    *   - `environment`: The target environment (e.g., staging, production).
-   * @returns CanIDeployResponse containing deployment decision and verification results.
+   * @returns CanIdeployResponse containing deployment decision and verification results.
    * @throws Error if the request fails or returns a non-OK response.
    */
-  async canIDeploy(body: CanIDeployInput): Promise<CanIDeployResponse> {
+  async canIdeploy(body: CanIdeployInput): Promise<CanIdeployResponse> {
     const { pacticipant, version, environment } = body;
     const queryParams = new URLSearchParams({
       pacticipant,
@@ -517,7 +546,7 @@ export class PactflowClient implements Client {
     });
     const url = `${this.baseUrl}/can-i-deploy?${queryParams.toString()}`;
 
-    return await this.fetchJson<CanIDeployResponse>(url, {
+    return await this.fetchJson<CanIdeployResponse>(url, {
       method: "GET",
       errorContext: "Can-I-Deploy Request",
     });
@@ -547,7 +576,7 @@ export class PactflowClient implements Client {
     }
 
     // Add the q parameters (pacticipant selectors)
-    q.forEach((selector) => {
+    for (const selector of q) {
       queryParts.push(
         `q[]pacticipant=${encodeURIComponent(selector.pacticipant)}`,
       );
@@ -573,7 +602,7 @@ export class PactflowClient implements Client {
       if (selector.mainBranch !== undefined) {
         queryParts.push(`q[]mainBranch=${selector.mainBranch}`);
       }
-    });
+    }
 
     const url = `${this.baseUrl}/matrix?${queryParts.join("&")}`;
 
@@ -609,6 +638,7 @@ export class PactflowClient implements Client {
 
       return (await response.json()) as MetricsResponse;
     } catch (error) {
+      // biome-ignore lint/suspicious/noConsole: surfaces unexpected (non-HTTP) errors for operators before re-throwing
       console.error("[GetMetrics] Unexpected error:", error);
       throw error;
     }
@@ -640,6 +670,8 @@ export class PactflowClient implements Client {
 
       return (await response.json()) as TeamMetricsResponse;
     } catch (error) {
+      // biome-ignore lint/suspicious/noConsole: surfaces unexpected (non-HTTP) errors for operators before re-throwing
+      // biome-ignore lint/security/noSecrets: log message prefix, not a secret
       console.error("[GetTeamMetrics] Unexpected error:", error);
       throw error;
     }
@@ -653,15 +685,19 @@ export class PactflowClient implements Client {
    * @returns List of pacticipants with their metadata.
    * @throws ToolError if the request fails.
    */
-  async listPacticipants(params?: {
+  async listPacticipants<T = unknown>(params?: {
     pageNumber?: number;
     pageSize?: number;
-  }): Promise<any> {
+  }): Promise<T> {
     const queryParams = new URLSearchParams();
-    if (params?.pageNumber) queryParams.set("page", String(params.pageNumber));
-    if (params?.pageSize) queryParams.set("size", String(params.pageSize));
+    if (params?.pageNumber) {
+      queryParams.set("page", String(params.pageNumber));
+    }
+    if (params?.pageSize) {
+      queryParams.set("size", String(params.pageSize));
+    }
     const qs = queryParams.toString();
-    return await this.fetchJson<any>(
+    return await this.fetchJson<T>(
       `${this.baseUrl}/pacticipants${qs ? `?${qs}` : ""}`,
       { method: "GET", errorContext: "List Pacticipants" },
     );
@@ -674,8 +710,10 @@ export class PactflowClient implements Client {
    * @returns Pacticipant metadata including display name, main branch, and repository URL.
    * @throws ToolError if the pacticipant is not found or the request fails.
    */
-  async getPacticipant({ pacticipantName }: GetPacticipantInput): Promise<any> {
-    return await this.fetchJson<any>(
+  async getPacticipant<T = unknown>({
+    pacticipantName,
+  }: GetPacticipantInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/pacticipants/${encodeURIComponent(pacticipantName)}`,
       { method: "GET", errorContext: "Get Pacticipant" },
     );
@@ -689,18 +727,24 @@ export class PactflowClient implements Client {
    * @returns List of branches for the pacticipant.
    * @throws ToolError if the request fails.
    */
-  async listBranches({
+  async listBranches<T = unknown>({
     pacticipantName,
     q,
     pageNumber,
     pageSize,
-  }: ListBranchesInput): Promise<any> {
+  }: ListBranchesInput): Promise<T> {
     const queryParams = new URLSearchParams();
-    if (q) queryParams.set("q", q);
-    if (pageNumber) queryParams.set("pageNumber", String(pageNumber));
-    if (pageSize) queryParams.set("pageSize", String(pageSize));
+    if (q) {
+      queryParams.set("q", q);
+    }
+    if (pageNumber) {
+      queryParams.set("pageNumber", String(pageNumber));
+    }
+    if (pageSize) {
+      queryParams.set("pageSize", String(pageSize));
+    }
     const qs = queryParams.toString();
-    return await this.fetchJson<any>(
+    return await this.fetchJson<T>(
       `${this.baseUrl}/pacticipants/${encodeURIComponent(pacticipantName)}/branches${qs ? `?${qs}` : ""}`,
       { method: "GET", errorContext: "List Branches" },
     );
@@ -713,16 +757,20 @@ export class PactflowClient implements Client {
    * @returns List of versions with their branch and tag associations.
    * @throws ToolError if the request fails.
    */
-  async listVersions({
+  async listVersions<T = unknown>({
     pacticipantName,
     pageNumber,
     pageSize,
-  }: ListVersionsInput): Promise<any> {
+  }: ListVersionsInput): Promise<T> {
     const queryParams = new URLSearchParams();
-    if (pageNumber) queryParams.set("page", String(pageNumber));
-    if (pageSize) queryParams.set("size", String(pageSize));
+    if (pageNumber) {
+      queryParams.set("page", String(pageNumber));
+    }
+    if (pageSize) {
+      queryParams.set("size", String(pageSize));
+    }
     const qs = queryParams.toString();
-    return await this.fetchJson<any>(
+    return await this.fetchJson<T>(
       `${this.baseUrl}/pacticipants/${encodeURIComponent(pacticipantName)}/versions${qs ? `?${qs}` : ""}`,
       { method: "GET", errorContext: "List Versions" },
     );
@@ -735,11 +783,11 @@ export class PactflowClient implements Client {
    * @returns Version metadata including branches, tags, and build URL.
    * @throws ToolError if the version is not found or the request fails.
    */
-  async getVersion({
+  async getVersion<T = unknown>({
     pacticipantName,
     versionNumber,
-  }: GetVersionInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: GetVersionInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/pacticipants/${encodeURIComponent(pacticipantName)}/versions/${encodeURIComponent(versionNumber)}`,
       { method: "GET", errorContext: "Get Version" },
     );
@@ -752,14 +800,14 @@ export class PactflowClient implements Client {
    * @returns The latest matching version.
    * @throws ToolError if the request fails.
    */
-  async getLatestVersion({
+  async getLatestVersion<T = unknown>({
     pacticipantName,
     tag,
-  }: GetLatestVersionInput): Promise<any> {
+  }: GetLatestVersionInput): Promise<T> {
     const path = tag
       ? `/pacticipants/${encodeURIComponent(pacticipantName)}/latest-version/${encodeURIComponent(tag)}`
       : `/pacticipants/${encodeURIComponent(pacticipantName)}/latest-version`;
-    return await this.fetchJson<any>(`${this.baseUrl}${path}`, {
+    return await this.fetchJson<T>(`${this.baseUrl}${path}`, {
       method: "GET",
       errorContext: "Get Latest Version",
     });
@@ -771,8 +819,8 @@ export class PactflowClient implements Client {
    * @returns List of environments with their UUIDs, names, and production flags.
    * @throws ToolError if the request fails.
    */
-  async listEnvironments(): Promise<any> {
-    return await this.fetchJson<any>(`${this.baseUrl}/environments`, {
+  async listEnvironments<T = unknown>(): Promise<T> {
+    return await this.fetchJson<T>(`${this.baseUrl}/environments`, {
       method: "GET",
       errorContext: "List Environments",
     });
@@ -785,8 +833,10 @@ export class PactflowClient implements Client {
    * @returns Environment metadata including name, display name, and production flag.
    * @throws ToolError if the environment is not found or the request fails.
    */
-  async getEnvironment({ environmentId }: GetEnvironmentInput): Promise<any> {
-    return await this.fetchJson<any>(
+  async getEnvironment<T = unknown>({
+    environmentId,
+  }: GetEnvironmentInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/environments/${encodeURIComponent(environmentId)}`,
       { method: "GET", errorContext: "Get Environment" },
     );
@@ -800,13 +850,13 @@ export class PactflowClient implements Client {
    * @returns The created deployment record.
    * @throws ToolError if the request fails.
    */
-  async recordDeployment({
+  async recordDeployment<T = unknown>({
     pacticipantName,
     versionNumber,
     environmentId,
     applicationInstance,
-  }: RecordDeploymentInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: RecordDeploymentInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/pacticipants/${encodeURIComponent(pacticipantName)}/versions/${encodeURIComponent(versionNumber)}/deployed-versions/environment/${encodeURIComponent(environmentId)}`,
       {
         method: "POST",
@@ -823,10 +873,10 @@ export class PactflowClient implements Client {
    * @returns List of currently deployed versions across all pacticipants.
    * @throws ToolError if the request fails.
    */
-  async getCurrentlyDeployed({
+  async getCurrentlyDeployed<T = unknown>({
     environmentId,
-  }: GetCurrentlyDeployedInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: GetCurrentlyDeployedInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/environments/${encodeURIComponent(environmentId)}/deployed-versions/currently-deployed`,
       { method: "GET", errorContext: "Get Currently Deployed" },
     );
@@ -840,12 +890,12 @@ export class PactflowClient implements Client {
    * @returns The created release record.
    * @throws ToolError if the request fails.
    */
-  async recordRelease({
+  async recordRelease<T = unknown>({
     pacticipantName,
     versionNumber,
     environmentId,
-  }: RecordReleaseInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: RecordReleaseInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/pacticipants/${encodeURIComponent(pacticipantName)}/versions/${encodeURIComponent(versionNumber)}/released-versions/environment/${encodeURIComponent(environmentId)}`,
       { method: "POST", body: {}, errorContext: "Record Release" },
     );
@@ -858,10 +908,10 @@ export class PactflowClient implements Client {
    * @returns List of currently supported released versions.
    * @throws ToolError if the request fails.
    */
-  async getCurrentlySupported({
+  async getCurrentlySupported<T = unknown>({
     environmentId,
-  }: GetCurrentlySupportedInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: GetCurrentlySupportedInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/environments/${encodeURIComponent(environmentId)}/released-versions/currently-supported`,
       { method: "GET", errorContext: "Get Currently Supported" },
     );
@@ -875,8 +925,10 @@ export class PactflowClient implements Client {
    * @returns Publication result including the pacticipant version number.
    * @throws ToolError if the request fails.
    */
-  async publishContracts(body: PublishConsumerContractsInput): Promise<any> {
-    return await this.fetchJson<any>(`${this.baseUrl}/contracts/publish`, {
+  async publishContracts<T = unknown>(
+    body: PublishConsumerContractsInput,
+  ): Promise<T> {
+    return await this.fetchJson<T>(`${this.baseUrl}/contracts/publish`, {
       method: "POST",
       body,
       errorContext: "Publish Consumer Contracts",
@@ -892,11 +944,11 @@ export class PactflowClient implements Client {
    * @returns Publication result.
    * @throws ToolError if the request fails.
    */
-  async publishProviderContract({
+  async publishProviderContract<T = unknown>({
     providerName,
     ...body
-  }: PublishProviderContractInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: PublishProviderContractInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/provider-contracts/provider/${encodeURIComponent(providerName)}/publish`,
       { method: "POST", body, errorContext: "Publish Provider Contract" },
     );
@@ -911,11 +963,11 @@ export class PactflowClient implements Client {
    * @returns List of pact URLs and metadata the provider must verify.
    * @throws ToolError if the request fails.
    */
-  async getPactsForVerification({
+  async getPactsForVerification<T = unknown>({
     providerName,
     ...body
-  }: GetPactsForVerificationInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: GetPactsForVerificationInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/pacts/provider/${encodeURIComponent(providerName)}/for-verification`,
       { method: "POST", body, errorContext: "Get Pacts for Verification" },
     );
@@ -928,11 +980,11 @@ export class PactflowClient implements Client {
    * @returns The published OpenAPI spec and its verification status.
    * @throws ToolError if the request fails.
    */
-  async getBiDirectionalProviderContract({
+  async getBiDirectionalProviderContract<T = unknown>({
     providerName,
     providerVersionNumber,
-  }: GetBiDirectionalProviderVersionInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: GetBiDirectionalProviderVersionInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/contracts/bi-directional/provider/${encodeURIComponent(providerName)}/version/${encodeURIComponent(providerVersionNumber)}/provider-contract`,
       { method: "GET", errorContext: "Get BDCT Provider Contract" },
     );
@@ -945,11 +997,11 @@ export class PactflowClient implements Client {
    * @returns The results of the tool (e.g. Dredd, Schemathesis) that verified the provider.
    * @throws ToolError if the request fails.
    */
-  async getBiDirectionalProviderContractVerificationResults({
+  async getBiDirectionalProviderContractVerificationResults<T = unknown>({
     providerName,
     providerVersionNumber,
-  }: GetBiDirectionalProviderVersionInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: GetBiDirectionalProviderVersionInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/contracts/bi-directional/provider/${encodeURIComponent(providerName)}/version/${encodeURIComponent(providerVersionNumber)}/provider-contract-verification-results`,
       {
         method: "GET",
@@ -965,11 +1017,11 @@ export class PactflowClient implements Client {
    * @returns Consumer contracts compared against the provider's OpenAPI spec.
    * @throws ToolError if the request fails.
    */
-  async getBiDirectionalConsumerContract({
+  async getBiDirectionalConsumerContract<T = unknown>({
     providerName,
     providerVersionNumber,
-  }: GetBiDirectionalProviderVersionInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: GetBiDirectionalProviderVersionInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/contracts/bi-directional/provider/${encodeURIComponent(providerName)}/version/${encodeURIComponent(providerVersionNumber)}/consumer-contract`,
       { method: "GET", errorContext: "Get BDCT Consumer Contract" },
     );
@@ -982,11 +1034,11 @@ export class PactflowClient implements Client {
    * @returns Results of comparing all consumer pacts against the provider's OpenAPI spec.
    * @throws ToolError if the request fails.
    */
-  async getBiDirectionalConsumerContractVerificationResults({
+  async getBiDirectionalConsumerContractVerificationResults<T = unknown>({
     providerName,
     providerVersionNumber,
-  }: GetBiDirectionalProviderVersionInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: GetBiDirectionalProviderVersionInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/contracts/bi-directional/provider/${encodeURIComponent(providerName)}/version/${encodeURIComponent(providerVersionNumber)}/consumer-contract-verification-results`,
       {
         method: "GET",
@@ -1003,11 +1055,11 @@ export class PactflowClient implements Client {
    *   against all relevant consumer pacts.
    * @throws ToolError if the request fails.
    */
-  async getBiDirectionalCrossContractVerificationResults({
+  async getBiDirectionalCrossContractVerificationResults<T = unknown>({
     providerName,
     providerVersionNumber,
-  }: GetBiDirectionalProviderVersionInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: GetBiDirectionalProviderVersionInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/contracts/bi-directional/provider/${encodeURIComponent(providerName)}/version/${encodeURIComponent(providerVersionNumber)}/cross-contract-verification-results`,
       {
         method: "GET",
@@ -1024,13 +1076,13 @@ export class PactflowClient implements Client {
    * @returns The Pact contract published by the specified consumer version.
    * @throws ToolError if the request fails.
    */
-  async getBiDirectionalConsumerContractByConsumer({
+  async getBiDirectionalConsumerContractByConsumer<T = unknown>({
     providerName,
     providerVersionNumber,
     consumerName,
     consumerVersionNumber,
-  }: GetBiDirectionalConsumerProviderVersionInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: GetBiDirectionalConsumerProviderVersionInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/contracts/bi-directional/provider/${encodeURIComponent(providerName)}/version/${encodeURIComponent(providerVersionNumber)}/consumer/${encodeURIComponent(consumerName)}/version/${encodeURIComponent(consumerVersionNumber)}/consumer-contract`,
       {
         method: "GET",
@@ -1047,13 +1099,13 @@ export class PactflowClient implements Client {
    * @returns The provider's OpenAPI spec in the context of the given consumer version.
    * @throws ToolError if the request fails.
    */
-  async getBiDirectionalProviderContractByConsumer({
+  async getBiDirectionalProviderContractByConsumer<T = unknown>({
     providerName,
     providerVersionNumber,
     consumerName,
     consumerVersionNumber,
-  }: GetBiDirectionalConsumerProviderVersionInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: GetBiDirectionalConsumerProviderVersionInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/contracts/bi-directional/provider/${encodeURIComponent(providerName)}/version/${encodeURIComponent(providerVersionNumber)}/consumer/${encodeURIComponent(consumerName)}/version/${encodeURIComponent(consumerVersionNumber)}/provider-contract`,
       {
         method: "GET",
@@ -1071,13 +1123,15 @@ export class PactflowClient implements Client {
    * @returns Provider self-verification results scoped to the given consumer version.
    * @throws ToolError if the request fails.
    */
-  async getBiDirectionalProviderContractVerificationResultsByConsumer({
+  async getBiDirectionalProviderContractVerificationResultsByConsumer<
+    T = unknown,
+  >({
     providerName,
     providerVersionNumber,
     consumerName,
     consumerVersionNumber,
-  }: GetBiDirectionalConsumerProviderVersionInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: GetBiDirectionalConsumerProviderVersionInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/contracts/bi-directional/provider/${encodeURIComponent(providerName)}/version/${encodeURIComponent(providerVersionNumber)}/consumer/${encodeURIComponent(consumerName)}/version/${encodeURIComponent(consumerVersionNumber)}/provider-contract-verification-results`,
       {
         method: "GET",
@@ -1096,13 +1150,15 @@ export class PactflowClient implements Client {
    * @returns Results of comparing the specific consumer pact against the provider's OpenAPI spec.
    * @throws ToolError if the request fails.
    */
-  async getBiDirectionalConsumerContractVerificationResultsByConsumer({
+  async getBiDirectionalConsumerContractVerificationResultsByConsumer<
+    T = unknown,
+  >({
     providerName,
     providerVersionNumber,
     consumerName,
     consumerVersionNumber,
-  }: GetBiDirectionalConsumerProviderVersionInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: GetBiDirectionalConsumerProviderVersionInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/contracts/bi-directional/provider/${encodeURIComponent(providerName)}/version/${encodeURIComponent(providerVersionNumber)}/consumer/${encodeURIComponent(consumerName)}/version/${encodeURIComponent(consumerVersionNumber)}/consumer-contract-verification-results`,
       {
         method: "GET",
@@ -1121,13 +1177,15 @@ export class PactflowClient implements Client {
    * @returns The precise cross-contract comparison outcome for the given pairing.
    * @throws ToolError if the request fails.
    */
-  async getBiDirectionalCrossContractVerificationResultsByConsumer({
+  async getBiDirectionalCrossContractVerificationResultsByConsumer<
+    T = unknown,
+  >({
     providerName,
     providerVersionNumber,
     consumerName,
     consumerVersionNumber,
-  }: GetBiDirectionalConsumerProviderVersionInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: GetBiDirectionalConsumerProviderVersionInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/contracts/bi-directional/provider/${encodeURIComponent(providerName)}/version/${encodeURIComponent(providerVersionNumber)}/consumer/${encodeURIComponent(consumerName)}/version/${encodeURIComponent(consumerVersionNumber)}/cross-contract-verification-results`,
       {
         method: "GET",
@@ -1143,8 +1201,8 @@ export class PactflowClient implements Client {
    * @returns List of all consumer-provider pairings that have pacts published.
    * @throws ToolError if the request fails.
    */
-  async listIntegrations(): Promise<any> {
-    return await this.fetchJson<any>(`${this.baseUrl}/integrations`, {
+  async listIntegrations<T = unknown>(): Promise<T> {
+    return await this.fetchJson<T>(`${this.baseUrl}/integrations`, {
       method: "GET",
       errorContext: "List Integrations",
     });
@@ -1158,10 +1216,10 @@ export class PactflowClient implements Client {
    * @returns Network graph of consumer-provider relationships for the pacticipant.
    * @throws ToolError if the request fails.
    */
-  async getPacticipantNetwork({
+  async getPacticipantNetwork<T = unknown>({
     pacticipantName,
-  }: GetPacticipantNetworkInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: GetPacticipantNetworkInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/pacticipant/${encodeURIComponent(pacticipantName)}/network`,
       { method: "GET", errorContext: "Get Pacticipant Network" },
     );
@@ -1174,15 +1232,19 @@ export class PactflowClient implements Client {
    * @returns List of every label applied to any pacticipant.
    * @throws ToolError if the request fails.
    */
-  async listLabels(params?: {
+  async listLabels<T = unknown>(params?: {
     pageNumber?: number;
     pageSize?: number;
-  }): Promise<any> {
+  }): Promise<T> {
     const queryParams = new URLSearchParams();
-    if (params?.pageNumber) queryParams.set("page", String(params.pageNumber));
-    if (params?.pageSize) queryParams.set("size", String(params.pageSize));
+    if (params?.pageNumber) {
+      queryParams.set("page", String(params.pageNumber));
+    }
+    if (params?.pageSize) {
+      queryParams.set("size", String(params.pageSize));
+    }
     const qs = queryParams.toString();
-    return await this.fetchJson<any>(
+    return await this.fetchJson<T>(
       `${this.baseUrl}/labels${qs ? `?${qs}` : ""}`,
       { method: "GET", errorContext: "List Labels" },
     );
@@ -1195,11 +1257,11 @@ export class PactflowClient implements Client {
    * @returns The label resource if it exists (404 if not applied).
    * @throws ToolError if the request fails.
    */
-  async getPacticipantLabel({
+  async getPacticipantLabel<T = unknown>({
     pacticipantName,
     labelName,
-  }: GetLabelInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: GetLabelInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/pacticipants/${encodeURIComponent(pacticipantName)}/labels/${encodeURIComponent(labelName)}`,
       { method: "GET", errorContext: "Get Pacticipant Label" },
     );
@@ -1212,8 +1274,10 @@ export class PactflowClient implements Client {
    * @returns List of pacticipants with the given label.
    * @throws ToolError if the request fails.
    */
-  async listPacticipantsByLabel({ labelName }: LabelByNameInput): Promise<any> {
-    return await this.fetchJson<any>(
+  async listPacticipantsByLabel<T = unknown>({
+    labelName,
+  }: LabelByNameInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/pacticipants/label/${encodeURIComponent(labelName)}`,
       { method: "GET", errorContext: "List Pacticipants by Label" },
     );
@@ -1227,11 +1291,11 @@ export class PactflowClient implements Client {
    * @returns The updated pacticipant resource.
    * @throws ToolError if the request fails.
    */
-  async updatePacticipant({
+  async updatePacticipant<T = unknown>({
     pacticipantName,
     ...body
-  }: UpdatePacticipantInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: UpdatePacticipantInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/pacticipants/${encodeURIComponent(pacticipantName)}`,
       { method: "PUT", body, errorContext: "Update Pacticipant" },
     );
@@ -1244,11 +1308,11 @@ export class PactflowClient implements Client {
    * @returns The updated pacticipant resource.
    * @throws ToolError if the request fails.
    */
-  async patchPacticipant({
+  async patchPacticipant<T = unknown>({
     pacticipantName,
     ...body
-  }: UpdatePacticipantInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: UpdatePacticipantInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/pacticipants/${encodeURIComponent(pacticipantName)}`,
       { method: "PATCH", body, errorContext: "Patch Pacticipant" },
     );
@@ -1261,12 +1325,12 @@ export class PactflowClient implements Client {
    * @returns The updated version resource.
    * @throws ToolError if the request fails.
    */
-  async updateVersion({
+  async updateVersion<T = unknown>({
     pacticipantName,
     versionNumber,
     ...body
-  }: UpdateVersionInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: UpdateVersionInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/pacticipants/${encodeURIComponent(pacticipantName)}/versions/${encodeURIComponent(versionNumber)}`,
       { method: "PUT", body, errorContext: "Update Version" },
     );
@@ -1279,17 +1343,21 @@ export class PactflowClient implements Client {
    * @returns List of versions created on the given branch.
    * @throws ToolError if the request fails.
    */
-  async getBranchVersions({
+  async getBranchVersions<T = unknown>({
     pacticipantName,
     branchName,
     pageNumber,
     pageSize,
-  }: GetBranchVersionsInput): Promise<any> {
+  }: GetBranchVersionsInput): Promise<T> {
     const queryParams = new URLSearchParams();
-    if (pageNumber) queryParams.set("page", String(pageNumber));
-    if (pageSize) queryParams.set("size", String(pageSize));
+    if (pageNumber) {
+      queryParams.set("page", String(pageNumber));
+    }
+    if (pageSize) {
+      queryParams.set("size", String(pageSize));
+    }
     const qs = queryParams.toString();
-    return await this.fetchJson<any>(
+    return await this.fetchJson<T>(
       `${this.baseUrl}/pacticipants/${encodeURIComponent(pacticipantName)}/branches/${encodeURIComponent(branchName)}/versions${qs ? `?${qs}` : ""}`,
       { method: "GET", errorContext: "Get Branch Versions" },
     );
@@ -1302,12 +1370,12 @@ export class PactflowClient implements Client {
    * @returns All deployment records for the version, including whether each is currently active.
    * @throws ToolError if the request fails.
    */
-  async getDeployedVersions({
+  async getDeployedVersions<T = unknown>({
     pacticipantName,
     versionNumber,
     environmentId,
-  }: GetVersionDeployedInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: GetVersionDeployedInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/pacticipants/${encodeURIComponent(pacticipantName)}/versions/${encodeURIComponent(versionNumber)}/deployed-versions/environment/${encodeURIComponent(environmentId)}`,
       { method: "GET", errorContext: "Get Deployed Versions" },
     );
@@ -1320,12 +1388,12 @@ export class PactflowClient implements Client {
    * @returns All release records for the version in the environment.
    * @throws ToolError if the request fails.
    */
-  async getReleasedVersions({
+  async getReleasedVersions<T = unknown>({
     pacticipantName,
     versionNumber,
     environmentId,
-  }: GetVersionDeployedInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: GetVersionDeployedInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/pacticipants/${encodeURIComponent(pacticipantName)}/versions/${encodeURIComponent(versionNumber)}/released-versions/environment/${encodeURIComponent(environmentId)}`,
       { method: "GET", errorContext: "Get Released Versions" },
     );
@@ -1338,10 +1406,10 @@ export class PactflowClient implements Client {
    * @returns The created environment resource.
    * @throws ToolError if the request fails.
    */
-  async createEnvironment({
+  async createEnvironment<T = unknown>({
     ...body
-  }: import("./client/base").CreateEnvironmentInput): Promise<any> {
-    return await this.fetchJson<any>(`${this.baseUrl}/environments`, {
+  }: import("./client/base").CreateEnvironmentInput): Promise<T> {
+    return await this.fetchJson<T>(`${this.baseUrl}/environments`, {
       method: "POST",
       body,
       errorContext: "Create Environment",
@@ -1355,11 +1423,11 @@ export class PactflowClient implements Client {
    * @returns The updated environment resource.
    * @throws ToolError if the environment is not found or the request fails.
    */
-  async updateEnvironment({
+  async updateEnvironment<T = unknown>({
     environmentId,
     ...body
-  }: import("./client/base").UpdateEnvironmentInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: import("./client/base").UpdateEnvironmentInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/environments/${encodeURIComponent(environmentId)}`,
       {
         method: "PUT",
@@ -1375,10 +1443,10 @@ export class PactflowClient implements Client {
    * @param params - `environmentId`: UUID of the environment to delete.
    * @throws ToolError if the environment is not found or the request fails.
    */
-  async deleteEnvironment({
+  async deleteEnvironment<T = unknown>({
     environmentId,
-  }: import("./client/base").GetEnvironmentInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: import("./client/base").GetEnvironmentInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/environments/${encodeURIComponent(environmentId)}`,
       {
         method: "DELETE",
@@ -1394,10 +1462,10 @@ export class PactflowClient implements Client {
    * @returns The created pacticipant resource.
    * @throws ToolError if the request fails.
    */
-  async createPacticipant({
+  async createPacticipant<T = unknown>({
     ...body
-  }: import("./client/base").CreatePacticipantInput): Promise<any> {
-    return await this.fetchJson<any>(`${this.baseUrl}/pacticipants`, {
+  }: import("./client/base").CreatePacticipantInput): Promise<T> {
+    return await this.fetchJson<T>(`${this.baseUrl}/pacticipants`, {
       method: "POST",
       body,
       errorContext: "Create Pacticipant",
@@ -1410,10 +1478,10 @@ export class PactflowClient implements Client {
    * @param params - `pacticipantName`: The name of the pacticipant to delete.
    * @throws ToolError if the request fails.
    */
-  async deletePacticipant({
+  async deletePacticipant<T = unknown>({
     pacticipantName,
-  }: import("./client/base").DeletePacticipantInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: import("./client/base").DeletePacticipantInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/pacticipants/${encodeURIComponent(pacticipantName)}`,
       {
         method: "DELETE",
@@ -1429,11 +1497,11 @@ export class PactflowClient implements Client {
    * @returns Branch metadata including its versions.
    * @throws ToolError if the branch is not found or the request fails.
    */
-  async getBranch({
+  async getBranch<T = unknown>({
     pacticipantName,
     branchName,
-  }: import("./client/base").GetBranchInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: import("./client/base").GetBranchInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/pacticipants/${encodeURIComponent(pacticipantName)}/branches/${encodeURIComponent(branchName)}`,
       { method: "GET", errorContext: "Get Branch" },
     );
@@ -1445,11 +1513,11 @@ export class PactflowClient implements Client {
    * @param params - `pacticipantName` and `branchName`.
    * @throws ToolError if the branch is not found or the request fails.
    */
-  async deleteBranch({
+  async deleteBranch<T = unknown>({
     pacticipantName,
     branchName,
-  }: import("./client/base").DeleteBranchInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: import("./client/base").DeleteBranchInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/pacticipants/${encodeURIComponent(pacticipantName)}/branches/${encodeURIComponent(branchName)}`,
       { method: "DELETE", errorContext: "Delete Branch" },
     );
@@ -1462,11 +1530,11 @@ export class PactflowClient implements Client {
    * @returns The created label resource.
    * @throws ToolError if the request fails.
    */
-  async addLabel({
+  async addLabel<T = unknown>({
     pacticipantName,
     labelName,
-  }: import("./client/base").ManageLabelInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: import("./client/base").ManageLabelInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/pacticipants/${encodeURIComponent(pacticipantName)}/labels/${encodeURIComponent(labelName)}`,
       { method: "PUT", body: {}, errorContext: "Add Label" },
     );
@@ -1478,11 +1546,11 @@ export class PactflowClient implements Client {
    * @param params - `pacticipantName` and `labelName` to remove.
    * @throws ToolError if the label or pacticipant is not found, or the request fails.
    */
-  async removeLabel({
+  async removeLabel<T = unknown>({
     pacticipantName,
     labelName,
-  }: import("./client/base").ManageLabelInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: import("./client/base").ManageLabelInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/pacticipants/${encodeURIComponent(pacticipantName)}/labels/${encodeURIComponent(labelName)}`,
       { method: "DELETE", errorContext: "Remove Label" },
     );
@@ -1495,10 +1563,10 @@ export class PactflowClient implements Client {
    * @returns List of integrations associated with the team.
    * @throws ToolError if the request fails.
    */
-  async getIntegrationsByTeam({
+  async getIntegrationsByTeam<T = unknown>({
     teamId,
-  }: import("./client/base").GetIntegrationsByTeamInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: import("./client/base").GetIntegrationsByTeamInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/integrations/team/${encodeURIComponent(teamId)}`,
       {
         method: "GET",
@@ -1513,11 +1581,11 @@ export class PactflowClient implements Client {
    * @param params - `providerName` and `consumerName`.
    * @throws ToolError if the integration is not found or the request fails.
    */
-  async deleteIntegration({
+  async deleteIntegration<T = unknown>({
     providerName,
     consumerName,
-  }: import("./client/base").DeleteIntegrationInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: import("./client/base").DeleteIntegrationInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/integrations/provider/${encodeURIComponent(providerName)}/consumer/${encodeURIComponent(consumerName)}`,
       { method: "DELETE", errorContext: "Delete Integration" },
     );
@@ -1528,8 +1596,8 @@ export class PactflowClient implements Client {
    *
    * @throws ToolError if the request fails.
    */
-  async deleteAllIntegrations(): Promise<any> {
-    return await this.fetchJson<any>(`${this.baseUrl}/integrations`, {
+  async deleteAllIntegrations<T = unknown>(): Promise<T> {
+    return await this.fetchJson<T>(`${this.baseUrl}/integrations`, {
       method: "DELETE",
       errorContext: "Delete All Integrations",
     });
@@ -1541,8 +1609,8 @@ export class PactflowClient implements Client {
    * @returns List of webhook definitions and their trigger configurations.
    * @throws ToolError if the request fails.
    */
-  async listWebhooks(): Promise<any> {
-    return await this.fetchJson<any>(`${this.baseUrl}/webhooks`, {
+  async listWebhooks<T = unknown>(): Promise<T> {
+    return await this.fetchJson<T>(`${this.baseUrl}/webhooks`, {
       method: "GET",
       errorContext: "List Webhooks",
     });
@@ -1555,10 +1623,10 @@ export class PactflowClient implements Client {
    * @returns Webhook definition including its URL, events, and consumer/provider filters.
    * @throws ToolError if the webhook is not found or the request fails.
    */
-  async getWebhook({
+  async getWebhook<T = unknown>({
     webhookId,
-  }: import("./client/base").WebhookIdInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: import("./client/base").WebhookIdInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/webhooks/${encodeURIComponent(webhookId)}`,
       {
         method: "GET",
@@ -1575,10 +1643,10 @@ export class PactflowClient implements Client {
    * @returns The created webhook resource.
    * @throws ToolError if the request fails.
    */
-  async createWebhook({
+  async createWebhook<T = unknown>({
     ...body
-  }: import("./client/base").CreateWebhookInput): Promise<any> {
-    return await this.fetchJson<any>(`${this.baseUrl}/webhooks`, {
+  }: import("./client/base").CreateWebhookInput): Promise<T> {
+    return await this.fetchJson<T>(`${this.baseUrl}/webhooks`, {
       method: "POST",
       body,
       errorContext: "Create Webhook",
@@ -1592,11 +1660,11 @@ export class PactflowClient implements Client {
    * @returns The updated webhook resource.
    * @throws ToolError if the webhook is not found or the request fails.
    */
-  async updateWebhook({
+  async updateWebhook<T = unknown>({
     webhookId,
     ...body
-  }: import("./client/base").UpdateWebhookInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: import("./client/base").UpdateWebhookInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/webhooks/${encodeURIComponent(webhookId)}`,
       {
         method: "PUT",
@@ -1612,10 +1680,10 @@ export class PactflowClient implements Client {
    * @param params - `webhookId`: UUID of the webhook to delete.
    * @throws ToolError if the webhook is not found or the request fails.
    */
-  async deleteWebhook({
+  async deleteWebhook<T = unknown>({
     webhookId,
-  }: import("./client/base").WebhookIdInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: import("./client/base").WebhookIdInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/webhooks/${encodeURIComponent(webhookId)}`,
       {
         method: "DELETE",
@@ -1629,8 +1697,8 @@ export class PactflowClient implements Client {
    *
    * @throws ToolError if the request fails.
    */
-  async executeWebhooks(): Promise<any> {
-    return await this.fetchJson<any>(`${this.baseUrl}/webhooks/execute`, {
+  async executeWebhooks<T = unknown>(): Promise<T> {
+    return await this.fetchJson<T>(`${this.baseUrl}/webhooks/execute`, {
       method: "POST",
       body: {},
       errorContext: "Execute Webhooks",
@@ -1643,10 +1711,10 @@ export class PactflowClient implements Client {
    * @param params - `webhookId`: UUID of the webhook to execute.
    * @throws ToolError if the webhook is not found or the request fails.
    */
-  async executeWebhook({
+  async executeWebhook<T = unknown>({
     webhookId,
-  }: import("./client/base").WebhookIdInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: import("./client/base").WebhookIdInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/webhooks/${encodeURIComponent(webhookId)}/execute`,
       {
         method: "POST",
@@ -1662,8 +1730,8 @@ export class PactflowClient implements Client {
    * @returns List of secret metadata.
    * @throws ToolError if the request fails.
    */
-  async listSecrets(): Promise<any> {
-    return await this.fetchJson<any>(`${this.baseUrl}/secrets`, {
+  async listSecrets<T = unknown>(): Promise<T> {
+    return await this.fetchJson<T>(`${this.baseUrl}/secrets`, {
       method: "GET",
       errorContext: "List Secrets",
     });
@@ -1675,10 +1743,10 @@ export class PactflowClient implements Client {
    * @param params - `secretId`: UUID of the secret.
    * @throws ToolError if the secret is not found or the request fails.
    */
-  async getSecret({
+  async getSecret<T = unknown>({
     secretId,
-  }: import("./client/base").SecretIdInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: import("./client/base").SecretIdInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/secrets/${encodeURIComponent(secretId)}`,
       {
         method: "GET",
@@ -1694,10 +1762,10 @@ export class PactflowClient implements Client {
    * @returns The created secret resource (value is not echoed back).
    * @throws ToolError if the request fails.
    */
-  async createSecret({
+  async createSecret<T = unknown>({
     ...body
-  }: import("./client/base").CreateSecretInput): Promise<any> {
-    return await this.fetchJson<any>(`${this.baseUrl}/secrets`, {
+  }: import("./client/base").CreateSecretInput): Promise<T> {
+    return await this.fetchJson<T>(`${this.baseUrl}/secrets`, {
       method: "POST",
       body,
       errorContext: "Create Secret",
@@ -1710,11 +1778,11 @@ export class PactflowClient implements Client {
    * @param params - `secretId` (UUID) plus updated name, description, and/or value.
    * @throws ToolError if the secret is not found or the request fails.
    */
-  async updateSecret({
+  async updateSecret<T = unknown>({
     secretId,
     ...body
-  }: import("./client/base").UpdateSecretInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: import("./client/base").UpdateSecretInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/secrets/${encodeURIComponent(secretId)}`,
       {
         method: "PUT",
@@ -1730,10 +1798,10 @@ export class PactflowClient implements Client {
    * @param params - `secretId`: UUID of the secret to delete.
    * @throws ToolError if the secret is not found or the request fails.
    */
-  async deleteSecret({
+  async deleteSecret<T = unknown>({
     secretId,
-  }: import("./client/base").SecretIdInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: import("./client/base").SecretIdInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/secrets/${encodeURIComponent(secretId)}`,
       {
         method: "DELETE",
@@ -1748,8 +1816,8 @@ export class PactflowClient implements Client {
    * @returns Current user's name, email, roles, and active status.
    * @throws ToolError if the request fails.
    */
-  async getCurrentUser(): Promise<any> {
-    return await this.fetchJson<any>(`${this.baseUrl}/user`, {
+  async getCurrentUser<T = unknown>(): Promise<T> {
+    return await this.fetchJson<T>(`${this.baseUrl}/user`, {
       method: "GET",
       errorContext: "Get Current User",
     });
@@ -1761,8 +1829,8 @@ export class PactflowClient implements Client {
    * @returns Token metadata (IDs, descriptions) — values are not returned.
    * @throws ToolError if the request fails.
    */
-  async listTokens(): Promise<any> {
-    return await this.fetchJson<any>(`${this.baseUrl}/settings/tokens`, {
+  async listTokens<T = unknown>(): Promise<T> {
+    return await this.fetchJson<T>(`${this.baseUrl}/settings/tokens`, {
       method: "GET",
       errorContext: "List Tokens",
     });
@@ -1775,10 +1843,10 @@ export class PactflowClient implements Client {
    * @returns The new token value.
    * @throws ToolError if the token is not found or the request fails.
    */
-  async regenerateToken({
+  async regenerateToken<T = unknown>({
     tokenId,
-  }: import("./client/base").RegenerateTokenInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: import("./client/base").RegenerateTokenInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/settings/tokens/${encodeURIComponent(tokenId)}/regenerate`,
       {
         method: "POST",
@@ -1794,14 +1862,11 @@ export class PactflowClient implements Client {
    * @returns User preference settings.
    * @throws ToolError if the request fails.
    */
-  async getUserPreferences(): Promise<any> {
-    return await this.fetchJson<any>(
-      `${this.baseUrl}/preferences/current-user`,
-      {
-        method: "GET",
-        errorContext: "Get User Preferences",
-      },
-    );
+  async getUserPreferences<T = unknown>(): Promise<T> {
+    return await this.fetchJson<T>(`${this.baseUrl}/preferences/current-user`, {
+      method: "GET",
+      errorContext: "Get User Preferences",
+    });
   }
 
   /**
@@ -1810,8 +1875,8 @@ export class PactflowClient implements Client {
    * @returns System preference settings.
    * @throws ToolError if the request fails.
    */
-  async getSystemPreferences(): Promise<any> {
-    return await this.fetchJson<any>(`${this.baseUrl}/preferences/system`, {
+  async getSystemPreferences<T = unknown>(): Promise<T> {
+    return await this.fetchJson<T>(`${this.baseUrl}/preferences/system`, {
       method: "GET",
       errorContext: "Get System Preferences",
     });
@@ -1825,18 +1890,33 @@ export class PactflowClient implements Client {
    * @returns Paginated list of audit events.
    * @throws ToolError if the request fails.
    */
-  async getAuditLog(params: import("./client/base").AuditInput): Promise<any> {
+  async getAuditLog<T = unknown>(
+    params: import("./client/base").AuditInput,
+  ): Promise<T> {
     const queryParams = new URLSearchParams();
-    if (params.since) queryParams.set("since", params.since);
-    if (params.userUuid) queryParams.set("userUuid", params.userUuid);
-    if (params.type) queryParams.set("type", params.type);
-    if (params.sort) queryParams.set("sort", params.sort);
-    if (params.from) queryParams.set("from", params.from);
-    if (params.pageNumber)
+    if (params.since) {
+      queryParams.set("since", params.since);
+    }
+    if (params.userUuid) {
+      queryParams.set("userUuid", params.userUuid);
+    }
+    if (params.type) {
+      queryParams.set("type", params.type);
+    }
+    if (params.sort) {
+      queryParams.set("sort", params.sort);
+    }
+    if (params.from) {
+      queryParams.set("from", params.from);
+    }
+    if (params.pageNumber) {
       queryParams.set("pageNumber", String(params.pageNumber));
-    if (params.pageSize) queryParams.set("pageSize", String(params.pageSize));
+    }
+    if (params.pageSize) {
+      queryParams.set("pageSize", String(params.pageSize));
+    }
     const qs = queryParams.toString();
-    return await this.fetchJson<any>(
+    return await this.fetchJson<T>(
       `${this.baseUrl}/audit${qs ? `?${qs}` : ""}`,
       {
         method: "GET",
@@ -1853,19 +1933,27 @@ export class PactflowClient implements Client {
    * @returns Paginated list of user accounts.
    * @throws ToolError if the request fails.
    */
-  async listAdminUsers(
+  async listAdminUsers<T = unknown>(
     params: import("./client/base").ListAdminUsersInput,
-  ): Promise<any> {
+  ): Promise<T> {
     const queryParams = new URLSearchParams();
-    if (params.active !== undefined)
+    if (params.active !== undefined) {
       queryParams.set("active", String(params.active));
-    if (params.q) queryParams.set("q", params.q);
-    if (params.userType !== undefined)
+    }
+    if (params.q) {
+      queryParams.set("q", params.q);
+    }
+    if (params.userType !== undefined) {
       queryParams.set("userType", String(params.userType));
-    if (params.page) queryParams.set("page", String(params.page));
-    if (params.size) queryParams.set("size", String(params.size));
+    }
+    if (params.page) {
+      queryParams.set("page", String(params.page));
+    }
+    if ((params.size ?? 0) > 0) {
+      queryParams.set("size", String(params.size));
+    }
     const qs = queryParams.toString();
-    return await this.fetchJson<any>(
+    return await this.fetchJson<T>(
       `${this.baseUrl}/admin/users${qs ? `?${qs}` : ""}`,
       {
         method: "GET",
@@ -1881,10 +1969,10 @@ export class PactflowClient implements Client {
    * @returns User profile including roles and active status.
    * @throws ToolError if the user is not found or the request fails.
    */
-  async getAdminUser({
+  async getAdminUser<T = unknown>({
     userId,
-  }: import("./client/base").AdminUserIdInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: import("./client/base").AdminUserIdInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/admin/users/${encodeURIComponent(userId)}`,
       {
         method: "GET",
@@ -1900,10 +1988,10 @@ export class PactflowClient implements Client {
    * @returns The created user resource.
    * @throws ToolError if the request fails.
    */
-  async createAdminUser({
+  async createAdminUser<T = unknown>({
     ...body
-  }: import("./client/base").CreateAdminUserInput): Promise<any> {
-    return await this.fetchJson<any>(`${this.baseUrl}/admin/users`, {
+  }: import("./client/base").CreateAdminUserInput): Promise<T> {
+    return await this.fetchJson<T>(`${this.baseUrl}/admin/users`, {
       method: "POST",
       body,
       errorContext: "Create Admin User",
@@ -1917,11 +2005,11 @@ export class PactflowClient implements Client {
    * @returns The updated user resource.
    * @throws ToolError if the user is not found or the request fails.
    */
-  async updateAdminUser({
+  async updateAdminUser<T = unknown>({
     userId,
     ...body
-  }: import("./client/base").UpdateAdminUserInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: import("./client/base").UpdateAdminUserInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/admin/users/${encodeURIComponent(userId)}`,
       {
         method: "PUT",
@@ -1937,10 +2025,10 @@ export class PactflowClient implements Client {
    * @param params - `userId`: UUID of the user to delete.
    * @throws ToolError if the user is not found or the request fails.
    */
-  async deleteAdminUser({
+  async deleteAdminUser<T = unknown>({
     userId,
-  }: import("./client/base").AdminUserIdInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: import("./client/base").AdminUserIdInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/admin/users/${encodeURIComponent(userId)}`,
       {
         method: "DELETE",
@@ -1955,17 +2043,14 @@ export class PactflowClient implements Client {
    * @param params - `users`: Array of objects with email and optional name.
    * @throws ToolError if the request fails.
    */
-  async inviteUsers({
+  async inviteUsers<T = unknown>({
     users,
-  }: import("./client/base").InviteUsersInput): Promise<any> {
-    return await this.fetchJson<any>(
-      `${this.baseUrl}/admin/users/invite-users`,
-      {
-        method: "POST",
-        body: { users },
-        errorContext: "Invite Users",
-      },
-    );
+  }: import("./client/base").InviteUsersInput): Promise<T> {
+    return await this.fetchJson<T>(`${this.baseUrl}/admin/users/invite-users`, {
+      method: "POST",
+      body: { users },
+      errorContext: "Invite Users",
+    });
   }
 
   /**
@@ -1975,11 +2060,11 @@ export class PactflowClient implements Client {
    * @param params - `userId` (UUID) and `roles` array of role UUIDs.
    * @throws ToolError if the user is not found or the request fails.
    */
-  async setUserRoles({
+  async setUserRoles<T = unknown>({
     userId,
     roles,
-  }: import("./client/base").SetUserRolesInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: import("./client/base").SetUserRolesInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/admin/users/${encodeURIComponent(userId)}/roles`,
       {
         method: "PUT",
@@ -1995,11 +2080,11 @@ export class PactflowClient implements Client {
    * @param params - `userId` and `roleId` UUIDs.
    * @throws ToolError if the user or role is not found, or the request fails.
    */
-  async addRoleToUser({
+  async addRoleToUser<T = unknown>({
     userId,
     roleId,
-  }: import("./client/base").UserRoleInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: import("./client/base").UserRoleInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/admin/users/${encodeURIComponent(userId)}/roles/${encodeURIComponent(roleId)}`,
       { method: "PUT", body: {}, errorContext: "Add Role to User" },
     );
@@ -2011,11 +2096,11 @@ export class PactflowClient implements Client {
    * @param params - `userId` and `roleId` UUIDs.
    * @throws ToolError if the user or role is not found, or the request fails.
    */
-  async removeRoleFromUser({
+  async removeRoleFromUser<T = unknown>({
     userId,
     roleId,
-  }: import("./client/base").UserRoleInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: import("./client/base").UserRoleInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/admin/users/${encodeURIComponent(userId)}/roles/${encodeURIComponent(roleId)}`,
       { method: "DELETE", errorContext: "Remove Role from User" },
     );
@@ -2028,15 +2113,21 @@ export class PactflowClient implements Client {
    * @returns Paginated list of teams.
    * @throws ToolError if the request fails.
    */
-  async listAdminTeams(
+  async listAdminTeams<T = unknown>(
     params: import("./client/base").ListAdminTeamsInput,
-  ): Promise<any> {
+  ): Promise<T> {
     const queryParams = new URLSearchParams();
-    if (params.q) queryParams.set("q", params.q);
-    if (params.page) queryParams.set("page", String(params.page));
-    if (params.size) queryParams.set("size", String(params.size));
+    if (params.q) {
+      queryParams.set("q", params.q);
+    }
+    if (params.page) {
+      queryParams.set("page", String(params.page));
+    }
+    if ((params.size ?? 0) > 0) {
+      queryParams.set("size", String(params.size));
+    }
     const qs = queryParams.toString();
-    return await this.fetchJson<any>(
+    return await this.fetchJson<T>(
       `${this.baseUrl}/admin/teams${qs ? `?${qs}` : ""}`,
       {
         method: "GET",
@@ -2052,10 +2143,10 @@ export class PactflowClient implements Client {
    * @returns Team details including name, members, environments, and pacticipants.
    * @throws ToolError if the team is not found or the request fails.
    */
-  async getAdminTeam({
+  async getAdminTeam<T = unknown>({
     teamId,
-  }: import("./client/base").AdminTeamIdInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: import("./client/base").AdminTeamIdInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/admin/teams/${encodeURIComponent(teamId)}`,
       {
         method: "GET",
@@ -2071,10 +2162,10 @@ export class PactflowClient implements Client {
    * @returns The created team resource.
    * @throws ToolError if the request fails.
    */
-  async createAdminTeam({
+  async createAdminTeam<T = unknown>({
     ...body
-  }: import("./client/base").CreateTeamInput): Promise<any> {
-    return await this.fetchJson<any>(`${this.baseUrl}/admin/teams`, {
+  }: import("./client/base").CreateTeamInput): Promise<T> {
+    return await this.fetchJson<T>(`${this.baseUrl}/admin/teams`, {
       method: "POST",
       body,
       errorContext: "Create Admin Team",
@@ -2088,11 +2179,11 @@ export class PactflowClient implements Client {
    *   and pacticipant assignments.
    * @throws ToolError if the team is not found or the request fails.
    */
-  async updateAdminTeam({
+  async updateAdminTeam<T = unknown>({
     teamId,
     ...body
-  }: import("./client/base").UpdateTeamInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: import("./client/base").UpdateTeamInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/admin/teams/${encodeURIComponent(teamId)}`,
       {
         method: "PUT",
@@ -2108,10 +2199,10 @@ export class PactflowClient implements Client {
    * @param params - `teamId`: UUID of the team to delete.
    * @throws ToolError if the team is not found or the request fails.
    */
-  async deleteAdminTeam({
+  async deleteAdminTeam<T = unknown>({
     teamId,
-  }: import("./client/base").AdminTeamIdInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: import("./client/base").AdminTeamIdInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/admin/teams/${encodeURIComponent(teamId)}`,
       {
         method: "DELETE",
@@ -2127,10 +2218,10 @@ export class PactflowClient implements Client {
    * @returns List of users in the team.
    * @throws ToolError if the team is not found or the request fails.
    */
-  async listTeamUsers({
+  async listTeamUsers<T = unknown>({
     teamId,
-  }: import("./client/base").AdminTeamIdInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: import("./client/base").AdminTeamIdInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/admin/teams/${encodeURIComponent(teamId)}/users`,
       {
         method: "GET",
@@ -2146,11 +2237,11 @@ export class PactflowClient implements Client {
    * @param params - `teamId` and `userId` UUIDs.
    * @throws ToolError if not found or the request fails.
    */
-  async getTeamUser({
+  async getTeamUser<T = unknown>({
     teamId,
     userId,
-  }: import("./client/base").TeamUserIdInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: import("./client/base").TeamUserIdInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/admin/teams/${encodeURIComponent(teamId)}/users/${encodeURIComponent(userId)}`,
       { method: "GET", errorContext: "Get Team User" },
     );
@@ -2163,11 +2254,11 @@ export class PactflowClient implements Client {
    * @param params - `teamId` (UUID) and `uuids` array of user UUIDs.
    * @throws ToolError if the team is not found or the request fails.
    */
-  async setTeamUsers({
+  async setTeamUsers<T = unknown>({
     teamId,
     uuids,
-  }: import("./client/base").SetTeamUsersInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: import("./client/base").SetTeamUsersInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/admin/teams/${encodeURIComponent(teamId)}/users`,
       {
         method: "PUT",
@@ -2183,11 +2274,11 @@ export class PactflowClient implements Client {
    * @param params - `teamId` (UUID) and `operations` array of JSON Patch ops (add/remove).
    * @throws ToolError if the team is not found or the request fails.
    */
-  async patchTeamUsers({
+  async patchTeamUsers<T = unknown>({
     teamId,
     operations,
-  }: import("./client/base").PatchTeamUsersInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: import("./client/base").PatchTeamUsersInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/admin/teams/${encodeURIComponent(teamId)}/users`,
       {
         method: "PATCH",
@@ -2203,11 +2294,11 @@ export class PactflowClient implements Client {
    * @param params - `teamId` and `userId` UUIDs.
    * @throws ToolError if not found or the request fails.
    */
-  async removeUserFromTeam({
+  async removeUserFromTeam<T = unknown>({
     teamId,
     userId,
-  }: import("./client/base").TeamUserIdInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: import("./client/base").TeamUserIdInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/admin/teams/${encodeURIComponent(teamId)}/users/${encodeURIComponent(userId)}`,
       { method: "DELETE", errorContext: "Remove User from Team" },
     );
@@ -2219,8 +2310,8 @@ export class PactflowClient implements Client {
    * @returns All role definitions and their associated permission scopes.
    * @throws ToolError if the request fails.
    */
-  async listAdminRoles(): Promise<any> {
-    return await this.fetchJson<any>(`${this.baseUrl}/admin/roles`, {
+  async listAdminRoles<T = unknown>(): Promise<T> {
+    return await this.fetchJson<T>(`${this.baseUrl}/admin/roles`, {
       method: "GET",
       errorContext: "List Admin Roles",
     });
@@ -2232,10 +2323,10 @@ export class PactflowClient implements Client {
    * @param params - `roleId`: UUID of the role.
    * @throws ToolError if the role is not found or the request fails.
    */
-  async getAdminRole({
+  async getAdminRole<T = unknown>({
     roleId,
-  }: import("./client/base").AdminRoleIdInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: import("./client/base").AdminRoleIdInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/admin/roles/${encodeURIComponent(roleId)}`,
       {
         method: "GET",
@@ -2251,10 +2342,10 @@ export class PactflowClient implements Client {
    * @returns The created role resource.
    * @throws ToolError if the request fails.
    */
-  async createAdminRole({
+  async createAdminRole<T = unknown>({
     ...body
-  }: import("./client/base").CreateRoleInput): Promise<any> {
-    return await this.fetchJson<any>(`${this.baseUrl}/admin/roles`, {
+  }: import("./client/base").CreateRoleInput): Promise<T> {
+    return await this.fetchJson<T>(`${this.baseUrl}/admin/roles`, {
       method: "POST",
       body,
       errorContext: "Create Admin Role",
@@ -2268,11 +2359,11 @@ export class PactflowClient implements Client {
    * @param params - `roleId` (UUID) plus updated name, description, and permissions.
    * @throws ToolError if the role is not found or the request fails.
    */
-  async updateAdminRole({
+  async updateAdminRole<T = unknown>({
     roleId,
     ...body
-  }: import("./client/base").UpdateRoleInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: import("./client/base").UpdateRoleInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/admin/roles/${encodeURIComponent(roleId)}`,
       {
         method: "PUT",
@@ -2288,10 +2379,10 @@ export class PactflowClient implements Client {
    * @param params - `roleId`: UUID of the role to delete.
    * @throws ToolError if the role is not found or the request fails.
    */
-  async deleteAdminRole({
+  async deleteAdminRole<T = unknown>({
     roleId,
-  }: import("./client/base").AdminRoleIdInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: import("./client/base").AdminRoleIdInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/admin/roles/${encodeURIComponent(roleId)}`,
       {
         method: "DELETE",
@@ -2306,8 +2397,8 @@ export class PactflowClient implements Client {
    *
    * @throws ToolError if the request fails.
    */
-  async resetAdminRoles(): Promise<any> {
-    return await this.fetchJson<any>(`${this.baseUrl}/admin/roles/reset`, {
+  async resetAdminRoles<T = unknown>(): Promise<T> {
+    return await this.fetchJson<T>(`${this.baseUrl}/admin/roles/reset`, {
       method: "POST",
       body: {},
       errorContext: "Reset Admin Roles",
@@ -2320,8 +2411,8 @@ export class PactflowClient implements Client {
    * @returns All permission scope definitions.
    * @throws ToolError if the request fails.
    */
-  async listAdminPermissions(): Promise<any> {
-    return await this.fetchJson<any>(`${this.baseUrl}/admin/permissions`, {
+  async listAdminPermissions<T = unknown>(): Promise<T> {
+    return await this.fetchJson<T>(`${this.baseUrl}/admin/permissions`, {
       method: "GET",
       errorContext: "List Admin Permissions",
     });
@@ -2334,10 +2425,10 @@ export class PactflowClient implements Client {
    * @returns The created system account resource.
    * @throws ToolError if the request fails.
    */
-  async createSystemAccount({
+  async createSystemAccount<T = unknown>({
     ...body
-  }: import("./client/base").CreateSystemAccountInput): Promise<any> {
-    return await this.fetchJson<any>(`${this.baseUrl}/admin/system-accounts`, {
+  }: import("./client/base").CreateSystemAccountInput): Promise<T> {
+    return await this.fetchJson<T>(`${this.baseUrl}/admin/system-accounts`, {
       method: "POST",
       body,
       errorContext: "Create System Account",
@@ -2351,10 +2442,10 @@ export class PactflowClient implements Client {
    * @returns Token list for use in CI/CD pipelines.
    * @throws ToolError if the account is not found or the request fails.
    */
-  async getSystemAccountTokens({
+  async getSystemAccountTokens<T = unknown>({
     accountId,
-  }: import("./client/base").GetSystemAccountTokensInput): Promise<any> {
-    return await this.fetchJson<any>(
+  }: import("./client/base").GetSystemAccountTokensInput): Promise<T> {
+    return await this.fetchJson<T>(
       `${this.baseUrl}/admin/system-accounts/${encodeURIComponent(accountId)}/tokens`,
       {
         method: "GET",
@@ -2373,40 +2464,39 @@ export class PactflowClient implements Client {
     register: RegisterToolsFunction,
     getInput: GetInputFunction,
   ): Promise<void> {
-    let disablePactflowAItools = false;
+    let disablePactflowAiTools = false;
     try {
-      const entitlement = await this.checkAIEntitlements();
+      const entitlement = await this.checkAiEntitlements();
       if (entitlement && !entitlement.aiEnabled) {
-        disablePactflowAItools = true;
+        disablePactflowAiTools = true;
       }
     } catch (error) {
       if (
         error instanceof ToolError &&
-        error.metadata?.get("responseStatus") === 404
+        error.metadata?.get("responseStatus") === HTTP_STATUS_NOT_FOUND
       ) {
-        disablePactflowAItools = true;
+        disablePactflowAiTools = true;
       }
     }
 
     for (const tool of TOOLS.filter(
-      (t) => !this._clientType || t.clients.includes(this._clientType),
+      (t) =>
+        (!this._clientType || t.clients.includes(this._clientType)) &&
+        !(disablePactflowAiTools && t.tags?.includes("pactflow-ai")),
     )) {
-      if (
-        tool.tags &&
-        disablePactflowAItools &&
-        tool.tags.includes("pactflow-ai")
-      ) {
-        continue;
-      }
-
       const { handler, clients: _, formatResponse, ...toolParams } = tool;
       register(toolParams, async (args, _extra) => {
-        const handlerFn = (this as any)[handler];
+        const handlerFn = (
+          this as unknown as Record<
+            string,
+            (...handlerArgs: unknown[]) => Promise<unknown>
+          >
+        )[handler];
         if (typeof handlerFn !== "function") {
           throw new Error(`Handler '${handler}' not found on PactClient`);
         }
 
-        let result: any;
+        let result: unknown;
         if (tool.enableElicitation) {
           result = await handlerFn.call(this, args, getInput);
         } else {
@@ -2431,6 +2521,7 @@ export class PactflowClient implements Client {
    *
    * @param register - The function used to register prompts.
    */
+  // biome-ignore lint/suspicious/useAwait: must satisfy the shared `Client.registerPrompts` interface (Promise<void>), which `server.ts` awaits; registering prompts here is synchronous.
   async registerPrompts(register: RegisterPromptFunction): Promise<void> {
     for (const prompt of PROMPTS) {
       register(

@@ -3,15 +3,20 @@ import type {
   ServerNotification,
   ServerRequest,
 } from "@modelcontextprotocol/sdk/types.js";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import {
   CreateFolderBody,
   CreateFolder201Response as createFolderResponse,
 } from "../../common/rest-api-schemas.ts";
+import {
+  asZephyrClient,
+  createMockZephyrClient,
+  type MockZephyrClient,
+} from "../../common/test-helpers.ts";
 import { CreateFolder } from "./create-folder.ts";
 
 describe("CreateFolder", () => {
-  let mockClient: any;
+  let mockClient: MockZephyrClient;
   let instance: CreateFolder;
 
   const ExtraRequestHandler: RequestHandlerExtra<
@@ -29,12 +34,8 @@ describe("CreateFolder", () => {
   };
 
   beforeEach(() => {
-    mockClient = {
-      getApiClient: vi.fn().mockReturnValue({
-        post: vi.fn(),
-      }),
-    };
-    instance = new CreateFolder(mockClient as any);
+    mockClient = createMockZephyrClient();
+    instance = new CreateFolder(asZephyrClient(mockClient));
   });
 
   it("should set specification correctly", () => {

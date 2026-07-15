@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { SmartBearMcpServer } from "../common/server.ts";
 import { Qtm4jClient } from "./client.ts";
 import { ApiClient } from "./http/api-client.ts";
+
+type ConfigureConfig = Parameters<Qtm4jClient["configure"]>[1];
 
 vi.mock("../common/request-context", () => ({
   getRequestHeader: vi.fn().mockReturnValue(null),
@@ -23,18 +26,21 @@ describe("Qtm4jClient", () => {
   it("should initialize ApiClient with default baseUrl", async () => {
     const client = new Qtm4jClient();
     await client.configure(
-      { getCache: () => undefined } as any,
-      { api_key: "token" } as any,
+      { getCache: () => undefined } as unknown as SmartBearMcpServer,
+      { api_key: "token" } as unknown as ConfigureConfig,
     );
     expect(client.getApiClient()).toBeInstanceOf(ApiClient);
   });
 
   it("should initialize ApiClient with custom baseUrl", async () => {
     const client = new Qtm4jClient();
-    await client.configure({ getCache: () => undefined } as any, {
-      api_key: "token",
-      base_url: "https://custom.qtm4j.com",
-    });
+    await client.configure(
+      { getCache: () => undefined } as unknown as SmartBearMcpServer,
+      {
+        api_key: "token",
+        base_url: "https://custom.qtm4j.com",
+      },
+    );
     expect(client.getApiClient()).toBeInstanceOf(ApiClient);
   });
 
@@ -42,8 +48,8 @@ describe("Qtm4jClient", () => {
     const client = new Qtm4jClient();
     expect(client.isConfigured()).toBe(false);
     await client.configure(
-      { getCache: () => undefined } as any,
-      { api_key: "token" } as any,
+      { getCache: () => undefined } as unknown as SmartBearMcpServer,
+      { api_key: "token" } as unknown as ConfigureConfig,
     );
     expect(client.isConfigured()).toBe(true);
   });
@@ -58,8 +64,8 @@ describe("Qtm4jClient", () => {
   it("should register tools and call register", async () => {
     const client = new Qtm4jClient();
     await client.configure(
-      { getCache: () => undefined } as any,
-      { api_key: "token" } as any,
+      { getCache: () => undefined } as unknown as SmartBearMcpServer,
+      { api_key: "token" } as unknown as ConfigureConfig,
     );
     const register = vi.fn();
     const getInput = vi.fn();
@@ -78,8 +84,8 @@ describe("Qtm4jClient", () => {
   it("should return ResolverRegistry after configure", async () => {
     const client = new Qtm4jClient();
     await client.configure(
-      { getCache: () => undefined } as any,
-      { api_key: "token" } as any,
+      { getCache: () => undefined } as unknown as SmartBearMcpServer,
+      { api_key: "token" } as unknown as ConfigureConfig,
     );
     expect(client.getResolverRegistry()).toBeDefined();
   });
@@ -87,8 +93,8 @@ describe("Qtm4jClient", () => {
   it("should throw when requireProjectContext called with no context set", async () => {
     const client = new Qtm4jClient();
     await client.configure(
-      { getCache: () => undefined } as any,
-      { api_key: "token" } as any,
+      { getCache: () => undefined } as unknown as SmartBearMcpServer,
+      { api_key: "token" } as unknown as ConfigureConfig,
     );
     expect(() => client.requireProjectContext()).toThrow(
       "No active project set",
@@ -98,8 +104,8 @@ describe("Qtm4jClient", () => {
   it("should get auth token from configuration", async () => {
     const client = new Qtm4jClient();
     await client.configure(
-      { getCache: () => undefined } as any,
-      { api_key: "test-token-123" } as any,
+      { getCache: () => undefined } as unknown as SmartBearMcpServer,
+      { api_key: "test-token-123" } as unknown as ConfigureConfig,
     );
     const token = client.getAuthToken();
     expect(token).toBe("test-token-123");
@@ -109,8 +115,8 @@ describe("Qtm4jClient", () => {
     vi.mocked(getRequestHeader).mockReturnValue("header-token");
     const client = new Qtm4jClient();
     await client.configure(
-      { getCache: () => undefined } as any,
-      { api_key: "config-token" } as any,
+      { getCache: () => undefined } as unknown as SmartBearMcpServer,
+      { api_key: "config-token" } as unknown as ConfigureConfig,
     );
     expect(client.getAuthToken()).toBe("header-token");
   });
@@ -119,8 +125,8 @@ describe("Qtm4jClient", () => {
     vi.mocked(getRequestHeader).mockReturnValue("Bearer my-bearer-token");
     const client = new Qtm4jClient();
     await client.configure(
-      { getCache: () => undefined } as any,
-      { api_key: "config-token" } as any,
+      { getCache: () => undefined } as unknown as SmartBearMcpServer,
+      { api_key: "config-token" } as unknown as ConfigureConfig,
     );
     expect(client.getAuthToken()).toBe("my-bearer-token");
   });
@@ -129,8 +135,8 @@ describe("Qtm4jClient", () => {
     vi.mocked(getRequestHeader).mockReturnValue(["array-token", "other"]);
     const client = new Qtm4jClient();
     await client.configure(
-      { getCache: () => undefined } as any,
-      { api_key: "config-token" } as any,
+      { getCache: () => undefined } as unknown as SmartBearMcpServer,
+      { api_key: "config-token" } as unknown as ConfigureConfig,
     );
     expect(client.getAuthToken()).toBe("array-token");
   });

@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { CacheService } from "../../common/cache.ts";
 import { ResolverKeys } from "../config/field-resolution.types.ts";
+import type { ApiClient } from "../http/api-client.ts";
 import { ResolverRegistry } from "./resolver-registry.ts";
 import { CommonAttributeResolver } from "./resolvers/common-attribute-resolver.ts";
 import { ComponentResolver } from "./resolvers/component-resolver.ts";
@@ -11,7 +13,7 @@ vi.mock("./resolvers/label-resolver");
 vi.mock("./resolvers/component-resolver");
 vi.mock("./resolvers/test-case-uid-resolver");
 
-function makeMockCacheService() {
+function makeMockCacheService(): CacheService {
   const store = new Map<string, unknown>();
   return {
     get: <T>(key: string): T | undefined => store.get(key) as T | undefined,
@@ -24,17 +26,36 @@ function makeMockCacheService() {
       return 1;
     },
     isEnabled: () => true,
-    flushAll: () => {},
-  };
+    flushAll: () => {
+      store.clear();
+    },
+  } as unknown as CacheService;
 }
 
 describe("ResolverRegistry", () => {
-  let mockApiClient: any;
+  let mockApiClient: { get: ReturnType<typeof vi.fn> };
   let registry: ResolverRegistry;
-  let mockCommonAttributes: any;
-  let mockLabelResolver: any;
-  let mockComponentResolver: any;
-  let mockTestCaseUidResolver: any;
+  let mockCommonAttributes: {
+    fieldKeys: string[];
+    resolve: ReturnType<typeof vi.fn>;
+    preload: ReturnType<typeof vi.fn>;
+    clearCache: ReturnType<typeof vi.fn>;
+  };
+  let mockLabelResolver: {
+    fieldKeys: string[];
+    resolve: ReturnType<typeof vi.fn>;
+    clearCache: ReturnType<typeof vi.fn>;
+  };
+  let mockComponentResolver: {
+    fieldKeys: string[];
+    resolve: ReturnType<typeof vi.fn>;
+    clearCache: ReturnType<typeof vi.fn>;
+  };
+  let mockTestCaseUidResolver: {
+    fieldKeys: string[];
+    resolveAndReturn: ReturnType<typeof vi.fn>;
+    clearCache: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -64,19 +85,21 @@ describe("ResolverRegistry", () => {
     };
 
     vi.mocked(CommonAttributeResolver).mockImplementation(
-      () => mockCommonAttributes,
+      () => mockCommonAttributes as unknown as CommonAttributeResolver,
     );
-    vi.mocked(LabelResolver).mockImplementation(() => mockLabelResolver);
+    vi.mocked(LabelResolver).mockImplementation(
+      () => mockLabelResolver as unknown as LabelResolver,
+    );
     vi.mocked(ComponentResolver).mockImplementation(
-      () => mockComponentResolver,
+      () => mockComponentResolver as unknown as ComponentResolver,
     );
     vi.mocked(TestCaseUidResolver).mockImplementation(
-      () => mockTestCaseUidResolver,
+      () => mockTestCaseUidResolver as unknown as TestCaseUidResolver,
     );
 
     registry = new ResolverRegistry(
-      mockApiClient,
-      makeMockCacheService() as any,
+      mockApiClient as unknown as ApiClient,
+      makeMockCacheService(),
     );
   });
 

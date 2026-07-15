@@ -1,6 +1,8 @@
 import type { SwaggerConfiguration } from "./configuration.ts";
 import type { TableOfContentsItem } from "./portal-types.ts";
 
+const MIN_SLUG_LENGTH = 3;
+
 type UrlSegmentSource = { slug?: string } | null;
 type PortalHostSource = {
   customDomain?: string | null;
@@ -14,7 +16,7 @@ export function normalizeSlug(value: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 
-  if (slug.length < 3) {
+  if (slug.length < MIN_SLUG_LENGTH) {
     throw new Error(`Slug "${slug}" is too short (minimum 3 characters).`);
   }
 
@@ -33,7 +35,7 @@ export function findTableOfContentsItem(
       return item;
     }
 
-    const nestedMatch = findTableOfContentsItem(item.children ?? [], targetId);
+    const nestedMatch = findTableOfContentsItem(item.children, targetId);
     if (nestedMatch) {
       return nestedMatch;
     }
@@ -42,17 +44,22 @@ export function findTableOfContentsItem(
   return null;
 }
 
+export interface PortalLiveUrlOptions {
+  portal: PortalHostSource;
+  productSlug: string | undefined;
+  section: UrlSegmentSource;
+  tocItem: UrlSegmentSource;
+  preview?: boolean;
+}
+
 /**
  * Build the live URL or previewUrl for a published portal product.
  */
 export function buildPortalLiveUrl(
   config: SwaggerConfiguration,
-  portal: PortalHostSource,
-  productSlug: string | undefined,
-  section: UrlSegmentSource,
-  tocItem: UrlSegmentSource,
-  preview = false,
+  options: PortalLiveUrlOptions,
 ): string {
+  const { portal, productSlug, section, tocItem, preview = false } = options;
   const host = portal?.customDomain ?? portal?.subdomain;
   const portalUiDomain = portal?.customDomain
     ? ""

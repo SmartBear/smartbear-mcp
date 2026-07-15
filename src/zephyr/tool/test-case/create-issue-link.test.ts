@@ -3,12 +3,17 @@ import type {
   ServerNotification,
   ServerRequest,
 } from "@modelcontextprotocol/sdk/types.js";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { CreateTestCaseIssueLink201Response as createTestCaseIssueLinkResponse } from "../../common/rest-api-schemas.ts";
+import {
+  asZephyrClient,
+  createMockZephyrClient,
+  type MockZephyrClient,
+} from "../../common/test-helpers.ts";
 import { CreateTestCaseIssueLink } from "./create-issue-link.ts";
 
 describe("CreateTestCaseIssueLink", () => {
-  let mockClient: any;
+  let mockClient: MockZephyrClient;
   let instance: CreateTestCaseIssueLink;
 
   const ExtraRequestHandler: RequestHandlerExtra<
@@ -26,12 +31,8 @@ describe("CreateTestCaseIssueLink", () => {
   };
 
   beforeEach(() => {
-    mockClient = {
-      getApiClient: vi.fn().mockReturnValue({
-        post: vi.fn(),
-      }),
-    };
-    instance = new CreateTestCaseIssueLink(mockClient as any);
+    mockClient = createMockZephyrClient();
+    instance = new CreateTestCaseIssueLink(asZephyrClient(mockClient));
   });
 
   it("should set specification correctly", () => {

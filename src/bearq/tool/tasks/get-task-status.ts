@@ -3,13 +3,13 @@ import type { ZodRawShape } from "zod";
 import { z } from "zod";
 import { Tool, ToolError } from "../../../common/tools.ts";
 import type { ToolParams } from "../../../common/types.ts";
-import type { BearQClient } from "../../client.ts";
+import type { BearqClient } from "../../client.ts";
 
 const inputSchema = z.object({
   taskId: z.number().int().positive().describe("BearQ task ID."),
 });
 
-export class GetTaskStatus extends Tool<BearQClient> {
+export class GetTaskStatus extends Tool<BearqClient> {
   specification: ToolParams = {
     title: "Get Task Status",
     toolset: "Tasks",
@@ -27,10 +27,11 @@ export class GetTaskStatus extends Tool<BearQClient> {
         headers: this.client.getHeaders(),
       },
     );
-    if (!res.ok)
+    if (!res.ok) {
       throw new ToolError(
         `GET /tasks/${taskId}/status failed: ${res.status} ${res.statusText}`,
       );
+    }
     return {
       content: [{ type: "text", text: JSON.stringify(await res.json()) }],
     };

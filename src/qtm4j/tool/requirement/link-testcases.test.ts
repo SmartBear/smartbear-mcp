@@ -1,15 +1,22 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ToolError } from "../../../common/tools.ts";
+import type { Qtm4jClient } from "../../client.ts";
 import { ENDPOINTS } from "../../config/constants.ts";
 import { ResolverKeys } from "../../config/field-resolution.types.ts";
 import { LinkTestCasesToRequirement } from "./link-testcases.ts";
 
 describe("LinkTestCasesToRequirement", () => {
-  let mockClient: any;
-  let mockApiClient: any;
-  let mockRegistry: any;
-  let mockReqResolver: any;
-  let mockTcResolver: any;
+  let mockClient: {
+    getApiClient: ReturnType<typeof vi.fn>;
+    getResolverRegistry: ReturnType<typeof vi.fn>;
+  };
+  let mockApiClient: { post: ReturnType<typeof vi.fn> };
+  let mockRegistry: {
+    requireProjectContext: ReturnType<typeof vi.fn>;
+    getResolver: ReturnType<typeof vi.fn>;
+  };
+  let mockReqResolver: { resolveAndReturn: ReturnType<typeof vi.fn> };
+  let mockTcResolver: { resolveAndReturn: ReturnType<typeof vi.fn> };
   let instance: LinkTestCasesToRequirement;
 
   const mockContext = {
@@ -27,10 +34,12 @@ describe("LinkTestCasesToRequirement", () => {
     mockRegistry = {
       requireProjectContext: vi.fn().mockReturnValue(mockContext),
       getResolver: vi.fn().mockImplementation((key: string) => {
-        if (key === ResolverKeys.SearchableField.REQUIREMENT_KEY_TO_ID)
+        if (key === ResolverKeys.SearchableField.REQUIREMENT_KEY_TO_ID) {
           return mockReqResolver;
-        if (key === ResolverKeys.SearchableField.TEST_CASE_KEY_TO_UID)
+        }
+        if (key === ResolverKeys.SearchableField.TEST_CASE_KEY_TO_UID) {
           return mockTcResolver;
+        }
         throw new Error(`Unexpected resolver key: ${key}`);
       }),
     };
@@ -41,7 +50,9 @@ describe("LinkTestCasesToRequirement", () => {
       getResolverRegistry: vi.fn().mockReturnValue(mockRegistry),
     };
 
-    instance = new LinkTestCasesToRequirement(mockClient as any);
+    instance = new LinkTestCasesToRequirement(
+      mockClient as unknown as Qtm4jClient,
+    );
   });
 
   describe("specification", () => {

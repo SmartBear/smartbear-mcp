@@ -13,12 +13,17 @@ export interface CreateTestCaseStep {
   inputData?: string;
   expectedOutcome?: string;
   UDF?: Record<string, string>;
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tcStepID?: number; // Required for updating existing steps, omit for new steps
 }
-export interface removeTestCaseStep {
+export interface RemoveTestCaseStep {
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tcID: number;
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   projectID: number;
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tcStepID: number;
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tcVersionID: number;
   tcVersion: number;
   tcsAttCount: number;
@@ -51,6 +56,7 @@ export interface FetchTestCasesPayload
 }
 
 export interface CreateTestCasesPayload {
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tcFolderID: string; // required - Test Case folder ID
   name: string; // required - Test Case name
   scope?: string; // optional - usually "project"
@@ -68,13 +74,15 @@ export interface CreateTestCasesPayload {
 }
 
 export interface UpdateTestCasesPayload {
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tcID: number; // required - Test Case numeric ID
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tcVersionID: number; // required - Test Case version ID
   withVersion?: boolean; // optional - whether to create a new version
   notrunall?: boolean; // optional - whether to not run all steps
   isStepUpdated?: boolean; // optional - whether steps are updated
   steps?: CreateTestCaseStep[]; // optional - array of test steps
-  removeSteps?: removeTestCaseStep[]; // optional - array of steps to remove
+  removeSteps?: RemoveTestCaseStep[]; // optional - array of steps to remove
   name?: string; // optional - Test Case name
   priority?: number; // optional - PriorityID of Testcase
   component?: number[]; // optional - Component(Label) Ids
@@ -90,6 +98,7 @@ export interface UpdateTestCasesPayload {
 export interface FetchTestCaseDetailsPayload
   extends PaginationPayload,
     FilterPayload {
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tcID: number; // required
 }
 export interface FetchTestCaseVersionDetailsPayload
@@ -106,17 +115,21 @@ export interface FetchTestCaseStepsPayload extends PaginationPayload {
 export interface FetchTestCasesLinkedToRequirementPayload
   extends PaginationPayload,
     FilterPayload {
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   rqID: number; // required - numeric ID of requirement
   getLinked?: boolean; // true to get linked TCs, false to get unlinked TCs
   showEntityWithReleaseCycle?: boolean; // true to show only TCs with given release/cycle
   tcFolderPath?: string; // folder path for test cases
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   releaseID?: string; // filter by release ID
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   cycleID?: string; // filter by cycle ID
   getSubEntities?: boolean; // allow filter of sub-entities
   getColumns?: boolean; // true to get column information
 }
 
-export interface linkRequirementToTestCasePayload {
+export interface LinkRequirementToTestCasePayload {
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tcID: string; // required - EntityKey of Testcase (e.g. 'COD-TC-29')
   tcVersionId: number; // required - VersionId of Testcase
   rqVersionIds: string; // required - Comma-separated values of versionId of the Requirement (e.g. '236124,236125')
@@ -205,6 +218,6 @@ export const DEFAULT_FETCH_TESTCASE_EXECUTIONS_PAYLOAD: Omit<
 };
 
 export const DEFAULT_LINKED_REQUIREMENT_TO_TESTCASE_PAYLOAD: Omit<
-  linkRequirementToTestCasePayload,
+  LinkRequirementToTestCasePayload,
   "tcID" | "tcVersionId" | "rqVersionIds"
 > = {};

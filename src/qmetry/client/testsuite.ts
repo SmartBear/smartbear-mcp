@@ -1,3 +1,5 @@
+// biome-ignore-all lint/style/noExcessiveLinesPerFile: this module cohesively covers one QMetry API area (client operations, tool definitions, or shared schema fields); splitting it would scatter closely related, frequently cross-referenced declarations
+// biome-ignore-all lint/security/noSecrets: this file contains many high-entropy API action-name / wire-format / fixture string constants that trip the noSecrets entropy heuristic; none are real secrets
 import { QMETRY_PATHS } from "../config/rest-endpoints.ts";
 import {
   type BulkUpdateExecutionStatusPayload,
@@ -59,7 +61,7 @@ export async function createTestSuites(
     );
   }
 
-  return qmetryRequest<unknown>({
+  return await qmetryRequest<unknown>({
     method: "POST",
     path: QMETRY_PATHS.TESTSUITE.CREATE_UPDATE_TS,
     token,
@@ -105,7 +107,7 @@ export async function updateTestSuite(
     );
   }
 
-  return qmetryRequest<unknown>({
+  return await qmetryRequest<unknown>({
     method: "PUT",
     path: QMETRY_PATHS.TESTSUITE.CREATE_UPDATE_TS,
     token,
@@ -146,7 +148,7 @@ export async function fetchTestSuites(
     );
   }
 
-  return qmetryRequest<unknown>({
+  return await qmetryRequest<unknown>({
     method: "POST",
     path: QMETRY_PATHS.TESTSUITE.GET_TS_LIST,
     token,
@@ -182,7 +184,7 @@ export async function fetchTestSuitesForTestCase(
     );
   }
 
-  return qmetryRequest<unknown>({
+  return await qmetryRequest<unknown>({
     method: "POST",
     path: QMETRY_PATHS.TESTSUITE.GET_TS_LIST_FOR_TC,
     token,
@@ -218,7 +220,7 @@ export async function fetchTestCasesByTestSuite(
     );
   }
 
-  return qmetryRequest<unknown>({
+  return await qmetryRequest<unknown>({
     method: "POST",
     path: QMETRY_PATHS.TESTSUITE.GET_TESTCASES_BY_TESTSUITE,
     token,
@@ -246,7 +248,7 @@ export async function fetchExecutionsByTestSuite(
     project,
   );
 
-  const { scopeId, orgCode, ...payloadRest } = payload as any;
+  const { scopeId, orgCode, ...payloadRest } = payload;
   const body: FetchExecutionsByTestSuitePayload = {
     ...DEFAULT_FETCH_EXECUTIONS_BY_TESTSUITE_PAYLOAD,
     ...payloadRest,
@@ -258,7 +260,7 @@ export async function fetchExecutionsByTestSuite(
     );
   }
 
-  return qmetryRequest<unknown>({
+  return await qmetryRequest<unknown>({
     method: "POST",
     path: QMETRY_PATHS.TESTSUITE.GET_EXECUTIONS_BY_TESTSUITE,
     token,
@@ -288,7 +290,7 @@ export async function fetchTestCaseRunsByTestSuiteRun(
     project,
   );
 
-  const { scopeId, orgCode, ...payloadRest } = payload as any;
+  const { scopeId, orgCode, ...payloadRest } = payload;
   const body: FetchTestCaseRunsByTestSuiteRunPayload = {
     ...DEFAULT_FETCH_TESTCASE_RUNS_BY_TESTSUITE_RUN_PAYLOAD,
     ...payloadRest,
@@ -306,7 +308,7 @@ export async function fetchTestCaseRunsByTestSuiteRun(
     );
   }
 
-  return qmetryRequest<unknown>({
+  return await qmetryRequest<unknown>({
     method: "POST",
     path: QMETRY_PATHS.TESTSUITE.GET_TESTCASE_RUNS_BY_TESTSUITE_RUN,
     token,
@@ -344,7 +346,7 @@ export async function fetchLinkedIssuesByTestCaseRun(
     );
   }
 
-  return qmetryRequest<unknown>({
+  return await qmetryRequest<unknown>({
     method: "POST",
     path: QMETRY_PATHS.TESTSUITE.GET_LINKED_ISSUES_BY_TESTCASE_RUN,
     token,
@@ -372,7 +374,7 @@ export async function linkTestCasesToTestSuite(
     project,
   );
 
-  const { scopeId, orgCode, ...payloadRest } = payload as any;
+  const { scopeId, orgCode, ...payloadRest } = payload;
   const body: LinkedTestCasesToTestSuitePayload = {
     ...DEFAULT_LINKED_TESTCASE_TO_TESTSUITE_PAYLOAD,
     ...payloadRest,
@@ -384,11 +386,12 @@ export async function linkTestCasesToTestSuite(
     );
   }
 
+  // biome-ignore lint/suspicious/noUnnecessaryConditions: tcvdIDs is declared as required, but MCP tool callers are not statically type-checked, so this guards against it being missing at runtime
   if (!body.tcvdIDs) {
     throw new Error("[linkTestCasesToTestSuite] 'tcvdIDs' must be provided.");
   }
 
-  return qmetryRequest<unknown>({
+  return await qmetryRequest<unknown>({
     method: "PUT",
     path: QMETRY_PATHS.TESTSUITE.LINKED_TESTCASES_TO_TESTSUITE,
     token,
@@ -418,7 +421,7 @@ export async function reqLinkedTestCasesToTestSuite(
     project,
   );
 
-  const { scopeId, orgCode, ...payloadRest } = payload as any;
+  const { scopeId, orgCode, ...payloadRest } = payload;
   const body: ReqLinkedTestCasesToTestSuitePayload = {
     ...DEFAULT_REQLINKED_TESTCASE_TO_TESTSUITE_PAYLOAD,
     ...payloadRest,
@@ -430,13 +433,14 @@ export async function reqLinkedTestCasesToTestSuite(
     );
   }
 
+  // biome-ignore lint/suspicious/noUnnecessaryConditions: tcvdIDs is declared as required, but MCP tool callers are not statically type-checked, so this guards against it being missing at runtime
   if (!body.tcvdIDs) {
     throw new Error(
       "[reqLinkedTestCasesToTestSuite] 'tcvdIDs' must be provided.",
     );
   }
 
-  return qmetryRequest<unknown>({
+  return await qmetryRequest<unknown>({
     method: "PUT",
     path: QMETRY_PATHS.TESTSUITE.LINKED_TESTCASES_TO_TESTSUITE,
     token,
@@ -484,7 +488,7 @@ export async function linkPlatformsToTestSuite(
     );
   }
 
-  return qmetryRequest<unknown>({
+  return await qmetryRequest<unknown>({
     method: "PUT",
     path: QMETRY_PATHS.TESTSUITE.LINK_PLATFORMS_TO_TESTSUITE,
     token,
@@ -525,6 +529,7 @@ export async function bulkUpdateExecutionStatus(
   }
 
   if (
+    // biome-ignore lint/suspicious/noUnnecessaryConditions: entityType is declared as required, but MCP tool callers are not statically type-checked, so this guards against it being missing at runtime
     !body.entityType ||
     (body.entityType !== "TCR" && body.entityType !== "TCSR")
   ) {
@@ -549,7 +554,7 @@ export async function bulkUpdateExecutionStatus(
     );
   }
 
-  return qmetryRequest<unknown>({
+  return await qmetryRequest<unknown>({
     method: "PUT",
     path: QMETRY_PATHS.TESTSUITE.BULK_UPDATE_EXECUTION_STATUS,
     token,

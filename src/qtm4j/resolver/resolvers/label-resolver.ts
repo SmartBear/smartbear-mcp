@@ -23,6 +23,7 @@ export class LabelResolver extends Resolver {
     this.cache = new Cache(cacheService);
   }
 
+  // biome-ignore lint/complexity/useMaxParams: implements the shared Resolver.resolve() base-class signature used across resolver and tool call sites
   async resolve(
     inputField: string,
     resolverKey: string,
@@ -31,13 +32,16 @@ export class LabelResolver extends Resolver {
     warnings: string[],
   ): Promise<void> {
     const raw = body[inputField];
-    if (raw == null) return;
+    if (raw === null || raw === undefined) {
+      return;
+    }
 
     const isArray = Array.isArray(raw);
     const names = isArray ? (raw as string[]) : [raw as string];
     const ids: number[] = [];
 
     for (const name of names) {
+      // biome-ignore lint/performance/noAwaitInLoops: each name is resolved via cache-then-API sequentially by design; parallelizing would race the shared per-project cache writes
       const id = await this.resolveAndReturn(
         context.projectKey,
         context.projectId,
@@ -67,7 +71,9 @@ export class LabelResolver extends Resolver {
     name: string,
   ): Promise<string | undefined> {
     const cached = this.cache.matchValue(projectKey, resolverKey, name);
-    if (cached !== undefined) return cached;
+    if (cached !== undefined) {
+      return cached;
+    }
 
     const response = await this.apiClient.get(ENDPOINTS.LABELS(projectId), {
       search: name,

@@ -1,4 +1,6 @@
+// biome-ignore-all lint/style/noExcessiveLinesPerFile: single cohesive set of test-cycle link/unlink/search schemas; splitting would scatter tightly related request/response pairs
 import z from "zod";
+import { PAGINATION } from "../config/constants.ts";
 
 /** Sprint filter item: board name + sprint name. */
 const SprintFilter = z.object({
@@ -11,6 +13,38 @@ const TestCaseVersionSkip = z.object({
   testCaseId: z.string(),
   version: z.number().int(),
 });
+
+/** A single test case execution entry in a test cycle. */
+const TestCycleExecutionSchema = z
+  .object({
+    id: z.string().optional().describe("Internal test case execution ID."),
+    key: z
+      .string()
+      .optional()
+      .describe("Test case key (e.g., 'SCRUM-TC-145')."),
+    summary: z.string().optional().describe("Test case summary."),
+    description: z.string().nullable().optional(),
+    executionResult: z
+      .string()
+      .nullable()
+      .optional()
+      .describe("Execution result (e.g., 'Pass', 'Fail', 'Blocked')."),
+    status: z.any().optional().describe("Test case status."),
+    priority: z.any().optional().describe("Test case priority."),
+    environment: z.string().nullable().optional(),
+    tcWithDefects: z.boolean().optional(),
+    estimatedTime: z.string().nullable().optional(),
+    actualTime: z.string().nullable().optional(),
+    createdOn: z.string().nullable().optional(),
+    updatedOn: z.string().nullable().optional(),
+    sprint: z.any().nullable().optional(),
+    seqNo: z.number().nullable().optional(),
+    latestTcExecutionId: z.string().nullable().optional(),
+    customFields: z.any().nullable().optional(),
+    flakyScore: z.number().nullable().optional(),
+    passRateScore: z.number().nullable().optional(),
+  })
+  .passthrough();
 
 /**
  * Filter object for selecting test cases when linking to a test cycle.
@@ -75,6 +109,7 @@ export const LinkToCycleTestCaseFilter = z.object({
     .array(z.number().int())
     .optional()
     .describe("Jira issue IDs of linked requirements."),
+  // biome-ignore lint/style/useNamingConvention: mirrors the QTM4J API request field name verbatim (spread directly into the request body)
   requirementJQL: z
     .string()
     .optional()
@@ -378,10 +413,10 @@ export const SearchLinkedTestCasesInCycleBody = z.object({
   maxResults: z
     .number()
     .int()
-    .min(1)
-    .max(100)
+    .min(PAGINATION.MIN_ALLOWED_RESULTS)
+    .max(PAGINATION.MAX_ALLOWED_RESULTS)
     .optional()
-    .default(50)
+    .default(PAGINATION.DEFAULT_MAX_RESULTS_TEST_CASES)
     .describe("Maximum results per page (1-100). Default: 50."),
   sort: z
     .string()
@@ -400,38 +435,6 @@ export const SearchLinkedTestCasesInCycleBody = z.object({
     "Optional filter criteria to narrow down results. projectId is auto-filled from the active project context.",
   ),
 });
-
-/** A single test case execution entry in a test cycle. */
-const TestCycleExecutionSchema = z
-  .object({
-    id: z.string().optional().describe("Internal test case execution ID."),
-    key: z
-      .string()
-      .optional()
-      .describe("Test case key (e.g., 'SCRUM-TC-145')."),
-    summary: z.string().optional().describe("Test case summary."),
-    description: z.string().nullable().optional(),
-    executionResult: z
-      .string()
-      .nullable()
-      .optional()
-      .describe("Execution result (e.g., 'Pass', 'Fail', 'Blocked')."),
-    status: z.any().optional().describe("Test case status."),
-    priority: z.any().optional().describe("Test case priority."),
-    environment: z.string().nullable().optional(),
-    tcWithDefects: z.boolean().optional(),
-    estimatedTime: z.string().nullable().optional(),
-    actualTime: z.string().nullable().optional(),
-    createdOn: z.string().nullable().optional(),
-    updatedOn: z.string().nullable().optional(),
-    sprint: z.any().nullable().optional(),
-    seqNo: z.number().nullable().optional(),
-    latestTcExecutionId: z.string().nullable().optional(),
-    customFields: z.any().nullable().optional(),
-    flakyScore: z.number().nullable().optional(),
-    passRateScore: z.number().nullable().optional(),
-  })
-  .passthrough();
 
 /** Paginated response for searching test cases linked to a test cycle. */
 export const SearchLinkedTestCasesInCycleResponse = z.object({
@@ -460,10 +463,10 @@ export const GetLinkedRequirementsForCycleBody = z.object({
   maxResults: z
     .number()
     .int()
-    .min(1)
-    .max(100)
+    .min(PAGINATION.MIN_ALLOWED_RESULTS)
+    .max(PAGINATION.MAX_ALLOWED_RESULTS)
     .optional()
-    .default(50)
+    .default(PAGINATION.DEFAULT_MAX_RESULTS_TEST_CASES)
     .describe("Maximum results per page (1-100). Default: 50."),
   startAt: z
     .number()

@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
+import type { SmartBearMcpServer } from "../common/server.ts";
 import { ZephyrClient } from "./client.ts";
 import { ApiClient } from "./common/api-client.ts";
+
+const fakeServer = {} as unknown as SmartBearMcpServer;
 
 describe("ZephyrClient", () => {
   it("should set name and prefix", () => {
@@ -12,13 +15,13 @@ describe("ZephyrClient", () => {
 
   it("should initialize ApiClient with default baseUrl", async () => {
     const client = new ZephyrClient();
-    await client.configure({} as any, { api_token: "token", base_url: "" });
+    await client.configure(fakeServer, { api_token: "token", base_url: "" });
     expect(client.getApiClient()).toBeInstanceOf(ApiClient);
   });
 
   it("should initialize ApiClient with custom baseUrl", async () => {
     const client = new ZephyrClient();
-    await client.configure({} as any, {
+    await client.configure(fakeServer, {
       api_token: "token",
       base_url: "http://custom",
     });
@@ -27,7 +30,7 @@ describe("ZephyrClient", () => {
 
   it("should register tools and call register", async () => {
     const client = new ZephyrClient();
-    await client.configure({} as any, { api_token: "token", base_url: "" });
+    await client.configure(fakeServer, { api_token: "token", base_url: "" });
     const register = vi.fn();
     const getInput = vi.fn();
     client.registerTools(register, getInput);

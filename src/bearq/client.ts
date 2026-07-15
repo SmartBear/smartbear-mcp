@@ -27,6 +27,8 @@ import { RunTestsInFunctionalAreas } from "./tool/tasks/run-tests-in-functional-
 import { StopTask } from "./tool/tasks/stop-task.ts";
 import { WaitForTask } from "./tool/tasks/wait-for-task.ts";
 
+const BEARER_PREFIX_LENGTH = "Bearer ".length;
+
 const ConfigurationSchema = z.object({
   api_token: z.string().describe("BearQ workspace API token (Bearer)."),
   api_base_url: z
@@ -37,7 +39,7 @@ const ConfigurationSchema = z.object({
     ),
 });
 
-export class BearQClient implements Client {
+export class BearqClient implements Client {
   private _apiToken: string | undefined;
   private _baseUrl: string = DEFAULT_API_BASE_URL;
 
@@ -46,12 +48,15 @@ export class BearQClient implements Client {
   configPrefix = "BearQ";
   config = ConfigurationSchema;
 
-  async configure(
+  configure(
     _server: SmartBearMcpServer,
     config: z.infer<typeof ConfigurationSchema>,
   ): Promise<void> {
     this._apiToken = config.api_token;
-    if (config.api_base_url) this._baseUrl = config.api_base_url;
+    if (config.api_base_url) {
+      this._baseUrl = config.api_base_url;
+    }
+    return Promise.resolve();
   }
 
   getAuthToken(): string | null {
@@ -60,7 +65,9 @@ export class BearQClient implements Client {
       let token = Array.isArray(contextHeader)
         ? contextHeader[0]
         : contextHeader;
-      if (token.startsWith("Bearer ")) token = token.substring(7);
+      if (token.startsWith("Bearer ")) {
+        token = token.slice(BEARER_PREFIX_LENGTH);
+      }
       return token;
     }
     return this._apiToken ?? null;
@@ -76,7 +83,9 @@ export class BearQClient implements Client {
 
   getHeaders(): Record<string, string> {
     const token = this.getAuthToken();
-    if (!token) throw new ToolError("BearQ API token not found");
+    if (!token) {
+      throw new ToolError("BearQ API token not found");
+    }
     return {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
@@ -84,7 +93,7 @@ export class BearQClient implements Client {
     };
   }
 
-  async registerTools(
+  registerTools(
     register: RegisterToolsFunction,
     _getInput: GetInputFunction,
   ): Promise<void> {
@@ -106,5 +115,6 @@ export class BearQClient implements Client {
     for (const tool of tools) {
       register(tool.specification, tool.handle);
     }
+    return Promise.resolve();
   }
 }

@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+const MAX_PAGE_SIZE = 1000;
+
 // Zod schemas for SwaggerHub User Management API validation
 
 // User Management API types for organization management functionality
@@ -46,7 +48,7 @@ export const OrganizationsQuerySchema = z.object({
   pageSize: z
     .number()
     .min(1)
-    .max(1000)
+    .max(MAX_PAGE_SIZE)
     .optional()
     .describe("Number of results per page to return"),
 });

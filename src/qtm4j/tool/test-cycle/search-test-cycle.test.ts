@@ -1,11 +1,27 @@
+// biome-ignore-all lint/security/noSecrets: this file contains many high-entropy API action-name / wire-format / fixture string constants that trip the noSecrets entropy heuristic; none are real secrets
+import type { Mock } from "vitest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { Qtm4jClient } from "../../client.ts";
 import { ENDPOINTS } from "../../config/constants.ts";
 import { SearchTestCycles } from "./search-test-cycle.ts";
 
+interface MockApiClient {
+  post: Mock;
+}
+
+interface MockRegistry {
+  requireProjectContext: Mock;
+}
+
+interface MockClient {
+  getApiClient: Mock;
+  getResolverRegistry: Mock;
+}
+
 describe("SearchTestCycles", () => {
-  let mockClient: any;
-  let mockApiClient: any;
-  let mockRegistry: any;
+  let mockClient: MockClient;
+  let mockApiClient: MockApiClient;
+  let mockRegistry: MockRegistry;
   let instance: SearchTestCycles;
 
   const mockContext = {
@@ -50,7 +66,7 @@ describe("SearchTestCycles", () => {
       getResolverRegistry: vi.fn().mockReturnValue(mockRegistry),
     };
 
-    instance = new SearchTestCycles(mockClient as any);
+    instance = new SearchTestCycles(mockClient as unknown as Qtm4jClient);
   });
 
   // ---------------------------------------------------------------------------
@@ -495,7 +511,7 @@ describe("SearchTestCycles", () => {
         ],
       });
 
-      const item = result.structuredContent.data[0];
+      const [item] = result.structuredContent.data;
       expect(item.summary).toBe("Smoke Test");
       expect(item.description).toBe("Cycle description");
       expect(item.reporter).toBe("6a20b3955d31276811fef32g");

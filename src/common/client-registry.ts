@@ -1,5 +1,5 @@
-import process from "node:process";
 import { type ZodType, ZodURL } from "zod";
+import { getEnv } from "./env.ts";
 import type { SmartBearMcpServer } from "./server.ts";
 import type { Client } from "./types.ts";
 import { fullyUnwrapZodType, isOptionalType } from "./zod-utils.ts";
@@ -10,7 +10,7 @@ import { fullyUnwrapZodType, isOptionalType } from "./zod-utils.ts";
  */
 class ClientRegistry {
   private entries: Client[] = [];
-  private enabledClients: Set<string>;
+  private readonly enabledClients: Set<string>;
 
   /**
    * Configure which clients should be enabled based on MCP_CLIENTS env var and MCP_TOOLSETS (to enable any referenced clients)
@@ -19,12 +19,14 @@ class ClientRegistry {
    */
   constructor() {
     let enabledClientsStr = "";
-    if (process.env.MCP_CLIENTS) {
-      enabledClientsStr = process.env.MCP_CLIENTS.trim();
+    const mcpClients = getEnv("MCP_CLIENTS");
+    if (mcpClients) {
+      enabledClientsStr = mcpClients.trim();
     }
     enabledClientsStr += ",";
-    if (process.env.MCP_TOOLSETS) {
-      enabledClientsStr += process.env.MCP_TOOLSETS.trim();
+    const mcpToolsets = getEnv("MCP_TOOLSETS");
+    if (mcpToolsets) {
+      enabledClientsStr += mcpToolsets.trim();
     }
 
     // Parse comma-separated list and normalize to lowercase for comparison
@@ -53,6 +55,33 @@ class ClientRegistry {
   }
 
   /**
+   * Check a single allowed-endpoint entry (exact string or `/regex/` pattern)
+   * against a config value.
+   */
+  private matchesAllowedEndpoint(
+    trimmedEndpoint: string,
+    value: string,
+  ): boolean {
+    const isRegexPattern =
+      trimmedEndpoint.startsWith("/") && trimmedEndpoint.endsWith("/");
+    if (!isRegexPattern) {
+      return value === trimmedEndpoint;
+    }
+    try {
+      const pattern = trimmedEndpoint.slice(1, -1); // Remove leading/trailing /
+      return new RegExp(pattern).test(value);
+    } catch (error) {
+      // No injectable logger on this class; this is an operator-facing
+      // misconfiguration warning (invalid regex in an env var), not debug output.
+      // biome-ignore lint/suspicious/noConsole: see above
+      console.warn(
+        `Invalid regex pattern in MCP_ALLOWED_ENDPOINTS: ${trimmedEndpoint}, error: ${error}`,
+      );
+      return false;
+    }
+  }
+
+  /**
    * Validate if a config option is an Allowed Endpoint URL
    * Supports both exact matches and regex patterns
    * Patterns starting with / and ending with / are treated as regex
@@ -60,37 +89,18 @@ class ClientRegistry {
    * @param value The actual config value to validate
    */
   private validateAllowedEndpoint(zodType: ZodType, value: string): void {
-    if (fullyUnwrapZodType(zodType) instanceof ZodURL) {
-      const allowedEndpoints = process.env.MCP_ALLOWED_ENDPOINTS?.split(",");
-      if (allowedEndpoints) {
-        for (const endpoint of allowedEndpoints) {
-          const trimmedEndpoint = endpoint.trim();
-
-          // Check if this is a regex pattern (wrapped in /)
-          if (
-            trimmedEndpoint.startsWith("/") &&
-            trimmedEndpoint.endsWith("/")
-          ) {
-            try {
-              const pattern = trimmedEndpoint.slice(1, -1); // Remove leading/trailing /
-              const regex = new RegExp(pattern);
-              if (regex.test(value)) {
-                return;
-              }
-            } catch (error) {
-              console.warn(
-                `Invalid regex pattern in MCP_ALLOWED_ENDPOINTS: ${trimmedEndpoint}, error: ${error}`,
-              );
-            }
-          } else {
-            // Exact match
-            if (value === trimmedEndpoint) {
-              return;
-            }
-          }
-        }
-        throw new Error(`URL ${value} is not allowed`);
-      }
+    if (!(fullyUnwrapZodType(zodType) instanceof ZodURL)) {
+      return;
+    }
+    const allowedEndpoints = getEnv("MCP_ALLOWED_ENDPOINTS")?.split(",");
+    if (!allowedEndpoints) {
+      return;
+    }
+    const isAllowed = allowedEndpoints.some((endpoint) =>
+      this.matchesAllowedEndpoint(endpoint.trim(), value),
+    );
+    if (!isAllowed) {
+      throw new Error(`URL ${value} is not allowed`);
     }
   }
 
@@ -110,6 +120,36 @@ class ClientRegistry {
   }
 
   /**
+   * Build the config object for a single client entry.
+   * @returns The config, or `null` if a required config value is missing (the
+   * client should be skipped).
+   */
+  private buildClientConfig(
+    entry: Client,
+    getConfigValue: (client: Client, key: string) => string | null,
+    ignoreMissingRequiredConfigs: boolean,
+  ): Record<string, string> | null {
+    const config: Record<string, string> = {};
+    for (const configKey of Object.keys(entry.config.shape)) {
+      const value = getConfigValue(entry, configKey);
+      if (value !== null) {
+        // validate if a config option is an Allowed Endpoint URL
+        this.validateAllowedEndpoint(entry.config.shape[configKey], value);
+        config[configKey] = value;
+      } else if (
+        !(
+          ignoreMissingRequiredConfigs ||
+          isOptionalType(entry.config.shape[configKey])
+        )
+      ) {
+        // Missing required config - skip configuring this client.
+        return null;
+      }
+    }
+    return config;
+  }
+
+  /**
    * Configures all enabled clients on the given MCP server
    * @param server The MCP server on which the client is registered
    * @param getConfigValue A function that obtains a configuration value for the given client and requirement name
@@ -121,27 +161,22 @@ class ClientRegistry {
     ignoreMissingRequiredConfigs = false,
   ): Promise<number> {
     let configuredCount = 0;
-    entryLoop: for (const entry of this.getAll()) {
-      const config: Record<string, string> = {};
-      for (const configKey of Object.keys(entry.config.shape)) {
-        const value = getConfigValue(entry, configKey);
-        if (value !== null) {
-          // validate if a config option is an Allowed Endpoint URL
-          this.validateAllowedEndpoint(entry.config.shape[configKey], value);
-          config[configKey] = value;
-        } else if (
-          !(
-            ignoreMissingRequiredConfigs ||
-            isOptionalType(entry.config.shape[configKey])
-          )
-        ) {
-          continue entryLoop; // Skip configuring this client - missing required config
+    // Clients are configured sequentially (not Promise.all) so that
+    // `server.addClient` registration order — and therefore tool/prompt/resource
+    // registration order — stays deterministic and matches the client registry order.
+    for (const entry of this.getAll()) {
+      const config = this.buildClientConfig(
+        entry,
+        getConfigValue,
+        ignoreMissingRequiredConfigs,
+      );
+      if (config !== null) {
+        // biome-ignore lint/performance/noAwaitInLoops: sequential registration order required
+        await entry.configure(server, config);
+        if (entry.isConfigured()) {
+          await server.addClient(entry);
+          configuredCount += 1;
         }
-      }
-      await entry.configure(server, config);
-      if (entry.isConfigured()) {
-        await server.addClient(entry);
-        configuredCount++;
       }
     }
     return configuredCount;

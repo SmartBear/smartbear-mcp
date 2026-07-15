@@ -1,3 +1,5 @@
+// biome-ignore-all lint/style/noExcessiveLinesPerFile: single self-contained publish CLI script; splitting the portal HTTP client, content processing, and orchestration into separate modules would add indirection for a script only run from CI/local release tooling.
+
 /**
  * Publish Portal Content
  *
@@ -57,7 +59,8 @@ interface ProductMetadata {
   logo?: string;
   logoDark?: string;
   autoPublish: boolean;
-  validateAPIs: boolean;
+  /** Wire key in manifest.json is `validateAPIs`; renamed here for strict camelCase. */
+  validateApis: boolean;
 }
 
 interface Manifest {
@@ -73,6 +76,12 @@ interface ProcessCtx {
 }
 
 // ─── Config ───────────────────────────────────────────────────────────────────
+
+const LOG_LEVEL_WARNING = 3;
+const TIMESTAMP_LENGTH = 19;
+const MIN_SEPARATOR_WIDTH = 4;
+const SEPARATOR_TARGET_WIDTH = 52;
+const SEPARATOR_INDENT_STEP = 2;
 
 const PORTAL_BASE_URL = "https://api.portal.swaggerhub.com/v1";
 const API_KEY = process.env.SWAGGERHUB_API_KEY;
@@ -105,16 +114,22 @@ const FAKE = Object.freeze({
 // ─── Logging ──────────────────────────────────────────────────────────────────
 
 function ts(): string {
-  return new Date().toISOString().replace("T", " ").slice(0, 19);
+  return new Date().toISOString().replace("T", " ").slice(0, TIMESTAMP_LENGTH);
 }
 function debug(msg: string): void {
-  if (LOG_LEVEL <= 1) console.log(`${ts()} [DEBUG] ${msg}`);
+  if (LOG_LEVEL <= 1) {
+    console.log(`${ts()} [DEBUG] ${msg}`);
+  }
 }
 function info(msg: string): void {
-  if (LOG_LEVEL <= 2) console.log(`${ts()} [INFO] ${msg}`);
+  if (LOG_LEVEL <= 2) {
+    console.log(`${ts()} [INFO] ${msg}`);
+  }
 }
 function warn(msg: string): void {
-  if (LOG_LEVEL <= 3) console.warn(`${ts()} [WARNING] ${msg}`);
+  if (LOG_LEVEL <= LOG_LEVEL_WARNING) {
+    console.warn(`${ts()} [WARNING] ${msg}`);
+  }
 }
 function error(msg: string): void {
   console.error(`${ts()} [ERROR] ${msg}`);
@@ -145,11 +160,12 @@ async function portalFetch(
   opts: FetchOpts = {},
 ): Promise<unknown> {
   if (DRY_RUN) {
-    const label = opts.json
-      ? ` ${JSON.stringify(opts.json)}`
-      : opts.binary
-        ? " [binary upload]"
-        : "";
+    let label = "";
+    if (opts.json) {
+      label = ` ${JSON.stringify(opts.json)}`;
+    } else if (opts.binary) {
+      label = " [binary upload]";
+    }
     info(`[DRY RUN] ${method} ${url}${label}`);
     return dryRunResponse(method, url);
   }
@@ -179,22 +195,40 @@ async function portalFetch(
   return text ? JSON.parse(text) : null;
 }
 
+const PORTALS_PATH_REGEX = /\/portals(\?|$)/;
+const PRODUCTS_PATH_REGEX = /\/products(\?|$)/;
+const SECTIONS_PATH_REGEX = /\/sections(\?|$)/;
+const TABLE_OF_CONTENTS_PATH_REGEX = /\/table-of-contents(\?|$)/;
+const ATTACHMENTS_PATH_REGEX = /\/attachments(\?|$)/;
+const ATTACHMENTS_UPLOAD_PATH_REGEX = /\/attachments\//;
+
+/** Route tables for `dryRunResponse`, keyed by HTTP method: [urlPattern, fakeResponseFactory][]. */
+const DRY_RUN_GET_ROUTES: [RegExp, () => unknown][] = [
+  [PORTALS_PATH_REGEX, () => ({ items: [{ id: FAKE.PORTAL }] })],
+  [PRODUCTS_PATH_REGEX, () => ({ items: [] })], // "not found" → exercises create path
+  [SECTIONS_PATH_REGEX, () => ({ items: [{ id: FAKE.SECTION }] })],
+  [TABLE_OF_CONTENTS_PATH_REGEX, () => ({ items: [] })], // empty TOC → exercises create path
+  [ATTACHMENTS_PATH_REGEX, () => []],
+];
+const DRY_RUN_POST_ROUTES: [RegExp, () => unknown][] = [
+  [PRODUCTS_PATH_REGEX, () => ({ id: FAKE.PRODUCT })],
+  [
+    TABLE_OF_CONTENTS_PATH_REGEX,
+    () => ({ id: FAKE.TOC, documentId: FAKE.DOC }),
+  ],
+  [ATTACHMENTS_UPLOAD_PATH_REGEX, () => ({ id: FAKE.ATTACHMENT })],
+];
+
 /** Returns a plausible fake response so the rest of the script can keep running. */
 function dryRunResponse(method: string, url: string): unknown {
+  let routes: [RegExp, () => unknown][] = [];
   if (method === "GET") {
-    if (/\/portals(\?|$)/.test(url)) return { items: [{ id: FAKE.PORTAL }] };
-    if (/\/products(\?|$)/.test(url)) return { items: [] }; // "not found" → exercises create path
-    if (/\/sections(\?|$)/.test(url)) return { items: [{ id: FAKE.SECTION }] };
-    if (/\/table-of-contents(\?|$)/.test(url)) return { items: [] }; // empty TOC → exercises create path
-    if (/\/attachments(\?|$)/.test(url)) return [];
+    routes = DRY_RUN_GET_ROUTES;
+  } else if (method === "POST") {
+    routes = DRY_RUN_POST_ROUTES;
   }
-  if (method === "POST") {
-    if (/\/products(\?|$)/.test(url)) return { id: FAKE.PRODUCT };
-    if (/\/table-of-contents(\?|$)/.test(url))
-      return { id: FAKE.TOC, documentId: FAKE.DOC };
-    if (/\/attachments\//.test(url)) return { id: FAKE.ATTACHMENT };
-  }
-  return null;
+  const match = routes.find(([pattern]) => pattern.test(url));
+  return match ? match[1]() : null;
 }
 
 function portalUrl(path: string): string {
@@ -203,7 +237,9 @@ function portalUrl(path: string): string {
 
 function portalUrlQ(path: string, params: Record<string, string>): string {
   const url = new URL(`${PORTAL_BASE_URL}${path}`);
-  for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
+  for (const [k, v] of Object.entries(params)) {
+    url.searchParams.set(k, v);
+  }
   return url.toString();
 }
 
@@ -215,9 +251,10 @@ async function getPortalId(): Promise<string> {
     "GET",
     portalUrlQ("/portals", { subdomain: PORTAL_SUBDOMAIN ?? "" }),
   )) as { items?: Array<{ id: string }> };
-  const id = data?.items?.[0]?.id;
-  if (!id)
+  const id = data.items?.[0]?.id;
+  if (!id) {
     throw new Error(`No portal found for subdomain "${PORTAL_SUBDOMAIN}"`);
+  }
   info(`Portal ID: ${id}`);
   return id;
 }
@@ -231,7 +268,7 @@ async function getProductId(
     "GET",
     portalUrlQ(`/portals/${portalId}/products`, { name: productName }),
   )) as { items?: Array<{ id: string }> };
-  return data?.items?.[0]?.id ?? null;
+  return data.items?.[0]?.id ?? null;
 }
 
 async function createProduct(
@@ -284,8 +321,10 @@ async function getDefaultSectionId(productId: string): Promise<string> {
     "GET",
     portalUrl(`/products/${productId}/sections`),
   )) as { items?: Array<{ id: string }> };
-  const id = data?.items?.[0]?.id;
-  if (!id) throw new Error(`No section found for product ${productId}`);
+  const id = data.items?.[0]?.id;
+  if (!id) {
+    throw new Error(`No section found for product ${productId}`);
+  }
   info(`Section ID: ${id}`);
   return id;
 }
@@ -378,16 +417,19 @@ async function loadDocImages(
   for (const filename of filenames) {
     if (attachments.find((a) => a.name === filename)) {
       debug(`Doc image already uploaded: ${filename}`);
-      continue;
+    } else {
+      info(`Uploading doc image "${filename}"...`);
+      // biome-ignore lint/performance/noAwaitInLoops: uploads must stay sequential — the dedup check above reads `attachments`, which is only refreshed after the whole batch, so concurrent uploads could re-upload the same file.
+      const buffer = await readFile(join(imagesDir, filename));
+      await portalFetch(
+        "POST",
+        portalUrlQ(`/attachments/documentation/${productId}`, {
+          name: filename,
+        }),
+        { binary: buffer, contentType: mimeForFile(filename) },
+      );
+      uploaded = true;
     }
-    info(`Uploading doc image "${filename}"...`);
-    const buffer = await readFile(join(imagesDir, filename));
-    await portalFetch(
-      "POST",
-      portalUrlQ(`/attachments/documentation/${productId}`, { name: filename }),
-      { binary: buffer, contentType: mimeForFile(filename) },
-    );
-    uploaded = true;
   }
 
   return uploaded ? getDocAttachments(productId) : attachments;
@@ -400,15 +442,19 @@ async function getTocItems(sectionId: string): Promise<TocItem[]> {
     "GET",
     portalUrl(`/sections/${sectionId}/table-of-contents`),
   )) as { items?: TocItem[] };
-  return data?.items ?? [];
+  return data.items ?? [];
 }
 
 function findInToc(items: TocItem[], title: string): TocItem | null {
   for (const item of items) {
-    if (item.title === title) return item;
-    if (item.children?.length) {
+    if (item.title === title) {
+      return item;
+    }
+    if (item.children?.length > 0) {
       const found = findInToc(item.children, title);
-      if (found) return found;
+      if (found) {
+        return found;
+      }
     }
   }
   return null;
@@ -545,7 +591,7 @@ async function publishPortalProduct(
     "PUT",
     portalUrlQ(`/products/${productId}/published-content`, { preview }),
   )) as { validationMessages?: unknown[] } | null;
-  if (data?.validationMessages?.length) {
+  if (data?.validationMessages?.length > 0) {
     throw new Error(
       `Publish validation errors: ${JSON.stringify(data.validationMessages)}`,
     );
@@ -592,7 +638,9 @@ async function processContentItem(
   const { name, slug, order, type, contentUrl } = item;
 
   const indent = "  ".repeat(depth);
-  info(`${indent}${"─".repeat(Math.max(4, 52 - depth * 2))}`);
+  info(
+    `${indent}${"─".repeat(Math.max(MIN_SEPARATOR_WIDTH, SEPARATOR_TARGET_WIDTH - depth * SEPARATOR_INDENT_STEP))}`,
+  );
   info(`${indent}"${name}" (${type}) order=${order}`);
 
   let tocId: string | null = null;
@@ -620,8 +668,8 @@ async function processContentItem(
       let rawContent: string;
       try {
         rawContent = await readFile(filePath, "utf8");
-      } catch {
-        throw new Error(`Content file not found: ${filePath}`);
+      } catch (cause) {
+        throw new Error(`Content file not found: ${filePath}`, { cause });
       }
       await updateDocument(
         documentId,
@@ -636,11 +684,70 @@ async function processContentItem(
     .sort((a, b) => a.order - b.order);
 
   for (const child of children) {
+    // biome-ignore lint/performance/noAwaitInLoops: each call re-fetches and searches the TOC (getTocItems/findInToc) to decide create-vs-update; running siblings concurrently could race and create duplicate TOC entries.
     await processContentItem(child, tocId, ctx, depth + 1);
   }
 }
 
 // ─── Orchestration ────────────────────────────────────────────────────────────
+
+/** Creates the product if it doesn't exist yet, or patches its metadata if it does. */
+async function upsertProduct(
+  portalId: string,
+  productName: string,
+  productMetadata: ProductMetadata,
+): Promise<string> {
+  const existingId = await getProductId(portalId, productName);
+  if (existingId) {
+    info(`Updating existing product: ${existingId}`);
+    await patchProduct(existingId, {
+      name: productName,
+      description: productMetadata.description,
+      slug: productMetadata.slug,
+      public: productMetadata.public,
+      hidden: productMetadata.hidden,
+    });
+    return existingId;
+  }
+  return createProduct(portalId, {
+    name: productName,
+    description: productMetadata.description,
+    slug: productMetadata.slug,
+    isPublic: productMetadata.public,
+    isHidden: productMetadata.hidden,
+  });
+}
+
+/** Uploads the light/dark logo images (if configured) and attaches them to the product. */
+async function applyBranding(
+  portalId: string,
+  productDir: string,
+  productId: string,
+  productMetadata: ProductMetadata,
+): Promise<void> {
+  if (productMetadata.logo) {
+    const logoId = await uploadBrandingImage(
+      portalId,
+      productDir,
+      productMetadata.logo,
+    );
+    if (logoId) {
+      await patchProduct(productId, { branding: { logoId } });
+    }
+  }
+  if (productMetadata.logoDark) {
+    const logoDarkId = await uploadBrandingImage(
+      portalId,
+      productDir,
+      productMetadata.logoDark,
+    );
+    if (logoDarkId) {
+      await patchProduct(productId, {
+        branding: { logoDarkModeId: logoDarkId },
+      });
+    }
+  }
+}
 
 async function processProduct(productDir: string): Promise<void> {
   const manifestPath = join(productDir, "manifest.json");
@@ -653,46 +760,8 @@ async function processProduct(productDir: string): Promise<void> {
   info("═".repeat(60));
 
   const portalId = await getPortalId();
-  let productId = await getProductId(portalId, productName);
-
-  if (productId) {
-    info(`Updating existing product: ${productId}`);
-    await patchProduct(productId, {
-      name: productName,
-      description: productMetadata.description,
-      slug: productMetadata.slug,
-      public: productMetadata.public,
-      hidden: productMetadata.hidden,
-    });
-  } else {
-    productId = await createProduct(portalId, {
-      name: productName,
-      description: productMetadata.description,
-      slug: productMetadata.slug,
-      isPublic: productMetadata.public,
-      isHidden: productMetadata.hidden,
-    });
-  }
-
-  if (productMetadata.logo) {
-    const logoId = await uploadBrandingImage(
-      portalId,
-      productDir,
-      productMetadata.logo,
-    );
-    if (logoId) await patchProduct(productId, { branding: { logoId } });
-  }
-  if (productMetadata.logoDark) {
-    const logoDarkId = await uploadBrandingImage(
-      portalId,
-      productDir,
-      productMetadata.logoDark,
-    );
-    if (logoDarkId)
-      await patchProduct(productId, {
-        branding: { logoDarkModeId: logoDarkId },
-      });
-  }
+  const productId = await upsertProduct(portalId, productName, productMetadata);
+  await applyBranding(portalId, productDir, productId, productMetadata);
 
   const sectionId = await getDefaultSectionId(productId);
   const attachments = await loadDocImages(productId, productDir);
@@ -708,6 +777,7 @@ async function processProduct(productDir: string): Promise<void> {
   }
 
   for (const item of rootItems) {
+    // biome-ignore lint/performance/noAwaitInLoops: same TOC create-vs-update race concern as processContentItem's child loop above.
     await processContentItem(item, null, ctx);
   }
 
@@ -754,6 +824,7 @@ async function main(): Promise<void> {
   info(`Found ${productDirs.length} product(s) to publish.`);
 
   for (const productDir of productDirs) {
+    // biome-ignore lint/performance/noAwaitInLoops: products are published one at a time so failures are attributable to a single product and logs stay in a readable, deterministic order.
     await processProduct(productDir);
   }
 
@@ -761,6 +832,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((err: unknown) => {
-  error((err as Error).message ?? String(err));
+  error(err instanceof Error ? err.message : String(err));
   process.exit(1);
 });

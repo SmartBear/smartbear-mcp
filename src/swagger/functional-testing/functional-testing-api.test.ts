@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
-import { FunctionalTestingAPI } from "../client/functional-testing-api.ts";
+import { FunctionalTestingApi } from "../client/functional-testing-api.ts";
 
 const fetchMock = createFetchMock(vi);
 fetchMock.enableMocks();
@@ -43,12 +43,12 @@ const suitesResponseMock = {
   },
 };
 
-describe("FunctionalTestingAPI", () => {
-  let api: FunctionalTestingAPI;
+describe("FunctionalTestingApi", () => {
+  let api: FunctionalTestingApi;
 
   beforeEach(() => {
     fetchMock.resetMocks();
-    api = new FunctionalTestingAPI(
+    api = new FunctionalTestingApi(
       () => "test-api-key",
       "SmartBear MCP Server/test",
     );
@@ -749,7 +749,7 @@ describe("FunctionalTestingAPI", () => {
     });
 
     it("should throw ToolError when no token is available", () => {
-      const apiWithNoToken = new FunctionalTestingAPI(
+      const apiWithNoToken = new FunctionalTestingApi(
         () => null,
         "SmartBear MCP Server/test",
       );

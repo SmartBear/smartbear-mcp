@@ -1,7 +1,15 @@
-import type { IncomingMessage, ServerResponse } from "node:http";
+import type { IncomingMessage, Server, ServerResponse } from "node:http";
+// process.env is used to set up/tear down BASE_URL / *_AUTH_TOKEN env vars between test cases.
 import process from "node:process";
+// SSEServerTransport is deprecated upstream but still part of TestSessionEntry's
+// shape below, mirroring the (also deprecated-import-tolerant) production type.
+// biome-ignore lint/suspicious/noDeprecatedImports: see above
+import type { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
+import type { StreamableHTTPServerTransport as StreamableHTTPServerTransportType } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { z } from "zod";
 import { clientRegistry } from "./client-registry.ts";
+import type { SmartBearMcpServer as SmartBearMcpServerType } from "./server.ts";
 import {
   drainHttpTransport,
   getBaseUrl,
@@ -13,6 +21,12 @@ import {
   newServer,
 } from "./transport-http.ts";
 import type { Client } from "./types.ts";
+
+/** Local mirror of transport-http.ts's private SessionEntry shape (not exported). */
+interface TestSessionEntry {
+  server: SmartBearMcpServerType;
+  transport: StreamableHTTPServerTransportType | SSEServerTransport;
+}
 
 function fakeRequest(
   headers: Record<string, string | string[] | undefined>,
@@ -39,7 +53,9 @@ function fakeResponse(): ServerResponse & {
       }
     },
     end(body?: string) {
-      if (body) res._body = body;
+      if (body) {
+        res._body = body;
+      }
     },
   };
   return res as unknown as ServerResponse & {
@@ -48,6 +64,11 @@ function fakeResponse(): ServerResponse & {
     _body: string;
   };
 }
+
+type TestClient = Client & {
+  _configured: boolean;
+  _authToken: string | null;
+};
 
 /**
  * Create a minimal Client that mimics Bugsnag's auth behavior for testing
@@ -69,27 +90,32 @@ function createTestClient(
     requiredFields = [],
   } = opts;
 
-  const { z } = require("zod");
-  const shape: Record<string, any> = {
+  const shape: Record<string, z.ZodType> = {
     auth_token: z.string().describe("Test auth token").optional(),
   };
   for (const field of requiredFields) {
     shape[field] = z.string().describe(`${field} (required)`);
   }
 
-  const client: any = {
+  const client: TestClient = {
     name,
     capabilityPrefix: name.toLowerCase(),
     configPrefix,
     config: z.object(shape),
     _configured: false,
     _authToken: authToken,
-    configure: vi.fn().mockImplementation(async (_server: any, config: any) => {
-      client._configured = true;
-      if (config.auth_token) {
-        client._authToken = config.auth_token;
-      }
-    }),
+    configure: vi.fn().mockImplementation(
+      // biome-ignore lint/suspicious/useAwait: must satisfy Client.configure's Promise<void> contract
+      async (
+        _server: SmartBearMcpServerType,
+        config: Record<string, string>,
+      ) => {
+        client._configured = true;
+        if (config.auth_token) {
+          client._authToken = config.auth_token;
+        }
+      },
+    ),
     isConfigured: () => client._configured,
     registerTools: vi.fn(),
     registerResources: vi.fn(),
@@ -198,6 +224,7 @@ describe("transport-http helpers", () => {
 
     it("should handle multi-word keys", () => {
       expect(getQueryStringName("Bugsnag", "project_api_key")).toBe(
+        // biome-ignore lint/security/noSecrets: expected query-string param name, not a secret
         "bugsnagProjectApiKey",
       );
     });
@@ -283,7 +310,7 @@ describe("newServer (OAuth flow)", () => {
           cleanupSession: vi.fn(),
           server: { elicitInput: vi.fn() },
           isClientEnabled: () => true,
-        }) as any,
+        }) as unknown as SmartBearMcpServerType,
     );
 
     const req = fakeRequest({ host: "localhost:3000" });
@@ -323,7 +350,7 @@ describe("newServer (OAuth flow)", () => {
           cleanupSession: vi.fn(),
           server: { elicitInput: vi.fn() },
           isClientEnabled: () => true,
-        }) as any,
+        }) as unknown as SmartBearMcpServerType,
     );
 
     const req = fakeRequest({
@@ -360,7 +387,7 @@ describe("newServer (OAuth flow)", () => {
           cleanupSession: vi.fn(),
           server: { elicitInput: vi.fn() },
           isClientEnabled: () => true,
-        }) as any,
+        }) as unknown as SmartBearMcpServerType,
     );
 
     const req = fakeRequest({ host: "localhost:3000" });
@@ -392,7 +419,7 @@ describe("newServer (OAuth flow)", () => {
           cleanupSession: vi.fn(),
           server: { elicitInput: vi.fn() },
           isClientEnabled: () => true,
-        }) as any,
+        }) as unknown as SmartBearMcpServerType,
     );
 
     // Set env var that matches client prefix + key
@@ -434,7 +461,7 @@ describe("newServer (OAuth flow)", () => {
           cleanupSession: vi.fn(),
           server: { elicitInput: vi.fn() },
           isClientEnabled: () => true,
-        }) as any,
+        }) as unknown as SmartBearMcpServerType,
     );
 
     const req = fakeRequest({ host: "localhost:3000" });
@@ -515,12 +542,12 @@ describe("drainHttpTransport", () => {
     };
   }
 
-  function fakeTransportEntry() {
+  function fakeTransportEntry(): TestSessionEntry {
     return {
-      server: {} as any,
+      server: {} as unknown as SmartBearMcpServerType,
       transport: {
         close: vi.fn().mockResolvedValue(undefined),
-      } as any,
+      } as unknown as StreamableHTTPServerTransportType,
     };
   }
 
@@ -528,12 +555,12 @@ describe("drainHttpTransport", () => {
     const httpServer = fakeHttpServer("immediate");
     const a = fakeTransportEntry();
     const b = fakeTransportEntry();
-    const transports = new Map<string, any>([
+    const transports = new Map<string, TestSessionEntry>([
       ["sid-a", a],
       ["sid-b", b],
     ]);
 
-    await drainHttpTransport(httpServer as any, transports);
+    await drainHttpTransport(httpServer as unknown as Server, transports);
 
     expect(httpServer.close).toHaveBeenCalled();
     expect(httpServer.closeIdleConnections).toHaveBeenCalled();
@@ -547,13 +574,13 @@ describe("drainHttpTransport", () => {
     const good = fakeTransportEntry();
     const bad = fakeTransportEntry();
     bad.transport.close = vi.fn().mockRejectedValue(new Error("boom"));
-    const transports = new Map<string, any>([
+    const transports = new Map<string, TestSessionEntry>([
       ["sid-good", good],
       ["sid-bad", bad],
     ]);
 
     await expect(
-      drainHttpTransport(httpServer as any, transports),
+      drainHttpTransport(httpServer as unknown as Server, transports),
     ).resolves.toBeUndefined();
 
     expect(good.transport.close).toHaveBeenCalled();
@@ -562,9 +589,9 @@ describe("drainHttpTransport", () => {
 
   it("works with an empty transports map", async () => {
     const httpServer = fakeHttpServer("immediate");
-    const transports = new Map<string, any>();
+    const transports = new Map<string, TestSessionEntry>();
     await expect(
-      drainHttpTransport(httpServer as any, transports),
+      drainHttpTransport(httpServer as unknown as Server, transports),
     ).resolves.toBeUndefined();
     expect(httpServer.close).toHaveBeenCalled();
   });
@@ -580,18 +607,26 @@ function fakeStreamRequest(opts: {
   body?: unknown;
 }): IncomingMessage {
   const { method = "POST", headers = {}, body } = opts;
-  const listeners: Record<string, ((arg?: any) => void)[]> = {};
+  type StreamListener = (arg?: Buffer) => void;
+  const listeners: Partial<Record<string, StreamListener[]>> = {};
   let emitted = false;
-  const req: any = {
+  const req: {
+    method: string;
+    headers: Record<string, string | string[] | undefined>;
+    resume: () => void;
+    on: (event: string, cb: StreamListener) => unknown;
+  } = {
     method,
     headers,
     resume() {
       // Drain: behave as if data/end fired with no consumers.
       emitted = true;
     },
-    on(event: string, cb: (arg?: any) => void) {
-      if (!listeners[event]) listeners[event] = [];
-      listeners[event].push(cb);
+    on(event: string, cb: StreamListener) {
+      if (!listeners[event]) {
+        listeners[event] = [];
+      }
+      listeners[event]?.push(cb);
       // Emit body once on first 'end' subscription. Multiple subscribers see
       // their callbacks invoked in the same emission cycle; later subscribers
       // do not retrigger emission (which would duplicate the body and break
@@ -601,9 +636,13 @@ function fakeStreamRequest(opts: {
         queueMicrotask(() => {
           if (body !== undefined) {
             const chunk = Buffer.from(JSON.stringify(body));
-            for (const dataCb of listeners.data || []) dataCb(chunk);
+            for (const dataCb of listeners.data || []) {
+              dataCb(chunk);
+            }
           }
-          for (const endCb of listeners.end || []) endCb();
+          for (const endCb of listeners.end || []) {
+            endCb();
+          }
         });
       }
       return req;
@@ -692,18 +731,18 @@ describe("handleStreamableHttpRequest (session routing)", () => {
         cleanupSession: vi.fn(),
         server: { elicitInput: vi.fn() },
         isClientEnabled: () => true,
-      } as any;
+      } as unknown as SmartBearMcpServerType;
     });
 
     // Stub the SDK transport's handleRequest so we don't run the real
     // initialize flow against an incomplete fakeResponse stub. The point of
     // this test is to verify dispatch *into* createNewTransport, not to
     // exercise the SDK internals.
-    const { StreamableHTTPServerTransport } = await import(
-      "@modelcontextprotocol/sdk/server/streamableHttp.js"
-    );
+    const {
+      StreamableHTTPServerTransport: StreamableHTTPServerTransportClass,
+    } = await import("@modelcontextprotocol/sdk/server/streamableHttp.js");
     const handleRequestSpy = vi
-      .spyOn(StreamableHTTPServerTransport.prototype, "handleRequest")
+      .spyOn(StreamableHTTPServerTransportClass.prototype, "handleRequest")
       .mockResolvedValue(undefined);
 
     try {
@@ -726,17 +765,17 @@ describe("handleStreamableHttpRequest (session routing)", () => {
     const handleRequest = vi.fn().mockResolvedValue(undefined);
     // Construct a stand-in for StreamableHTTPServerTransport that satisfies the
     // instanceof check inside getExistingTransport without spinning up a real one.
-    const { StreamableHTTPServerTransport } = await import(
-      "@modelcontextprotocol/sdk/server/streamableHttp.js"
-    );
+    const {
+      StreamableHTTPServerTransport: StreamableHTTPServerTransportClass,
+    } = await import("@modelcontextprotocol/sdk/server/streamableHttp.js");
     const fakeTransport = Object.create(
-      StreamableHTTPServerTransport.prototype,
+      StreamableHTTPServerTransportClass.prototype,
     );
     fakeTransport.handleRequest = handleRequest;
     transports.set("known-session", {
       server: {
         getMcpClientIdentity: () => ({ name: undefined }),
-      } as any,
+      } as unknown as SmartBearMcpServerType,
       transport: fakeTransport,
     });
 

@@ -9,9 +9,9 @@ describe("ApiClient", () => {
   const apiClient = new ApiClient(token, baseUrl);
 
   it("should initialize with trimmed baseUrl and default headers", () => {
-    const apiClient = new ApiClient(token, "https://a.url.com/");
-    expect(apiClient.baseUrl).toBe("https://a.url.com");
-    expect(apiClient.defaultHeaders).toEqual(
+    const trimmedClient = new ApiClient(token, "https://a.url.com/");
+    expect(trimmedClient.baseUrl).toBe("https://a.url.com");
+    expect(trimmedClient.defaultHeaders).toEqual(
       new AuthService(token).getAuthHeaders(),
     );
   });
@@ -42,12 +42,12 @@ describe("ApiClient", () => {
   });
 
   it("should handle fetch errors", async () => {
-    global.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
+    globalThis.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
     await expect(apiClient.get("/projects")).rejects.toThrow("Network error");
   });
 
   it("should handle fetch errors when post", async () => {
-    global.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
+    globalThis.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
     await expect(apiClient.post("/testcases", {})).rejects.toThrow(
       "Network error",
     );
@@ -55,13 +55,17 @@ describe("ApiClient", () => {
 
   it("should fetch and return JSON", async () => {
     const mockJson = { foo: "bar" };
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
       headers: {
         get: (name: string) => {
-          if (name === "content-type") return "application/json";
-          if (name === "content-length") return "13";
+          if (name === "content-type") {
+            return "application/json";
+          }
+          if (name === "content-length") {
+            return "13";
+          }
           return null;
         },
       },
@@ -73,13 +77,17 @@ describe("ApiClient", () => {
 
   it("should fetch and return JSON when post", async () => {
     const mockJson = { id: 1, key: "SA-T1" };
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
       headers: {
         get: (name: string) => {
-          if (name === "content-type") return "application/json";
-          if (name === "content-length") return "20";
+          if (name === "content-type") {
+            return "application/json";
+          }
+          if (name === "content-length") {
+            return "20";
+          }
           return null;
         },
       },
@@ -98,14 +106,18 @@ describe("ApiClient", () => {
       status: 200,
       headers: {
         get: (name: string) => {
-          if (name === "content-type") return "application/json";
-          if (name === "content-length") return "2";
+          if (name === "content-type") {
+            return "application/json";
+          }
+          if (name === "content-length") {
+            return "2";
+          }
           return null;
         },
       },
       text: () => Promise.resolve("{}"),
     });
-    global.fetch = fetchMock;
+    globalThis.fetch = fetchMock;
     await apiClient.post("/testcases", { name: "Test Case", projectKey: "SA" });
     expect(fetchMock).toHaveBeenCalledWith(
       expect.any(String),
@@ -120,7 +132,7 @@ describe("ApiClient", () => {
   });
 
   it("should handle failing requests", async () => {
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: false,
       status: 401,
       text: () => "Unauthorized",
@@ -131,7 +143,7 @@ describe("ApiClient", () => {
   });
 
   it("should handle failing requests when post", async () => {
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: false,
       status: 401,
       text: () => "Unauthorized",
@@ -144,12 +156,14 @@ describe("ApiClient", () => {
   });
 
   it("should handle empty response body (204 No Content)", async () => {
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       status: 204,
       headers: {
         get: (name: string) => {
-          if (name === "content-length") return "0";
+          if (name === "content-length") {
+            return "0";
+          }
           return null;
         },
       },
@@ -162,13 +176,17 @@ describe("ApiClient", () => {
   });
 
   it("should handle empty response body with content-length 0", async () => {
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
       headers: {
         get: (name: string) => {
-          if (name === "content-length") return "0";
-          if (name === "content-type") return "application/json";
+          if (name === "content-length") {
+            return "0";
+          }
+          if (name === "content-type") {
+            return "application/json";
+          }
           return null;
         },
       },
@@ -180,12 +198,14 @@ describe("ApiClient", () => {
 
   it("should handle response with missing content-type header but valid JSON", async () => {
     const mockJson = { id: 1, key: "SA-T1" };
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
       headers: {
         get: (name: string) => {
-          if (name === "content-length") return "20";
+          if (name === "content-length") {
+            return "20";
+          }
           return null; // No content-type header
         },
       },
@@ -196,13 +216,17 @@ describe("ApiClient", () => {
   });
 
   it("should handle non-JSON response gracefully", async () => {
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
       headers: {
         get: (name: string) => {
-          if (name === "content-type") return "text/plain";
-          if (name === "content-length") return "5";
+          if (name === "content-type") {
+            return "text/plain";
+          }
+          if (name === "content-length") {
+            return "5";
+          }
           return null;
         },
       },

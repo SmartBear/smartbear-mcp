@@ -1,11 +1,5 @@
-import type {
-  OrganizationApiView,
-  ProjectApiView,
-  ReleaseApiView,
-  ReleaseGroup,
-} from "./api.ts";
-
 // Exporting all the types required outside of the api module - all imports from the tool should come from here
+// biome-ignore-all lint/performance/noBarrelFile: intentional public entry point for the client/api module, consumed throughout src/bugsnag/tool
 
 export {
   CurrentUserApiFetchParamCreator,
@@ -22,23 +16,8 @@ export {
   SpanGroup,
   TraceField,
 } from "./api.ts";
-export { CurrentUserAPI } from "./CurrentUser.ts";
 export { Configuration } from "./configuration.ts";
-export { ErrorAPI } from "./Error.ts";
-export { ProjectAPI } from "./Project.ts";
-
-export interface Organization extends OrganizationApiView {
-  id: string; // ID is always present
-}
-
-export interface Project extends ProjectApiView {
-  id: string; // ID is always present
-}
-
-export interface Build extends ReleaseApiView {
-  id: string; // ID is always present
-}
-
-export interface Release extends ReleaseGroup {
-  id: string; // ID is always present
-}
+export { CurrentUserApi } from "./current-user.ts";
+export { ErrorApi } from "./error.ts";
+export { Build, Organization, Project, Release } from "./models.ts";
+export { ProjectApi } from "./project.ts";

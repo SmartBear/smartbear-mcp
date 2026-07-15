@@ -1,18 +1,17 @@
+// biome-ignore-all lint/style/noExcessiveLinesPerFile: groups every Projects API method (releases, span groups, traces, network grouping) mirroring the generated ProjectsApiFetchParamCreator; splitting would fragment one cohesive API surface
 import { type FilterObject, toUrlSearchParams } from "../filters.ts";
-import { type ApiResponse, BaseAPI, getQueryParams } from "./base.ts";
 import {
-  type Build,
   type EventField,
-  type Project,
   type ProjectNetworkGroupingRuleset,
   ProjectsApiFetchParamCreator,
-  type Release,
   type Span,
   type SpanGroup,
   type TraceField,
-} from "./index.ts";
+} from "./api.ts";
+import { type ApiResponse, BaseApi, getQueryParams } from "./base.ts";
+import type { Build, Project, Release } from "./models.ts";
 
-export class ProjectAPI extends BaseAPI {
+export class ProjectApi extends BaseApi {
   static projectFields: (keyof Project)[] = [
     "id",
     "name",
@@ -71,7 +70,7 @@ export class ProjectAPI extends BaseAPI {
       localVarFetchArgs.url,
       localVarFetchArgs.options,
       true,
-      ProjectAPI.eventFieldFields,
+      ProjectApi.eventFieldFields,
     );
   }
 
@@ -92,7 +91,7 @@ export class ProjectAPI extends BaseAPI {
     return await this.requestObject<Build>(
       localVarFetchArgs.url,
       localVarFetchArgs.options,
-      ProjectAPI.buildFields,
+      ProjectApi.buildFields,
     );
   }
 
@@ -107,6 +106,7 @@ export class ProjectAPI extends BaseAPI {
    * @param nextUrl Optional URL for next page (overrides other pagination params).
    * @returns A promise that resolves to an array of `ReleaseSummaryResponse` objects.
    */
+  // biome-ignore lint/complexity/useMaxParams: mirrors the positional params of the generated ProjectsApiFetchParamCreator.listProjectReleaseGroups
   async listProjectReleaseGroups(
     projectId: string,
     releaseStageName: string,
@@ -115,17 +115,16 @@ export class ProjectAPI extends BaseAPI {
     perPage?: number,
     nextUrl?: string,
   ): Promise<ApiResponse<Release[]>> {
-    if (nextUrl) {
-      topOnly = undefined;
-      visibleOnly = undefined;
-    }
+    // Don't allow override of these params when using nextUrl
+    const effectiveTopOnly = nextUrl ? undefined : topOnly;
+    const effectiveVisibleOnly = nextUrl ? undefined : visibleOnly;
     const localVarFetchArgs = ProjectsApiFetchParamCreator(
       this.configuration,
     ).listProjectReleaseGroups(
       projectId,
       releaseStageName,
-      topOnly,
-      visibleOnly,
+      effectiveTopOnly,
+      effectiveVisibleOnly,
       perPage,
       undefined,
       undefined,
@@ -143,7 +142,7 @@ export class ProjectAPI extends BaseAPI {
       url.toString(),
       localVarFetchArgs.options,
       false, // Paginate results
-      ProjectAPI.releaseFields,
+      ProjectApi.releaseFields,
     );
   }
 
@@ -160,7 +159,7 @@ export class ProjectAPI extends BaseAPI {
     return await this.requestObject<Release>(
       localVarFetchArgs.url,
       localVarFetchArgs.options,
-      ProjectAPI.releaseFields,
+      ProjectApi.releaseFields,
     );
   }
 
@@ -178,7 +177,7 @@ export class ProjectAPI extends BaseAPI {
       localVarFetchArgs.url,
       localVarFetchArgs.options,
       true,
-      ProjectAPI.buildFields,
+      ProjectApi.buildFields,
     );
   }
 
@@ -199,6 +198,7 @@ export class ProjectAPI extends BaseAPI {
    * @param nextUrl Optional URL for next page (overrides other pagination params).
    * @returns A promise that resolves to an array of span groups.
    */
+  // biome-ignore lint/complexity/useMaxParams: mirrors the positional params of the generated ProjectsApiFetchParamCreator.listProjectSpanGroups
   async listProjectSpanGroups(
     projectId: string,
     sort?: string,
@@ -209,19 +209,18 @@ export class ProjectAPI extends BaseAPI {
     starredOnly?: boolean,
     nextUrl?: string,
   ): Promise<ApiResponse<SpanGroup[]>> {
-    if (nextUrl) {
-      sort = undefined;
-      direction = undefined;
-      offset = undefined;
-    }
+    // Don't allow override of these params when using nextUrl
+    const effectiveSort = nextUrl ? undefined : sort;
+    const effectiveDirection = nextUrl ? undefined : direction;
+    const effectiveOffset = nextUrl ? undefined : offset;
     const localVarFetchArgs = ProjectsApiFetchParamCreator(
       this.configuration,
     ).listProjectSpanGroups(
       projectId,
-      sort,
-      direction,
+      effectiveSort,
+      effectiveDirection,
       perPage,
-      offset,
+      effectiveOffset,
       undefined, // Filters are encoded separately below
       starredOnly,
       undefined,
@@ -236,9 +235,9 @@ export class ProjectAPI extends BaseAPI {
     }
     if (!nextUrl && filters) {
       // Apply our own encoding of filters
-      toUrlSearchParams(filters).forEach((value, key) => {
+      for (const [key, value] of toUrlSearchParams(filters)) {
         url.searchParams.append(key, value);
-      });
+      }
     }
     return await this.requestArray<SpanGroup>(
       url.toString(),
@@ -267,9 +266,9 @@ export class ProjectAPI extends BaseAPI {
     const url = new URL(localVarFetchArgs.url, this.configuration.basePath);
     if (filters) {
       // Apply our own encoding of filters
-      toUrlSearchParams(filters).forEach((value, key) => {
+      for (const [key, value] of toUrlSearchParams(filters)) {
         url.searchParams.append(key, value);
-      });
+      }
     }
     return await this.requestObject<SpanGroup>(
       url.toString(),
@@ -289,7 +288,8 @@ export class ProjectAPI extends BaseAPI {
     projectId: string,
     id: string,
     filters?: FilterObject,
-  ): Promise<ApiResponse<any>> {
+    // The API has no dedicated response schema for this endpoint; callers narrow as needed.
+  ): Promise<ApiResponse<unknown>> {
     const localVarFetchArgs = ProjectsApiFetchParamCreator(
       this.configuration,
     ).getProjectSpanGroupTimeline(projectId, id, undefined, undefined);
@@ -297,11 +297,11 @@ export class ProjectAPI extends BaseAPI {
     const url = new URL(localVarFetchArgs.url, this.configuration.basePath);
     if (filters) {
       // Apply our own encoding of filters
-      toUrlSearchParams(filters).forEach((value, key) => {
+      for (const [key, value] of toUrlSearchParams(filters)) {
         url.searchParams.append(key, value);
-      });
+      }
     }
-    return await this.requestObject<any>(
+    return await this.requestObject<unknown>(
       url.toString(),
       localVarFetchArgs.options,
     );
@@ -319,11 +319,8 @@ export class ProjectAPI extends BaseAPI {
     projectId: string,
     id: string,
     filters?: FilterObject,
-  ): Promise<ApiResponse<any>> {
-    const options: any = {};
-    if (filters) {
-      options.query = toUrlSearchParams(filters);
-    }
+    // The API has no dedicated response schema for this endpoint; callers narrow as needed.
+  ): Promise<ApiResponse<unknown>> {
     const localVarFetchArgs = ProjectsApiFetchParamCreator(
       this.configuration,
     ).getProjectSpanGroupDistribution(projectId, id, undefined, undefined);
@@ -331,11 +328,11 @@ export class ProjectAPI extends BaseAPI {
     const url = new URL(localVarFetchArgs.url, this.configuration.basePath);
     if (filters) {
       // Apply our own encoding of filters
-      toUrlSearchParams(filters).forEach((value, key) => {
+      for (const [key, value] of toUrlSearchParams(filters)) {
         url.searchParams.append(key, value);
-      });
+      }
     }
-    return await this.requestObject<any>(
+    return await this.requestObject<unknown>(
       url.toString(),
       localVarFetchArgs.options,
     );
@@ -353,6 +350,7 @@ export class ProjectAPI extends BaseAPI {
    * @param nextUrl Optional URL for next page (overrides other pagination params).
    * @returns A promise that resolves to an array of spans.
    */
+  // biome-ignore lint/complexity/useMaxParams: mirrors the positional params of the generated ProjectsApiFetchParamCreator.listSpansBySpanGroupId
   async listSpansBySpanGroupId(
     projectId: string,
     id: string,
@@ -362,18 +360,17 @@ export class ProjectAPI extends BaseAPI {
     perPage?: number,
     nextUrl?: string,
   ): Promise<ApiResponse<Span[]>> {
-    if (nextUrl) {
-      sort = undefined;
-      direction = undefined;
-    }
+    // Don't allow override of these params when using nextUrl
+    const effectiveSort = nextUrl ? undefined : sort;
+    const effectiveDirection = nextUrl ? undefined : direction;
     const localVarFetchArgs = ProjectsApiFetchParamCreator(
       this.configuration,
     ).listSpansBySpanGroupId(
       projectId,
       id,
       undefined,
-      sort,
-      direction,
+      effectiveSort,
+      effectiveDirection,
       perPage,
       undefined,
     );
@@ -388,9 +385,9 @@ export class ProjectAPI extends BaseAPI {
     }
     if (!nextUrl && filters) {
       // Apply our own encoding of filters
-      toUrlSearchParams(filters).forEach((value, key) => {
+      for (const [key, value] of toUrlSearchParams(filters)) {
         url.searchParams.append(key, value);
-      });
+      }
     }
     return await this.requestArray<Span>(
       url.toString(),
@@ -411,6 +408,7 @@ export class ProjectAPI extends BaseAPI {
    * @param nextUrl Optional URL for next page (overrides other pagination params).
    * @returns A promise that resolves to an array of spans.
    */
+  // biome-ignore lint/complexity/useMaxParams: mirrors the positional params of the generated ProjectsApiFetchParamCreator.listSpansByTraceId
   async listSpansByTraceId(
     projectId: string,
     traceId: string,

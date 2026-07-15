@@ -1,11 +1,10 @@
-import { randomUUID } from "node:crypto";
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ZodRawShape } from "zod";
 import { z } from "zod";
 import { Tool, ToolError } from "../../../common/tools.ts";
 import type { ToolParams } from "../../../common/types.ts";
 import type { ReflectClient } from "../../client.ts";
-import type { MCPGetScreenshotSuccessResponse } from "../../types/mcp.ts";
+import type { McpGetScreenshotSuccessResponse } from "../../types/mcp.ts";
 
 export class GetScreenshot extends Tool<ReflectClient> {
   specification: ToolParams = {
@@ -29,12 +28,14 @@ export class GetScreenshot extends Tool<ReflectClient> {
       sessionId: string;
       format?: "png" | "jpeg";
     };
-    if (!sessionId) throw new ToolError("sessionId argument is required");
+    if (!sessionId) {
+      throw new ToolError("sessionId argument is required");
+    }
 
     const imageFormat = format ?? "png";
     const wsManager = this.client.getConnectedSession(sessionId);
 
-    const id = randomUUID();
+    const id = globalThis.crypto.randomUUID();
     const responsePromise = wsManager.waitForResponse(id);
     await wsManager.sendMcpMessage({
       type: "mcp:get-screenshot",
@@ -42,7 +43,7 @@ export class GetScreenshot extends Tool<ReflectClient> {
       id,
     });
 
-    const response = (await responsePromise) as MCPGetScreenshotSuccessResponse;
+    const response = (await responsePromise) as McpGetScreenshotSuccessResponse;
     const { imageBase64, state } = response;
 
     if (!imageBase64) {

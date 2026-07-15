@@ -29,6 +29,7 @@ export class GetBuild extends Tool<BugsnagClient> {
       {
         description: "Get details for a specific build",
         parameters: {
+          // biome-ignore lint/security/noSecrets: example build ID, not a secret
           buildId: "5f8d0d55c9e77c0017a1b2c3",
         },
         expectedOutput:
@@ -50,8 +51,9 @@ export class GetBuild extends Tool<BugsnagClient> {
       params.buildId,
     );
 
-    if (!response.body)
+    if (!response.body) {
       throw new ToolError(`No build for ${params.buildId} found.`);
+    }
     const build = this.client.addStabilityData(response.body, project);
     return {
       content: [{ type: "text", text: JSON.stringify(build) }],

@@ -1,4 +1,7 @@
-import { QMetryToolsHandlers } from "../../config/constants.ts";
+// biome-ignore-all lint/style/noMagicNumbers: these are illustrative example IDs/values shown to the LLM in tool descriptions, not computational constants
+// biome-ignore-all lint/style/noExcessiveLinesPerFile: this module cohesively lists all tool definitions, descriptions, and usage examples for one QMetry API area; splitting it would scatter closely related declarations
+// biome-ignore-all lint/security/noSecrets: this file contains many high-entropy API action-name / wire-format / fixture string constants that trip the noSecrets entropy heuristic; none are real secrets
+import { QmetryToolsHandlers } from "../../config/constants.ts";
 import {
   BulkUpdateExecutionStatusArgsSchema,
   CreateTestSuiteArgsSchema,
@@ -12,15 +15,16 @@ import {
   TestSuitesForTestCaseArgsSchema,
   UpdateTestSuiteArgsSchema,
 } from "../../types/common.ts";
-import type { QMetryToolParams } from "./types.ts";
+import { stripHtml } from "../utils.ts";
+import type { QmetryToolParams } from "./types.ts";
 
-export const TESTSUITE_TOOLS: QMetryToolParams[] = [
+export const TESTSUITE_TOOLS: QmetryToolParams[] = [
   {
     title: "Create Test Suite",
     toolset: "Test Suites",
     summary:
       "Create a new test suite in QMetry with metadata and release/cycle mapping.",
-    handler: QMetryToolsHandlers.CREATE_TEST_SUITE,
+    handler: QmetryToolsHandlers.CREATE_TEST_SUITE,
     inputSchema: CreateTestSuiteArgsSchema,
     purpose:
       "Allows users to create a new test suite in QMetry, including metadata and release/cycle mapping. " +
@@ -66,6 +70,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
           associateRelCyc: true,
           releaseCycleMapping: [
             {
+              // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
               buildID: 18_411,
               releaseId: 10_286,
             },
@@ -105,7 +110,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
     toolset: "Test Suites",
     summary:
       "Update an existing QMetry test suite by id(testsuite numeric id), with auto-resolution from entityKey.",
-    handler: QMetryToolsHandlers.UPDATE_TEST_SUITE,
+    handler: QmetryToolsHandlers.UPDATE_TEST_SUITE,
     inputSchema: UpdateTestSuiteArgsSchema,
     purpose:
       "Update a QMetry test suite's metadata, description, or other fields. " +
@@ -123,6 +128,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         parameters: {
           id: 1_505_898,
           entityKey: "VT-TS-7",
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           TsFolderID: 1_644_087,
           name: "MAC Test11",
         },
@@ -134,6 +140,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         parameters: {
           id: 1_505_898,
           entityKey: "VT-TS-7",
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           TsFolderID: 1_644_087,
           testSuiteState: 505_036,
           testsuiteOwner: 6963,
@@ -146,6 +153,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         parameters: {
           id: 1_505_898,
           entityKey: "VT-TS-7",
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           TsFolderID: 1_644_087,
           description: "Updated description for the test suite.",
         },
@@ -175,7 +183,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
     toolset: "Test Suites",
     summary:
       "Fetch QMetry test suites - automatically handles viewId resolution based on project",
-    handler: QMetryToolsHandlers.FETCH_TEST_SUITES,
+    handler: QmetryToolsHandlers.FETCH_TEST_SUITES,
     inputSchema: TestSuiteListArgsSchema,
     purpose:
       "Get test suites from QMetry. System automatically gets correct viewId from project info if not provided.",
@@ -294,7 +302,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
     toolset: "Test Suites",
     summary:
       "Get test suites that can be linked to test cases in QMetry with automatic viewId resolution",
-    handler: QMetryToolsHandlers.FETCH_TESTSUITES_FOR_TESTCASE,
+    handler: QmetryToolsHandlers.FETCH_TESTSUITES_FOR_TESTCASE,
     inputSchema: TestSuitesForTestCaseArgsSchema,
     purpose:
       "Retrieve test suites available for linking with test cases. " +
@@ -319,6 +327,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description:
           "Get test suites from root folder using auto-resolved viewId",
+        // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
         parameters: { tsFolderID: 113_557 },
         expectedOutput:
           "List of test suites available in the root test suite folder with auto-resolved viewId",
@@ -326,12 +335,14 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description:
           "Get test suites with custom pagination and auto-resolved viewId",
+        // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
         parameters: { tsFolderID: 113_557, page: 1, limit: 25 },
         expectedOutput: "Paginated list of test suites with 20 items per page",
       },
       {
         description: "Filter test suites by release with auto-resolved viewId",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tsFolderID: 113_557,
           filter: '[{"type":"list","value":[55178],"field":"release"}]',
         },
@@ -340,6 +351,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter test suites by cycle with auto-resolved viewId",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tsFolderID: 113_557,
           filter: '[{"type":"list","value":[111577],"field":"cycle"}]',
         },
@@ -348,6 +360,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description: "Get only active (non-archived) test suites",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tsFolderID: 113_557,
           filter: '[{"value":[0],"type":"list","field":"isArchived"}]',
         },
@@ -356,6 +369,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter test suites by release and cycle",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tsFolderID: 113_557,
           filter:
             '[{"type":"list","value":[55178],"field":"release"},{"type":"list","value":[111577],"field":"cycle"}]',
@@ -365,6 +379,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       },
       {
         description: "Get test suites with column information",
+        // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
         parameters: { tsFolderID: 113_557, getColumns: true },
         expectedOutput:
           "Test suites list with detailed column metadata for better interpretation",
@@ -372,6 +387,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description:
           "Search test suites from specific sub-folder with manual viewId",
+        // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
         parameters: { tsFolderID: 42, viewId: 104_316 }, // This is an example viewId, must be resolved per project TS viewId
         expectedOutput:
           "Test suites available in specific folder ID 42 for test case linking",
@@ -414,7 +430,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
     title: "Link Test Cases to Test Suite",
     toolset: "Test Suites",
     summary: "Link test cases to a test suite in QMetry.",
-    handler: QMetryToolsHandlers.LINK_TESTCASES_TO_TESTSUITE,
+    handler: QmetryToolsHandlers.LINK_TESTCASES_TO_TESTSUITE,
     inputSchema: LinkTestCasesToTestSuiteArgsSchema,
     purpose:
       "Link one or more test cases to a test suite. " +
@@ -429,7 +445,9 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description: "Link test cases to a test suite",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tsID: 8674,
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcvdIDs: [5_448_504, 5_448_503],
           fromReqs: false,
         },
@@ -440,7 +458,9 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Link test cases directly to test suites with test cases entityKeys VT-TC-9, VT-TC-10 to test suite id 1487397",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tsID: 1_487_397,
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcvdIDs: [5_448_504, 5_448_503],
           fromReqs: false,
         },
@@ -451,7 +471,9 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Link test case VT-TC-4, VT-TC-1,VT-TC-101, VT-TC-22 to test suite VT-TS-3",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tsID: 1_487_397,
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcvdIDs: [5_448_504, 5_448_503, 5_448_505, 5_448_506],
           fromReqs: false,
         },
@@ -473,7 +495,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
     toolset: "Test Suites",
     summary:
       "Link test cases (including those linked to requirements) to a test suite in QMetry.",
-    handler: QMetryToolsHandlers.REQUIREMENTS_LINKED_TESTCASES_TO_TESTSUITE,
+    handler: QmetryToolsHandlers.REQUIREMENTS_LINKED_TESTCASES_TO_TESTSUITE,
     inputSchema: RequirementsLinkedTestCasesToTestSuiteArgsSchema,
     purpose:
       "Link one or more test cases to a test suite. " +
@@ -488,7 +510,9 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description: "VT-RQ-18 Requirements Linked test cases to a test suite",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tsID: 8674,
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcvdIDs: [5_448_504, 5_448_503],
           fromReqs: true,
         },
@@ -499,7 +523,9 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "VT-RQ-19 Requirements Linked test cases to test suites id 1487397",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tsID: 1_487_397,
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcvdIDs: [5_448_504, 5_448_503],
           fromReqs: true,
         },
@@ -510,7 +536,9 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "VT-RQ-20 Requirements Linked test case to test suite VT-TS-3",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tsID: 1_487_397,
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcvdIDs: [5_448_504, 5_448_503, 5_448_505, 5_448_506],
           fromReqs: true,
         },
@@ -531,7 +559,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
     title: "Link Platforms to Test Suite",
     toolset: "Test Suites",
     summary: "Link one or more platforms to a QMetry Test Suite.",
-    handler: QMetryToolsHandlers.LINK_PLATFORMS_TO_TESTSUITE,
+    handler: QmetryToolsHandlers.LINK_PLATFORMS_TO_TESTSUITE,
     inputSchema: LinkPlatformsToTestSuiteArgsSchema,
     purpose:
       "Associate testing platforms (browsers, OS, devices, or environments) with a specific Test Suite. " +
@@ -591,7 +619,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
     toolset: "Test Suites",
     summary:
       "Get test cases that are linked (or not linked) to a specific test suite in QMetry",
-    handler: QMetryToolsHandlers.FETCH_TESTCASES_BY_TESTSUITE,
+    handler: QmetryToolsHandlers.FETCH_TESTCASES_BY_TESTSUITE,
     inputSchema: TestCasesByTestSuiteArgsSchema,
     purpose:
       "Retrieve test cases that are linked to a specific test suite. " +
@@ -615,6 +643,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description:
           "Get all test cases linked to test suite ID 1497291 (default behavior)",
+        // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
         parameters: { tsID: 1_497_291 },
         expectedOutput:
           "List of test cases linked to the test suite with test case details and metadata",
@@ -622,18 +651,21 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description:
           "Get all test cases linked to test suite ID 1497291 (explicit)",
+        // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
         parameters: { tsID: 1_497_291, getLinked: true },
         expectedOutput:
           "List of test cases linked to the test suite with test case details and metadata",
       },
       {
         description: "Get test cases NOT linked to test suite (gap analysis)",
+        // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
         parameters: { tsID: 1_497_291, getLinked: false },
         expectedOutput:
           "List of test cases that are NOT linked to the test suite",
       },
       {
         description: "Get linked test cases with custom pagination",
+        // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
         parameters: { tsID: 1_497_291, getLinked: true, page: 1, limit: 25 },
         expectedOutput:
           "Paginated list of linked test cases with 50 items per page",
@@ -642,6 +674,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Filter linked test cases by priority (using default getLinked=true)",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tsID: 1_497_291,
           filter: '[{"value":[1,2],"type":"list","field":"priorityAlias"}]',
         },
@@ -651,6 +684,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter linked test cases by status",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tsID: 1_497_291,
           getLinked: true,
           filter: '[{"value":[1],"type":"list","field":"testCaseStateAlias"}]',
@@ -691,7 +725,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
     title: "Fetch Executions by Test Suite",
     toolset: "Test Suites",
     summary: "Get executions for a given test suite in QMetry",
-    handler: QMetryToolsHandlers.FETCH_EXECUTIONS_BY_TESTSUITE,
+    handler: QmetryToolsHandlers.FETCH_EXECUTIONS_BY_TESTSUITE,
     inputSchema: ExecutionsByTestSuiteArgsSchema,
     purpose:
       "Retrieve test executions that belong to a specific test suite. " +
@@ -712,6 +746,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
     examples: [
       {
         description: "Get all executions for test suite ID 194955",
+        // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
         parameters: { tsID: 194_955 },
         expectedOutput:
           "List of executions for the test suite with execution details, status, and metadata",
@@ -719,7 +754,9 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description: "Get executions with test suite folder and view ID",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tsID: 194_955,
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tsFolderID: 126_554,
           viewId: 41_799, // This is an example viewId, must be resolved per project TEL viewId
         },
@@ -729,6 +766,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter executions by release and cycle",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tsID: 194_955,
           filter:
             '[{"type":"list","value":[55178],"field":"releaseID"},{"type":"list","value":[111577],"field":"cycleID"}]',
@@ -739,6 +777,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter executions by platform and automation status",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tsID: 194_955,
           filter:
             '[{"type":"list","value":[12345],"field":"platformID"},{"type":"boolean","value":true,"field":"isAutomatedFlag"}]',
@@ -749,6 +788,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description: "Get only active (non-archived) executions",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tsID: 194_955,
           filter: '[{"value":[0],"type":"list","field":"isArchived"}]',
         },
@@ -757,6 +797,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description: "Get executions with custom pagination and grid name",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tsID: 194_955,
           gridName: "TESTEXECUTIONLIST",
           page: 1,
@@ -817,13 +858,20 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       "Get test case runs under a specific test suite run execution in QMetry, including Test Run UDF values. " +
       "ALWAYS present results as a unified table: Test Case Key | Test Case Summary | Executed Version | Execution Status | <UDF Label columns…>. " +
       "NEVER show a separate type+value breakdown — always combine identification fields and UDF values in one table per run.",
-    handler: QMetryToolsHandlers.FETCH_TESTCASE_RUNS_BY_TESTSUITE_RUN,
+    handler: QmetryToolsHandlers.FETCH_TESTCASE_RUNS_BY_TESTSUITE_RUN,
     inputSchema: TestCaseRunsByTestSuiteRunArgsSchema,
-    formatResponse: (result: any) => {
-      if (!(result?.data && Array.isArray(result.data))) return result;
-      if (result.hasTcRunUdf === false) {
+    formatResponse: (result: unknown) => {
+      if (
+        !result ||
+        typeof result !== "object" ||
+        !Array.isArray((result as Record<string, unknown>).data)
+      ) {
+        return result;
+      }
+      const resultObj = result as Record<string, unknown>;
+      if (resultObj.hasTcRunUdf === false) {
         return {
-          ...result,
+          ...resultObj,
           testRunUdfNote:
             "No Test Run UDFs are configured for this project. " +
             "The 'testRunUdfs' field will not be present in execution records. " +
@@ -831,31 +879,21 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         };
       }
       return {
-        ...result,
-        data: result.data.map((row: any) => {
-          if (!row.udfjson) return row;
+        ...resultObj,
+        data: (resultObj.data as Record<string, unknown>[]).map((row) => {
+          if (!row.udfjson) {
+            return row;
+          }
           let testRunUdfs: Record<string, unknown> = {};
           try {
-            const parsed = JSON.parse(row.udfjson);
+            const parsed = JSON.parse(row.udfjson as string);
             testRunUdfs = Object.fromEntries(
-              Object.entries(parsed).map(([key, val]) => {
-                if (typeof val === "string" && /<[^>]+>/.test(val)) {
-                  const text = val
-                    .replace(/<[^>]*>/g, " ")
-                    .replace(/&(nbsp|amp|lt|gt|quot);/g, (_, entity) => {
-                      if (entity === "nbsp") return " ";
-                      if (entity === "amp") return "&";
-                      if (entity === "lt") return "<";
-                      if (entity === "gt") return ">";
-                      if (entity === "quot") return '"';
-                      return `&${entity};`;
-                    })
-                    .replace(/\s+/g, " ")
-                    .trim();
-                  return [key, text];
-                }
-                return [key, val];
-              }),
+              Object.entries(parsed as Record<string, unknown>).map(
+                ([key, val]) => [
+                  key,
+                  typeof val === "string" ? stripHtml(val) : val,
+                ],
+              ),
             );
           } catch {
             testRunUdfs = {};
@@ -891,6 +929,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
     examples: [
       {
         description: "Get all test case runs for test suite run ID '107021'",
+        // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
         parameters: { tsrunID: "107021", viewId: 6887 },
         expectedOutput:
           "Present as ONE unified table — never as a separate type+value breakdown. Example:\n" +
@@ -904,6 +943,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Fetch Test Run UDF values for all executions in test suite run '728995'",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tsrunID: "728995",
           viewId: 79_451,
           start: 0,
@@ -920,6 +960,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Filter by Test Run UDF list/dropdown field (single-select or multi-select lookup) — runs where UDF '8260LUP' has list item IDs 5108701 or 5108697",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tsrunID: "728995",
           viewId: 79_451,
           tcrUdfFilter:
@@ -932,6 +973,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Filter by Test Run UDF multi-lookup list field — runs where multi-select UDF 'PGTE_MULTILOOKUPLIST' contains list item IDs 5126503 or 5126502",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tsrunID: "728995",
           viewId: 79_451,
           tcrUdfFilter:
@@ -944,6 +986,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Filter by Test Run UDF cascading dropdown field — runs where cascading UDF 'cascade_vK' has list item IDs 5126498 or 5126499 (must set isCascading:true)",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tsrunID: "728995",
           viewId: 79_451,
           tcrUdfFilter:
@@ -956,6 +999,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Filter by Test Run UDF short text field — runs where text UDF 'TRString' contains the value 'str'",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tsrunID: "728995",
           viewId: 79_451,
           tcrUdfFilter: '[{"type":"string","field":"TRString","value":"str"}]',
@@ -967,6 +1011,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Filter by Test Run UDF large text field — runs where large text UDF 'vk_large_text' contains 'this is large text'",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tsrunID: "728995",
           viewId: 79_451,
           tcrUdfFilter:
@@ -979,6 +1024,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Filter by Test Run UDF date field — runs where date UDF 'PGTE_DATEPICKER' is after a specific date (comparison: gt) and before another date (comparison: lt)",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tsrunID: "728995",
           viewId: 79_451,
           tcrUdfFilter:
@@ -991,6 +1037,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Filter by Test Run UDF numeric field — runs where numeric UDF 'NB_number_TR' equals 2",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tsrunID: "728995",
           viewId: 79_451,
           tcrUdfFilter: '[{"type":"numeric","value":2,"field":"NB_number_TR"}]',
@@ -1002,6 +1049,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Combine multiple Test Run UDF filters — filter by list UDF AND string UDF AND numeric UDF simultaneously",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tsrunID: "728995",
           viewId: 79_451,
           start: 0,
@@ -1017,6 +1065,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Full filter combination — standard field filter + Test Run UDF filter + show only runs with defects",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tsrunID: "728995",
           viewId: 79_451,
           start: 0,
@@ -1035,6 +1084,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Get paginated test case runs with standard runStatus filter",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tsrunID: "2362144",
           viewId: 104_123,
           start: 0,
@@ -1049,6 +1099,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Show only test case runs with linked defects, filtered by Test Run UDF list value",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tsrunID: "107021",
           viewId: 6887,
           showTcWithDefects: true,
@@ -1299,7 +1350,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
     toolset: "Test Suites",
     summary:
       "Update execution status for individual or multiple test case runs in bulk",
-    handler: QMetryToolsHandlers.BULK_UPDATE_EXECUTION_STATUS,
+    handler: QmetryToolsHandlers.BULK_UPDATE_EXECUTION_STATUS,
     inputSchema: BulkUpdateExecutionStatusArgsSchema,
     purpose:
       "Update the execution status (Pass, Fail, Blocked, Not Run, WIP, etc.) for one or more test case runs. " +
@@ -1321,9 +1372,11 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Update single test case run status to Failed (single execution)",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           entityIDs: "66095087",
           entityType: "TCR",
           qmTsRunId: "2720260",
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           runStatusID: 123_266,
           isBulkOperation: false,
         },
@@ -1334,9 +1387,11 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Bulk update two test case runs to Pass status (bulk execution)",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           entityIDs: "66095069,66095075",
           entityType: "TCR",
           qmTsRunId: "2720260",
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           runStatusID: 123_268,
           isBulkOperation: true,
           comments: "All test cases passed successfully",
@@ -1348,10 +1403,12 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Bulk update all selected test case runs to Not Run status",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           entityIDs:
             "66095069,66095075,66095081,66095087,66095093,66095099,66095105",
           entityType: "TCR",
           qmTsRunId: "2720260",
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           runStatusID: 123_269,
           isBulkOperation: true,
         },
@@ -1361,10 +1418,13 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description: "Update test case run with build/drop information",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           entityIDs: "66095087",
           entityType: "TCR",
           qmTsRunId: "2720260",
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           runStatusID: 123_266,
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           dropID: 947,
           isBulkOperation: false,
         },
@@ -1375,9 +1435,11 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Update automated test execution status with automation flag",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           entityIDs: "66095069,66095075",
           entityType: "TCR",
           qmTsRunId: "2720260",
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           runStatusID: 123_268,
           isAutoExecuted: "1",
           isBulkOperation: true,
@@ -1390,9 +1452,11 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Update test case run status with Part 11 Compliance authentication",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           entityIDs: "66095087",
           entityType: "TCR",
           qmTsRunId: "2720260",
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           runStatusID: 123_266,
           username: "test.user",
           password: "password",
@@ -1405,9 +1469,11 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Update ALL executions of test suite VKMC-TS-20 to Failed (MULTI-CALL OPERATION)",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           entityIDs: "66341841,66342887,66342893,66342899",
           entityType: "TCR",
           qmTsRunId: "2733104",
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           runStatusID: 123_269,
           isBulkOperation: true,
         },

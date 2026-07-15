@@ -5,18 +5,22 @@
 
 import WebSocket from "ws";
 import { WEBSOCKET_HOSTNAME } from "./config/constants.ts";
-import type { MCPMessage } from "./types/mcp.ts";
+import type { McpMessage } from "./types/mcp.ts";
 
 interface PendingResponse {
   resolve: (msg: unknown) => void;
   reject: (err: unknown) => void;
 }
 
+// Grace period to allow the WebSocket close handshake to complete before
+// tearing down the connection.
+const DISCONNECT_GRACE_PERIOD_MS = 100;
+
 export class WebSocketManager {
-  private sessionId: string;
-  private authHeader: Record<string, string>;
+  private readonly sessionId: string;
+  private readonly authHeader: Record<string, string>;
   private mcpSocket: WebSocket | null = null;
-  private pendingResponses: Map<string, PendingResponse> = new Map();
+  private readonly pendingResponses: Map<string, PendingResponse> = new Map();
 
   constructor(sessionId: string, authHeader: Record<string, string>) {
     this.sessionId = sessionId;
@@ -32,11 +36,12 @@ export class WebSocketManager {
     } catch (error) {
       throw new Error(
         `Failed to connect WebSocket: ${(error as Error).message}`,
+        { cause: error },
       );
     }
   }
 
-  private async connectMcpSocket(): Promise<void> {
+  private connectMcpSocket(): Promise<void> {
     return new Promise((resolve, reject) => {
       const url = `wss://${WEBSOCKET_HOSTNAME}/websocket/v2/recordings/${this.sessionId}/topics/mcp?sid=${this.sessionId}`;
       this.mcpSocket = new WebSocket(url, {
@@ -66,8 +71,8 @@ export class WebSocketManager {
               pending.reject(message);
             }
           }
-        } catch (error) {
-          console.error("Failed to parse MCP message:", error);
+        } catch {
+          // Ignore malformed messages; they are not actionable.
         }
       });
 
@@ -77,7 +82,7 @@ export class WebSocketManager {
     });
   }
 
-  async sendMcpMessage(message: MCPMessage): Promise<void> {
+  sendMcpMessage(message: McpMessage): Promise<void> {
     if (!this.mcpSocket || this.mcpSocket.readyState !== WebSocket.OPEN) {
       throw new Error("WebSocket is not connected");
     }
@@ -111,7 +116,9 @@ export class WebSocketManager {
       this.mcpSocket = null;
     }
 
-    await new Promise<void>((resolve) => setTimeout(resolve, 100));
+    await new Promise<void>((resolve) =>
+      setTimeout(resolve, DISCONNECT_GRACE_PERIOD_MS),
+    );
   }
 
   isConnected(): boolean {

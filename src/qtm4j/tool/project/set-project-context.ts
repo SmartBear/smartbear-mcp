@@ -89,6 +89,7 @@ export class SetProjectContext extends Tool<Qtm4jClient> {
       "availableFields contains priority and status options for NLP mapping in subsequent tool calls.",
   };
 
+  // biome-ignore lint/complexity/noExcessiveLinesPerFunction: single sequential tool handler; splitting would fragment one linear flow
   handle: ToolCallback<ZodRawShape> = async (rawArgs) => {
     const { projectKey } = SetProjectContextBody.parse(rawArgs);
     const apiClient = this.client.getApiClient();

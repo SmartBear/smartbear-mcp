@@ -1,10 +1,27 @@
+// biome-ignore-all lint/security/noSecrets: this file contains many high-entropy API action-name / wire-format / fixture string constants that trip the noSecrets entropy heuristic; none are real secrets
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
-import { GenerationInputSchema, type GenerationResponse } from "./client/ai.ts";
+import type { SmartBearMcpServer } from "../common/server.ts";
+import {
+  GenerationInputSchema,
+  type GenerationResponse,
+  type StatusResponse,
+} from "./client/ai.ts";
+import type { CreateWebhookInput, UpdateWebhookInput } from "./client/base.ts";
+import type { PactflowToolParams } from "./client/tools.ts";
+// biome-ignore lint/performance/noNamespaceImport: needed so vi.spyOn(toolsModule, "TOOLS", "get") can spy on/replace the module's named export.
 import * as toolsModule from "./client/tools.ts";
 import { PactflowClient } from "./client.ts";
 
 const fetchMock = createFetchMock(vi);
+
+/** Exposes the private `pollForCompletion` method for direct testing. */
+interface ClientWithPollForCompletion {
+  pollForCompletion: <T>(
+    statusResponse: StatusResponse,
+    operationName: string,
+  ) => Promise<T>;
+}
 
 // Helper to create and configure a client
 async function createConfiguredClient(config: {
@@ -18,7 +35,7 @@ async function createConfiguredClient(config: {
   const mockServer = {
     server: vi.fn(),
     getClientInfo: vi.fn().mockReturnValue(config.clientInfo),
-  } as any;
+  } as unknown as SmartBearMcpServer;
   const defaultConfig = {
     base_url: "https://example.com",
     token: config.token,
@@ -32,11 +49,12 @@ async function createConfiguredClient(config: {
 describe("PactFlowClient", () => {
   let client: PactflowClient;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks();
     fetchMock.enableMocks();
     fetchMock.resetMocks();
     // Suppress console.error for error test cases
+    // biome-ignore lint/suspicious/noEmptyBlockStatements: intentionally swallows console.error output during tests that exercise error-logging code paths.
     vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
@@ -101,28 +119,28 @@ describe("PactFlowClient", () => {
     const mockGetInput = vi.fn();
 
     it("registers only tools matching the given clientType", async () => {
-      const fakeTools = [
+      const fakeTools: PactflowToolParams[] = [
         {
           title: "tool1",
           summary: "summary1",
+          toolset: "toolset1",
           purpose: "purpose1",
-          parameters: [],
           handler: "generate",
           clients: ["pactflow"], // should be registered
         },
         {
           title: "tool2",
           summary: "summary2",
+          toolset: "toolset2",
           purpose: "purpose2",
-          parameters: [],
           handler: "generate",
           clients: ["pact_broker"], // should NOT be registered
         },
       ];
-      vi.spyOn(toolsModule, "TOOLS", "get").mockReturnValue(fakeTools as any);
+      vi.spyOn(toolsModule, "TOOLS", "get").mockReturnValue(fakeTools);
 
-      const client = await createConfiguredClient({ token: "token" });
-      await client.registerTools(mockRegister, mockGetInput);
+      const scopedClient = await createConfiguredClient({ token: "token" });
+      await scopedClient.registerTools(mockRegister, mockGetInput);
 
       expect(mockRegister).toHaveBeenCalledTimes(1);
       expect(mockRegister.mock.calls[0][0].title).toBe("tool1");
@@ -130,20 +148,20 @@ describe("PactFlowClient", () => {
     });
 
     it("registers no tools if none match the clientType", async () => {
-      const fakeTools = [
+      const fakeTools: PactflowToolParams[] = [
         {
           title: "tool2",
           summary: "summary2",
+          toolset: "toolset2",
           purpose: "purpose2",
-          parameters: [],
           handler: "generate",
           clients: ["pact_broker"],
         },
       ];
-      vi.spyOn(toolsModule, "TOOLS", "get").mockReturnValue(fakeTools as any);
+      vi.spyOn(toolsModule, "TOOLS", "get").mockReturnValue(fakeTools);
 
-      const client = await createConfiguredClient({ token: "token" });
-      await client.registerTools(mockRegister, mockGetInput);
+      const scopedClient = await createConfiguredClient({ token: "token" });
+      await scopedClient.registerTools(mockRegister, mockGetInput);
 
       expect(mockRegister).not.toHaveBeenCalled();
     });
@@ -154,7 +172,7 @@ describe("PactFlowClient", () => {
       client = await createConfiguredClient({ token: "test-token" });
     });
 
-    describe("canIDeploy", () => {
+    describe("canIdeploy", () => {
       const mockInput = {
         pacticipant: "my-service",
         version: "1.0.0",
@@ -168,7 +186,7 @@ describe("PactFlowClient", () => {
 
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.canIDeploy(mockInput);
+        const result = await client.canIdeploy(mockInput);
 
         expect(fetchMock).toHaveBeenCalledWith(
           "https://example.com/can-i-deploy?pacticipant=my-service&version=1.0.0&environment=production",
@@ -187,7 +205,7 @@ describe("PactFlowClient", () => {
 
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.canIDeploy(mockInput);
+        const result = await client.canIdeploy(mockInput);
 
         expect(result.summary.deployable).toBe(false);
       });
@@ -199,7 +217,7 @@ describe("PactFlowClient", () => {
           statusText: "Not Found",
         });
 
-        await expect(client.canIDeploy(mockInput)).rejects.toThrow(
+        await expect(client.canIdeploy(mockInput)).rejects.toThrow(
           "Can-I-Deploy Request Failed - status: 404 Not Found - Pacticipant not found",
         );
       });
@@ -215,7 +233,7 @@ describe("PactFlowClient", () => {
           JSON.stringify({ summary: { deployable: true } }),
         );
 
-        await client.canIDeploy(inputWithSpecialChars);
+        await client.canIdeploy(inputWithSpecialChars);
 
         expect(fetchMock).toHaveBeenCalledWith(
           "https://example.com/can-i-deploy?pacticipant=my-service%40special&version=1.0.0-beta%2Bbuild.123&environment=test%2Fstaging",
@@ -247,10 +265,11 @@ describe("PactFlowClient", () => {
         refined: true,
       };
 
-      beforeEach(async () => {
-        vi.spyOn(client, "pollForCompletion" as any).mockResolvedValue(
-          mockReviewResponse,
-        );
+      beforeEach(() => {
+        vi.spyOn(
+          client as unknown as ClientWithPollForCompletion,
+          "pollForCompletion",
+        ).mockResolvedValue(mockReviewResponse);
       });
 
       it("should successfully review Pact tests", async () => {
@@ -630,7 +649,7 @@ describe("PactFlowClient", () => {
       });
     });
 
-    describe("checkAIEntitlements", () => {
+    describe("checkAiEntitlements", () => {
       const mockEntitlement = {
         organizationEntitlements: {
           name: "test-org",
@@ -645,7 +664,7 @@ describe("PactFlowClient", () => {
 
       it("should successfully retrieve AI status and entitlements", async () => {
         fetchMock.mockResponseOnce(JSON.stringify(mockEntitlement));
-        const result = await client.checkAIEntitlements();
+        const result = await client.checkAiEntitlements();
         expect(fetchMock).toHaveBeenCalledWith(
           "https://example.com/api/ai/entitlement",
           {
@@ -664,7 +683,7 @@ describe("PactFlowClient", () => {
           status: 401,
           statusText: "Unauthorized",
         });
-        await expect(client.checkAIEntitlements()).rejects.toThrow(
+        await expect(client.checkAiEntitlements()).rejects.toThrow(
           "PactFlow AI Entitlements Request Failed - status: 401 Unauthorized - Unauthorized",
         );
       });
@@ -685,10 +704,11 @@ describe("PactFlowClient", () => {
         code: "const { PactV3 } = require('@pact-foundation/pact');",
       };
 
-      beforeEach(async () => {
-        vi.spyOn(client, "pollForCompletion" as any).mockResolvedValue(
-          mockGenerationResponse,
-        );
+      beforeEach(() => {
+        vi.spyOn(
+          client as unknown as ClientWithPollForCompletion,
+          "pollForCompletion",
+        ).mockResolvedValue(mockGenerationResponse);
       });
 
       it("should successfully generate Pact tests", async () => {
@@ -934,7 +954,10 @@ describe("PactFlowClient", () => {
       it("should handle timeout during polling", async () => {
         fetchMock.mockResponseOnce(JSON.stringify(mockStatusResponse));
 
-        vi.spyOn(client, "pollForCompletion" as any).mockRejectedValue(
+        vi.spyOn(
+          client as unknown as ClientWithPollForCompletion,
+          "pollForCompletion",
+        ).mockRejectedValue(
           new Error("Generation timed out after 120 seconds"),
         );
 
@@ -949,9 +972,10 @@ describe("PactFlowClient", () => {
       it("should handle generation failure during polling", async () => {
         fetchMock.mockResponseOnce(JSON.stringify(mockStatusResponse));
 
-        vi.spyOn(client, "pollForCompletion" as any).mockRejectedValue(
-          new Error("Generation failed with status: 500"),
-        );
+        vi.spyOn(
+          client as unknown as ClientWithPollForCompletion,
+          "pollForCompletion",
+        ).mockRejectedValue(new Error("Generation failed with status: 500"));
 
         await expect(
           client.generate(
@@ -1032,7 +1056,10 @@ describe("PactFlowClient", () => {
       });
 
       it("should resolve when status becomes 200", async () => {
-        const statusResponse = {
+        const statusResponse: StatusResponse = {
+          status: "accepted",
+          session_id: "session-123",
+          submitted_at: "2024-01-01T00:00:00.000Z",
           status_url: "https://example.com/status/123",
           result_url: "https://example.com/result/123",
         };
@@ -1055,10 +1082,9 @@ describe("PactFlowClient", () => {
 
         const spyGetResult = vi.spyOn(client, "getResult");
         spyGetResult.mockResolvedValue({ result: "done" });
-        const result = await (client as any).pollForCompletion(
-          statusResponse as any,
-          "TestOp",
-        );
+        const result = await (
+          client as unknown as ClientWithPollForCompletion
+        ).pollForCompletion(statusResponse, "TestOp");
         expect(result).toEqual({ result: "done" });
         expect(spyGetStatus).toHaveBeenCalledTimes(2);
         expect(spyGetResult).toHaveBeenCalledWith(
@@ -1067,14 +1093,20 @@ describe("PactFlowClient", () => {
       });
 
       it("should throw error if status is not 202 or 200", async () => {
-        const statusResponse = {
+        const statusResponse: StatusResponse = {
+          status: "accepted",
+          session_id: "session-123",
+          submitted_at: "2024-01-01T00:00:00.000Z",
           status_url: "https://example.com/status/123",
           result_url: "https://example.com/result/123",
         };
         const spyGetStatus = vi.spyOn(client, "getStatus");
         spyGetStatus.mockResolvedValue({ status: 500, isComplete: false });
         await expect(
-          (client as any).pollForCompletion(statusResponse as any, "TestOp"),
+          (client as unknown as ClientWithPollForCompletion).pollForCompletion(
+            statusResponse,
+            "TestOp",
+          ),
         ).rejects.toThrow("TestOp failed with status: 500");
       });
     });
@@ -1350,7 +1382,9 @@ describe("PactFlowClient", () => {
         const mockResponse = { pacticipants: [{ name: "ServiceA" }] };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.listPacticipants();
+        const result = await client.listPacticipants<{
+          pacticipants: unknown;
+        }>();
 
         expect(fetchMock).toHaveBeenCalledWith(
           "https://example.com/pacticipants",
@@ -1386,7 +1420,7 @@ describe("PactFlowClient", () => {
         const mockResponse = { name: "ServiceA", mainBranch: "main" };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.getPacticipant({
+        const result = await client.getPacticipant<{ name: unknown }>({
           pacticipantName: "ServiceA",
         });
 
@@ -1426,7 +1460,7 @@ describe("PactFlowClient", () => {
         const mockResponse = { branches: [{ name: "main" }] };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.listBranches({
+        const result = await client.listBranches<{ branches: unknown }>({
           pacticipantName: "ServiceA",
         });
 
@@ -1459,7 +1493,7 @@ describe("PactFlowClient", () => {
         const mockResponse = { versions: [{ number: "1.0.0" }] };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.listVersions({
+        const result = await client.listVersions<{ versions: unknown }>({
           pacticipantName: "ServiceA",
         });
 
@@ -1491,7 +1525,7 @@ describe("PactFlowClient", () => {
         const mockResponse = { number: "1.0.0", branch: "main" };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.getVersion({
+        const result = await client.getVersion<{ number: unknown }>({
           pacticipantName: "ServiceA",
           versionNumber: "1.0.0",
         });
@@ -1523,7 +1557,7 @@ describe("PactFlowClient", () => {
         const mockResponse = { number: "2.0.0" };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.getLatestVersion({
+        const result = await client.getLatestVersion<{ number: unknown }>({
           pacticipantName: "ServiceA",
         });
 
@@ -1556,7 +1590,9 @@ describe("PactFlowClient", () => {
         };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.listEnvironments();
+        const result = await client.listEnvironments<{
+          environments: unknown;
+        }>();
 
         expect(fetchMock).toHaveBeenCalledWith(
           "https://example.com/environments",
@@ -1585,7 +1621,10 @@ describe("PactFlowClient", () => {
         };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.getEnvironment({
+        const result = await client.getEnvironment<{
+          name: unknown;
+          production: unknown;
+        }>({
           environmentId: "env-uuid-1",
         });
 
@@ -1659,7 +1698,9 @@ describe("PactFlowClient", () => {
         };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.getCurrentlyDeployed({
+        const result = await client.getCurrentlyDeployed<{
+          deployedVersions: unknown;
+        }>({
           environmentId: "env-uuid-1",
         });
 
@@ -1697,7 +1738,9 @@ describe("PactFlowClient", () => {
         const mockResponse = { releasedVersions: [] };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.getCurrentlySupported({
+        const result = await client.getCurrentlySupported<{
+          releasedVersions: unknown;
+        }>({
           environmentId: "env-uuid-1",
         });
 
@@ -1962,7 +2005,9 @@ describe("PactFlowClient", () => {
         };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.listIntegrations();
+        const result = await client.listIntegrations<{
+          integrations: unknown;
+        }>();
 
         expect(fetchMock).toHaveBeenCalledWith(
           "https://example.com/integrations",
@@ -1979,7 +2024,9 @@ describe("PactFlowClient", () => {
         };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.getPacticipantNetwork({
+        const result = await client.getPacticipantNetwork<{
+          pacticipants: unknown;
+        }>({
           pacticipantName: "ServiceA",
         });
 
@@ -1996,7 +2043,7 @@ describe("PactFlowClient", () => {
         const mockResponse = { labels: [{ name: "team-a" }] };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.listLabels();
+        const result = await client.listLabels<{ labels: unknown }>();
 
         expect(fetchMock).toHaveBeenCalledWith("https://example.com/labels", {
           method: "GET",
@@ -2022,7 +2069,7 @@ describe("PactFlowClient", () => {
         const mockResponse = { name: "team-a" };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.getPacticipantLabel({
+        const result = await client.getPacticipantLabel<{ name: unknown }>({
           pacticipantName: "ServiceA",
           labelName: "team-a",
         });
@@ -2057,7 +2104,9 @@ describe("PactFlowClient", () => {
         };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.listPacticipantsByLabel({
+        const result = await client.listPacticipantsByLabel<{
+          pacticipants: unknown;
+        }>({
           labelName: "team-a",
         });
 
@@ -2142,7 +2191,7 @@ describe("PactFlowClient", () => {
         const mockResponse = { versions: [{ number: "1.0.0" }] };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.getBranchVersions({
+        const result = await client.getBranchVersions<{ versions: unknown }>({
           pacticipantName: "ServiceA",
           branchName: "main",
         });
@@ -2178,7 +2227,9 @@ describe("PactFlowClient", () => {
         };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.getDeployedVersions({
+        const result = await client.getDeployedVersions<{
+          deployedVersions: Array<{ currentlyDeployed: unknown }>;
+        }>({
           pacticipantName: "ServiceA",
           versionNumber: "1.0.0",
           environmentId: "env-uuid-1",
@@ -2199,7 +2250,9 @@ describe("PactFlowClient", () => {
         };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.getReleasedVersions({
+        const result = await client.getReleasedVersions<{
+          releasedVersions: Array<{ currentlySupported: unknown }>;
+        }>({
           pacticipantName: "ServiceA",
           versionNumber: "1.0.0",
           environmentId: "env-uuid-1",
@@ -2216,12 +2269,12 @@ describe("PactFlowClient", () => {
     describe("registerPrompts", () => {
       const mockRegisterPrompt = vi.fn();
 
-      beforeEach(async () => {
+      beforeEach(() => {
         mockRegisterPrompt.mockClear();
       });
 
       it("should register all prompts from PROMPTS array", async () => {
-        client.registerPrompts(mockRegisterPrompt);
+        await client.registerPrompts(mockRegisterPrompt);
         expect(mockRegisterPrompt).toHaveBeenCalledTimes(1);
       });
     });
@@ -2231,7 +2284,7 @@ describe("PactFlowClient", () => {
         const mockResponse = { uuid: "env-uuid-1", name: "production" };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.createEnvironment({
+        const result = await client.createEnvironment<{ uuid: unknown }>({
           name: "production",
           displayName: "Production",
           production: true,
@@ -2323,7 +2376,7 @@ describe("PactFlowClient", () => {
         const mockResponse = { name: "NewService", displayName: "New Service" };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.createPacticipant({
+        const result = await client.createPacticipant<{ name: unknown }>({
           name: "NewService",
           displayName: "New Service",
           mainBranch: "main",
@@ -2379,7 +2432,7 @@ describe("PactFlowClient", () => {
         };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.getBranch({
+        const result = await client.getBranch<{ name: unknown }>({
           pacticipantName: "ServiceA",
           branchName: "main",
         });
@@ -2468,7 +2521,9 @@ describe("PactFlowClient", () => {
         };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.getIntegrationsByTeam({
+        const result = await client.getIntegrationsByTeam<{
+          integrations: unknown;
+        }>({
           teamId: "team-uuid-1",
         });
 
@@ -2514,7 +2569,7 @@ describe("PactFlowClient", () => {
         const mockResponse = { webhooks: [{ uuid: "wh-uuid-1" }] };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.listWebhooks();
+        const result = await client.listWebhooks<{ webhooks: unknown }>();
 
         expect(fetchMock).toHaveBeenCalledWith("https://example.com/webhooks", {
           method: "GET",
@@ -2532,7 +2587,9 @@ describe("PactFlowClient", () => {
         };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.getWebhook({ webhookId: "wh-uuid-1" });
+        const result = await client.getWebhook<{ uuid: unknown }>({
+          webhookId: "wh-uuid-1",
+        });
 
         expect(fetchMock).toHaveBeenCalledWith(
           "https://example.com/webhooks/wh-uuid-1",
@@ -2543,7 +2600,7 @@ describe("PactFlowClient", () => {
     });
 
     describe("createWebhook", () => {
-      const mockWebhookBody = {
+      const mockWebhookBody: CreateWebhookInput = {
         description: "Trigger CI build",
         events: [{ name: "contract_published" }],
         request: {
@@ -2552,13 +2609,16 @@ describe("PactFlowClient", () => {
           headers: { "Content-Type": "application/json" },
           body: '{"ref": "main"}',
         },
+        enabled: true,
       };
 
       it("should create a new webhook", async () => {
         const mockResponse = { uuid: "wh-uuid-2", ...mockWebhookBody };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.createWebhook(mockWebhookBody as any);
+        const result = await client.createWebhook<{ uuid: unknown }>(
+          mockWebhookBody,
+        );
 
         expect(fetchMock).toHaveBeenCalledWith("https://example.com/webhooks", {
           method: "POST",
@@ -2574,7 +2634,7 @@ describe("PactFlowClient", () => {
         const mockResponse = { uuid: "wh-uuid-1" };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        await client.updateWebhook({
+        const updateWebhookBody: UpdateWebhookInput = {
           webhookId: "wh-uuid-1",
           description: "Updated webhook",
           events: [{ name: "contract_published" }],
@@ -2582,7 +2642,8 @@ describe("PactFlowClient", () => {
             method: "POST",
             url: "https://ci.example.com/new-trigger",
           },
-        } as any);
+        };
+        await client.updateWebhook(updateWebhookBody);
 
         expect(fetchMock).toHaveBeenCalledWith(
           "https://example.com/webhooks/wh-uuid-1",
@@ -2647,7 +2708,7 @@ describe("PactFlowClient", () => {
         };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.listSecrets();
+        const result = await client.listSecrets<{ secrets: unknown }>();
 
         expect(fetchMock).toHaveBeenCalledWith("https://example.com/secrets", {
           method: "GET",
@@ -2662,7 +2723,9 @@ describe("PactFlowClient", () => {
         const mockResponse = { uuid: "sec-uuid-1", name: "CI_TOKEN" };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.getSecret({ secretId: "sec-uuid-1" });
+        const result = await client.getSecret<{ uuid: unknown }>({
+          secretId: "sec-uuid-1",
+        });
 
         expect(fetchMock).toHaveBeenCalledWith(
           "https://example.com/secrets/sec-uuid-1",
@@ -2677,7 +2740,7 @@ describe("PactFlowClient", () => {
         const mockResponse = { uuid: "sec-uuid-2", name: "MY_TOKEN" };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.createSecret({
+        const result = await client.createSecret<{ uuid: unknown }>({
           name: "MY_TOKEN",
           description: "CI token",
           value: "s3cr3t",
@@ -2739,7 +2802,7 @@ describe("PactFlowClient", () => {
         };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.getCurrentUser();
+        const result = await client.getCurrentUser<{ email: unknown }>();
 
         expect(fetchMock).toHaveBeenCalledWith("https://example.com/user", {
           method: "GET",
@@ -2756,7 +2819,7 @@ describe("PactFlowClient", () => {
         };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.listTokens();
+        const result = await client.listTokens<{ tokens: unknown }>();
 
         expect(fetchMock).toHaveBeenCalledWith(
           "https://example.com/settings/tokens",
@@ -2771,7 +2834,9 @@ describe("PactFlowClient", () => {
         const mockResponse = { uuid: "tok-uuid-1", value: "new-token-value" };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.regenerateToken({ tokenId: "tok-uuid-1" });
+        const result = await client.regenerateToken<{ value: unknown }>({
+          tokenId: "tok-uuid-1",
+        });
 
         expect(fetchMock).toHaveBeenCalledWith(
           "https://example.com/settings/tokens/tok-uuid-1/regenerate",
@@ -2790,7 +2855,7 @@ describe("PactFlowClient", () => {
         const mockResponse = { theme: "dark", notifications: true };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.getUserPreferences();
+        const result = await client.getUserPreferences<{ theme: unknown }>();
 
         expect(fetchMock).toHaveBeenCalledWith(
           "https://example.com/preferences/current-user",
@@ -2805,7 +2870,9 @@ describe("PactFlowClient", () => {
         const mockResponse = { allowGuestAccess: false };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.getSystemPreferences();
+        const result = await client.getSystemPreferences<{
+          allowGuestAccess: unknown;
+        }>();
 
         expect(fetchMock).toHaveBeenCalledWith(
           "https://example.com/preferences/system",
@@ -2852,7 +2919,7 @@ describe("PactFlowClient", () => {
         const mockResponse = { users: [{ uuid: "user-uuid-1" }] };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.listAdminUsers({});
+        const result = await client.listAdminUsers<{ users: unknown }>({});
 
         expect(fetchMock).toHaveBeenCalledWith(
           "https://example.com/admin/users",
@@ -2886,7 +2953,9 @@ describe("PactFlowClient", () => {
         };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.getAdminUser({ userId: "user-uuid-1" });
+        const result = await client.getAdminUser<{ email: unknown }>({
+          userId: "user-uuid-1",
+        });
 
         expect(fetchMock).toHaveBeenCalledWith(
           "https://example.com/admin/users/user-uuid-1",
@@ -2901,7 +2970,7 @@ describe("PactFlowClient", () => {
         const mockResponse = { uuid: "user-uuid-2", email: "new@example.com" };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.createAdminUser({
+        const result = await client.createAdminUser<{ uuid: unknown }>({
           email: "new@example.com",
           name: "New User",
         });
@@ -3050,7 +3119,7 @@ describe("PactFlowClient", () => {
         };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.listAdminTeams({});
+        const result = await client.listAdminTeams<{ teams: unknown }>({});
 
         expect(fetchMock).toHaveBeenCalledWith(
           "https://example.com/admin/teams",
@@ -3076,7 +3145,9 @@ describe("PactFlowClient", () => {
         const mockResponse = { uuid: "team-uuid-1", name: "Infra" };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.getAdminTeam({ teamId: "team-uuid-1" });
+        const result = await client.getAdminTeam<{ name: unknown }>({
+          teamId: "team-uuid-1",
+        });
 
         expect(fetchMock).toHaveBeenCalledWith(
           "https://example.com/admin/teams/team-uuid-1",
@@ -3091,7 +3162,9 @@ describe("PactFlowClient", () => {
         const mockResponse = { uuid: "team-uuid-2", name: "Platform" };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.createAdminTeam({ name: "Platform" });
+        const result = await client.createAdminTeam<{ uuid: unknown }>({
+          name: "Platform",
+        });
 
         expect(fetchMock).toHaveBeenCalledWith(
           "https://example.com/admin/teams",
@@ -3145,7 +3218,9 @@ describe("PactFlowClient", () => {
         };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.listTeamUsers({ teamId: "team-uuid-1" });
+        const result = await client.listTeamUsers<{ teamMembers: unknown }>({
+          teamId: "team-uuid-1",
+        });
 
         expect(fetchMock).toHaveBeenCalledWith(
           "https://example.com/admin/teams/team-uuid-1/users",
@@ -3259,7 +3334,7 @@ describe("PactFlowClient", () => {
         };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.listAdminRoles();
+        const result = await client.listAdminRoles<{ roles: unknown }>();
 
         expect(fetchMock).toHaveBeenCalledWith(
           "https://example.com/admin/roles",
@@ -3278,7 +3353,9 @@ describe("PactFlowClient", () => {
         };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.getAdminRole({ roleId: "role-uuid-1" });
+        const result = await client.getAdminRole<{ name: unknown }>({
+          roleId: "role-uuid-1",
+        });
 
         expect(fetchMock).toHaveBeenCalledWith(
           "https://example.com/admin/roles/role-uuid-1",
@@ -3293,7 +3370,7 @@ describe("PactFlowClient", () => {
         const mockResponse = { uuid: "role-uuid-2", name: "ReadOnly" };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.createAdminRole({
+        const result = await client.createAdminRole<{ uuid: unknown }>({
           name: "ReadOnly",
           permissions: [{ scope: "contract:read" }],
         });
@@ -3382,7 +3459,9 @@ describe("PactFlowClient", () => {
         };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.listAdminPermissions();
+        const result = await client.listAdminPermissions<{
+          permissions: unknown;
+        }>();
 
         expect(fetchMock).toHaveBeenCalledWith(
           "https://example.com/admin/permissions",
@@ -3403,7 +3482,7 @@ describe("PactFlowClient", () => {
         };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.createSystemAccount({
+        const result = await client.createSystemAccount<{ uuid: unknown }>({
           name: "CI Bot",
         });
 
@@ -3428,9 +3507,11 @@ describe("PactFlowClient", () => {
         };
         fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-        const result = await client.getSystemAccountTokens({
-          accountId: "sys-uuid-1",
-        });
+        const result = await client.getSystemAccountTokens<{ tokens: unknown }>(
+          {
+            accountId: "sys-uuid-1",
+          },
+        );
 
         expect(fetchMock).toHaveBeenCalledWith(
           "https://example.com/admin/system-accounts/sys-uuid-1/tokens",

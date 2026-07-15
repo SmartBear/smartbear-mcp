@@ -1,3 +1,4 @@
+// biome-ignore-all lint/style/noExcessiveLinesPerFile: tool spec (docs/examples/hints) is intentionally colocated with its handler for discoverability
 import { Tool } from "../../../common/tools.ts";
 import type { ToolParams } from "../../../common/types.ts";
 import type { Qtm4jClient } from "../../client.ts";
@@ -174,7 +175,9 @@ export class GetTestCases extends Tool<Qtm4jClient> {
         description: "Filter by folder and fix version",
         parameters: {
           filter: {
+            // biome-ignore lint/style/noMagicNumbers: illustrative example IDs in tool documentation, not real constants
             folders: [123, 456],
+            // biome-ignore lint/style/noMagicNumbers: illustrative example ID in tool documentation, not a real constant
             fixVersions: [789],
           },
         },
@@ -302,7 +305,7 @@ export class GetTestCases extends Tool<Qtm4jClient> {
       "JSON object with total (total matching test cases), startAt, maxResults, and data (array of test case objects for this page).",
   };
 
-  handle = async (rawArgs: any) => {
+  handle = async (rawArgs: unknown) => {
     const args = SearchTestCaseBody.parse(rawArgs);
 
     const context = this.client.getResolverRegistry().requireProjectContext();
@@ -315,9 +318,12 @@ export class GetTestCases extends Tool<Qtm4jClient> {
     }
 
     const params = new URLSearchParams();
-    if (args.fields?.length)
+    if (args.fields && args.fields.length > 0) {
       params.set(RESPONSE_FIELDS.FIELDS, args.fields.join(","));
-    if (args.sort) params.set(RESPONSE_FIELDS.SORT, args.sort);
+    }
+    if (args.sort) {
+      params.set(RESPONSE_FIELDS.SORT, args.sort);
+    }
     params.set(RESPONSE_FIELDS.START_AT, String(args.startAt));
     params.set(RESPONSE_FIELDS.MAX_RESULTS, String(args.maxResults));
 

@@ -9,6 +9,9 @@ import {
 } from "../config/constants.ts";
 import { AuthService } from "./auth-service.ts";
 
+/** Matches a single trailing slash on a base URL. */
+const TRAILING_SLASH = /\/$/;
+
 /**
  * ApiClient handles HTTP communication with QTM4J REST API
  * Provides methods for GET, POST, PUT operations with proper error handling
@@ -23,7 +26,7 @@ export class ApiClient {
     baseUrl: string,
     automationTokenProvider?: () => string | null,
   ) {
-    this.baseUrl = baseUrl.trim().replace(/\/$/, EMPTY_VALUES.STRING);
+    this.baseUrl = baseUrl.trim().replace(TRAILING_SLASH, EMPTY_VALUES.STRING);
 
     if (typeof tokenOrProvider === "string") {
       this.tokenProvider = () => tokenOrProvider;
@@ -72,11 +75,11 @@ export class ApiClient {
   ): string {
     const url = new URL(this.baseUrl + endpoint);
     if (params) {
-      Object.entries(params).forEach(([key, value]) => {
+      for (const [key, value] of Object.entries(params)) {
         if (value !== undefined) {
           url.searchParams.append(key, String(value));
         }
-      });
+      }
     }
     return url.toString();
   }
@@ -90,7 +93,7 @@ export class ApiClient {
   async get(
     endpoint: string,
     params?: Record<string, string | number | boolean | undefined>,
-  ): Promise<any> {
+  ): Promise<unknown> {
     const response = await fetch(this.getUrl(endpoint, params), {
       method: HTTP_METHODS.GET,
       headers: this.getHeaders(),
@@ -109,7 +112,7 @@ export class ApiClient {
     endpoint: string,
     body: object,
     params?: Record<string, string | number | boolean | undefined>,
-  ): Promise<any> {
+  ): Promise<unknown> {
     const response = await fetch(this.getUrl(endpoint, params), {
       method: HTTP_METHODS.POST,
       headers: {
@@ -127,7 +130,7 @@ export class ApiClient {
    * @param body - Request body object
    * @returns Parsed response data
    */
-  async put(endpoint: string, body: object): Promise<any> {
+  async put(endpoint: string, body: object): Promise<unknown> {
     const response = await fetch(this.getUrl(endpoint), {
       method: HTTP_METHODS.PUT,
       headers: {
@@ -149,7 +152,7 @@ export class ApiClient {
   async getAutomation(
     endpoint: string,
     params?: Record<string, string | number | boolean | undefined>,
-  ): Promise<any> {
+  ): Promise<unknown> {
     const response = await fetch(this.getUrl(endpoint, params), {
       method: HTTP_METHODS.GET,
       headers: this.getAutomationHeaders(),
@@ -165,7 +168,7 @@ export class ApiClient {
    * @param body - Request body object
    * @returns Parsed response data
    */
-  async postAutomation(endpoint: string, body: object): Promise<any> {
+  async postAutomation(endpoint: string, body: object): Promise<unknown> {
     const url = this.getUrl(endpoint);
     const requestHeaders = {
       ...this.getAutomationHeaders(),
@@ -185,7 +188,7 @@ export class ApiClient {
    * @param body - Optional request body object
    * @returns Parsed response data
    */
-  async delete(endpoint: string, body?: object): Promise<any> {
+  async delete(endpoint: string, body?: object): Promise<unknown> {
     const response = await fetch(this.getUrl(endpoint), {
       method: HTTP_METHODS.DELETE,
       headers: {

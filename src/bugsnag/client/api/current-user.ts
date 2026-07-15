@@ -1,13 +1,12 @@
-import { type ApiResponse, BaseAPI } from "./base.ts";
 import {
   CurrentUserApiFetchParamCreator,
-  type Organization,
   type OrganizationApiView,
-  type Project,
-} from "./index.ts";
-import { ProjectAPI } from "./Project.ts";
+} from "./api.ts";
+import { type ApiResponse, BaseApi } from "./base.ts";
+import type { Organization, Project } from "./models.ts";
+import { ProjectApi } from "./project.ts";
 
-export class CurrentUserAPI extends BaseAPI {
+export class CurrentUserApi extends BaseApi {
   static organizationFields: (keyof OrganizationApiView)[] = [
     "id",
     "name",
@@ -21,7 +20,7 @@ export class CurrentUserAPI extends BaseAPI {
   async listUserOrganizations(
     admin?: boolean,
     perPage?: number,
-    options: any = {},
+    options: Record<string, unknown> = {},
   ): Promise<ApiResponse<Organization[]>> {
     const localVarFetchArgs = CurrentUserApiFetchParamCreator(
       this.configuration,
@@ -30,7 +29,7 @@ export class CurrentUserAPI extends BaseAPI {
       localVarFetchArgs.url,
       localVarFetchArgs.options,
       true,
-      CurrentUserAPI.organizationFields,
+      CurrentUserApi.organizationFields,
     );
   }
 
@@ -41,13 +40,14 @@ export class CurrentUserAPI extends BaseAPI {
    * @param options Optional parameters for filtering, pagination, etc.
    * @returns A promise that resolves to the list of projects in the organization
    */
+  // biome-ignore lint/complexity/useMaxParams: mirrors the positional params of the generated CurrentUserApiFetchParamCreator.getOrganizationProjects
   async getOrganizationProjects(
     organizationId: string,
     q?: string,
     sort?: string,
     direction?: string,
     perPage?: number,
-    options?: any,
+    options?: Record<string, unknown>,
   ): Promise<ApiResponse<Project[]>> {
     const localVarFetchArgs = CurrentUserApiFetchParamCreator(
       this.configuration,
@@ -63,7 +63,7 @@ export class CurrentUserAPI extends BaseAPI {
       localVarFetchArgs.url,
       localVarFetchArgs.options,
       true,
-      ProjectAPI.projectFields,
+      ProjectApi.projectFields,
     );
   }
 }

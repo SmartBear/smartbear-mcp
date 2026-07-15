@@ -3,15 +3,22 @@ import type {
   ServerNotification,
   ServerRequest,
 } from "@modelcontextprotocol/sdk/types.js";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+import type { z as zod } from "zod";
 import {
   GetTestCaseLinksParams,
   GetTestCaseLinks200Response as GetTestCaseLinksResponse,
 } from "../../common/rest-api-schemas.ts";
+import {
+  asZephyrClient,
+  createMockZephyrClient,
+  type MockZephyrClient,
+} from "../../common/test-helpers.ts";
 import { GetTestCaseLinks } from "./get-links.ts";
 
+// biome-ignore lint/security/noSecrets: test describe name, not a secret
 describe("GetTestCaseLinks", () => {
-  let mockClient: any;
+  let mockClient: MockZephyrClient;
   let instance: GetTestCaseLinks;
 
   const ExtraRequestHandler: RequestHandlerExtra<
@@ -29,12 +36,8 @@ describe("GetTestCaseLinks", () => {
   };
 
   beforeEach(() => {
-    mockClient = {
-      getApiClient: vi.fn().mockReturnValue({
-        get: vi.fn(),
-      }),
-    };
-    instance = new GetTestCaseLinks(mockClient as any);
+    mockClient = createMockZephyrClient();
+    instance = new GetTestCaseLinks(asZephyrClient(mockClient));
   });
 
   it("should set specification correctly", () => {
@@ -217,13 +220,12 @@ describe("GetTestCaseLinks", () => {
     );
     expect(result.structuredContent).toBe(responseMock);
     expect(result.structuredContent?.webLinks).toHaveLength(3);
-    expect((result.structuredContent as any).webLinks[0].url).toBe(
-      "not-a-valid-url",
-    );
-    expect((result.structuredContent as any).webLinks[1].url).toBe(
-      "//incomplete",
-    );
-    expect((result.structuredContent as any).webLinks[2].url).toBe(
+    const structuredContent = result.structuredContent as zod.infer<
+      typeof GetTestCaseLinksResponse
+    >;
+    expect(structuredContent.webLinks?.[0]?.url).toBe("not-a-valid-url");
+    expect(structuredContent.webLinks?.[1]?.url).toBe("//incomplete");
+    expect(structuredContent.webLinks?.[2]?.url).toBe(
       "http://example.com/path with spaces",
     );
   });

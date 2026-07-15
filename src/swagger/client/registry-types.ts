@@ -1,4 +1,13 @@
+// biome-ignore-all lint/style/noExcessiveLinesPerFile: single cohesive module of SwaggerHub Registry API zod schemas and their inferred types; splitting would separate each schema from its paired type
 import { z } from "zod";
+
+const MAX_PAGE_SIZE = 100;
+
+const StandardizationErrorSchema = z.object({
+  line: z.number().optional(),
+  description: z.string().optional(),
+  severity: z.string().optional(),
+});
 
 // Zod schemas for SwaggerHub Registry API validation
 export const ApiSearchParamsSchema = z.object({
@@ -21,7 +30,7 @@ export const ApiSearchParamsSchema = z.object({
   limit: z
     .number()
     .min(1)
-    .max(100)
+    .max(MAX_PAGE_SIZE)
     .optional()
     .describe("Number of results per page (1-100, default 20)"),
   sort: z
@@ -268,12 +277,6 @@ export const CreateApiFromPromptOutputSchema = z.looseObject({
   version: z.string().optional(),
   url: z.string().optional(),
   operation: z.enum(["create", "update"]).optional(),
-});
-
-const StandardizationErrorSchema = z.object({
-  line: z.number().optional(),
-  description: z.string().optional(),
-  severity: z.string().optional(),
 });
 
 export const ScanOutputSchema = z.looseObject({

@@ -1,11 +1,12 @@
 import yaml from "js-yaml";
 // @ts-expect-error missing type declarations
 import Swagger from "swagger-client";
+import { getEnv } from "../../common/env.ts";
 import { ToolError } from "../../common/tools";
 import {
-  type OpenAPI,
-  type RemoteOpenAPIDocument,
-  RemoteOpenAPIDocumentSchema,
+  type OpenApi,
+  type RemoteOpenApiDocument,
+  RemoteOpenApiDocumentSchema,
 } from "./ai";
 
 /**
@@ -16,14 +17,14 @@ import {
  * @throws Error if the resolution fails.
  */
 export async function resolveOpenAPISpec(
-  remoteOpenAPIDocument: RemoteOpenAPIDocument,
-): Promise<OpenAPI> {
-  const openAPISchema = RemoteOpenAPIDocumentSchema.safeParse(
+  remoteOpenAPIDocument: RemoteOpenApiDocument,
+): Promise<OpenApi> {
+  const openAPISchema = RemoteOpenApiDocumentSchema.safeParse(
     remoteOpenAPIDocument,
   );
   if (openAPISchema.error || !remoteOpenAPIDocument) {
     throw new ToolError(
-      `Invalid RemoteOpenAPIDocument: ${JSON.stringify(
+      `Invalid RemoteOpenApiDocument: ${JSON.stringify(
         openAPISchema.error?.issues,
       )}`,
     );
@@ -49,7 +50,7 @@ export async function resolveOpenAPISpec(
  * @throws Error if the URL is not provided or the fetch fails.
  */
 export async function getRemoteSpecContents(
-  openAPISchema: RemoteOpenAPIDocument,
+  openAPISchema: RemoteOpenApiDocument,
 ): Promise<any> {
   if (!openAPISchema.url) {
     throw new ToolError("'url' must be provided.");
@@ -78,7 +79,7 @@ export async function getRemoteSpecContents(
       return yaml.load(specRawBody);
     } catch (yamlError) {
       const isStdioTransport =
-        process.env.MCP_TRANSPORT?.toLowerCase() === "stdio";
+        getEnv("MCP_TRANSPORT")?.toLowerCase() === "stdio";
 
       if (isStdioTransport) {
         throw new ToolError(

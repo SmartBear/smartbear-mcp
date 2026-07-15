@@ -1,9 +1,32 @@
+// This is the core, single-class server implementation extending McpServer;
+// its private helper methods are already extracted as far as reasonably
+// possible while keeping cohesive access to `this`. Splitting further into
+// separate files would fragment a tightly-coupled class across modules with
+// little readability benefit, for a rule whose only concern is line count.
+// biome-ignore-all lint/style/noExcessiveLinesPerFile: see above
+import type {
+  PromptCallback,
+  ReadResourceTemplateCallback,
+  RegisteredPrompt,
+  RegisteredResourceTemplate,
+  RegisteredTool,
+  ToolCallback,
+} from "@modelcontextprotocol/sdk/server/mcp.js";
 import {
   McpServer,
   ResourceTemplate,
 } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type {
+  RequestHandlerExtra,
+  RequestOptions,
+} from "@modelcontextprotocol/sdk/shared/protocol.js";
+import type { Variables } from "@modelcontextprotocol/sdk/shared/uriTemplate.js";
+import type {
   CallToolResult,
+  ElicitRequest,
+  ElicitResult,
+  ServerNotification,
+  ServerRequest,
   ToolAnnotations,
 } from "@modelcontextprotocol/sdk/types.js";
 import {
@@ -21,7 +44,13 @@ import {
   isElicitationPolyfillResult,
 } from "./pollyfills.ts";
 import { ToolError } from "./tools.ts";
-import type { Client, ClientInfo, ToolParams } from "./types.ts";
+import type {
+  Client,
+  ClientInfo,
+  PromptParams,
+  ResourceParams,
+  ToolParams,
+} from "./types.ts";
 import {
   getDefaultValue,
   getReadableTypeName,
@@ -29,13 +58,17 @@ import {
   isOptionalType,
 } from "./zod-utils.ts";
 
+// Tool names must be 64 characters or fewer for client compatibility.
+// https://github.com/anthropics/claude-code/issues/34960
+const MAX_TOOL_NAME_LENGTH = 64;
+
 export class SmartBearMcpServer extends McpServer {
-  private cache: CacheService;
+  private readonly cache: CacheService;
   private samplingSupported = false;
   private elicitationSupported = false;
   private clientInfo?: ClientInfo;
-  private clients: Client[] = [];
-  private enabledToolsets?: string[];
+  private readonly clients: Client[] = [];
+  private readonly enabledToolsets?: string[];
   private mcpClientIdentity?: McpClientIdentity;
 
   constructor(enabledToolsets?: string) {
@@ -125,159 +158,216 @@ export class SmartBearMcpServer extends McpServer {
   }
 
   async cleanupSession(mcpSessionId: string): Promise<void> {
-    for (const client of this.clients) {
-      await client.cleanupSession?.(mcpSessionId);
-    }
+    // Per-client cleanup is independent, so these can run concurrently.
+    await Promise.all(
+      this.clients.map((client) => client.cleanupSession?.(mcpSessionId)),
+    );
   }
 
   async addClient(client: Client): Promise<void> {
     this.clients.push(client);
     await client.registerTools(
-      (params, cb) => {
-        if (!this.isToolEnabled(client, params.toolset)) {
-          return null;
-        }
-        const toolName = this.getCapabilityName(client, params.title);
-        const toolTitle = this.getCapabilityTitle(client, params.title);
-        if (toolName.length > 64) {
-          throw new ToolError(
-            `The tool name "${toolName}" is too long. Tool names must be 64 characters or fewer for client compatibility. https://github.com/anthropics/claude-code/issues/34960`,
-          );
-        }
-        return super.registerTool(
-          toolName,
-          {
-            title: toolTitle,
-            description: this.getDescription(params),
-            inputSchema: params.inputSchema
-              ? this.schemaToRawShape(params.inputSchema)
-              : {},
-            // Pass ZodObject-based schemas through as-is (rather than via schemaToRawShape)
-            // so that z.looseObject()'s additionalProperties:true is preserved in the JSON
-            // schema sent to clients — extracting `.shape` would rebuild a strict object and
-            // cause "additional properties" validation errors on real API responses.
-            outputSchema:
-              params.outputSchema instanceof ZodObject
-                ? params.outputSchema
-                : this.schemaToRawShape(params.outputSchema),
-            annotations: this.getAnnotations(toolTitle, params),
-          },
-          async (args: any, extra: any) => {
-            try {
-              if (!client.isConfigured()) {
-                throw new ToolError(
-                  `The tool is not configured - configuration options for ${client.name} are missing or invalid.`,
-                );
-              }
-              const result = await cb(args, extra);
-              if (result) {
-                this.validateCallbackResult(result, params);
-                this.addStructuredContentAsText(result);
-              }
-              return result;
-            } catch (e) {
-              // ToolErrors should not be reported to BugSnag
-              if (e instanceof ToolError) {
-                return {
-                  isError: true,
-                  content: [
-                    {
-                      type: "text" as const,
-                      text: `Error executing ${toolTitle}: ${e.message}`,
-                    },
-                  ],
-                };
-              }
-              Bugsnag.notify(e as unknown as Error, (event: BugsnagEvent) => {
-                event.addMetadata("app", { tool: toolName });
-                this.addClientMetadata(event);
-                event.unhandled = true;
-              });
-              throw e;
-            }
-          },
-        );
-      },
-      async (params, options) => {
-        const result = await executeElicitationOrPolyfill(
-          this,
-          params,
-          options,
-        );
-
-        if (isElicitationPolyfillResult(result)) {
-          const schemaStr =
-            "requestedSchema" in result.inputRequest
-              ? `\n\nSchema: ${JSON.stringify(result.inputRequest.requestedSchema, null, 2)}`
-              : "";
-          throw new ToolError(
-            `Input collection required: ${result.inputRequest.message}${schemaStr}\n\n${result.instructions}`,
-          );
-        }
-
-        return result;
-      },
+      (params, cb) => this.registerClientTool(client, params, cb),
+      (params, options) => this.getInputOrPolyfill(params, options),
     );
 
     if (client.registerResources) {
-      await client.registerResources((params, cb) => {
-        const resourceName = this.getCapabilityName(client, params.title);
-        const slug = params.title.replace(/\s+/g, "_").toLowerCase();
-        const url = `${client.capabilityPrefix}://${slug}/${params.path}`;
-        return super.registerResource(
-          resourceName,
-          new ResourceTemplate(url, {
-            list: undefined,
-          }),
-          {
-            title: this.getCapabilityTitle(client, params.title),
-            description: params.description,
-          },
-          async (url: any, variables: any, extra: any) => {
-            try {
-              return await cb(url, variables, extra);
-            } catch (e) {
-              Bugsnag.notify(e as unknown as Error, (event: BugsnagEvent) => {
-                event.addMetadata("app", {
-                  resource: resourceName,
-                  url,
-                });
-                this.addClientMetadata(event);
-                event.unhandled = true;
-              });
-              throw e;
-            }
-          },
-        );
-      });
+      await client.registerResources((params, cb) =>
+        this.registerClientResource(client, params, cb),
+      );
     }
 
     if (client.registerPrompts) {
       await client.registerPrompts((params, cb) =>
-        super.registerPrompt(
-          this.getCapabilityName(client, params.title),
-          {
-            title: this.getCapabilityTitle(client, params.title),
-            description: params.description,
-            argsSchema: this.schemaToRawShape(params.argsSchema) || {},
-          },
-          async (args: any, extra: any) => {
-            try {
-              return await cb(args, extra);
-            } catch (e) {
-              Bugsnag.notify(e as unknown as Error, (event: BugsnagEvent) => {
-                event.addMetadata("app", {
-                  prompt: this.getCapabilityName(client, params.title),
-                });
-                this.addClientMetadata(event);
-                event.unhandled = true;
-              });
-              throw e;
-            }
-          },
-        ),
+        this.registerClientPrompt(client, params, cb),
       );
     }
+  }
+
+  /**
+   * Elicitation `getInput` implementation passed to each client's
+   * `registerTools`, falling back to a polyfill instruction when the host
+   * doesn't support elicitation.
+   */
+  private async getInputOrPolyfill(
+    params: ElicitRequest["params"],
+    options?: RequestOptions,
+  ): Promise<ElicitResult> {
+    const result = await executeElicitationOrPolyfill(this, params, options);
+
+    if (isElicitationPolyfillResult(result)) {
+      const schemaStr =
+        "requestedSchema" in result.inputRequest
+          ? `\n\nSchema: ${JSON.stringify(result.inputRequest.requestedSchema, null, 2)}`
+          : "";
+      throw new ToolError(
+        `Input collection required: ${result.inputRequest.message}${schemaStr}\n\n${result.instructions}`,
+      );
+    }
+
+    return result;
+  }
+
+  private registerClientTool(
+    client: Client,
+    params: ToolParams,
+    cb: ToolCallback<ZodRawShape>,
+  ): RegisteredTool | null {
+    if (!this.isToolEnabled(client, params.toolset)) {
+      return null;
+    }
+    const toolName = this.getCapabilityName(client, params.title);
+    const toolTitle = this.getCapabilityTitle(client, params.title);
+    if (toolName.length > MAX_TOOL_NAME_LENGTH) {
+      throw new ToolError(
+        `The tool name "${toolName}" is too long. Tool names must be ${MAX_TOOL_NAME_LENGTH} characters or fewer for client compatibility. https://github.com/anthropics/claude-code/issues/34960`,
+      );
+    }
+    return super.registerTool(
+      toolName,
+      {
+        title: toolTitle,
+        description: this.getDescription(params),
+        inputSchema: params.inputSchema
+          ? this.schemaToRawShape(params.inputSchema)
+          : {},
+        // Pass ZodObject-based schemas through as-is (rather than via schemaToRawShape)
+        // so that z.looseObject()'s additionalProperties:true is preserved in the JSON
+        // schema sent to clients — extracting `.shape` would rebuild a strict object and
+        // cause "additional properties" validation errors on real API responses.
+        outputSchema:
+          params.outputSchema instanceof ZodObject
+            ? params.outputSchema
+            : this.schemaToRawShape(params.outputSchema),
+        annotations: this.getAnnotations(toolTitle, params),
+      },
+      (
+        args: Record<string, unknown>,
+        extra: RequestHandlerExtra<ServerRequest, ServerNotification>,
+      ) =>
+        this.handleToolCall(
+          { client, params, cb, toolName, toolTitle },
+          args,
+          extra,
+        ),
+    );
+  }
+
+  private async handleToolCall(
+    context: {
+      client: Client;
+      params: ToolParams;
+      cb: ToolCallback<ZodRawShape>;
+      toolName: string;
+      toolTitle: string;
+    },
+    args: Record<string, unknown>,
+    extra: RequestHandlerExtra<ServerRequest, ServerNotification>,
+  ): Promise<CallToolResult> {
+    const { client, params, cb, toolName, toolTitle } = context;
+    try {
+      if (!client.isConfigured()) {
+        throw new ToolError(
+          `The tool is not configured - configuration options for ${client.name} are missing or invalid.`,
+        );
+      }
+      const result = await cb(args, extra);
+      if (result) {
+        this.validateCallbackResult(result, params);
+        this.addStructuredContentAsText(result);
+      }
+      return result;
+    } catch (e) {
+      // ToolErrors should not be reported to BugSnag
+      if (e instanceof ToolError) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: "text" as const,
+              text: `Error executing ${toolTitle}: ${e.message}`,
+            },
+          ],
+        };
+      }
+      Bugsnag.notify(e as unknown as Error, (event: BugsnagEvent) => {
+        event.addMetadata("app", { tool: toolName });
+        this.addClientMetadata(event);
+        event.unhandled = true;
+      });
+      throw e;
+    }
+  }
+
+  private registerClientResource(
+    client: Client,
+    params: ResourceParams,
+    cb: ReadResourceTemplateCallback,
+  ): RegisteredResourceTemplate {
+    const resourceName = this.getCapabilityName(client, params.title);
+    const slug = params.title.replace(/\s+/g, "_").toLowerCase();
+    const urlTemplate = `${client.capabilityPrefix}://${slug}/${params.path}`;
+    return super.registerResource(
+      resourceName,
+      new ResourceTemplate(urlTemplate, {
+        list: undefined,
+      }),
+      {
+        title: this.getCapabilityTitle(client, params.title),
+        description: params.description,
+      },
+      async (
+        url: URL,
+        variables: Variables,
+        extra: RequestHandlerExtra<ServerRequest, ServerNotification>,
+      ) => {
+        try {
+          return await cb(url, variables, extra);
+        } catch (e) {
+          Bugsnag.notify(e as unknown as Error, (event: BugsnagEvent) => {
+            event.addMetadata("app", {
+              resource: resourceName,
+              url,
+            });
+            this.addClientMetadata(event);
+            event.unhandled = true;
+          });
+          throw e;
+        }
+      },
+    );
+  }
+
+  private registerClientPrompt(
+    client: Client,
+    params: PromptParams,
+    cb: PromptCallback<ZodRawShape>,
+  ): RegisteredPrompt {
+    return super.registerPrompt(
+      this.getCapabilityName(client, params.title),
+      {
+        title: this.getCapabilityTitle(client, params.title),
+        description: params.description,
+        argsSchema: this.schemaToRawShape(params.argsSchema) || {},
+      },
+      async (
+        args: Record<string, unknown>,
+        extra: RequestHandlerExtra<ServerRequest, ServerNotification>,
+      ) => {
+        try {
+          return await cb(args, extra);
+        } catch (e) {
+          Bugsnag.notify(e as unknown as Error, (event: BugsnagEvent) => {
+            event.addMetadata("app", {
+              prompt: this.getCapabilityName(client, params.title),
+            });
+            this.addClientMetadata(event);
+            event.unhandled = true;
+          });
+          throw e;
+        }
+      },
+    );
   }
 
   private validateCallbackResult(result: CallToolResult, params: ToolParams) {
@@ -292,7 +382,7 @@ export class SmartBearMcpServer extends McpServer {
   }
 
   private addStructuredContentAsText(result: CallToolResult) {
-    if (result.structuredContent && !result.content?.length) {
+    if (result.structuredContent && (result.content?.length ?? 0) === 0) {
       result.content = [
         {
           type: "text",
@@ -377,8 +467,34 @@ export class SmartBearMcpServer extends McpServer {
 
     return (
       toolsetEntries.includes(toolsetName) ||
-      (client.defaultToolsets || [])?.includes(toolset)
+      (client.defaultToolsets || []).includes(toolset)
     );
+  }
+
+  /**
+   * Format the `**Parameters:**` section listing each field of an input schema.
+   */
+  private formatParametersSection(inputSchema: ZodType | undefined): string {
+    if (!(inputSchema && inputSchema instanceof ZodObject)) {
+      return "";
+    }
+    let parameters = Object.keys(inputSchema.shape)
+      .map((key) => {
+        const field = inputSchema.shape[key];
+        const fieldDescription = getTypeDescription(field);
+        const defaultValue = getDefaultValue(field);
+        return (
+          `- ${key} (${getReadableTypeName(field)})` +
+          `${isOptionalType(field) ? "" : " *required*"}` +
+          `${fieldDescription ? `: ${fieldDescription}` : ""}` +
+          `${defaultValue === null ? "" : ` (default: ${JSON.stringify(defaultValue)})`}`
+        );
+      })
+      .join("\n");
+    if (parameters.length === 0) {
+      parameters = "None";
+    }
+    return `\n\n**Parameters:**\n${parameters}`;
   }
 
   private getDescription(params: ToolParams): string {
@@ -398,25 +514,7 @@ export class SmartBearMcpServer extends McpServer {
       description += `\n\n**Toolset:** ${toolset}`;
     }
 
-    if (inputSchema && inputSchema instanceof ZodObject) {
-      let parameters = Object.keys(inputSchema.shape)
-        .map((key) => {
-          const field = inputSchema.shape[key];
-          const description = getTypeDescription(field);
-          const defaultValue = getDefaultValue(field);
-          return (
-            `- ${key} (${getReadableTypeName(field)})` +
-            `${isOptionalType(field) ? "" : " *required*"}` +
-            `${description ? `: ${description}` : ""}` +
-            `${defaultValue === null ? "" : ` (default: ${JSON.stringify(defaultValue)})`}`
-          );
-        })
-        .join("\n");
-      if (parameters.length === 0) {
-        parameters = "None";
-      }
-      description += `\n\n**Parameters:**\n${parameters}`;
-    }
+    description += this.formatParametersSection(inputSchema);
 
     if (outputDescription) {
       description += `\n\n**Output Description:** ${outputDescription}`;

@@ -1,4 +1,7 @@
-import { QMetryToolsHandlers } from "../../config/constants.ts";
+// biome-ignore-all lint/style/noMagicNumbers: these are illustrative example IDs/values shown to the LLM in tool descriptions, not computational constants
+// biome-ignore-all lint/style/noExcessiveLinesPerFile: this module cohesively lists all tool definitions, descriptions, and usage examples for one QMetry API area; splitting it would scatter closely related declarations
+// biome-ignore-all lint/security/noSecrets: this file contains many high-entropy API action-name / wire-format / fixture string constants that trip the noSecrets entropy heuristic; none are real secrets
+import { QmetryToolsHandlers } from "../../config/constants.ts";
 import {
   CreateIssueArgsSchema,
   IssueExecutionsArgsSchema,
@@ -8,14 +11,14 @@ import {
   LinkIssuesToTestcaseRunArgsSchema,
   UpdateIssueArgsSchema,
 } from "../../types/common.ts";
-import type { QMetryToolParams } from "./types.ts";
+import type { QmetryToolParams } from "./types.ts";
 
-export const ISSUE_TOOLS: QMetryToolParams[] = [
+export const ISSUE_TOOLS: QmetryToolParams[] = [
   {
     title: "Create Defect or Issue",
     toolset: "Issues",
     summary: "Create a new defect/issue internally in QMetry.",
-    handler: QMetryToolsHandlers.CREATE_ISSUE,
+    handler: QmetryToolsHandlers.CREATE_ISSUE,
     inputSchema: CreateIssueArgsSchema,
     purpose:
       "Allows users to create a new defect/issue in QMetry, including issueType, issuePriority, issueOwner and summary. " +
@@ -70,6 +73,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
           issueOwner: 15_112,
           issuePriority: 2_231_988,
           issueType: 2_231_983,
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcRunID: 567_890,
         },
         expectedOutput:
@@ -83,6 +87,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
           issueOwner: 15_112,
           issuePriority: 2_231_988,
           issueType: 2_231_983,
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcRunID: 567_890,
           description: "User is unable to login",
         },
@@ -151,7 +156,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
     title: "Update Issue",
     toolset: "Issues",
     summary: "Update an existing QMetry issue by DefectId and/or entityKey.",
-    handler: QMetryToolsHandlers.UPDATE_ISSUE,
+    handler: QmetryToolsHandlers.UPDATE_ISSUE,
     inputSchema: UpdateIssueArgsSchema,
     purpose:
       "Update an existing QMetry issue by DefectId and/or entityKey. " +
@@ -207,7 +212,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
     toolset: "Issues",
     summary:
       "Fetch QMetry defects or issues - automatically handles viewId resolution based on project",
-    handler: QMetryToolsHandlers.FETCH_ISSUES,
+    handler: QmetryToolsHandlers.FETCH_ISSUES,
     inputSchema: IssuesListArgsSchema,
     purpose:
       "Get defects or issues from QMetry. System automatically gets correct viewId from project info if not provided.",
@@ -328,7 +333,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
     toolset: "Issues",
     summary:
       "Get issues that are linked (or not linked) to a specific test case run in QMetry",
-    handler: QMetryToolsHandlers.FETCH_LINKED_ISSUES_BY_TESTCASE_RUN,
+    handler: QmetryToolsHandlers.FETCH_LINKED_ISSUES_BY_TESTCASE_RUN,
     inputSchema: LinkedIssuesByTestCaseRunArgsSchema,
     purpose:
       "CRITICAL: This tool requires entityId which is the Test Case Run ID (tcRunID), NOT any other ID! " +
@@ -470,7 +475,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
     title: "Link Issues to Testcase Run",
     toolset: "Issues",
     summary: "Link one or more issues to a QMetry Testcase Run (execution).",
-    handler: QMetryToolsHandlers.LINK_ISSUES_TO_TESTCASE_RUN,
+    handler: QmetryToolsHandlers.LINK_ISSUES_TO_TESTCASE_RUN,
     inputSchema: LinkIssuesToTestcaseRunArgsSchema,
     purpose:
       "Link existing QMetry issues to a specific Testcase Run (execution) by providing their IDs. " +
@@ -513,7 +518,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       "Get test case executions linked to a QMetry-native (non-Jira) defect/issue. " +
       "ALWAYS present results as a unified table: Test Suite Key | Test Suite Name | Release | Cycle | Platform | Executed Version | Execution Status | <UDF Label columns…>. " +
       "NEVER show a separate type+value UDF breakdown — always combine identification fields and UDF values in one table per execution row.",
-    handler: QMetryToolsHandlers.FETCH_ISSUE_EXECUTIONS,
+    handler: QmetryToolsHandlers.FETCH_ISSUE_EXECUTIONS,
     inputSchema: IssueExecutionsArgsSchema,
     purpose:
       "Retrieve all test case execution runs that are linked to a specific QMetry-native defect or issue. " +
@@ -709,7 +714,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
     toolset: "Issues",
     summary:
       "Get issues that are linked (or not linked) to a specific test case in QMetry",
-    handler: QMetryToolsHandlers.FETCH_ISSUES_LINKED_TO_TESTCASE,
+    handler: QmetryToolsHandlers.FETCH_ISSUES_LINKED_TO_TESTCASE,
     inputSchema: IssuesLinkedToTestCaseArgsSchema,
     purpose:
       "Retrieve issues/defects that are linked to a specific test case. " +
@@ -732,23 +737,27 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       {
         description:
           "Get all issues linked to test case ID 4495658 (default behavior)",
+        // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
         parameters: { tcID: 4_495_658 },
         expectedOutput:
           "List of issues linked to the test case with issue details, status, and metadata",
       },
       {
         description: "Get all issues linked to test case ID 4495658 (explicit)",
+        // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
         parameters: { tcID: 4_495_658, getLinked: true },
         expectedOutput:
           "List of issues linked to the test case with issue details, status, and metadata",
       },
       {
         description: "Get issues NOT linked to test case (gap analysis)",
+        // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
         parameters: { tcID: 4_495_658, getLinked: false },
         expectedOutput: "List of issues that are NOT linked to the test case",
       },
       {
         description: "Get linked issues with pagination",
+        // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
         parameters: { tcID: 4_495_658, getLinked: true, limit: 25, page: 1 },
         expectedOutput: "Paginated list of issues linked to the test case",
       },
@@ -756,6 +765,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
         description:
           "Filter linked issues by summary content (using default getLinked=true)",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcID: 4_495_658,
           filter: '[{"value":"login","type":"string","field":"summary"}]',
         },
@@ -765,6 +775,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter linked issues by status and priority",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcID: 4_495_658,
           getLinked: true,
           filter:
@@ -775,6 +786,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter issues by execution version",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcID: 4_495_658,
           getLinked: true,
           filter: '[{"value":"2","type":"string","field":"executedVersion"}]',

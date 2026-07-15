@@ -1,21 +1,23 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import {
   ListPrioritiesQueryParams,
   ListPriorities200Response as ListPrioritiesResponse,
 } from "../../common/rest-api-schemas.ts";
+import {
+  asZephyrClient,
+  createMockZephyrClient,
+  fakeExtra,
+  type MockZephyrClient,
+} from "../../common/test-helpers.ts";
 import { GetPriorities } from "./get-priorities.ts";
 
 describe("GetProjectPriorities", () => {
-  let mockClient: any;
+  let mockClient: MockZephyrClient;
   let instance: GetPriorities;
 
   beforeEach(() => {
-    mockClient = {
-      getApiClient: vi.fn().mockReturnValue({
-        get: vi.fn(),
-      }),
-    };
-    instance = new GetPriorities(mockClient as any);
+    mockClient = createMockZephyrClient();
+    instance = new GetPriorities(asZephyrClient(mockClient));
   });
 
   it("should set specification correctly", () => {
@@ -77,7 +79,7 @@ describe("GetProjectPriorities", () => {
     };
     mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
     const args = { maxResults: 10, startAt: 0, projectKey: "PROJ" };
-    const result = await instance.handle(args, {} as any);
+    const result = await instance.handle(args, fakeExtra);
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith("/priorities", {
       maxResults: 10,
       startAt: 0,
@@ -109,7 +111,7 @@ describe("GetProjectPriorities", () => {
       ],
     };
     mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
-    const result = await instance.handle({}, {} as any);
+    const result = await instance.handle({}, fakeExtra);
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith("/priorities", {
       maxResults: 10, // default value from schema
       startAt: 0, // default value from schema
@@ -119,14 +121,14 @@ describe("GetProjectPriorities", () => {
 
   it("should handle apiClient.get throwing error", async () => {
     mockClient.getApiClient().get.mockRejectedValueOnce(new Error("API error"));
-    await expect(instance.handle({ maxResults: 1 }, {} as any)).rejects.toThrow(
+    await expect(instance.handle({ maxResults: 1 }, fakeExtra)).rejects.toThrow(
       "API error",
     );
   });
 
   it("should handle apiClient.get returning unexpected data", async () => {
     mockClient.getApiClient().get.mockResolvedValueOnce(undefined);
-    const result = await instance.handle({ maxResults: 1 }, {} as any);
+    const result = await instance.handle({ maxResults: 1 }, fakeExtra);
     expect(result.structuredContent).toBeUndefined();
   });
 });

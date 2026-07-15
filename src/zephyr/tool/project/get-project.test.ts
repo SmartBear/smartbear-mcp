@@ -1,21 +1,23 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import {
   GetProjectParams,
   GetProject200Response as GetProjectResponse,
 } from "../../common/rest-api-schemas.ts";
+import {
+  asZephyrClient,
+  createMockZephyrClient,
+  fakeExtra,
+  type MockZephyrClient,
+} from "../../common/test-helpers.ts";
 import { GetProject } from "./get-project.ts";
 
 describe("GetProject", () => {
-  let mockClient: any;
+  let mockClient: MockZephyrClient;
   let instance: GetProject;
 
   beforeEach(() => {
-    mockClient = {
-      getApiClient: vi.fn().mockReturnValue({
-        get: vi.fn(),
-      }),
-    };
-    instance = new GetProject(mockClient as any);
+    mockClient = createMockZephyrClient();
+    instance = new GetProject(asZephyrClient(mockClient));
   });
 
   it("should set specification correctly", () => {
@@ -38,7 +40,7 @@ describe("GetProject", () => {
     };
     mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
     const args = { projectIdOrKey: "PROJ" };
-    const result = await instance.handle(args, {} as any);
+    const result = await instance.handle(args, fakeExtra);
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/projects/PROJ",
     );
@@ -54,7 +56,7 @@ describe("GetProject", () => {
     };
     mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
     const args = { projectIdOrKey: "39" }; // Pass as string
-    const result = await instance.handle(args, {} as any);
+    const result = await instance.handle(args, fakeExtra);
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith("/projects/39");
     expect(result.structuredContent).toBe(responseMock);
   });
@@ -62,11 +64,11 @@ describe("GetProject", () => {
   it("should handle apiClient.get throwing error", async () => {
     mockClient.getApiClient().get.mockRejectedValueOnce(new Error("API error"));
     await expect(
-      instance.handle({ projectIdOrKey: "PROJ" }, {} as any),
+      instance.handle({ projectIdOrKey: "PROJ" }, fakeExtra),
     ).rejects.toThrow("API error");
   });
 
   it("should throw validation error if projectIdOrKey is missing", async () => {
-    await expect(instance.handle({}, {} as any)).rejects.toThrow();
+    await expect(instance.handle({}, fakeExtra)).rejects.toThrow();
   });
 });

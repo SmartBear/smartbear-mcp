@@ -93,6 +93,22 @@ const TestCaseExecutionFields = zod
   .nullable()
   .optional();
 
+/** Pagination bounds for the getAutomationHistory tool */
+const AUTOMATION_HISTORY_MIN_RESULTS = 1;
+const AUTOMATION_HISTORY_MAX_RESULTS = 100;
+const AUTOMATION_HISTORY_DEFAULT_MAX_RESULTS = 20;
+
+/** Summary entry within a history record */
+const AutomationHistorySummary = zod.object({
+  testCycle: zod.string().nullable().optional(),
+  testCasesCreated: zod.number().nullable().optional(),
+  testCaseVersionsCreated: zod.number().nullable().optional(),
+  testCaseVersionsReused: zod.number().nullable().optional(),
+  testStepsCreated: zod.number().nullable().optional(),
+  testCycleIssueKey: zod.string().nullable().optional(),
+  testCycleSummary: zod.string().nullable().optional(),
+});
+
 /** Input schema for the uploadAutomationResult tool */
 export const UploadAutomationResultBody = zod.object({
   filePath: zod.string().describe(SCHEMA_DESCRIPTIONS.AUTOMATION_FILE_PATH),
@@ -165,27 +181,16 @@ export const GetAutomationHistoryBody = zod.object({
   maxResults: zod
     .number()
     .int()
-    .min(1)
-    .max(100)
+    .min(AUTOMATION_HISTORY_MIN_RESULTS)
+    .max(AUTOMATION_HISTORY_MAX_RESULTS)
     .optional()
-    .default(20)
+    .default(AUTOMATION_HISTORY_DEFAULT_MAX_RESULTS)
     .describe(SCHEMA_DESCRIPTIONS.AUTOMATION_HISTORY_MAX_RESULTS),
 });
 
 export type GetAutomationHistoryBodyType = zod.infer<
   typeof GetAutomationHistoryBody
 >;
-
-/** Summary entry within a history record */
-const AutomationHistorySummary = zod.object({
-  testCycle: zod.string().nullable().optional(),
-  testCasesCreated: zod.number().nullable().optional(),
-  testCaseVersionsCreated: zod.number().nullable().optional(),
-  testCaseVersionsReused: zod.number().nullable().optional(),
-  testStepsCreated: zod.number().nullable().optional(),
-  testCycleIssueKey: zod.string().nullable().optional(),
-  testCycleSummary: zod.string().nullable().optional(),
-});
 
 /** A single automation history record */
 export const AutomationHistoryRecord = zod.object({

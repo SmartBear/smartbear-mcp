@@ -3,9 +3,12 @@ import type { ZodRawShape } from "zod";
 import { z } from "zod";
 import { Tool, ToolError } from "../../../common/tools.ts";
 import type { ToolParams } from "../../../common/types.ts";
+import type { EventApiView } from "../../client/api/index.ts";
 import { type FilterObject, toUrlSearchParams } from "../../client/filters.ts";
 import type { BugsnagClient } from "../../client.ts";
 import { toolInputParameters } from "../../input-schemas.ts";
+
+const PIVOT_VALUE_LIMIT = 5;
 
 const inputSchema = z.object({
   projectId: toolInputParameters.projectId,
@@ -44,6 +47,7 @@ export class GetError extends Tool<BugsnagClient> {
       {
         description: "Get details for a specific error",
         parameters: {
+          // biome-ignore lint/security/noSecrets: example error ID, not a secret
           errorId: "6863e2af8c857c0a5023b411",
         },
         expectedOutput:
@@ -58,6 +62,36 @@ export class GetError extends Tool<BugsnagClient> {
       "The URL provided in the response points should be shown to the user in all cases as it allows them to view the error in the dashboard and perform further analysis",
     ],
   };
+
+  // Fetch the latest event for an error, tolerating failures since it's supplementary to the main error details.
+  private async getLatestEvent(
+    projectId: string,
+    filters: FilterObject,
+  ): Promise<EventApiView | null> {
+    try {
+      const latestEvents = (
+        await this.client.errorsApi.listEventsOnProject(
+          projectId,
+          null,
+          "timestamp",
+          "desc",
+          1,
+          filters,
+          true,
+        )
+      ).body;
+      if (!(latestEvents && latestEvents.length > 0)) {
+        return null;
+      }
+      const [latestEvent] = latestEvents;
+      latestEvent.threads = undefined; // Remove threads to reduce payload size
+      return latestEvent;
+    } catch (e) {
+      // biome-ignore lint/suspicious/noConsole: intentional warning so failures fetching the supplementary latest event are visible without failing the whole request
+      console.warn("Failed to fetch latest event:", e);
+      return null;
+    }
+  }
 
   handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
     const params = inputSchema.parse(args);
@@ -78,28 +112,7 @@ export class GetError extends Tool<BugsnagClient> {
 
     await this.client.validateEventFields(project, filters);
 
-    // Get the latest event for this error using the events endpoint with filters
-    let latestEvent = null;
-    try {
-      const latestEvents = (
-        await this.client.errorsApi.listEventsOnProject(
-          project.id,
-          null,
-          "timestamp",
-          "desc",
-          1,
-          filters,
-          true,
-        )
-      ).body;
-      if (latestEvents && latestEvents.length > 0) {
-        latestEvent = latestEvents[0];
-        latestEvent.threads = undefined; // Remove threads to reduce payload size
-      }
-    } catch (e) {
-      console.warn("Failed to fetch latest event:", e);
-      // Continue without latest event rather than failing the entire request
-    }
+    const latestEvent = await this.getLatestEvent(project.id, filters);
 
     const content = {
       error_details: errorDetails,
@@ -110,7 +123,7 @@ export class GetError extends Tool<BugsnagClient> {
             project.id,
             params.errorId,
             filters,
-            5,
+            PIVOT_VALUE_LIMIT,
           )
         ).body || [],
       url: await this.client.getErrorUrl(

@@ -1,7 +1,10 @@
+// node:module / node:process are required for the compile cache and CLI
+// argv access this stdio entrypoint depends on.
 import { enableCompileCache } from "node:module";
 import process from "node:process";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { clientRegistry } from "./client-registry.ts";
+import { getEnv } from "./env.ts";
 import { USER_AGENT } from "./info.ts";
 import { handleInitializeMessage } from "./initialize.ts";
 import { SmartBearMcpServer } from "./server.ts";
@@ -29,44 +32,69 @@ function getNoConfigMessage(): string[] {
 }
 
 /**
- * Run server in STDIO mode (default)
+ * Handle `--version` / `--help` CLI flags, printing to stdout and exiting the
+ * process when one is present. No-op otherwise.
  */
-export async function runStdioMode() {
+function handleCliFlags(): void {
   if (process.argv.includes("--version")) {
+    // biome-ignore lint/suspicious/noConsole: CLI output, not debug logging
     console.log(`User-Agent: ${USER_AGENT}`);
     process.exit(0);
   } else if (process.argv.includes("--help")) {
+    // biome-ignore lint/suspicious/noConsole: CLI output, not debug logging
     console.log(
       "The following environment variables can be set to configure each of the SmartBear clients:",
     );
+    // biome-ignore lint/suspicious/noConsole: CLI output, not debug logging
     console.log(getNoConfigMessage().join("\n"));
     process.exit(0);
   }
+}
 
-  enableCompileCache();
-
-  const server = new SmartBearMcpServer(process.env.MCP_TOOLSETS);
-
-  // Setup clients from environment variables
+/**
+ * Configure all enabled clients from environment variables. If none end up
+ * configured, warns with setup instructions and falls back to registering
+ * every enabled (but unconfigured) client so its tools are still listable.
+ */
+async function configureClientsFromEnv(
+  server: SmartBearMcpServer,
+): Promise<void> {
   const configuredCount = await clientRegistry.configure(
     server,
     (client, key) => {
       const envVarName = getEnvVarName(client.configPrefix, key);
-      return process.env[envVarName] || null;
+      return getEnv(envVarName) || null;
     },
   );
   if (configuredCount === 0) {
     const message = getNoConfigMessage();
+    // biome-ignore lint/suspicious/noConsole: operator-facing configuration warning
     console.warn(
       message.length > 0
         ? `No clients configured. Please provide valid environment variables for at least one client:\n${message.join("\n")}`
         : "No clients support environment variable configuration.",
     );
-    // Add non-configured clients to server to allow listing available tools
+    // Add non-configured clients to server to allow listing available tools.
+    // Sequential (not Promise.all) so registration order stays deterministic.
     for (const entry of clientRegistry.getAll()) {
+      // biome-ignore lint/performance/noAwaitInLoops: sequential registration order required
       await server.addClient(entry);
     }
   }
+}
+
+/**
+ * Run server in STDIO mode (default)
+ */
+export async function runStdioMode() {
+  handleCliFlags();
+
+  enableCompileCache();
+
+  const server = new SmartBearMcpServer(getEnv("MCP_TOOLSETS"));
+
+  // Setup clients from environment variables
+  await configureClientsFromEnv(server);
 
   const transport = new StdioServerTransport();
 
@@ -89,6 +117,8 @@ export async function runStdioMode() {
     try {
       await transport.close();
     } catch (err) {
+      // biome-ignore lint/security/noSecrets: log message text, not a secret
+      // biome-ignore lint/suspicious/noConsole: operator-facing shutdown diagnostic
       console.error("[MCP][shutdown] Error closing stdio transport:", err);
     }
   });

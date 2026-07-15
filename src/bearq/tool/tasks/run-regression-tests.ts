@@ -3,7 +3,7 @@ import type { ZodRawShape } from "zod";
 import { z } from "zod";
 import { Tool, ToolError } from "../../../common/tools.ts";
 import type { ToolParams } from "../../../common/types.ts";
-import type { BearQClient } from "../../client.ts";
+import type { BearqClient } from "../../client.ts";
 
 const inputSchema = z.object({
   environment: z
@@ -15,7 +15,7 @@ const inputSchema = z.object({
     ),
 });
 
-export class RunRegressionTests extends Tool<BearQClient> {
+export class RunRegressionTests extends Tool<BearqClient> {
   specification: ToolParams = {
     title: "Run Regression Tests",
     toolset: "Tasks",
@@ -27,16 +27,19 @@ export class RunRegressionTests extends Tool<BearQClient> {
   handle: ToolCallback<ZodRawShape> = async (args) => {
     const { environment } = inputSchema.parse(args);
     const body: Record<string, unknown> = { agent: "tester", mode: "run" };
-    if (environment !== undefined) body.environment = environment;
+    if (environment !== undefined) {
+      body.environment = environment;
+    }
     const res = await fetch(`${this.client.getBaseUrl()}/tasks`, {
       method: "POST",
       headers: this.client.getHeaders(),
       body: JSON.stringify(body),
     });
-    if (!res.ok)
+    if (!res.ok) {
       throw new ToolError(
         `POST /tasks failed: ${res.status} ${res.statusText}`,
       );
+    }
     return {
       content: [{ type: "text", text: JSON.stringify(await res.json()) }],
     };

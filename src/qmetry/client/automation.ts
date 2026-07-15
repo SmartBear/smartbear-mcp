@@ -4,7 +4,7 @@ import { QMETRY_PATHS } from "../config/rest-endpoints.ts";
 import type { ImportAutomationResultsPayload } from "../types/automation.ts";
 import { DEFAULT_IMPORT_AUTOMATION_PAYLOAD } from "../types/automation.ts";
 import { qmetryRequest } from "./api/client-api.ts";
-import { handleQMetryApiError } from "./api/error-handler.ts";
+import { handleQmetryApiError } from "./api/error-handler.ts";
 
 /**
  * Imports automation test results into QMetry
@@ -24,12 +24,14 @@ import { handleQMetryApiError } from "./api/error-handler.ts";
  * @param payload - Import configuration including file data, entityType, and optional parameters
  * @returns Promise resolving to import result with test suite and execution details
  */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: handles three mutually-exclusive file input formats (data URI, file path, raw base64) plus all optional multipart form fields; splitting would fragment one cohesive upload flow
+// biome-ignore lint/complexity/noExcessiveLinesPerFunction: see above — one cohesive file-upload flow with three input formats and many optional fields
 export async function importAutomationResults(
   token: string,
   baseUrl: string,
   project: string,
   payload: ImportAutomationResultsPayload,
-): Promise<any> {
+): Promise<unknown> {
   // Merge with defaults
   const finalPayload: ImportAutomationResultsPayload = {
     ...DEFAULT_IMPORT_AUTOMATION_PAYLOAD,
@@ -45,10 +47,10 @@ export async function importAutomationResults(
 
   if (finalPayload.file.startsWith("data:")) {
     // Base64 data URI format
-    const base64Data = finalPayload.file.split(",")[1];
+    const [, base64Data] = finalPayload.file.split(",");
     const binaryData = atob(base64Data);
     const bytes = new Uint8Array(binaryData.length);
-    for (let i = 0; i < binaryData.length; i++) {
+    for (let i = 0; i < binaryData.length; i += 1) {
       bytes[i] = binaryData.charCodeAt(i);
     }
     fileBlob = new Blob([bytes]);
@@ -64,6 +66,7 @@ export async function importAutomationResults(
     } catch (error) {
       throw new Error(
         `Failed to read file from path: ${finalPayload.file}. Error: ${error instanceof Error ? error.message : String(error)}`,
+        { cause: error },
       );
     }
   } else {
@@ -71,13 +74,14 @@ export async function importAutomationResults(
     try {
       const binaryData = atob(finalPayload.file);
       const bytes = new Uint8Array(binaryData.length);
-      for (let i = 0; i < binaryData.length; i++) {
+      for (let i = 0; i < binaryData.length; i += 1) {
         bytes[i] = binaryData.charCodeAt(i);
       }
       fileBlob = new Blob([bytes]);
-    } catch (_error) {
+    } catch (error) {
       throw new Error(
         "Invalid file format. Please provide base64 encoded file content or file path.",
+        { cause: error },
       );
     }
   }
@@ -154,11 +158,12 @@ export async function importAutomationResults(
   } catch (error) {
     throw new Error(
       `Failed to import automation results. Network error: ${error instanceof Error ? error.message : String(error)}\n\nPlease check:\n- QMetry server is accessible\n- File size is under 30 MB\n- File format is .json, .xml, or .zip`,
+      { cause: error },
     );
   }
 
   if (!res.ok) {
-    await handleQMetryApiError(
+    await handleQmetryApiError(
       res,
       baseUrl || QMETRY_DEFAULTS.BASE_URL,
       project || QMETRY_DEFAULTS.PROJECT_KEY,
@@ -185,18 +190,21 @@ export async function getAutomationStatus(
   let numericRequestId: number;
   if (
     typeof requestId === "object" &&
+    // biome-ignore lint/suspicious/noUnnecessaryConditions: requestId is declared as number but MCP tool callers are not statically type-checked, so this guards against an object actually being passed at runtime
     requestId !== null &&
     "requestID" in requestId &&
-    typeof (requestId as any).requestID !== "undefined"
+    typeof (requestId as Record<string, unknown>).requestID !== "undefined"
   ) {
-    numericRequestId = Number((requestId as any).requestID);
+    numericRequestId = Number(
+      (requestId as Record<string, unknown>).requestID as string | number,
+    );
   } else {
     numericRequestId = Number(requestId);
   }
   if (!numericRequestId || Number.isNaN(numericRequestId)) {
     throw new Error("requestID must be a valid number");
   }
-  return qmetryRequest({
+  return await qmetryRequest({
     method: "GET",
     path: QMETRY_PATHS.AUTOMATION.GET_STATUS.replace(
       ":requestID",

@@ -3,11 +3,16 @@ import type {
   ServerNotification,
   ServerRequest,
 } from "@modelcontextprotocol/sdk/types.js";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+import {
+  asZephyrClient,
+  createMockZephyrClient,
+  type MockZephyrClient,
+} from "../../common/test-helpers.ts";
 import { UpdateTestExecutionSteps } from "./update-test-steps.ts";
 
 describe("UpdateTestExecutionSteps", () => {
-  let mockClient: any;
+  let mockClient: MockZephyrClient;
   let instance: UpdateTestExecutionSteps;
 
   const ExtraRequestHandler: RequestHandlerExtra<
@@ -25,13 +30,8 @@ describe("UpdateTestExecutionSteps", () => {
   };
 
   beforeEach(() => {
-    mockClient = {
-      getApiClient: vi.fn().mockReturnValue({
-        get: vi.fn(),
-        put: vi.fn(),
-      }),
-    };
-    instance = new UpdateTestExecutionSteps(mockClient as any);
+    mockClient = createMockZephyrClient();
+    instance = new UpdateTestExecutionSteps(asZephyrClient(mockClient));
   });
 
   it("should set specification correctly", () => {
@@ -154,7 +154,7 @@ describe("UpdateTestExecutionSteps", () => {
         ExtraRequestHandler,
       );
 
-      const body = mockClient.getApiClient().put.mock.calls[0][1];
+      const [, body] = mockClient.getApiClient().put.mock.calls[0];
 
       expect(body.steps[0]).toEqual({
         actualResult: "API returned 500 error",
@@ -246,7 +246,7 @@ describe("UpdateTestExecutionSteps", () => {
 
       await instance.handle(args, ExtraRequestHandler);
 
-      const body = mockClient.getApiClient().put.mock.calls[0][1];
+      const [, body] = mockClient.getApiClient().put.mock.calls[0];
 
       expect(body.steps[0]).toEqual({
         actualResult: "Existing result 1",
@@ -299,7 +299,7 @@ describe("UpdateTestExecutionSteps", () => {
         ExtraRequestHandler,
       );
 
-      const body = mockClient.getApiClient().put.mock.calls[0][1];
+      const [, body] = mockClient.getApiClient().put.mock.calls[0];
 
       expect(body.steps[0]).toEqual({
         actualResult: "API returned 500 error",
@@ -337,7 +337,7 @@ describe("UpdateTestExecutionSteps", () => {
 
       await instance.handle(args, ExtraRequestHandler);
 
-      const body = mockClient.getApiClient().put.mock.calls[0][1];
+      const [, body] = mockClient.getApiClient().put.mock.calls[0];
       expect(body.steps[0]).toEqual({
         actualResult: "Page froze while updating notification preferences",
         statusName: "Fail",

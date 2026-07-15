@@ -6,6 +6,7 @@
  * This follows the pattern established in the pactflow module.
  */
 
+// biome-ignore-all lint/style/noExcessiveLinesPerFile: single flat list of tool definitions; splitting would separate each tool's schema/handler/description trio across files
 import type { ToolParams } from "../../common/types.ts";
 import { FUNCTIONAL_TESTING_TOOLS } from "./functional-testing-tools.ts";
 import {
@@ -62,6 +63,7 @@ import {
 
 export interface SwaggerToolParams extends ToolParams {
   handler: string;
+  // biome-ignore lint/suspicious/noExplicitAny: handlers return heterogeneous result types (arrays, objects, primitives) dispatched dynamically by name; formatResponse implementations narrow their own parameter type per tool
   formatResponse?: (result: any) => any;
 }
 
@@ -305,6 +307,7 @@ export const TOOLS: SwaggerToolParams[] = [
       "Run a standardization scan on an API that already exists in SwaggerHub Registry, identified by organization name, API name, and version. Fetches the API definition from the registry internally and scans it against the organization's governance and standardization rules. Returns a list of validation errors, total issue count, counts grouped by severity, and a SwaggerHub UI URL for the scanned API. Use this tool when the user identifies the API by org name, API name, and version and asks to validate, scan, or check the governance or standardization of an existing API.",
     inputSchema: ScanApiStandardizationFromRegistryParamsSchema,
     outputSchema: ScanFromRegistryOutputSchema,
+    // biome-ignore lint/security/noSecrets: false positive; this is the SwaggerClient method name dispatched by registerTools, not a secret
     handler: "scanApiStandardizationFromRegistry",
     ...READ_ONLY,
   },

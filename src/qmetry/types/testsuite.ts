@@ -9,6 +9,7 @@ import {
 
 export interface ReleaseCycleMapping {
   releaseId: number;
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   buildID: number;
 }
 
@@ -24,6 +25,7 @@ export interface CreateTestSuitePayload {
 }
 export interface UpdateTestSuitePayload {
   id: number; // required - Test Suite ID
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   TsFolderID: number; // required - Test Suite folder ID
   entityKey: string; // required - Test Case folder ID
   name?: string; // required - Test Case name
@@ -34,6 +36,7 @@ export interface UpdateTestSuitePayload {
 export interface FetchTestSuitesForTestCasePayload
   extends PaginationPayload,
     FilterPayload {
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tsFolderID: number; // required - Test Suite folder ID
   viewId?: number; // optional - Test Suite folder view ID (auto-resolved if not provided)
   getColumns?: boolean; // whether to get column information
@@ -67,6 +70,7 @@ export const DEFAULT_FETCH_TESTSUITES_FOR_TESTCASE_PAYLOAD: Omit<
 export interface FetchTestCasesByTestSuitePayload
   extends PaginationPayload,
     FilterPayload {
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tsID: number; // required - Test Suite ID
   getLinked?: boolean; // optional - True to get linked test cases, false for unlinked (default: true)
 }
@@ -83,7 +87,9 @@ export const DEFAULT_FETCH_TESTCASES_BY_TESTSUITE_PAYLOAD: Omit<
 export interface FetchExecutionsByTestSuitePayload
   extends PaginationPayload,
     FilterPayload {
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tsID: number; // required - Test Suite ID
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tsFolderID?: number; // optional - Test Suite folder ID
   gridName?: string; // optional - Grid Name to be displayed
   viewId?: number; // optional - View ID for executions
@@ -100,6 +106,7 @@ export const DEFAULT_FETCH_EXECUTIONS_BY_TESTSUITE_PAYLOAD: Omit<
 
 export interface FetchTestCaseRunsByTestSuiteRunPayload
   extends PaginationPayload {
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tsrunID: string; // required - Test Suite Run ID (STRING format - get from executions API)
   viewId: number; // required - View ID for test execution (get from project info latestViews.TE.viewId)
   filter?: string; // optional - standard field filter as JSON string (default '[]')
@@ -109,13 +116,17 @@ export interface FetchTestCaseRunsByTestSuiteRunPayload
 }
 
 export interface LinkedTestCasesToTestSuitePayload {
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tsID: number; // required - Test Suite ID
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tcvdIDs: number[]; // required - Array of Test Case Version IDs (used if fromReqs is false or undefined)
   fromReqs?: boolean; // optional - Indicates whether to link from requirements
 }
 
 export interface ReqLinkedTestCasesToTestSuitePayload {
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tsID: number; // required - Test Suite ID
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tcvdIDs: number[]; // required - Array of Test Case Version IDs (used if fromReqs is true)
   fromReqs?: boolean; // optional - Indicates whether to link from requirements
 }
@@ -200,10 +211,13 @@ export const DEFAULT_LINKED_PLATFORMS_TO_TESTSUITE_PAYLOAD: Omit<
 > = {};
 
 export interface BulkUpdateExecutionStatusPayload {
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   entityIDs: string; // required - Comma-separated Test Case Run IDs
   entityType: "TCR" | "TCSR"; // required - Type of Entity
   qmTsRunId: string; // required - Test Suite Run ID
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   runStatusID: number; // required - Execution status ID
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   dropID?: number | string; // optional - Build/Drop ID
   isAutoExecuted?: "0" | "1"; // optional - Manual (0) or Automated (1)
   isBulkOperation?: boolean; // optional - True for bulk, false for single

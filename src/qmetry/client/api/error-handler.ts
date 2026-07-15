@@ -1,3 +1,4 @@
+// biome-ignore-all lint/style/noExcessiveLinesPerFile: this module cohesively covers troubleshooting text for every QMetry API error scenario; splitting it would scatter closely related error templates and their detection logic
 /**
  * QMetry API Error Handling Utilities
  *
@@ -13,15 +14,10 @@
  * - Generic API errors with helpful troubleshooting
  */
 
-export interface QMetryErrorContext {
-  status: number;
-  errorData?: any;
-  errorText: string;
-  baseUrl: string;
-  project?: string;
-  path?: string;
-  isCorsError?: boolean;
-}
+// MARK: HTTP status codes
+const HTTP_UNAUTHORIZED = 401;
+const HTTP_FORBIDDEN = 403;
+const HTTP_NOT_FOUND = 404;
 
 /**
  * Error message templates for common QMetry API issues
@@ -124,40 +120,40 @@ const ERROR_TEMPLATES = {
 /**
  * Checks if the error is related to authentication (invalid/expired API key)
  */
-function isAuthenticationError(context: QMetryErrorContext): boolean {
+function isAuthenticationError(context: QmetryErrorContext): boolean {
   const { status, errorData } = context;
 
   return (
-    status === 401 ||
+    status === HTTP_UNAUTHORIZED ||
     errorData?.code === "CO.INVALID_API_KEY" ||
-    errorData?.message?.toLowerCase().includes("invalid api key")
+    (errorData?.message?.toLowerCase().includes("invalid api key") ?? false)
   );
 }
 
 /**
  * Checks if the error is related to authorization (insufficient permissions)
  */
-function isAuthorizationError(context: QMetryErrorContext): boolean {
+function isAuthorizationError(context: QmetryErrorContext): boolean {
   const { status } = context;
-  return status === 403;
+  return status === HTTP_FORBIDDEN;
 }
 
 /**
  * Checks if the error is related to project access
  */
-function isProjectAccessError(context: QMetryErrorContext): boolean {
+function isProjectAccessError(context: QmetryErrorContext): boolean {
   const { status, path } = context;
-  return status === 404 && (path?.includes("project") ?? false);
+  return status === HTTP_NOT_FOUND && (path?.includes("project") ?? false);
 }
 
 /**
  * Checks if the error is related to CORS (Cross-Origin Resource Sharing)
  */
-function isCorsError(context: QMetryErrorContext): boolean {
-  const { status, errorText, isCorsError } = context;
+function isCorsError(context: QmetryErrorContext): boolean {
+  const { status, errorText, isCorsError: hasCorsFlag } = context;
 
   // Explicit CORS flag from fetch error
-  if (isCorsError) {
+  if (hasCorsFlag) {
     return true;
   }
 
@@ -188,7 +184,7 @@ function isCorsError(context: QMetryErrorContext): boolean {
 /**
  * Checks if the error is related to SSL/TLS certificate issues
  */
-function isSslCertificateError(context: QMetryErrorContext): boolean {
+function isSslCertificateError(context: QmetryErrorContext): boolean {
   const { errorText } = context;
 
   // Common SSL certificate error indicators
@@ -227,12 +223,12 @@ function isSslCertificateError(context: QMetryErrorContext): boolean {
 /**
  * Checks if the error is related to invalid/wrong API URL
  */
-function isInvalidUrlError(context: QMetryErrorContext): boolean {
+function isInvalidUrlError(context: QmetryErrorContext): boolean {
   const { status, errorText, errorData } = context;
   const lowercaseErrorText = errorText.toLowerCase();
 
   // HTTP 404 is the most common indicator of wrong URL/endpoint
-  if (status === 404) {
+  if (status === HTTP_NOT_FOUND) {
     return true;
   }
 
@@ -281,7 +277,7 @@ function isInvalidUrlError(context: QMetryErrorContext): boolean {
 /**
  * Creates an appropriate error message based on the error context
  */
-export function createQMetryError(context: QMetryErrorContext): Error {
+export function createQmetryError(context: QmetryErrorContext): Error {
   const { status, errorText, baseUrl, project } = context;
 
   // SSL certificate errors should be checked first as they're network-level issues
@@ -326,13 +322,13 @@ export function createQMetryError(context: QMetryErrorContext): Error {
  * @param project - Optional project context
  * @param path - Optional API path context
  */
-export async function handleQMetryApiError(
+export async function handleQmetryApiError(
   response: Response,
   baseUrl: string,
   project?: string,
   path?: string,
 ): Promise<never> {
-  let errorData: any;
+  let errorData: QmetryErrorData | undefined;
   let errorText: string;
 
   try {
@@ -342,7 +338,7 @@ export async function handleQMetryApiError(
     errorText = (await response.text()) || `HTTP ${response.status}`;
   }
 
-  const context: QMetryErrorContext = {
+  const context: QmetryErrorContext = {
     status: response.status,
     errorData,
     errorText,
@@ -351,7 +347,7 @@ export async function handleQMetryApiError(
     path,
   };
 
-  throw createQMetryError(context);
+  throw createQmetryError(context);
 }
 
 /**
@@ -362,7 +358,7 @@ export async function handleQMetryApiError(
  * @param project - Optional project context
  * @param path - Optional API path context
  */
-export function handleQMetryFetchError(
+export function handleQmetryFetchError(
   error: Error,
   baseUrl: string,
   project?: string,
@@ -373,7 +369,7 @@ export function handleQMetryFetchError(
 
   // Check if error has a cause property with more details (common for SSL errors)
   if (error.cause && typeof error.cause === "object") {
-    const cause = error.cause as any;
+    const cause = error.cause as Record<string, unknown>;
     if (cause.message) {
       errorText += ` | Cause: ${cause.message}`;
     }
@@ -381,8 +377,8 @@ export function handleQMetryFetchError(
       errorText += ` | Code: ${cause.code}`;
     }
     // Add the full cause details for better debugging
-    if (cause.toString && typeof cause.toString === "function") {
-      errorText += ` | Details: ${cause.toString()}`;
+    if (typeof cause.toString === "function") {
+      errorText += ` | Details: ${(cause.toString as () => string)()}`;
     }
   }
 
@@ -410,7 +406,7 @@ export function handleQMetryFetchError(
   const isSslError = isSslCertificateError(tempContext);
   const isUrlError = isInvalidUrlError(tempContext);
 
-  const context: QMetryErrorContext = {
+  const context: QmetryErrorContext = {
     status: 0, // Status 0 typically indicates network/CORS/SSL issues
     errorText,
     baseUrl,
@@ -420,5 +416,27 @@ export function handleQMetryFetchError(
     isCorsError: !(isSslError || isUrlError),
   };
 
-  throw createQMetryError(context);
+  throw createQmetryError(context);
+}
+
+/**
+ * Shape of a QMetry API error response body. The exact fields present vary by
+ * endpoint and failure mode, so this only models the fields this module
+ * inspects; unrecognized fields are preserved via the index signature.
+ */
+export interface QmetryErrorData {
+  code?: string;
+  message?: string;
+  error?: string;
+  [key: string]: unknown;
+}
+
+export interface QmetryErrorContext {
+  status: number;
+  errorData?: QmetryErrorData;
+  errorText: string;
+  baseUrl: string;
+  project?: string;
+  path?: string;
+  isCorsError?: boolean;
 }

@@ -1,14 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ToolError } from "../../../common/tools.ts";
+import type { Qtm4jClient } from "../../client.ts";
 import { ENDPOINTS } from "../../config/constants.ts";
 import { ResolverKeys } from "../../config/field-resolution.types.ts";
 import { GetTestSteps } from "./get-test-steps.ts";
 
+type MockMethods = Record<string, ReturnType<typeof vi.fn>>;
+
 describe("GetTestSteps", () => {
-  let mockClient: any;
-  let mockApiClient: any;
-  let mockRegistry: any;
-  let mockUidResolver: any;
+  let mockClient: Partial<Qtm4jClient>;
+  let mockApiClient: MockMethods;
+  let mockRegistry: MockMethods;
+  let mockUidResolver: MockMethods;
   let instance: GetTestSteps;
 
   const mockContext = {
@@ -50,7 +53,7 @@ describe("GetTestSteps", () => {
       getResolverRegistry: vi.fn().mockReturnValue(mockRegistry),
     };
 
-    instance = new GetTestSteps(mockClient as any);
+    instance = new GetTestSteps(mockClient as Qtm4jClient);
   });
 
   describe("specification", () => {

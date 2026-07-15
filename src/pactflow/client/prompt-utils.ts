@@ -11,7 +11,7 @@ import {
   EndpointMatcherSchema,
   MatcherRecommendationInputSchema,
   type MatcherRecommendations,
-  type OpenAPI,
+  type OpenApi,
 } from "./ai";
 import { OADMatcherPrompt } from "./prompts";
 
@@ -24,7 +24,7 @@ import { OADMatcherPrompt } from "./prompts";
  * @throws Error if unable to parse recommendations.
  */
 export async function getOADMatcherRecommendations(
-  openAPI: OpenAPI,
+  openAPI: OpenApi,
   server: SmartBearMcpServer,
 ): Promise<MatcherRecommendations | SamplingPolyfillResult> {
   const prompt = OADMatcherPrompt.replace("{0}", JSON.stringify(openAPI));

@@ -36,7 +36,7 @@ export async function getProjectInfo(
   baseUrl: string,
   project?: string,
 ) {
-  return qmetryRequest({
+  return await qmetryRequest({
     method: "GET",
     path: QMETRY_PATHS.PROJECT.GET_INFO,
     token,
@@ -59,7 +59,7 @@ export async function getProjects(
     ...payload,
   };
 
-  return qmetryRequest<unknown>({
+  return await qmetryRequest<unknown>({
     method: "POST",
     path: QMETRY_PATHS.PROJECT.GET_PROJECTS,
     token,
@@ -87,7 +87,7 @@ export async function getReleasesCycles(
     showArchive: showArchiveValue,
   };
 
-  return qmetryRequest({
+  return await qmetryRequest({
     method: "POST",
     path: QMETRY_PATHS.PROJECT.GET_RELEASES_CYCLES,
     token,
@@ -111,7 +111,7 @@ export async function getBuilds(
     ...payload,
   };
 
-  return qmetryRequest<unknown>({
+  return await qmetryRequest<unknown>({
     method: "POST",
     path: QMETRY_PATHS.PROJECT.GET_BUILD,
     token,
@@ -136,7 +136,7 @@ export async function getPlatforms(
     ...payload,
   };
 
-  return qmetryRequest({
+  return await qmetryRequest({
     method: "POST",
     path: QMETRY_PATHS.PROJECT.GET_PLATFORMS,
     token,
@@ -182,7 +182,7 @@ export async function createRelease(
     );
   }
 
-  return qmetryRequest({
+  return await qmetryRequest({
     method: "POST",
     path: QMETRY_PATHS.PROJECT.CREATE_RELEASE,
     token,
@@ -228,7 +228,7 @@ export async function createCycle(
     );
   }
 
-  return qmetryRequest({
+  return await qmetryRequest({
     method: "POST",
     path: QMETRY_PATHS.PROJECT.CREATE_CYCLE,
     token,
@@ -268,7 +268,7 @@ export async function updateCycle(
     );
   }
 
-  return qmetryRequest({
+  return await qmetryRequest({
     method: "PUT",
     path: QMETRY_PATHS.PROJECT.UPDATE_CYCLE,
     token,

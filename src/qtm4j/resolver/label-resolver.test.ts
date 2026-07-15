@@ -1,16 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { CacheService } from "../../common/cache.ts";
 import { ENDPOINTS } from "../config/constants.ts";
 import {
   InputField,
   type ProjectContext,
   ResolverKeys,
 } from "../config/field-resolution.types.ts";
+import type { ApiClient } from "../http/api-client.ts";
 import { Cache } from "./cache/cache.ts";
 import { LabelResolver } from "./resolvers/label-resolver.ts";
 
 vi.mock("./cache/cache");
 
-function makeMockCacheService() {
+function makeMockCacheService(): CacheService {
   const store = new Map<string, unknown>();
   return {
     get: <T>(key: string): T | undefined => store.get(key) as T | undefined,
@@ -23,14 +25,20 @@ function makeMockCacheService() {
       return 1;
     },
     isEnabled: () => true,
-    flushAll: () => {},
-  };
+    flushAll: () => {
+      store.clear();
+    },
+  } as unknown as CacheService;
 }
 
 describe("LabelResolver", () => {
-  let mockApiClient: any;
+  let mockApiClient: { get: ReturnType<typeof vi.fn> };
   let resolver: LabelResolver;
-  let mockCache: any;
+  let mockCache: {
+    matchValue: ReturnType<typeof vi.fn>;
+    set: ReturnType<typeof vi.fn>;
+    clear: ReturnType<typeof vi.fn>;
+  };
   const context: ProjectContext = {
     projectKey: "PROJ",
     projectId: 10_000,
@@ -43,9 +51,12 @@ describe("LabelResolver", () => {
     mockApiClient = { get: vi.fn() };
     mockCache = { matchValue: vi.fn(), set: vi.fn(), clear: vi.fn() };
 
-    vi.mocked(Cache).mockImplementation(() => mockCache);
+    vi.mocked(Cache).mockImplementation(() => mockCache as unknown as Cache);
 
-    resolver = new LabelResolver(mockApiClient, makeMockCacheService() as any);
+    resolver = new LabelResolver(
+      mockApiClient as unknown as ApiClient,
+      makeMockCacheService(),
+    );
   });
 
   describe("fieldKeys", () => {

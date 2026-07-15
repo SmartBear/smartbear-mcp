@@ -1,3 +1,4 @@
+import type { Mock } from "vitest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { bulkUpdateExecutionStatus } from "../client/testsuite.ts";
 import type { BulkUpdateExecutionStatusPayload } from "../types/testsuite.ts";
@@ -11,11 +12,12 @@ describe("testsuite bulk update execution status API", () => {
     vi.resetAllMocks();
   });
 
-  const mockOk = (data: any) => ({
+  const mockOk = <T>(data: T) => ({
     ok: true,
     json: async () => data,
   });
 
+  // biome-ignore lint/security/noSecrets: high-entropy false positive; this is a descriptive string (error message, parameter name, or API action name), not a credential
   describe("bulkUpdateExecutionStatus", () => {
     it("should PUT bulk execution status update with correct payload", async () => {
       const payload: BulkUpdateExecutionStatusPayload = {
@@ -84,7 +86,7 @@ describe("testsuite bulk update execution status API", () => {
       expect(result).toEqual(mockResponse);
       expect(globalThis.fetch).toHaveBeenCalledTimes(1);
 
-      const [, options] = (globalThis.fetch as any).mock.calls[0];
+      const [, options] = (globalThis.fetch as Mock).mock.calls[0];
       const bodyData = JSON.parse(options.body);
 
       expect(bodyData.entityIDs).toBe("66095087");

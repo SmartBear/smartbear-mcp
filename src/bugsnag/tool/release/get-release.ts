@@ -41,6 +41,7 @@ export class GetRelease extends Tool<BugsnagClient> {
       {
         description: "Get details for a specific release",
         parameters: {
+          // biome-ignore lint/security/noSecrets: example release ID, not a secret
           releaseId: "5f8d0d55c9e77c0017a1b2c3",
         },
         expectedOutput:
@@ -60,8 +61,9 @@ export class GetRelease extends Tool<BugsnagClient> {
     const releaseResponse = await this.client.projectApi.getReleaseGroup(
       params.releaseId,
     );
-    if (!releaseResponse.body)
+    if (!releaseResponse.body) {
       throw new ToolError(`No release for ${params.releaseId} found.`);
+    }
     const release = this.client.addStabilityData(releaseResponse.body, project);
     let builds: (Build & StabilityData)[] = [];
     if (releaseResponse.body) {

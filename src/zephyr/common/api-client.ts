@@ -1,15 +1,18 @@
 import { ToolError } from "../../common/tools.ts";
 import { AuthService } from "./auth-service.ts";
 
+const TRAILING_SLASH_REGEX = /\/$/;
+const NO_CONTENT_STATUS = 204;
+
 export class ApiClient {
-  public readonly baseUrl: string;
+  readonly baseUrl: string;
   private readonly tokenProvider: () => string | null;
 
   constructor(
     tokenOrProvider: string | (() => string | null),
     baseUrl: string,
   ) {
-    this.baseUrl = baseUrl.trim().replace(/\/$/, "");
+    this.baseUrl = baseUrl.trim().replace(TRAILING_SLASH_REGEX, "");
 
     if (typeof tokenOrProvider === "string") {
       this.tokenProvider = () => tokenOrProvider;
@@ -18,7 +21,7 @@ export class ApiClient {
     }
   }
 
-  public get defaultHeaders(): Record<string, string> {
+  get defaultHeaders(): Record<string, string> {
     return this.getHeaders();
   }
 
@@ -36,11 +39,11 @@ export class ApiClient {
   ): string {
     const url = new URL(this.baseUrl + endpoint);
     if (params) {
-      Object.entries(params).forEach(([key, value]) => {
+      for (const [key, value] of Object.entries(params)) {
         if (value !== undefined) {
           url.searchParams.append(key, String(value));
         }
-      });
+      }
     }
     return url.toString();
   }
@@ -48,7 +51,7 @@ export class ApiClient {
   async get(
     endpoint: string,
     params?: Record<string, string | number | boolean | undefined>,
-  ): Promise<any> {
+  ): Promise<Record<string, unknown>> {
     const response = await fetch(this.getUrl(endpoint, params), {
       method: "GET",
       headers: this.getHeaders(),
@@ -56,7 +59,7 @@ export class ApiClient {
     return await this.validateAndGetResponseBody(response);
   }
 
-  async post(endpoint: string, body: object): Promise<any> {
+  async post(endpoint: string, body: object): Promise<Record<string, unknown>> {
     const response = await fetch(this.getUrl(endpoint), {
       method: "POST",
       headers: {
@@ -68,7 +71,7 @@ export class ApiClient {
     return await this.validateAndGetResponseBody(response);
   }
 
-  async put(endpoint: string, body: object): Promise<any> {
+  async put(endpoint: string, body: object): Promise<Record<string, unknown>> {
     const response = await fetch(this.getUrl(endpoint), {
       method: "PUT",
       headers: {
@@ -80,7 +83,9 @@ export class ApiClient {
     return await this.validateAndGetResponseBody(response);
   }
 
-  private async validateAndGetResponseBody(response: Response) {
+  private async validateAndGetResponseBody(
+    response: Response,
+  ): Promise<Record<string, unknown>> {
     if (!response.ok) {
       const errorText = await response.text();
       throw new ToolError(
@@ -91,7 +96,7 @@ export class ApiClient {
     // Check if response has content before parsing JSON
     const contentLength = response.headers.get("content-length");
     // If content-length is 0 or response is 204 No Content, return empty object
-    if (response.status === 204 || contentLength === "0") {
+    if (response.status === NO_CONTENT_STATUS || contentLength === "0") {
       return {};
     }
     const text = await response.text();

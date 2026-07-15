@@ -38,7 +38,7 @@ export class ListSegments extends Tool<ReflectClient> {
       limit?: number;
     };
 
-    const urlPath = this.client.isOAuthRequest()
+    const urlPath = this.client.isOauthRequest()
       ? `https://${WEB_APP_HOSTNAME}/api/mcp`
       : `https://${API_HOSTNAME}/v1`;
     const url = `${urlPath}/segments?type=${platform}&offset=${offset}&limit=${limit}`;

@@ -1,13 +1,24 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ToolError } from "../../../common/tools.ts";
+import type { Qtm4jClient } from "../../client.ts";
 import { ENDPOINTS } from "../../config/constants.ts";
 import { SetProjectContext } from "./set-project-context.ts";
 
+type HandleExtra = Parameters<SetProjectContext["handle"]>[1];
+
 describe("SetProjectContext", () => {
-  let mockClient: any;
-  let mockApiClient: any;
-  let mockFieldResolver: any;
-  let mockPreload: any;
+  let mockClient: {
+    getApiClient: ReturnType<typeof vi.fn>;
+    getResolverRegistry: ReturnType<typeof vi.fn>;
+  };
+  let mockApiClient: { post: ReturnType<typeof vi.fn> };
+  let mockFieldResolver: {
+    requireProjectContext: ReturnType<typeof vi.fn>;
+    setProjectContext: ReturnType<typeof vi.fn>;
+    clearProjectCache: ReturnType<typeof vi.fn>;
+    getCommonAttributeResolver: ReturnType<typeof vi.fn>;
+  };
+  let mockPreload: ReturnType<typeof vi.fn>;
   let instance: SetProjectContext;
 
   beforeEach(() => {
@@ -32,7 +43,7 @@ describe("SetProjectContext", () => {
       getResolverRegistry: vi.fn().mockReturnValue(mockFieldResolver),
     };
 
-    instance = new SetProjectContext(mockClient as any);
+    instance = new SetProjectContext(mockClient as unknown as Qtm4jClient);
   });
 
   describe("specification", () => {
@@ -73,7 +84,10 @@ describe("SetProjectContext", () => {
       });
       mockPreload.mockResolvedValueOnce(mockAvailableFields);
 
-      const result = await instance.handle({ projectKey: "SCRUM" }, {} as any);
+      const result = await instance.handle(
+        { projectKey: "SCRUM" },
+        {} as unknown as HandleExtra,
+      );
 
       expect(mockApiClient.post).toHaveBeenCalledWith(ENDPOINTS.PROJECTS, {
         startAt: 0,
@@ -114,7 +128,10 @@ describe("SetProjectContext", () => {
       });
       mockPreload.mockResolvedValueOnce({});
 
-      const result = await instance.handle({ projectKey: "scrum" }, {} as any);
+      const result = await instance.handle(
+        { projectKey: "scrum" },
+        {} as unknown as HandleExtra,
+      );
 
       expect(mockFieldResolver.setProjectContext).toHaveBeenCalledWith({
         projectId: 10_000,
@@ -146,7 +163,7 @@ describe("SetProjectContext", () => {
       });
       mockPreload.mockResolvedValueOnce({});
 
-      await instance.handle({ projectKey: "AD" }, {} as any);
+      await instance.handle({ projectKey: "AD" }, {} as unknown as HandleExtra);
 
       expect(mockFieldResolver.clearProjectCache).toHaveBeenCalledWith("SCRUM");
       expect(mockFieldResolver.setProjectContext).toHaveBeenCalledWith({
@@ -178,7 +195,10 @@ describe("SetProjectContext", () => {
       });
       mockPreload.mockResolvedValueOnce({});
 
-      await instance.handle({ projectKey: "SCRUM" }, {} as any);
+      await instance.handle(
+        { projectKey: "SCRUM" },
+        {} as unknown as HandleExtra,
+      );
 
       expect(mockFieldResolver.clearProjectCache).not.toHaveBeenCalled();
     });
@@ -195,12 +215,15 @@ describe("SetProjectContext", () => {
       });
 
       try {
-        await instance.handle({ projectKey: "NONEXISTENT" }, {} as any);
+        await instance.handle(
+          { projectKey: "NONEXISTENT" },
+          {} as unknown as HandleExtra,
+        );
         // Should not reach here
         expect.fail("Expected error to be thrown");
-      } catch (error: any) {
+      } catch (error) {
         expect(error).toBeInstanceOf(ToolError);
-        expect(error.message).toContain("not found");
+        expect((error as Error).message).toContain("not found");
       }
     });
 
@@ -231,12 +254,15 @@ describe("SetProjectContext", () => {
       });
 
       try {
-        await instance.handle({ projectKey: "SCR" }, {} as any);
+        await instance.handle(
+          { projectKey: "SCR" },
+          {} as unknown as HandleExtra,
+        );
         // Should not reach here
         expect.fail("Expected error to be thrown");
-      } catch (error: any) {
+      } catch (error) {
         expect(error).toBeInstanceOf(ToolError);
-        expect(error.message).toContain("No exact match");
+        expect((error as Error).message).toContain("No exact match");
       }
     });
 
@@ -260,7 +286,10 @@ describe("SetProjectContext", () => {
       });
       mockPreload.mockRejectedValueOnce(new Error("Preload failed"));
 
-      const result = await instance.handle({ projectKey: "SCRUM" }, {} as any);
+      const result = await instance.handle(
+        { projectKey: "SCRUM" },
+        {} as unknown as HandleExtra,
+      );
 
       expect(result.structuredContent).toMatchObject({
         projectId: 10_000,
@@ -274,7 +303,7 @@ describe("SetProjectContext", () => {
       mockApiClient.post.mockRejectedValueOnce(new Error("API Error"));
 
       await expect(
-        instance.handle({ projectKey: "SCRUM" }, {} as any),
+        instance.handle({ projectKey: "SCRUM" }, {} as unknown as HandleExtra),
       ).rejects.toThrow("API Error");
     });
 
@@ -285,7 +314,7 @@ describe("SetProjectContext", () => {
       });
 
       await expect(
-        instance.handle({ projectKey: "SCRUM" }, {} as any),
+        instance.handle({ projectKey: "SCRUM" }, {} as unknown as HandleExtra),
       ).rejects.toThrow();
     });
   });

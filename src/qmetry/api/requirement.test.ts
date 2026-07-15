@@ -1,3 +1,5 @@
+// biome-ignore-all lint/performance/useTopLevelRegex: each regex here is a one-off assertion matcher used once per test; hoisting dozens of single-use patterns would hurt readability without any real perf benefit
+// biome-ignore-all lint/security/noSecrets: this file contains many high-entropy API action-name / wire-format / fixture string constants that trip the noSecrets entropy heuristic; none are real secrets
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { QMETRY_HANDLER_MAP } from "../client/handlers.ts";
 import {
@@ -5,7 +7,7 @@ import {
   fetchRequirements,
 } from "../client/requirement.ts";
 import { fetchTestCasesLinkedToRequirement } from "../client/testcase.ts";
-import { QMetryToolsHandlers } from "../config/constants.ts";
+import { QmetryToolsHandlers } from "../config/constants.ts";
 import { DEFAULT_FETCH_REQUIREMENTS_PAYLOAD } from "../types/requirements.ts";
 
 const token = "fake-token";
@@ -20,14 +22,14 @@ describe("requirement API clients", () => {
   // Handler mapping tests
   describe("Handler Mappings", () => {
     it("should have fetchRequirements mapped to FETCH_REQUIREMENTS handler", () => {
-      expect(QMETRY_HANDLER_MAP[QMetryToolsHandlers.FETCH_REQUIREMENTS]).toBe(
+      expect(QMETRY_HANDLER_MAP[QmetryToolsHandlers.FETCH_REQUIREMENTS]).toBe(
         fetchRequirements,
       );
     });
 
     it("should have fetchRequirementDetails mapped to FETCH_REQUIREMENT_DETAILS handler", () => {
       expect(
-        QMETRY_HANDLER_MAP[QMetryToolsHandlers.FETCH_REQUIREMENT_DETAILS],
+        QMETRY_HANDLER_MAP[QmetryToolsHandlers.FETCH_REQUIREMENT_DETAILS],
       ).toBe(fetchRequirementDetails);
     });
 
@@ -40,7 +42,7 @@ describe("requirement API clients", () => {
     });
   });
 
-  const mockOk = (data: any) => ({
+  const mockOk = <T>(data: T) => ({
     ok: true,
     json: async () => data,
   });
@@ -67,7 +69,7 @@ describe("requirement API clients", () => {
         total: 2,
       };
 
-      global.fetch = vi.fn().mockResolvedValue(mockOk(mockResponse));
+      globalThis.fetch = vi.fn().mockResolvedValue(mockOk(mockResponse));
 
       const result = await fetchRequirements(
         token,
@@ -76,7 +78,7 @@ describe("requirement API clients", () => {
         payload,
       );
 
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(globalThis.fetch).toHaveBeenCalledWith(
         `${baseUrl}/rest/requirements/list/viewColumns`,
         expect.objectContaining({
           method: "POST",
@@ -90,15 +92,21 @@ describe("requirement API clients", () => {
       );
 
       expect(result).toHaveProperty("data");
-      expect((result as any).data).toHaveLength(2);
-      expect((result as any).total).toBe(2);
+      expect((result as Record<string, unknown>).data).toHaveLength(2);
+      expect((result as Record<string, unknown>).total).toBe(2);
     });
 
     it("should throw error when viewId is missing", async () => {
       const payload = { folderPath: "" };
 
       await expect(
-        fetchRequirements(token, baseUrl, projectKey, payload as any),
+        fetchRequirements(
+          token,
+          baseUrl,
+          projectKey,
+          // biome-ignore lint/suspicious/noExplicitAny: intentionally-invalid fixture missing the required 'viewId' field, to exercise the runtime validation error
+          payload as any,
+        ),
       ).rejects.toThrow(
         "[fetchRequirements] Missing or invalid required parameter: 'viewId'.",
       );
@@ -108,14 +116,22 @@ describe("requirement API clients", () => {
       const payload = { viewId: 54_321 };
 
       await expect(
-        fetchRequirements(token, baseUrl, projectKey, payload as any),
+        fetchRequirements(
+          token,
+          baseUrl,
+          projectKey,
+          // biome-ignore lint/suspicious/noExplicitAny: intentionally-invalid fixture missing the required 'folderPath' field, to exercise the runtime validation error
+          payload as any,
+        ),
       ).rejects.toThrow(
         "[fetchRequirements] Missing or invalid required parameter: 'folderPath'.",
       );
     });
 
     it("should handle API errors gracefully", async () => {
-      global.fetch = vi.fn().mockResolvedValue(mockFail(403, "Access denied"));
+      globalThis.fetch = vi
+        .fn()
+        .mockResolvedValue(mockFail(403, "Access denied"));
 
       const payload = {
         viewId: 54_321,
@@ -140,7 +156,7 @@ describe("requirement API clients", () => {
         status: "Active",
       };
 
-      global.fetch = vi.fn().mockResolvedValue(mockOk(mockResponse));
+      globalThis.fetch = vi.fn().mockResolvedValue(mockOk(mockResponse));
 
       const payload = { id: 2_499_315, version: 1 };
       const result = await fetchRequirementDetails(
@@ -150,7 +166,7 @@ describe("requirement API clients", () => {
         payload,
       );
 
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(globalThis.fetch).toHaveBeenCalledWith(
         `${baseUrl}/rest/requirements/detail/data`,
         expect.objectContaining({
           method: "POST",
@@ -172,7 +188,13 @@ describe("requirement API clients", () => {
       const payload = { version: 1 };
 
       await expect(
-        fetchRequirementDetails(token, baseUrl, projectKey, payload as any),
+        fetchRequirementDetails(
+          token,
+          baseUrl,
+          projectKey,
+          // biome-ignore lint/suspicious/noExplicitAny: intentionally-invalid fixture missing the required 'id' field, to exercise the runtime validation error
+          payload as any,
+        ),
       ).rejects.toThrow(
         "[fetchRequirementDetails] Missing or invalid required parameter: 'id'.",
       );
@@ -182,7 +204,13 @@ describe("requirement API clients", () => {
       const payload = { id: 2_499_315 };
 
       await expect(
-        fetchRequirementDetails(token, baseUrl, projectKey, payload as any),
+        fetchRequirementDetails(
+          token,
+          baseUrl,
+          projectKey,
+          // biome-ignore lint/suspicious/noExplicitAny: intentionally-invalid fixture missing the required 'version' field, to exercise the runtime validation error
+          payload as any,
+        ),
       ).rejects.toThrow(
         "[fetchRequirementDetails] Missing or invalid required parameter: 'version'.",
       );
@@ -192,14 +220,20 @@ describe("requirement API clients", () => {
       const payload = { id: "invalid-id", version: 1 };
 
       await expect(
-        fetchRequirementDetails(token, baseUrl, projectKey, payload as any),
+        fetchRequirementDetails(
+          token,
+          baseUrl,
+          projectKey,
+          // biome-ignore lint/suspicious/noExplicitAny: intentionally-invalid fixture using a wrong-typed 'id' value, to exercise the runtime validation error
+          payload as any,
+        ),
       ).rejects.toThrow(
         "[fetchRequirementDetails] Missing or invalid required parameter: 'id'.",
       );
     });
 
     it("should handle API errors gracefully", async () => {
-      global.fetch = vi
+      globalThis.fetch = vi
         .fn()
         .mockResolvedValue(mockFail(404, "Requirement not found"));
 
@@ -214,7 +248,7 @@ describe("requirement API clients", () => {
 
     it("should handle JSON error responses", async () => {
       const errorResponse = { error: "Invalid requirement ID", code: 400 };
-      global.fetch = vi.fn().mockResolvedValue({
+      globalThis.fetch = vi.fn().mockResolvedValue({
         ok: false,
         status: 400,
         headers: new Map([["content-type", "application/json"]]),
@@ -233,7 +267,7 @@ describe("requirement API clients", () => {
     it("should have fetchTestCasesLinkedToRequirement mapped to FETCH_TESTCASES_LINKED_TO_REQUIREMENT handler", () => {
       expect(
         QMETRY_HANDLER_MAP[
-          QMetryToolsHandlers.FETCH_TESTCASES_LINKED_TO_REQUIREMENT
+          QmetryToolsHandlers.FETCH_TESTCASES_LINKED_TO_REQUIREMENT
         ],
       ).toBe(fetchTestCasesLinkedToRequirement);
     });
@@ -254,6 +288,7 @@ describe("requirement API clients", () => {
             "token",
             "baseUrl",
             "project",
+            // biome-ignore lint/suspicious/noExplicitAny: intentionally-invalid fixture missing the required 'rqID' field, to exercise the runtime validation error
             mockPayload as any,
           ),
         ).rejects.toThrow(
@@ -272,6 +307,7 @@ describe("requirement API clients", () => {
             "token",
             "baseUrl",
             "project",
+            // biome-ignore lint/suspicious/noExplicitAny: intentionally-invalid fixture using a wrong-typed 'rqID' value, to exercise the runtime validation error
             mockPayload as any,
           ),
         ).rejects.toThrow(
@@ -290,6 +326,7 @@ describe("requirement API clients", () => {
             "token",
             "baseUrl",
             "project",
+            // biome-ignore lint/suspicious/noExplicitAny: intentionally-invalid fixture using a null 'rqID' value, to exercise the runtime validation error
             mockPayload as any,
           ),
         ).rejects.toThrow(

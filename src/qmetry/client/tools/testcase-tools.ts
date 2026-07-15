@@ -1,4 +1,7 @@
-import { QMetryToolsHandlers } from "../../config/constants.ts";
+// biome-ignore-all lint/style/noMagicNumbers: these are illustrative example IDs/values shown to the LLM in tool descriptions, not computational constants
+// biome-ignore-all lint/style/noExcessiveLinesPerFile: this module cohesively lists all tool definitions, descriptions, and usage examples for one QMetry API area; splitting it would scatter closely related declarations
+// biome-ignore-all lint/security/noSecrets: this file contains many high-entropy API action-name / wire-format / fixture string constants that trip the noSecrets entropy heuristic; none are real secrets
+import { QmetryToolsHandlers } from "../../config/constants.ts";
 import {
   CreateTestCaseArgsSchema,
   TestCaseDetailsArgsSchema,
@@ -8,15 +11,15 @@ import {
   TestCaseVersionDetailsArgsSchema,
   UpdateTestCaseArgsSchema,
 } from "../../types/common.ts";
-import type { QMetryToolParams } from "./types.ts";
+import type { QmetryToolParams } from "./types.ts";
 
-export const TESTCASE_TOOLS: QMetryToolParams[] = [
+export const TESTCASE_TOOLS: QmetryToolParams[] = [
   {
     title: "Create Test Case",
     toolset: "Test Cases",
     summary:
       "Create a new test case in QMetry with steps, metadata, and release/cycle mapping.",
-    handler: QMetryToolsHandlers.CREATE_TEST_CASE,
+    handler: QmetryToolsHandlers.CREATE_TEST_CASE,
     inputSchema: CreateTestCaseArgsSchema,
     purpose:
       "Allows users to create a new test case in QMetry, including steps, custom fields, and release/cycle mapping. " +
@@ -46,6 +49,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       {
         description: "Create a simple test case in folder 102653",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcFolderID: "102653",
           name: "Login Test Case",
         },
@@ -54,6 +58,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       {
         description: "Create a test case with steps and metadata",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcFolderID: "102653",
           name: "Test Case 1",
           steps: [
@@ -128,7 +133,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
     toolset: "Test Cases",
     summary:
       "Update an existing QMetry test case OR create a new version by tcID and tcVersionID, with auto-resolution from entityKey.",
-    handler: QMetryToolsHandlers.UPDATE_TEST_CASE,
+    handler: QmetryToolsHandlers.UPDATE_TEST_CASE,
     inputSchema: UpdateTestCaseArgsSchema,
     purpose:
       "Update a QMetry test case's metadata, steps, or other fields. Can also create NEW VERSIONS of test cases. " +
@@ -156,7 +161,9 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       {
         description: "Update test case summary (existing version update)",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcID: 4_519_260,
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcVersionID: 5_448_492,
           name: "MAC Test11",
         },
@@ -166,7 +173,9 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       {
         description: "Create NEW VERSION with updated summary and description",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcID: 4_572_654,
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcVersionID: 5_514_384,
           tcVersion: 1,
           name: "Add two numbers 2 v2",
@@ -183,7 +192,9 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
         description:
           "Create NEW VERSION with all metadata fields (release, cycle, priority, owner, etc.)",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcID: 4_572_654,
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcVersionID: 5_514_384,
           tcVersion: 1,
           name: "Facebook Login Validation Failed update from MCP V2",
@@ -206,7 +217,9 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       {
         description: "Update EXISTING VERSION 2 (not creating new version)",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcID: 4_572_654,
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcVersionID: 5_514_385,
           name: "Updated version 2 name",
           priority: 2_355_752,
@@ -218,7 +231,9 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
         description:
           "Update priority to High and owner to john.doe (existing version)",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcID: 4_519_260,
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcVersionID: 5_448_492,
           priority: 505_015,
           testcaseOwner: 6963,
@@ -229,7 +244,9 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       {
         description: "Update steps (edit, add, remove) - existing version",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcID: 4_519_260,
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcVersionID: 5_448_492,
           steps: [
             {
@@ -237,6 +254,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
               description: "Step 22",
               inputData: "Input 22",
               expectedOutcome: "Outcome 22",
+              // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
               tcStepID: 3_014_032, // CRITICAL: Include tcStepID to UPDATE existing step (not create duplicate)
             },
             {
@@ -248,6 +266,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
             },
           ],
           removeSteps: [
+            // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
             { tcStepID: 3_014_031, description: "Step 1", orderId: 1 },
           ],
           isStepUpdated: true,
@@ -258,7 +277,9 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       {
         description: "Create NEW VERSION with updated steps",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcID: 4_572_654,
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcVersionID: 5_514_384,
           tcVersion: 1,
           name: "Add two numbers 2 v2",
@@ -268,6 +289,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
               description: "I and u have a calculator",
               inputData: "",
               expectedOutcome: "",
+              // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
               tcStepID: 38_001_791,
             },
             {
@@ -275,6 +297,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
               description: "I add 41 and 31",
               inputData: "",
               expectedOutcome: "",
+              // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
               tcStepID: 38_001_793,
             },
             {
@@ -282,6 +305,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
               description: "the result should be 72",
               inputData: "",
               expectedOutcome: "",
+              // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
               tcStepID: 38_001_792,
             },
           ],
@@ -297,7 +321,9 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       {
         description: "Update only metadata (no steps) - existing version",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcID: 4_519_260,
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcVersionID: 5_448_492,
           updateOnlyMetadata: true,
           name: "New Name",
@@ -309,7 +335,9 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
         description:
           "Create NEW VERSION from existing version 2 with updated steps (working payload for linked test cases)",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcID: 4_594_145,
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           tcVersionID: 5_536_706,
           tcVersion: 2,
           name: "Mock Test Case - E-commerce Checkout Flow - v3",
@@ -320,6 +348,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
               expectedOutcome:
                 "Homepage loads successfully with product catalog",
               inputData: "URL: https://example-shop.com",
+              // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
               tcStepID: 38_129_471,
             },
             {
@@ -327,6 +356,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
               description: "Search for product",
               expectedOutcome: "Search results display relevant products",
               inputData: "Search term: 'wireless headphones'",
+              // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
               tcStepID: 38_129_475,
             },
             {
@@ -334,6 +364,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
               description: "Select product and add to cart",
               expectedOutcome: "Product added to cart, cart counter increments",
               inputData: "Click 'Add to Cart' button",
+              // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
               tcStepID: 38_129_472,
             },
             {
@@ -341,6 +372,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
               description: "Proceed to checkout",
               expectedOutcome: "Checkout page displays with cart summary",
               inputData: "Click cart icon and 'Proceed to Checkout'",
+              // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
               tcStepID: 38_129_473,
             },
             {
@@ -348,6 +380,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
               description: "Complete payment",
               expectedOutcome: "Order confirmation page displayed",
               inputData: "Fill payment details and submit",
+              // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
               tcStepID: 38_129_474,
             },
             {
@@ -477,7 +510,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       "  * WITHOUT tcStepID = CREATE new step (QMetry adds a brand new step)",
       "- For steps to be UPDATED: ALWAYS fetch existing steps first using FETCH_TEST_CASE_STEPS, then include the tcStepID in the step object.",
       "- For steps to be ADDED: omit tcStepID completely in the step object.",
-      "- For steps to be REMOVED: add a full removeSteps object for each step to be deleted, matching the removeTestCaseStep interface.",
+      "- For steps to be REMOVED: add a full removeSteps object for each step to be deleted, matching the RemoveTestCaseStep interface.",
       "- CRITICAL WARNING - DO NOT ADD UNSOLICITED STEPS:",
       "  * ONLY add, edit, or remove steps that the user EXPLICITLY requested",
       "  * DO NOT invent, create, or add extra steps based on assumptions or best practices",
@@ -770,7 +803,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
     toolset: "Test Cases",
     summary:
       "Fetch QMetry test cases - automatically handles viewId resolution based on project",
-    handler: QMetryToolsHandlers.FETCH_TEST_CASES,
+    handler: QmetryToolsHandlers.FETCH_TEST_CASES,
     inputSchema: TestCaseListArgsSchema,
     purpose:
       "Get LIST of test cases from QMetry for browsing and bulk operations. " +
@@ -910,7 +943,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
     toolset: "Test Cases",
     summary:
       "Get detailed information for a specific QMetry test case by numeric ID - USE THIS for single test case lookup",
-    handler: QMetryToolsHandlers.FETCH_TEST_CASE_DETAILS,
+    handler: QmetryToolsHandlers.FETCH_TEST_CASE_DETAILS,
     inputSchema: TestCaseDetailsArgsSchema,
     purpose:
       "PREFERRED TOOL for fetching a SINGLE test case by ID or entityKey. " +
@@ -927,6 +960,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
     examples: [
       {
         description: "Get test case details by numeric ID",
+        // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
         parameters: { tcID: 4_468_020 },
         expectedOutput:
           "Detailed test case information including summary, description, status",
@@ -953,7 +987,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
     toolset: "Test Cases",
     summary:
       "Get QMetry test case details for a specific version by numeric ID",
-    handler: QMetryToolsHandlers.FETCH_TEST_CASE_VERSION_DETAILS,
+    handler: QmetryToolsHandlers.FETCH_TEST_CASE_VERSION_DETAILS,
     inputSchema: TestCaseVersionDetailsArgsSchema,
     purpose:
       "Retrieve version-specific information for a test case including history and changes",
@@ -985,7 +1019,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
     toolset: "Test Cases",
     summary:
       "Get detailed test case steps for a specific test case by numeric ID",
-    handler: QMetryToolsHandlers.FETCH_TEST_CASE_STEPS,
+    handler: QmetryToolsHandlers.FETCH_TEST_CASE_STEPS,
     inputSchema: TestCaseStepsArgsSchema,
     purpose:
       "Retrieve step-by-step instructions and expected results for manual execution of a test case",
@@ -1021,7 +1055,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       "Get execution records for a specific test case by numeric ID, including Test Run UDF values. " +
       "ALWAYS present results as a unified table: Test Suite Key | Test Suite Name | Release | Cycle | Platform | Executed Version | Execution Status | <UDF Label columns…>. " +
       "NEVER show a separate type+value UDF breakdown — always combine identification fields and UDF values in one table per execution row.",
-    handler: QMetryToolsHandlers.FETCH_TEST_CASE_EXECUTIONS,
+    handler: QmetryToolsHandlers.FETCH_TEST_CASE_EXECUTIONS,
     inputSchema: TestCaseExecutionsArgsSchema,
     purpose:
       "Retrieve execution history and results for a specific test case. " +

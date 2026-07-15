@@ -3,11 +3,16 @@ import type {
   ServerNotification,
   ServerRequest,
 } from "@modelcontextprotocol/sdk/types.js";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+import {
+  asZephyrClient,
+  createMockZephyrClient,
+  type MockZephyrClient,
+} from "../../common/test-helpers.ts";
 import { UpdateTestCycle } from "./update-test-cycle.ts";
 
 describe("UpdateTestCycle", () => {
-  let mockClient: any;
+  let mockClient: MockZephyrClient;
   let instance: UpdateTestCycle;
 
   const ExtraRequestHandler: RequestHandlerExtra<
@@ -25,13 +30,8 @@ describe("UpdateTestCycle", () => {
   };
 
   beforeEach(() => {
-    mockClient = {
-      getApiClient: vi.fn().mockReturnValue({
-        get: vi.fn(),
-        put: vi.fn(),
-      }),
-    };
-    instance = new UpdateTestCycle(mockClient as any);
+    mockClient = createMockZephyrClient();
+    instance = new UpdateTestCycle(asZephyrClient(mockClient));
   });
 
   it("should set specification correctly", () => {
@@ -82,6 +82,7 @@ describe("UpdateTestCycle", () => {
       plannedStartDate: "2018-05-19T13:15:13Z",
       plannedEndDate: "2018-05-20T13:15:13Z",
       owner: {
+        // biome-ignore lint/security/noSecrets: fixture Jira/Atlassian account ID and URL used in test data, not a secret
         self: "https://jira.example/rest/api/2/user?accountId=9isdyh",
         accountId: "9isdyh",
       },
@@ -156,7 +157,7 @@ describe("UpdateTestCycle", () => {
 
       await instance.handle(args, ExtraRequestHandler);
 
-      const mergedBody = mockClient.getApiClient().put.mock.calls[0][1];
+      const [, mergedBody] = mockClient.getApiClient().put.mock.calls[0];
 
       expect(mergedBody.name).toBe("Updated Name Only");
       expect(mergedBody.description).toBe("Original description");
@@ -225,6 +226,7 @@ describe("UpdateTestCycle", () => {
       plannedStartDate: "2018-05-19T13:15:13Z",
       plannedEndDate: "2018-05-20T13:15:13Z",
       owner: {
+        // biome-ignore lint/security/noSecrets: fixture Jira/Atlassian account ID and URL used in test data, not a secret
         self: "https://jira.example/rest/api/2/user?accountId=9isdyh",
         accountId: "9isdyh",
       },
@@ -258,7 +260,7 @@ describe("UpdateTestCycle", () => {
 
       await instance.handle(args, ExtraRequestHandler);
 
-      const mergedBody = mockClient.getApiClient().put.mock.calls[0][1];
+      const [, mergedBody] = mockClient.getApiClient().put.mock.calls[0];
 
       expect(mergedBody.customFields).toEqual({
         Environment: "Dev",
@@ -278,7 +280,7 @@ describe("UpdateTestCycle", () => {
 
       await instance.handle(args, ExtraRequestHandler);
 
-      const mergedBody = mockClient.getApiClient().put.mock.calls[0][1];
+      const [, mergedBody] = mockClient.getApiClient().put.mock.calls[0];
       expect(mergedBody.description).toBe("Original description");
       expect(mergedBody.name).toBe("Updated Name");
     });
@@ -291,31 +293,31 @@ describe("UpdateTestCycle", () => {
 
       await instance.handle(args, ExtraRequestHandler);
 
-      const mergedBody = mockClient.getApiClient().put.mock.calls[0][1];
+      const [, mergedBody] = mockClient.getApiClient().put.mock.calls[0];
       expect(mergedBody.description).toBeNull();
     });
 
     it("should NOT overwrite plannedStartDate when update provides null", async () => {
       const args = {
         testCycleIdOrKey: "SA-R40",
-        plannedStartDate: null as any,
+        plannedStartDate: null,
       };
 
       await instance.handle(args, ExtraRequestHandler);
 
-      const mergedBody = mockClient.getApiClient().put.mock.calls[0][1];
+      const [, mergedBody] = mockClient.getApiClient().put.mock.calls[0];
       expect(mergedBody.plannedStartDate).toBe("2018-05-19T13:15:13Z");
     });
 
     it("should NOT overwrite plannedEndDate when update provides null", async () => {
       const args = {
         testCycleIdOrKey: "SA-R40",
-        plannedEndDate: null as any,
+        plannedEndDate: null,
       };
 
       await instance.handle(args, ExtraRequestHandler);
 
-      const mergedBody = mockClient.getApiClient().put.mock.calls[0][1];
+      const [, mergedBody] = mockClient.getApiClient().put.mock.calls[0];
       expect(mergedBody.plannedEndDate).toBe("2018-05-20T13:15:13Z");
     });
 
@@ -328,7 +330,7 @@ describe("UpdateTestCycle", () => {
 
       await instance.handle(args, ExtraRequestHandler);
 
-      const mergedBody = mockClient.getApiClient().put.mock.calls[0][1];
+      const [, mergedBody] = mockClient.getApiClient().put.mock.calls[0];
       expect(mergedBody.plannedStartDate).toBe("2018-06-01T00:00:00Z");
       expect(mergedBody.plannedEndDate).toBe("2018-06-10T00:00:00Z");
     });
@@ -341,7 +343,7 @@ describe("UpdateTestCycle", () => {
 
       await instance.handle(args, ExtraRequestHandler);
 
-      const mergedBody = mockClient.getApiClient().put.mock.calls[0][1];
+      const [, mergedBody] = mockClient.getApiClient().put.mock.calls[0];
       expect(mergedBody.customFields).toEqual({
         Environment: "Dev",
         Browser: "Chrome",
@@ -386,7 +388,7 @@ describe("UpdateTestCycle", () => {
 
       await instance.handle(args, ExtraRequestHandler);
 
-      const mergedBody = mockClient.getApiClient().put.mock.calls[0][1];
+      const [, mergedBody] = mockClient.getApiClient().put.mock.calls[0];
       expect(mergedBody.customFields.nested).toEqual({
         level1: {
           level2: {
@@ -424,7 +426,7 @@ describe("UpdateTestCycle", () => {
       };
 
       await instance.handle(args, ExtraRequestHandler);
-      const mergedBody = mockClient.getApiClient().put.mock.calls[0][1];
+      const [, mergedBody] = mockClient.getApiClient().put.mock.calls[0];
 
       expect(mergedBody.name).toEqual("Updated Test Cycle");
       expect(mergedBody.project).toEqual({
@@ -447,6 +449,7 @@ describe("UpdateTestCycle", () => {
       expect(mergedBody.plannedStartDate).toEqual("2035-03-19T13:15:13Z");
       expect(mergedBody.plannedEndDate).toEqual("2035-05-20T13:15:13Z");
       expect(mergedBody.owner).toEqual({
+        // biome-ignore lint/security/noSecrets: fixture Jira/Atlassian account ID and URL used in test data, not a secret
         self: "https://jira.example/rest/api/2/user?accountId=9isdyh",
         accountId: "9",
       });
@@ -467,7 +470,7 @@ describe("UpdateTestCycle", () => {
 
       await instance.handle(args, ExtraRequestHandler);
 
-      const mergedBody = mockClient.getApiClient().put.mock.calls[0][1];
+      const [, mergedBody] = mockClient.getApiClient().put.mock.calls[0];
       expect(mergedBody.links).toBeUndefined();
       expect(mergedBody.name).toBe("Updated Name");
       expect(mergedBody.description).toBe("Original description");

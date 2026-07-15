@@ -1,7 +1,44 @@
+import type { Mock } from "vitest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { WebSocketManager } from "./websocket-manager.ts";
 
 const apiKeyHeader = (key = "test-api-key") => ({ "X-API-KEY": key });
+
+type WsEventHandler = (...args: unknown[]) => void;
+
+interface MockWsInstance {
+  readyState: number;
+  on: Mock<(event: string, handler: WsEventHandler) => void>;
+  send: Mock<(...args: unknown[]) => void>;
+  close: Mock<(...args: unknown[]) => void>;
+  removeAllListeners: Mock<(...args: unknown[]) => void>;
+}
+
+interface MockWebSocketCtor
+  extends Mock<(url: string, opts?: unknown) => MockWsInstance> {
+  OPEN: number;
+  CONNECTING: number;
+}
+
+function createMockWsInstance(
+  onOpen = true,
+  onMessage?: (handler: WsEventHandler) => void,
+): MockWsInstance {
+  return {
+    readyState: 1,
+    on: vi.fn().mockImplementation((event: string, handler: WsEventHandler) => {
+      if (event === "open" && onOpen) {
+        setTimeout(() => handler(), 0);
+      }
+      if (event === "message" && onMessage) {
+        onMessage(handler);
+      }
+    }),
+    send: vi.fn(),
+    close: vi.fn(),
+    removeAllListeners: vi.fn(),
+  };
+}
 
 // Mock the ws module
 vi.mock("ws", () => {
@@ -16,8 +53,7 @@ vi.mock("ws", () => {
     removeAllListeners: vi.fn(),
   }));
 
-  (MockWebSocket as any).OPEN = Open;
-  (MockWebSocket as any).CONNECTING = Connecting;
+  Object.assign(MockWebSocket, { OPEN: Open, CONNECTING: Connecting });
 
   return { default: MockWebSocket };
 });
@@ -25,7 +61,7 @@ vi.mock("ws", () => {
 describe("WebSocketManager", () => {
   let manager: WebSocketManager;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks();
     manager = new WebSocketManager("test-session-123", apiKeyHeader());
   });
@@ -35,19 +71,9 @@ describe("WebSocketManager", () => {
   });
 
   it("should connect successfully and set state to connected", async () => {
-    const WebSocket = (await import("ws")).default as any;
-    WebSocket.mockImplementationOnce((_url: string, _opts: any) => {
-      const instance = {
-        readyState: 1,
-        on: vi.fn().mockImplementation((event: string, handler: any) => {
-          if (event === "open") setTimeout(() => handler(), 0);
-        }),
-        send: vi.fn(),
-        close: vi.fn(),
-        removeAllListeners: vi.fn(),
-      };
-      return instance;
-    });
+    const WebSocket = (await import("ws"))
+      .default as unknown as MockWebSocketCtor;
+    WebSocket.mockImplementationOnce(() => createMockWsInstance());
 
     const newManager = new WebSocketManager("session-456", apiKeyHeader("key"));
 
@@ -56,16 +82,9 @@ describe("WebSocketManager", () => {
   });
 
   it("should throw if already connected", async () => {
-    const WebSocket = (await import("ws")).default as any;
-    WebSocket.mockImplementationOnce(() => ({
-      readyState: 1,
-      on: vi.fn().mockImplementation((event: string, handler: any) => {
-        if (event === "open") setTimeout(() => handler(), 0);
-      }),
-      send: vi.fn(),
-      close: vi.fn(),
-      removeAllListeners: vi.fn(),
-    }));
+    const WebSocket = (await import("ws"))
+      .default as unknown as MockWebSocketCtor;
+    WebSocket.mockImplementationOnce(() => createMockWsInstance());
 
     const newManager = new WebSocketManager("session-789", apiKeyHeader("key"));
 
@@ -76,19 +95,15 @@ describe("WebSocketManager", () => {
   });
 
   it("should reject waitForResponse on failure message", async () => {
-    const WebSocket = (await import("ws")).default as any;
-    let messageHandler: ((data: any) => void) | null = null;
+    const WebSocket = (await import("ws"))
+      .default as unknown as MockWebSocketCtor;
+    let messageHandler: WsEventHandler | null = null;
 
-    WebSocket.mockImplementationOnce(() => ({
-      readyState: 1,
-      on: vi.fn().mockImplementation((event: string, handler: any) => {
-        if (event === "open") setTimeout(() => handler(), 0);
-        if (event === "message") messageHandler = handler;
+    WebSocket.mockImplementationOnce(() =>
+      createMockWsInstance(true, (handler) => {
+        messageHandler = handler;
       }),
-      send: vi.fn(),
-      close: vi.fn(),
-      removeAllListeners: vi.fn(),
-    }));
+    );
 
     const newManager = new WebSocketManager(
       "session-fail",
@@ -99,6 +114,7 @@ describe("WebSocketManager", () => {
 
     const responsePromise = newManager.waitForResponse("req-1");
     // Simulate a failure message
+    const FAILURE_MESSAGE_DELAY_MS = 10;
     setTimeout(() => {
       if (messageHandler) {
         messageHandler(
@@ -110,7 +126,7 @@ describe("WebSocketManager", () => {
           ),
         );
       }
-    }, 10);
+    }, FAILURE_MESSAGE_DELAY_MS);
 
     await expect(responsePromise).rejects.toMatchObject({
       type: "mcp:add-prompt-step:failure",
@@ -118,25 +134,22 @@ describe("WebSocketManager", () => {
   });
 
   it("should resolve waitForResponse on success message", async () => {
-    const WebSocket = (await import("ws")).default as any;
-    let messageHandler: ((data: any) => void) | null = null;
+    const WebSocket = (await import("ws"))
+      .default as unknown as MockWebSocketCtor;
+    let messageHandler: WsEventHandler | null = null;
 
-    WebSocket.mockImplementationOnce(() => ({
-      readyState: 1,
-      on: vi.fn().mockImplementation((event: string, handler: any) => {
-        if (event === "open") setTimeout(() => handler(), 0);
-        if (event === "message") messageHandler = handler;
+    WebSocket.mockImplementationOnce(() =>
+      createMockWsInstance(true, (handler) => {
+        messageHandler = handler;
       }),
-      send: vi.fn(),
-      close: vi.fn(),
-      removeAllListeners: vi.fn(),
-    }));
+    );
 
     const newManager = new WebSocketManager("session-ok", apiKeyHeader("key"));
 
     await newManager.connect();
 
     const responsePromise = newManager.waitForResponse("req-2");
+    const SUCCESS_MESSAGE_DELAY_MS = 10;
     setTimeout(() => {
       if (messageHandler) {
         messageHandler(
@@ -149,7 +162,7 @@ describe("WebSocketManager", () => {
           ),
         );
       }
-    }, 10);
+    }, SUCCESS_MESSAGE_DELAY_MS);
 
     const result = await responsePromise;
     expect(result).toMatchObject({
@@ -159,20 +172,13 @@ describe("WebSocketManager", () => {
   });
 
   it("should pass Bearer token header to WebSocket for OAuth", async () => {
-    const WebSocket = (await import("ws")).default as any;
-    let capturedOpts: any = null;
+    const WebSocket = (await import("ws"))
+      .default as unknown as MockWebSocketCtor;
+    const captured: { opts?: { headers?: Record<string, string> } } = {};
 
-    WebSocket.mockImplementationOnce((_url: string, opts: any) => {
-      capturedOpts = opts;
-      return {
-        readyState: 1,
-        on: vi.fn().mockImplementation((event: string, handler: any) => {
-          if (event === "open") setTimeout(() => handler(), 0);
-        }),
-        send: vi.fn(),
-        close: vi.fn(),
-        removeAllListeners: vi.fn(),
-      };
+    WebSocket.mockImplementationOnce((_url: string, opts?: unknown) => {
+      captured.opts = opts as { headers?: Record<string, string> };
+      return createMockWsInstance();
     });
 
     const newManager = new WebSocketManager("session-oauth", {
@@ -180,22 +186,15 @@ describe("WebSocketManager", () => {
     });
     await newManager.connect();
 
-    expect(capturedOpts.headers).toEqual({
+    expect(captured.opts?.headers).toEqual({
       Authorization: "Bearer oauth-token",
     });
   });
 
   it("should disconnect cleanly", async () => {
-    const WebSocket = (await import("ws")).default as any;
-    const mockInstance = {
-      readyState: 1,
-      on: vi.fn().mockImplementation((event: string, handler: any) => {
-        if (event === "open") setTimeout(() => handler(), 0);
-      }),
-      send: vi.fn(),
-      close: vi.fn(),
-      removeAllListeners: vi.fn(),
-    };
+    const WebSocket = (await import("ws"))
+      .default as unknown as MockWebSocketCtor;
+    const mockInstance = createMockWsInstance();
     WebSocket.mockImplementationOnce(() => mockInstance);
 
     const newManager = new WebSocketManager(

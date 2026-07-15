@@ -1,4 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+// biome-ignore-all lint/performance/useTopLevelRegex: each regex here is a one-off assertion matcher used once per test; hoisting dozens of single-use patterns would hurt readability without any real perf benefit
+import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 import {
   bulkUpdateTestRunUdfs,
   fetchTestRunUdfMetadata,
@@ -14,11 +15,12 @@ describe("UDF API clients", () => {
     vi.resetAllMocks();
   });
 
-  const mockOk = (data: any) => ({
+  const mockOk = <T>(data: T) => ({
     ok: true,
     json: async () => data,
   });
 
+  // biome-ignore lint/security/noSecrets: high-entropy false positive; this is a descriptive string (error message, parameter name, or API action name), not a credential
   describe("bulkUpdateTestRunUdfs", () => {
     const mockSuccessResponse = {
       success: true,
@@ -28,7 +30,7 @@ describe("UDF API clients", () => {
     };
 
     it("should PUT to correct endpoint with tcRunIDs and UDF payload", async () => {
-      global.fetch = vi.fn().mockResolvedValue(mockOk(mockSuccessResponse));
+      globalThis.fetch = vi.fn().mockResolvedValue(mockOk(mockSuccessResponse));
 
       const result = await bulkUpdateTestRunUdfs(token, baseUrl, projectKey, {
         tcRunIDs: [41_572_006, 41_572_009, 41_572_013],
@@ -39,7 +41,7 @@ describe("UDF API clients", () => {
         orgCode: "2O5API",
       });
 
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(globalThis.fetch).toHaveBeenCalledWith(
         `${baseUrl}/rest/execution/udf/bulkupdate`,
         expect.objectContaining({
           method: "PUT",
@@ -51,17 +53,17 @@ describe("UDF API clients", () => {
       );
 
       const body = JSON.parse(
-        (global.fetch as any).mock.calls[0][1].body as string,
+        (globalThis.fetch as Mock).mock.calls[0][1].body as string,
       );
       expect(body.tcRunIDs).toEqual([41_572_006, 41_572_009, 41_572_013]);
       expect(body.UDF["8190_String"].fieldID).toBe(229_241);
       expect(body.UDF["8190_String"].value).toBe("test");
 
-      expect((result as any).success).toBe(true);
+      expect((result as { success: boolean }).success).toBe(true);
     });
 
     it("should apply default multiSelectAction 'append' for array values when not specified", async () => {
-      global.fetch = vi.fn().mockResolvedValue(mockOk(mockSuccessResponse));
+      globalThis.fetch = vi.fn().mockResolvedValue(mockOk(mockSuccessResponse));
 
       await bulkUpdateTestRunUdfs(token, baseUrl, projectKey, {
         tcRunIDs: [41_572_006],
@@ -72,13 +74,13 @@ describe("UDF API clients", () => {
       });
 
       const body = JSON.parse(
-        (global.fetch as any).mock.calls[0][1].body as string,
+        (globalThis.fetch as Mock).mock.calls[0][1].body as string,
       );
       expect(body.UDF.m_selections.multiSelectAction).toBe("append");
     });
 
     it("should preserve explicit multiSelectAction 'replace' for multi-select fields", async () => {
-      global.fetch = vi.fn().mockResolvedValue(mockOk(mockSuccessResponse));
+      globalThis.fetch = vi.fn().mockResolvedValue(mockOk(mockSuccessResponse));
 
       await bulkUpdateTestRunUdfs(token, baseUrl, projectKey, {
         tcRunIDs: [41_572_006, 41_572_009],
@@ -93,13 +95,13 @@ describe("UDF API clients", () => {
       });
 
       const body = JSON.parse(
-        (global.fetch as any).mock.calls[0][1].body as string,
+        (globalThis.fetch as Mock).mock.calls[0][1].body as string,
       );
       expect(body.UDF.mullt_env.multiSelectAction).toBe("replace");
     });
 
     it("should not include multiSelectAction for non-array values", async () => {
-      global.fetch = vi.fn().mockResolvedValue(mockOk(mockSuccessResponse));
+      globalThis.fetch = vi.fn().mockResolvedValue(mockOk(mockSuccessResponse));
 
       await bulkUpdateTestRunUdfs(token, baseUrl, projectKey, {
         tcRunIDs: [41_572_006],
@@ -110,13 +112,13 @@ describe("UDF API clients", () => {
       });
 
       const body = JSON.parse(
-        (global.fetch as any).mock.calls[0][1].body as string,
+        (globalThis.fetch as Mock).mock.calls[0][1].body as string,
       );
       expect(body.UDF.defaultNum.multiSelectAction).toBeUndefined();
     });
 
     it("should handle cascading list value with parent and child", async () => {
-      global.fetch = vi.fn().mockResolvedValue(mockOk(mockSuccessResponse));
+      globalThis.fetch = vi.fn().mockResolvedValue(mockOk(mockSuccessResponse));
 
       await bulkUpdateTestRunUdfs(token, baseUrl, projectKey, {
         tcRunIDs: [41_572_006, 41_572_009],
@@ -130,7 +132,7 @@ describe("UDF API clients", () => {
       });
 
       const body = JSON.parse(
-        (global.fetch as any).mock.calls[0][1].body as string,
+        (globalThis.fetch as Mock).mock.calls[0][1].body as string,
       );
       expect(body.UDF.cascade_mcp.value).toEqual({
         parent: 5_126_498,
@@ -139,7 +141,7 @@ describe("UDF API clients", () => {
     });
 
     it("should handle bulk update with multiple UDF fields of different types", async () => {
-      global.fetch = vi.fn().mockResolvedValue(mockOk(mockSuccessResponse));
+      globalThis.fetch = vi.fn().mockResolvedValue(mockOk(mockSuccessResponse));
 
       await bulkUpdateTestRunUdfs(token, baseUrl, projectKey, {
         tcRunIDs: [
@@ -171,7 +173,7 @@ describe("UDF API clients", () => {
       });
 
       const body = JSON.parse(
-        (global.fetch as any).mock.calls[0][1].body as string,
+        (globalThis.fetch as Mock).mock.calls[0][1].body as string,
       );
       expect(body.tcRunIDs).toHaveLength(6);
       expect(Object.keys(body.UDF)).toHaveLength(7);
@@ -223,15 +225,15 @@ describe("UDF API clients", () => {
     };
 
     it("should POST to metadata endpoint with entityType=TCR and special headers", async () => {
-      global.fetch = vi.fn().mockResolvedValue(mockOk(mockMetaResponse));
+      globalThis.fetch = vi.fn().mockResolvedValue(mockOk(mockMetaResponse));
 
       await fetchTestRunUdfMetadata(token, baseUrl, projectKey, {
         scopeId: 46_270,
         orgCode: "2O5API",
       });
 
-      expect(global.fetch).toHaveBeenCalledOnce();
-      const [url, opts] = (global.fetch as any).mock.calls[0];
+      expect(globalThis.fetch).toHaveBeenCalledOnce();
+      const [url, opts] = (globalThis.fetch as Mock).mock.calls[0];
       expect(url).toContain("/rest/admin/udf/metadata");
       expect(opts.method).toBe("POST");
       expect(JSON.parse(opts.body)).toMatchObject({ entityType: "TCR" });
@@ -240,54 +242,55 @@ describe("UDF API clients", () => {
     });
 
     it("should return normalized fields array with fieldID and label", async () => {
-      global.fetch = vi.fn().mockResolvedValue(mockOk(mockMetaResponse));
+      globalThis.fetch = vi.fn().mockResolvedValue(mockOk(mockMetaResponse));
 
-      const result = (await fetchTestRunUdfMetadata(
+      const result = await fetchTestRunUdfMetadata(
         token,
         baseUrl,
         projectKey,
         {},
-      )) as any;
+      );
 
       expect(result.fields).toHaveLength(2);
       const dateField = result.fields.find(
-        (f: any) => f.name === "planned_execution_date",
+        (f) => f.name === "planned_execution_date",
       );
       expect(dateField).toBeDefined();
-      expect(dateField.fieldID).toBe(229_460);
-      expect(dateField.label).toBe("Planned Execution Date");
-      expect(dateField.fieldType).toBe("DATETIMEPICKER");
+      expect(dateField?.fieldID).toBe(229_460);
+      expect(dateField?.label).toBe("Planned Execution Date");
+      expect(dateField?.fieldType).toBe("DATETIMEPICKER");
     });
 
     it("should return empty fields array when no TCR UDFs exist", async () => {
-      global.fetch = vi
+      globalThis.fetch = vi
         .fn()
         .mockResolvedValue(mockOk({ qmUDF: { TCR: {} }, qmUDFList: {} }));
 
-      const result = (await fetchTestRunUdfMetadata(
+      const result = await fetchTestRunUdfMetadata(
         token,
         baseUrl,
         projectKey,
         {},
-      )) as any;
+      );
 
       expect(result.fields).toEqual([]);
     });
 
-    it("should include _note with fieldID usage instructions", async () => {
-      global.fetch = vi.fn().mockResolvedValue(mockOk(mockMetaResponse));
+    it("should include note with fieldID usage instructions", async () => {
+      globalThis.fetch = vi.fn().mockResolvedValue(mockOk(mockMetaResponse));
 
-      const result = (await fetchTestRunUdfMetadata(
+      const result = await fetchTestRunUdfMetadata(
         token,
         baseUrl,
         projectKey,
         {},
-      )) as any;
+      );
 
-      expect(result._note).toContain("fieldID");
+      expect(result.note).toContain("fieldID");
     });
   });
 
+  // biome-ignore lint/security/noSecrets: high-entropy false positive; this is a descriptive string (error message, parameter name, or API action name), not a credential
   describe("fetchTestRunUdfValues", () => {
     const mockRunsResponse = {
       hasTcRunUdf: true,
@@ -319,7 +322,7 @@ describe("UDF API clients", () => {
     };
 
     it("should call both runs API and metadata API when hasTcRunUdf is true", async () => {
-      global.fetch = vi
+      globalThis.fetch = vi
         .fn()
         .mockResolvedValueOnce(mockOk(mockRunsResponse))
         .mockResolvedValueOnce(mockOk(mockMetaResponse));
@@ -331,40 +334,44 @@ describe("UDF API clients", () => {
         orgCode: "2O5API",
       });
 
-      expect(global.fetch).toHaveBeenCalledTimes(2);
+      expect(globalThis.fetch).toHaveBeenCalledTimes(2);
     });
 
     it("should return hasTcRunUdf=false immediately when project has no UDFs", async () => {
-      global.fetch = vi
+      globalThis.fetch = vi
         .fn()
         .mockResolvedValueOnce(
           mockOk({ hasTcRunUdf: false, total: 2, data: [] }),
         );
 
-      const result = (await fetchTestRunUdfValues(token, baseUrl, projectKey, {
+      const result = await fetchTestRunUdfValues(token, baseUrl, projectKey, {
         tsrunID: "731600",
         viewId: 87_039,
-      })) as any;
+      });
 
-      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(globalThis.fetch).toHaveBeenCalledTimes(1);
       expect(result.hasTcRunUdf).toBe(false);
       expect(result.runs).toEqual([]);
-      expect(result._note).toContain("No Test Run UDFs");
+      expect(result.note).toContain("No Test Run UDFs");
     });
 
     it("should enrich UDF values with label and fieldID from metadata", async () => {
-      global.fetch = vi
+      globalThis.fetch = vi
         .fn()
         .mockResolvedValueOnce(mockOk(mockRunsResponse))
         .mockResolvedValueOnce(mockOk(mockMetaResponse));
 
-      const result = (await fetchTestRunUdfValues(token, baseUrl, projectKey, {
+      const result = await fetchTestRunUdfValues(token, baseUrl, projectKey, {
         tsrunID: "731600",
         viewId: 87_039,
-      })) as any;
+      });
 
       expect(result.runs).toHaveLength(1);
-      const udf = result.runs[0].testRunUdfs[0];
+      const [
+        {
+          testRunUdfs: [udf],
+        },
+      ] = result.runs;
       expect(udf.name).toBe("planned_execution_date");
       expect(udf.label).toBe("Planned Execution Date");
       expect(udf.fieldID).toBe(229_460);
@@ -384,24 +391,24 @@ describe("UDF API clients", () => {
       await expect(
         fetchTestRunUdfValues(token, baseUrl, projectKey, {
           tsrunID: "731600",
-          viewId: undefined as any,
+          viewId: undefined,
         }),
       ).rejects.toThrow("viewId");
     });
 
     it("should include availableUdfFields in response", async () => {
-      global.fetch = vi
+      globalThis.fetch = vi
         .fn()
         .mockResolvedValueOnce(mockOk(mockRunsResponse))
         .mockResolvedValueOnce(mockOk(mockMetaResponse));
 
-      const result = (await fetchTestRunUdfValues(token, baseUrl, projectKey, {
+      const result = await fetchTestRunUdfValues(token, baseUrl, projectKey, {
         tsrunID: "731600",
         viewId: 87_039,
-      })) as any;
+      });
 
       expect(result.availableUdfFields).toHaveLength(1);
-      expect(result.availableUdfFields[0].fieldID).toBe(229_460);
+      expect(result.availableUdfFields?.[0].fieldID).toBe(229_460);
     });
   });
 });

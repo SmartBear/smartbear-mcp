@@ -73,6 +73,7 @@ export class SearchLinkedTestCasesInCycle extends Tool<Qtm4jClient> {
         parameters: {
           cycleKey: "SCRUM-TR-2",
           filter: {
+            // biome-ignore lint/security/noSecrets: example Jira account ID, not a secret
             executionAssignee: ["5b10a2844c20165700ede21f"],
             environment: ["Staging"],
           },
@@ -103,7 +104,7 @@ export class SearchLinkedTestCasesInCycle extends Tool<Qtm4jClient> {
       "JSON object with total (total matching executions), startAt, maxResults, and data (array of test case execution objects for this page).",
   };
 
-  handle = async (rawArgs: any) => {
+  handle = async (rawArgs: unknown) => {
     const args = SearchLinkedTestCasesInCycleBody.parse(rawArgs);
     const fieldResolver = this.client.getResolverRegistry();
     const context = fieldResolver.requireProjectContext();
@@ -125,7 +126,7 @@ export class SearchLinkedTestCasesInCycle extends Tool<Qtm4jClient> {
 
     // Build query params
     const params = new URLSearchParams();
-    if (args.fields?.length) {
+    if (args.fields && args.fields.length > 0) {
       params.set(RESPONSE_FIELDS.FIELDS, args.fields.join(","));
     }
     if (args.sort) {

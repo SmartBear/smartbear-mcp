@@ -1,8 +1,14 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import {
   ListStatusesQueryParams,
   ListStatuses200Response as ListStatusesResponse,
 } from "../../common/rest-api-schemas.ts";
+import {
+  asZephyrClient,
+  createMockZephyrClient,
+  fakeExtra,
+  type MockZephyrClient,
+} from "../../common/test-helpers.ts";
 import { GetStatuses } from "./get-statuses.ts";
 
 const responseMock = {
@@ -26,16 +32,12 @@ const responseMock = {
 };
 
 describe("GetStatuses", () => {
-  let mockClient: any;
+  let mockClient: MockZephyrClient;
   let instance: GetStatuses;
 
   beforeEach(() => {
-    mockClient = {
-      getApiClient: vi.fn().mockReturnValue({
-        get: vi.fn(),
-      }),
-    };
-    instance = new GetStatuses(mockClient as any);
+    mockClient = createMockZephyrClient();
+    instance = new GetStatuses(asZephyrClient(mockClient));
   });
 
   it("should set specification correctly", () => {
@@ -57,7 +59,7 @@ describe("GetStatuses", () => {
       statusType: "TEST_CASE",
       projectKey: "PROJ",
     } as const;
-    const result = await instance.handle(args, {} as any);
+    const result = await instance.handle(args, fakeExtra);
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/statuses",
       args,
@@ -68,7 +70,7 @@ describe("GetStatuses", () => {
   it("should call apiClient.get with only statusType", async () => {
     mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
     const args = { statusType: "TEST_PLAN" } as const;
-    const result = await instance.handle(args, {} as any);
+    const result = await instance.handle(args, fakeExtra);
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith("/statuses", {
       ...args,
       maxResults: 10,
@@ -80,7 +82,7 @@ describe("GetStatuses", () => {
   it("should call apiClient.get with only projectKey", async () => {
     mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
     const args = { projectKey: "PROJ" } as const;
-    const result = await instance.handle(args, {} as any);
+    const result = await instance.handle(args, fakeExtra);
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith("/statuses", {
       ...args,
       maxResults: 10,
@@ -91,7 +93,7 @@ describe("GetStatuses", () => {
 
   it("should handle empty args (all undefined optional params)", async () => {
     mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
-    const result = await instance.handle({}, {} as any);
+    const result = await instance.handle({}, fakeExtra);
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith("/statuses", {
       maxResults: 10,
       startAt: 0,
@@ -101,14 +103,14 @@ describe("GetStatuses", () => {
 
   it("should propagate errors from apiClient.get", async () => {
     mockClient.getApiClient().get.mockRejectedValueOnce(new Error("API error"));
-    await expect(instance.handle({ maxResults: 1 }, {} as any)).rejects.toThrow(
+    await expect(instance.handle({ maxResults: 1 }, fakeExtra)).rejects.toThrow(
       "API error",
     );
   });
 
   it("should handle apiClient.get returning unexpected undefined data", async () => {
     mockClient.getApiClient().get.mockResolvedValueOnce(undefined);
-    const result = await instance.handle({ maxResults: 1 }, {} as any);
+    const result = await instance.handle({ maxResults: 1 }, fakeExtra);
     expect(result.structuredContent).toBeUndefined();
   });
 });

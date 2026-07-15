@@ -1,14 +1,35 @@
+import type { Mock } from "vitest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ToolError } from "../../../common/tools.ts";
+import type { Qtm4jClient } from "../../client.ts";
 import { ENDPOINTS } from "../../config/constants.ts";
 import { ResolverKeys } from "../../config/field-resolution.types.ts";
 import { SearchLinkedTestCasesInCycle } from "./search-linked-testcases.ts";
 
+interface MockApiClient {
+  post: Mock;
+}
+
+interface MockFieldResolver {
+  resolveAndReturn: Mock;
+}
+
+interface MockRegistry {
+  requireProjectContext: Mock;
+  getResolver: Mock;
+}
+
+interface MockClient {
+  getApiClient: Mock;
+  getResolverRegistry: Mock;
+}
+
+// biome-ignore lint/security/noSecrets: test suite name, not a secret
 describe("SearchLinkedTestCasesInCycle", () => {
-  let mockClient: any;
-  let mockApiClient: any;
-  let mockRegistry: any;
-  let mockCycleResolver: any;
+  let mockClient: MockClient;
+  let mockApiClient: MockApiClient;
+  let mockRegistry: MockRegistry;
+  let mockCycleResolver: MockFieldResolver;
   let instance: SearchLinkedTestCasesInCycle;
 
   const mockContext = {
@@ -45,8 +66,9 @@ describe("SearchLinkedTestCasesInCycle", () => {
     mockRegistry = {
       requireProjectContext: vi.fn().mockReturnValue(mockContext),
       getResolver: vi.fn().mockImplementation((key: string) => {
-        if (key === ResolverKeys.SearchableField.TEST_CYCLE_KEY_TO_UID)
+        if (key === ResolverKeys.SearchableField.TEST_CYCLE_KEY_TO_UID) {
           return mockCycleResolver;
+        }
         throw new Error(`Unexpected resolver key: ${key}`);
       }),
     };
@@ -57,7 +79,9 @@ describe("SearchLinkedTestCasesInCycle", () => {
       getResolverRegistry: vi.fn().mockReturnValue(mockRegistry),
     };
 
-    instance = new SearchLinkedTestCasesInCycle(mockClient as any);
+    instance = new SearchLinkedTestCasesInCycle(
+      mockClient as unknown as Qtm4jClient,
+    );
   });
 
   describe("specification", () => {
@@ -144,6 +168,7 @@ describe("SearchLinkedTestCasesInCycle", () => {
       });
 
       expect(mockApiClient.post).toHaveBeenCalledWith(
+        // biome-ignore lint/security/noSecrets: URL-encoded query string, not a secret
         expect.stringContaining("fields=key%2Csummary%2CexecutionResult"),
         expect.any(Object),
       );
@@ -160,6 +185,7 @@ describe("SearchLinkedTestCasesInCycle", () => {
       });
 
       expect(mockApiClient.post).toHaveBeenCalledWith(
+        // biome-ignore lint/security/noSecrets: URL-encoded query string, not a secret
         expect.stringContaining("sort=key%3Adesc"),
         expect.any(Object),
       );

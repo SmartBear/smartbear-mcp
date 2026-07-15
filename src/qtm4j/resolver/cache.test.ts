@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
+import type { CacheService } from "../../common/cache.ts";
 import { Cache } from "./cache/cache.ts";
 
-function makeMockCacheService() {
+function makeMockCacheService(): CacheService {
   const store = new Map<string, unknown>();
   return {
     get: <T>(key: string): T | undefined => store.get(key) as T | undefined,
@@ -13,14 +14,18 @@ function makeMockCacheService() {
       store.delete(key);
       return 1;
     },
-  };
+    isEnabled: () => true,
+    flushAll: () => {
+      store.clear();
+    },
+  } as unknown as CacheService;
 }
 
 describe("Cache", () => {
   let cache: Cache;
 
   beforeEach(() => {
-    cache = new Cache(makeMockCacheService() as any);
+    cache = new Cache(makeMockCacheService());
   });
 
   describe("get", () => {

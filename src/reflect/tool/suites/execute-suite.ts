@@ -18,7 +18,9 @@ export class ExecuteSuite extends Tool<ReflectClient> {
 
   handle: ToolCallback<ZodRawShape> = async (args) => {
     const { suiteId } = args as { suiteId: string };
-    if (!suiteId) throw new ToolError("suiteId argument is required");
+    if (!suiteId) {
+      throw new ToolError("suiteId argument is required");
+    }
 
     const response = await fetch(
       `https://${API_HOSTNAME}/v1/suites/${suiteId}/executions`,

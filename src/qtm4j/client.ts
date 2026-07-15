@@ -77,6 +77,7 @@ export class Qtm4jClient implements Client {
    * @param server - MCP Server instance
    * @param config - Configuration object containing API key and optional base URL
    */
+  // biome-ignore lint/suspicious/useAwait: must satisfy the Client interface's Promise<void>-returning configure signature
   async configure(
     server: SmartBearMcpServer,
     config: z.infer<typeof ConfigurationSchema>,
@@ -119,8 +120,9 @@ export class Qtm4jClient implements Client {
         : contextHeader;
 
       // Handle Bearer prefix if present
-      if (token.startsWith("Bearer ")) {
-        token = token.substring(7);
+      const bearerPrefix = "Bearer ";
+      if (token.startsWith(bearerPrefix)) {
+        token = token.slice(bearerPrefix.length);
       }
       return token;
     }
@@ -177,6 +179,7 @@ export class Qtm4jClient implements Client {
    * @param register - Function to register tools with MCP server
    * @param _getInput - Function to get user input (not used currently)
    */
+  // biome-ignore lint/complexity/noExcessiveLinesPerFunction: registers every qtm4j tool via dynamic import; splitting would obscure the single registration list
   async registerTools(
     register: RegisterToolsFunction,
     _getInput: GetInputFunction,

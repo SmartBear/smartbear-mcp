@@ -1,12 +1,17 @@
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ZodRawShape } from "zod";
+import type { z as zod, ZodRawShape } from "zod";
 import { Tool } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { ZephyrClient } from "../../client";
 import {
+  GetTestExecutionTestSteps200Response,
   PutTestExecutionTestStepsBody,
   PutTestExecutionTestStepsParams,
 } from "../../common/rest-api-schemas";
+
+type ExistingTestStep = NonNullable<
+  zod.infer<typeof GetTestExecutionTestSteps200Response>["values"]
+>[number];
 
 export class UpdateTestExecutionSteps extends Tool<ZephyrClient> {
   specification: ToolParams = {
@@ -82,18 +87,20 @@ export class UpdateTestExecutionSteps extends Tool<ZephyrClient> {
 
     const { testExecutionIdOrKey, steps: stepUpdates } = parsed;
 
-    const response = await this.client
+    const response = (await this.client
       .getApiClient()
-      .get(`/testexecutions/${testExecutionIdOrKey}/teststeps`);
+      .get(
+        `/testexecutions/${testExecutionIdOrKey}/teststeps`,
+      )) as zod.infer<typeof GetTestExecutionTestSteps200Response>;
 
-    const existingSteps = response.values;
+    const existingSteps: ExistingTestStep[] = response.values ?? [];
 
     const updatedSteps = existingSteps.map(
-      (existingStep: any, index: number) => {
+      (existingStep: ExistingTestStep, index: number) => {
         const update = stepUpdates?.[index];
         return {
           actualResult:
-            update?.actualResult ?? existingStep.inline.actualResult,
+            update?.actualResult ?? existingStep.inline?.actualResult,
           ...(update?.statusName !== undefined && {
             statusName: update.statusName,
           }),

@@ -1,3 +1,4 @@
+// biome-ignore-all lint/style/noExcessiveLinesPerFile: single centralized constants module by design; splitting would scatter related constant groups across files
 /**
  * QTM4J Constants
  *
@@ -232,6 +233,7 @@ export const PAGINATION = {
  */
 export const AUTOMATION_LIMITS = {
   /** Maximum allowed upload file size in bytes (10 MB) */
+  // biome-ignore lint/style/noMagicNumbers: this literal IS the named constant definition (10 MiB expressed as bytes)
   MAX_FILE_SIZE_BYTES: 10 * 1024 * 1024,
 } as const;
 

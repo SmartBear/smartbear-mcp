@@ -24,6 +24,7 @@ export class CommonAttributeResolver extends Resolver {
   }
 
   // Priority and status are always single values — no array handling needed.
+  // biome-ignore lint/complexity/useMaxParams: implements the shared Resolver.resolve() base-class signature used across resolver and tool call sites
   async resolve(
     inputField: string,
     resolverKey: string,
@@ -32,7 +33,9 @@ export class CommonAttributeResolver extends Resolver {
     warnings: string[],
   ): Promise<void> {
     const name = body[inputField];
-    if (name == null) return;
+    if (name === null || name === undefined) {
+      return;
+    }
 
     const id = await this.resolveAndReturn(
       context.projectKey,
@@ -57,7 +60,9 @@ export class CommonAttributeResolver extends Resolver {
     name: string,
   ): Promise<string | undefined> {
     const cached = this.cache.matchValue(projectKey, resolverKey, name);
-    if (cached !== undefined) return cached;
+    if (cached !== undefined) {
+      return cached;
+    }
 
     await this.preload(projectKey, projectId);
     return this.cache.matchValue(projectKey, resolverKey, name);

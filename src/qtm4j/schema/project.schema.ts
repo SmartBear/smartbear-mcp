@@ -3,29 +3,25 @@
  *
  * Zod schemas for project-related API requests and responses.
  */
-import * as zod from "zod";
+import { z } from "zod";
 import { PAGINATION, SCHEMA_DESCRIPTIONS } from "../config/constants.ts";
 
-export const ProjectSchema = zod
+export const ProjectSchema = z
   .object({
-    id: zod.number().describe("Project ID"),
-    key: zod.string().describe("Project key (e.g., 'SCRUM', 'AD')"),
-    name: zod.string().describe("Project name"),
-    favorite: zod
+    id: z.number().describe("Project ID"),
+    key: z.string().describe("Project key (e.g., 'SCRUM', 'AD')"),
+    name: z.string().describe("Project name"),
+    favorite: z
       .boolean()
       .optional()
       .describe("Whether project is marked as favorite"),
-    avatarUrl: zod
-      .string()
-      .optional()
-      .nullable()
-      .describe("Project avatar URL"),
-    projectTypeKey: zod
+    avatarUrl: z.string().optional().nullable().describe("Project avatar URL"),
+    projectTypeKey: z
       .string()
       .optional()
       .nullable()
       .describe("Project type key (e.g., 'software')"),
-    qmetryEnabled: zod
+    qmetryEnabled: z
       .boolean()
       .optional()
       .describe("Whether QMetry is enabled for this project"),
@@ -34,19 +30,19 @@ export const ProjectSchema = zod
   .describe(SCHEMA_DESCRIPTIONS.PROJECT_OBJECT);
 
 /** POST /rest/api/latest/projects */
-export const GetProjectsBody = zod.object({
-  projectId: zod.number().optional().describe("Filter by specific project ID"),
-  search: zod.string().optional().describe(SCHEMA_DESCRIPTIONS.SEARCH_TEXT),
-  qmetryEnabled: zod
+export const GetProjectsBody = z.object({
+  projectId: z.number().optional().describe("Filter by specific project ID"),
+  search: z.string().optional().describe(SCHEMA_DESCRIPTIONS.SEARCH_TEXT),
+  qmetryEnabled: z
     .boolean()
     .optional()
     .describe(SCHEMA_DESCRIPTIONS.QMETRY_ENABLED),
-  startAt: zod
+  startAt: z
     .number()
     .min(PAGINATION.MIN_ALLOWED_RESULTS - 1)
     .default(PAGINATION.DEFAULT_START_AT)
     .describe(SCHEMA_DESCRIPTIONS.START_AT),
-  maxResults: zod
+  maxResults: z
     .number()
     .min(PAGINATION.MIN_ALLOWED_RESULTS)
     .max(PAGINATION.MAX_ALLOWED_RESULTS)
@@ -54,32 +50,32 @@ export const GetProjectsBody = zod.object({
     .describe(SCHEMA_DESCRIPTIONS.MAX_RESULTS_PROJECTS),
 });
 
-export const GetProjectsResponse = zod.object({
-  total: zod
+export const GetProjectsResponse = z.object({
+  total: z
     .number()
     .min(PAGINATION.MIN_ALLOWED_RESULTS - 1)
     .describe("Total number of projects"),
-  data: zod.array(ProjectSchema).describe("List of projects"),
+  data: z.array(ProjectSchema).describe("List of projects"),
 });
 
-export type GetProjectsResponseType = zod.infer<typeof GetProjectsResponse>;
+export type GetProjectsResponseType = z.infer<typeof GetProjectsResponse>;
 
 /** set_project_context input */
-export const SetProjectContextBody = zod.object({
-  projectKey: zod
+export const SetProjectContextBody = z.object({
+  projectKey: z
     .string()
     .describe(
       "Project key (e.g., 'SCRUM'). Use the get_projects tool to discover available project keys.",
     ),
 });
 
-export const SetProjectContextResponse = zod.object({
-  projectId: zod.number().describe("Numeric project ID"),
-  projectKey: zod.string().describe("Project key"),
-  projectName: zod.string().describe("Project name"),
-  message: zod.string().describe("Confirmation message"),
-  availableFields: zod
-    .record(zod.string(), zod.record(zod.string(), zod.string()))
+export const SetProjectContextResponse = z.object({
+  projectId: z.number().describe("Numeric project ID"),
+  projectKey: z.string().describe("Project key"),
+  projectName: z.string().describe("Project name"),
+  message: z.string().describe("Confirmation message"),
+  availableFields: z
+    .record(z.string(), z.record(z.string(), z.string()))
     .optional()
     .describe(
       "Available field values keyed by field name (e.g. 'priority', 'testcase_status'). " +
@@ -87,7 +83,7 @@ export const SetProjectContextResponse = zod.object({
     ),
 });
 
-export type SetProjectContextBodyType = zod.infer<typeof SetProjectContextBody>;
-export type SetProjectContextResponseType = zod.infer<
+export type SetProjectContextBodyType = z.infer<typeof SetProjectContextBody>;
+export type SetProjectContextResponseType = z.infer<
   typeof SetProjectContextResponse
 >;

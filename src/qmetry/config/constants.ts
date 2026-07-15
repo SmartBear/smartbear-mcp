@@ -1,3 +1,4 @@
+// biome-ignore-all lint/security/noSecrets: this file contains many high-entropy API action-name / wire-format / fixture string constants that trip the noSecrets entropy heuristic; none are real secrets
 export const QMETRY_DEFAULTS = {
   BASE_URL: "https://testmanagement.qmetry.com",
   PROJECT_KEY: "default",
@@ -61,7 +62,7 @@ export const UDF_FIELD_TYPES = [
   },
 ] as const;
 
-export const QMetryToolsHandlers = {
+export const QmetryToolsHandlers = {
   FETCH_PROJECTS: "getProjects",
   SET_PROJECT_INFO: "setProjectInfo",
   FETCH_PROJECT_INFO: "getProjectInfo",

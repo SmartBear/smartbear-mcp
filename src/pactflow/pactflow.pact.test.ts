@@ -24,10 +24,14 @@
  *   npx vitest run src/tests/pactflow/pactflow.pact.test.ts
  */
 
+// node:path / node:process are required to build the pact output directory
+// (dir: path.resolve(process.cwd(), "pacts")) for the Pact mock-server contract tests.
 import path from "node:path";
 import process from "node:process";
 import { Matchers, PactV4 } from "@pact-foundation/pact";
 import { describe, expect, it } from "vitest";
+import type { SmartBearMcpServer } from "../common/server.ts";
+import type { CreateWebhookInput } from "./client/base.ts";
 import { PactflowClient } from "./client.ts";
 
 const { like, eachLike, regex } = Matchers;
@@ -41,7 +45,9 @@ const provider = new PactV4({
 
 async function createClient(baseUrl: string): Promise<PactflowClient> {
   const client = new PactflowClient();
-  const mockServer = { getClientInfo: () => undefined } as any;
+  const mockServer = {
+    getClientInfo: () => undefined,
+  } as unknown as SmartBearMcpServer;
   await client.configure(mockServer, {
     base_url: baseUrl,
     token: "test-token",
@@ -131,7 +137,7 @@ describe("Core", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.canIDeploy({
+        const result = await client.canIdeploy({
           pacticipant: "ServiceA",
           version: "1.0.0",
           environment: "production",
@@ -155,7 +161,9 @@ describe("Core", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.listPacticipants();
+        const result = await client.listPacticipants<{
+          _embedded: { pacticipants: Array<{ name: unknown }> };
+        }>();
         expect(Array.isArray(result._embedded.pacticipants)).toBe(true);
         expect(result._embedded.pacticipants.length).toBeGreaterThanOrEqual(1);
         expect(result._embedded.pacticipants[0].name).toBeDefined();
@@ -179,7 +187,10 @@ describe("Core", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.getPacticipant({
+        const result = await client.getPacticipant<{
+          name: unknown;
+          mainBranch: unknown;
+        }>({
           pacticipantName: "ServiceA",
         });
         expect(result.name).toBe("ServiceA");
@@ -209,7 +220,9 @@ describe("Core", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.listEnvironments();
+        const result = await client.listEnvironments<{
+          _embedded: { environments: Array<{ name: unknown; uuid: unknown }> };
+        }>();
         expect(Array.isArray(result._embedded.environments)).toBe(true);
         expect(result._embedded.environments.length).toBeGreaterThanOrEqual(1);
         expect(result._embedded.environments[0].name).toBeDefined();
@@ -243,7 +256,11 @@ describe("Core", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.getEnvironment({
+        const result = await client.getEnvironment<{
+          name: unknown;
+          uuid: unknown;
+          production: unknown;
+        }>({
           environmentId: "00000000-0000-0000-0000-000000000001",
         });
         expect(result.name).toBe("production");
@@ -344,7 +361,9 @@ describe("Core", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.getCurrentlyDeployed({
+        const result = await client.getCurrentlyDeployed<{
+          _embedded: { deployedVersions: unknown };
+        }>({
           environmentId: "00000000-0000-0000-0000-000000000001",
         });
         expect(Array.isArray(result._embedded.deployedVersions)).toBe(true);
@@ -358,6 +377,7 @@ describe("Core", () => {
         {
           consumerName: "ConsumerApp",
           providerName: "ProviderAPI",
+          // biome-ignore lint/security/noSecrets: base64-encoded test fixture content, not a secret
           content: "eyJjb25zdW1lciI6IHsibmFtZSI6ICJDb25zdW1lckFwcCJ9fQ==",
           contentType: "application/json" as const,
           specification: "pact" as const,
@@ -392,7 +412,9 @@ describe("Core", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.publishContracts(publishBody);
+        const result = await client.publishContracts<{ _embedded: unknown }>(
+          publishBody,
+        );
         expect(result).toBeDefined();
         expect(result._embedded).toBeDefined();
       });
@@ -427,7 +449,9 @@ describe("Core", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.getPactsForVerification({
+        const result = await client.getPactsForVerification<{
+          _embedded: { pacts: unknown };
+        }>({
           providerName: "ProviderAPI",
           consumerVersionSelectors: [{ mainBranch: true }],
           includePendingStatus: true,
@@ -497,7 +521,10 @@ describe("Environment management", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.createEnvironment({
+        const result = await client.createEnvironment<{
+          uuid: unknown;
+          name: unknown;
+        }>({
           name: "production",
           production: true,
           displayName: "Production",
@@ -538,7 +565,7 @@ describe("Environment management", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.updateEnvironment({
+        const result = await client.updateEnvironment<{ uuid: unknown }>({
           environmentId: "00000000-0000-0000-0000-000000000002",
           name: "staging",
           production: false,
@@ -597,7 +624,9 @@ describe("Environment management", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.getCurrentlySupported({
+        const result = await client.getCurrentlySupported<{
+          _embedded: { releasedVersions: unknown };
+        }>({
           environmentId: "00000000-0000-0000-0000-000000000002",
         });
         expect(Array.isArray(result._embedded.releasedVersions)).toBe(true);
@@ -629,7 +658,7 @@ describe("Pacticipant CRUD", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.createPacticipant({
+        const result = await client.createPacticipant<{ name: unknown }>({
           name: "NewService",
           displayName: "New Service",
           mainBranch: "main",
@@ -670,7 +699,7 @@ describe("Pacticipant CRUD", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.updatePacticipant({
+        const result = await client.updatePacticipant<{ name: unknown }>({
           pacticipantName: "ServiceA",
           mainBranch: "main",
           displayName: "Service A",
@@ -693,7 +722,7 @@ describe("Pacticipant CRUD", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.patchPacticipant({
+        const result = await client.patchPacticipant<{ name: unknown }>({
           pacticipantName: "ServiceA",
           mainBranch: "develop",
         });
@@ -719,7 +748,7 @@ describe("Branch & version management", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.getVersion({
+        const result = await client.getVersion<{ number: unknown }>({
           pacticipantName: "ServiceA",
           versionNumber: "1.0.0",
         });
@@ -752,7 +781,9 @@ describe("Branch & version management", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.getDeployedVersions({
+        const result = await client.getDeployedVersions<{
+          _embedded: { deployedVersions: unknown };
+        }>({
           pacticipantName: "ServiceA",
           versionNumber: "1.0.0",
           environmentId: "00000000-0000-0000-0000-000000000002",
@@ -786,7 +817,9 @@ describe("Branch & version management", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.getReleasedVersions({
+        const result = await client.getReleasedVersions<{
+          _embedded: { releasedVersions: unknown };
+        }>({
           pacticipantName: "ServiceA",
           versionNumber: "1.0.0",
           environmentId: "00000000-0000-0000-0000-000000000002",
@@ -816,7 +849,9 @@ describe("Labels", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.listLabels();
+        const result = await client.listLabels<{
+          _embedded: { labels: unknown };
+        }>();
         expect(Array.isArray(result._embedded.labels)).toBe(true);
       }));
 
@@ -833,7 +868,7 @@ describe("Labels", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.getPacticipantLabel({
+        const result = await client.getPacticipantLabel<{ name: unknown }>({
           pacticipantName: "ServiceA",
           labelName: "team-a",
         });
@@ -856,7 +891,9 @@ describe("Labels", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.listPacticipantsByLabel({
+        const result = await client.listPacticipantsByLabel<{
+          _embedded: { pacticipants: unknown };
+        }>({
           labelName: "team-a",
         });
         expect(Array.isArray(result._embedded.pacticipants)).toBe(true);
@@ -962,7 +999,9 @@ describe("Integrations & network", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.getPacticipantNetwork({
+        const result = await client.getPacticipantNetwork<{
+          integrations: unknown;
+        }>({
           pacticipantName: "ServiceA",
         });
         expect(Array.isArray(result.integrations)).toBe(true);
@@ -990,7 +1029,9 @@ describe("Webhooks", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.listWebhooks();
+        const result = await client.listWebhooks<{
+          _embedded: { webhooks: unknown };
+        }>();
         expect(Array.isArray(result._embedded.webhooks)).toBe(true);
       }));
 
@@ -1012,18 +1053,21 @@ describe("Webhooks", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.getWebhook({ webhookId: "wh-uuid-1" });
+        const result = await client.getWebhook<{ uuid: unknown }>({
+          webhookId: "wh-uuid-1",
+        });
         expect(result.uuid).toBe("wh-uuid-1");
       }));
 
   it("POST /webhooks – creates a webhook", () => {
-    const webhookBody = {
+    const webhookBody: CreateWebhookInput = {
       description: "Trigger CI build",
       events: [{ name: "contract_published" }],
       request: {
         method: "POST" as const,
         url: "https://ci.example.com/trigger",
       },
+      enabled: true,
     };
     return provider
       .addInteraction()
@@ -1038,7 +1082,9 @@ describe("Webhooks", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.createWebhook(webhookBody as any);
+        const result = await client.createWebhook<{ uuid: unknown }>(
+          webhookBody,
+        );
         expect(result.uuid).toBeDefined();
       });
   });
@@ -1141,7 +1187,9 @@ describe("Secrets", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.listSecrets();
+        const result = await client.listSecrets<{
+          _embedded: { secrets: unknown };
+        }>();
         expect(Array.isArray(result._embedded.secrets)).toBe(true);
       }));
 
@@ -1160,7 +1208,9 @@ describe("Secrets", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.getSecret({ secretId: "sec-uuid-1" });
+        const result = await client.getSecret<{ uuid: unknown }>({
+          secretId: "sec-uuid-1",
+        });
         expect(result.uuid).toBe("sec-uuid-1");
       }));
 
@@ -1228,7 +1278,7 @@ describe("User, settings & audit", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.getCurrentUser();
+        const result = await client.getCurrentUser<{ email: unknown }>();
         expect(result.email).toBe("user@example.com");
       }));
 
@@ -1252,7 +1302,9 @@ describe("User, settings & audit", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.listTokens();
+        const result = await client.listTokens<{
+          _embedded: { items: unknown };
+        }>();
         expect(Array.isArray(result._embedded.items)).toBe(true);
       }));
 
@@ -1280,7 +1332,7 @@ describe("User, settings & audit", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.regenerateToken({
+        const result = await client.regenerateToken<{ value: unknown }>({
           tokenId: "00000000-0000-0000-0000-000000000009",
         });
         expect(result.value).toBeDefined();
@@ -1301,7 +1353,9 @@ describe("User, settings & audit", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.getUserPreferences();
+        const result = await client.getUserPreferences<{
+          _embedded: unknown;
+        }>();
         expect(result._embedded).toBeDefined();
       }));
 
@@ -1320,7 +1374,9 @@ describe("User, settings & audit", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.getSystemPreferences();
+        const result = await client.getSystemPreferences<{
+          _embedded: unknown;
+        }>();
         expect(result._embedded).toBeDefined();
       }));
 
@@ -1339,7 +1395,7 @@ describe("User, settings & audit", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.getAuditLog({});
+        const result = await client.getAuditLog<{ events: unknown }>({});
         expect(result.events).toBeDefined();
       }));
 
@@ -1385,7 +1441,7 @@ describe("Admin – Users", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.listAdminUsers({});
+        const result = await client.listAdminUsers<{ users: unknown }>({});
         expect(Array.isArray(result.users)).toBe(true);
       }));
 
@@ -1413,7 +1469,7 @@ describe("Admin – Users", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.getAdminUser({
+        const result = await client.getAdminUser<{ email: unknown }>({
           userId: "00000000-0000-0000-0000-000000000012",
         });
         expect(result.email).toBe("admin@example.com");
@@ -1438,7 +1494,7 @@ describe("Admin – Users", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.createAdminUser({
+        const result = await client.createAdminUser<{ uuid: unknown }>({
           email: "new@example.com",
           name: "New User",
         });
@@ -1610,7 +1666,7 @@ describe("Admin – Teams", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.listAdminTeams({});
+        const result = await client.listAdminTeams<{ teams: unknown }>({});
         expect(Array.isArray(result.teams)).toBe(true);
       }));
 
@@ -1635,7 +1691,7 @@ describe("Admin – Teams", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.getAdminTeam({
+        const result = await client.getAdminTeam<{ name: unknown }>({
           teamId: "00000000-0000-0000-0000-000000000005",
         });
         expect(result.name).toBe("Infra");
@@ -1658,7 +1714,9 @@ describe("Admin – Teams", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.createAdminTeam({ name: "Platform" });
+        const result = await client.createAdminTeam<{ uuid: unknown }>({
+          name: "Platform",
+        });
         expect(result.uuid).toBeDefined();
       }));
 
@@ -1739,7 +1797,9 @@ describe("Admin – Teams", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.listTeamUsers({
+        const result = await client.listTeamUsers<{
+          _embedded: { users: unknown };
+        }>({
           teamId: "00000000-0000-0000-0000-000000000005",
         });
         expect(Array.isArray(result._embedded.users)).toBe(true);
@@ -1771,7 +1831,9 @@ describe("Admin – Teams", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.getTeamUser({
+        const result = await client.getTeamUser<{
+          _embedded: { user: { uuid: unknown } };
+        }>({
           teamId: "00000000-0000-0000-0000-000000000005",
           userId: "00000000-0000-0000-0000-000000000012",
         });
@@ -1833,7 +1895,9 @@ describe("Admin – Teams", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.setTeamUsers({
+        const result = await client.setTeamUsers<{
+          _embedded: { users: unknown };
+        }>({
           teamId: "00000000-0000-0000-0000-000000000005",
           uuids: ["00000000-0000-0000-0000-000000000012"],
         });
@@ -1866,7 +1930,9 @@ describe("Admin – Roles & Permissions", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.listAdminRoles();
+        const result = await client.listAdminRoles<{
+          _embedded: { roles: unknown };
+        }>();
         expect(Array.isArray(result._embedded.roles)).toBe(true);
       }));
 
@@ -1892,7 +1958,7 @@ describe("Admin – Roles & Permissions", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.createAdminRole({
+        const result = await client.createAdminRole<{ uuid: unknown }>({
           name: "ReadOnly",
           permissions: [{ scope: "contract_data:read:*" }],
         });
@@ -1932,7 +1998,9 @@ describe("Admin – Roles & Permissions", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.listAdminPermissions();
+        const result = await client.listAdminPermissions<{
+          permissions: unknown;
+        }>();
         expect(Array.isArray(result.permissions)).toBe(true);
       }));
 });
@@ -1956,7 +2024,9 @@ describe("Admin – System Accounts", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.createSystemAccount({ name: "CI Bot" });
+        const result = await client.createSystemAccount<{ uuid: unknown }>({
+          name: "CI Bot",
+        });
         expect(result.uuid).toBeDefined();
       }));
 
@@ -1987,7 +2057,9 @@ describe("Admin – System Accounts", () => {
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
-        const result = await client.getSystemAccountTokens({
+        const result = await client.getSystemAccountTokens<{
+          _embedded: { items: unknown };
+        }>({
           accountId: "00000000-0000-0000-0000-000000000008",
         });
         expect(Array.isArray(result._embedded.items)).toBe(true);

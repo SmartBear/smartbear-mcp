@@ -1,11 +1,27 @@
+import type { Mock } from "vitest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { Qtm4jClient } from "../../client.ts";
 import { ENDPOINTS } from "../../config/constants.ts";
 import { CreateTestCycle } from "./create-test-cycle.ts";
 
+interface MockApiClient {
+  post: Mock;
+}
+
+interface MockFieldResolver {
+  requireProjectContext: Mock;
+  getResolver: Mock;
+}
+
+interface MockClient {
+  getApiClient: Mock;
+  getResolverRegistry: Mock;
+}
+
 describe("CreateTestCycle", () => {
-  let mockClient: any;
-  let mockApiClient: any;
-  let mockFieldResolver: any;
+  let mockClient: MockClient;
+  let mockApiClient: MockApiClient;
+  let mockFieldResolver: MockFieldResolver;
   let instance: CreateTestCycle;
 
   const ProjectContext = {
@@ -33,7 +49,7 @@ describe("CreateTestCycle", () => {
       getResolverRegistry: vi.fn().mockReturnValue(mockFieldResolver),
     };
 
-    instance = new CreateTestCycle(mockClient as any);
+    instance = new CreateTestCycle(mockClient as unknown as Qtm4jClient);
   });
 
   describe("specification", () => {
@@ -86,7 +102,7 @@ describe("CreateTestCycle", () => {
 
       const resolveCall = mockFieldResolver
         .getResolver()
-        .resolve.mock.calls.find((call: any[]) => call[0] === "folderId");
+        .resolve.mock.calls.find((call: unknown[]) => call[0] === "folderId");
       expect(resolveCall).toBeDefined();
       expect(resolveCall[2]).toMatchObject({ folderId: "MCP Generated" });
     });
@@ -133,22 +149,21 @@ describe("CreateTestCycle", () => {
 
     it("should return warning when a field cannot be resolved", async () => {
       mockFieldResolver.getResolver.mockReturnValue({
-        resolve: vi
-          .fn()
-          .mockImplementation(
-            (
-              _field: string,
-              _key: string,
-              _body: Record<string, unknown>,
-              _context: unknown,
-              warnings: string[],
-            ) => {
-              warnings.push(
-                "Skipped priority 'Urgent' — not available in the current project.",
-              );
-              return Promise.resolve();
-            },
-          ),
+        resolve: vi.fn().mockImplementation(
+          // biome-ignore lint/complexity/useMaxParams: mirrors the real Resolver.resolve() signature shared across all resolvers/callers
+          (
+            _field: string,
+            _key: string,
+            _body: Record<string, unknown>,
+            _context: unknown,
+            warnings: string[],
+          ) => {
+            warnings.push(
+              "Skipped priority 'Urgent' — not available in the current project.",
+            );
+            return Promise.resolve();
+          },
+        ),
       });
       mockApiClient.post.mockResolvedValueOnce(MinimalResponse);
 
@@ -167,22 +182,21 @@ describe("CreateTestCycle", () => {
 
     it("should return warning when priority cannot be resolved", async () => {
       mockFieldResolver.getResolver.mockReturnValue({
-        resolve: vi
-          .fn()
-          .mockImplementation(
-            (
-              _field: string,
-              _key: string,
-              _body: Record<string, unknown>,
-              _context: unknown,
-              warnings: string[],
-            ) => {
-              warnings.push(
-                "Skipped priority 'Critical' — not available in the current project.",
-              );
-              return Promise.resolve();
-            },
-          ),
+        resolve: vi.fn().mockImplementation(
+          // biome-ignore lint/complexity/useMaxParams: mirrors the real Resolver.resolve() signature shared across all resolvers/callers
+          (
+            _field: string,
+            _key: string,
+            _body: Record<string, unknown>,
+            _context: unknown,
+            warnings: string[],
+          ) => {
+            warnings.push(
+              "Skipped priority 'Critical' — not available in the current project.",
+            );
+            return Promise.resolve();
+          },
+        ),
       });
       mockApiClient.post.mockResolvedValueOnce(MinimalResponse);
 
@@ -196,22 +210,21 @@ describe("CreateTestCycle", () => {
 
     it("should return warning when status cannot be resolved", async () => {
       mockFieldResolver.getResolver.mockReturnValue({
-        resolve: vi
-          .fn()
-          .mockImplementation(
-            (
-              _field: string,
-              _key: string,
-              _body: Record<string, unknown>,
-              _context: unknown,
-              warnings: string[],
-            ) => {
-              warnings.push(
-                "Skipped status 'Invalid' — not available in the current project.",
-              );
-              return Promise.resolve();
-            },
-          ),
+        resolve: vi.fn().mockImplementation(
+          // biome-ignore lint/complexity/useMaxParams: mirrors the real Resolver.resolve() signature shared across all resolvers/callers
+          (
+            _field: string,
+            _key: string,
+            _body: Record<string, unknown>,
+            _context: unknown,
+            warnings: string[],
+          ) => {
+            warnings.push(
+              "Skipped status 'Invalid' — not available in the current project.",
+            );
+            return Promise.resolve();
+          },
+        ),
       });
       mockApiClient.post.mockResolvedValueOnce(MinimalResponse);
 
@@ -225,22 +238,21 @@ describe("CreateTestCycle", () => {
 
     it("should return warning when labels cannot be resolved", async () => {
       mockFieldResolver.getResolver.mockReturnValue({
-        resolve: vi
-          .fn()
-          .mockImplementation(
-            (
-              _field: string,
-              _key: string,
-              _body: Record<string, unknown>,
-              _context: unknown,
-              warnings: string[],
-            ) => {
-              warnings.push(
-                "Skipped labels 'UnknownLabel' — not available in the current project.",
-              );
-              return Promise.resolve();
-            },
-          ),
+        resolve: vi.fn().mockImplementation(
+          // biome-ignore lint/complexity/useMaxParams: mirrors the real Resolver.resolve() signature shared across all resolvers/callers
+          (
+            _field: string,
+            _key: string,
+            _body: Record<string, unknown>,
+            _context: unknown,
+            warnings: string[],
+          ) => {
+            warnings.push(
+              "Skipped labels 'UnknownLabel' — not available in the current project.",
+            );
+            return Promise.resolve();
+          },
+        ),
       });
       mockApiClient.post.mockResolvedValueOnce(MinimalResponse);
 
@@ -254,22 +266,21 @@ describe("CreateTestCycle", () => {
 
     it("should return warning when components cannot be resolved", async () => {
       mockFieldResolver.getResolver.mockReturnValue({
-        resolve: vi
-          .fn()
-          .mockImplementation(
-            (
-              _field: string,
-              _key: string,
-              _body: Record<string, unknown>,
-              _context: unknown,
-              warnings: string[],
-            ) => {
-              warnings.push(
-                "Skipped components 'UnknownComp' — not available in the current project.",
-              );
-              return Promise.resolve();
-            },
-          ),
+        resolve: vi.fn().mockImplementation(
+          // biome-ignore lint/complexity/useMaxParams: mirrors the real Resolver.resolve() signature shared across all resolvers/callers
+          (
+            _field: string,
+            _key: string,
+            _body: Record<string, unknown>,
+            _context: unknown,
+            warnings: string[],
+          ) => {
+            warnings.push(
+              "Skipped components 'UnknownComp' — not available in the current project.",
+            );
+            return Promise.resolve();
+          },
+        ),
       });
       mockApiClient.post.mockResolvedValueOnce(MinimalResponse);
 
@@ -358,12 +369,16 @@ describe("CreateTestCycle", () => {
 
       await instance.handle({
         summary: "Cycle",
+        // biome-ignore lint/security/noSecrets: example Jira account ID, not a secret
         reporter: "5b10a2844c20165700ede21f",
       });
 
       expect(mockApiClient.post).toHaveBeenCalledWith(
         ENDPOINTS.CREATE_TEST_CYCLE,
-        expect.objectContaining({ reporter: "5b10a2844c20165700ede21f" }),
+        expect.objectContaining({
+          // biome-ignore lint/security/noSecrets: example Jira account ID, not a secret
+          reporter: "5b10a2844c20165700ede21f",
+        }),
       );
     });
   });

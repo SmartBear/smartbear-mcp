@@ -7,6 +7,9 @@ const filterValueSchema = z.object({
 
 const filtersSchema = z.record(z.string(), z.array(filterValueSchema));
 
+const MAX_PER_PAGE = 100;
+const DEFAULT_PER_PAGE = 30;
+
 /**
  * A collection of input parameter schemas for reuse between tools.
  * Add new entries when common parameters are identified.
@@ -56,8 +59,8 @@ export const toolInputParameters = {
     .number()
     .describe("How many results to return per page.")
     .min(1)
-    .max(100)
-    .default(30),
+    .max(MAX_PER_PAGE)
+    .default(DEFAULT_PER_PAGE),
   releaseStage: z
     .string()
     .describe(

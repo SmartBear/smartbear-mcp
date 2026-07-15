@@ -1,19 +1,21 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { ListTestExecutionLinks200Response as getTestExecutionLinksResponse } from "../../common/rest-api-schemas.ts";
+import {
+  asZephyrClient,
+  createMockZephyrClient,
+  fakeExtra,
+  type MockZephyrClient,
+} from "../../common/test-helpers.ts";
 import { GetTestExecutionLinks } from "./get-test-execution-links.ts";
 
 describe("GetTestExecutionLinks", () => {
-  let mockClient: any;
+  let mockClient: MockZephyrClient;
   let instance: GetTestExecutionLinks;
 
   beforeEach(() => {
-    mockClient = {
-      getApiClient: vi.fn().mockReturnValue({
-        get: vi.fn(),
-      }),
-    };
+    mockClient = createMockZephyrClient();
 
-    instance = new GetTestExecutionLinks(mockClient as any);
+    instance = new GetTestExecutionLinks(asZephyrClient(mockClient));
   });
 
   it("should set specification correctly", () => {
@@ -54,7 +56,7 @@ describe("GetTestExecutionLinks", () => {
 
     const args = { testExecutionIdOrKey: "1" };
 
-    const result = await instance.handle(args, {} as any);
+    const result = await instance.handle(args, fakeExtra);
 
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/testexecutions/1/links",
@@ -89,7 +91,7 @@ describe("GetTestExecutionLinks", () => {
 
     const result = await instance.handle(
       { testExecutionIdOrKey: "PROJ-E123" },
-      {} as any,
+      fakeExtra,
     );
 
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
@@ -103,7 +105,7 @@ describe("GetTestExecutionLinks", () => {
     mockClient.getApiClient().get.mockRejectedValueOnce(new Error("API error"));
 
     await expect(
-      instance.handle({ testExecutionIdOrKey: "PROJ-E123" }, {} as any),
+      instance.handle({ testExecutionIdOrKey: "PROJ-E123" }, fakeExtra),
     ).rejects.toThrow("API error");
   });
 
@@ -112,7 +114,7 @@ describe("GetTestExecutionLinks", () => {
 
     const result = await instance.handle(
       { testExecutionIdOrKey: "1" },
-      {} as any,
+      fakeExtra,
     );
 
     expect(result.structuredContent).toBeUndefined();

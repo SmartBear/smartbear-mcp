@@ -1,11 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { Qtm4jClient } from "../../client.ts";
 import { ENDPOINTS } from "../../config/constants.ts";
 import { GetTestCases } from "./get-test-cases.ts";
 
+type MockMethods = Record<string, ReturnType<typeof vi.fn>>;
+
 describe("SearchTestCases", () => {
-  let mockClient: any;
-  let mockApiClient: any;
-  let mockRegistry: any;
+  let mockClient: Partial<Qtm4jClient>;
+  let mockApiClient: MockMethods;
+  let mockRegistry: MockMethods;
   let instance: GetTestCases;
 
   const mockContext = {
@@ -46,7 +49,7 @@ describe("SearchTestCases", () => {
       getResolverRegistry: vi.fn().mockReturnValue(mockRegistry),
     };
 
-    instance = new GetTestCases(mockClient as any);
+    instance = new GetTestCases(mockClient as Qtm4jClient);
   });
 
   describe("specification", () => {
@@ -99,6 +102,7 @@ describe("SearchTestCases", () => {
       await instance.handle({ fields: ["key", "summary", "status"] });
 
       expect(mockApiClient.post).toHaveBeenCalledWith(
+        // biome-ignore lint/security/noSecrets: URL-encoded query param list, not a secret
         expect.stringContaining("fields=key%2Csummary%2Cstatus"),
         expect.any(Object),
       );
@@ -120,7 +124,7 @@ describe("SearchTestCases", () => {
 
       await instance.handle({ startAt: 50, maxResults: 25 });
 
-      const postCall = mockApiClient.post.mock.calls[0][0];
+      const [postCall] = mockApiClient.post.mock.calls[0];
       expect(postCall).toContain("startAt=50");
       expect(postCall).toContain("maxResults=25");
     });

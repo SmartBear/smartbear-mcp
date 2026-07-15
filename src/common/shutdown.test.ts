@@ -1,3 +1,5 @@
+// Real Node EventEmitter/process are required to exercise signal handling and
+// environment-variable configuration in these tests.
 import { EventEmitter } from "node:events";
 import process from "node:process";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -9,11 +11,13 @@ import { ShutdownManager } from "./shutdown.ts";
  */
 function fakeProcess(): NodeJS.Process {
   const emitter = new EventEmitter();
-  const proc: any = {
-    on: emitter.on.bind(emitter),
-    off: emitter.off.bind(emitter),
-    emit: emitter.emit.bind(emitter),
-    listenerCount: emitter.listenerCount.bind(emitter),
+  const proc: Pick<NodeJS.Process, "on" | "off" | "emit" | "listenerCount"> = {
+    on: emitter.on.bind(emitter) as NodeJS.Process["on"],
+    off: emitter.off.bind(emitter) as NodeJS.Process["off"],
+    emit: emitter.emit.bind(emitter) as NodeJS.Process["emit"],
+    listenerCount: emitter.listenerCount.bind(
+      emitter,
+    ) as NodeJS.Process["listenerCount"],
   };
   return proc as NodeJS.Process;
 }
@@ -22,12 +26,16 @@ function silentLogger() {
   return { log: vi.fn(), warn: vi.fn(), error: vi.fn() };
 }
 
+// Shared no-op used throughout as a stand-in `exit`/handler body.
+// biome-ignore lint/suspicious/noEmptyBlockStatements: intentional no-op stub
+function noop(): void {}
+
 describe("ShutdownManager.drain", () => {
   it("runs handlers in LIFO order", async () => {
     const order: string[] = [];
     const m = new ShutdownManager({
       logger: silentLogger(),
-      exit: () => {},
+      exit: noop,
     });
     m.register("first", () => {
       order.push("first");
@@ -49,7 +57,7 @@ describe("ShutdownManager.drain", () => {
     const order: string[] = [];
     const m = new ShutdownManager({
       logger: silentLogger(),
-      exit: () => {},
+      exit: noop,
     });
     m.register("a", async () => {
       await new Promise((r) => setTimeout(r, 10));
@@ -70,7 +78,7 @@ describe("ShutdownManager.drain", () => {
   it("continues running subsequent handlers when one throws", async () => {
     const ran: string[] = [];
     const logger = silentLogger();
-    const m = new ShutdownManager({ logger, exit: () => {} });
+    const m = new ShutdownManager({ logger, exit: noop });
     m.register("good-1", () => {
       ran.push("good-1");
     });
@@ -94,13 +102,11 @@ describe("ShutdownManager.drain", () => {
   it("continues when an async handler rejects", async () => {
     const ran: string[] = [];
     const logger = silentLogger();
-    const m = new ShutdownManager({ logger, exit: () => {} });
+    const m = new ShutdownManager({ logger, exit: noop });
     m.register("ok", () => {
       ran.push("ok");
     });
-    m.register("rejects", async () => {
-      throw new Error("async boom");
-    });
+    m.register("rejects", () => Promise.reject(new Error("async boom")));
 
     const result = await m.drain();
 
@@ -113,10 +119,10 @@ describe("ShutdownManager.drain", () => {
     const m = new ShutdownManager({
       timeoutMs: 50,
       logger: silentLogger(),
-      exit: () => {},
+      exit: noop,
     });
-    m.register("fast", () => {});
-    m.register("hangs", () => new Promise<void>(() => {}));
+    m.register("fast", noop);
+    m.register("hangs", () => new Promise<void>(noop));
 
     const result = await m.drain();
 
@@ -130,7 +136,7 @@ describe("ShutdownManager.drain", () => {
   it("flips isDraining() during drain and getState() through the lifecycle", async () => {
     const m = new ShutdownManager({
       logger: silentLogger(),
-      exit: () => {},
+      exit: noop,
     });
     expect(m.isDraining()).toBe(false);
     expect(m.getState()).toBe("idle");
@@ -151,7 +157,7 @@ describe("ShutdownManager.drain", () => {
     const handler = vi.fn();
     const m = new ShutdownManager({
       logger: silentLogger(),
-      exit: () => {},
+      exit: noop,
     });
     m.register("once", handler);
 
@@ -163,8 +169,8 @@ describe("ShutdownManager.drain", () => {
 
   it("refuses to register handlers after drain has started", async () => {
     const logger = silentLogger();
-    const m = new ShutdownManager({ logger, exit: () => {} });
-    m.register("first", () => {});
+    const m = new ShutdownManager({ logger, exit: noop });
+    m.register("first", noop);
     const drainPromise = m.drain();
     // Once drain has begun, late registrations are rejected.
     m.register("late", () => {
@@ -216,7 +222,7 @@ describe("ShutdownManager signal handling", () => {
       logger,
       timeoutMs: 20,
     });
-    m.register("hangs", () => new Promise<void>(() => {}));
+    m.register("hangs", () => new Promise<void>(noop));
     m.installSignalHandlers();
 
     (proc as unknown as EventEmitter).emit("SIGTERM");
@@ -279,8 +285,8 @@ describe("ShutdownManager configuration", () => {
     const original = process.env.MCP_SHUTDOWN_TIMEOUT_MS;
     process.env.MCP_SHUTDOWN_TIMEOUT_MS = "30";
 
-    const m = new ShutdownManager({ logger: silentLogger(), exit: () => {} });
-    m.register("hangs", () => new Promise<void>(() => {}));
+    const m = new ShutdownManager({ logger: silentLogger(), exit: noop });
+    m.register("hangs", () => new Promise<void>(noop));
     const result = await m.drain();
 
     expect(result.status).toBe("deadline");
@@ -300,7 +306,7 @@ describe("ShutdownManager configuration", () => {
 
     // Should not throw at construction time.
     expect(
-      () => new ShutdownManager({ logger: silentLogger(), exit: () => {} }),
+      () => new ShutdownManager({ logger: silentLogger(), exit: noop }),
     ).not.toThrow();
 
     if (original === undefined) {

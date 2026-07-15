@@ -1,8 +1,14 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import {
   GetTestExecutionParams,
   GetTestExecution200Response as GetTestExecutionResponse,
 } from "../../common/rest-api-schemas.ts";
+import {
+  asZephyrClient,
+  createMockZephyrClient,
+  fakeExtra,
+  type MockZephyrClient,
+} from "../../common/test-helpers.ts";
 import { GetTestExecution } from "./get-test-execution.ts";
 
 const responseMock = {
@@ -31,7 +37,9 @@ const responseMock = {
   actualEndDate: "2018-05-20T13:15:13Z",
   estimatedTime: 138_000,
   executionTime: 120_000,
+  // biome-ignore lint/security/noSecrets: entropy false positive in test fixture data, not a secret
   executedById: "5b10a2844c20165700ede21g",
+  // biome-ignore lint/security/noSecrets: entropy false positive in test fixture data, not a secret
   assignedToId: "5b10a2844c20165700ede21g",
   comment: "Test failed user could not login",
   automated: true,
@@ -63,16 +71,12 @@ const responseMock = {
 };
 
 describe("GetTestExecution", () => {
-  let mockClient: any;
+  let mockClient: MockZephyrClient;
   let instance: GetTestExecution;
 
   beforeEach(() => {
-    mockClient = {
-      getApiClient: vi.fn().mockReturnValue({
-        get: vi.fn(),
-      }),
-    };
-    instance = new GetTestExecution(mockClient as any);
+    mockClient = createMockZephyrClient();
+    instance = new GetTestExecution(asZephyrClient(mockClient));
   });
 
   it("should set specification correctly", () => {
@@ -89,7 +93,7 @@ describe("GetTestExecution", () => {
   it("should call apiClient.get with string testExecutionIdOrKey and return formatted content", async () => {
     mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
     const args = { testExecutionIdOrKey: "SA-E10" };
-    const result = await instance.handle(args, {} as any);
+    const result = await instance.handle(args, fakeExtra);
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/testexecutions/SA-E10",
     );
@@ -99,7 +103,7 @@ describe("GetTestExecution", () => {
   it("should call apiClient.get with numeric string testExecutionIdOrKey and return formatted content", async () => {
     mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
     const args = { testExecutionIdOrKey: "1" }; // Pass as string
-    const result = await instance.handle(args, {} as any);
+    const result = await instance.handle(args, fakeExtra);
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/testexecutions/1",
     );
@@ -109,11 +113,11 @@ describe("GetTestExecution", () => {
   it("should handle apiClient.get throwing error", async () => {
     mockClient.getApiClient().get.mockRejectedValueOnce(new Error("API error"));
     await expect(
-      instance.handle({ testExecutionIdOrKey: "1" }, {} as any),
+      instance.handle({ testExecutionIdOrKey: "1" }, fakeExtra),
     ).rejects.toThrow("API error");
   });
 
   it("should throw validation error if testExecutionIdOrKey is missing", async () => {
-    await expect(instance.handle({}, {} as any)).rejects.toThrow();
+    await expect(instance.handle({}, fakeExtra)).rejects.toThrow();
   });
 });

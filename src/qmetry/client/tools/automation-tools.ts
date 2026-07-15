@@ -1,13 +1,14 @@
-import { QMetryToolsHandlers } from "../../config/constants.ts";
+// biome-ignore-all lint/style/noExcessiveLinesPerFile: this module cohesively covers one QMetry API area (client operations, tool definitions, or shared schema fields); splitting it would scatter closely related, frequently cross-referenced declarations
+import { QmetryToolsHandlers } from "../../config/constants.ts";
 import {
   FetchAutomationStatusPayloadSchema,
   ImportAutomationResultsPayloadSchema,
 } from "../../types/common.ts";
-import type { QMetryToolParams } from "./types.ts";
+import type { QmetryToolParams } from "./types.ts";
 
-export const AUTOMATION_TOOLS: QMetryToolParams[] = [
+export const AUTOMATION_TOOLS: QmetryToolParams[] = [
   {
-    handler: QMetryToolsHandlers.IMPORT_AUTOMATION_RESULTS,
+    handler: QmetryToolsHandlers.IMPORT_AUTOMATION_RESULTS,
     title: "Import Automation Test Results",
     toolset: "Automation",
     summary:
@@ -56,8 +57,11 @@ export const AUTOMATION_TOOLS: QMetryToolParams[] = [
           file: "<base64_encoded_cucumber_json_content>",
           fileName: "cucumber-results.json",
           entityType: "CUCUMBER",
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           platformID: "Chrome 120",
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           releaseID: "Release 2.0",
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           cycleID: "Sprint 15",
           testsuiteName: "API Automation Tests",
         },
@@ -124,6 +128,7 @@ export const AUTOMATION_TOOLS: QMetryToolParams[] = [
           fileName: "junit-results.xml",
           entityType: "JUNIT",
           automationHierarchy: "3",
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           projectID: "PROJ",
         },
         expectedOutput:
@@ -135,9 +140,13 @@ export const AUTOMATION_TOOLS: QMetryToolParams[] = [
           file: "<base64_encoded_testng_xml_content>",
           fileName: "testng-results.xml",
           entityType: "TESTNG",
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           buildID: "Build-1.2.3",
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           platformID: "Safari 17",
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           releaseID: "Release 1.2",
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           cycleID: "QA Cycle",
         },
         expectedOutput:
@@ -285,7 +294,7 @@ export const AUTOMATION_TOOLS: QMetryToolParams[] = [
     ],
   },
   {
-    handler: QMetryToolsHandlers.FETCH_AUTOMATION_STATUS,
+    handler: QmetryToolsHandlers.FETCH_AUTOMATION_STATUS,
     title: "Fetch Automation Status",
     toolset: "Automation",
     summary: "Fetches the status of an automation import job by request ID.",
@@ -301,6 +310,7 @@ export const AUTOMATION_TOOLS: QMetryToolParams[] = [
       {
         description: "Fetch status for request ID 12345",
         parameters: {
+          // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
           requestID: 12_345,
         },
         expectedOutput:

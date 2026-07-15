@@ -1,6 +1,15 @@
+import type { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/protocol.js";
+import type {
+  ServerNotification,
+  ServerRequest,
+  TextContent,
+} from "@modelcontextprotocol/sdk/types.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
+import type { ReflectClient } from "../../client.ts";
 import { CancelSuiteExecution } from "./cancel-suite-execution.ts";
+
+type Extra = RequestHandlerExtra<ServerRequest, ServerNotification>;
 
 const fetchMock = createFetchMock(vi);
 fetchMock.enableMocks();
@@ -8,7 +17,7 @@ fetchMock.enableMocks();
 const cancelMock = { id: "exec-1", status: "cancelled" };
 
 describe("CancelSuiteExecution", () => {
-  let mockClient: any;
+  let mockClient: Pick<ReflectClient, "getHeaders">;
   let instance: CancelSuiteExecution;
 
   beforeEach(() => {
@@ -21,7 +30,7 @@ describe("CancelSuiteExecution", () => {
       }),
     };
 
-    instance = new CancelSuiteExecution(mockClient as any);
+    instance = new CancelSuiteExecution(mockClient as unknown as ReflectClient);
   });
 
   it("should set specification correctly", () => {
@@ -33,7 +42,7 @@ describe("CancelSuiteExecution", () => {
 
     const result = await instance.handle(
       { suiteId: "suite-1", executionId: "exec-1" },
-      {} as any,
+      {} as unknown as Extra,
     );
 
     expect(fetchMock).toHaveBeenCalledWith(
@@ -44,26 +53,29 @@ describe("CancelSuiteExecution", () => {
       }),
     );
 
-    const parsed = JSON.parse((result.content[0] as any).text);
+    const parsed = JSON.parse((result.content[0] as TextContent).text);
     expect(parsed.status).toBe("cancelled");
   });
 
   it("should throw ToolError if suiteId is missing", async () => {
     await expect(
-      instance.handle({ executionId: "exec-1" }, {} as any),
+      instance.handle({ executionId: "exec-1" }, {} as unknown as Extra),
     ).rejects.toThrow("Both suiteId and executionId arguments are required");
   });
 
   it("should throw ToolError if executionId is missing", async () => {
     await expect(
-      instance.handle({ suiteId: "suite-1" }, {} as any),
+      instance.handle({ suiteId: "suite-1" }, {} as unknown as Extra),
     ).rejects.toThrow("Both suiteId and executionId arguments are required");
   });
 
   it("should throw ToolError if fetch fails", async () => {
     fetchMock.mockResponseOnce("Not Found", { status: 404 });
     await expect(
-      instance.handle({ suiteId: "suite-1", executionId: "exec-1" }, {} as any),
+      instance.handle(
+        { suiteId: "suite-1", executionId: "exec-1" },
+        {} as unknown as Extra,
+      ),
     ).rejects.toThrow("Failed to cancel suite execution");
   });
 });

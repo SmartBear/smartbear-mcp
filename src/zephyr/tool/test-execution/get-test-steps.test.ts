@@ -1,18 +1,20 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { GetTestExecutionTestSteps200Response as getTestExecutionStepsResponse } from "../../common/rest-api-schemas.ts";
+import {
+  asZephyrClient,
+  createMockZephyrClient,
+  fakeExtra,
+  type MockZephyrClient,
+} from "../../common/test-helpers.ts";
 import { GetTestExecutionSteps } from "./get-test-steps.ts";
 
 describe("GetTestExecutionSteps", () => {
-  let mockClient: any;
+  let mockClient: MockZephyrClient;
   let instance: GetTestExecutionSteps;
 
   beforeEach(() => {
-    mockClient = {
-      getApiClient: vi.fn().mockReturnValue({
-        get: vi.fn(),
-      }),
-    };
-    instance = new GetTestExecutionSteps(mockClient as any);
+    mockClient = createMockZephyrClient();
+    instance = new GetTestExecutionSteps(asZephyrClient(mockClient));
   });
 
   it("should set specification correctly", () => {
@@ -59,7 +61,7 @@ describe("GetTestExecutionSteps", () => {
       testExecutionIdOrKey: "SA-E1",
     };
 
-    const result = await instance.handle(args, {} as any);
+    const result = await instance.handle(args, fakeExtra);
 
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/testexecutions/SA-E1/teststeps",
@@ -91,7 +93,7 @@ describe("GetTestExecutionSteps", () => {
 
     const result = await instance.handle(
       { testExecutionIdOrKey: "SA-E1" },
-      {} as any,
+      fakeExtra,
     );
 
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
@@ -129,7 +131,7 @@ describe("GetTestExecutionSteps", () => {
 
     const result = await instance.handle(
       { testExecutionIdOrKey: "SA-E1" },
-      {} as any,
+      fakeExtra,
     );
 
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
@@ -171,7 +173,7 @@ describe("GetTestExecutionSteps", () => {
         startAt: 0,
         testDataRowNumber: 3,
       },
-      {} as any,
+      fakeExtra,
     );
 
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
@@ -211,7 +213,7 @@ describe("GetTestExecutionSteps", () => {
         testExecutionIdOrKey: "12345",
         maxResults: 1,
       },
-      {} as any,
+      fakeExtra,
     );
 
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
@@ -231,7 +233,7 @@ describe("GetTestExecutionSteps", () => {
     await expect(
       instance.handle(
         { testExecutionIdOrKey: "SA-E1", maxResults: 1 },
-        {} as any,
+        fakeExtra,
       ),
     ).rejects.toThrow("API error");
   });
@@ -241,7 +243,7 @@ describe("GetTestExecutionSteps", () => {
 
     const result = await instance.handle(
       { testExecutionIdOrKey: "SA-E1", maxResults: 1 },
-      {} as any,
+      fakeExtra,
     );
 
     expect(result.structuredContent).toBeUndefined();

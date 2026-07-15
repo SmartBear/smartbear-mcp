@@ -1,55 +1,11 @@
 import { z } from "zod";
 import { CommonFields } from "./common.ts";
 
-export interface UdfModule {
-  moduleID: number;
-  mandatory: boolean;
-}
-
-export interface UdfListValue {
-  id: number;
-  name: string;
-  projectID: number;
-}
-
-export interface UdfDataEntry {
-  projectID: number;
-  projectName: string;
-  modules: UdfModule[];
-  moduleModel: any[];
-  listValues?: UdfListValue[];
-  defaultValue?: string | number | number[] | null;
-  defaultChildValue?: number[];
-}
-export interface FetchUdfFieldTypesPayload {
-  scopeId?: number;
-  orgCode?: string;
-}
-
-export const FetchUdfFieldTypesArgsSchema = z.object({
-  projectKey: CommonFields.projectKey,
-  baseUrl: CommonFields.baseUrl,
-});
-
-export const FetchUdfModulesArgsSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
-});
-
-export interface UdfFieldValue {
-  fieldID: number;
-  value: string | number | number[] | { parent: number; child: number } | null;
-  multiSelectAction?: "append" | "replace";
-}
-
-export interface BulkUpdateTestRunUdfsPayload {
-  tcRunIDs: number[];
-  UDF: Record<string, UdfFieldValue>;
-  scopeId?: number;
-  orgCode?: string;
-}
+// MARK: Pagination defaults
+const DEFAULT_PAGE_SIZE = 50;
 
 const UdfFieldValueSchema = z.object({
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   fieldID: z
     .number()
     .int()
@@ -89,9 +45,79 @@ const UdfFieldValueSchema = z.object({
     ),
 });
 
+/**
+ * A Test Run UDF (custom field) definition as returned by the
+ * `rest/admin/udf/metadata` endpoint's `qmUDF.TCR` map.
+ */
+export interface UdfFieldDefinition {
+  name?: string;
+  fieldLabel?: string;
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
+  projectUserFieldID?: number;
+  fieldTypeName?: string;
+  qmListName?: string;
+  allowBlank?: boolean;
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
+  listMasterID?: number;
+}
+
+export interface UdfModule {
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
+  moduleID: number;
+  mandatory: boolean;
+}
+
+export interface UdfListValue {
+  id: number;
+  name: string;
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
+  projectID: number;
+}
+
+export interface UdfDataEntry {
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
+  projectID: number;
+  projectName: string;
+  modules: UdfModule[];
+  moduleModel: unknown[];
+  listValues?: UdfListValue[];
+  defaultValue?: string | number | number[] | null;
+  defaultChildValue?: number[];
+}
+export interface FetchUdfFieldTypesPayload {
+  scopeId?: number;
+  orgCode?: string;
+}
+
+export const FetchUdfFieldTypesArgsSchema = z.object({
+  projectKey: CommonFields.projectKey,
+  baseUrl: CommonFields.baseUrl,
+});
+
+export const FetchUdfModulesArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+});
+
+export interface UdfFieldValue {
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
+  fieldID: number;
+  value: string | number | number[] | { parent: number; child: number } | null;
+  multiSelectAction?: "append" | "replace";
+}
+
+export interface BulkUpdateTestRunUdfsPayload {
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
+  tcRunIDs: number[];
+  UDF: Record<string, UdfFieldValue>;
+  scopeId?: number;
+  orgCode?: string;
+}
+
 export const BulkUpdateTestRunUdfsArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
   baseUrl: CommonFields.baseUrl,
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tcRunIDs: z
     .array(z.number().int().positive())
     .min(1)
@@ -130,6 +156,7 @@ export const FetchTestRunUdfMetadataArgsSchema = z.object({
 // ---------------------------------------------------------------------------
 
 export interface FetchTestRunUdfValuesPayload {
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tsrunID?: string;
   viewId?: number;
   sourceContext?: "testSuiteRun" | "testCaseExecutions";
@@ -175,10 +202,12 @@ export const FetchCascadeChildValuesArgsSchema = z.object({
 export const FetchTestRunUdfValuesArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
   baseUrl: CommonFields.baseUrl,
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tsrunID: z.coerce
     .string()
     .optional()
     .describe(
+      // biome-ignore lint/security/noSecrets: high-entropy false positive; this is a descriptive string (error message, parameter name, or API action name), not a credential
       "Test Suite Run ID. CRITICAL: the parameter name is 'tsrunID' — do NOT use 'testSuiteRunId', 'tsRunID', or any other variant. " +
         "Accepts a string or number (e.g. 731600 or '731600' — both are valid). " +
         "Get this from 'Fetch Executions by Test Suite' → use data[<index>].tsRunID from the response. " +
@@ -223,6 +252,6 @@ export const FetchTestRunUdfValuesArgsSchema = z.object({
     .int()
     .min(1)
     .optional()
-    .default(50)
+    .default(DEFAULT_PAGE_SIZE)
     .describe("Number of test case runs to return per page (default: 50)."),
 });

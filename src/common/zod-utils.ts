@@ -17,13 +17,13 @@ import {
 
 export function unwrapZodType(zodType: ZodType): ZodType {
   if (zodType instanceof ZodOptional) {
-    return (zodType as ZodOptional<any>).unwrap();
+    return (zodType as ZodOptional<ZodType>).unwrap();
   }
   if (zodType instanceof ZodDefault) {
-    return (zodType as ZodDefault<any>).unwrap();
+    return (zodType as ZodDefault<ZodType>).unwrap();
   }
   if (zodType instanceof ZodNullable) {
-    return (zodType as ZodNullable<any>).unwrap();
+    return (zodType as ZodNullable<ZodType>).unwrap();
   }
   return zodType;
 }
@@ -42,9 +42,9 @@ export function isOptionalType(zodType: ZodType): boolean {
   return isOptional;
 }
 
-export function getDefaultValue(zodType: ZodType): any {
+export function getDefaultValue(zodType: ZodType): unknown {
   if (zodType instanceof ZodDefault) {
-    return (zodType as ZodDefault<any>).def.defaultValue;
+    return (zodType as ZodDefault<ZodType>).def.defaultValue;
   }
   const unwrapped = unwrapZodType(zodType);
   if (unwrapped !== zodType) {
@@ -73,19 +73,37 @@ export function getTypeDescription(zodType: ZodType): string | null {
 }
 
 export function getReadableTypeName(zodType: ZodType): string {
-  zodType = fullyUnwrapZodType(zodType);
-  if (zodType instanceof ZodRecord) {
-    const record = zodType as ZodRecord;
+  const unwrapped = fullyUnwrapZodType(zodType);
+  if (unwrapped instanceof ZodRecord) {
+    const record = unwrapped as ZodRecord;
     return `record<${getReadableTypeName(record.def.keyType as ZodType)}, ${getReadableTypeName(record.def.valueType as ZodType)}>`;
   }
-  if (zodType instanceof ZodString) return "string";
-  if (zodType instanceof ZodNumber) return "number";
-  if (zodType instanceof ZodBoolean) return "boolean";
-  if (zodType instanceof ZodArray) return "array";
-  if (zodType instanceof ZodObject) return "object";
-  if (zodType instanceof ZodEnum) return "enum";
-  if (zodType instanceof ZodLiteral) return "literal";
-  if (zodType instanceof ZodUnion) return "union";
-  if (zodType instanceof ZodAny) return "any";
+  if (unwrapped instanceof ZodString) {
+    return "string";
+  }
+  if (unwrapped instanceof ZodNumber) {
+    return "number";
+  }
+  if (unwrapped instanceof ZodBoolean) {
+    return "boolean";
+  }
+  if (unwrapped instanceof ZodArray) {
+    return "array";
+  }
+  if (unwrapped instanceof ZodObject) {
+    return "object";
+  }
+  if (unwrapped instanceof ZodEnum) {
+    return "enum";
+  }
+  if (unwrapped instanceof ZodLiteral) {
+    return "literal";
+  }
+  if (unwrapped instanceof ZodUnion) {
+    return "union";
+  }
+  if (unwrapped instanceof ZodAny) {
+    return "any";
+  }
   return "any";
 }

@@ -13,6 +13,7 @@ const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.resolve(__dirname, "..");
 const PACKAGE_JSON_PATH = path.join(ROOT_DIR, "package.json");
 const CHANGELOG_PATH = path.join(ROOT_DIR, "CHANGELOG.md");
+const VERSION_FORMAT_REGEX = /^\d+\.\d+\.\d+$/;
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -37,9 +38,9 @@ const getCurrentVersion = () => {
 };
 
 const getNextVersionSuggestion = (currentVersion, changelogContent) => {
-  const unreleasedSection = changelogContent
-    .split("## Unreleased")[1]
-    .split("## [")[0];
+  const [, afterUnreleasedHeader = ""] =
+    changelogContent.split("## Unreleased");
+  const [unreleasedSection] = afterUnreleasedHeader.split("## [");
 
   let type = "patch";
   if (
@@ -60,7 +61,7 @@ const getNextVersionSuggestion = (currentVersion, changelogContent) => {
 
 const updateChangelog = (newVersion) => {
   let content = fs.readFileSync(CHANGELOG_PATH, "utf-8");
-  const date = new Date().toISOString().split("T")[0];
+  const [date] = new Date().toISOString().split("T");
 
   // Replace "## Unreleased" with "## Unreleased\n\n## [Version] - Date"
   // But we need to be careful not to duplicate the Unreleased header if we just prepend.
@@ -73,10 +74,9 @@ const updateChangelog = (newVersion) => {
   console.log("Updated CHANGELOG.md");
 };
 
-const main = async () => {
-  console.log("🚀 Starting Release Process...");
+// MARK: Git steps
 
-  // 1. Check for clean git status
+const ensureCleanGitStatus = () => {
   try {
     const status = execSync("git status --porcelain", {
       cwd: ROOT_DIR,
@@ -90,7 +90,9 @@ const main = async () => {
   } catch (e) {
     console.error("❌ Failed to check git status.", e);
   }
+};
 
+const promptForVersion = async () => {
   const currentVersion = getCurrentVersion();
   const changelogContent = fs.readFileSync(CHANGELOG_PATH, "utf-8");
   const suggestedVersion = getNextVersionSuggestion(
@@ -104,16 +106,18 @@ const main = async () => {
   );
   const newVersion = inputVersion.trim() || suggestedVersion;
 
-  if (!/^\d+\.\d+\.\d+$/.test(newVersion)) {
+  if (!VERSION_FORMAT_REGEX.test(newVersion)) {
     console.error("❌ Invalid version format. Must be X.Y.Z");
     process.exit(1);
   }
 
-  console.log(`\nPreparing release for v${newVersion}...`);
+  return newVersion;
+};
 
-  // 2. Create Release Branch
+const createReleaseBranchAndCommit = (newVersion) => {
   const branchName = `release/v${newVersion}`;
 
+  // 2. Create Release Branch
   console.log("Switching to main and pulling latest changes...");
   runCommand("git checkout main");
   runCommand("git pull origin main");
@@ -136,6 +140,19 @@ const main = async () => {
   // 6. Push branch
   console.log(`Pushing branch ${branchName} to origin...`);
   runCommand(`git push -u origin ${branchName}`);
+};
+
+// MARK: Entry point
+
+const main = async () => {
+  console.log("🚀 Starting Release Process...");
+
+  ensureCleanGitStatus();
+
+  const newVersion = await promptForVersion();
+
+  console.log(`\nPreparing release for v${newVersion}...`);
+  createReleaseBranchAndCommit(newVersion);
 
   console.log("\n✅ Release preparation complete!");
   console.log("\nNext steps:");

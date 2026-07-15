@@ -1,21 +1,21 @@
-import * as zod from "zod";
+import { z } from "zod";
 import { PAGINATION } from "../config/constants.ts";
 
-export const GetTestStepsFilter = zod
+export const GetTestStepsFilter = z
   .object({
-    stepDetails: zod
+    stepDetails: z
       .string()
       .optional()
       .describe(
         "Substring match on step details (action text). Example: 'Open the application'",
       ),
-    testData: zod
+    testData: z
       .string()
       .optional()
       .describe(
         "Substring match on test data. Example: 'Username: user1, Password: pass123'",
       ),
-    expectedResult: zod
+    expectedResult: z
       .string()
       .optional()
       .describe(
@@ -26,8 +26,8 @@ export const GetTestStepsFilter = zod
     "Text filters for test steps — each field performs a substring match. Multiple fields are combined with AND.",
   );
 
-export const GetTestStepsBody = zod.object({
-  key: zod
+export const GetTestStepsBody = z.object({
+  key: z
     .string()
     .describe(
       "Test case key in the format '{PROJECT_KEY}-TC-{number}', e.g. 'SCRUM-TC-145'. " +
@@ -35,7 +35,7 @@ export const GetTestStepsBody = zod.object({
         "The number is the test case counter within that project (auto-incremented, not related to seqNo). " +
         "Obtain keys from the search_test_cases tool or directly from QTM4J.",
     ),
-  versionNo: zod
+  versionNo: z
     .number()
     .int()
     .min(1)
@@ -45,7 +45,7 @@ export const GetTestStepsBody = zod.object({
         "Obtain from search_test_cases response field: version.versionNo",
     ),
   filter: GetTestStepsFilter.optional(),
-  startAt: zod
+  startAt: z
     .number()
     .min(0)
     .optional()
@@ -53,7 +53,7 @@ export const GetTestStepsBody = zod.object({
     .describe(
       "Zero-indexed offset for pagination (URL query param). Default: 0.",
     ),
-  maxResults: zod
+  maxResults: z
     .number()
     .min(PAGINATION.MIN_ALLOWED_RESULTS)
     .max(PAGINATION.MAX_ALLOWED_RESULTS_TEST_STEPS)
@@ -62,7 +62,7 @@ export const GetTestStepsBody = zod.object({
     .describe(
       "Number of steps per page (URL query param). Default: 50. Maximum: 100.",
     ),
-  sort: zod
+  sort: z
     .string()
     .optional()
     .describe(
@@ -72,30 +72,31 @@ export const GetTestStepsBody = zod.object({
     ),
 });
 
-export const ShareableTestStepSchema = zod.object({
-  id: zod.number().optional(),
-  seqNo: zod
-    .union([zod.string(), zod.number()])
+export const ShareableTestStepSchema = z.object({
+  id: z.number().optional(),
+  seqNo: z
+    .union([z.string(), z.number()])
     .optional()
     .describe("Sequence number within the shared test case, e.g. '1.1', '1.3'"),
-  stepDetails: zod
+  stepDetails: z
     .string()
     .describe("Step action / description — always required"),
-  testData: zod.string().nullish().describe("Input data for this step"),
-  expectedResult: zod
+  testData: z.string().nullish().describe("Input data for this step"),
+  expectedResult: z
     .string()
     .nullish()
     .describe("Expected outcome of this step"),
-  testcase_version_id: zod.number().optional(),
+  testcase_version_id: z.number().optional(),
 });
 
-export const ShareableSchema = zod
+export const ShareableSchema = z
   .object({
-    shareableTestcaseUID: zod.string().optional(),
-    shareableVersionNo: zod.number().optional(),
-    archived: zod.boolean().optional(),
-    projectId: zod.number().optional(),
-    shareableTestSteps: zod
+    // biome-ignore lint/style/useNamingConvention: mirrors the QTM4J API response field name verbatim
+    shareableTestcaseUID: z.string().optional(),
+    shareableVersionNo: z.number().optional(),
+    archived: z.boolean().optional(),
+    projectId: z.number().optional(),
+    shareableTestSteps: z
       .array(ShareableTestStepSchema)
       .optional()
       .describe("Embedded steps from the shared test case"),
@@ -104,23 +105,23 @@ export const ShareableSchema = zod
     "Present when this step is a reference to a shared (reusable) test case. Contains its embedded sub-steps.",
   );
 
-export const TestStepSchema = zod
+export const TestStepSchema = z
   .object({
-    id: zod.number().describe("Internal test step ID"),
-    seqNo: zod
-      .union([zod.string(), zod.number()])
+    id: z.number().describe("Internal test step ID"),
+    seqNo: z
+      .union([z.string(), z.number()])
       .optional()
       .describe("Step sequence number within the test case (e.g. 1, 2, 3)"),
-    stepDetails: zod
+    stepDetails: z
       .string()
       .describe("Step action / description — always required"),
-    testData: zod.string().nullish().describe("Input data for this step"),
-    expectedResult: zod
+    testData: z.string().nullish().describe("Input data for this step"),
+    expectedResult: z
       .string()
       .nullish()
       .describe("Expected outcome of this step"),
-    testcase_version_id: zod.number().optional(),
-    attachmentCount: zod
+    testcase_version_id: z.number().optional(),
+    attachmentCount: z
       .number()
       .optional()
       .describe("Number of attachments on this step"),
@@ -128,16 +129,16 @@ export const TestStepSchema = zod
   })
   .passthrough();
 
-export const GetTestStepsResponse = zod.object({
-  total: zod
+export const GetTestStepsResponse = z.object({
+  total: z
     .number()
     .describe("Total steps matching the filter (across all pages)"),
-  startAt: zod.number().describe("Offset of this page"),
-  maxResults: zod.number().describe("Page size used for this response"),
-  data: zod.array(TestStepSchema).describe("Test steps on this page"),
+  startAt: z.number().describe("Offset of this page"),
+  maxResults: z.number().describe("Page size used for this response"),
+  data: z.array(TestStepSchema).describe("Test steps on this page"),
 });
 
-export type GetTestStepsBodyType = zod.infer<typeof GetTestStepsBody>;
-export type GetTestStepsFilterType = zod.infer<typeof GetTestStepsFilter>;
-export type GetTestStepsResponseType = zod.infer<typeof GetTestStepsResponse>;
-export type TestStepType = zod.infer<typeof TestStepSchema>;
+export type GetTestStepsBodyType = z.infer<typeof GetTestStepsBody>;
+export type GetTestStepsFilterType = z.infer<typeof GetTestStepsFilter>;
+export type GetTestStepsResponseType = z.infer<typeof GetTestStepsResponse>;
+export type TestStepType = z.infer<typeof TestStepSchema>;

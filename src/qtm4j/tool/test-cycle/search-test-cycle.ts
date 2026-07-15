@@ -47,6 +47,7 @@ export class SearchTestCycles extends Tool<Qtm4jClient> {
       },
       {
         description: "Find cycles owned by a specific user",
+        // biome-ignore lint/security/noSecrets: example Jira account ID, not a secret
         parameters: { filter: { assignee: ["5b10a2844c20165700ede21f"] } },
         expectedOutput: "Test cycles assigned to that user",
       },
@@ -94,6 +95,7 @@ export class SearchTestCycles extends Tool<Qtm4jClient> {
         parameters: {
           filter: {
             priority: ["High"],
+            // biome-ignore lint/security/noSecrets: example Jira account ID, not a secret
             reporter: ["5b10a2844c20165700ede21f"],
             updatedOn: "01/May/2026,21/May/2026",
           },
@@ -108,6 +110,7 @@ export class SearchTestCycles extends Tool<Qtm4jClient> {
           filter: {
             status: ["In Progress"],
             priority: ["High", "Medium"],
+            // biome-ignore lint/security/noSecrets: example Jira account ID, not a secret
             assignee: ["5b10a2844c20165700ede21f"],
             folderId: 109_987,
             plannedStartDate: "02/Apr/2026,15/May/2026",
@@ -142,18 +145,21 @@ export class SearchTestCycles extends Tool<Qtm4jClient> {
       "Each item always has id and key. Other fields depend on what was requested via the fields parameter.",
   };
 
-  handle = async (rawArgs: any) => {
+  handle = async (rawArgs: unknown) => {
     const args = SearchTestCycleBody.parse(rawArgs);
     const context = this.client.getResolverRegistry().requireProjectContext();
 
     // Inject projectId into the filter body — never exposed to the LLM.
-    if (!args.filter) args.filter = {};
+    if (!args.filter) {
+      args.filter = {};
+    }
     args.filter.projectId = context.projectId;
 
     // Pagination, sort, and field selection are URL query params, not body fields.
     const params = new URLSearchParams();
-    if (args.fields?.length)
+    if (args.fields && args.fields.length > 0) {
       params.set(RESPONSE_FIELDS.FIELDS, args.fields.join(","));
+    }
     params.set(RESPONSE_FIELDS.START_AT, String(args.startAt));
     params.set(RESPONSE_FIELDS.MAX_RESULTS, String(args.maxResults));
     params.set(RESPONSE_FIELDS.SORT, args.sort);

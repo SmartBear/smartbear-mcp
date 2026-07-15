@@ -1,6 +1,15 @@
+import type { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/protocol.js";
+import type {
+  ServerNotification,
+  ServerRequest,
+  TextContent,
+} from "@modelcontextprotocol/sdk/types.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
+import type { ReflectClient } from "../../client.ts";
 import { ListSuites } from "./list-suites.ts";
+
+type Extra = RequestHandlerExtra<ServerRequest, ServerNotification>;
 
 const fetchMock = createFetchMock(vi);
 fetchMock.enableMocks();
@@ -11,7 +20,7 @@ const suitesMock = [
 ];
 
 describe("ListSuites", () => {
-  let mockClient: any;
+  let mockClient: Pick<ReflectClient, "getHeaders">;
   let instance: ListSuites;
 
   beforeEach(() => {
@@ -24,7 +33,7 @@ describe("ListSuites", () => {
       }),
     };
 
-    instance = new ListSuites(mockClient as any);
+    instance = new ListSuites(mockClient as unknown as ReflectClient);
   });
 
   it("should set specification correctly", () => {
@@ -37,7 +46,7 @@ describe("ListSuites", () => {
   it("should call suites API and return results", async () => {
     fetchMock.mockResponseOnce(JSON.stringify(suitesMock));
 
-    const result = await instance.handle({}, {} as any);
+    const result = await instance.handle({}, {} as unknown as Extra);
 
     expect(fetchMock).toHaveBeenCalledWith(
       "https://api.reflect.run/v1/suites",
@@ -47,13 +56,13 @@ describe("ListSuites", () => {
       }),
     );
 
-    const parsed = JSON.parse((result.content[0] as any).text);
+    const parsed = JSON.parse((result.content[0] as TextContent).text);
     expect(parsed).toHaveLength(2);
   });
 
   it("should throw ToolError if fetch fails", async () => {
     fetchMock.mockResponseOnce("Unauthorized", { status: 401 });
-    await expect(instance.handle({}, {} as any)).rejects.toThrow(
+    await expect(instance.handle({}, {} as unknown as Extra)).rejects.toThrow(
       "Failed to list suites",
     );
   });

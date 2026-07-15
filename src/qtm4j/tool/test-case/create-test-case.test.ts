@@ -1,11 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { Qtm4jClient } from "../../client.ts";
 import { ENDPOINTS } from "../../config/constants.ts";
 import { CreateTestCase } from "./create-test-case.ts";
 
 describe("CreateTestCase", () => {
-  let mockClient: any;
-  let mockApiClient: any;
-  let mockFieldResolver: any;
+  let mockClient: Partial<Qtm4jClient>;
+  let mockApiClient: { post: ReturnType<typeof vi.fn> };
+  let mockFieldResolver: {
+    requireProjectContext: ReturnType<typeof vi.fn>;
+    getResolver: ReturnType<typeof vi.fn>;
+  };
   let instance: CreateTestCase;
 
   beforeEach(() => {
@@ -30,7 +34,7 @@ describe("CreateTestCase", () => {
       getResolverRegistry: vi.fn().mockReturnValue(mockFieldResolver),
     };
 
-    instance = new CreateTestCase(mockClient as any);
+    instance = new CreateTestCase(mockClient as Qtm4jClient);
   });
 
   describe("specification", () => {
@@ -103,22 +107,21 @@ describe("CreateTestCase", () => {
     it("should return warnings when resolve pushes them", async () => {
       const rawArgs = { summary: "Test", priority: "NonExistent" };
       mockFieldResolver.getResolver.mockReturnValue({
-        resolve: vi
-          .fn()
-          .mockImplementation(
-            (
-              _field: string,
-              _key: string,
-              _body: Record<string, unknown>,
-              _context: unknown,
-              warnings: string[],
-            ) => {
-              warnings.push(
-                "Skipped priority 'NonExistent' — not available in the current project.",
-              );
-              return Promise.resolve();
-            },
-          ),
+        resolve: vi.fn().mockImplementation(
+          // biome-ignore lint/complexity/useMaxParams: mirrors the real Resolver.resolve signature it mocks
+          (
+            _field: string,
+            _key: string,
+            _body: Record<string, unknown>,
+            _context: unknown,
+            warnings: string[],
+          ) => {
+            warnings.push(
+              "Skipped priority 'NonExistent' — not available in the current project.",
+            );
+            return Promise.resolve();
+          },
+        ),
       });
       mockApiClient.post.mockResolvedValueOnce({
         id: "1",

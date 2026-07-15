@@ -1,3 +1,4 @@
+// biome-ignore-all lint/security/noSecrets: this file contains many high-entropy API action-name / wire-format / fixture string constants that trip the noSecrets entropy heuristic; none are real secrets
 // tools.test.ts
 
 import { describe, expect, it } from "vitest";
@@ -5,11 +6,15 @@ import type { ZodObject, ZodTypeAny } from "zod";
 import type { ClientType } from "./client/tools.ts";
 import { TOOLS } from "./client/tools.ts";
 
+const GENERATE_SUMMARY_PATTERN = /Generate Pact tests using PactFlow AI/;
+const METRICS_SUMMARY_PATTERN = /Fetch metrics across the entire workspace/;
+const TEAM_METRICS_SUMMARY_PATTERN = /Fetch metrics for all teams/;
+
 describe("TOOLS definition for 'Generate Pact Tests'", () => {
   it("defines the generate pact tests tool with correct metadata", () => {
     const tool = TOOLS.find((t) => t.title === "Generate Pact Tests");
     expect(tool).toBeDefined();
-    expect(tool?.summary).toMatch(/Generate Pact tests using PactFlow AI/);
+    expect(tool?.summary).toMatch(GENERATE_SUMMARY_PATTERN);
     expect(tool?.clients).toEqual(["pactflow"]);
     expect(tool?.handler).toBe("generate");
   });
@@ -31,7 +36,7 @@ describe("TOOLS definition for 'Get Metrics'", () => {
   it("defines the metrics tool with correct metadata", () => {
     const tool = TOOLS.find((t) => t.title === "Get Metrics");
     expect(tool).toBeDefined();
-    expect(tool?.summary).toMatch(/Fetch metrics across the entire workspace/);
+    expect(tool?.summary).toMatch(METRICS_SUMMARY_PATTERN);
     expect(tool?.handler).toBe("getMetrics");
     expect(tool?.clients).toContain("pactflow");
     expect(tool?.clients).toContain("pact_broker");
@@ -53,7 +58,7 @@ describe("TOOLS definition for 'Get Team Metrics'", () => {
   it("defines the team metrics tool with correct metadata", () => {
     const tool = TOOLS.find((t) => t.title === "Get Team Metrics");
     expect(tool).toBeDefined();
-    expect(tool?.summary).toMatch(/Fetch metrics for all teams/);
+    expect(tool?.summary).toMatch(TEAM_METRICS_SUMMARY_PATTERN);
     expect(tool?.handler).toBe("getTeamMetrics");
     expect(tool?.clients).toContain("pactflow");
   });
@@ -78,8 +83,11 @@ describe("TOOLS definition for 'Get Team Metrics'", () => {
 // Helper to find a tool and assert it exists
 function findTool(title: string) {
   const tool = TOOLS.find((t) => t.title === title);
+  // biome-ignore lint/suspicious/noMisplacedAssertion: shared helper used by every test below to assert+guard tool lookup before use; the throw immediately after is the real guard.
   expect(tool).toBeDefined();
-  if (!tool) throw new Error(`Tool with title "${title}" not found`);
+  if (!tool) {
+    throw new Error(`Tool with title "${title}" not found`);
+  }
   return tool;
 }
 

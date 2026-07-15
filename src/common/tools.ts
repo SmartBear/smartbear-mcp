@@ -1,3 +1,7 @@
+// biome-ignore-all lint/style/noExcessiveClassesPerFile: ToolError and Tool are small,
+// tightly-related exports (a tool's base class and its dedicated error type) that are
+// both imported from this single module throughout every client directory; splitting
+// them into separate files would ripple import paths repo-wide for no functional benefit.
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ZodRawShape } from "zod";
 import type { Client, ToolParams } from "./types.ts";
@@ -8,12 +12,12 @@ import type { Client, ToolParams } from "./types.ts";
  */
 export class ToolError extends Error {
   // can be used to set misc properties like response status code, etc.
-  public metadata?: Map<string, any> | undefined;
+  metadata?: Map<string, unknown> | undefined;
 
   constructor(
     cause?: string | undefined,
     options?: ErrorOptions | undefined,
-    metadata?: Map<string, any> | undefined,
+    metadata?: Map<string, unknown> | undefined,
   ) {
     super(cause, options);
     this.metadata = metadata;

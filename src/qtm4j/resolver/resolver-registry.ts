@@ -50,8 +50,9 @@ export class ResolverRegistry {
    */
   getResolver(resolverKey: string): Resolver {
     const resolver = this.resolverByKey.get(resolverKey);
-    if (!resolver)
+    if (!resolver) {
       throw new Error(`No resolver registered for key '${resolverKey}'`);
+    }
     return resolver;
   }
 

@@ -1,6 +1,7 @@
-import process from "node:process";
 import z from "zod";
+import { getEnv } from "../common/env.ts";
 import { getRequestHeader } from "../common/request-context.ts";
+import type { SmartBearMcpServer } from "../common/server.ts";
 import type {
   Client,
   GetInputFunction,
@@ -44,6 +45,7 @@ import { UpdateTestExecution } from "./tool/test-execution/update-test-execution
 import { UpdateTestExecutionSteps } from "./tool/test-execution/update-test-steps.ts";
 
 const BASE_URL_DEFAULT = "https://api.zephyrscale.smartbear.com/v2";
+const BEARER_PREFIX_LENGTH = "Bearer ".length;
 
 const ConfigurationSchema = z.object({
   api_token: z.string().describe("Zephyr Scale API token for authentication"),
@@ -64,15 +66,15 @@ export class ZephyrClient implements Client {
   configPrefix = "Zephyr";
   config = ConfigurationSchema;
 
+  // biome-ignore lint/suspicious/useAwait: must satisfy the Client interface's Promise<void>-returning configure signature
   async configure(
-    _server: any,
+    _server: SmartBearMcpServer,
     config: z.infer<typeof ConfigurationSchema>,
-    _cache?: any,
   ): Promise<void> {
     this._apiToken = config.api_token;
     this.apiClient = new ApiClient(
       () => this.getAuthToken(),
-      config.base_url || process.env.ZEPHYR_CUSTOM_BASE_URL || BASE_URL_DEFAULT,
+      config.base_url || getEnv("ZEPHYR_CUSTOM_BASE_URL") || BASE_URL_DEFAULT,
     );
   }
 
@@ -88,7 +90,7 @@ export class ZephyrClient implements Client {
 
       // Handle Bearer or token prefix if present
       if (token.startsWith("Bearer ")) {
-        token = token.substring(7);
+        token = token.slice(BEARER_PREFIX_LENGTH);
       }
       return token;
     }
@@ -102,10 +104,13 @@ export class ZephyrClient implements Client {
   }
 
   getApiClient() {
-    if (!this.apiClient) throw new Error("Client not configured");
+    if (!this.apiClient) {
+      throw new Error("Client not configured");
+    }
     return this.apiClient;
   }
 
+  // biome-ignore lint/suspicious/useAwait: must satisfy the Client interface's Promise<void>-returning registerTools signature
   async registerTools(
     register: RegisterToolsFunction,
     _getInput: GetInputFunction,

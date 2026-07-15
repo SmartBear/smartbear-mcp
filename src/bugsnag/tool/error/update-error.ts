@@ -1,3 +1,5 @@
+// biome-ignore-all lint/style/noExcessiveLinesPerFile: single-class-per-file Tool pattern used throughout this codebase; the length comes from the tool specification's examples/hints, not code complexity
+// biome-ignore-all lint/security/noSecrets: this file contains many high-entropy API action-name / wire-format / fixture string constants that trip the noSecrets entropy heuristic; none are real secrets
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ZodRawShape } from "zod";
 import { z } from "zod";
@@ -6,6 +8,10 @@ import type { GetInputFunction, ToolParams } from "../../../common/types.ts";
 import { ErrorUpdateRequest } from "../../client/api/index.ts";
 import type { BugsnagClient } from "../../client.ts";
 import { toolInputParameters } from "../../input-schemas.ts";
+
+const HTTP_STATUS_OK = 200;
+const HTTP_STATUS_NO_CONTENT = 204;
+const MAX_ADDITIONAL_USERS = 100_000;
 
 const PERMITTED_UPDATE_OPERATIONS = [
   "override_severity",
@@ -46,7 +52,7 @@ const inputSchema = z.object({
       additionalUsers: z
         .number()
         .min(1)
-        .max(100_000)
+        .max(MAX_ADDITIONAL_USERS)
         .optional()
         .describe(
           "for n_additional_users reopen rules, the number of additional users to be affected by an Error before the Error is automatically reopened.",
@@ -86,9 +92,11 @@ const inputSchema = z.object({
     ),
 });
 
+type UpdateErrorParams = z.infer<typeof inputSchema>;
+
 // Updates an error's workflow state (e.g. fix, ignore, snooze, link/unlink issue). Prompts for severity when overriding it.
 export class UpdateError extends Tool<BugsnagClient> {
-  private getInput: GetInputFunction;
+  private readonly getInput: GetInputFunction;
 
   specification: ToolParams = {
     title: "Update Error",
@@ -193,121 +201,135 @@ export class UpdateError extends Tool<BugsnagClient> {
     this.getInput = getInput;
   }
 
-  handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const params = inputSchema.parse(args);
-    const project = await this.client.getInputProject(params.projectId);
-
-    // Validate snooze operation requirements
+  // Validate operation-specific requirements that the input schema can't express on its own.
+  private validateParams(params: UpdateErrorParams): void {
     if (params.operation === "snooze" && !params.reopenRules) {
       throw new ToolError(
         "reopenRules parameter is required when using 'snooze' operation",
       );
     }
 
-    // Validate link_issue operation requirements
     if (params.operation === "link_issue" && !params.issue_url) {
       throw new ToolError(
         "'issue_url' parameter is required for 'link_issue' operation",
       );
     }
 
-    // Validate reopen rule parameters based on reopenIf type
-    if (params.reopenRules) {
-      const { reopenIf } = params.reopenRules;
-      if (reopenIf === "occurs_after" && !params.reopenRules.seconds) {
-        throw new ToolError(
-          "'seconds' parameter is required for 'occurs_after' reopen rules",
-        );
-      }
-      if (
-        reopenIf === "n_additional_users" &&
-        !params.reopenRules.additionalUsers
-      ) {
-        throw new ToolError(
-          "'additionalUsers' parameter is required for 'n_additional_users' reopen rules",
-        );
-      }
-      if (
-        reopenIf === "n_occurrences_in_m_hours" &&
-        !(params.reopenRules.occurrences && params.reopenRules.hours)
-      ) {
-        throw new ToolError(
-          "Both 'occurrences' and 'hours' parameters are required for 'n_occurrences_in_m_hours' reopen rules",
-        );
-      }
-      if (
-        reopenIf === "n_additional_occurrences" &&
-        !params.reopenRules.additionalOccurrences
-      ) {
-        throw new ToolError(
-          "'additionalOccurrences' parameter is required for 'n_additional_occurrences' reopen rules",
-        );
-      }
+    if (!params.reopenRules) {
+      return;
     }
+    const { reopenIf } = params.reopenRules;
+    if (reopenIf === "occurs_after" && !params.reopenRules.seconds) {
+      throw new ToolError(
+        "'seconds' parameter is required for 'occurs_after' reopen rules",
+      );
+    }
+    if (
+      reopenIf === "n_additional_users" &&
+      !params.reopenRules.additionalUsers
+    ) {
+      throw new ToolError(
+        "'additionalUsers' parameter is required for 'n_additional_users' reopen rules",
+      );
+    }
+    if (
+      reopenIf === "n_occurrences_in_m_hours" &&
+      !(params.reopenRules.occurrences && params.reopenRules.hours)
+    ) {
+      throw new ToolError(
+        "Both 'occurrences' and 'hours' parameters are required for 'n_occurrences_in_m_hours' reopen rules",
+      );
+    }
+    if (
+      reopenIf === "n_additional_occurrences" &&
+      !params.reopenRules.additionalOccurrences
+    ) {
+      throw new ToolError(
+        "'additionalOccurrences' parameter is required for 'n_additional_occurrences' reopen rules",
+      );
+    }
+  }
 
-    let severity: any;
-    if (params.operation === "override_severity") {
-      // illicit the severity from the user
-      const result = await this.getInput({
-        message:
-          "Please provide the new severity for the error (e.g. 'info', 'warning', 'error', 'critical')",
-        requestedSchema: {
-          type: "object",
-          properties: {
-            severity: {
-              type: "string",
-              enum: ["info", "warning", "error"],
-              description: "The new severity level for the error",
-            },
+  // Prompt the user for a new severity when overriding it; otherwise undefined.
+  private async resolveSeverity(
+    params: UpdateErrorParams,
+  ): Promise<ErrorUpdateRequest["severity"]> {
+    if (params.operation !== "override_severity") {
+      return;
+    }
+    const result = await this.getInput({
+      message:
+        "Please provide the new severity for the error (e.g. 'info', 'warning', 'error', 'critical')",
+      requestedSchema: {
+        type: "object",
+        properties: {
+          severity: {
+            type: "string",
+            enum: ["info", "warning", "error"],
+            description: "The new severity level for the error",
           },
-          required: ["severity"],
         },
-      });
+        required: ["severity"],
+      },
+    });
 
-      if (result.action === "accept" && result.content?.severity) {
-        severity = result.content.severity;
-      }
+    if (result.action === "accept" && result.content?.severity) {
+      return result.content.severity as ErrorUpdateRequest["severity"];
     }
+  }
 
-    // Prepare reopen rules for API call
-    let reopenRules: any;
-    if (params.reopenRules) {
-      reopenRules = {
-        reopen_if: params.reopenRules.reopenIf,
-      };
-      if (params.reopenRules.additionalUsers !== undefined) {
-        reopenRules.additional_users = params.reopenRules.additionalUsers;
-      }
-      if (params.reopenRules.seconds !== undefined) {
-        reopenRules.seconds = params.reopenRules.seconds;
-      }
-      if (params.reopenRules.occurrences !== undefined) {
-        reopenRules.occurrences = params.reopenRules.occurrences;
-      }
-      if (params.reopenRules.hours !== undefined) {
-        reopenRules.hours = params.reopenRules.hours;
-      }
-      if (params.reopenRules.additionalOccurrences !== undefined) {
-        reopenRules.additional_occurrences =
-          params.reopenRules.additionalOccurrences;
-      }
+  // Translate the tool's reopenRules input shape into the API's reopen_rules request shape.
+  private buildReopenRules(
+    params: UpdateErrorParams,
+  ): ErrorUpdateRequest["reopen_rules"] {
+    if (!params.reopenRules) {
+      return;
     }
+    const {
+      reopenIf,
+      additionalUsers,
+      seconds,
+      occurrences,
+      hours,
+      additionalOccurrences,
+    } = params.reopenRules;
+    return {
+      reopen_if: reopenIf as unknown as NonNullable<
+        ErrorUpdateRequest["reopen_rules"]
+      >["reopen_if"],
+      ...(additionalUsers !== undefined && {
+        additional_users: additionalUsers,
+      }),
+      ...(seconds !== undefined && { seconds }),
+      ...(occurrences !== undefined && { occurrences }),
+      ...(hours !== undefined && { hours }),
+      ...(additionalOccurrences !== undefined && {
+        additional_occurrences: additionalOccurrences,
+      }),
+    };
+  }
 
-    const errorUpdateRequestBody: any = {
+  handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
+    const params = inputSchema.parse(args);
+    const project = await this.client.getInputProject(params.projectId);
+
+    this.validateParams(params);
+
+    const severity = await this.resolveSeverity(params);
+    const reopenRules = this.buildReopenRules(params);
+
+    const errorUpdateRequestBody: ErrorUpdateRequest = {
       operation: Object.values(ErrorUpdateRequest.OperationEnum).find(
         (value) => value === params.operation,
       ) as ErrorUpdateRequest.OperationEnum,
+      ...(severity !== undefined && { severity }),
+      ...(reopenRules !== undefined && { reopen_rules: reopenRules }),
+      ...(params.operation === "link_issue" &&
+        params.issue_url && {
+          issue_url: params.issue_url,
+          verify_issue_url: true,
+        }),
     };
-    if (severity !== undefined) {
-      errorUpdateRequestBody.severity = severity;
-    }
-    if (reopenRules !== undefined) {
-      errorUpdateRequestBody.reopen_rules = reopenRules;
-    }
-    if (params.operation === "link_issue" && params.issue_url) {
-      errorUpdateRequestBody.issue_url = params.issue_url;
-      errorUpdateRequestBody.verify_issue_url = true;
-    }
 
     const result = await this.client.errorsApi.updateErrorOnProject(
       project.id,
@@ -319,7 +341,9 @@ export class UpdateError extends Tool<BugsnagClient> {
         {
           type: "text",
           text: JSON.stringify({
-            success: result.status === 200 || result.status === 204,
+            success:
+              result.status === HTTP_STATUS_OK ||
+              result.status === HTTP_STATUS_NO_CONTENT,
           }),
         },
       ],

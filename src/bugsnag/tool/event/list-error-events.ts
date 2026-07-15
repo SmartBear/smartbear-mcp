@@ -34,7 +34,9 @@ export class ListErrorEvents extends Tool<BugsnagClient> {
       {
         description: "Get events of an error",
         parameters: {
+          // biome-ignore lint/security/noSecrets: example project ID, not a secret
           projectId: "1234567890abcdef12345678",
+          // biome-ignore lint/security/noSecrets: example error ID, not a secret
           errorId: "6863e2af012caf1d5c320000",
         },
         expectedOutput:

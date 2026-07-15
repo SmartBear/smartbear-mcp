@@ -7,6 +7,8 @@ import {
   isOptionalType,
 } from "./zod-utils.ts";
 
+const TEST_STRING_REGEX = /test/;
+
 describe("zod-utils", () => {
   describe("isOptionalType", () => {
     it.each([
@@ -94,7 +96,10 @@ describe("zod-utils", () => {
       ["any", z.any()],
       ["string", z.optional(z.string())],
       ["string", z.string().default("default")],
-      ["string", z.string().regex(/test/).nullish().describe("regex test")],
+      [
+        "string",
+        z.string().regex(TEST_STRING_REGEX).nullish().describe("regex test"),
+      ],
     ])("should return '%s' for the given Zod type", (expected, zodType) => {
       const result = getReadableTypeName(zodType);
       expect(result).toBe(expected);

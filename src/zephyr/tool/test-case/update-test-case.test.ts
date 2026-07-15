@@ -3,11 +3,16 @@ import type {
   ServerNotification,
   ServerRequest,
 } from "@modelcontextprotocol/sdk/types.js";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+import {
+  asZephyrClient,
+  createMockZephyrClient,
+  type MockZephyrClient,
+} from "../../common/test-helpers.ts";
 import { UpdateTestCase } from "./update-test-case.ts";
 
 describe("UpdateTestCase", () => {
-  let mockClient: any;
+  let mockClient: MockZephyrClient;
   let instance: UpdateTestCase;
   const ExtraRequestHandler: RequestHandlerExtra<
     ServerRequest,
@@ -24,13 +29,8 @@ describe("UpdateTestCase", () => {
   };
 
   beforeEach(() => {
-    mockClient = {
-      getApiClient: vi.fn().mockReturnValue({
-        get: vi.fn(),
-        put: vi.fn(),
-      }),
-    };
-    instance = new UpdateTestCase(mockClient as any);
+    mockClient = createMockZephyrClient();
+    instance = new UpdateTestCase(asZephyrClient(mockClient));
   });
 
   it("should set specification correctly", () => {
@@ -154,8 +154,7 @@ describe("UpdateTestCase", () => {
 
       await instance.handle(args, ExtraRequestHandler);
 
-      const putCall = mockClient.getApiClient().put.mock.calls[0];
-      const mergedBody = putCall[1];
+      const [, mergedBody] = mockClient.getApiClient().put.mock.calls[0];
 
       expect(mergedBody.name).toBe("Updated Test Case");
       expect(mergedBody.objective).toBe("Original objective"); // Preserved
@@ -288,8 +287,7 @@ describe("UpdateTestCase", () => {
 
       await instance.handle(args, ExtraRequestHandler);
 
-      const putCall = mockClient.getApiClient().put.mock.calls[0];
-      const mergedBody = putCall[1];
+      const [, mergedBody] = mockClient.getApiClient().put.mock.calls[0];
 
       expect(mergedBody.customFields).toEqual({
         Environment: "Dev", // Preserved from existing
@@ -314,8 +312,7 @@ describe("UpdateTestCase", () => {
 
       await instance.handle(args, ExtraRequestHandler);
 
-      const putCall = mockClient.getApiClient().put.mock.calls[0];
-      const mergedBody = putCall[1];
+      const [, mergedBody] = mockClient.getApiClient().put.mock.calls[0];
 
       expect(mergedBody.labels).toEqual(["new-label", "another-label"]);
       expect(mergedBody.labels).not.toContain("existing-label");
@@ -335,8 +332,7 @@ describe("UpdateTestCase", () => {
 
       await instance.handle(args, ExtraRequestHandler);
 
-      const putCall = mockClient.getApiClient().put.mock.calls[0];
-      const mergedBody = putCall[1];
+      const [, mergedBody] = mockClient.getApiClient().put.mock.calls[0];
 
       expect(mergedBody.objective).toBe("Original objective"); // Preserved
       expect(mergedBody.name).toBe("Updated Test Case"); // Updated
@@ -356,8 +352,7 @@ describe("UpdateTestCase", () => {
 
       await instance.handle(args, ExtraRequestHandler);
 
-      const putCall = mockClient.getApiClient().put.mock.calls[0];
-      const mergedBody = putCall[1];
+      const [, mergedBody] = mockClient.getApiClient().put.mock.calls[0];
 
       expect(mergedBody.objective).toBeNull();
     });
@@ -376,8 +371,7 @@ describe("UpdateTestCase", () => {
 
       await instance.handle(args, ExtraRequestHandler);
 
-      const putCall = mockClient.getApiClient().put.mock.calls[0];
-      const mergedBody = putCall[1];
+      const [, mergedBody] = mockClient.getApiClient().put.mock.calls[0];
 
       // When merging with empty object, existing fields should be preserved
       expect(mergedBody.customFields).toEqual({
@@ -430,8 +424,7 @@ describe("UpdateTestCase", () => {
 
       await instance.handle(args, ExtraRequestHandler);
 
-      const putCall = mockClient.getApiClient().put.mock.calls[0];
-      const mergedBody = putCall[1];
+      const [, mergedBody] = mockClient.getApiClient().put.mock.calls[0];
 
       expect(mergedBody.customFields.nested).toEqual({
         level1: {
@@ -458,8 +451,7 @@ describe("UpdateTestCase", () => {
 
       await instance.handle(args, ExtraRequestHandler);
 
-      const putCall = mockClient.getApiClient().put.mock.calls[0];
-      const mergedBody = putCall[1];
+      const [, mergedBody] = mockClient.getApiClient().put.mock.calls[0];
 
       expect(mergedBody.name).toBe("Completely New Name");
       expect(mergedBody.project).toEqual({
@@ -490,8 +482,7 @@ describe("UpdateTestCase", () => {
 
       await instance.handle(args, ExtraRequestHandler);
 
-      const putCall = mockClient.getApiClient().put.mock.calls[0];
-      const mergedBody = putCall[1];
+      const [, mergedBody] = mockClient.getApiClient().put.mock.calls[0];
 
       expect(mergedBody.estimatedTime).toBe(3_600_000);
       expect(mergedBody.name).toBe("Original Test Case"); // Preserved
@@ -517,8 +508,7 @@ describe("UpdateTestCase", () => {
 
       await instance.handle(args, ExtraRequestHandler);
 
-      const putCall = mockClient.getApiClient().put.mock.calls[0];
-      const mergedBody = putCall[1];
+      const [, mergedBody] = mockClient.getApiClient().put.mock.calls[0];
 
       expect(mergedBody.name).toBe("Updated Name");
       expect(mergedBody.project).toEqual({
@@ -557,7 +547,7 @@ describe("UpdateTestCase", () => {
 
       await instance.handle(args, ExtraRequestHandler);
 
-      const mergedBody = mockClient.getApiClient().put.mock.calls[0][1];
+      const [, mergedBody] = mockClient.getApiClient().put.mock.calls[0];
 
       expect(mergedBody.links).toBeUndefined();
       expect(mergedBody.createdOn).toBeUndefined();

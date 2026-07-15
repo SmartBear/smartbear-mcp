@@ -1,4 +1,7 @@
+// biome-ignore-all lint/performance/noNamespaceImport: namespace import is required so `vi.mock(...)` can replace and access every export of these client modules as mocks throughout this file
+// biome-ignore-all lint/security/noSecrets: this file contains many high-entropy API action-name / wire-format / fixture string constants that trip the noSecrets entropy heuristic; none are real secrets
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { SmartBearMcpServer } from "../common/server.ts";
 import * as issues from "./client/issues.ts";
 // Mock API clients
 import * as project from "./client/project.ts";
@@ -13,13 +16,18 @@ vi.mock("./client/requirement");
 vi.mock("./client/issues");
 vi.mock("./client/testsuite");
 
+// No-op used to silence console output during tests that intentionally trigger error logging
+function noop() {
+  // intentionally empty: suppresses expected console output during a test
+}
+
 // Helper to create and configure a client
 async function createConfiguredClient(
   apiKey = "fake-token",
   baseUrl = "https://qmetry.example",
 ): Promise<QmetryClient> {
   const client = new QmetryClient();
-  await client.configure({} as any, {
+  await client.configure({} as SmartBearMcpServer, {
     api_key: apiKey,
     base_url: baseUrl,
   });
@@ -39,13 +47,15 @@ describe("QmetryClient tools", () => {
   const getHandler = (title: string) => {
     client.registerTools(mockRegister, vi.fn());
     const call = mockRegister.mock.calls.find((c) => c[0].title === title);
-    if (!call) throw new Error(`Tool not registered: ${title}`);
+    if (!call) {
+      throw new Error(`Tool not registered: ${title}`);
+    }
     return call[1]; // handler fn
   };
 
   describe("Fetch QMetry Project Info", () => {
     it("should fetch project info with defaults", async () => {
-      (project.getProjectInfo as any).mockResolvedValue({
+      vi.mocked(project.getProjectInfo).mockResolvedValue({
         id: 1,
         name: "Proj",
       });
@@ -65,11 +75,9 @@ describe("QmetryClient tools", () => {
 
     it("should handle API errors gracefully", async () => {
       // Mock console.error to suppress expected error logging during test
-      const consoleSpy = vi
-        .spyOn(console, "error")
-        .mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(noop);
 
-      (project.getProjectInfo as any).mockRejectedValue(new Error("boom"));
+      vi.mocked(project.getProjectInfo).mockRejectedValue(new Error("boom"));
 
       const handler = getHandler("Fetch QMetry Project Info");
       const result = await handler({});
@@ -92,10 +100,10 @@ describe("QmetryClient tools", () => {
   describe("Fetch Test Cases", () => {
     it("should auto-resolve viewId and call fetchTestCases with default pagination", async () => {
       // Mock project info response for auto-resolution
-      (project.getProjectInfo as any).mockResolvedValue({
+      vi.mocked(project.getProjectInfo).mockResolvedValue({
         latestViews: { TC: { viewId: 12_345 } },
       });
-      (testcase.fetchTestCases as any).mockResolvedValue({
+      vi.mocked(testcase.fetchTestCases).mockResolvedValue({
         data: [
           { id: 1, name: "Test1" },
           { id: 2, name: "Test2" },
@@ -129,7 +137,7 @@ describe("QmetryClient tools", () => {
     });
 
     it("should skip auto-resolution when viewId is provided", async () => {
-      (testcase.fetchTestCases as any).mockResolvedValue({
+      vi.mocked(testcase.fetchTestCases).mockResolvedValue({
         data: [{ id: 4, name: "Test4" }],
       });
 
@@ -155,12 +163,10 @@ describe("QmetryClient tools", () => {
 
     it("should handle auto-resolution failure gracefully", async () => {
       // Mock console.error to suppress expected error logging during test
-      const consoleSpy = vi
-        .spyOn(console, "error")
-        .mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(noop);
 
       // Mock getProjectInfo to fail during auto-resolution
-      (project.getProjectInfo as any).mockRejectedValue(
+      vi.mocked(project.getProjectInfo).mockRejectedValue(
         new Error("Project not found"),
       );
 
@@ -187,7 +193,9 @@ describe("QmetryClient tools", () => {
 
   describe("Fetch Test Case Details", () => {
     it("should pass tcID and pagination correctly", async () => {
-      (testcase.fetchTestCaseDetails as any).mockResolvedValue({ id: "TC-1" });
+      vi.mocked(testcase.fetchTestCaseDetails).mockResolvedValue({
+        id: "TC-1",
+      });
 
       const handler = getHandler("Fetch Test Case Details");
       const result = await handler({ tcID: "TC-1" });
@@ -205,7 +213,7 @@ describe("QmetryClient tools", () => {
 
   describe("Fetch Test Case Version Details", () => {
     it("should pass id and version", async () => {
-      (testcase.fetchTestCaseVersionDetails as any).mockResolvedValue({
+      vi.mocked(testcase.fetchTestCaseVersionDetails).mockResolvedValue({
         id: "TC-2",
         version: 3,
       });
@@ -226,7 +234,7 @@ describe("QmetryClient tools", () => {
 
   describe("Fetch Test Case Steps", () => {
     it("should fetch steps with defaults", async () => {
-      (testcase.fetchTestCaseSteps as any).mockResolvedValue({
+      vi.mocked(testcase.fetchTestCaseSteps).mockResolvedValue({
         steps: ["step1", "step2"],
       });
 
@@ -247,10 +255,10 @@ describe("QmetryClient tools", () => {
   describe("Fetch Requirements", () => {
     it("should auto-resolve viewId and call fetchRequirements with default pagination", async () => {
       // Mock project info response for auto-resolution
-      (project.getProjectInfo as any).mockResolvedValue({
+      vi.mocked(project.getProjectInfo).mockResolvedValue({
         latestViews: { RQ: { viewId: 54_321 } },
       });
-      (requirement.fetchRequirements as any).mockResolvedValue({
+      vi.mocked(requirement.fetchRequirements).mockResolvedValue({
         data: [
           { id: 1, name: "Requirement1", entityKey: "MAC-RQ-1" },
           { id: 2, name: "Requirement2", entityKey: "MAC-RQ-2" },
@@ -282,11 +290,9 @@ describe("QmetryClient tools", () => {
     });
 
     it("should handle API errors gracefully", async () => {
-      const consoleSpy = vi
-        .spyOn(console, "error")
-        .mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(noop);
 
-      (project.getProjectInfo as any).mockRejectedValue(
+      vi.mocked(project.getProjectInfo).mockRejectedValue(
         new Error("API failure"),
       );
 
@@ -308,10 +314,10 @@ describe("QmetryClient tools", () => {
 
     it("should use manual viewId when provided", async () => {
       // Mock project info for auto-resolution of folderPath
-      (project.getProjectInfo as any).mockResolvedValue({
+      vi.mocked(project.getProjectInfo).mockResolvedValue({
         latestViews: { RQ: { viewId: 54_321 } },
       });
-      (requirement.fetchRequirements as any).mockResolvedValue({
+      vi.mocked(requirement.fetchRequirements).mockResolvedValue({
         data: [{ id: 1, name: "Requirement1" }],
       });
 
@@ -340,7 +346,7 @@ describe("QmetryClient tools", () => {
 
   describe("Fetch Requirement Details", () => {
     it("should fetch requirement details with required parameters", async () => {
-      (requirement.fetchRequirementDetails as any).mockResolvedValue({
+      vi.mocked(requirement.fetchRequirementDetails).mockResolvedValue({
         id: 12_345,
         entityKey: "MAC-RQ-748",
         name: "Test Requirement",
@@ -366,11 +372,9 @@ describe("QmetryClient tools", () => {
     });
 
     it("should handle API errors gracefully", async () => {
-      const consoleSpy = vi
-        .spyOn(console, "error")
-        .mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(noop);
 
-      (requirement.fetchRequirementDetails as any).mockRejectedValue(
+      vi.mocked(requirement.fetchRequirementDetails).mockRejectedValue(
         new Error("Requirement not found"),
       );
 
@@ -391,7 +395,7 @@ describe("QmetryClient tools", () => {
     });
 
     it("should use custom project key when provided", async () => {
-      (requirement.fetchRequirementDetails as any).mockResolvedValue({
+      vi.mocked(requirement.fetchRequirementDetails).mockResolvedValue({
         id: 67_890,
         entityKey: "PROJ-RQ-123",
       });
@@ -419,7 +423,7 @@ describe("QmetryClient tools", () => {
 
   describe("Fetch Test Cases Linked to Requirement", () => {
     it("should fetch linked test cases with required rqID", async () => {
-      (testcase.fetchTestCasesLinkedToRequirement as any).mockResolvedValue({
+      vi.mocked(testcase.fetchTestCasesLinkedToRequirement).mockResolvedValue({
         data: [
           {
             entityKey: "MAC-TC-1692",
@@ -455,7 +459,7 @@ describe("QmetryClient tools", () => {
     });
 
     it("should handle getLinked parameter for gap analysis", async () => {
-      (testcase.fetchTestCasesLinkedToRequirement as any).mockResolvedValue({
+      vi.mocked(testcase.fetchTestCasesLinkedToRequirement).mockResolvedValue({
         data: [
           {
             entityKey: "MAC-TC-9999",
@@ -487,11 +491,9 @@ describe("QmetryClient tools", () => {
     });
 
     it("should handle API errors gracefully", async () => {
-      const consoleSpy = vi
-        .spyOn(console, "error")
-        .mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(noop);
 
-      (testcase.fetchTestCasesLinkedToRequirement as any).mockRejectedValue(
+      vi.mocked(testcase.fetchTestCasesLinkedToRequirement).mockRejectedValue(
         new Error("Requirement ID not found"),
       );
 
@@ -538,7 +540,7 @@ describe("QmetryClient tools", () => {
         totalCount: 2,
       };
 
-      (testcase.fetchTestCaseExecutions as any).mockResolvedValue(
+      vi.mocked(testcase.fetchTestCaseExecutions).mockResolvedValue(
         mockExecutions,
       );
 
@@ -576,7 +578,7 @@ describe("QmetryClient tools", () => {
         totalCount: 1,
       };
 
-      (testcase.fetchTestCaseExecutions as any).mockResolvedValue(
+      vi.mocked(testcase.fetchTestCaseExecutions).mockResolvedValue(
         mockFilteredExecutions,
       );
 
@@ -610,11 +612,9 @@ describe("QmetryClient tools", () => {
     });
 
     it("should handle API errors gracefully", async () => {
-      const consoleSpy = vi
-        .spyOn(console, "error")
-        .mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(noop);
 
-      (testcase.fetchTestCaseExecutions as any).mockRejectedValue(
+      vi.mocked(testcase.fetchTestCaseExecutions).mockRejectedValue(
         new Error("Test case ID not found"),
       );
 
@@ -663,7 +663,9 @@ describe("QmetryClient tools", () => {
         totalCount: 2,
       };
 
-      (issues.fetchIssuesLinkedToTestCase as any).mockResolvedValue(mockIssues);
+      vi.mocked(issues.fetchIssuesLinkedToTestCase).mockResolvedValue(
+        mockIssues,
+      );
 
       const handler = getHandler("Fetch Issues Linked to Test Case");
       const result = await handler({
@@ -703,7 +705,7 @@ describe("QmetryClient tools", () => {
         totalCount: 1,
       };
 
-      (issues.fetchIssuesLinkedToTestCase as any).mockResolvedValue(
+      vi.mocked(issues.fetchIssuesLinkedToTestCase).mockResolvedValue(
         mockFilteredIssues,
       );
 
@@ -735,11 +737,9 @@ describe("QmetryClient tools", () => {
     });
 
     it("should handle API errors gracefully", async () => {
-      const consoleSpy = vi
-        .spyOn(console, "error")
-        .mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(noop);
 
-      (issues.fetchIssuesLinkedToTestCase as any).mockRejectedValue(
+      vi.mocked(issues.fetchIssuesLinkedToTestCase).mockRejectedValue(
         new Error("Test case not found or no issues linked"),
       );
 
@@ -764,7 +764,7 @@ describe("QmetryClient tools", () => {
 
   describe("Fetch Test Cases Linked to Test Suite", () => {
     it("should fetch test cases linked to test suite with defaults", async () => {
-      (testsuite.fetchTestCasesByTestSuite as any).mockResolvedValue({
+      vi.mocked(testsuite.fetchTestCasesByTestSuite).mockResolvedValue({
         data: [
           {
             tcID: 123_456,
@@ -809,7 +809,7 @@ describe("QmetryClient tools", () => {
     });
 
     it("should fetch test cases with custom filters and pagination", async () => {
-      (testsuite.fetchTestCasesByTestSuite as any).mockResolvedValue({
+      vi.mocked(testsuite.fetchTestCasesByTestSuite).mockResolvedValue({
         data: [
           {
             tcID: 123_456,
@@ -857,7 +857,7 @@ describe("QmetryClient tools", () => {
 
   describe("Fetch Executions by Test Suite", () => {
     it("should fetch executions by test suite with required tsID", async () => {
-      (testsuite.fetchExecutionsByTestSuite as any).mockResolvedValue({
+      vi.mocked(testsuite.fetchExecutionsByTestSuite).mockResolvedValue({
         data: [
           {
             executionID: 789_123,
@@ -908,7 +908,7 @@ describe("QmetryClient tools", () => {
     });
 
     it("should fetch executions with filters and optional parameters", async () => {
-      (testsuite.fetchExecutionsByTestSuite as any).mockResolvedValue({
+      vi.mocked(testsuite.fetchExecutionsByTestSuite).mockResolvedValue({
         data: [
           {
             executionID: 789_125,
@@ -964,7 +964,7 @@ describe("QmetryClient tools", () => {
 
   describe("Fetch Test Case Runs by Test Suite Run", () => {
     it("should fetch test case runs by test suite run with required parameters", async () => {
-      (testsuite.fetchTestCaseRunsByTestSuiteRun as any).mockResolvedValue({
+      vi.mocked(testsuite.fetchTestCaseRunsByTestSuiteRun).mockResolvedValue({
         data: [
           {
             id: 123_456,
@@ -1026,7 +1026,7 @@ describe("QmetryClient tools", () => {
     });
 
     it("should fetch test case runs with filter and showTcWithDefects", async () => {
-      (testsuite.fetchTestCaseRunsByTestSuiteRun as any).mockResolvedValue({
+      vi.mocked(testsuite.fetchTestCaseRunsByTestSuiteRun).mockResolvedValue({
         data: [
           {
             id: 123_458,
@@ -1088,7 +1088,7 @@ describe("QmetryClient tools", () => {
     });
 
     it("should filter test case runs by Test Run UDF using tcrUdfFilter", async () => {
-      (testsuite.fetchTestCaseRunsByTestSuiteRun as any).mockResolvedValue({
+      vi.mocked(testsuite.fetchTestCaseRunsByTestSuiteRun).mockResolvedValue({
         data: [
           {
             tcRunID: 41_572_006,
@@ -1129,7 +1129,7 @@ describe("QmetryClient tools", () => {
     });
 
     it("should parse udfjson and strip HTML from rich text UDF values in response", async () => {
-      (testsuite.fetchTestCaseRunsByTestSuiteRun as any).mockResolvedValue({
+      vi.mocked(testsuite.fetchTestCaseRunsByTestSuiteRun).mockResolvedValue({
         data: [
           {
             tcRunID: 41_572_006,
@@ -1177,7 +1177,7 @@ describe("QmetryClient tools", () => {
 
   describe("Fetch Linked Issues of Test Case Run", () => {
     it("should fetch linked issues by test case run with required parameters", async () => {
-      (testsuite.fetchLinkedIssuesByTestCaseRun as any).mockResolvedValue({
+      vi.mocked(testsuite.fetchLinkedIssuesByTestCaseRun).mockResolvedValue({
         data: [
           {
             id: 456_789,
@@ -1243,7 +1243,7 @@ describe("QmetryClient tools", () => {
     });
 
     it("should fetch issues with getLinked false and filter", async () => {
-      (testsuite.fetchLinkedIssuesByTestCaseRun as any).mockResolvedValue({
+      vi.mocked(testsuite.fetchLinkedIssuesByTestCaseRun).mockResolvedValue({
         data: [
           {
             id: 456_791,
@@ -1307,7 +1307,7 @@ describe("QmetryClient tools", () => {
 
   describe("Fetch QMetry list Projects", () => {
     it("should fetch project list with default parameters", async () => {
-      (project.getProjects as any).mockResolvedValue({
+      vi.mocked(project.getProjects).mockResolvedValue({
         data: [
           {
             projectID: 1,
@@ -1342,7 +1342,7 @@ describe("QmetryClient tools", () => {
     });
 
     it("should fetch project list with filter and pagination", async () => {
-      (project.getProjects as any).mockResolvedValue({
+      vi.mocked(project.getProjects).mockResolvedValue({
         data: [
           {
             projectID: 3,
@@ -1380,7 +1380,7 @@ describe("QmetryClient tools", () => {
 
   describe("Set QMetry Project Info", () => {
     it("should set project info with default project key", async () => {
-      (project.getProjectInfo as any).mockResolvedValue({
+      vi.mocked(project.getProjectInfo).mockResolvedValue({
         id: 1,
         name: "default",
         projectKey: "default",
@@ -1400,7 +1400,7 @@ describe("QmetryClient tools", () => {
     });
 
     it("should set project info with custom project key", async () => {
-      (project.getProjectInfo as any).mockResolvedValue({
+      vi.mocked(project.getProjectInfo).mockResolvedValue({
         id: 2,
         name: "MAC Project",
         projectKey: "MAC",
@@ -1422,7 +1422,7 @@ describe("QmetryClient tools", () => {
 
   describe("Fetch Releases and Cycles", () => {
     it("should fetch releases and cycles with default parameters", async () => {
-      (project.getReleasesCycles as any).mockResolvedValue({
+      vi.mocked(project.getReleasesCycles).mockResolvedValue({
         projects: [
           {
             releases: [
@@ -1448,7 +1448,7 @@ describe("QmetryClient tools", () => {
     });
 
     it("should fetch releases including archived with showArchive true", async () => {
-      (project.getReleasesCycles as any).mockResolvedValue({
+      vi.mocked(project.getReleasesCycles).mockResolvedValue({
         projects: [
           {
             releases: [
@@ -1474,7 +1474,7 @@ describe("QmetryClient tools", () => {
 
   describe("Fetch Builds", () => {
     it("should fetch builds with default pagination", async () => {
-      (project.getBuilds as any).mockResolvedValue({
+      vi.mocked(project.getBuilds).mockResolvedValue({
         data: [
           { buildID: 1, name: "Build 1.0", isArchived: false },
           { buildID: 2, name: "Build 1.1", isArchived: false },
@@ -1497,7 +1497,7 @@ describe("QmetryClient tools", () => {
     });
 
     it("should fetch builds with filter by name", async () => {
-      (project.getBuilds as any).mockResolvedValue({
+      vi.mocked(project.getBuilds).mockResolvedValue({
         data: [{ buildID: 3, name: "Build 2.0", isArchived: false }],
         total: 1,
       });
@@ -1524,7 +1524,7 @@ describe("QmetryClient tools", () => {
 
   describe("Fetch Platforms", () => {
     it("should fetch platforms with default parameters", async () => {
-      (project.getPlatforms as any).mockResolvedValue({
+      vi.mocked(project.getPlatforms).mockResolvedValue({
         data: [
           { platformID: 1, name: "Chrome", isPlatformArchived: false },
           { platformID: 2, name: "Firefox", isPlatformArchived: false },
@@ -1547,7 +1547,7 @@ describe("QmetryClient tools", () => {
     });
 
     it("should fetch platforms with archive filter", async () => {
-      (project.getPlatforms as any).mockResolvedValue({
+      vi.mocked(project.getPlatforms).mockResolvedValue({
         data: [{ platformID: 3, name: "Safari", isPlatformArchived: false }],
         total: 1,
       });
@@ -1572,7 +1572,7 @@ describe("QmetryClient tools", () => {
 
   describe("Create Test Case", () => {
     it("should create test case with required parameters", async () => {
-      (testcase.createTestCases as any).mockResolvedValue({
+      vi.mocked(testcase.createTestCases).mockResolvedValue({
         id: 12_345,
         entityKey: "TC-001",
         name: "New Test Case",
@@ -1599,7 +1599,7 @@ describe("QmetryClient tools", () => {
     });
 
     it("should create test case with steps and metadata", async () => {
-      (testcase.createTestCases as any).mockResolvedValue({
+      vi.mocked(testcase.createTestCases).mockResolvedValue({
         id: 12_346,
         entityKey: "TC-002",
         name: "Test with Steps",
@@ -1643,7 +1643,7 @@ describe("QmetryClient tools", () => {
 
   describe("Update Test Case", () => {
     it("should update test case with basic fields", async () => {
-      (testcase.updateTestCase as any).mockResolvedValue({
+      vi.mocked(testcase.updateTestCase).mockResolvedValue({
         id: 4_519_260,
         entityKey: "TC-003",
         name: "Updated Test Case",
@@ -1671,7 +1671,7 @@ describe("QmetryClient tools", () => {
     });
 
     it("should update test case with steps", async () => {
-      (testcase.updateTestCase as any).mockResolvedValue({
+      vi.mocked(testcase.updateTestCase).mockResolvedValue({
         id: 4_519_260,
         entityKey: "TC-004",
         name: "Test with Updated Steps",
@@ -1714,7 +1714,7 @@ describe("QmetryClient tools", () => {
 
   describe("Create Test Suite", () => {
     it("should create test suite with required parameters", async () => {
-      (testsuite.createTestSuites as any).mockResolvedValue({
+      vi.mocked(testsuite.createTestSuites).mockResolvedValue({
         id: 1_505_898,
         entityKey: "TS-001",
         name: "New Test Suite",
@@ -1741,7 +1741,7 @@ describe("QmetryClient tools", () => {
     });
 
     it("should create test suite with metadata and release mapping", async () => {
-      (testsuite.createTestSuites as any).mockResolvedValue({
+      vi.mocked(testsuite.createTestSuites).mockResolvedValue({
         id: 1_505_899,
         entityKey: "TS-002",
         name: "Suite with Metadata",
@@ -1775,7 +1775,7 @@ describe("QmetryClient tools", () => {
 
   describe("Update Test Suite", () => {
     it("should update test suite name", async () => {
-      (testsuite.updateTestSuite as any).mockResolvedValue({
+      vi.mocked(testsuite.updateTestSuite).mockResolvedValue({
         id: 1_505_898,
         entityKey: "TS-003",
         name: "Updated Suite Name",
@@ -1805,7 +1805,7 @@ describe("QmetryClient tools", () => {
     });
 
     it("should update test suite state and owner", async () => {
-      (testsuite.updateTestSuite as any).mockResolvedValue({
+      vi.mocked(testsuite.updateTestSuite).mockResolvedValue({
         id: 1_505_898,
         entityKey: "TS-004",
         testSuiteState: 505_036,
@@ -1838,10 +1838,10 @@ describe("QmetryClient tools", () => {
 
   describe("Fetch Test Suites", () => {
     it("should auto-resolve viewId and fetch test suites", async () => {
-      (project.getProjectInfo as any).mockResolvedValue({
+      vi.mocked(project.getProjectInfo).mockResolvedValue({
         latestViews: { TS: { viewId: 103_097 } },
       });
-      (testsuite.fetchTestSuites as any).mockResolvedValue({
+      vi.mocked(testsuite.fetchTestSuites).mockResolvedValue({
         data: [
           { id: 1, name: "Suite 1", entityKey: "TS-001" },
           { id: 2, name: "Suite 2", entityKey: "TS-002" },
@@ -1867,7 +1867,7 @@ describe("QmetryClient tools", () => {
     });
 
     it("should skip auto-resolution when viewId provided", async () => {
-      (testsuite.fetchTestSuites as any).mockResolvedValue({
+      vi.mocked(testsuite.fetchTestSuites).mockResolvedValue({
         data: [{ id: 3, name: "Suite 3", entityKey: "TS-003" }],
       });
 
@@ -1891,10 +1891,10 @@ describe("QmetryClient tools", () => {
 
   describe("Fetch Test Suites for Test Case", () => {
     it("should fetch test suites for test case with auto-resolution", async () => {
-      (project.getProjectInfo as any).mockResolvedValue({
+      vi.mocked(project.getProjectInfo).mockResolvedValue({
         latestViews: { TSFS: { viewId: 104_316 } },
       });
-      (testsuite.fetchTestSuitesForTestCase as any).mockResolvedValue({
+      vi.mocked(testsuite.fetchTestSuitesForTestCase).mockResolvedValue({
         data: [
           { id: 101, name: "Available Suite 1" },
           { id: 102, name: "Available Suite 2" },
@@ -1919,10 +1919,10 @@ describe("QmetryClient tools", () => {
     });
 
     it("should fetch test suites with filter", async () => {
-      (project.getProjectInfo as any).mockResolvedValue({
+      vi.mocked(project.getProjectInfo).mockResolvedValue({
         latestViews: { TSFS: { viewId: 104_316 } },
       });
-      (testsuite.fetchTestSuitesForTestCase as any).mockResolvedValue({
+      vi.mocked(testsuite.fetchTestSuitesForTestCase).mockResolvedValue({
         data: [{ id: 103, name: "Filtered Suite" }],
       });
 
@@ -1948,7 +1948,7 @@ describe("QmetryClient tools", () => {
 
   describe("Link Requirements to Testcase", () => {
     it("should link requirements to test case", async () => {
-      (testcase.linkRequirementToTestCase as any).mockResolvedValue({
+      vi.mocked(testcase.linkRequirementToTestCase).mockResolvedValue({
         success: true,
         message: "Requirements linked successfully",
       });
@@ -1975,11 +1975,9 @@ describe("QmetryClient tools", () => {
     });
 
     it("should handle API errors gracefully", async () => {
-      const consoleSpy = vi
-        .spyOn(console, "error")
-        .mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(noop);
 
-      (testcase.linkRequirementToTestCase as any).mockRejectedValue(
+      vi.mocked(testcase.linkRequirementToTestCase).mockRejectedValue(
         new Error("Test case not found"),
       );
 
@@ -1999,7 +1997,9 @@ describe("QmetryClient tools", () => {
 
   describe("Fetch Requirements Linked to Test Case", () => {
     it("should fetch requirements linked to test case", async () => {
-      (requirement.fetchRequirementsLinkedToTestCase as any).mockResolvedValue({
+      vi.mocked(
+        requirement.fetchRequirementsLinkedToTestCase,
+      ).mockResolvedValue({
         data: [
           { entityKey: "RQ-001", name: "Requirement 1" },
           { entityKey: "RQ-002", name: "Requirement 2" },
@@ -2025,7 +2025,9 @@ describe("QmetryClient tools", () => {
     });
 
     it("should fetch unlinked requirements with getLinked false", async () => {
-      (requirement.fetchRequirementsLinkedToTestCase as any).mockResolvedValue({
+      vi.mocked(
+        requirement.fetchRequirementsLinkedToTestCase,
+      ).mockResolvedValue({
         data: [{ entityKey: "RQ-003", name: "Unlinked Requirement" }],
       });
 
@@ -2050,7 +2052,7 @@ describe("QmetryClient tools", () => {
 
   describe("Link Test Cases to Test Suite", () => {
     it("should link test cases to test suite", async () => {
-      (testsuite.linkTestCasesToTestSuite as any).mockResolvedValue({
+      vi.mocked(testsuite.linkTestCasesToTestSuite).mockResolvedValue({
         success: true,
         message: "Test cases linked successfully",
       });
@@ -2077,7 +2079,7 @@ describe("QmetryClient tools", () => {
     });
 
     it("should handle linking multiple test cases", async () => {
-      (testsuite.linkTestCasesToTestSuite as any).mockResolvedValue({
+      vi.mocked(testsuite.linkTestCasesToTestSuite).mockResolvedValue({
         success: true,
         linkedCount: 4,
       });
@@ -2107,7 +2109,7 @@ describe("QmetryClient tools", () => {
 
   describe("Requirements Linked Test Cases to Test Suite", () => {
     it("should link requirement-linked test cases to test suite", async () => {
-      (testsuite.reqLinkedTestCasesToTestSuite as any).mockResolvedValue({
+      vi.mocked(testsuite.reqLinkedTestCasesToTestSuite).mockResolvedValue({
         success: true,
         message: "Requirement-linked test cases linked successfully",
       });
@@ -2136,7 +2138,7 @@ describe("QmetryClient tools", () => {
     });
 
     it("should link multiple requirement-linked test cases", async () => {
-      (testsuite.reqLinkedTestCasesToTestSuite as any).mockResolvedValue({
+      vi.mocked(testsuite.reqLinkedTestCasesToTestSuite).mockResolvedValue({
         success: true,
         linkedCount: 4,
       });
@@ -2166,7 +2168,7 @@ describe("QmetryClient tools", () => {
 
   describe("Create Defect or Issue", () => {
     it("should create issue with required parameters", async () => {
-      (issues.createIssue as any).mockResolvedValue({
+      vi.mocked(issues.createIssue).mockResolvedValue({
         id: 5_057_882,
         entityKey: "IS-001",
         summary: "Login button not working",
@@ -2195,7 +2197,7 @@ describe("QmetryClient tools", () => {
     });
 
     it("should create issue with all optional parameters", async () => {
-      (issues.createIssue as any).mockResolvedValue({
+      vi.mocked(issues.createIssue).mockResolvedValue({
         id: 5_057_883,
         entityKey: "IS-002",
         summary: "Complete Issue",
@@ -2231,7 +2233,7 @@ describe("QmetryClient tools", () => {
 
   describe("Update Issue", () => {
     it("should update issue summary", async () => {
-      (issues.updateIssue as any).mockResolvedValue({
+      vi.mocked(issues.updateIssue).mockResolvedValue({
         id: 118_150,
         summary: "Updated summary",
       });
@@ -2256,7 +2258,7 @@ describe("QmetryClient tools", () => {
     });
 
     it("should update issue priority and type", async () => {
-      (issues.updateIssue as any).mockResolvedValue({
+      vi.mocked(issues.updateIssue).mockResolvedValue({
         id: 118_150,
         issuePriority: 189_340,
         issueType: 189_337,
@@ -2286,10 +2288,10 @@ describe("QmetryClient tools", () => {
 
   describe("Fetch Defects or Issues", () => {
     it("should auto-resolve viewId and fetch issues", async () => {
-      (project.getProjectInfo as any).mockResolvedValue({
+      vi.mocked(project.getProjectInfo).mockResolvedValue({
         latestViews: { IS: { viewId: 169_424 } },
       });
-      (issues.fetchIssues as any).mockResolvedValue({
+      vi.mocked(issues.fetchIssues).mockResolvedValue({
         data: [
           { id: 1, entityKey: "IS-001", name: "Issue 1" },
           { id: 2, entityKey: "IS-002", name: "Issue 2" },
@@ -2314,10 +2316,10 @@ describe("QmetryClient tools", () => {
     });
 
     it("should fetch issues with filter", async () => {
-      (project.getProjectInfo as any).mockResolvedValue({
+      vi.mocked(project.getProjectInfo).mockResolvedValue({
         latestViews: { IS: { viewId: 169_424 } },
       });
-      (issues.fetchIssues as any).mockResolvedValue({
+      vi.mocked(issues.fetchIssues).mockResolvedValue({
         data: [{ id: 3, entityKey: "IS-003", name: "Filtered Issue" }],
       });
 
@@ -2341,7 +2343,7 @@ describe("QmetryClient tools", () => {
 
   describe("Link Issues to Testcase Run", () => {
     it("should link single issue to testcase run", async () => {
-      (issues.linkIssuesToTestcaseRun as any).mockResolvedValue({
+      vi.mocked(issues.linkIssuesToTestcaseRun).mockResolvedValue({
         success: true,
         message: "Issue linked successfully",
       });
@@ -2366,7 +2368,7 @@ describe("QmetryClient tools", () => {
     });
 
     it("should link multiple issues to testcase run", async () => {
-      (issues.linkIssuesToTestcaseRun as any).mockResolvedValue({
+      vi.mocked(issues.linkIssuesToTestcaseRun).mockResolvedValue({
         success: true,
         linkedCount: 2,
       });
@@ -2393,7 +2395,7 @@ describe("QmetryClient tools", () => {
 
   describe("Link Platforms to Test Suite", () => {
     it("should link single platform to test suite", async () => {
-      (testsuite.linkPlatformsToTestSuite as any).mockResolvedValue({
+      vi.mocked(testsuite.linkPlatformsToTestSuite).mockResolvedValue({
         success: true,
         message: "Platform linked successfully",
       });
@@ -2418,7 +2420,7 @@ describe("QmetryClient tools", () => {
     });
 
     it("should link multiple platforms to test suite", async () => {
-      (testsuite.linkPlatformsToTestSuite as any).mockResolvedValue({
+      vi.mocked(testsuite.linkPlatformsToTestSuite).mockResolvedValue({
         success: true,
         linkedCount: 3,
       });

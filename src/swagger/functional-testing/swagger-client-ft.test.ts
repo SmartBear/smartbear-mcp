@@ -1,10 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
 import { requestContextStorage } from "../../common/request-context.ts";
-import { SwaggerClient } from "../client/index.ts";
+import type { SmartBearMcpServer } from "../../common/server.ts";
+import { SwaggerClient } from "../client.ts";
 
 const fetchMock = createFetchMock(vi);
 fetchMock.enableMocks();
+
+const mockServer = {} as unknown as SmartBearMcpServer;
 
 describe("SwaggerClient — Functional Testing integration", () => {
   let client: SwaggerClient;
@@ -14,9 +17,10 @@ describe("SwaggerClient — Functional Testing integration", () => {
     client = new SwaggerClient();
   });
 
+  // biome-ignore lint/security/noSecrets: false positive; this is the SwaggerClient method name under test, not a secret
   describe("getFtAuthToken", () => {
     it("should return token from configure()", async () => {
-      await client.configure({} as any, {
+      await client.configure(mockServer, {
         api_key: "swagger-key",
         functional_testing_api_token: "ft-token",
       });
@@ -28,7 +32,7 @@ describe("SwaggerClient — Functional Testing integration", () => {
     });
 
     it("should return token from X-API-KEY request header", async () => {
-      await client.configure({} as any, {
+      await client.configure(mockServer, {
         api_key: "swagger-key",
         functional_testing_api_token: "static-token",
       });
@@ -41,7 +45,7 @@ describe("SwaggerClient — Functional Testing integration", () => {
     });
 
     it("should prefer request header over configured token", async () => {
-      await client.configure({} as any, {
+      await client.configure(mockServer, {
         api_key: "swagger-key",
         functional_testing_api_token: "static-token",
       });
@@ -54,7 +58,7 @@ describe("SwaggerClient — Functional Testing integration", () => {
     });
 
     it("should return null when no FT token available", async () => {
-      await client.configure({} as any, { api_key: "swagger-key" });
+      await client.configure(mockServer, { api_key: "swagger-key" });
 
       const result = requestContextStorage.run({ headers: {} }, () =>
         client.getFtAuthToken(),
@@ -63,7 +67,7 @@ describe("SwaggerClient — Functional Testing integration", () => {
     });
 
     it("should not interfere with Swagger getAuthToken", async () => {
-      await client.configure({} as any, {
+      await client.configure(mockServer, {
         api_key: "swagger-key",
         functional_testing_api_token: "ft-token",
       });
@@ -82,19 +86,19 @@ describe("SwaggerClient — Functional Testing integration", () => {
 
   describe("isConfigured", () => {
     it("should return false when neither api_key nor FT token is configured", async () => {
-      await client.configure({} as any, {});
+      await client.configure(mockServer, {});
 
       expect(client.isConfigured()).toBe(false);
     });
 
     it("should return true when only api_key is configured", async () => {
-      await client.configure({} as any, { api_key: "swagger-key" });
+      await client.configure(mockServer, { api_key: "swagger-key" });
 
       expect(client.isConfigured()).toBe(true);
     });
 
     it("should return true when only FT token is configured", async () => {
-      await client.configure({} as any, {
+      await client.configure(mockServer, {
         functional_testing_api_token: "ft-token",
       });
 
@@ -102,7 +106,7 @@ describe("SwaggerClient — Functional Testing integration", () => {
     });
 
     it("should return true when both api_key and FT token are configured", async () => {
-      await client.configure({} as any, {
+      await client.configure(mockServer, {
         api_key: "swagger-key",
         functional_testing_api_token: "ft-token",
       });
@@ -113,7 +117,7 @@ describe("SwaggerClient — Functional Testing integration", () => {
 
   describe("registerTools — conditional FT tool registration", () => {
     it("should not register FT tools when no FT token configured", async () => {
-      await client.configure({} as any, { api_key: "swagger-key" });
+      await client.configure(mockServer, { api_key: "swagger-key" });
 
       const mockRegister = vi.fn();
       await client.registerTools(mockRegister, vi.fn());
@@ -126,7 +130,7 @@ describe("SwaggerClient — Functional Testing integration", () => {
     });
 
     it("should register FT tools when FT token is configured", async () => {
-      await client.configure({} as any, {
+      await client.configure(mockServer, {
         api_key: "swagger-key",
         functional_testing_api_token: "ft-token",
       });
@@ -142,7 +146,7 @@ describe("SwaggerClient — Functional Testing integration", () => {
     });
 
     it("should not affect existing Swagger tools when FT token is absent", async () => {
-      await client.configure({} as any, { api_key: "swagger-key" });
+      await client.configure(mockServer, { api_key: "swagger-key" });
 
       const mockRegister = vi.fn();
       await client.registerTools(mockRegister, vi.fn());
@@ -155,7 +159,7 @@ describe("SwaggerClient — Functional Testing integration", () => {
     });
 
     it("should register only FT tools when only FT token is configured", async () => {
-      await client.configure({} as any, {
+      await client.configure(mockServer, {
         functional_testing_api_token: "ft-token",
       });
 
@@ -172,7 +176,7 @@ describe("SwaggerClient — Functional Testing integration", () => {
     });
 
     it("should register all tools when both api_key and FT token are configured", async () => {
-      await client.configure({} as any, {
+      await client.configure(mockServer, {
         api_key: "swagger-key",
         functional_testing_api_token: "ft-token",
       });
@@ -194,7 +198,7 @@ describe("SwaggerClient — Functional Testing integration", () => {
       const testsMock = [{ id: "test-1", name: "Login Test" }];
       fetchMock.mockResponseOnce(JSON.stringify(testsMock));
 
-      await client.configure({} as any, {
+      await client.configure(mockServer, {
         api_key: "swagger-key",
         functional_testing_api_token: "ft-token",
       });
@@ -216,7 +220,7 @@ describe("SwaggerClient — Functional Testing integration", () => {
 
   describe("listFunctionalTestingSuiteExecutions", () => {
     it("should register the List Suite Executions tool when FT token is configured", async () => {
-      await client.configure({} as any, {
+      await client.configure(mockServer, {
         functional_testing_api_token: "ft-token",
       });
 
@@ -241,7 +245,7 @@ describe("SwaggerClient — Functional Testing integration", () => {
       };
       fetchMock.mockResponseOnce(JSON.stringify(suiteExecutionsMock));
 
-      await client.configure({} as any, {
+      await client.configure(mockServer, {
         api_key: "swagger-key",
         functional_testing_api_token: "ft-token",
       });
@@ -267,7 +271,7 @@ describe("SwaggerClient — Functional Testing integration", () => {
 
   describe("cancelFunctionalTestingSuiteExecution", () => {
     it("should register the Cancel Suite Execution tool when FT token is configured", async () => {
-      await client.configure({} as any, {
+      await client.configure(mockServer, {
         functional_testing_api_token: "ft-token",
       });
 
@@ -288,7 +292,7 @@ describe("SwaggerClient — Functional Testing integration", () => {
       };
       fetchMock.mockResponseOnce(JSON.stringify(cancelledMock));
 
-      await client.configure({} as any, {
+      await client.configure(mockServer, {
         api_key: "swagger-key",
         functional_testing_api_token: "ft-token",
       });
@@ -316,7 +320,7 @@ describe("SwaggerClient — Functional Testing integration", () => {
       const suitesMock = [{ id: "suite-1", name: "Smoke Suite" }];
       fetchMock.mockResponseOnce(JSON.stringify(suitesMock));
 
-      await client.configure({} as any, {
+      await client.configure(mockServer, {
         api_key: "swagger-key",
         functional_testing_api_token: "ft-token",
       });
@@ -336,7 +340,7 @@ describe("SwaggerClient — Functional Testing integration", () => {
     });
 
     it("should throw when FT API is not configured", async () => {
-      await client.configure({} as any, { api_key: "swagger-key" });
+      await client.configure(mockServer, { api_key: "swagger-key" });
 
       await expect(client.listFunctionalTestingSuites()).rejects.toThrow(
         "Functional Testing API not configured",
@@ -349,7 +353,7 @@ describe("SwaggerClient — Functional Testing integration", () => {
       const executionMock = { executionId: "42", status: "pending" };
       fetchMock.mockResponseOnce(JSON.stringify(executionMock));
 
-      await client.configure({} as any, {
+      await client.configure(mockServer, {
         api_key: "swagger-key",
         functional_testing_api_token: "ft-token",
       });
@@ -380,7 +384,7 @@ describe("SwaggerClient — Functional Testing integration", () => {
       };
       fetchMock.mockResponseOnce(JSON.stringify(suiteExecutionMock));
 
-      await client.configure({} as any, {
+      await client.configure(mockServer, {
         api_key: "swagger-key",
         functional_testing_api_token: "ft-token",
       });

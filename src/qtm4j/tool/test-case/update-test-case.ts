@@ -30,35 +30,59 @@ const ADD_DELETE_FIELD_CONFIG: Record<string, string> = {
  * Resolves a { add?, delete? } object of name strings to { add?, delete? } of
  * numeric IDs. Names that cannot be resolved are skipped with a warning.
  */
-async function resolveAddDelete(
-  resolver: Resolver,
-  inputField: string,
-  resolverKey: string,
-  field: { add?: string[]; delete?: string[] },
-  context: ProjectContext,
-  warnings: string[],
-): Promise<{ add?: number[]; delete?: number[] }> {
-  const result: { add?: number[]; delete?: number[] } = {};
+interface AddDeleteConfig {
+  resolver: Resolver;
+  inputField: string;
+  resolverKey: string;
+  field: { add?: string[]; delete?: string[] };
+  context: ProjectContext;
+  warnings: string[];
+}
 
-  for (const op of ["add", "delete"] as const) {
-    const names = field[op];
-    if (!names?.length) continue;
-
-    const tempBody: Record<string, unknown> = { [inputField]: names };
-    await resolver.resolve(
-      inputField,
-      resolverKey,
-      tempBody,
-      context,
-      warnings,
-    );
-
-    const val = tempBody[inputField];
-    if (Array.isArray(val) && val.length > 0 && typeof val[0] === "number") {
-      result[op] = val as number[];
-    }
+/** Resolves a single add/delete operation's name list to numeric IDs, if present. */
+async function resolveAddDeleteOp(
+  config: AddDeleteConfig,
+  op: "add" | "delete",
+): Promise<number[] | undefined> {
+  const names = config.field[op];
+  if (names?.length === 0) {
+    return;
   }
 
+  const tempBody: Record<string, unknown> = { [config.inputField]: names };
+  await config.resolver.resolve(
+    config.inputField,
+    config.resolverKey,
+    tempBody,
+    config.context,
+    config.warnings,
+  );
+
+  const val = tempBody[config.inputField];
+  if (Array.isArray(val) && val.length > 0 && typeof val[0] === "number") {
+    return val as number[];
+  }
+}
+
+/**
+ * Resolves a { add?, delete? } object of name strings to { add?, delete? } of
+ * numeric IDs. Names that cannot be resolved are skipped with a warning.
+ */
+async function resolveAddDelete(
+  config: AddDeleteConfig,
+): Promise<{ add?: number[]; delete?: number[] }> {
+  const [add, del] = await Promise.all([
+    resolveAddDeleteOp(config, "add"),
+    resolveAddDeleteOp(config, "delete"),
+  ]);
+
+  const result: { add?: number[]; delete?: number[] } = {};
+  if (add) {
+    result.add = add;
+  }
+  if (del) {
+    result.delete = del;
+  }
   return result;
 }
 
@@ -131,6 +155,7 @@ export class UpdateTestCase extends Tool<Qtm4jClient> {
         parameters: {
           key: "SCRUM-TC-85",
           versionNo: 2,
+          // biome-ignore lint/security/noSecrets: example Jira Account ID, not a secret
           assignee: "5b10a2844c20165700ede21f",
           estimatedTime: "01:30:00",
         },
@@ -153,7 +178,8 @@ export class UpdateTestCase extends Tool<Qtm4jClient> {
       "Confirmation object with the test case key, versionNo updated, and updated: true. Warnings are included if any field names could not be resolved.",
   };
 
-  handle = async (rawArgs: any) => {
+  // biome-ignore lint/complexity/noExcessiveLinesPerFunction: single sequential update flow (resolve key → resolve fields → PUT → respond); splitting would fragment one linear procedure
+  handle = async (rawArgs: unknown) => {
     const args = UpdateTestCaseBody.parse(rawArgs);
     const fieldResolver = this.client.getResolverRegistry();
     const context = fieldResolver.requireProjectContext();
@@ -198,28 +224,40 @@ export class UpdateTestCase extends Tool<Qtm4jClient> {
     );
     // Remove any scalar field that failed to resolve (still a string, not a valid ID)
     for (const field of Object.keys(SIMPLE_FIELD_CONFIG)) {
-      if (typeof body[field] === "string") delete body[field];
+      if (typeof body[field] === "string") {
+        delete body[field];
+      }
     }
 
     // Resolve add/delete metadata fields (labels, components)
+    const addDeleteTasks: Promise<{
+      inputField: string;
+      resolvedField: { add?: number[]; delete?: number[] };
+    }>[] = [];
     for (const [inputField, resolverKey] of Object.entries(
       ADD_DELETE_FIELD_CONFIG,
     )) {
       const field = args[inputField as keyof typeof args] as
         | { add?: string[]; delete?: string[] }
         | undefined;
-      if (!field) continue;
-
-      const resolvedField = await resolveAddDelete(
-        fieldResolver.getResolver(resolverKey),
-        inputField,
-        resolverKey,
-        field,
-        context,
-        warnings,
-      );
-      if (Object.keys(resolvedField).length > 0)
+      if (field) {
+        addDeleteTasks.push(
+          resolveAddDelete({
+            resolver: fieldResolver.getResolver(resolverKey),
+            inputField,
+            resolverKey,
+            field,
+            context,
+            warnings,
+          }).then((resolvedField) => ({ inputField, resolvedField })),
+        );
+      }
+    }
+    const addDeleteResults = await Promise.all(addDeleteTasks);
+    for (const { inputField, resolvedField } of addDeleteResults) {
+      if (Object.keys(resolvedField).length > 0) {
         body[inputField] = resolvedField;
+      }
     }
 
     await this.client

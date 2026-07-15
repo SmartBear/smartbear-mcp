@@ -1,4 +1,6 @@
-import { QMetryToolsHandlers } from "../../config/constants.ts";
+// biome-ignore-all lint/style/noExcessiveLinesPerFile: this module cohesively covers one QMetry API area (client operations, tool definitions, or shared schema fields); splitting it would scatter closely related, frequently cross-referenced declarations
+// biome-ignore-all lint/security/noSecrets: this file contains many high-entropy API action-name / wire-format / fixture string constants that trip the noSecrets entropy heuristic; none are real secrets
+import { QmetryToolsHandlers } from "../../config/constants.ts";
 import {
   BuildArgsSchema,
   CreateCycleArgsSchema,
@@ -9,15 +11,15 @@ import {
   ReleasesCyclesArgsSchema,
   UpdateCycleArgsSchema,
 } from "../../types/common.ts";
-import type { QMetryToolParams } from "./types.ts";
+import type { QmetryToolParams } from "./types.ts";
 
-export const PROJECT_TOOLS: QMetryToolParams[] = [
+export const PROJECT_TOOLS: QmetryToolParams[] = [
   {
     title: "Fetch QMetry list Projects",
     toolset: "Projects",
     summary:
       "Fetch QMetry projects list including projectID, name, projectKey, isArchived, viewIds and folderPath needed for other operations",
-    handler: QMetryToolsHandlers.FETCH_PROJECTS,
+    handler: QmetryToolsHandlers.FETCH_PROJECTS,
     inputSchema: ProjectListArgsSchema,
     purpose:
       "Prerequisite tool that provides project list to user that associated to valid API Key. " +
@@ -94,7 +96,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
     title: "Set QMetry Project Info",
     toolset: "Projects",
     summary: "Set current QMetry project for your account",
-    handler: QMetryToolsHandlers.SET_PROJECT_INFO,
+    handler: QmetryToolsHandlers.SET_PROJECT_INFO,
     inputSchema: ProjectArgsSchema,
     purpose:
       "Switch the active QMetry project context for the current session. " +
@@ -143,7 +145,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
     toolset: "Projects",
     summary:
       "Fetch QMetry project information including viewId and folderPath needed for other operations",
-    handler: QMetryToolsHandlers.FETCH_PROJECT_INFO,
+    handler: QmetryToolsHandlers.FETCH_PROJECT_INFO,
     inputSchema: ProjectArgsSchema,
     purpose:
       "Prerequisite tool that provides project configuration data required by other QMetry operations. " +
@@ -185,7 +187,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
     title: "Fetch Releases and Cycles",
     toolset: "Projects",
     summary: "Fetch QMetry releases and cycles from the current project",
-    handler: QMetryToolsHandlers.FETCH_RELEASES_CYCLES,
+    handler: QmetryToolsHandlers.FETCH_RELEASES_CYCLES,
     inputSchema: ReleasesCyclesArgsSchema,
     purpose:
       "Retrieve release and cycle information from the current QMetry project. " +
@@ -242,7 +244,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
     title: "Fetch Builds",
     toolset: "Projects",
     summary: "Fetch QMetry builds from the current project",
-    handler: QMetryToolsHandlers.FETCH_BUILDS,
+    handler: QmetryToolsHandlers.FETCH_BUILDS,
     inputSchema: BuildArgsSchema,
     purpose:
       "Retrieve builds information from the current QMetry project. " +
@@ -305,7 +307,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
     title: "Fetch Platforms",
     toolset: "Projects",
     summary: "Fetch QMetry platforms from the current project",
-    handler: QMetryToolsHandlers.FETCH_PLATFORMS,
+    handler: QmetryToolsHandlers.FETCH_PLATFORMS,
     inputSchema: PlatformArgsSchema,
     purpose:
       "Retrieve platforms information from the current QMetry project. " +
@@ -394,7 +396,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
     toolset: "Projects",
     summary:
       "Create a new release in QMetry with optional cycle for test planning and execution tracking",
-    handler: QMetryToolsHandlers.CREATE_RELEASE,
+    handler: QmetryToolsHandlers.CREATE_RELEASE,
     inputSchema: CreateReleaseArgsSchema,
     purpose:
       "Create a new release in QMetry to organize test execution phases. " +
@@ -496,7 +498,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
     toolset: "Projects",
     summary:
       "Create a new cycle within an existing release in QMetry for test execution planning",
-    handler: QMetryToolsHandlers.CREATE_CYCLE,
+    handler: QmetryToolsHandlers.CREATE_CYCLE,
     inputSchema: CreateCycleArgsSchema,
     purpose:
       "Create a new cycle within an existing release to organize test execution phases. " +
@@ -517,6 +519,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
         parameters: {
           cycle: {
             name: "Sprint 2",
+            // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
             releaseID: 12_345,
           },
         },
@@ -531,6 +534,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
             description: "Full regression testing for release 2.0",
             startDate: "15-01-2024",
             targetDate: "31-01-2024",
+            // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
             releaseID: 12_345,
           },
         },
@@ -545,6 +549,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
             description: "Locked cycle for final QA testing",
             isLocked: true,
             isArchived: false,
+            // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
             releaseID: 12_345,
           },
         },
@@ -562,7 +567,9 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
             targetDate: "15-02-2024",
             isLocked: false,
             isArchived: false,
+            // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
             projectID: 67_890,
+            // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
             releaseID: 12_345,
           },
         },
@@ -622,7 +629,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
     title: "Update Cycle",
     toolset: "Projects",
     summary: "Update an existing cycle in QMetry for test execution planning",
-    handler: QMetryToolsHandlers.UPDATE_CYCLE,
+    handler: QmetryToolsHandlers.UPDATE_CYCLE,
     inputSchema: UpdateCycleArgsSchema,
     purpose:
       "Update an existing cycle within a release to modify test execution phase details. " +
@@ -643,7 +650,9 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
         parameters: {
           cycle: {
             name: "Alpha_v1_Updated",
+            // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
             buildID: 1494,
+            // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
             releaseID: 3729,
           },
         },
@@ -656,7 +665,9 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
           cycle: {
             startDate: "10-10-2018",
             targetDate: "11-11-2018",
+            // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
             buildID: 1494,
+            // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
             releaseID: 3729,
           },
         },
@@ -670,7 +681,9 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
             name: "Sprint 2 - Updated",
             startDate: "15-01-2024",
             targetDate: "31-01-2024",
+            // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
             buildID: 1494,
+            // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
             releaseID: 3729,
           },
         },

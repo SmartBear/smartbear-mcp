@@ -19,6 +19,9 @@ describe("request-context", () => {
       const req = fakeRequest({ authorization: "Bearer abc" });
       const result = withRequestContext(req, () => {
         const ctx = getRequestContext();
+        // Within this callback the context is always set by withRequestContext, but
+        // ctx's declared type is still RequestContext | undefined.
+        // biome-ignore lint/suspicious/noUnnecessaryConditions: see above
         return ctx?.headers.authorization;
       });
       expect(result).toBe("Bearer abc");
@@ -40,7 +43,10 @@ describe("request-context", () => {
 
     it("should not leak context outside the callback", () => {
       const req = fakeRequest({ "x-token": "secret" });
-      withRequestContext(req, () => {});
+      withRequestContext(req, () => {
+        // Intentionally empty: exercises that the context doesn't leak once the
+        // callback (which does nothing) returns.
+      });
       expect(getRequestContext()).toBeUndefined();
     });
   });

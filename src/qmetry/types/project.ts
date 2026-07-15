@@ -45,6 +45,7 @@ export interface CreateReleasePayload {
     description?: string;
     startDate?: string;
     targetDate?: string;
+    // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
     projectID?: number;
   };
   cycle?: {
@@ -68,7 +69,9 @@ export interface CreateCyclePayload {
     name: string;
     startDate?: string;
     targetDate?: string;
+    // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
     projectID?: number;
+    // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
     releaseID: number;
   };
 }
@@ -86,7 +89,9 @@ export interface UpdateCyclePayload {
     name?: string;
     startDate?: string;
     targetDate?: string;
+    // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
     buildID: number;
+    // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
     releaseID: number;
   };
 }

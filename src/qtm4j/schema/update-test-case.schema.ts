@@ -8,19 +8,19 @@
  * Input accepts human-readable names for priority, status, labels, and components.
  * Labels and components support add/delete operations with name auto-resolution.
  */
-import * as zod from "zod";
+import { z } from "zod";
 
 /** add/delete object for labels and components — names are auto-resolved to IDs */
-const MetadataAddDelete = zod
+const MetadataAddDelete = z
   .object({
-    add: zod
-      .array(zod.string())
+    add: z
+      .array(z.string())
       .optional()
       .describe(
         "Names to add (e.g., ['Release_1', 'Sprint 1']). Auto-resolved to IDs.",
       ),
-    delete: zod
-      .array(zod.string())
+    delete: z
+      .array(z.string())
       .optional()
       .describe("Names to remove (e.g., ['Sprint 1']). Auto-resolved to IDs."),
   })
@@ -28,14 +28,14 @@ const MetadataAddDelete = zod
     "Add or remove entries by name. Both add and delete are optional — omit either to skip that operation.",
   );
 
-export const UpdateTestCaseBody = zod.object({
-  key: zod
+export const UpdateTestCaseBody = z.object({
+  key: z
     .string()
     .describe(
       "Test case key in the format '{PROJECT_KEY}-TC-{number}', e.g. 'SCRUM-TC-145'. " +
         "Automatically resolved to the internal ID and latest version.",
     ),
-  versionNo: zod
+  versionNo: z
     .number()
     .int()
     .min(1)
@@ -43,38 +43,36 @@ export const UpdateTestCaseBody = zod.object({
     .describe(
       "Test case version number to update. Defaults to the latest version if omitted.",
     ),
-  summary: zod
+  summary: z
     .string()
     .min(1)
     .optional()
     .describe("Updated test case summary/title."),
-  description: zod
-    .string()
-    .optional()
-    .describe("Updated test case description."),
-  precondition: zod
+  description: z.string().optional().describe("Updated test case description."),
+  precondition: z
     .string()
     .optional()
     .describe(
       "Updated precondition — conditions that must be true before the test is executed.",
     ),
-  priority: zod
+  priority: z
     .string()
     .optional()
     .describe(
       "Priority name (e.g., 'High', 'Medium', 'Low'). Auto-resolved to ID. Use values from set_project_context response.",
     ),
-  status: zod
+  status: z
     .string()
     .optional()
     .describe(
       "Status name (e.g., 'To Do', 'In Progress', 'Done'). Auto-resolved to ID. Use values from set_project_context response.",
     ),
-  assignee: zod
+  assignee: z
     .string()
     .optional()
+    // biome-ignore lint/security/noSecrets: sample Jira account ID in docs, not a secret
     .describe("Assignee Jira account ID (e.g., '5b10a2844c20165700ede21f')."),
-  estimatedTime: zod
+  estimatedTime: z
     .string()
     .regex(/^\d{2}:\d{2}:\d{2}$/, "Must be in HH:MM:SS format")
     .optional()
@@ -87,13 +85,11 @@ export const UpdateTestCaseBody = zod.object({
   ),
 });
 
-export const UpdateTestCaseResponse = zod.object({
-  key: zod.string().describe("Test case key that was updated"),
-  versionNo: zod.number().describe("Version number that was updated"),
-  updated: zod.literal(true).describe("Confirms the update was applied"),
+export const UpdateTestCaseResponse = z.object({
+  key: z.string().describe("Test case key that was updated"),
+  versionNo: z.number().describe("Version number that was updated"),
+  updated: z.literal(true).describe("Confirms the update was applied"),
 });
 
-export type UpdateTestCaseBodyType = zod.infer<typeof UpdateTestCaseBody>;
-export type UpdateTestCaseResponseType = zod.infer<
-  typeof UpdateTestCaseResponse
->;
+export type UpdateTestCaseBodyType = z.infer<typeof UpdateTestCaseBody>;
+export type UpdateTestCaseResponseType = z.infer<typeof UpdateTestCaseResponse>;

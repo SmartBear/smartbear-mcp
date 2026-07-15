@@ -2,8 +2,8 @@ import { getUserAgent } from "../../../common/info.ts";
 import { QMETRY_DEFAULTS } from "../../config/constants.ts";
 import type { RequestOptions } from "../../types/common.ts";
 import {
-  handleQMetryApiError,
-  handleQMetryFetchError,
+  handleQmetryApiError,
+  handleQmetryFetchError,
 } from "./error-handler.ts";
 
 /**
@@ -61,7 +61,7 @@ export async function qmetryRequest<T>({
     res = await fetch(url, init);
   } catch (error) {
     // Handle fetch errors (CORS, network issues, SSL certificate issues, etc.)
-    handleQMetryFetchError(
+    handleQmetryFetchError(
       error instanceof Error ? error : new Error(String(error)),
       baseUrl,
       project,
@@ -71,7 +71,7 @@ export async function qmetryRequest<T>({
 
   if (!res.ok) {
     // Use centralized error handling
-    await handleQMetryApiError(res, baseUrl, project, path);
+    await handleQmetryApiError(res, baseUrl, project, path);
   }
 
   return (await res.json()) as T;

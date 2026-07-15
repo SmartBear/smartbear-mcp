@@ -1,12 +1,19 @@
+import type { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/protocol.js";
+import type {
+  ServerNotification,
+  ServerRequest,
+  TextContent,
+} from "@modelcontextprotocol/sdk/types.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
+import type { BearqClient } from "../../client.ts";
 import { RefineAllDraftTests } from "./refine-all-draft-tests.ts";
 
 const fetchMock = createFetchMock(vi);
 fetchMock.enableMocks();
 
 describe("RefineAllDraftTests", () => {
-  let mockClient: any;
+  let mockClient: Pick<BearqClient, "getBaseUrl" | "getHeaders">;
   let instance: RefineAllDraftTests;
 
   beforeEach(() => {
@@ -18,7 +25,7 @@ describe("RefineAllDraftTests", () => {
         "Content-Type": "application/json",
       }),
     };
-    instance = new RefineAllDraftTests(mockClient);
+    instance = new RefineAllDraftTests(mockClient as unknown as BearqClient);
   });
 
   it("should set specification correctly", () => {
@@ -28,7 +35,10 @@ describe("RefineAllDraftTests", () => {
   it("should POST to /tasks with correct body and headers", async () => {
     fetchMock.mockResponseOnce(JSON.stringify({ taskIds: [3] }));
 
-    const result = await instance.handle({}, {} as any);
+    const result = await instance.handle(
+      {},
+      {} as unknown as RequestHandlerExtra<ServerRequest, ServerNotification>,
+    );
 
     expect(fetchMock).toHaveBeenCalledWith(
       "https://api.bearq.smartbear.com/tasks",
@@ -41,14 +51,17 @@ describe("RefineAllDraftTests", () => {
       }),
     );
 
-    const parsed = JSON.parse((result.content[0] as any).text);
+    const parsed = JSON.parse((result.content[0] as TextContent).text);
     expect(parsed.taskIds).toEqual([3]);
   });
 
   it("should throw ToolError on non-2xx response", async () => {
     fetchMock.mockResponseOnce("Forbidden", { status: 403 });
-    await expect(instance.handle({}, {} as any)).rejects.toThrow(
-      "POST /tasks failed: 403",
-    );
+    await expect(
+      instance.handle(
+        {},
+        {} as unknown as RequestHandlerExtra<ServerRequest, ServerNotification>,
+      ),
+    ).rejects.toThrow("POST /tasks failed: 403");
   });
 });

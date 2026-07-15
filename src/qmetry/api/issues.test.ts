@@ -1,3 +1,6 @@
+// biome-ignore-all lint/performance/useTopLevelRegex: each regex here is a one-off assertion matcher used once per test; hoisting dozens of single-use patterns would hurt readability without any real perf benefit
+
+import type { Mock } from "vitest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   fetchIssueExecutions,
@@ -13,7 +16,7 @@ describe("issues API clients", () => {
     vi.resetAllMocks();
   });
 
-  const mockOk = (data: any) => ({
+  const mockOk = <T>(data: T) => ({
     ok: true,
     json: async () => data,
   });
@@ -56,7 +59,7 @@ describe("issues API clients", () => {
         totalCount: 2,
       };
 
-      global.fetch = vi.fn().mockResolvedValue(mockOk(mockResponse));
+      globalThis.fetch = vi.fn().mockResolvedValue(mockOk(mockResponse));
 
       const result = await fetchIssuesLinkedToTestCase(
         token,
@@ -65,7 +68,7 @@ describe("issues API clients", () => {
         payload,
       );
 
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(globalThis.fetch).toHaveBeenCalledWith(
         `${baseUrl}/rest/issues/list/ForTC`,
         expect.objectContaining({
           method: "POST",
@@ -78,13 +81,14 @@ describe("issues API clients", () => {
         }),
       );
 
+      const typedResult = result as { data: { summary: string }[] };
       expect(result).toHaveProperty("data");
-      expect((result as any).data).toHaveLength(2);
-      expect((result as any).data[0]).toHaveProperty(
+      expect(typedResult.data).toHaveLength(2);
+      expect(typedResult.data[0]).toHaveProperty(
         "summary",
         "Login button not working",
       );
-      expect((result as any).data[1]).toHaveProperty(
+      expect(typedResult.data[1]).toHaveProperty(
         "summary",
         "UI alignment issue",
       );
@@ -116,7 +120,7 @@ describe("issues API clients", () => {
         totalCount: 1,
       };
 
-      global.fetch = vi.fn().mockResolvedValue(mockOk(mockResponse));
+      globalThis.fetch = vi.fn().mockResolvedValue(mockOk(mockResponse));
 
       const result = await fetchIssuesLinkedToTestCase(
         token,
@@ -125,30 +129,31 @@ describe("issues API clients", () => {
         payload,
       );
 
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(globalThis.fetch).toHaveBeenCalledWith(
         `${baseUrl}/rest/issues/list/ForTC`,
         expect.objectContaining({
           method: "POST",
           body: expect.stringContaining(
+            // biome-ignore lint/security/noSecrets: high-entropy false positive; this is a descriptive string (error message, parameter name, or API action name), not a credential
             '"filter":"[{\\"value\\":\\"authentication\\",\\"type\\":\\"string\\",\\"field\\":\\"summary\\"}]"',
           ),
         }),
       );
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(globalThis.fetch).toHaveBeenCalledWith(
         `${baseUrl}/rest/issues/list/ForTC`,
         expect.objectContaining({
           method: "POST",
           body: expect.stringContaining('"limit":20'),
         }),
       );
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(globalThis.fetch).toHaveBeenCalledWith(
         `${baseUrl}/rest/issues/list/ForTC`,
         expect.objectContaining({
           method: "POST",
           body: expect.stringContaining('"page":2'),
         }),
       );
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(globalThis.fetch).toHaveBeenCalledWith(
         `${baseUrl}/rest/issues/list/ForTC`,
         expect.objectContaining({
           method: "POST",
@@ -156,16 +161,17 @@ describe("issues API clients", () => {
         }),
       );
 
+      const typedResult = result as { data: { summary: string }[] };
       expect(result).toHaveProperty("data");
-      expect((result as any).data).toHaveLength(1);
-      expect((result as any).data[0]).toHaveProperty(
+      expect(typedResult.data).toHaveLength(1);
+      expect(typedResult.data[0]).toHaveProperty(
         "summary",
         "Authentication timeout",
       );
     });
 
     it("should handle API errors gracefully with enhanced URL error detection", async () => {
-      global.fetch = vi
+      globalThis.fetch = vi
         .fn()
         .mockResolvedValue(mockFail(404, "Test case not found"));
 
@@ -181,7 +187,8 @@ describe("issues API clients", () => {
     });
 
     it("should throw error when tcID is missing", async () => {
-      const payload = {} as any; // Missing required tcID
+      // biome-ignore lint/suspicious/noExplicitAny: intentionally invalid fixture missing the required 'tcID' field, to exercise the runtime parameter-validation error path
+      const payload = {} as any;
 
       await expect(
         fetchIssuesLinkedToTestCase(token, baseUrl, projectKey, payload),
@@ -190,6 +197,7 @@ describe("issues API clients", () => {
 
     it("should throw error when tcID is invalid", async () => {
       const payload = {
+        // biome-ignore lint/suspicious/noExplicitAny: intentionally invalid fixture (wrong type for 'tcID'), to exercise the runtime parameter-validation error path
         tcID: "invalid" as any,
       };
 
@@ -200,6 +208,7 @@ describe("issues API clients", () => {
 
     it("should throw error when tcID is not a number", async () => {
       const payload = {
+        // biome-ignore lint/suspicious/noExplicitAny: intentionally invalid fixture (null for 'tcID'), to exercise the runtime parameter-validation error path
         tcID: null as any,
       };
 
@@ -238,13 +247,15 @@ describe("issues API clients", () => {
     };
 
     it("should POST with correct URL when using linkedAssetId", async () => {
-      global.fetch = vi.fn().mockResolvedValue(mockOk(mockExecutionResponse));
+      globalThis.fetch = vi
+        .fn()
+        .mockResolvedValue(mockOk(mockExecutionResponse));
 
       const result = await fetchIssueExecutions(token, baseUrl, projectKey, {
         linkedAssetId: 9_598_240,
-      } as any);
+      });
 
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(globalThis.fetch).toHaveBeenCalledWith(
         `${baseUrl}/rest/execution/getExecutionsForIssue`,
         expect.objectContaining({
           method: "POST",
@@ -257,29 +268,37 @@ describe("issues API clients", () => {
       );
 
       const body = JSON.parse(
-        (global.fetch as any).mock.calls[0][1].body as string,
+        (globalThis.fetch as Mock).mock.calls[0][1].body as string,
       );
       expect(body.linkedAsset).toEqual({ type: "DF", id: 9_598_240 });
+      const typedResult = result as unknown as {
+        hasTcRunUdf: boolean;
+        total: number;
+      };
       expect(result).toHaveProperty("data");
-      expect((result as any).hasTcRunUdf).toBe(true);
-      expect((result as any).total).toBe(1);
+      expect(typedResult.hasTcRunUdf).toBe(true);
+      expect(typedResult.total).toBe(1);
     });
 
     it("should POST with correct URL when using linkedAsset directly", async () => {
-      global.fetch = vi.fn().mockResolvedValue(mockOk(mockExecutionResponse));
+      globalThis.fetch = vi
+        .fn()
+        .mockResolvedValue(mockOk(mockExecutionResponse));
 
       await fetchIssueExecutions(token, baseUrl, projectKey, {
         linkedAsset: { type: "DF", id: 9_598_240 },
       });
 
       const body = JSON.parse(
-        (global.fetch as any).mock.calls[0][1].body as string,
+        (globalThis.fetch as Mock).mock.calls[0][1].body as string,
       );
       expect(body.linkedAsset).toEqual({ type: "DF", id: 9_598_240 });
     });
 
     it("should include filter and pagination in request body", async () => {
-      global.fetch = vi.fn().mockResolvedValue(mockOk(mockExecutionResponse));
+      globalThis.fetch = vi
+        .fn()
+        .mockResolvedValue(mockOk(mockExecutionResponse));
 
       await fetchIssueExecutions(token, baseUrl, projectKey, {
         linkedAsset: { type: "DF", id: 9_509_016 },
@@ -292,7 +311,7 @@ describe("issues API clients", () => {
       });
 
       const body = JSON.parse(
-        (global.fetch as any).mock.calls[0][1].body as string,
+        (globalThis.fetch as Mock).mock.calls[0][1].body as string,
       );
       expect(body.filter).toContain("runStatusName");
       expect(body.limit).toBe(20);
@@ -301,7 +320,7 @@ describe("issues API clients", () => {
 
     it("should throw when linkedAssetId is missing", async () => {
       await expect(
-        fetchIssueExecutions(token, baseUrl, projectKey, {} as any),
+        fetchIssueExecutions(token, baseUrl, projectKey, {}),
       ).rejects.toThrow(
         /Missing or invalid required parameter: 'linkedAssetId'/,
       );
@@ -310,8 +329,9 @@ describe("issues API clients", () => {
     it("should throw when linkedAssetId is not a number", async () => {
       await expect(
         fetchIssueExecutions(token, baseUrl, projectKey, {
-          linkedAssetId: "invalid",
-        } as any),
+          // biome-ignore lint/suspicious/noExplicitAny: intentionally invalid fixture (wrong type for 'linkedAssetId'), to exercise the runtime parameter-validation error path
+          linkedAssetId: "invalid" as any,
+        }),
       ).rejects.toThrow(
         /Missing or invalid required parameter: 'linkedAssetId'/,
       );

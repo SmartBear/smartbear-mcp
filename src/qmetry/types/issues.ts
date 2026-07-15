@@ -21,6 +21,7 @@ import {
 export interface FetchIssuesLinkedToTestCasePayload
   extends PaginationPayload,
     FilterPayload {
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tcID: number; // required - Test Case numeric ID
   getLinked?: boolean; // optional - True to get linked issues, false for unlinked (default: true)
 }
@@ -45,6 +46,7 @@ export interface CreateIssuePayload {
   affectedRelease?: number[]; // optional - Numeric ID Release Id of Issue
   affectedCycles?: number[]; // optional - Array of Cycle IDs affected by this issue
   environment?: string; // optional - Environment details
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   tcRunID?: number; // optional - Test Case Run numeric ID to link the issue to
 }
 
@@ -103,6 +105,7 @@ export interface FetchIssueExecutionsPayload
     type: "DF";
     id: number;
   };
+  // biome-ignore lint/style/useNamingConvention: mirrors external QMetry REST API wire-format field name; renaming would change the JSON payload/response key and break the API request
   platformID?: string;
 }
 

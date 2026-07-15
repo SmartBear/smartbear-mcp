@@ -1,21 +1,23 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import {
   GetTestCycleParams,
   GetTestCycle200Response as GetTestCycleResponse,
 } from "../../common/rest-api-schemas.ts";
+import {
+  asZephyrClient,
+  createMockZephyrClient,
+  fakeExtra,
+  type MockZephyrClient,
+} from "../../common/test-helpers.ts";
 import { GetTestCycle } from "./get-test-cycle.ts";
 
 describe("GetTestCycle", () => {
-  let mockClient: any;
+  let mockClient: MockZephyrClient;
   let instance: GetTestCycle;
 
   beforeEach(() => {
-    mockClient = {
-      getApiClient: vi.fn().mockReturnValue({
-        get: vi.fn(),
-      }),
-    };
-    instance = new GetTestCycle(mockClient as any);
+    mockClient = createMockZephyrClient();
+    instance = new GetTestCycle(asZephyrClient(mockClient));
   });
 
   it("should set specification correctly", () => {
@@ -54,6 +56,7 @@ describe("GetTestCycle", () => {
       plannedStartDate: "2025-10-24T09:44:29Z",
       plannedEndDate: "2025-10-24T09:44:29Z",
       owner: {
+        // biome-ignore lint/security/noSecrets: fixture Jira/Atlassian account ID and URL used in test data, not a secret
         self: "https://test.atlassian.net/rest/api/2/user?accountId=712020%3Ad55539fb-741c-4c02-8ceb-c89cd4450cb3",
         accountId: "712020:d55539fb-741c-4c02-8ceb-c89cd4450cb3",
       },
@@ -94,7 +97,7 @@ describe("GetTestCycle", () => {
     };
     mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
     const args = { testCycleIdOrKey: "TEST-R1" };
-    const result = await instance.handle(args, {} as any);
+    const result = await instance.handle(args, fakeExtra);
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/testcycles/TEST-R1",
     );
@@ -104,17 +107,17 @@ describe("GetTestCycle", () => {
   it("should handle apiClient.get throwing error", async () => {
     mockClient.getApiClient().get.mockRejectedValueOnce(new Error("API error"));
     await expect(
-      instance.handle({ testCycleIdOrKey: "1" }, {} as any),
+      instance.handle({ testCycleIdOrKey: "1" }, fakeExtra),
     ).rejects.toThrow("API error");
   });
 
   it("should handle apiClient.get returning unexpected data", async () => {
     mockClient.getApiClient().get.mockResolvedValueOnce(undefined);
-    const result = await instance.handle({ testCycleIdOrKey: "1" }, {} as any);
+    const result = await instance.handle({ testCycleIdOrKey: "1" }, fakeExtra);
     expect(result.structuredContent).toBeUndefined();
   });
 
   it("should throw validation error if testCycleKey is missing", async () => {
-    await expect(instance.handle({}, {} as any)).rejects.toThrow();
+    await expect(instance.handle({}, fakeExtra)).rejects.toThrow();
   });
 });

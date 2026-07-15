@@ -15,6 +15,8 @@ import process from "node:process";
 const ROOT = path.resolve(new URL("..", import.meta.url).pathname);
 const COVERAGE_PATH = path.join(ROOT, "coverage", "coverage-summary.json");
 const COVERAGE_MARKER = "<!-- coverage-report -->";
+const FULL_COVERAGE_PCT = 100;
+const WARNING_THRESHOLD_RATIO = 0.75;
 
 if (!fs.existsSync(COVERAGE_PATH)) {
   const relativePath = path.relative(ROOT, COVERAGE_PATH);
@@ -32,8 +34,12 @@ if (!fs.existsSync(COVERAGE_PATH)) {
  * @returns {string} Status icon (✅, ⚠️, ❌)
  */
 function getStatusIcon(pct, threshold = 80) {
-  if (pct >= threshold) return "✅";
-  if (pct >= threshold * 0.75) return "⚠️";
+  if (pct >= threshold) {
+    return "✅";
+  }
+  if (pct >= threshold * WARNING_THRESHOLD_RATIO) {
+    return "⚠️";
+  }
   return "❌";
 }
 
@@ -65,7 +71,7 @@ function getTopUncoveredFiles(coverage, limit = 5) {
       file: file.replace(`${ROOT}/`, ""),
       lines: data.lines.pct,
     }))
-    .filter((item) => item.lines < 100)
+    .filter((item) => item.lines < FULL_COVERAGE_PCT)
     .sort((a, b) => a.lines - b.lines)
     .slice(0, limit);
 
@@ -85,18 +91,12 @@ function readCoverage(coveragePath) {
 /**
  * Build the coverage metrics tables
  *
- * @param {Object} lines - Lines coverage data.
- * @param {Object} functions - Functions coverage data.
- * @param {Object} branches - Branches coverage data.
- * @param {Object} statements - Statements coverage data.
+ * @param {{ lines: Object, functions: Object, branches: Object, statements: Object }} metrics - Coverage data per metric.
  * @param {{ lines: number, functions: number, branches: number, statements: number }} thresholds - Per-metric coverage thresholds.
  * @returns {string} Markdown table of coverage metrics.
  */
 function buildCoverageMetricsTable(
-  lines,
-  functions,
-  branches,
-  statements,
+  { lines, functions, branches, statements },
   thresholds,
 ) {
   return [
@@ -133,7 +133,9 @@ function buildTestStatistics(lines, functions, branches, statements) {
 
 function buildUncoveredFilesSection(coverage) {
   const uncoveredFiles = getTopUncoveredFiles(coverage);
-  if (uncoveredFiles.length === 0) return "";
+  if (uncoveredFiles.length === 0) {
+    return "";
+  }
 
   const lines = [
     "",
@@ -142,9 +144,9 @@ function buildUncoveredFilesSection(coverage) {
     "| File | Coverage |",
     "|------|----------|",
   ];
-  uncoveredFiles.forEach((item) => {
+  for (const item of uncoveredFiles) {
     lines.push(`| \`${item.file}\` | ${formatPercentage(item.lines)} |`);
-  });
+  }
   return lines.join("\n");
 }
 
@@ -157,7 +159,7 @@ function buildUncoveredFilesSection(coverage) {
  * @returns {string} Markdown body for the coverage comment.
  */
 function buildCoverageComment(coverage, _github, context) {
-  const total = coverage.total;
+  const { total } = coverage;
   const thresholds = { lines: 75, functions: 75, branches: 80, statements: 75 };
   const overallPass =
     total.lines.pct >= thresholds.lines &&
@@ -174,10 +176,12 @@ function buildCoverageComment(coverage, _github, context) {
     `## ${statusIcon} ${statusText}`,
     "",
     buildCoverageMetricsTable(
-      total.lines,
-      total.functions,
-      total.branches,
-      total.statements,
+      {
+        lines: total.lines,
+        functions: total.functions,
+        branches: total.branches,
+        statements: total.statements,
+      },
       thresholds,
     ),
     "",
@@ -244,7 +248,7 @@ async function upsertCoverageComment(body, github, context) {
   }
 }
 
-export default async function postCoverageComment({ github, context }) {
+export async function postCoverageComment({ github, context }) {
   try {
     const coverage = readCoverage(COVERAGE_PATH);
     const commentBody = buildCoverageComment(coverage, github, context);

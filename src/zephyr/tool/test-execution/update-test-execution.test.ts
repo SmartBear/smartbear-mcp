@@ -3,11 +3,16 @@ import type {
   ServerNotification,
   ServerRequest,
 } from "@modelcontextprotocol/sdk/types.js";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+import {
+  asZephyrClient,
+  createMockZephyrClient,
+  type MockZephyrClient,
+} from "../../common/test-helpers.ts";
 import { UpdateTestExecution } from "./update-test-execution.ts";
 
 describe("UpdateTestExecution", () => {
-  let mockClient: any;
+  let mockClient: MockZephyrClient;
   let instance: UpdateTestExecution;
 
   const ExtraRequestHandler: RequestHandlerExtra<
@@ -25,13 +30,9 @@ describe("UpdateTestExecution", () => {
   };
 
   beforeEach(() => {
-    mockClient = {
-      getApiClient: vi.fn().mockReturnValue({
-        put: vi.fn(),
-      }),
-    };
+    mockClient = createMockZephyrClient();
 
-    instance = new UpdateTestExecution(mockClient as any);
+    instance = new UpdateTestExecution(asZephyrClient(mockClient));
   });
 
   it("should set specification correctly", () => {
@@ -86,7 +87,7 @@ describe("UpdateTestExecution", () => {
 
       await instance.handle(args, ExtraRequestHandler);
 
-      const body = mockClient.getApiClient().put.mock.calls[0][1];
+      const [, body] = mockClient.getApiClient().put.mock.calls[0];
 
       expect(body).toEqual({
         statusName: "In Progress",
@@ -103,7 +104,7 @@ describe("UpdateTestExecution", () => {
 
       await instance.handle(args, ExtraRequestHandler);
 
-      const body = mockClient.getApiClient().put.mock.calls[0][1];
+      const [, body] = mockClient.getApiClient().put.mock.calls[0];
 
       expect(body.comment).toBeNull();
     });
@@ -118,7 +119,7 @@ describe("UpdateTestExecution", () => {
 
       await instance.handle(args, ExtraRequestHandler);
 
-      const body = mockClient.getApiClient().put.mock.calls[0][1];
+      const [, body] = mockClient.getApiClient().put.mock.calls[0];
 
       expect(body.actualEndDate).toBe("2018-06-01T00:00:00Z");
     });

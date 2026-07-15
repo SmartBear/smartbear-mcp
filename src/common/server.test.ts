@@ -1,9 +1,11 @@
 import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { Mocked, MockInstance } from "vitest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import z from "zod";
 import Bugsnag from "./bugsnag.ts";
 import { SmartBearMcpServer } from "./server.ts";
 import { ToolError } from "./tools.ts";
+import type { Client, RegisterToolsFunction } from "./types.ts";
 
 // Mock Bugsnag
 vi.mock("./bugsnag.js", () => ({
@@ -14,8 +16,8 @@ vi.mock("./bugsnag.js", () => ({
 
 describe("SmartBearMcpServer", () => {
   let server: SmartBearMcpServer;
-  let superRegisterToolMock: any;
-  let superRegisterResourceMock: any;
+  let superRegisterToolMock: MockInstance;
+  let superRegisterResourceMock: MockInstance;
 
   beforeEach(() => {
     server = new SmartBearMcpServer();
@@ -66,7 +68,7 @@ describe("SmartBearMcpServer", () => {
   });
 
   describe("addClient", () => {
-    let mockClient: any;
+    let mockClient: Mocked<Client>;
 
     beforeEach(() => {
       mockClient = {
@@ -91,12 +93,13 @@ describe("SmartBearMcpServer", () => {
       );
 
       // Get the register function passed from the server and execute it with test tool details
-      const registerFn = mockClient.registerTools.mock.calls[0][0];
+      const [[registerFn]] = mockClient.registerTools.mock.calls;
       const registerCbMock = vi.fn();
       registerFn(
         {
           title: "Test Tool",
           summary: "A test tool",
+          toolset: "",
           inputSchema: z.object({
             p1: z.string().describe("The input for the tool"),
           }),
@@ -107,7 +110,7 @@ describe("SmartBearMcpServer", () => {
       expect(superRegisterToolMock).toHaveBeenCalledOnce();
 
       // Assert some of the details
-      const registerToolParams = superRegisterToolMock.mock.calls[0];
+      const [registerToolParams] = superRegisterToolMock.mock.calls;
       expect(registerToolParams[0]).toBe("test_product_test_tool");
       expect(registerToolParams[1].title).toBe("Test Product: Test Tool");
       expect(registerToolParams[1].description).toBe(
@@ -137,18 +140,19 @@ describe("SmartBearMcpServer", () => {
       await server.addClient(mockClient);
 
       // Get the register function passed from the server and execute it with test tool details
-      const registerFn = mockClient.registerTools.mock.calls[0][0];
+      const [[registerFn]] = mockClient.registerTools.mock.calls;
       const registerCbMock = vi.fn();
       registerFn(
         {
           title: "Test Tool",
           summary: "An non-configured tool",
+          toolset: "",
         },
         registerCbMock,
       );
 
       // Get the wrapper function that will execute the tool and call it
-      const registerToolParams = superRegisterToolMock.mock.calls[0];
+      const [registerToolParams] = superRegisterToolMock.mock.calls;
 
       mockClient.isConfigured.mockReturnValueOnce(false);
 
@@ -165,11 +169,12 @@ describe("SmartBearMcpServer", () => {
       await server.addClient(mockClient);
 
       // Get the register function passed from the server and execute it with test tool details
-      const registerFn = mockClient.registerTools.mock.calls[0][0];
+      const [[registerFn]] = mockClient.registerTools.mock.calls;
       registerFn(
         {
           title: "Test Tool",
           summary: "A test tool",
+          toolset: "",
           inputSchema: z.object({
             p1: z.string().describe("The input for the tool"),
             p2: z
@@ -217,7 +222,7 @@ describe("SmartBearMcpServer", () => {
       );
 
       // Assert some of the details
-      const registerToolParams = superRegisterToolMock.mock.calls[0];
+      const [registerToolParams] = superRegisterToolMock.mock.calls;
       expect(registerToolParams[0]).toBe("test_product_test_tool");
       expect(registerToolParams[1].title).toBe("Test Product: Test Tool");
       expect(registerToolParams[1].description).toBe(
@@ -269,13 +274,13 @@ describe("SmartBearMcpServer", () => {
       await server.addClient(mockClient);
 
       // Get the register function passed from the server and execute it with test tool details
-      const registerFn = mockClient.registerTools.mock.calls[0][0];
+      const [[registerFn]] = mockClient.registerTools.mock.calls;
       const registerCbMock = vi.fn();
       registerFn(
         {
           title: "Test Tool",
           summary: "A test tool",
-          parameters: [],
+          toolset: "",
         },
         registerCbMock,
       );
@@ -286,7 +291,7 @@ describe("SmartBearMcpServer", () => {
       });
 
       // Get the wrapper function that will execute the tool and call it
-      const registerToolParams = superRegisterToolMock.mock.calls[0];
+      const [registerToolParams] = superRegisterToolMock.mock.calls;
 
       expect(await registerToolParams[2]()).toEqual({
         isError: true,
@@ -306,13 +311,13 @@ describe("SmartBearMcpServer", () => {
       await server.addClient(mockClient);
 
       // Get the register function passed from the server and execute it with test tool details
-      const registerFn = mockClient.registerTools.mock.calls[0][0];
+      const [[registerFn]] = mockClient.registerTools.mock.calls;
       const registerCbMock = vi.fn();
       registerFn(
         {
           title: "Test Tool",
           summary: "A test tool",
-          parameters: [],
+          toolset: "",
         },
         registerCbMock,
       );
@@ -323,7 +328,7 @@ describe("SmartBearMcpServer", () => {
       });
 
       // Get the wrapper function that will execute the tool and call it
-      const registerToolParams = superRegisterToolMock.mock.calls[0];
+      const [registerToolParams] = superRegisterToolMock.mock.calls;
 
       await expect(registerToolParams[2]()).rejects.toThrow(
         "Unexpected error from registerCbMock",
@@ -346,9 +351,12 @@ describe("SmartBearMcpServer", () => {
       );
 
       // Get the register function passed from the server and execute it with test tool details
-      const getInputFn = mockClient.registerTools.mock.calls[0][1];
-      const params = vi.mockObject({});
-      const options = vi.mockObject({});
+      const [[, getInputFn]] = mockClient.registerTools.mock.calls;
+      const params = {
+        message: "Enter a value",
+        requestedSchema: { type: "object" as const, properties: {} },
+      };
+      const options = {};
       await getInputFn(params, options);
 
       // Since elicitation is supported, the wrapper should call elicitInput
@@ -359,7 +367,7 @@ describe("SmartBearMcpServer", () => {
     });
 
     it("should register resources when client provides them", async () => {
-      const mockClient = {
+      const resourceMockClient = {
         name: "Test Product",
         capabilityPrefix: "test_product",
         configPrefix: "test-product",
@@ -370,15 +378,15 @@ describe("SmartBearMcpServer", () => {
         isConfigured: vi.fn().mockReturnValue(true),
       };
 
-      await server.addClient(mockClient);
+      await server.addClient(resourceMockClient);
 
       // The server should call the client's registerResources function
-      expect(mockClient.registerResources).toHaveBeenCalledWith(
+      expect(resourceMockClient.registerResources).toHaveBeenCalledWith(
         expect.any(Function),
       );
 
       // Get the register function passed from the server and execute it with test resource details
-      const registerFn = mockClient.registerResources.mock.calls[0][0];
+      const [[registerFn]] = resourceMockClient.registerResources.mock.calls;
       const registerCbMock = vi.fn();
       registerFn(
         {
@@ -397,7 +405,7 @@ describe("SmartBearMcpServer", () => {
       );
 
       // Assert some of the details
-      const registerResourceParams = superRegisterResourceMock.mock.calls[0];
+      const [registerResourceParams] = superRegisterResourceMock.mock.calls;
       expect(registerResourceParams[0]).toBe("test_product_test_resource");
       expect(registerResourceParams[1].uriTemplate.template).toBe(
         "test_product://test_resource/{identifier}",
@@ -415,7 +423,7 @@ describe("SmartBearMcpServer", () => {
     });
 
     it("should not register resources when client does not provide them", async () => {
-      const mockClient = {
+      const noResourcesMockClient = {
         name: "Test Product",
         capabilityPrefix: "test_product",
         configPrefix: "test-product",
@@ -426,7 +434,7 @@ describe("SmartBearMcpServer", () => {
         isConfigured: vi.fn().mockReturnValue(true),
       };
 
-      await server.addClient(mockClient);
+      await server.addClient(noResourcesMockClient);
 
       // It should not crash with undefined registerResources function
       expect(vi.mocked(Bugsnag.notify)).not.toHaveBeenCalled();
@@ -436,7 +444,12 @@ describe("SmartBearMcpServer", () => {
       await server.addClient(mockClient);
 
       // Get the register function passed from the server and execute it with test resource details
-      const registerFn = mockClient.registerResources.mock.calls[0][0];
+      // registerResources is always set to vi.fn() in beforeEach above.
+      const registerResourcesMock =
+        mockClient.registerResources as unknown as MockInstance<
+          NonNullable<Client["registerResources"]>
+        >;
+      const [[registerFn]] = registerResourcesMock.mock.calls;
       const registerCbMock = vi.fn();
       registerFn(
         {
@@ -453,7 +466,7 @@ describe("SmartBearMcpServer", () => {
       });
 
       // Get the wrapper function that will execute the resource and call it
-      const registerResourceParams = superRegisterResourceMock.mock.calls[0];
+      const [registerResourceParams] = superRegisterResourceMock.mock.calls;
       await expect(registerResourceParams[3]()).rejects.toThrow(
         "Test error from registerCbMock",
       );
@@ -497,11 +510,12 @@ describe("SmartBearMcpServer", () => {
           .describe("List of values"),
       });
 
-      const registerFn = mockClient.registerTools.mock.calls[0][0];
+      const [[registerFn]] = mockClient.registerTools.mock.calls;
       registerFn(
         {
           title: "Search values",
           summary: "Tool using input and output schemas",
+          toolset: "",
           inputSchema,
           outputSchema,
         },
@@ -509,7 +523,7 @@ describe("SmartBearMcpServer", () => {
       );
 
       expect(superRegisterToolMock).toHaveBeenCalledOnce();
-      const registerToolParams = superRegisterToolMock.mock.calls[0];
+      const [registerToolParams] = superRegisterToolMock.mock.calls;
 
       expect(registerToolParams[0]).toBe("test_product_search_values");
       expect(registerToolParams[1].title).toBe("Test Product: Search values");
@@ -570,18 +584,19 @@ describe("SmartBearMcpServer", () => {
           .describe("List of values"),
       });
 
-      const registerFn = mockClient.registerTools.mock.calls[0][0];
+      const [[registerFn]] = mockClient.registerTools.mock.calls;
       registerFn(
         {
           title: "Get values",
           summary: "Tool using output schema",
+          toolset: "",
           outputSchema,
         },
         registerCbMock,
       );
 
       expect(superRegisterToolMock).toHaveBeenCalledOnce();
-      const registerToolParams = superRegisterToolMock.mock.calls[0];
+      const [registerToolParams] = superRegisterToolMock.mock.calls;
 
       // Execute wrapper function to validate error on missing structuredContent
       await expect(registerToolParams[2]({}, {})).rejects.toThrow(
@@ -609,18 +624,19 @@ describe("SmartBearMcpServer", () => {
           .describe("List of values"),
       });
 
-      const registerFn = mockClient.registerTools.mock.calls[0][0];
+      const [[registerFn]] = mockClient.registerTools.mock.calls;
       registerFn(
         {
           title: "Get values",
           summary: "Tool using output schema",
+          toolset: "",
           outputSchema,
         },
         registerCbMock,
       );
 
       expect(superRegisterToolMock).toHaveBeenCalledOnce();
-      const registerToolParams = superRegisterToolMock.mock.calls[0];
+      const [registerToolParams] = superRegisterToolMock.mock.calls;
 
       // Execute wrapper function to validate no error on missing structuredContent when isError is true
       const result = await registerToolParams[2]({}, {});
@@ -667,17 +683,17 @@ describe("SmartBearMcpServer", () => {
   });
 
   describe("toolset filtering", () => {
-    let mockClient: any;
-    let secondMockClient: any;
-    let server: SmartBearMcpServer;
-    let registerToolSpy: any;
-    let registerFn: any;
+    let mockClient: Mocked<Client>;
+    let secondMockClient: Mocked<Client>;
+    let filterServer: SmartBearMcpServer;
+    let registerToolSpy: MockInstance;
+    let registerFn: RegisterToolsFunction;
     let setupServer: (
       enabledToolsets?: string,
       defaultToolsets?: string[],
     ) => Promise<void>;
 
-    beforeEach(async () => {
+    beforeEach(() => {
       mockClient = {
         name: "Test Product",
         capabilityPrefix: "test_product",
@@ -703,18 +719,18 @@ describe("SmartBearMcpServer", () => {
         enabledToolsets?: string,
         defaultToolsets?: string[],
       ) => {
-        server = new SmartBearMcpServer(enabledToolsets);
+        filterServer = new SmartBearMcpServer(enabledToolsets);
         registerToolSpy = vi
           .spyOn(
-            Object.getPrototypeOf(Object.getPrototypeOf(server)),
+            Object.getPrototypeOf(Object.getPrototypeOf(filterServer)),
             "registerTool",
           )
           .mockImplementation(vi.fn());
 
         mockClient.defaultToolsets = defaultToolsets;
-        await server.addClient(mockClient);
-        registerFn = mockClient.registerTools.mock.calls[0][0];
-        await server.addClient(secondMockClient);
+        await filterServer.addClient(mockClient);
+        [[registerFn]] = mockClient.registerTools.mock.calls;
+        await filterServer.addClient(secondMockClient);
       };
     });
 
@@ -726,7 +742,10 @@ describe("SmartBearMcpServer", () => {
         vi.fn(),
       );
       // Tool without a toolset
-      const result2 = registerFn({ title: "Tool B", summary: "B" }, vi.fn());
+      const result2 = registerFn(
+        { title: "Tool B", summary: "B", toolset: "" },
+        vi.fn(),
+      );
 
       expect(result1).not.toBeNull();
       expect(result2).not.toBeNull();
@@ -897,61 +916,61 @@ describe("SmartBearMcpServer", () => {
     };
 
     it("should enable all tools when no toolsets are configured", () => {
-      const server = new SmartBearMcpServer();
-      expect(server.isToolEnabled(mockClient, "anything")).toBe(true);
+      const testServer = new SmartBearMcpServer();
+      expect(testServer.isToolEnabled(mockClient, "anything")).toBe(true);
     });
 
     it("should enable tool when client is listed", () => {
-      const server = new SmartBearMcpServer("test-product");
-      expect(server.isToolEnabled(mockClient, "anything")).toBe(true);
+      const testServer = new SmartBearMcpServer("test-product");
+      expect(testServer.isToolEnabled(mockClient, "anything")).toBe(true);
     });
 
     it("should enable tool when its toolset matches an enabled entry", () => {
-      const server = new SmartBearMcpServer("test-product:errors");
-      expect(server.isToolEnabled(mockClient, "errors")).toBe(true);
+      const testServer = new SmartBearMcpServer("test-product:errors");
+      expect(testServer.isToolEnabled(mockClient, "errors")).toBe(true);
     });
 
     it("should disable tool when its toolset does not match any enabled entry", () => {
-      const server = new SmartBearMcpServer("test-product:errors");
-      expect(server.isToolEnabled(mockClient, "releases")).toBe(false);
+      const testServer = new SmartBearMcpServer("test-product:errors");
+      expect(testServer.isToolEnabled(mockClient, "releases")).toBe(false);
     });
 
     it("should disable tool when client prefix does not match any enabled toolset", () => {
-      const server = new SmartBearMcpServer("other-product:errors");
-      expect(server.isToolEnabled(mockClient, "errors")).toBe(false);
+      const testServer = new SmartBearMcpServer("other-product:errors");
+      expect(testServer.isToolEnabled(mockClient, "errors")).toBe(false);
     });
 
     it("should handle toolset name normalization (spaces, hyphens, underscores)", () => {
-      const server = new SmartBearMcpServer("test-product:mytools");
-      expect(server.isToolEnabled(mockClient, "my-tools")).toBe(true);
-      expect(server.isToolEnabled(mockClient, "my_tools")).toBe(true);
-      expect(server.isToolEnabled(mockClient, "my tools")).toBe(true);
+      const testServer = new SmartBearMcpServer("test-product:mytools");
+      expect(testServer.isToolEnabled(mockClient, "my-tools")).toBe(true);
+      expect(testServer.isToolEnabled(mockClient, "my_tools")).toBe(true);
+      expect(testServer.isToolEnabled(mockClient, "my tools")).toBe(true);
     });
 
     it("should be case-insensitive", () => {
-      const server = new SmartBearMcpServer("Test-Product:Errors");
-      expect(server.isToolEnabled(mockClient, "errors")).toBe(true);
+      const testServer = new SmartBearMcpServer("Test-Product:Errors");
+      expect(testServer.isToolEnabled(mockClient, "errors")).toBe(true);
     });
 
     it("should enable default toolsets when specific toolsets are configured for the client", () => {
       const client = { ...mockClient, defaultToolsets: ["default-set"] };
-      const server = new SmartBearMcpServer("test-product:errors");
-      expect(server.isToolEnabled(client, "default-set")).toBe(true);
+      const testServer = new SmartBearMcpServer("test-product:errors");
+      expect(testServer.isToolEnabled(client, "default-set")).toBe(true);
     });
 
     it("should not enable default toolsets when no specific toolsets are configured for the client", () => {
       const client = { ...mockClient, defaultToolsets: ["default-set"] };
-      const server = new SmartBearMcpServer("other-product:errors");
-      expect(server.isToolEnabled(client, "default-set")).toBe(false);
+      const testServer = new SmartBearMcpServer("other-product:errors");
+      expect(testServer.isToolEnabled(client, "default-set")).toBe(false);
     });
 
     it("should support multiple toolset entries for the same client", () => {
-      const server = new SmartBearMcpServer(
+      const testServer = new SmartBearMcpServer(
         "test-product:errors,test-product:releases",
       );
-      expect(server.isToolEnabled(mockClient, "errors")).toBe(true);
-      expect(server.isToolEnabled(mockClient, "releases")).toBe(true);
-      expect(server.isToolEnabled(mockClient, "other")).toBe(false);
+      expect(testServer.isToolEnabled(mockClient, "errors")).toBe(true);
+      expect(testServer.isToolEnabled(mockClient, "releases")).toBe(true);
+      expect(testServer.isToolEnabled(mockClient, "other")).toBe(false);
     });
   });
 });

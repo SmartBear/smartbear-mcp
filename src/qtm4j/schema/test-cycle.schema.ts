@@ -3,60 +3,63 @@
  *
  * POST /rest/api/latest/testcycles
  */
-import * as zod from "zod";
+import { z } from "zod";
+
+const SUMMARY_MAX_LENGTH = 255;
+const DESCRIPTION_MAX_LENGTH = 65_535;
 
 /**
  * projectId and folderId are injected automatically by the tool.
  * priority, status, labels, and components accept human-readable names
  * and are auto-resolved to numeric IDs before the API call.
  */
-export const CreateTestCycleBody = zod.object({
-  summary: zod
+export const CreateTestCycleBody = z.object({
+  summary: z
     .string()
     .min(1)
-    .max(255)
+    .max(SUMMARY_MAX_LENGTH)
     .describe(
       "Short title of the test cycle. Must not be blank. Max 255 chars.",
     ),
-  description: zod
+  description: z
     .string()
-    .max(65_535)
+    .max(DESCRIPTION_MAX_LENGTH)
     .optional()
     .describe("Detailed description of the test cycle. Max 65 535 characters."),
-  priority: zod
+  priority: z
     .string()
     .optional()
     .describe(
       "Priority name (e.g., 'High', 'Medium', 'Low'). Auto-resolved to ID.",
     ),
-  status: zod
+  status: z
     .string()
     .optional()
     .describe(
       "Status name (e.g., 'To Do', 'In Progress', 'Done'). Auto-resolved to ID.",
     ),
-  assignee: zod.string().optional().describe("Assignee account ID"),
-  reporter: zod.string().optional().describe("Reporter account ID"),
-  labels: zod
-    .array(zod.string())
+  assignee: z.string().optional().describe("Assignee account ID"),
+  reporter: z.string().optional().describe("Reporter account ID"),
+  labels: z
+    .array(z.string())
     .optional()
     .describe(
       "List of label names (e.g., ['Release_1', 'Sprint 1']). Auto-resolved to IDs.",
     ),
-  components: zod
-    .array(zod.string())
+  components: z
+    .array(z.string())
     .optional()
     .describe(
       "List of component names (e.g., ['UI', 'Cloud']). Auto-resolved to IDs.",
     ),
-  plannedStartDate: zod
+  plannedStartDate: z
     .string()
     .regex(/^\d{2}\/[A-Za-z]{3}\/\d{4} \d{2}:\d{2}$/)
     .optional()
     .describe(
       "Planned start date. Format: 'dd/MMM/yyyy HH:mm' e.g. '10/May/2026 00:00'. Must be ≤ plannedEndDate when both are provided.",
     ),
-  plannedEndDate: zod
+  plannedEndDate: z
     .string()
     .regex(/^\d{2}\/[A-Za-z]{3}\/\d{4} \d{2}:\d{2}$/)
     .optional()
@@ -65,19 +68,19 @@ export const CreateTestCycleBody = zod.object({
     ),
 });
 
-export const CreateTestCycleResponse = zod.object({
-  id: zod
+export const CreateTestCycleResponse = z.object({
+  id: z
     .string()
     .describe(
       "Opaque permanent identifier of the created test cycle. Use this in all subsequent API calls.",
     ),
-  key: zod
+  key: z
     .string()
     .describe(
       "Human-readable project-scoped key in format '<PROJECT_KEY>-TR-<number>'. e.g. 'TRWT-TR-218'.",
     ),
 });
 
-export type CreateTestCycleResponseType = zod.infer<
+export type CreateTestCycleResponseType = z.infer<
   typeof CreateTestCycleResponse
 >;

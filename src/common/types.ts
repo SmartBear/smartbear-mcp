@@ -31,7 +31,7 @@ export interface ToolParams {
   useCases?: string[];
   examples?: Array<{
     description: string;
-    parameters: Record<string, any>;
+    parameters: Record<string, unknown>;
     expectedOutput?: string;
   }>;
   hints?: string[];
@@ -100,18 +100,23 @@ export interface Client {
   /**
    * Configure the client with the given server and configuration
    */
+  // Each client implementation declares its own concrete config shape (with
+  // required/optional properties specific to that client), which is incompatible
+  // with a single narrower shared type here (e.g. Record<string, string>) under
+  // strict parameter contravariance.
+  // biome-ignore lint/suspicious/noExplicitAny: shared cross-directory interface; see above
   configure: (server: SmartBearMcpServer, config: any) => Promise<void>;
   isConfigured: () => boolean;
-  registerTools(
+  registerTools: (
     register: RegisterToolsFunction,
     getInput: GetInputFunction,
-  ): Promise<void>;
-  registerResources?(register: RegisterResourceFunction): Promise<void>;
-  registerPrompts?(register: RegisterPromptFunction): Promise<void>;
+  ) => Promise<void>;
+  registerResources?: (register: RegisterResourceFunction) => Promise<void>;
+  registerPrompts?: (register: RegisterPromptFunction) => Promise<void>;
   /**
    * Optional method to retrieve the authentication token for the current request context.
    * This is used for request-level authentication where the token might change per request.
    */
-  getAuthToken?(): string | null;
-  cleanupSession?(mcpSessionId: string): Promise<void>;
+  getAuthToken?: () => string | null;
+  cleanupSession?: (mcpSessionId: string) => Promise<void>;
 }

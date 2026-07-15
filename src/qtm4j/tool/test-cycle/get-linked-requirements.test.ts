@@ -1,14 +1,35 @@
+import type { Mock } from "vitest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ToolError } from "../../../common/tools.ts";
+import type { Qtm4jClient } from "../../client.ts";
 import { ENDPOINTS } from "../../config/constants.ts";
 import { ResolverKeys } from "../../config/field-resolution.types.ts";
 import { GetLinkedRequirementsForCycle } from "./get-linked-requirements.ts";
 
+interface MockApiClient {
+  get: Mock;
+}
+
+interface MockCycleResolver {
+  resolveAndReturn: Mock;
+}
+
+interface MockRegistry {
+  requireProjectContext: Mock;
+  getResolver: Mock;
+}
+
+interface MockClient {
+  getApiClient: Mock;
+  getResolverRegistry: Mock;
+}
+
+// biome-ignore lint/security/noSecrets: test suite name, not a secret
 describe("GetLinkedRequirementsForCycle", () => {
-  let mockClient: any;
-  let mockApiClient: any;
-  let mockRegistry: any;
-  let mockCycleResolver: any;
+  let mockClient: MockClient;
+  let mockApiClient: MockApiClient;
+  let mockRegistry: MockRegistry;
+  let mockCycleResolver: MockCycleResolver;
   let instance: GetLinkedRequirementsForCycle;
 
   const mockContext = {
@@ -75,8 +96,9 @@ describe("GetLinkedRequirementsForCycle", () => {
     mockRegistry = {
       requireProjectContext: vi.fn().mockReturnValue(mockContext),
       getResolver: vi.fn().mockImplementation((key: string) => {
-        if (key === ResolverKeys.SearchableField.TEST_CYCLE_KEY_TO_UID)
+        if (key === ResolverKeys.SearchableField.TEST_CYCLE_KEY_TO_UID) {
           return mockCycleResolver;
+        }
         throw new Error(`Unexpected resolver key: ${key}`);
       }),
     };
@@ -87,7 +109,9 @@ describe("GetLinkedRequirementsForCycle", () => {
       getResolverRegistry: vi.fn().mockReturnValue(mockRegistry),
     };
 
-    instance = new GetLinkedRequirementsForCycle(mockClient as any);
+    instance = new GetLinkedRequirementsForCycle(
+      mockClient as unknown as Qtm4jClient,
+    );
   });
 
   describe("specification", () => {

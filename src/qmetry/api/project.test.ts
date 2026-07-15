@@ -1,3 +1,6 @@
+// biome-ignore-all lint/performance/useTopLevelRegex: each regex here is a one-off assertion matcher used once per test; hoisting dozens of single-use patterns would hurt readability without any real perf benefit
+
+import type { Mock } from "vitest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createCycle,
@@ -20,14 +23,14 @@ describe("getProjectInfo", () => {
 
   it("should call fetch with correct URL and headers", async () => {
     const mockResponse = { id: 1, name: "Project A" };
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
     });
 
     const result = await getProjectInfo(token, baseUrl, projectKey);
 
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(globalThis.fetch).toHaveBeenCalledWith(
       `${baseUrl}/rest/admin/project/getinfo`,
       expect.objectContaining({
         method: "GET",
@@ -43,7 +46,7 @@ describe("getProjectInfo", () => {
   });
 
   it("should throw error on non-OK response", async () => {
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: false,
       status: 500,
       text: async () => "Server error",
@@ -56,14 +59,14 @@ describe("getProjectInfo", () => {
 
   it("should use default project key when not provided", async () => {
     const mockResponse = { id: 2, name: "Default Project" };
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
     });
 
     await getProjectInfo(token, baseUrl);
 
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(globalThis.fetch).toHaveBeenCalledWith(
       `${baseUrl}/rest/admin/project/getinfo`,
       expect.objectContaining({
         headers: expect.objectContaining({
@@ -109,14 +112,14 @@ describe("getReleasesCycles", () => {
       ],
     };
 
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
     });
 
     const result = await getReleasesCycles(token, baseUrl, projectKey);
 
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(globalThis.fetch).toHaveBeenCalledWith(
       `${baseUrl}/rest/admin/scope/tree`,
       expect.objectContaining({
         method: "POST",
@@ -171,7 +174,7 @@ describe("getReleasesCycles", () => {
       ],
     };
 
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
     });
@@ -180,7 +183,7 @@ describe("getReleasesCycles", () => {
       showArchive: true,
     });
 
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(globalThis.fetch).toHaveBeenCalledWith(
       `${baseUrl}/rest/admin/scope/tree`,
       expect.objectContaining({
         method: "POST",
@@ -223,7 +226,7 @@ describe("getReleasesCycles", () => {
       ],
     };
 
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
     });
@@ -232,7 +235,7 @@ describe("getReleasesCycles", () => {
       showArchive: false,
     });
 
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(globalThis.fetch).toHaveBeenCalledWith(
       `${baseUrl}/rest/admin/scope/tree`,
       expect.objectContaining({
         method: "POST",
@@ -255,14 +258,14 @@ describe("getReleasesCycles", () => {
       children: [],
     };
 
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
     });
 
     await getReleasesCycles(token, baseUrl);
 
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(globalThis.fetch).toHaveBeenCalledWith(
       `${baseUrl}/rest/admin/scope/tree`,
       expect.objectContaining({
         headers: expect.objectContaining({
@@ -278,14 +281,14 @@ describe("getReleasesCycles", () => {
       children: [],
     };
 
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
     });
 
     await getReleasesCycles(token, "", projectKey);
 
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(globalThis.fetch).toHaveBeenCalledWith(
       "https://testmanagement.qmetry.com/rest/admin/scope/tree", // from QMETRY_DEFAULTS
       expect.objectContaining({
         method: "POST",
@@ -299,14 +302,14 @@ describe("getReleasesCycles", () => {
       children: [],
     };
 
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
     });
 
     const result = await getReleasesCycles(token, baseUrl, projectKey, {});
 
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(globalThis.fetch).toHaveBeenCalledWith(
       `${baseUrl}/rest/admin/scope/tree`,
       expect.objectContaining({
         body: JSON.stringify({ showArchive: false }), // default behavior
@@ -317,7 +320,7 @@ describe("getReleasesCycles", () => {
   });
 
   it("should throw error on non-OK response", async () => {
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: false,
       status: 401,
       text: async () => "Unauthorized",
@@ -329,7 +332,7 @@ describe("getReleasesCycles", () => {
   });
 
   it("should handle network errors", async () => {
-    global.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
+    globalThis.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
 
     await expect(getReleasesCycles(token, baseUrl, projectKey)).rejects.toThrow(
       "Network error",
@@ -382,7 +385,7 @@ describe("getReleasesCycles", () => {
       ],
     };
 
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
     });
@@ -391,9 +394,15 @@ describe("getReleasesCycles", () => {
       showArchive: false,
     });
 
+    interface ScopeTreeNode {
+      type?: string;
+      children?: ScopeTreeNode[];
+    }
+    const typedResult = result as ScopeTreeNode;
+
     expect(result).toEqual(mockResponse);
-    expect((result as any).children[0].children[0].children).toHaveLength(2);
-    expect((result as any).children[0].children[0].type).toBe("release 1");
+    expect(typedResult.children?.[0].children?.[0].children).toHaveLength(2);
+    expect(typedResult.children?.[0].children?.[0].type).toBe("release 1");
   });
 });
 
@@ -421,14 +430,14 @@ describe("getBuilds", () => {
       total: 1,
     };
 
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
     });
 
     const result = await getBuilds(token, baseUrl, projectKey, {});
 
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(globalThis.fetch).toHaveBeenCalledWith(
       `${baseUrl}/rest/admin/drop/list`,
       expect.objectContaining({
         method: "POST",
@@ -460,7 +469,7 @@ describe("getBuilds", () => {
       total: 1,
     };
 
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
     });
@@ -469,12 +478,13 @@ describe("getBuilds", () => {
       start: 10,
       limit: 20,
       page: 2,
+      // biome-ignore lint/security/noSecrets: high-entropy false positive; this is a descriptive string (error message, parameter name, or API action name), not a credential
       filter: '[{"value":[1],"type":"list","field":"isArchived"}]',
     };
 
     const result = await getBuilds(token, baseUrl, projectKey, customPayload);
 
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(globalThis.fetch).toHaveBeenCalledWith(
       `${baseUrl}/rest/admin/drop/list`,
       expect.objectContaining({
         method: "POST",
@@ -489,12 +499,13 @@ describe("getBuilds", () => {
     );
 
     // Verify the body contains all the expected values
-    const fetchCall = (global.fetch as any).mock.calls[0];
-    const body = JSON.parse(fetchCall[1].body);
+    const [, requestInit] = (globalThis.fetch as Mock).mock.calls[0];
+    const body = JSON.parse(requestInit.body);
     expect(body).toMatchObject({
       start: 10,
       limit: 20,
       page: 2,
+      // biome-ignore lint/security/noSecrets: high-entropy false positive; this is a descriptive string (error message, parameter name, or API action name), not a credential
       filter: '[{"value":[1],"type":"list","field":"isArchived"}]',
     });
 
@@ -527,14 +538,14 @@ describe("getPlatforms", () => {
       total: 1,
     };
 
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
     });
 
     const result = await getPlatforms(token, baseUrl, projectKey, {});
 
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(globalThis.fetch).toHaveBeenCalledWith(
       `${baseUrl}/rest/admin/platform/list`,
       expect.objectContaining({
         method: "POST",
@@ -549,8 +560,8 @@ describe("getPlatforms", () => {
     );
 
     // Verify the body contains the expected default values
-    const fetchCall = (global.fetch as any).mock.calls[0];
-    const body = JSON.parse(fetchCall[1].body);
+    const [, requestInit] = (globalThis.fetch as Mock).mock.calls[0];
+    const body = JSON.parse(requestInit.body);
     expect(body).toMatchObject({
       start: 0,
       page: 1,
@@ -577,7 +588,7 @@ describe("getPlatforms", () => {
       total: 1,
     };
 
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
     });
@@ -587,6 +598,7 @@ describe("getPlatforms", () => {
       limit: 25,
       page: 1,
       sort: '[{"property":"platformID","direction":"DESC"}]',
+      // biome-ignore lint/security/noSecrets: high-entropy false positive; this is a descriptive string (error message, parameter name, or API action name), not a credential
       filter: '[{"value":[1],"type":"list","field":"isArchived"}]',
     };
 
@@ -597,7 +609,7 @@ describe("getPlatforms", () => {
       customPayload,
     );
 
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(globalThis.fetch).toHaveBeenCalledWith(
       `${baseUrl}/rest/admin/platform/list`,
       expect.objectContaining({
         method: "POST",
@@ -612,13 +624,14 @@ describe("getPlatforms", () => {
     );
 
     // Verify the body contains all the expected values
-    const fetchCall = (global.fetch as any).mock.calls[0];
-    const body = JSON.parse(fetchCall[1].body);
+    const [, requestInit] = (globalThis.fetch as Mock).mock.calls[0];
+    const body = JSON.parse(requestInit.body);
     expect(body).toMatchObject({
       start: 0,
       limit: 25,
       page: 1,
       sort: '[{"property":"platformID","direction":"DESC"}]',
+      // biome-ignore lint/security/noSecrets: high-entropy false positive; this is a descriptive string (error message, parameter name, or API action name), not a credential
       filter: '[{"value":[1],"type":"list","field":"isArchived"}]',
     });
 
@@ -676,8 +689,8 @@ describe("createRelease", () => {
       }),
     );
 
-    const fetchCall = (globalThis.fetch as any).mock.calls[0];
-    const body = JSON.parse(fetchCall[1].body);
+    const [, requestInit] = (globalThis.fetch as Mock).mock.calls[0];
+    const body = JSON.parse(requestInit.body);
     expect(body).toMatchObject({
       release: {
         name: "Release 2.0",
@@ -698,6 +711,7 @@ describe("createRelease", () => {
   it("should throw error when release name is missing", async () => {
     const payload = {
       release: {
+        // biome-ignore lint/suspicious/noExplicitAny: intentionally invalid input to exercise the missing-name validation error
         name: undefined as any,
       },
     };
@@ -761,6 +775,7 @@ describe("createCycle", () => {
   it("should throw error when cycle name is missing", async () => {
     const payload = {
       cycle: {
+        // biome-ignore lint/suspicious/noExplicitAny: intentionally invalid input to exercise the missing-name validation error
         name: undefined as any,
         releaseID: 12_345,
       },
@@ -817,8 +832,8 @@ describe("updateCycle", () => {
       }),
     );
 
-    const fetchCall = (globalThis.fetch as any).mock.calls[0];
-    const body = JSON.parse(fetchCall[1].body);
+    const [, requestInit] = (globalThis.fetch as Mock).mock.calls[0];
+    const body = JSON.parse(requestInit.body);
     expect(body).toMatchObject({
       cycle: {
         name: "Updated Sprint 2",
@@ -833,6 +848,7 @@ describe("updateCycle", () => {
   it("should throw error when buildID is missing", async () => {
     const payload = {
       cycle: {
+        // biome-ignore lint/suspicious/noExplicitAny: intentionally invalid input to exercise the missing-buildID validation error
         buildID: undefined as any,
         releaseID: 3729,
       },

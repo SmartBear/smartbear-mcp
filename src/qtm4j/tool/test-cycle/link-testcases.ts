@@ -47,6 +47,7 @@ export class LinkTestCasesToCycle extends Tool<Qtm4jClient> {
         parameters: {
           cycleKey: "SCRUM-TR-1",
           filter: { priority: ["High"], status: ["To Do"] },
+          // biome-ignore lint/security/noSecrets: example Jira account ID, not a secret
           assignee: "5b10a2844c20165700ede21f",
           startNewExecution: true,
         },
@@ -79,7 +80,8 @@ export class LinkTestCasesToCycle extends Tool<Qtm4jClient> {
       "Confirmation with the cycle key and linked: true. Warnings included if any test cases could not be resolved or linked.",
   };
 
-  handle = async (rawArgs: any) => {
+  // biome-ignore lint/complexity/noExcessiveLinesPerFunction: single sequential tool handler; splitting would fragment one linear resolve→request→respond flow
+  handle = async (rawArgs: unknown) => {
     const args = LinkTestCasesToCycleBody.parse(rawArgs);
     const fieldResolver = this.client.getResolverRegistry();
     const context = fieldResolver.requireProjectContext();
@@ -103,7 +105,7 @@ export class LinkTestCasesToCycle extends Tool<Qtm4jClient> {
     const body: Record<string, unknown> = {};
 
     // Resolve test case keys → [{id: uid, versionNo}]
-    if (args.testCaseKeys?.length) {
+    if (args.testCaseKeys && args.testCaseKeys.length > 0) {
       const uidMap = (await fieldResolver
         .getResolver(ResolverKeys.SearchableField.TEST_CASE_KEY_TO_UID)
         .resolveAndReturn(context.projectId, args.testCaseKeys)) as Record<
@@ -126,7 +128,9 @@ export class LinkTestCasesToCycle extends Tool<Qtm4jClient> {
         }
       }
 
-      if (testCases.length > 0) body.testCases = testCases;
+      if (testCases.length > 0) {
+        body.testCases = testCases;
+      }
     }
 
     // Pass filter with auto-injected projectId

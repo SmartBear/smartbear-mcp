@@ -1,4 +1,7 @@
+// biome-ignore-all lint/security/noSecrets: this file contains many high-entropy API action-name / wire-format / fixture string constants that trip the noSecrets entropy heuristic; none are real secrets
+import type { Mock } from "vitest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { Qtm4jClient } from "../../client.ts";
 import { ENDPOINTS } from "../../config/constants.ts";
 import { ResolverKeys } from "../../config/field-resolution.types.ts";
 import {
@@ -7,10 +10,24 @@ import {
 } from "../../schema/update-test-cycle.schema.ts";
 import { UpdateTestCycle } from "./update-test-cycle.ts";
 
+interface MockApiClient {
+  put: Mock;
+}
+
+interface MockRegistry {
+  requireProjectContext: Mock;
+  getResolver: Mock;
+}
+
+interface MockClient {
+  getApiClient: Mock;
+  getResolverRegistry: Mock;
+}
+
 describe("UpdateTestCycle", () => {
-  let mockClient: any;
-  let mockApiClient: any;
-  let mockRegistry: any;
+  let mockClient: MockClient;
+  let mockApiClient: MockApiClient;
+  let mockRegistry: MockRegistry;
   let instance: UpdateTestCycle;
 
   const mockContext = {
@@ -22,36 +39,37 @@ describe("UpdateTestCycle", () => {
   /** Builds a resolver mock that maps name strings → numeric IDs via body mutation. */
   function makeResolverMock(idMap: Record<string, number> = {}) {
     return {
-      resolve: vi
-        .fn()
-        .mockImplementation(
-          async (
-            inputField: string,
-            _resolverKey: string,
-            body: Record<string, unknown>,
-            _context: unknown,
-            warnings: string[],
-          ) => {
-            const raw = body[inputField];
-            if (raw == null) return; // null passes through untouched
-            const isArray = Array.isArray(raw);
-            const names = isArray ? (raw as string[]) : [raw as string];
-            const ids: number[] = [];
-            for (const name of names) {
-              const id = idMap[name];
-              if (id === undefined) {
-                warnings.push(
-                  `Skipped ${inputField} '${name}' — not available in the current project.`,
-                );
-              } else {
-                ids.push(id);
-              }
+      resolve: vi.fn().mockImplementation(
+        // biome-ignore lint/complexity/useMaxParams: mirrors the real Resolver.resolve() signature shared across all resolvers/callers
+        (
+          inputField: string,
+          _resolverKey: string,
+          body: Record<string, unknown>,
+          _context: unknown,
+          warnings: string[],
+        ) => {
+          const raw = body[inputField];
+          if (raw === null || raw === undefined) {
+            return; // null/undefined passes through untouched
+          }
+          const isArray = Array.isArray(raw);
+          const names = isArray ? (raw as string[]) : [raw as string];
+          const ids: number[] = [];
+          for (const name of names) {
+            const id = idMap[name];
+            if (id === undefined) {
+              warnings.push(
+                `Skipped ${inputField} '${name}' — not available in the current project.`,
+              );
+            } else {
+              ids.push(id);
             }
-            if (ids.length > 0) {
-              body[inputField] = isArray ? ids : ids[0];
-            }
-          },
-        ),
+          }
+          if (ids.length > 0) {
+            body[inputField] = isArray ? ids : ids[0];
+          }
+        },
+      ),
     };
   }
 
@@ -68,7 +86,7 @@ describe("UpdateTestCycle", () => {
       getResolverRegistry: vi.fn().mockReturnValue(mockRegistry),
     };
 
-    instance = new UpdateTestCycle(mockClient as any);
+    instance = new UpdateTestCycle(mockClient as unknown as Qtm4jClient);
   });
 
   // ---------------------------------------------------------------------------
@@ -204,8 +222,9 @@ describe("UpdateTestCycle", () => {
   describe("handle — field resolution", () => {
     it("should resolve status name to numeric ID", async () => {
       mockRegistry.getResolver.mockImplementation((key: string) => {
-        if (key === ResolverKeys.CommonAttribute.TEST_CYCLE_STATUS)
+        if (key === ResolverKeys.CommonAttribute.TEST_CYCLE_STATUS) {
           return makeResolverMock({ "In Progress": 44_893 });
+        }
         return makeResolverMock();
       });
 
@@ -219,8 +238,9 @@ describe("UpdateTestCycle", () => {
 
     it("should resolve priority name to numeric ID", async () => {
       mockRegistry.getResolver.mockImplementation((key: string) => {
-        if (key === ResolverKeys.CommonAttribute.PRIORITY)
+        if (key === ResolverKeys.CommonAttribute.PRIORITY) {
           return makeResolverMock({ High: 25_510 });
+        }
         return makeResolverMock();
       });
 
@@ -234,8 +254,9 @@ describe("UpdateTestCycle", () => {
 
     it("should resolve labels.add and labels.delete names to IDs", async () => {
       mockRegistry.getResolver.mockImplementation((key: string) => {
-        if (key === ResolverKeys.SearchableField.LABEL)
+        if (key === ResolverKeys.SearchableField.LABEL) {
           return makeResolverMock({ Regression: 1001, Sprint1: 1003 });
+        }
         return makeResolverMock();
       });
 
@@ -252,8 +273,9 @@ describe("UpdateTestCycle", () => {
 
     it("should resolve components.add and components.delete names to IDs", async () => {
       mockRegistry.getResolver.mockImplementation((key: string) => {
-        if (key === ResolverKeys.SearchableField.COMPONENTS)
+        if (key === ResolverKeys.SearchableField.COMPONENTS) {
           return makeResolverMock({ Backend: 2001, Frontend: 2002 });
+        }
         return makeResolverMock();
       });
 
@@ -273,14 +295,14 @@ describe("UpdateTestCycle", () => {
     it("should pass null status through to the body (clears the field)", async () => {
       await instance.handle({ key: "PROJ-TR-26", status: null });
 
-      const calledBody = mockApiClient.put.mock.calls[0][1];
+      const [, calledBody] = mockApiClient.put.mock.calls[0];
       expect(calledBody).toHaveProperty("status", null);
     });
 
     it("should pass null priority through to the body (clears the field)", async () => {
       await instance.handle({ key: "PROJ-TR-26", priority: null });
 
-      const calledBody = mockApiClient.put.mock.calls[0][1];
+      const [, calledBody] = mockApiClient.put.mock.calls[0];
       expect(calledBody).toHaveProperty("priority", null);
     });
 
@@ -352,7 +374,7 @@ describe("UpdateTestCycle", () => {
         labels: { add: ["NonExistent"] },
       });
 
-      const calledBody = mockApiClient.put.mock.calls[0][1];
+      const [, calledBody] = mockApiClient.put.mock.calls[0];
       expect(calledBody).not.toHaveProperty("labels");
       expect(result.content).toHaveLength(1);
       expect(result.content[0].text).toContain("NonExistent");
@@ -367,7 +389,7 @@ describe("UpdateTestCycle", () => {
     it("should only include provided fields in the PUT body", async () => {
       await instance.handle({ key: "PROJ-TR-26", summary: "Only summary" });
 
-      const calledBody = mockApiClient.put.mock.calls[0][1];
+      const [, calledBody] = mockApiClient.put.mock.calls[0];
       expect(calledBody).toHaveProperty("summary", "Only summary");
       expect(calledBody).not.toHaveProperty("description");
       expect(calledBody).not.toHaveProperty("priority");
@@ -402,14 +424,14 @@ describe("UpdateTestCycle", () => {
     it("should NOT include key in the PUT body", async () => {
       await instance.handle({ key: "PROJ-TR-26", summary: "Updated" });
 
-      const calledBody = mockApiClient.put.mock.calls[0][1];
+      const [, calledBody] = mockApiClient.put.mock.calls[0];
       expect(calledBody).not.toHaveProperty("key");
     });
 
     it("should pass null description through to the body (clears description text)", async () => {
       await instance.handle({ key: "PROJ-TR-26", description: null });
 
-      const calledBody = mockApiClient.put.mock.calls[0][1];
+      const [, calledBody] = mockApiClient.put.mock.calls[0];
       expect(calledBody).toHaveProperty("description", null);
     });
 
@@ -419,14 +441,14 @@ describe("UpdateTestCycle", () => {
         description: "Updated description",
       });
 
-      const calledBody = mockApiClient.put.mock.calls[0][1];
+      const [, calledBody] = mockApiClient.put.mock.calls[0];
       expect(calledBody).toHaveProperty("description", "Updated description");
     });
 
     it("should not include description in the body when omitted", async () => {
       await instance.handle({ key: "PROJ-TR-26", summary: "Only summary" });
 
-      const calledBody = mockApiClient.put.mock.calls[0][1];
+      const [, calledBody] = mockApiClient.put.mock.calls[0];
       expect(calledBody).not.toHaveProperty("description");
     });
   });
@@ -557,13 +579,17 @@ describe("UpdateTestCycleBody", () => {
         description: null,
       });
       expect(result.success).toBe(true);
-      if (result.success) expect(result.data.description).toBeNull();
+      if (result.success) {
+        expect(result.data.description).toBeNull();
+      }
     });
 
     it("should be optional", () => {
       const result = UpdateTestCycleBody.safeParse({ key: "SCRUM-TR-1" });
       expect(result.success).toBe(true);
-      if (result.success) expect(result.data.description).toBeUndefined();
+      if (result.success) {
+        expect(result.data.description).toBeUndefined();
+      }
     });
   });
 
@@ -582,7 +608,9 @@ describe("UpdateTestCycleBody", () => {
         status: null,
       });
       expect(result.success).toBe(true);
-      if (result.success) expect(result.data.status).toBeNull();
+      if (result.success) {
+        expect(result.data.status).toBeNull();
+      }
     });
 
     it("should accept a priority string", () => {
@@ -599,7 +627,9 @@ describe("UpdateTestCycleBody", () => {
         priority: null,
       });
       expect(result.success).toBe(true);
-      if (result.success) expect(result.data.priority).toBeNull();
+      if (result.success) {
+        expect(result.data.priority).toBeNull();
+      }
     });
   });
 
@@ -667,7 +697,9 @@ describe("UpdateTestCycleBody", () => {
         assignee: null,
       });
       expect(result.success).toBe(true);
-      if (result.success) expect(result.data.assignee).toBeNull();
+      if (result.success) {
+        expect(result.data.assignee).toBeNull();
+      }
     });
   });
 
@@ -746,7 +778,9 @@ describe("UpdateTestCycleBody", () => {
         summary: "Title",
       });
       expect(result.success).toBe(true);
-      if (result.success) expect(result.data.key).toBe("SCRUM-TR-101");
+      if (result.success) {
+        expect(result.data.key).toBe("SCRUM-TR-101");
+      }
     });
 
     it("should strip unknown fields", () => {
@@ -756,8 +790,11 @@ describe("UpdateTestCycleBody", () => {
         unknownField: "should be stripped",
       });
       expect(result.success).toBe(true);
-      if (result.success)
-        expect((result.data as any).unknownField).toBeUndefined();
+      if (result.success) {
+        expect(
+          (result.data as Record<string, unknown>).unknownField,
+        ).toBeUndefined();
+      }
     });
   });
 });

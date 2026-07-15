@@ -1,12 +1,28 @@
+import type { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/protocol.js";
+import type {
+  ServerNotification,
+  ServerRequest,
+  TextContent,
+} from "@modelcontextprotocol/sdk/types.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { ReflectClient } from "../../client.ts";
+import type { WebSocketManager } from "../../websocket-manager.ts";
 import { ConnectToSession } from "./connect-to-session.ts";
 
-const mockWsManager = {
+type Extra = RequestHandlerExtra<ServerRequest, ServerNotification>;
+
+const mockWsManager: Pick<
+  WebSocketManager,
+  | "connect"
+  | "disconnect"
+  | "sendMcpMessage"
+  | "waitForResponse"
+  | "isConnected"
+> = {
   connect: vi.fn().mockResolvedValue(undefined),
   disconnect: vi.fn().mockResolvedValue(undefined),
   sendMcpMessage: vi.fn().mockResolvedValue(undefined),
   waitForResponse: vi.fn(),
-  onError: vi.fn(),
   isConnected: vi.fn().mockReturnValue(false),
 };
 
@@ -15,28 +31,40 @@ vi.mock("../../websocket-manager", () => ({
 }));
 
 describe("ConnectToSession", () => {
-  let mockClient: any;
+  let mockClient: Pick<
+    ReflectClient,
+    | "isSessionConnected"
+    | "getSessionState"
+    | "getAuthHeader"
+    | "registerConnection"
+  >;
   let instance: ConnectToSession;
 
   beforeEach(() => {
     vi.clearAllMocks();
 
     // Reset mock implementations after clearAllMocks
-    mockWsManager.connect.mockResolvedValue(undefined);
-    mockWsManager.disconnect.mockResolvedValue(undefined);
-    mockWsManager.sendMcpMessage.mockResolvedValue(undefined);
-    mockWsManager.onError.mockImplementation(() => {});
-    mockWsManager.isConnected.mockReturnValue(false);
+    (mockWsManager.connect as ReturnType<typeof vi.fn>).mockResolvedValue(
+      undefined,
+    );
+    (mockWsManager.disconnect as ReturnType<typeof vi.fn>).mockResolvedValue(
+      undefined,
+    );
+    (
+      mockWsManager.sendMcpMessage as ReturnType<typeof vi.fn>
+    ).mockResolvedValue(undefined);
+    (mockWsManager.isConnected as ReturnType<typeof vi.fn>).mockReturnValue(
+      false,
+    );
 
     mockClient = {
       isSessionConnected: vi.fn().mockReturnValue(false),
       getSessionState: vi.fn().mockReturnValue(undefined),
-      getWebSocketManager: vi.fn().mockReturnValue(undefined),
       getAuthHeader: vi.fn().mockReturnValue({ "X-API-KEY": "test-api-key" }),
       registerConnection: vi.fn(),
     };
 
-    instance = new ConnectToSession(mockClient as any);
+    instance = new ConnectToSession(mockClient as unknown as ReflectClient);
   });
 
   it("should set specification correctly", () => {
@@ -46,25 +74,37 @@ describe("ConnectToSession", () => {
   });
 
   it("should return cached connection if already connected", async () => {
-    mockClient.isSessionConnected.mockReturnValue(true);
-    mockClient.getSessionState.mockReturnValue({ platform: "web" });
+    (mockClient.isSessionConnected as ReturnType<typeof vi.fn>).mockReturnValue(
+      true,
+    );
+    (mockClient.getSessionState as ReturnType<typeof vi.fn>).mockReturnValue({
+      platform: "web",
+    });
 
-    const result = await instance.handle({ sessionId: "sess-1" }, {} as any);
-    expect(result.content[0].type).toBe("text");
-    const parsed = JSON.parse((result.content[0] as any).text);
+    const result = await instance.handle(
+      { sessionId: "sess-1" },
+      {} as unknown as Extra,
+    );
+    expect(result.content[0]?.type).toBe("text");
+    const parsed = JSON.parse((result.content[0] as TextContent).text);
     expect(parsed.success).toBe(true);
     expect(parsed.platform).toBe("web");
     expect(mockClient.registerConnection).not.toHaveBeenCalled();
   });
 
   it("should connect, send connect message, and register connection", async () => {
-    mockWsManager.waitForResponse.mockResolvedValue({
+    (
+      mockWsManager.waitForResponse as ReturnType<typeof vi.fn>
+    ).mockResolvedValue({
       type: "mcp:connect-to-session:success",
       id: "some-id",
       platform: "native-mobile",
     });
 
-    const result = await instance.handle({ sessionId: "sess-new" }, {} as any);
+    const result = await instance.handle(
+      { sessionId: "sess-new" },
+      {} as unknown as Extra,
+    );
 
     expect(mockWsManager.connect).toHaveBeenCalled();
     expect(mockWsManager.sendMcpMessage).toHaveBeenCalledWith(
@@ -79,22 +119,24 @@ describe("ConnectToSession", () => {
       undefined,
     );
 
-    const parsed = JSON.parse((result.content[0] as any).text);
+    const parsed = JSON.parse((result.content[0] as TextContent).text);
     expect(parsed.success).toBe(true);
     expect(parsed.sessionId).toBe("sess-new");
     expect(parsed.platform).toBe("native-mobile");
   });
 
   it("should throw ToolError if sessionId is missing", async () => {
-    await expect(instance.handle({}, {} as any)).rejects.toThrow(
+    await expect(instance.handle({}, {} as unknown as Extra)).rejects.toThrow(
       "sessionId argument is required",
     );
   });
 
   it("should throw ToolError if connect fails", async () => {
-    mockWsManager.connect.mockRejectedValue(new Error("connection refused"));
+    (mockWsManager.connect as ReturnType<typeof vi.fn>).mockRejectedValue(
+      new Error("connection refused"),
+    );
     await expect(
-      instance.handle({ sessionId: "sess-fail" }, {} as any),
+      instance.handle({ sessionId: "sess-fail" }, {} as unknown as Extra),
     ).rejects.toThrow("Failed to connect to session");
   });
 });

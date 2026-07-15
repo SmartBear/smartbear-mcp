@@ -1,16 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ENDPOINTS } from "../config/constants.ts";
+import type { ProjectContext } from "../config/field-resolution.types.ts";
 import { ResolverKeys } from "../config/field-resolution.types.ts";
+import type { ApiClient } from "../http/api-client.ts";
 import { TestCaseUidResolver } from "./resolvers/test-case-uid-resolver.ts";
 
 describe("TestCaseUidResolver", () => {
-  let mockApiClient: any;
+  let mockApiClient: { get: ReturnType<typeof vi.fn> };
   let resolver: TestCaseUidResolver;
 
   beforeEach(() => {
     vi.clearAllMocks();
     mockApiClient = { get: vi.fn() };
-    resolver = new TestCaseUidResolver(mockApiClient);
+    resolver = new TestCaseUidResolver(mockApiClient as unknown as ApiClient);
   });
 
   describe("fieldKeys", () => {
@@ -75,7 +77,13 @@ describe("TestCaseUidResolver", () => {
     it("should be a no-op and not throw", async () => {
       const body: Record<string, unknown> = {};
       await expect(
-        resolver.resolve("someField", "someKey", body, {} as any, []),
+        resolver.resolve(
+          "someField",
+          "someKey",
+          body,
+          {} as ProjectContext,
+          [],
+        ),
       ).resolves.toBeUndefined();
       expect(body).toEqual({});
     });

@@ -1,11 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ToolError } from "../../../common/tools.ts";
+import type { Qtm4jClient } from "../../client.ts";
 import { ENDPOINTS } from "../../config/constants.ts";
+import type { ApiClient } from "../../http/api-client.ts";
 import { GetAutomationHistory } from "../test-automation/get-automation-history.ts";
 
 describe("GetAutomationHistory", () => {
-  let mockClient: any;
-  let mockApiClient: any;
+  let mockClient: Qtm4jClient;
+  let mockApiClient: { getAutomation: ReturnType<typeof vi.fn> };
   let instance: GetAutomationHistory;
 
   const fakeRecord = {
@@ -22,6 +24,7 @@ describe("GetAutomationHistory", () => {
     childFileSummaryResponses: [],
     summary: [
       {
+        // biome-ignore lint/security/noSecrets: fake test-cycle ID fixture, not a real secret
         testCycle: "mqNETxEnS6dJKN",
         testCasesCreated: 3,
         testCaseVersionsCreated: 4,
@@ -48,10 +51,12 @@ describe("GetAutomationHistory", () => {
     };
 
     mockClient = {
-      getApiClient: vi.fn().mockReturnValue(mockApiClient),
-    };
+      getApiClient: vi
+        .fn()
+        .mockReturnValue(mockApiClient as unknown as ApiClient),
+    } as unknown as Qtm4jClient;
 
-    instance = new GetAutomationHistory(mockClient as any);
+    instance = new GetAutomationHistory(mockClient);
   });
 
   // ─── Specification ────────────────────────────────────────────────────────

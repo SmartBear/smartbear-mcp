@@ -3,12 +3,18 @@ import type {
   ServerNotification,
   ServerRequest,
 } from "@modelcontextprotocol/sdk/types.js";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { CreateTestCaseWebLink201Response as CreateTestCaseWebLinkResponse } from "../../common/rest-api-schemas.ts";
+import {
+  asZephyrClient,
+  createMockZephyrClient,
+  type MockZephyrClient,
+} from "../../common/test-helpers.ts";
 import { CreateTestCaseWebLink } from "./create-web-link.ts";
 
+// biome-ignore lint/security/noSecrets: test describe name, not a secret
 describe("CreateTestCaseWebLink", () => {
-  let mockClient: any;
+  let mockClient: MockZephyrClient;
   let instance: CreateTestCaseWebLink;
 
   const ExtraRequestHandler: RequestHandlerExtra<
@@ -26,12 +32,8 @@ describe("CreateTestCaseWebLink", () => {
   };
 
   beforeEach(() => {
-    mockClient = {
-      getApiClient: vi.fn().mockReturnValue({
-        post: vi.fn(),
-      }),
-    };
-    instance = new CreateTestCaseWebLink(mockClient as any);
+    mockClient = createMockZephyrClient();
+    instance = new CreateTestCaseWebLink(asZephyrClient(mockClient));
   });
 
   it("should set specification correctly", () => {

@@ -109,7 +109,7 @@ export class GetTestSteps extends Tool<Qtm4jClient> {
       "Shared steps also have a 'shareable' object containing shareableTestcaseUID and shareableTestSteps array.",
   };
 
-  handle = async (rawArgs: any) => {
+  handle = async (rawArgs: unknown) => {
     const args = GetTestStepsBody.parse(rawArgs);
     const fieldResolver = this.client.getResolverRegistry();
     const context = fieldResolver.requireProjectContext();
@@ -134,7 +134,9 @@ export class GetTestSteps extends Tool<Qtm4jClient> {
     const params = new URLSearchParams();
     params.set(RESPONSE_FIELDS.START_AT, String(args.startAt));
     params.set(RESPONSE_FIELDS.MAX_RESULTS, String(args.maxResults));
-    if (args.sort) params.set(RESPONSE_FIELDS.SORT, args.sort);
+    if (args.sort) {
+      params.set(RESPONSE_FIELDS.SORT, args.sort);
+    }
 
     const endpoint = `${ENDPOINTS.TEST_STEPS(entry.uid, versionNo)}?${params.toString()}`;
 
