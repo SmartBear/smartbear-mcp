@@ -39,7 +39,7 @@ export class FunctionalTestingAPI {
   }
 
   /**
-   * Wrapper around the fetch function for the Functional Testting API. It generates the full URL and performs
+   * Wrapper around the fetch function for the Functional Testing API. It generates the full URL and performs
    * common error handling.
    * @param relativePath Path of the resource to fetch relative to the base URL
    * @param init RequestInit passed to the fetch function
@@ -49,7 +49,7 @@ export class FunctionalTestingAPI {
   private async ftFetch(
     relativePath: string,
     init: RequestInit,
-    onFailure: errorMessageFn,
+    onFailure: ErrorMessageFn,
   ): Promise<Response> {
     let response: Response;
     try {
@@ -171,6 +171,7 @@ export class FunctionalTestingAPI {
       },
     };
   }
+
   async listSuites(): Promise<ListSuitesResponse> {
     const response = await this.ftFetch(
       `suites`,
@@ -287,7 +288,7 @@ export class FunctionalTestingAPI {
 /**
  * Maps a failed (status code other than 2xx) HTTP response to a string explaining the failure.
  */
-type errorMessageFn = (response: Response) => string;
+type ErrorMessageFn = (response: Response) => string;
 
 /**
  * Returns an error message handler that selects the message to return based on the
@@ -297,8 +298,8 @@ type errorMessageFn = (response: Response) => string;
  */
 function handleStatus(
   messages: Map<number, string>,
-  defaultMessage: errorMessageFn,
-): errorMessageFn {
+  defaultMessage: ErrorMessageFn,
+): ErrorMessageFn {
   return (response) =>
     messages.get(response.status) || defaultMessage(response);
 }
@@ -309,7 +310,7 @@ function handleStatus(
  * so must not start with uppercase
  * @param operation description of the attempted operation
  */
-function errorMessageFor(operation: string): errorMessageFn {
+function errorMessageFor(operation: string): ErrorMessageFn {
   return (response) =>
     `Failed to ${operation}: ${response.status} ${response.statusText}`;
 }
