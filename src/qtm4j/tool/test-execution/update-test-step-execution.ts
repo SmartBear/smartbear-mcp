@@ -36,7 +36,7 @@ export class UpdateTestStepExecution extends Tool<Qtm4jClient> {
     purpose: "Update an existing test step execution.",
     useCases: [
       "Set a test step execution result (e.g. Pass, Fail, Blocked)",
-      "Update actual result text or comment on a test step execution",
+      "Update actualResult or comment on a test step execution",
     ],
     examples: [
       {
@@ -51,7 +51,7 @@ export class UpdateTestStepExecution extends Tool<Qtm4jClient> {
           "{ testCycleKey: 'PROJ-TR-101', testCaseKey: 'PROJ-TC-42', testStepSeqNo: 2, executionResultName: 'Pass', updated: true }",
       },
       {
-        description: "Update step 3 with result text and comment",
+        description: "Update step 3 with actualResult and comment",
         parameters: {
           testCycleKey: "PROJ-TR-101",
           testCaseKey: "PROJ-TC-42",
@@ -64,7 +64,7 @@ export class UpdateTestStepExecution extends Tool<Qtm4jClient> {
           "{ testCycleKey: 'PROJ-TR-101', testCaseKey: 'PROJ-TC-42', testStepSeqNo: 3, executionResultName: 'Fail', updated: true }",
       },
       {
-        description: "Clear actual result on step 1",
+        description: "Clear actualResult on step 1",
         parameters: {
           testCycleKey: "PROJ-TR-101",
           testCaseKey: "PROJ-TC-42",
@@ -78,7 +78,6 @@ export class UpdateTestStepExecution extends Tool<Qtm4jClient> {
     hints: [
       "Call set_project_context before this tool.",
       "At least one updatable field must be provided.",
-      "An execution must already be started for the test case before steps can be updated.",
     ],
     outputDescription:
       "Confirmation object with testCycleKey, testCaseKey, testStepSeqNo, and updated: true. " +
