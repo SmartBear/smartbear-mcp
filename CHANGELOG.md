@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [Pactflow] Corrected MCP tool hint annotations for all 102 PactFlow tools. Previously, `readOnlyHint` defaulted to `true` for every tool because no tool explicitly set `readOnly`, causing write/delete operations to be misreported as read-only. All tools now declare all four hints explicitly: `readOnly` (58 read-only, 44 write), `destructive` (true for DELETE ops, `resetAdminRoles`, and `regenerateToken`), `idempotent` (false for creates, records, patch, execute, and invite operations), and `openWorld` (true for `executeWebhook`, `executeWebhooks`, and `inviteUsers` which trigger external HTTP requests or send emails).
 
+### Security
+
+- [Swagger] Prevented organization admin email addresses from being exposed through the `list_organizations` tool. Introduced `OrganizationListItem` type that omits the `email` field, filtered organization list data at the MCP boundary, and updated the output schema and documentation accordingly.
+
 ## [0.29.0] - 2026-07-13
 
 ### Changed
