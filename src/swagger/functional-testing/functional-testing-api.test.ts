@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
-import { FunctionalTestingAPI } from "../client/functional-testing-api";
+import { FunctionalTestingAPI, normalizePath } from "../client/functional-testing-api";
 import {
   CreateFunctionalTestingSuiteParamsSchema,
   CreateFunctionalTestingTestParamsSchema,
@@ -1340,6 +1340,32 @@ describe("FunctionalTestingAPI", () => {
       ).rejects.toThrow(
         "Swagger Functional Testing service is currently unreachable. Retry after a moment.",
       );
+    });
+  });
+
+  describe("normalizePath", () => {
+    it("should convert $. dot notation to bracket notation", () => {
+      expect(normalizePath("$.data.name")).toBe('["data"]["name"]');
+    });
+
+    it("should convert bare dot notation (no $) to bracket notation", () => {
+      expect(normalizePath("data.name")).toBe('["data"]["name"]');
+    });
+
+    it("should handle a single segment after $.", () => {
+      expect(normalizePath("$.id")).toBe('["id"]');
+    });
+
+    it("should preserve array index segments", () => {
+      expect(normalizePath("$.items[0].name")).toBe('["items"][0]["name"]');
+    });
+
+    it("should leave already-bracket-notation paths unchanged", () => {
+      expect(normalizePath('["data"]["name"]')).toBe('["data"]["name"]');
+    });
+
+    it("should return empty string for bare $ root", () => {
+      expect(normalizePath("$")).toBe("");
     });
   });
 
