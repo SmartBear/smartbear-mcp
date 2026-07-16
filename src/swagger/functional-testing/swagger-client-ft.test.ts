@@ -402,4 +402,64 @@ describe("SwaggerClient — Functional Testing integration", () => {
       expect(result).toEqual(suiteExecutionMock);
     });
   });
+
+  describe("getFunctionalTestingTestHistory", () => {
+    const historyMock = {
+      totalRuns: 5,
+      runs: [
+        { id: 1, passed: true, created: "2026-06-10T10:00:00Z", runTime: 4200 },
+      ],
+    };
+
+    it("should delegate to the API and return results", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(historyMock));
+
+      await client.configure({} as any, {
+        api_key: "swagger-key",
+        functional_testing_api_token: "ft-token",
+      });
+
+      const result = await requestContextStorage.run({ headers: {} }, () =>
+        client.getFunctionalTestingTestHistory({ testId: "test-1" }),
+      );
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://api.reflect.run/v1/tests/test-1/runs",
+        expect.objectContaining({
+          method: "GET",
+          headers: expect.objectContaining({ "X-API-KEY": "ft-token" }),
+        }),
+      );
+      expect(result).toEqual(historyMock);
+    });
+
+    it("should pass limit and offset query params through", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(historyMock));
+
+      await client.configure({} as any, {
+        functional_testing_api_token: "ft-token",
+      });
+
+      await requestContextStorage.run({ headers: {} }, () =>
+        client.getFunctionalTestingTestHistory({
+          testId: "test-1",
+          limit: 5,
+          offset: 20,
+        }),
+      );
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://api.reflect.run/v1/tests/test-1/runs?limit=5&offset=20",
+        expect.anything(),
+      );
+    });
+
+    it("should throw when FT API is not configured", async () => {
+      await client.configure({} as any, { api_key: "swagger-key" });
+
+      await expect(
+        client.getFunctionalTestingTestHistory({ testId: "test-1" }),
+      ).rejects.toThrow("Functional Testing API not configured");
+    });
+  });
 });

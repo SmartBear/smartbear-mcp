@@ -2,6 +2,7 @@ import { appendClientIdentity } from "../../common/info";
 import { ToolError } from "../../common/tools";
 import type {
   CancelFunctionalTestingSuiteExecutionParams,
+  GetFunctionalTestHistoryParams,
   GetFunctionalTestingExecutionTestParams,
   GetFunctionalTestingSuiteExecutionParams,
   ListFunctionalTestingSuiteExecutionsParams,
@@ -9,6 +10,7 @@ import type {
   ListSuitesResponse,
   RunFunctionalTestingSuiteParams,
   RunFunctionalTestingTestParams,
+  TestRunHistoryResponse,
 } from "./functional-testing-types";
 
 const API_HOSTNAME = "api.reflect.run";
@@ -273,6 +275,33 @@ export class FunctionalTestingAPI {
       }
     }
     return data;
+  }
+
+  async getTestHistory(
+    args: GetFunctionalTestHistoryParams,
+  ): Promise<TestRunHistoryResponse> {
+    if (!args.testId) throw new ToolError("testId argument is required");
+
+    const params = new URLSearchParams();
+    if (args.limit !== undefined) params.set("limit", String(args.limit));
+    if (args.offset !== undefined) params.set("offset", String(args.offset));
+    const query = params.toString() ? `?${params.toString()}` : "";
+
+    const response = await this.ftFetch(
+      `tests/${encodeURIComponent(args.testId)}/runs${query}`,
+      {
+        method: "GET",
+        headers: this.getFtHeaders(),
+      },
+      handleStatus(
+        new Map([
+          [404, "Test not found. Verify the testId belongs to your workspace."],
+        ]),
+        errorMessageFor("get test execution history"),
+      ),
+    );
+
+    return response.json();
   }
 
   private async withoutField(

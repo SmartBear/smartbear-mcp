@@ -118,3 +118,50 @@ export interface ListSuitesResponse {
     cumExecTimeSecs: number;
   };
 }
+
+export const GetFunctionalTestHistoryParamsSchema = z.object({
+  testId: z
+    .string()
+    .describe("ID of the Functional Testing test")
+    .trim()
+    .min(1),
+  limit: z
+    .number()
+    .int()
+    .min(1)
+    .max(100)
+    .optional()
+    .describe("Number of most recent runs to return (default: 25, max: 100)"),
+  offset: z
+    .number()
+    .int()
+    .min(0)
+    .optional()
+    .describe("Pagination offset (default: 0)"),
+});
+
+export type GetFunctionalTestHistoryParams = z.infer<
+  typeof GetFunctionalTestHistoryParamsSchema
+>;
+
+export interface TestRun {
+  id: number;
+  passed: boolean;
+  created: number;
+  runTime: number;
+  failureDetails?: {
+    stepCount: number;
+    failedStepsByIndex: Record<string, { summaryErrorMessage: string | null }>;
+  };
+  suiteExecution?: {
+    executionId: number;
+    slug: string;
+    attemptNumber: number;
+    originExecutionId: number | null;
+  };
+}
+
+export interface TestRunHistoryResponse {
+  totalRuns: number;
+  runs: TestRun[];
+}
