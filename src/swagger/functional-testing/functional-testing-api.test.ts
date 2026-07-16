@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
-import { FunctionalTestingAPI } from "../client/functional-testing-api";
+import { FunctionalTestingAPI, normalizePath } from "../client/functional-testing-api";
 
 const fetchMock = createFetchMock(vi);
 fetchMock.enableMocks();
@@ -132,6 +132,72 @@ describe("FunctionalTestingAPI", () => {
       await expect(api.createTest({ name: "My New Test" })).rejects.toThrow(
         UNREACHABLE_MESSAGE,
       );
+    });
+
+    it("should forward expectedStatusCodes on a step", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
+
+      await api.createTest({
+        name: "Status Code Test",
+        steps: [
+          {
+            url: "https://example.com/api",
+            httpMethod: "GET",
+            expectedStatusCodes: [{ start: 200, end: 299 }],
+          },
+        ],
+      });
+
+      const [, init] = fetchMock.mock.calls[0];
+      const body = JSON.parse((init as RequestInit).body as string);
+      expect(body.steps[0].expectedStatusCodes).toEqual([{ start: 200, end: 299 }]);
+    });
+
+    it("should normalize dot-notation paths in expectedBodyRules to bracket notation", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
+
+      await api.createTest({
+        name: "Body Rule Test",
+        steps: [
+          {
+            url: "https://example.com/api",
+            httpMethod: "POST",
+            expectedBodyRules: [
+              { path: "$.data.name", assertionType: "string", operator: "eq", target: "Alice" },
+              { path: "$.data.token", assertionType: "regex", pattern: "nonempty" },
+            ],
+          },
+        ],
+      });
+
+      const [, init] = fetchMock.mock.calls[0];
+      const body = JSON.parse((init as RequestInit).body as string);
+      expect(body.steps[0].expectedBodyRules).toEqual([
+        { path: '["data"]["name"]', assertionType: "string", operator: "eq", target: "Alice" },
+        { path: '["data"]["token"]', assertionType: "regex", pattern: "nonempty" },
+      ]);
+    });
+
+    it("should forward expectedBodyType on a step", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
+
+      await api.createTest({
+        name: "Body Type Test",
+        steps: [
+          {
+            url: "https://example.com/api",
+            httpMethod: "GET",
+            expectedBodyType: "xml",
+            expectedBodyRules: [
+              { path: "$.root.item", assertionType: "string", operator: "contains", target: "foo" },
+            ],
+          },
+        ],
+      });
+
+      const [, init] = fetchMock.mock.calls[0];
+      const body = JSON.parse((init as RequestInit).body as string);
+      expect(body.steps[0].expectedBodyType).toBe("xml");
     });
   });
 
@@ -817,6 +883,32 @@ describe("FunctionalTestingAPI", () => {
       ).rejects.toThrow(
         "Swagger Functional Testing service is currently unreachable. Retry after a moment.",
       );
+    });
+  });
+
+  describe("normalizePath", () => {
+    it("should convert $. dot notation to bracket notation", () => {
+      expect(normalizePath("$.data.name")).toBe('["data"]["name"]');
+    });
+
+    it("should convert bare dot notation (no $) to bracket notation", () => {
+      expect(normalizePath("data.name")).toBe('["data"]["name"]');
+    });
+
+    it("should handle a single segment after $.", () => {
+      expect(normalizePath("$.id")).toBe('["id"]');
+    });
+
+    it("should preserve array index segments", () => {
+      expect(normalizePath("$.items[0].name")).toBe('["items"][0]["name"]');
+    });
+
+    it("should leave already-bracket-notation paths unchanged", () => {
+      expect(normalizePath('["data"]["name"]')).toBe('["data"]["name"]');
+    });
+
+    it("should return empty string for bare $ root", () => {
+      expect(normalizePath("$")).toBe("");
     });
   });
 

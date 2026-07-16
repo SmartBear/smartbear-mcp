@@ -171,6 +171,37 @@ export const CreateFunctionalTestingTestHeaderSchema = z.object({
   value: z.string().describe("Header value"),
 });
 
+export const CreateFunctionalTestingStatusRangeSchema = z.object({
+  start: z.number().int().describe("Start of the HTTP status code range, inclusive"),
+  end: z.number().int().describe("End of the HTTP status code range, inclusive"),
+});
+
+export const CreateFunctionalTestingBodyRuleSchema = z.object({
+  path: z.string().describe("Path to the field to assert. Accepts dot notation (e.g. '$.data.id', 'items[0].name') or bracket notation (e.g. '[\"data\"][\"id\"]')."),
+  assertionType: z
+    .enum(["string", "number", "regex"])
+    .describe("Type of assertion"),
+  operator: z
+    .enum(["eq", "lt", "gt", "lte", "gte", "contains"])
+    .optional()
+    .describe("Comparison operator for compare assertions"),
+  target: z.string().optional().describe("Expected value for compare assertions"),
+  targets: z
+    .array(z.string())
+    .optional()
+    .describe("List of allowed values for list-match assertions"),
+  lower: z.string().optional().describe("Lower bound for number range assertions"),
+  upper: z.string().optional().describe("Upper bound for number range assertions"),
+  pattern: z
+    .enum(["nonempty"])
+    .optional()
+    .describe("Pattern type for regex assertions"),
+  assignment: z
+    .string()
+    .optional()
+    .describe("Variable name to assign the extracted value to"),
+});
+
 export const CreateFunctionalTestingTestStepSchema = z.object({
   url: z.string().url().describe("URL for the API call").optional(),
   httpMethod: z
@@ -190,6 +221,22 @@ export const CreateFunctionalTestingTestStepSchema = z.object({
     .string()
     .describe("Human-readable label for this step")
     .optional(),
+  expectedStatusCodes: z
+    .array(CreateFunctionalTestingStatusRangeSchema)
+    .optional()
+    .describe("Expected HTTP status code ranges, e.g. [{start: 200, end: 299}]"),
+  expectedBody: z
+    .string()
+    .optional()
+    .describe("Expected response body (required when expectedBodyRules is set)"),
+  expectedBodyType: z
+    .enum(["json", "xml"])
+    .optional()
+    .describe('Response body format, defaults to "json"'),
+  expectedBodyRules: z
+    .array(CreateFunctionalTestingBodyRuleSchema)
+    .optional()
+    .describe("Assertion rules evaluated against the response body"),
 });
 
 export const CreateFunctionalTestingTestParamsSchema = z.object({
@@ -206,6 +253,12 @@ export const CreateFunctionalTestingTestParamsSchema = z.object({
 
 export type CreateFunctionalTestingTestParams = z.infer<
   typeof CreateFunctionalTestingTestParamsSchema
+>;
+export type CreateFunctionalTestingStatusRange = z.infer<
+  typeof CreateFunctionalTestingStatusRangeSchema
+>;
+export type CreateFunctionalTestingBodyRule = z.infer<
+  typeof CreateFunctionalTestingBodyRuleSchema
 >;
 
 export interface CreateFunctionalTestingTestResponse {

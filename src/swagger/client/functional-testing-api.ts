@@ -88,7 +88,14 @@ export class FunctionalTestingAPI {
         body: JSON.stringify({
           type: "api",
           ...args,
-          steps: args.steps?.map((step) => ({ type: "api", ...step })),
+          steps: args.steps?.map((step) => ({
+            type: "api",
+            ...step,
+            expectedBodyRules: step.expectedBodyRules?.map((rule) => ({
+              ...rule,
+              path: normalizePath(rule.path),
+            })),
+          })),
         }),
       },
       errorMessageFor(`create Functional Testing test`),
@@ -364,4 +371,21 @@ function handleStatus(
 function errorMessageFor(operation: string): ErrorMessageFn {
   return (response) =>
     `Failed to ${operation}: ${response.status} ${response.statusText}`;
+}
+
+/**
+ * Converts dot-notation JSON paths (e.g. "$.data.name", "items[0].id") to the
+ * bracket notation the reflect frontend expects (e.g. ["data"]["name"], ["items"][0]["id"]).
+ * Paths already in bracket notation are returned unchanged.
+ */
+export function normalizePath(path: string): string {
+  if (path.startsWith("[")) return path;
+  const stripped = path.replace(/^\$\.?/, "");
+  if (!stripped) return "";
+  return stripped
+    .split(".")
+    .map((segment) =>
+      segment.replace(/^([^[]+)(.*)$/, (_m, name, rest) => `["${name}"]${rest}`),
+    )
+    .join("");
 }
