@@ -238,7 +238,7 @@ export class FunctionalTestingAPI {
       errorMessageFor("run suite"),
     );
 
-    return response;
+    return response.json();
   }
 
   async getSuiteExecution(
