@@ -295,10 +295,7 @@ export class FunctionalTestingAPI {
       },
       handleStatus(
         new Map([
-          [
-            404,
-            "Test not found. Verify the testId belongs to your workspace.",
-          ],
+          [404, "Test not found. Verify the testId belongs to your workspace."],
         ]),
         errorMessageFor("get test execution history"),
       ),
