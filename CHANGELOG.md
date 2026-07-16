@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- [Swagger] Added output schemas to Swagger Portal and Registry tools, enabling structured, validated responses for all portal, product, section, document, table-of-contents, and registry operations.
+- [Swagger] Introduced tool constants (`READ_ONLY`, `WRITE`, `WRITE_DESTRUCTIVE`) to annotate each Swagger tool with semantic flags (`readOnly`, `openWorld`, `destructive`) for better client-side tool classification.
+
 ### Changed
 
 - [Pactflow] Replaced the static `USER_AGENT` constant with a dynamic `getUserAgent()` call in `PactflowClient.requestHeaders`, ensuring the outbound `User-Agent` header always includes the identified MCP client name and version. Removed the `SOURCE_APPLICATION` header.
@@ -47,9 +52,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Swagger] Added `cancel_suite_execution` tool for stopping an ongoing test suite execution in your Swagger Functional Testing workspace. Requires `suiteId` and `executionId`. Requires `SWAGGER_FUNCTIONAL_TESTING_API_TOKEN` env var.
 
 - [BearQ] Add environment targeting to the run tools and a `bearq_list_environments` tool [#565](https://github.com/SmartBear/smartbear-mcp/pull/565)
-
-- [Swagger] Added output schemas to Swagger Portal and Registry tools, enabling structured, validated responses for all portal, product, section, document, table-of-contents, and registry operations.
-- [Swagger] Introduced tool constants (`READ_ONLY`, `WRITE`, `WRITE_DESTRUCTIVE`) to annotate each Swagger tool with semantic flags (`readOnly`, `openWorld`, `destructive`) for better client-side tool classification.
 
 ## [0.28.0] - 2026-07-07
 
