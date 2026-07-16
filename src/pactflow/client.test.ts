@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
+import { setProcessClientIdentity } from "../common/client-identity";
+import { USER_AGENT } from "../common/info";
 import { PactflowClient } from "./client";
 import { GenerationInputSchema, type GenerationResponse } from "./client/ai";
 import * as toolsModule from "./client/tools";
@@ -72,25 +74,26 @@ describe("PactFlowClient", () => {
       );
     });
 
-    it("includes SOURCE_APPLICATION header when client info is available", async () => {
-      client = await createConfiguredClient({
-        token: "my-token",
-        clientInfo: { name: "Claude Code", version: "1.2.3" },
-      });
-
-      expect(client.requestHeaders).toEqual(
-        expect.objectContaining({
-          SOURCE_APPLICATION: "Claude Code/1.2.3",
-        }),
-      );
-    });
-
-    it("sends SOURCE_APPLICATION header as 'unknown' when client info is not available", async () => {
+    it("includes client identity in User-Agent when a client is identified", async () => {
+      setProcessClientIdentity({ name: "Claude Code", version: "1.2.3" });
       client = await createConfiguredClient({ token: "my-token" });
 
       expect(client.requestHeaders).toEqual(
         expect.objectContaining({
-          SOURCE_APPLICATION: "unknown",
+          "User-Agent": `${USER_AGENT} (client: Claude Code; clientVersion: 1.2.3)`,
+        }),
+      );
+
+      setProcessClientIdentity(undefined);
+    });
+
+    it("uses base User-Agent when no client identity is available", async () => {
+      setProcessClientIdentity(undefined);
+      client = await createConfiguredClient({ token: "my-token" });
+
+      expect(client.requestHeaders).toEqual(
+        expect.objectContaining({
+          "User-Agent": USER_AGENT,
         }),
       );
     });

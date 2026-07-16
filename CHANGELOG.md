@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- [Pactflow] Replaced the static `USER_AGENT` constant with a dynamic `getUserAgent()` call in `PactflowClient.requestHeaders`, ensuring the outbound `User-Agent` header always includes the identified MCP client name and version. Removed the `SOURCE_APPLICATION` header.
+
 - [Reflect] Add create_test and create_segment tools to enable agents to port tests from open source frameworks (Selenium, Cypress, Playwright) and other SmartBear products (TestComplete, BearQ) to Reflect.
 
 ### Fixed
