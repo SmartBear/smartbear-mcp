@@ -288,24 +288,21 @@ export class FunctionalTestingAPI {
     const query = params.toString() ? `?${params.toString()}` : "";
 
     const response = await this.ftFetch(
-      `${this.baseUrl}/tests/${encodeURIComponent(args.testId)}/runs${query}`,
+      `tests/${encodeURIComponent(args.testId)}/runs${query}`,
       {
         method: "GET",
         headers: this.getFtHeaders(),
       },
+      handleStatus(
+        new Map([
+          [
+            404,
+            "Test not found. Verify the testId belongs to your workspace.",
+          ],
+        ]),
+        errorMessageFor("get test execution history"),
+      ),
     );
-
-    if (response.status === 404) {
-      throw new ToolError(
-        "Test not found. Verify the testId belongs to your workspace.",
-      );
-    }
-
-    if (!response.ok) {
-      throw new ToolError(
-        `Failed to get test execution history: ${response.status} ${response.statusText}`,
-      );
-    }
 
     return response.json();
   }
