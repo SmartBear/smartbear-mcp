@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.30.0] - 2026-07-16
+
 ### Added
 
 - [Swagger] Added output schemas to Swagger Portal and Registry tools, enabling structured, validated responses for all portal, product, section, document, table-of-contents, and registry operations.
