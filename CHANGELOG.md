@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - [Swagger] Added `get_test_history` Functional Testing tool that retrieves the execution history for a given test, returning past runs with pass/fail status, run time, creation timestamp, and per-step failure details for failed runs.
+- [Swagger] Added a Cursor plugin for the hosted Swagger MCP server (`plugins/swagger`), bundling the remote server, a context rule for the `swagger_*` tools, and three workflow commands (`/validate-api-contract`, `/generate-api-tests`, `/check-api-drift`). Includes a root `.cursor-plugin/marketplace.json` manifest for listing in the Cursor Marketplace and a `scripts/install-plugin-local.sh` helper for local testing.
 
 ### Changed
 

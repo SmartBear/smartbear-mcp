@@ -1,0 +1,20 @@
+---
+description: When to use Swagger MCP tools for OpenAPI design, API governance, SwaggerHub registry, and API portal documentation tasks
+alwaysApply: false
+---
+
+# Swagger MCP tools
+
+This workspace has access to SmartBear's hosted Swagger MCP server (tools prefixed `swagger_`). Prefer these tools over guessing or scraping when the task involves OpenAPI definitions, API governance, SwaggerHub, or API portals:
+
+- **Registry (SwaggerHub)**: searching, fetching, creating, or updating API definitions (`swagger_search_apis_and_domains`, `swagger_get_api_definition`, `swagger_create_or_update_api`, `swagger_list_organizations`).
+- **Governance**: validating an API definition against organizational standardization rules (`swagger_scan_api_standardization` for raw YAML/JSON, `swagger_scan_api_standardization_from_registry` for registry APIs). Always scan before publishing.
+- **AI-assisted design**: generating a new API definition from a natural-language description (`swagger_create_api_from_prompt`) and auto-fixing governance violations (`swagger_standardize_api`).
+- **Portals and docs**: managing API portals, products, and documentation pages (`swagger_list_portals`, `swagger_create_documentation_page`, `swagger_publish_portal_product`, and related tools).
+
+## Guidance
+
+- The server authenticates via SmartBear OAuth. If a tool call fails with an authentication error, tell the user to re-authenticate the server in Cursor's MCP settings (a browser window handles login — no API tokens needed).
+- Discover inputs like organization names, API identifiers, and portal IDs with the corresponding `search`/`list` tools rather than asking the user, unless ambiguous.
+- When editing an OpenAPI definition, preserve the existing spec version (2.0/3.0/3.1), style, and property ordering; validate with a governance scan after significant changes.
+- Other SmartBear products (BugSnag, Zephyr, PactFlow, Reflect) are not part of this server; they are available via SmartBear's other hosted MCP servers or the local `@smartbear/mcp` npm package. See the plugin README.

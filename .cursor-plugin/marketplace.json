@@ -1,0 +1,16 @@
+{
+  "name": "smartbear-mcp",
+  "owner": {
+    "name": "SmartBear"
+  },
+  "metadata": {
+    "description": "SmartBear plugins for Cursor: hosted MCP servers with OAuth and ready-made API workflows."
+  },
+  "plugins": [
+    {
+      "name": "swagger",
+      "source": "plugins/swagger",
+      "description": "Connect Cursor to Swagger by SmartBear: design, validate, and publish APIs with SwaggerHub registry access, governance scans, AI-assisted API generation, and API portal documentation. OAuth sign-in, no API tokens required."
+    }
+  ]
+}

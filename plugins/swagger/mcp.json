@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "smartbear-swagger": {
+      "url": "https://swagger.mcp.smartbear.com/mcp"
+    }
+  }
+}

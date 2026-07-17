@@ -1,0 +1,28 @@
+{
+  "name": "swagger",
+  "displayName": "Swagger",
+  "version": "1.0.0",
+  "description": "Connect Cursor to Swagger by SmartBear: design, validate, and publish APIs with SwaggerHub registry access, governance/standardization scans, AI-assisted API generation, and API portal documentation. OAuth sign-in, no API tokens required.",
+  "author": {
+    "name": "SmartBear"
+  },
+  "homepage": "https://developer.smartbear.com/smartbear-mcp",
+  "repository": "https://github.com/SmartBear/smartbear-mcp",
+  "license": "MIT",
+  "logo": "assets/logo.png",
+  "keywords": [
+    "swagger",
+    "swaggerhub",
+    "openapi",
+    "api-design",
+    "api-governance",
+    "api-documentation",
+    "api-testing",
+    "smartbear",
+    "mcp"
+  ],
+  "category": "developer-tools",
+  "tags": ["api", "openapi", "testing"],
+  "rules": "./rules/",
+  "commands": "./commands/"
+}
