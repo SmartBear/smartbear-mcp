@@ -10,10 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - [Swagger] Added `get_test_history` Functional Testing tool that retrieves the execution history for a given test, returning past runs with pass/fail status, run time, creation timestamp, and per-step failure details for failed runs.
+- [QTM4J] Added test execution tools to start executions, update test case and step executions, link Jira bugs, and retrieve linked bugs
+- [QTM4J] Added API request tracking and suppressed internal API calls from analytics.
 
 ### Changed
 
 - [BearQ] Remove draft-test refinement tools and add `bearq_delete_test_cases` [#593](https://github.com/SmartBear/smartbear-mcp/pull/593)
+
+### Fixed
+
+- [QTM4J] Fixed `search_test_cases` response validation errors when test case fields are missing.
 
 ## [0.30.0] - 2026-07-16
 
