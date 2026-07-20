@@ -1,8 +1,8 @@
 import { getUserAgent } from "../../common/info";
-import { CONTENT_TYPES, HTTP_HEADERS } from "../config/constants";
-import { USER_AGENT } from "../../common/info";
 import {
   CLIENT_CONFIG,
+  CONTENT_TYPES,
+  HTTP_HEADERS,
 } from "../config/constants";
 
 /**
