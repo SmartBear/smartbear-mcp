@@ -1,6 +1,6 @@
 {
   "name": "@smartbear/mcp",
-  "version": "0.27.2",
+  "version": "0.30.0",
   "description": "MCP server for interacting SmartBear Products",
   "keywords": [
     "smartbear",
@@ -45,6 +45,7 @@
     "test:coverage": "vitest --coverage",
     "test:coverage:ci": "vitest --coverage --reporter=verbose",
     "test:run": "vitest run",
+    "test:pact": "vitest run --config vitest.pact.config.ts",
     "coverage:check": "vitest --coverage --reporter=verbose",
     "bump": "node scripts/bump.js"
   },
@@ -60,6 +61,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.8",
+    "@pact-foundation/pact": "^17.0.1",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.19.15",
     "@types/ws": "^8.18.1",

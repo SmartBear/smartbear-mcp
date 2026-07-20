@@ -5,7 +5,15 @@ import { Tool, ToolError } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { BearQClient } from "../../client";
 
-const inputSchema = z.object({});
+const inputSchema = z.object({
+  environment: z
+    .string()
+    .min(1)
+    .optional()
+    .describe(
+      "Target environment name to run tests against. Omit to use the workspace default.",
+    ),
+});
 
 export class RunRegressionTests extends Tool<BearQClient> {
   specification: ToolParams = {
@@ -16,11 +24,14 @@ export class RunRegressionTests extends Tool<BearQClient> {
     inputSchema,
   };
 
-  handle: ToolCallback<ZodRawShape> = async (_args) => {
+  handle: ToolCallback<ZodRawShape> = async (args) => {
+    const { environment } = inputSchema.parse(args);
+    const body: Record<string, unknown> = { agent: "tester", mode: "run" };
+    if (environment !== undefined) body.environment = environment;
     const res = await fetch(`${this.client.getBaseUrl()}/tasks`, {
       method: "POST",
       headers: this.client.getHeaders(),
-      body: JSON.stringify({ agent: "tester", mode: "run" }),
+      body: JSON.stringify(body),
     });
     if (!res.ok)
       throw new ToolError(

@@ -1,8 +1,16 @@
+import { appendClientIdentity } from "../../common/info";
 import { ToolError } from "../../common/tools";
 import type {
+  CancelFunctionalTestingSuiteExecutionParams,
+  GetFunctionalTestHistoryParams,
   GetFunctionalTestingExecutionTestParams,
+  GetFunctionalTestingSuiteExecutionParams,
+  ListFunctionalTestingSuiteExecutionsParams,
+  ListSuiteExecutionsResponse,
   ListSuitesResponse,
+  RunFunctionalTestingSuiteParams,
   RunFunctionalTestingTestParams,
+  TestRunHistoryResponse,
 } from "./functional-testing-types";
 
 const API_HOSTNAME = "api.reflect.run";
@@ -28,77 +36,26 @@ export class FunctionalTestingAPI {
     return {
       [FUNCTIONAL_TESTING_API_KEY_HEADER]: token,
       "Content-Type": "application/json",
-      "User-Agent": this.userAgent,
+      "User-Agent": appendClientIdentity(this.userAgent),
     };
   }
 
-  async listTests(): Promise<unknown> {
-    const response = await fetch(`${this.baseUrl}/tests`, {
-      method: "GET",
-      headers: this.getFtHeaders(),
-    });
-
-    if (!response.ok) {
-      throw new ToolError(
-        `Failed to list Functional Testing tests: ${response.status} ${response.statusText}`,
-      );
-    }
-
-    return response.json();
-  }
-
-  async runTest(args: RunFunctionalTestingTestParams): Promise<unknown> {
-    if (!args.testId) throw new ToolError("testId argument is required");
-
-    const response = await fetch(
-      `${this.baseUrl}/tests/${args.testId}/executions`,
-      {
-        method: "POST",
-        headers: this.getFtHeaders(),
-      },
-    );
-
-    if (!response.ok) {
-      throw new ToolError(
-        `Failed to run test: ${response.status} ${response.statusText}`,
-      );
-    }
-
-    return response.json();
-  }
-
-  async getTestExecution(
-    args: GetFunctionalTestingExecutionTestParams,
-  ): Promise<unknown> {
-    if (!args.executionId) {
-      throw new ToolError("executionId argument is required");
-    }
-
-    const response = await fetch(
-      `${this.baseUrl}/executions/${args.executionId}`,
-      {
-        method: "GET",
-        headers: this.getFtHeaders(),
-      },
-    );
-
-    if (!response.ok) {
-      throw new ToolError(
-        `Failed to get test status: ${response.status} ${response.statusText}`,
-      );
-    }
-
-    return response.json();
-  }
-
-  async listSuites(): Promise<ListSuitesResponse> {
-    const headers = this.getFtHeaders();
+  /**
+   * Wrapper around the fetch function for the Functional Testing API. It generates the full URL and performs
+   * common error handling.
+   * @param relativePath Path of the resource to fetch relative to the base URL
+   * @param init RequestInit passed to the fetch function
+   * @param onFailure Handler that generates the error message for failed responses
+   * @returns Response having asserted it has not failed (status is 2xx)
+   */
+  private async ftFetch(
+    relativePath: string,
+    init: RequestInit,
+    onFailure: ErrorMessageFn,
+  ): Promise<Response> {
     let response: Response;
     try {
-      response = await fetch(`${this.baseUrl}/suites`, {
-        method: "GET",
-        headers,
-      });
+      response = await fetch(`${this.baseUrl}/${relativePath}`, init);
     } catch {
       throw new ToolError(
         "Swagger Functional Testing service is currently unreachable. Retry after a moment.",
@@ -112,11 +69,277 @@ export class FunctionalTestingAPI {
     }
 
     if (!response.ok) {
-      throw new ToolError(
-        `Failed to list Functional Testing suites: ${response.status} ${response.statusText}`,
-      );
+      throw new ToolError(onFailure(response));
     }
+
+    return response;
+  }
+
+  async listTests(): Promise<unknown> {
+    const response = await this.ftFetch(
+      `tests`,
+      {
+        method: "GET",
+        headers: this.getFtHeaders(),
+      },
+      errorMessageFor(`list Functional Testing tests`),
+    );
 
     return response.json();
   }
+
+  async runTest(args: RunFunctionalTestingTestParams): Promise<unknown> {
+    if (!args.testId) throw new ToolError("testId argument is required");
+
+    const response = await this.ftFetch(
+      `tests/${encodeURIComponent(args.testId)}/executions`,
+      {
+        method: "POST",
+        headers: this.getFtHeaders(),
+      },
+      errorMessageFor(`run test`),
+    );
+
+    return response.json();
+  }
+
+  async getTestExecution(
+    args: GetFunctionalTestingExecutionTestParams,
+  ): Promise<unknown> {
+    if (!args.executionId) {
+      throw new ToolError("executionId argument is required");
+    }
+
+    const response = await this.ftFetch(
+      `executions/${encodeURIComponent(args.executionId)}`,
+      {
+        method: "GET",
+        headers: this.getFtHeaders(),
+      },
+      errorMessageFor("get test status"),
+    );
+
+    const data = (await response.json()) as Record<string, unknown>;
+    // Reflect API returns video recording URL for each test run, which SFT does not need so we remove it.
+    if (Array.isArray(data.tests)) {
+      for (const test of data.tests as Record<string, unknown>[]) {
+        const run = test.run as Record<string, unknown> | undefined;
+        if (run) {
+          delete run.videoUrl;
+        }
+      }
+    }
+    return data;
+  }
+
+  async listSuiteExecutions(
+    args: ListFunctionalTestingSuiteExecutionsParams,
+  ): Promise<ListSuiteExecutionsResponse> {
+    if (!args.suiteId) throw new ToolError("suiteId argument is required");
+
+    const response = await this.ftFetch(
+      `suites/${encodeURIComponent(args.suiteId)}/executions`,
+      {
+        method: "GET",
+        headers: this.getFtHeaders(),
+      },
+      handleStatus(
+        new Map([
+          // Defensive: the Reflect API currently returns 200 with an empty
+          // `executions.data` list for an unknown suiteId rather than a 404, so this
+          // branch is not expected to fire today. Kept in case the API starts
+          // returning 404 for missing suites.
+          [
+            404,
+            "Test suite not found. Verify the suiteId is correct and belongs to your workspace.",
+          ],
+        ]),
+        errorMessageFor("list suite executions"),
+      ),
+    );
+
+    const data: ListSuiteExecutionsResponse = await response.json();
+    // Will be adjusted after https://smartbear.atlassian.net/browse/RF-5271 is done
+    return {
+      ...data,
+      executions: {
+        data: data.executions.data.map(
+          ({ executionId, status, isFinished }) => ({
+            executionId,
+            status,
+            isFinished,
+          }),
+        ),
+      },
+    };
+  }
+
+  async listSuites(): Promise<ListSuitesResponse> {
+    const response = await this.ftFetch(
+      `suites`,
+      {
+        method: "GET",
+        headers: this.getFtHeaders(),
+      },
+      errorMessageFor("list Functional Testing suites"),
+    );
+
+    return response.json();
+  }
+
+  async cancelSuiteExecution(
+    args: CancelFunctionalTestingSuiteExecutionParams,
+  ): Promise<unknown> {
+    if (!args.suiteId) throw new ToolError("suiteId argument is required");
+    if (!args.executionId) {
+      throw new ToolError("executionId argument is required");
+    }
+
+    const response = await this.ftFetch(
+      `suites/${encodeURIComponent(args.suiteId)}/executions/${encodeURIComponent(args.executionId)}/cancel`,
+      {
+        method: "PATCH",
+        headers: this.getFtHeaders(),
+      },
+      handleStatus(
+        new Map([
+          [
+            404,
+            "Suite execution not found. Verify the suiteId and executionId are correct and belong to your workspace.",
+          ],
+          [
+            409,
+            "Suite execution cannot be cancelled because it has already finished.",
+          ],
+        ]),
+        errorMessageFor("cancel suite execution"),
+      ),
+    );
+
+    return response.json();
+  }
+
+  async runSuite(args: RunFunctionalTestingSuiteParams): Promise<unknown> {
+    if (!args.suiteId) throw new ToolError("suiteId argument is required");
+
+    const body = args.tunnelAgentName
+      ? JSON.stringify({
+          overrides: { agent: { name: args.tunnelAgentName } },
+        })
+      : undefined;
+
+    const response = await this.ftFetch(
+      `suites/${args.suiteId}/executions`,
+      {
+        method: "POST",
+        headers: this.getFtHeaders(),
+        body,
+      },
+      errorMessageFor("run suite"),
+    );
+
+    // Reflect API returns suite URL, in format which currently is not supported within Private Workspaces epic.
+    // We remove it for now, but will bring it back corrected in scope of https://smartbear.atlassian.net/browse/RF-5271.
+    return this.withoutField("url", response);
+  }
+
+  async getSuiteExecution(
+    args: GetFunctionalTestingSuiteExecutionParams,
+  ): Promise<unknown> {
+    if (!args.suiteId) throw new ToolError("suiteId argument is required");
+    if (!args.executionId) {
+      throw new ToolError("executionId argument is required");
+    }
+
+    const response = await this.ftFetch(
+      `suites/${args.suiteId}/executions/${args.executionId}`,
+      {
+        method: "GET",
+        headers: this.getFtHeaders(),
+      },
+      errorMessageFor("get suite execution status"),
+    );
+
+    // Reflect API returns suite URL, in format which currently is not supported within Private Workspaces epic.
+    // We remove it for now, but will bring it back corrected in scope of https://smartbear.atlassian.net/browse/RF-5271.
+    const data = await this.withoutField("url", response);
+    // Reflect API returns video recording URL for each test run within suite, which SFT does not need so we remove it.
+    const testsData = (data.tests as Record<string, unknown> | undefined)?.data;
+    if (Array.isArray(testsData)) {
+      for (const test of testsData as Record<string, unknown>[]) {
+        if (Array.isArray(test.runs)) {
+          for (const run of test.runs as Record<string, unknown>[]) {
+            delete run.videoUrl;
+          }
+        }
+      }
+    }
+    return data;
+  }
+
+  async getTestHistory(
+    args: GetFunctionalTestHistoryParams,
+  ): Promise<TestRunHistoryResponse> {
+    if (!args.testId) throw new ToolError("testId argument is required");
+
+    const params = new URLSearchParams();
+    if (args.limit !== undefined) params.set("limit", String(args.limit));
+    if (args.offset !== undefined) params.set("offset", String(args.offset));
+    const query = params.toString() ? `?${params.toString()}` : "";
+
+    const response = await this.ftFetch(
+      `tests/${encodeURIComponent(args.testId)}/runs${query}`,
+      {
+        method: "GET",
+        headers: this.getFtHeaders(),
+      },
+      handleStatus(
+        new Map([
+          [404, "Test not found. Verify the testId belongs to your workspace."],
+        ]),
+        errorMessageFor("get test execution history"),
+      ),
+    );
+
+    return response.json();
+  }
+
+  private async withoutField(
+    field: string,
+    response: Response,
+  ): Promise<Record<string, unknown>> {
+    const data = (await response.json()) as Record<string, unknown>;
+    delete data[field];
+    return data;
+  }
+}
+
+/**
+ * Maps a failed (status code other than 2xx) HTTP response to a string explaining the failure.
+ */
+type ErrorMessageFn = (response: Response) => string;
+
+/**
+ * Returns an error message handler that selects the message to return based on the
+ * response's status code. If no match is found, delegates on the default function
+ * @param messages Map associating status code -> error message
+ * @param defaultMessage Default function if no entry is found in the map for the responses status code
+ */
+function handleStatus(
+  messages: Map<number, string>,
+  defaultMessage: ErrorMessageFn,
+): ErrorMessageFn {
+  return (response) =>
+    messages.get(response.status) || defaultMessage(response);
+}
+
+/**
+ * Returns an error message handler that renders a message based on the responses
+ * status code, status text as well as the given operation. The operation is concatenated
+ * so must not start with uppercase
+ * @param operation description of the attempted operation
+ */
+function errorMessageFor(operation: string): ErrorMessageFn {
+  return (response) =>
+    `Failed to ${operation}: ${response.status} ${response.statusText}`;
 }

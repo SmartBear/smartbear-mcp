@@ -15,8 +15,14 @@ import {
   FunctionalTestingAPI,
 } from "./client/functional-testing-api";
 import type {
+  CancelFunctionalTestingSuiteExecutionParams,
+  GetFunctionalTestHistoryParams,
   GetFunctionalTestingExecutionTestParams,
+  GetFunctionalTestingSuiteExecutionParams,
+  ListFunctionalTestingSuiteExecutionsParams,
+  RunFunctionalTestingSuiteParams,
   RunFunctionalTestingTestParams,
+  TestRunHistoryResponse,
 } from "./client/functional-testing-types";
 import {
   type ApiDefinitionParams,
@@ -372,6 +378,34 @@ export class SwaggerClient implements Client {
     return this.withFunctionalTesting((ftApi) => ftApi.getTestExecution(args));
   }
 
+  async listFunctionalTestingSuiteExecutions(
+    args: ListFunctionalTestingSuiteExecutionsParams,
+  ): Promise<unknown> {
+    return this.withFunctionalTesting((ftApi) =>
+      ftApi.listSuiteExecutions(args),
+    );
+  }
+
+  async cancelFunctionalTestingSuiteExecution(
+    args: CancelFunctionalTestingSuiteExecutionParams,
+  ): Promise<unknown> {
+    return this.withFunctionalTesting((ftApi) =>
+      ftApi.cancelSuiteExecution(args),
+    );
+  }
+
+  async runFunctionalTestingSuite(
+    args: RunFunctionalTestingSuiteParams,
+  ): Promise<unknown> {
+    return this.withFunctionalTesting((ftApi) => ftApi.runSuite(args));
+  }
+
+  async getFunctionalTestingSuiteExecution(
+    args: GetFunctionalTestingSuiteExecutionParams,
+  ): Promise<unknown> {
+    return this.withFunctionalTesting((ftApi) => ftApi.getSuiteExecution(args));
+  }
+
   /**
    * Perform an operation with the Functional Testing API.
    * Throws a ToolError if Functional Testing is not configured
@@ -388,6 +422,12 @@ export class SwaggerClient implements Client {
 
   async listFunctionalTestingSuites(): Promise<unknown> {
     return this.withFunctionalTesting((ftApi) => ftApi.listSuites());
+  }
+
+  async getFunctionalTestingTestHistory(
+    args: GetFunctionalTestHistoryParams,
+  ): Promise<TestRunHistoryResponse> {
+    return this.withFunctionalTesting((ftApi) => ftApi.getTestHistory(args));
   }
 
   async registerTools(
@@ -426,8 +466,14 @@ export class SwaggerClient implements Client {
               ? formattedResult
               : JSON.stringify(formattedResult);
 
+          const isPlainObject =
+            typeof formattedResult === "object" &&
+            formattedResult !== null &&
+            !Array.isArray(formattedResult);
+
           return {
             content: [{ type: "text", text: responseText }],
+            ...(isPlainObject && { structuredContent: formattedResult }),
           };
         } catch (error) {
           return {
@@ -437,6 +483,7 @@ export class SwaggerClient implements Client {
                 text: `Error: ${error instanceof Error ? error.message : String(error)}`,
               },
             ],
+            isError: true,
           };
         }
       });
