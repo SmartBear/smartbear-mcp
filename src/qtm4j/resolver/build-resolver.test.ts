@@ -1,14 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ENDPOINTS } from "../../../../qtm4j/config/constants";
+import { ENDPOINTS } from "../config/constants";
 import {
   InputField,
   type ProjectContext,
   ResolverKeys,
-} from "../../../../qtm4j/config/field-resolution.types";
-import { Cache } from "../../../../qtm4j/resolver/cache/cache";
-import { BuildResolver } from "../../../../qtm4j/resolver/resolvers/build-resolver";
+} from "../config/field-resolution.types";
+import { Cache } from "./cache/cache";
+import { BuildResolver } from "./resolvers/build-resolver";
 
-vi.mock("../../../../qtm4j/resolver/cache/cache");
+vi.mock("./cache/cache");
 
 function makeMockCacheService() {
   const store = new Map<string, unknown>();

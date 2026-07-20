@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ENDPOINTS } from "../../../../qtm4j/config/constants";
-import { ResolverKeys } from "../../../../qtm4j/config/field-resolution.types";
-import { ExecutionContextResolver } from "../../../../qtm4j/resolver/resolvers/execution-context-resolver";
+import { ENDPOINTS } from "../config/constants";
+import { ResolverKeys } from "../config/field-resolution.types";
+import { ExecutionContextResolver } from "./resolvers/execution-context-resolver";
 
 describe("ExecutionContextResolver", () => {
   let mockApiClient: any;

@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ENDPOINTS } from "../../../../qtm4j/config/constants";
-import { ResolverKeys } from "../../../../qtm4j/config/field-resolution.types";
-import { Cache } from "../../../../qtm4j/resolver/cache/cache";
-import { DefectStatusResolver } from "../../../../qtm4j/resolver/resolvers/defect-status-resolver";
+import { ENDPOINTS } from "../config/constants";
+import { ResolverKeys } from "../config/field-resolution.types";
+import { Cache } from "./cache/cache";
+import { DefectStatusResolver } from "./resolvers/defect-status-resolver";
 
-vi.mock("../../../../qtm4j/resolver/cache/cache");
+vi.mock("./cache/cache");
 
 function makeMockCacheService() {
   const store = new Map<string, unknown>();

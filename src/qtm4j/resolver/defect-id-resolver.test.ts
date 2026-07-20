@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ENDPOINTS } from "../../../../qtm4j/config/constants";
-import { ResolverKeys } from "../../../../qtm4j/config/field-resolution.types";
-import { DefectIdResolver } from "../../../../qtm4j/resolver/resolvers/defect-id-resolver";
+import { ENDPOINTS } from "../config/constants";
+import { ResolverKeys } from "../config/field-resolution.types";
+import { DefectIdResolver } from "./resolvers/defect-id-resolver";
 
 describe("DefectIdResolver", () => {
   let mockApiClient: any;
