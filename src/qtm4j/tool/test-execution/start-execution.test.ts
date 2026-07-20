@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ENDPOINTS } from "../../../../../qtm4j/config/constants";
-import { ResolverKeys } from "../../../../../qtm4j/config/field-resolution.types";
+import { ENDPOINTS } from "../../config/constants";
+import { ResolverKeys } from "../../config/field-resolution.types";
 import {
   StartExecutionBody,
   StartExecutionResponse,
-} from "../../../../../qtm4j/schema/start-execution.schema";
-import { StartExecution } from "../../../../../qtm4j/tool/test-execution/start-execution";
+} from "../../schema/start-execution.schema";
+import { StartExecution } from "./start-execution";
 
 // ---------------------------------------------------------------------------
 // StartExecution tool tests

@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ENDPOINTS } from "../../../../../qtm4j/config/constants";
-import { ResolverKeys } from "../../../../../qtm4j/config/field-resolution.types";
-import { GetTestStepBugsBody } from "../../../../../qtm4j/schema/get-bugs.schema";
-import { GetTestStepBugs } from "../../../../../qtm4j/tool/test-execution/get-test-step-bugs";
+import { ENDPOINTS } from "../../config/constants";
+import { ResolverKeys } from "../../config/field-resolution.types";
+import { GetTestStepBugsBody } from "../../schema/get-bugs.schema";
+import { GetTestStepBugs } from "./get-test-step-bugs";
 
 describe("GetTestStepBugs", () => {
   let mockClient: any;

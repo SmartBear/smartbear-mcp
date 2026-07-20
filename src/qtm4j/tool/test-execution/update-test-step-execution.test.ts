@@ -1,17 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ENDPOINTS } from "../../../../../qtm4j/config/constants";
-import { ResolverKeys } from "../../../../../qtm4j/config/field-resolution.types";
+import { ENDPOINTS } from "../../config/constants";
+import { ResolverKeys } from "../../config/field-resolution.types";
 import {
-  UpdateTestCaseExecutionBody,
-  UpdateTestCaseExecutionResponse,
-} from "../../../../../qtm4j/schema/update-test-case-execution.schema";
-import { UpdateTestCaseExecution } from "../../../../../qtm4j/tool/test-execution/update-test-case-execution";
+  UpdateTestStepExecutionBody,
+  UpdateTestStepExecutionResponse,
+} from "../../schema/update-test-step-execution.schema";
+import { UpdateTestStepExecution } from "./update-test-step-execution";
 
-describe("UpdateTestCaseExecution", () => {
+describe("UpdateTestStepExecution", () => {
   let mockClient: any;
   let mockApiClient: any;
   let mockFieldResolver: any;
-  let instance: UpdateTestCaseExecution;
+  let instance: UpdateTestStepExecution;
 
   const PROJECT_CONTEXT = {
     projectId: 10007,
@@ -26,6 +26,14 @@ describe("UpdateTestCaseExecution", () => {
     },
   };
 
+  const STEP_EXECUTION_CONTEXT_RESPONSE = {
+    "PROJ-TC-42": {
+      "1": 2548098,
+      "2": 2548099,
+      "3": 2548100,
+    },
+  };
+
   function makeExecutionContextResolver(result: any) {
     return {
       resolve: vi.fn().mockResolvedValue(undefined),
@@ -33,7 +41,7 @@ describe("UpdateTestCaseExecution", () => {
     };
   }
 
-  function makeFieldResolver(resolvedId?: number) {
+  function makeStatusResolver(statusId?: number) {
     return {
       resolve: vi
         .fn()
@@ -47,8 +55,8 @@ describe("UpdateTestCaseExecution", () => {
           ) => {
             const name = body[inputField];
             if (name == null) return;
-            if (resolvedId !== undefined) {
-              body[inputField] = resolvedId;
+            if (statusId !== undefined) {
+              body[inputField] = statusId;
             } else {
               delete body[inputField];
               warnings.push(
@@ -69,14 +77,16 @@ describe("UpdateTestCaseExecution", () => {
         if (key === ResolverKeys.SearchableField.EXECUTION_CONTEXT) {
           return makeExecutionContextResolver(EXECUTION_CONTEXT_RESPONSE);
         }
+        if (key === ResolverKeys.SearchableField.STEP_EXECUTION_CONTEXT) {
+          return {
+            resolve: vi.fn(),
+            resolveAndReturn: vi
+              .fn()
+              .mockResolvedValue(STEP_EXECUTION_CONTEXT_RESPONSE),
+          };
+        }
         if (key === ResolverKeys.CommonAttribute.EXECUTION_RESULT) {
-          return makeFieldResolver(19434); // "Pass" → 19434
-        }
-        if (key === ResolverKeys.SearchableField.ENVIRONMENT) {
-          return makeFieldResolver(5410); // "Production" → 5410
-        }
-        if (key === ResolverKeys.SearchableField.BUILD) {
-          return makeFieldResolver(1562); // "Build 2.0" → 1562
+          return makeStatusResolver(19434); // "Pass" → 19434
         }
         return { resolve: vi.fn(), resolveAndReturn: vi.fn() };
       }),
@@ -94,7 +104,7 @@ describe("UpdateTestCaseExecution", () => {
       getResolverRegistry: vi.fn().mockReturnValue(mockFieldResolver),
     };
 
-    instance = new UpdateTestCaseExecution(mockClient as any);
+    instance = new UpdateTestStepExecution(mockClient as any);
   });
 
   // ---------------------------------------------------------------------------
@@ -103,7 +113,7 @@ describe("UpdateTestCaseExecution", () => {
 
   describe("specification", () => {
     it("should have correct tool metadata", () => {
-      expect(instance.specification.title).toBe("Update Test Case Execution");
+      expect(instance.specification.title).toBe("Update Test Step Execution");
       expect(instance.specification.readOnly).toBe(false);
       expect(instance.specification.idempotent).toBe(true);
     });
@@ -130,6 +140,7 @@ describe("UpdateTestCaseExecution", () => {
       await expect(
         instance.handle({
           testCaseKey: "PROJ-TC-42",
+          testStepSeqNo: 1,
           executionResultId: "Pass",
         }),
       ).rejects.toThrow();
@@ -139,6 +150,28 @@ describe("UpdateTestCaseExecution", () => {
       await expect(
         instance.handle({
           testCycleKey: "PROJ-TR-101",
+          testStepSeqNo: 1,
+          executionResultId: "Pass",
+        }),
+      ).rejects.toThrow();
+    });
+
+    it("should reject missing testStepSeqNo", async () => {
+      await expect(
+        instance.handle({
+          testCycleKey: "PROJ-TR-101",
+          testCaseKey: "PROJ-TC-42",
+          executionResultId: "Pass",
+        }),
+      ).rejects.toThrow();
+    });
+
+    it("should reject non-positive testStepSeqNo", async () => {
+      await expect(
+        instance.handle({
+          testCycleKey: "PROJ-TR-101",
+          testCaseKey: "PROJ-TC-42",
+          testStepSeqNo: 0,
           executionResultId: "Pass",
         }),
       ).rejects.toThrow();
@@ -149,45 +182,57 @@ describe("UpdateTestCaseExecution", () => {
         instance.handle({
           testCycleKey: "PROJ-TR-101",
           testCaseKey: "PROJ-TC-42",
+          testStepSeqNo: 1,
         }),
       ).rejects.toThrow("Provide at least one updatable field.");
     });
 
-    it("should reject invalid actualTime format", async () => {
-      await expect(
-        instance.handle({
-          testCycleKey: "PROJ-TR-101",
-          testCaseKey: "PROJ-TC-42",
-          actualTime: "1h30m",
-        }),
-      ).rejects.toThrow();
-    });
-
-    it("should reject invalid plannedDate format", async () => {
-      await expect(
-        instance.handle({
-          testCycleKey: "PROJ-TR-101",
-          testCaseKey: "PROJ-TC-42",
-          executionPlannedDate: "2025-10-15",
-        }),
-      ).rejects.toThrow();
-    });
-
-    it("should throw when test case not linked to cycle", async () => {
+    it("should throw when step seqNo not found in step context", async () => {
       mockFieldResolver.getResolver.mockImplementation((key: string) => {
-        if (key === ResolverKeys.SearchableField.EXECUTION_CONTEXT) {
-          return makeExecutionContextResolver({});
+        if (key === ResolverKeys.SearchableField.STEP_EXECUTION_CONTEXT) {
+          return {
+            resolve: vi.fn(),
+            resolveAndReturn: vi.fn().mockResolvedValue({}),
+          };
         }
-        return makeFieldResolver(19434);
+        if (key === ResolverKeys.CommonAttribute.EXECUTION_RESULT)
+          return makeStatusResolver(19434);
+        return { resolve: vi.fn(), resolveAndReturn: vi.fn() };
       });
 
       await expect(
         instance.handle({
           testCycleKey: "PROJ-TR-101",
           testCaseKey: "PROJ-TC-999",
+          testStepSeqNo: 1,
           executionResultId: "Pass",
         }),
-      ).rejects.toThrow("is not linked to test cycle");
+      ).rejects.toThrow("Step 1 was not found in this execution");
+    });
+
+    it("should throw when step context returns null for the step ID", async () => {
+      mockFieldResolver.getResolver.mockImplementation((key: string) => {
+        if (key === ResolverKeys.SearchableField.STEP_EXECUTION_CONTEXT) {
+          return {
+            resolve: vi.fn(),
+            resolveAndReturn: vi.fn().mockResolvedValue({
+              "PROJ-TC-42": { "2": 2548099 }, // step 1 absent
+            }),
+          };
+        }
+        if (key === ResolverKeys.CommonAttribute.EXECUTION_RESULT)
+          return makeStatusResolver(19434);
+        return { resolve: vi.fn(), resolveAndReturn: vi.fn() };
+      });
+
+      await expect(
+        instance.handle({
+          testCycleKey: "PROJ-TR-101",
+          testCaseKey: "PROJ-TC-42",
+          testStepSeqNo: 1,
+          executionResultId: "Pass",
+        }),
+      ).rejects.toThrow("Step 1 was not found in this execution");
     });
 
     it("should throw ToolError when all resolvable fields fail and body becomes empty", async () => {
@@ -195,38 +240,59 @@ describe("UpdateTestCaseExecution", () => {
         if (key === ResolverKeys.SearchableField.EXECUTION_CONTEXT) {
           return makeExecutionContextResolver(EXECUTION_CONTEXT_RESPONSE);
         }
-        return makeFieldResolver(); // no ID → deletes field, adds warning
+        if (key === ResolverKeys.SearchableField.STEP_EXECUTION_CONTEXT) {
+          return {
+            resolve: vi.fn(),
+            resolveAndReturn: vi
+              .fn()
+              .mockResolvedValue(STEP_EXECUTION_CONTEXT_RESPONSE),
+          };
+        }
+        return makeStatusResolver(); // no ID → deletes field, adds warning
       });
 
       await expect(
         instance.handle({
           testCycleKey: "PROJ-TR-101",
           testCaseKey: "PROJ-TC-42",
+          testStepSeqNo: 2,
           executionResultId: "InvalidStatus",
         }),
       ).rejects.toThrow("No updatable fields remain after resolution");
     });
 
-    it("should throw when no execution started (testCaseExecutionId is null)", async () => {
+    it("should throw when step seqNo not found", async () => {
+      await expect(
+        instance.handle({
+          testCycleKey: "PROJ-TR-101",
+          testCaseKey: "PROJ-TC-42",
+          testStepSeqNo: 99,
+          executionResultId: "Pass",
+        }),
+      ).rejects.toThrow("Step 99 was not found in this execution");
+    });
+
+    it("should throw when step resolver returns empty map", async () => {
       mockFieldResolver.getResolver.mockImplementation((key: string) => {
-        if (key === ResolverKeys.SearchableField.EXECUTION_CONTEXT) {
-          return makeExecutionContextResolver({
-            "PROJ-TC-42": {
-              testCycleTestCaseMapId: 614823,
-              testCaseExecutionId: null,
-            },
-          });
+        if (key === ResolverKeys.SearchableField.EXECUTION_CONTEXT)
+          return makeExecutionContextResolver(EXECUTION_CONTEXT_RESPONSE);
+        if (key === ResolverKeys.SearchableField.STEP_EXECUTION_CONTEXT) {
+          return {
+            resolve: vi.fn(),
+            resolveAndReturn: vi.fn().mockResolvedValue({}),
+          };
         }
-        return makeFieldResolver(19434);
+        return makeStatusResolver(19434);
       });
 
       await expect(
         instance.handle({
           testCycleKey: "PROJ-TR-101",
           testCaseKey: "PROJ-TC-42",
+          testStepSeqNo: 2,
           executionResultId: "Pass",
         }),
-      ).rejects.toThrow("No execution has been started");
+      ).rejects.toThrow("Step 2 was not found in this execution");
     });
   });
 
@@ -235,15 +301,16 @@ describe("UpdateTestCaseExecution", () => {
   // ---------------------------------------------------------------------------
 
   describe("handle", () => {
-    it("should PUT to the correct testCase endpoint", async () => {
+    it("should resolve step seqNo and PUT to the correct testStep endpoint", async () => {
       await instance.handle({
         testCycleKey: "PROJ-TR-101",
         testCaseKey: "PROJ-TC-42",
+        testStepSeqNo: 2,
         executionResultId: "Pass",
       });
 
       expect(mockApiClient.put).toHaveBeenCalledWith(
-        ENDPOINTS.UPDATE_TEST_CASE_EXECUTION("PROJ-TR-101", 725982),
+        ENDPOINTS.UPDATE_TEST_STEP_EXECUTION("PROJ-TR-101", 2548099),
         expect.any(Object),
       );
     });
@@ -252,6 +319,7 @@ describe("UpdateTestCaseExecution", () => {
       await instance.handle({
         testCycleKey: "PROJ-TR-101",
         testCaseKey: "PROJ-TC-42",
+        testStepSeqNo: 2,
         executionResultId: "Pass",
       });
 
@@ -261,128 +329,61 @@ describe("UpdateTestCaseExecution", () => {
       );
     });
 
-    it("should resolve environment name to numeric ID", async () => {
+    it("should include executionResultId, comment, and actualResult in PUT body", async () => {
       await instance.handle({
         testCycleKey: "PROJ-TR-101",
         testCaseKey: "PROJ-TC-42",
-        environmentId: "Production",
-      });
-
-      expect(mockApiClient.put).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.objectContaining({ environmentId: 5410 }),
-      );
-    });
-
-    it("should resolve build name to numeric ID", async () => {
-      await instance.handle({
-        testCycleKey: "PROJ-TR-101",
-        testCaseKey: "PROJ-TC-42",
-        buildId: "Build 2.0",
-      });
-
-      expect(mockApiClient.put).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.objectContaining({ buildId: 1562 }),
-      );
-    });
-
-    it("should include comment and actualTime in PUT body unchanged", async () => {
-      await instance.handle({
-        testCycleKey: "PROJ-TR-101",
-        testCaseKey: "PROJ-TC-42",
-        comment: "All passed.",
-        actualTime: "01:30:00",
+        testStepSeqNo: 2,
+        executionResultId: "Pass",
+        comment: "Step passed.",
+        actualResult: "Login page loaded.",
       });
 
       expect(mockApiClient.put).toHaveBeenCalledWith(
         expect.any(String),
         expect.objectContaining({
-          comment: "All passed.",
-          actualTime: "01:30:00",
+          executionResultId: 19434,
+          comment: "Step passed.",
+          actualResult: "Login page loaded.",
         }),
       );
     });
 
-    it("should pass executionPlannedDate through to body unchanged", async () => {
+    it("should pass null actualResult through to body (clear)", async () => {
       await instance.handle({
         testCycleKey: "PROJ-TR-101",
         testCaseKey: "PROJ-TC-42",
-        executionPlannedDate: "15/Oct/2025",
+        testStepSeqNo: 1,
+        actualResult: null,
       });
 
       expect(mockApiClient.put).toHaveBeenCalledWith(
         expect.any(String),
-        expect.objectContaining({ executionPlannedDate: "15/Oct/2025" }),
+        expect.objectContaining({ actualResult: null }),
       );
     });
 
-    it("should pass null comment through to body (clear)", async () => {
-      await instance.handle({
-        testCycleKey: "PROJ-TR-101",
-        testCaseKey: "PROJ-TC-42",
-        comment: null,
-      });
-
-      expect(mockApiClient.put).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.objectContaining({ comment: null }),
-      );
-    });
-
-    it("should pass null actualTime through to body (clear)", async () => {
-      await instance.handle({
-        testCycleKey: "PROJ-TR-101",
-        testCaseKey: "PROJ-TC-42",
-        actualTime: null,
-      });
-
-      expect(mockApiClient.put).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.objectContaining({ actualTime: null }),
-      );
-    });
-
-    it("should pass null buildId through to body (clear)", async () => {
-      await instance.handle({
-        testCycleKey: "PROJ-TR-101",
-        testCaseKey: "PROJ-TC-42",
-        buildId: null,
-      });
-
-      expect(mockApiClient.put).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.objectContaining({ buildId: null }),
-      );
-    });
-
-    it("should pass executionAssignee through to body", async () => {
-      await instance.handle({
-        testCycleKey: "PROJ-TR-101",
-        testCaseKey: "PROJ-TC-42",
-        executionAssignee: "user-abc-123",
-      });
-
-      expect(mockApiClient.put).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.objectContaining({ executionAssignee: "user-abc-123" }),
-      );
-    });
-
-    it("should warn and exclude executionResultId when it cannot be resolved", async () => {
+    it("should warn and exclude status when it cannot be resolved", async () => {
       mockFieldResolver.getResolver.mockImplementation((key: string) => {
-        if (key === ResolverKeys.SearchableField.EXECUTION_CONTEXT) {
+        if (key === ResolverKeys.SearchableField.EXECUTION_CONTEXT)
           return makeExecutionContextResolver(EXECUTION_CONTEXT_RESPONSE);
+        if (key === ResolverKeys.SearchableField.STEP_EXECUTION_CONTEXT) {
+          return {
+            resolve: vi.fn(),
+            resolveAndReturn: vi
+              .fn()
+              .mockResolvedValue(STEP_EXECUTION_CONTEXT_RESPONSE),
+          };
         }
-        if (key === ResolverKeys.CommonAttribute.EXECUTION_RESULT) {
-          return makeFieldResolver(); // no ID → warning
-        }
+        if (key === ResolverKeys.CommonAttribute.EXECUTION_RESULT)
+          return makeStatusResolver(); // no ID → warning
         return { resolve: vi.fn(), resolveAndReturn: vi.fn() };
       });
 
       const result = await instance.handle({
         testCycleKey: "PROJ-TR-101",
         testCaseKey: "PROJ-TC-42",
+        testStepSeqNo: 2,
         executionResultId: "InvalidStatus",
         comment: "Still updating",
       });
@@ -391,62 +392,18 @@ describe("UpdateTestCaseExecution", () => {
       expect(result.content[0].text).toContain("InvalidStatus");
     });
 
-    it("should warn and exclude environmentId when it cannot be resolved", async () => {
-      mockFieldResolver.getResolver.mockImplementation((key: string) => {
-        if (key === ResolverKeys.SearchableField.EXECUTION_CONTEXT) {
-          return makeExecutionContextResolver(EXECUTION_CONTEXT_RESPONSE);
-        }
-        if (key === ResolverKeys.SearchableField.ENVIRONMENT) {
-          return makeFieldResolver(); // no ID → warning
-        }
-        return makeFieldResolver(19434);
-      });
-
-      // comment keeps body non-empty so update proceeds with a warning
+    it("should return confirmation response with testStepSeqNo", async () => {
       const result = await instance.handle({
         testCycleKey: "PROJ-TR-101",
         testCaseKey: "PROJ-TC-42",
-        environmentId: "UnknownEnv",
-        comment: "Still updating",
-      });
-
-      expect(result.content).toHaveLength(1);
-      expect(result.content[0].text).toContain("UnknownEnv");
-    });
-
-    it("should warn and exclude buildId when it cannot be resolved", async () => {
-      mockFieldResolver.getResolver.mockImplementation((key: string) => {
-        if (key === ResolverKeys.SearchableField.EXECUTION_CONTEXT) {
-          return makeExecutionContextResolver(EXECUTION_CONTEXT_RESPONSE);
-        }
-        if (key === ResolverKeys.SearchableField.BUILD) {
-          return makeFieldResolver(); // no ID → warning
-        }
-        return makeFieldResolver(19434);
-      });
-
-      // comment keeps body non-empty so update proceeds with a warning
-      const result = await instance.handle({
-        testCycleKey: "PROJ-TR-101",
-        testCaseKey: "PROJ-TC-42",
-        buildId: "UnknownBuild",
-        comment: "Still updating",
-      });
-
-      expect(result.content).toHaveLength(1);
-      expect(result.content[0].text).toContain("UnknownBuild");
-    });
-
-    it("should return confirmation response", async () => {
-      const result = await instance.handle({
-        testCycleKey: "PROJ-TR-101",
-        testCaseKey: "PROJ-TC-42",
+        testStepSeqNo: 2,
         executionResultId: "Pass",
       });
 
       expect(result.structuredContent).toMatchObject({
         testCycleKey: "PROJ-TR-101",
         testCaseKey: "PROJ-TC-42",
+        testStepSeqNo: 2,
         updated: true,
       });
     });
@@ -455,10 +412,24 @@ describe("UpdateTestCaseExecution", () => {
       const result = await instance.handle({
         testCycleKey: "PROJ-TR-101",
         testCaseKey: "PROJ-TC-42",
+        testStepSeqNo: 2,
         executionResultId: "Pass",
       });
 
       expect(result.content).toEqual([]);
+    });
+
+    it("should include executionResultName in structuredContent when API returns it", async () => {
+      mockApiClient.put.mockResolvedValueOnce({ executionResultName: "Pass" });
+
+      const result = await instance.handle({
+        testCycleKey: "PROJ-TR-101",
+        testCaseKey: "PROJ-TC-42",
+        testStepSeqNo: 2,
+        executionResultId: "Pass",
+      });
+
+      expect(result.structuredContent.executionResultName).toBe("Pass");
     });
   });
 
@@ -474,6 +445,7 @@ describe("UpdateTestCaseExecution", () => {
         instance.handle({
           testCycleKey: "PROJ-TR-101",
           testCaseKey: "PROJ-TC-42",
+          testStepSeqNo: 2,
           executionResultId: "Pass",
         }),
       ).rejects.toThrow("API Error 500");
@@ -482,97 +454,65 @@ describe("UpdateTestCaseExecution", () => {
 });
 
 // ---------------------------------------------------------------------------
-// UpdateTestCaseExecutionBody schema tests
+// UpdateTestStepExecutionBody schema tests
 // ---------------------------------------------------------------------------
 
-describe("UpdateTestCaseExecutionBody", () => {
+describe("UpdateTestStepExecutionBody", () => {
   it("should accept minimal valid input", () => {
-    const result = UpdateTestCaseExecutionBody.safeParse({
+    const result = UpdateTestStepExecutionBody.safeParse({
       testCycleKey: "PROJ-TR-101",
       testCaseKey: "PROJ-TC-42",
+      testStepSeqNo: 1,
       executionResultId: "Pass",
     });
     expect(result.success).toBe(true);
   });
 
   it("should accept null comment", () => {
-    const result = UpdateTestCaseExecutionBody.safeParse({
+    const result = UpdateTestStepExecutionBody.safeParse({
       testCycleKey: "PROJ-TR-101",
       testCaseKey: "PROJ-TC-42",
+      testStepSeqNo: 1,
       comment: null,
     });
     expect(result.success).toBe(true);
     if (result.success) expect(result.data.comment).toBeNull();
   });
 
-  it("should accept null actualTime", () => {
-    const result = UpdateTestCaseExecutionBody.safeParse({
+  it("should accept null actualResult", () => {
+    const result = UpdateTestStepExecutionBody.safeParse({
       testCycleKey: "PROJ-TR-101",
       testCaseKey: "PROJ-TC-42",
-      actualTime: null,
+      testStepSeqNo: 2,
+      actualResult: null,
     });
     expect(result.success).toBe(true);
-    if (result.success) expect(result.data.actualTime).toBeNull();
+    if (result.success) expect(result.data.actualResult).toBeNull();
   });
 
-  it("should accept valid actualTime format", () => {
-    const result = UpdateTestCaseExecutionBody.safeParse({
+  it("should reject missing testStepSeqNo", () => {
+    const result = UpdateTestStepExecutionBody.safeParse({
       testCycleKey: "PROJ-TR-101",
-      testCaseKey: "PROJ-TC-42",
-      actualTime: "01:30:00",
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it("should accept null plannedDate", () => {
-    const result = UpdateTestCaseExecutionBody.safeParse({
-      testCycleKey: "PROJ-TR-101",
-      testCaseKey: "PROJ-TC-42",
-      executionPlannedDate: null,
-    });
-    expect(result.success).toBe(true);
-    if (result.success) expect(result.data.executionPlannedDate).toBeNull();
-  });
-
-  it("should accept null buildId", () => {
-    const result = UpdateTestCaseExecutionBody.safeParse({
-      testCycleKey: "PROJ-TR-101",
-      testCaseKey: "PROJ-TC-42",
-      buildId: null,
-    });
-    expect(result.success).toBe(true);
-    if (result.success) expect(result.data.buildId).toBeNull();
-  });
-
-  it("should reject invalid actualTime format", () => {
-    const result = UpdateTestCaseExecutionBody.safeParse({
-      testCycleKey: "PROJ-TR-101",
-      testCaseKey: "PROJ-TC-42",
-      actualTime: "2h30m",
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("should reject invalid plannedDate", () => {
-    const result = UpdateTestCaseExecutionBody.safeParse({
-      testCycleKey: "PROJ-TR-101",
-      testCaseKey: "PROJ-TC-42",
-      executionPlannedDate: "2025-10-15",
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("should reject missing testCycleKey", () => {
-    const result = UpdateTestCaseExecutionBody.safeParse({
       testCaseKey: "PROJ-TC-42",
       executionResultId: "Pass",
     });
     expect(result.success).toBe(false);
   });
 
-  it("should reject missing testCaseKey", () => {
-    const result = UpdateTestCaseExecutionBody.safeParse({
+  it("should reject non-positive testStepSeqNo", () => {
+    const result = UpdateTestStepExecutionBody.safeParse({
       testCycleKey: "PROJ-TR-101",
+      testCaseKey: "PROJ-TC-42",
+      testStepSeqNo: 0,
+      executionResultId: "Pass",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("should reject missing testCycleKey", () => {
+    const result = UpdateTestStepExecutionBody.safeParse({
+      testCaseKey: "PROJ-TC-42",
+      testStepSeqNo: 1,
       executionResultId: "Pass",
     });
     expect(result.success).toBe(false);
@@ -580,30 +520,33 @@ describe("UpdateTestCaseExecutionBody", () => {
 });
 
 // ---------------------------------------------------------------------------
-// UpdateTestCaseExecutionResponse schema tests
+// UpdateTestStepExecutionResponse schema tests
 // ---------------------------------------------------------------------------
 
-describe("UpdateTestCaseExecutionResponse", () => {
+describe("UpdateTestStepExecutionResponse", () => {
   it("should accept valid response", () => {
-    const result = UpdateTestCaseExecutionResponse.safeParse({
+    const result = UpdateTestStepExecutionResponse.safeParse({
       testCycleKey: "PROJ-TR-101",
       testCaseKey: "PROJ-TC-42",
+      testStepSeqNo: 2,
       updated: true,
     });
     expect(result.success).toBe(true);
   });
 
   it("should reject when updated is false", () => {
-    const result = UpdateTestCaseExecutionResponse.safeParse({
+    const result = UpdateTestStepExecutionResponse.safeParse({
       testCycleKey: "PROJ-TR-101",
       testCaseKey: "PROJ-TC-42",
+      testStepSeqNo: 2,
       updated: false,
     });
     expect(result.success).toBe(false);
   });
 
-  it("should reject missing testCycleKey", () => {
-    const result = UpdateTestCaseExecutionResponse.safeParse({
+  it("should reject missing testStepSeqNo", () => {
+    const result = UpdateTestStepExecutionResponse.safeParse({
+      testCycleKey: "PROJ-TR-101",
       testCaseKey: "PROJ-TC-42",
       updated: true,
     });

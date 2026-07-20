@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ENDPOINTS } from "../../../../../qtm4j/config/constants";
-import { ResolverKeys } from "../../../../../qtm4j/config/field-resolution.types";
+import { ENDPOINTS } from "../../config/constants";
+import { ResolverKeys } from "../../config/field-resolution.types";
 import {
   GetBugsResponse,
   GetTestCaseBugsBody,
-} from "../../../../../qtm4j/schema/get-bugs.schema";
-import { GetTestCaseBugs } from "../../../../../qtm4j/tool/test-execution/get-test-case-bugs";
+} from "../../schema/get-bugs.schema";
+import { GetTestCaseBugs } from "./get-test-case-bugs";
 
 describe("GetTestCaseBugs", () => {
   let mockClient: any;
