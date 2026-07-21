@@ -172,10 +172,7 @@ export const CreateFunctionalTestingTestHeaderSchema = z.object({
 
 export const CreateFunctionalTestingTestStepSchema = z.object({
   url: z.string().url().describe("URL for the API call").optional(),
-  httpMethod: z
-    .string()
-    .describe('HTTP method, e.g. "GET", "POST"')
-    .optional(),
+  httpMethod: z.string().describe('HTTP method, e.g. "GET", "POST"').optional(),
   requestBody: z.string().describe("Request body").optional(),
   requestHeaders: z
     .array(CreateFunctionalTestingTestHeaderSchema)
