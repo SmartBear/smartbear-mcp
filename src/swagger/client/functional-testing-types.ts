@@ -87,8 +87,7 @@ export type GetFunctionalTestingSuiteExecutionParams = z.infer<
 
 export interface SuiteExecution {
   executionId: number;
-  // Will be brought back after https://smartbear.atlassian.net/browse/RF-5271 is done
-  // url: string;
+  url: string;
   status: string;
   isFinished: boolean;
 }

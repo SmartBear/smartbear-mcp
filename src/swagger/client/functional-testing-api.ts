@@ -159,15 +159,15 @@ export class FunctionalTestingAPI {
     );
 
     const data: ListSuiteExecutionsResponse = await response.json();
-    // Will be adjusted after https://smartbear.atlassian.net/browse/RF-5271 is done
     return {
       ...data,
       executions: {
         data: data.executions.data.map(
-          ({ executionId, status, isFinished }) => ({
+          ({ executionId, status, isFinished, url }) => ({
             executionId,
             status,
             isFinished,
+            url,
           }),
         ),
       },
@@ -238,9 +238,7 @@ export class FunctionalTestingAPI {
       errorMessageFor("run suite"),
     );
 
-    // Reflect API returns suite URL, in format which currently is not supported within Private Workspaces epic.
-    // We remove it for now, but will bring it back corrected in scope of https://smartbear.atlassian.net/browse/RF-5271.
-    return this.withoutField("url", response);
+    return response.json();
   }
 
   async getSuiteExecution(
@@ -260,9 +258,7 @@ export class FunctionalTestingAPI {
       errorMessageFor("get suite execution status"),
     );
 
-    // Reflect API returns suite URL, in format which currently is not supported within Private Workspaces epic.
-    // We remove it for now, but will bring it back corrected in scope of https://smartbear.atlassian.net/browse/RF-5271.
-    const data = await this.withoutField("url", response);
+    const data = (await response.json()) as Record<string, unknown>;
     // Reflect API returns video recording URL for each test run within suite, which SFT does not need so we remove it.
     const testsData = (data.tests as Record<string, unknown> | undefined)?.data;
     if (Array.isArray(testsData)) {
@@ -302,15 +298,6 @@ export class FunctionalTestingAPI {
     );
 
     return response.json();
-  }
-
-  private async withoutField(
-    field: string,
-    response: Response,
-  ): Promise<Record<string, unknown>> {
-    const data = (await response.json()) as Record<string, unknown>;
-    delete data[field];
-    return data;
   }
 }
 

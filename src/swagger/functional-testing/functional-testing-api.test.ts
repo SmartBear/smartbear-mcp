@@ -531,7 +531,7 @@ describe("FunctionalTestingAPI", () => {
       expect(result).toEqual(executionMock);
     });
 
-    it("should strip url field from response", async () => {
+    it("should include url field in response", async () => {
       fetchMock.mockResponseOnce(
         JSON.stringify({
           ...executionMock,
@@ -541,7 +541,9 @@ describe("FunctionalTestingAPI", () => {
 
       const result = await api.runSuite({ suiteId: "checkout-suite" });
 
-      expect((result as Record<string, unknown>).url).toBeUndefined();
+      expect((result as Record<string, unknown>).url).toBe(
+        "https://app.reflect.run/suites/checkout-suite/executions/7",
+      );
     });
 
     it("should throw ToolError when suiteId is missing", async () => {
@@ -620,7 +622,7 @@ describe("FunctionalTestingAPI", () => {
       expect(result).toEqual(suiteExecutionMock);
     });
 
-    it("should strip url field from response", async () => {
+    it("should include url field in response", async () => {
       fetchMock.mockResponseOnce(
         JSON.stringify({
           ...suiteExecutionMock,
@@ -633,7 +635,9 @@ describe("FunctionalTestingAPI", () => {
         executionId: "7",
       });
 
-      expect((result as Record<string, unknown>).url).toBeUndefined();
+      expect((result as Record<string, unknown>).url).toBe(
+        "https://app.reflect.run/suites/checkout-suite/executions/7",
+      );
     });
 
     it("should strip videoUrl from each run in tests.data array", async () => {
