@@ -46,6 +46,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Swagger] Added a conditional required-field rule to the `create_table_of_contents` tool's `content` schema so `url` is structurally required only when `content.type` is `apiUrl`, instead of relying solely on prose descriptions. Addresses an "Unclear Arguments" flag from ChatGPT app review while keeping `content` as a flat object for manual tool testing.
 - [Swagger] Fixed a client-side "data should NOT have additional properties" validation error shown for tools like `get_portal_product` that return extra fields (e.g. `role`, `createdAt`, `updatedAt`) not modeled in their output schema. The MCP server now advertises the intended `additionalProperties: true` for these loosely-typed output schemas instead of losing that setting during tool registration. [#553](https://github.com/SmartBear/smartbear-mcp/pull/553)
 
+### Security
+
+- [Swagger] Prevented organization admin email addresses from being exposed through the `list_organizations` tool. Introduced `OrganizationListItem` type that omits the `email` field, filtered organization list data at the MCP boundary, and updated the output schema and documentation accordingly.
+
 ## [0.29.0] - 2026-07-13
 
 ### Changed

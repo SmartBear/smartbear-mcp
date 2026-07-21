@@ -107,7 +107,7 @@ The Swagger Studio client provides comprehensive API and Domain management capab
 #### `list_organizations`
 
 -   Purpose: Get organizations for the authenticated user. Returns a list of organizations that the authenticating user is a member of. On-Premise admins get a list of all organizations in the system.
--   Returns: Paged list of organizations, each including id, name, description, email, url, and memberCount.
+-   Returns: Paged list of organizations, each including id, name, description, url, and memberCount.
 -   Use case: Discover which organizations the current user belongs to before performing organization-scoped operations (e.g., `scan_api_standardization`, creating APIs under a specific owner), or enumerate organizations on On-Premise installations.
 -   Parameters:
 

@@ -58,6 +58,7 @@ import type {
 } from "./registry-types";
 import type {
   Organization,
+  OrganizationListItem,
   OrganizationsListResponse,
   OrganizationsQueryParams,
 } from "./user-management-types";
@@ -268,7 +269,16 @@ export class SwaggerAPI {
       response,
       defaultResponse,
     );
-    return result as OrganizationsListResponse;
+    const list = result as OrganizationsListResponse;
+    if (list.items) {
+      // The User Management API returns admin email addresses by default.
+      // Filter them out at the MCP boundary before exposing the list to agents.
+      list.items = list.items.map((org) => {
+        const { email: _email, ...rest } = org as Organization;
+        return rest as OrganizationListItem;
+      });
+    }
+    return list;
   }
 
   async createPortal(body: CreatePortalArgs): Promise<Portal> {
@@ -427,7 +437,7 @@ export class SwaggerAPI {
    */
   private async findOrganizationById(
     organizationId: string,
-  ): Promise<Organization | undefined> {
+  ): Promise<OrganizationListItem | undefined> {
     const pageSize = 100;
     const maxPages = 10;
     const target = organizationId.toLowerCase();
