@@ -404,9 +404,9 @@ describe("SwaggerClient — Functional Testing integration", () => {
     });
   });
 
-  describe("createFunctionalTest", () => {
+  describe("createFunctionalTestingTest", () => {
     it("should POST to api.reflect.run and return the new test id", async () => {
-      const createResponseMock = { id: "test-abc123" };
+      const createResponseMock = { id: 12345 };
       fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
 
       await client.configure({} as any, {
@@ -415,7 +415,7 @@ describe("SwaggerClient — Functional Testing integration", () => {
       });
 
       const result = await requestContextStorage.run({ headers: {} }, () =>
-        client.createFunctionalTest({ name: "My New Test" }),
+        client.createFunctionalTestingTest({ name: "My New Test" }),
       );
 
       expect(fetchMock).toHaveBeenCalledWith(
@@ -432,7 +432,7 @@ describe("SwaggerClient — Functional Testing integration", () => {
       await client.configure({} as any, { api_key: "swagger-key" });
 
       await expect(
-        client.createFunctionalTest({ name: "My New Test" }),
+        client.createFunctionalTestingTest({ name: "My New Test" }),
       ).rejects.toThrow("Functional Testing API not configured");
     });
   });

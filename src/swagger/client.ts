@@ -364,7 +364,7 @@ export class SwaggerClient implements Client {
 
   // Functional Testing methods
 
-  async createFunctionalTest(
+  async createFunctionalTestingTest(
     args: CreateFunctionalTestingTestParams,
   ): Promise<CreateFunctionalTestingTestResponse> {
     return this.withFunctionalTesting((ftApi) => ftApi.createTest(args));

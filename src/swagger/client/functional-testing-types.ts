@@ -166,13 +166,18 @@ export interface TestRunHistoryResponse {
 }
 
 export const CreateFunctionalTestingTestHeaderSchema = z.object({
-  name: z.string().describe("Header name"),
+  name: z.string().describe("Header name").trim().min(1),
   value: z.string().describe("Header value"),
 });
 
+export const HTTP_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"] as const;
+
 export const CreateFunctionalTestingTestStepSchema = z.object({
-  url: z.string().url().describe("URL for the API call").optional(),
-  httpMethod: z.string().describe('HTTP method, e.g. "GET", "POST"').optional(),
+  url: z.url().describe("URL for the API call"),
+  httpMethod: z
+    .enum(HTTP_METHODS)
+    .describe("HTTP method for the API call (defaults to GET server-side)")
+    .optional(),
   requestBody: z.string().describe("Request body").optional(),
   requestHeaders: z
     .array(CreateFunctionalTestingTestHeaderSchema)
@@ -184,6 +189,7 @@ export const CreateFunctionalTestingTestStepSchema = z.object({
     .optional(),
   description: z
     .string()
+    .trim()
     .describe("Human-readable label for this step")
     .optional(),
 });
@@ -192,6 +198,7 @@ export const CreateFunctionalTestingTestParamsSchema = z.object({
   name: z.string().describe("Name for the new test").trim().min(1),
   description: z
     .string()
+    .trim()
     .describe("Optional description for the test")
     .optional(),
   steps: z
@@ -205,5 +212,5 @@ export type CreateFunctionalTestingTestParams = z.infer<
 >;
 
 export interface CreateFunctionalTestingTestResponse {
-  id: string;
+  id: number;
 }

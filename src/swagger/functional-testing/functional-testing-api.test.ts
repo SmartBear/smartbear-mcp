@@ -55,7 +55,7 @@ describe("FunctionalTestingAPI", () => {
   });
 
   describe("createTest", () => {
-    const createResponseMock = { id: "test-abc123" };
+    const createResponseMock = { id: 12345 };
 
     it("should POST to the correct endpoint with X-API-KEY header", async () => {
       fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
@@ -98,6 +98,63 @@ describe("FunctionalTestingAPI", () => {
       expect(body.steps[0].type).toBe("api");
       expect(body.steps[1].type).toBe("api");
       expect(body.steps[0].url).toBe("https://example.com/api");
+      expect(body.steps[0].httpMethod).toBe("GET");
+      expect(body.steps[1].url).toBe("https://example.com/api/users");
+      expect(body.steps[1].httpMethod).toBe("POST");
+    });
+
+    it("should forward all step fields to the request body", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
+
+      await api.createTest({
+        name: "Full Test",
+        description: "Test description",
+        steps: [
+          {
+            url: "https://example.com/api",
+            httpMethod: "POST",
+            requestBody: '{"key":"value"}',
+            requestHeaders: [{ name: "X-Custom", value: "abc" }],
+            followRedirects: true,
+            description: "Step 1",
+          },
+        ],
+      });
+
+      const [, init] = fetchMock.mock.calls[0];
+      const body = JSON.parse((init as RequestInit).body as string);
+      expect(body).toMatchObject({
+        name: "Full Test",
+        description: "Test description",
+        type: "api",
+        steps: [
+          {
+            type: "api",
+            url: "https://example.com/api",
+            httpMethod: "POST",
+            requestBody: '{"key":"value"}',
+            requestHeaders: [{ name: "X-Custom", value: "abc" }],
+            followRedirects: true,
+            description: "Step 1",
+          },
+        ],
+      });
+    });
+
+    it("should not allow caller to override the injected type", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
+
+      const rogueArgs: any = {
+        name: "Override Test",
+        type: "browser",
+        steps: [{ url: "https://example.com", type: "click" }],
+      };
+      await api.createTest(rogueArgs);
+
+      const [, init] = fetchMock.mock.calls[0];
+      const body = JSON.parse((init as RequestInit).body as string);
+      expect(body.type).toBe("api");
+      expect(body.steps[0].type).toBe("api");
     });
 
     it("should handle test with no steps", async () => {
@@ -115,7 +172,7 @@ describe("FunctionalTestingAPI", () => {
 
       const result = await api.createTest({ name: "My New Test" });
 
-      expect(result).toEqual({ id: "test-abc123" });
+      expect(result).toEqual({ id: 12345 });
     });
 
     it("should throw ToolError on HTTP error", async () => {

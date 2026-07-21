@@ -12,18 +12,6 @@ import type { SwaggerToolParams } from "./tools";
 
 export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
   {
-    title: "Create Test",
-    toolset: "Functional Testing",
-    summary:
-      "Creates a new API test in your Swagger Functional Testing workspace. " +
-      "Use this when you need to programmatically create a test with a defined set of steps. " +
-      "Returns the ID of the newly created test, which can be used with swagger_run_test.",
-    inputSchema: CreateFunctionalTestingTestParamsSchema,
-    handler: "createFunctionalTest",
-    idempotent: false,
-    readOnly: false,
-  },
-  {
     title: "List Tests",
     toolset: "Functional Testing",
     summary:
@@ -35,12 +23,26 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
     readOnly: true,
   },
   {
+    title: "Create Test",
+    toolset: "Functional Testing",
+    summary:
+      "Creates a new API test in your Swagger Functional Testing workspace. " +
+      "This tool only creates API tests (not browser or native-mobile tests). " +
+      "Use this when you need to programmatically create a test with a defined set of API request steps. " +
+      "Each step requires a URL and may specify an HTTP method (defaults to GET), request body, headers, and redirect handling. " +
+      "Returns the ID of the newly created test, which can be used with `swagger_run_test`.",
+    inputSchema: CreateFunctionalTestingTestParamsSchema,
+    handler: "createFunctionalTestingTest",
+    idempotent: false,
+    readOnly: false,
+  },
+  {
     title: "Run Test",
     toolset: "Functional Testing",
     summary:
       "Runs a specific API test in your Swagger Functional Testing workspace. " +
       "The execution is asynchronous — it returns an executionId, not the result directly. " +
-      "Use swagger_get_test_status with that executionId to track progress and retrieve the final result.",
+      "Use `swagger_get_test_status` with that executionId to track progress and retrieve the final result.",
     inputSchema: RunFunctionalTestingTestParamsSchema,
     handler: "runFunctionalTestingTest",
     idempotent: false,

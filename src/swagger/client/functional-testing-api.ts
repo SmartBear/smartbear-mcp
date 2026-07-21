@@ -86,9 +86,9 @@ export class FunctionalTestingAPI {
         method: "POST",
         headers: this.getFtHeaders(),
         body: JSON.stringify({
-          type: "api",
           ...args,
-          steps: args.steps?.map((step) => ({ type: "api", ...step })),
+          type: "api",
+          steps: args.steps?.map((step) => ({ ...step, type: "api" })),
         }),
       },
       errorMessageFor(`create Functional Testing test`),
