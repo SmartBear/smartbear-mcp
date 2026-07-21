@@ -1,11 +1,18 @@
 import type { CacheService } from "../../common/cache";
 import type { ProjectContext } from "../config/field-resolution.types";
 import type { ApiClient } from "../http/api-client";
+import { BuildResolver } from "./resolvers/build-resolver";
 import { CommonAttributeResolver } from "./resolvers/common-attribute-resolver";
 import { ComponentResolver } from "./resolvers/component-resolver";
+import { DefectIdResolver } from "./resolvers/defect-id-resolver";
+import { DefectPriorityResolver } from "./resolvers/defect-priority-resolver";
+import { DefectStatusResolver } from "./resolvers/defect-status-resolver";
+import { EnvironmentResolver } from "./resolvers/environment-resolver";
+import { ExecutionContextResolver } from "./resolvers/execution-context-resolver";
 import { LabelResolver } from "./resolvers/label-resolver";
 import { RequirementIdResolver } from "./resolvers/requirement-id-resolver";
 import type { Resolver } from "./resolvers/resolver.ts";
+import { StepExecutionContextResolver } from "./resolvers/step-execution-context-resolver";
 import { TestCaseUidResolver } from "./resolvers/test-case-uid-resolver.ts";
 import { TestCycleUidResolver } from "./resolvers/test-cycle-uid-resolver";
 
@@ -28,6 +35,28 @@ export class ResolverRegistry {
     const componentResolver = new ComponentResolver(apiClient, cacheService);
     const requirementIdResolver = new RequirementIdResolver(apiClient);
     const testcycleUidResolver = new TestCycleUidResolver(apiClient);
+    const environmentResolver = new EnvironmentResolver(
+      apiClient,
+      cacheService,
+    );
+    const buildResolver = new BuildResolver(apiClient, cacheService);
+    const defectIdResolver = new DefectIdResolver(apiClient);
+    const defectStatusResolver = new DefectStatusResolver(
+      apiClient,
+      cacheService,
+    );
+    const defectPriorityResolver = new DefectPriorityResolver(
+      apiClient,
+      cacheService,
+    );
+    const executionContextResolver = new ExecutionContextResolver(
+      apiClient,
+      cacheService,
+    );
+    const stepExecutionContextResolver = new StepExecutionContextResolver(
+      apiClient,
+      cacheService,
+    );
 
     this.resolverByKey = new Map();
     for (const resolver of [
@@ -37,6 +66,13 @@ export class ResolverRegistry {
       this.testCaseUidResolver,
       requirementIdResolver,
       testcycleUidResolver,
+      environmentResolver,
+      buildResolver,
+      defectIdResolver,
+      defectStatusResolver,
+      defectPriorityResolver,
+      executionContextResolver,
+      stepExecutionContextResolver,
     ]) {
       for (const key of resolver.fieldKeys) {
         this.resolverByKey.set(key, resolver);

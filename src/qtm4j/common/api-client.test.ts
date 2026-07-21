@@ -180,4 +180,205 @@ describe("ApiClient", () => {
 
     await expect(client.get("/endpoint")).rejects.toThrow("Network error");
   });
+
+  it("should return empty object for empty text response", async () => {
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      headers: { get: () => null },
+      text: async () => "   ",
+    });
+
+    const client = new ApiClient("token", "https://api.example.com");
+    const result = await client.get("/endpoint");
+
+    expect(result).toEqual({});
+  });
+
+  it("should return wrapped text for non-JSON response", async () => {
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      headers: { get: () => "100" },
+      text: async () => "plain text response",
+    });
+
+    const client = new ApiClient("token", "https://api.example.com");
+    const result = await client.get("/endpoint");
+
+    expect(result).toEqual({ data: "plain text response" });
+  });
+
+  it("should return empty object for 204 No Content by status check", async () => {
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      status: 204,
+      headers: { get: () => null },
+      text: async () => "",
+    });
+
+    const client = new ApiClient("token", "https://api.example.com");
+    const result = await client.get("/endpoint");
+
+    expect(result).toEqual({});
+  });
+
+  it("skipAnalytics() returns new ApiClient instance", () => {
+    const client = new ApiClient("token", "https://api.example.com");
+    const skipped = client.skipAnalytics();
+
+    expect(skipped).toBeInstanceOf(ApiClient);
+    expect(skipped).not.toBe(client);
+  });
+
+  it("skipAnalytics() instance sends allowTracking: false in headers", async () => {
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      headers: { get: () => "10" },
+      text: async () => "{}",
+    });
+
+    const client = new ApiClient("token", "https://api.example.com");
+    const skipped = client.skipAnalytics();
+    await skipped.get("/endpoint");
+
+    const calledHeaders = (global.fetch as any).mock.calls[0][1].headers;
+    expect(calledHeaders).toMatchObject({ "X-Allow-Tracking": "false" });
+  });
+
+  it("regular client sends allowTracking: true in headers", async () => {
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      headers: { get: () => "10" },
+      text: async () => "{}",
+    });
+
+    const client = new ApiClient("token", "https://api.example.com");
+    await client.get("/endpoint");
+
+    const calledHeaders = (global.fetch as any).mock.calls[0][1].headers;
+    expect(calledHeaders).toMatchObject({ "X-Allow-Tracking": "true" });
+  });
+
+  it("should throw ToolError when automation token is not available", () => {
+    const client = new ApiClient("token", "https://api.example.com");
+
+    expect(() => {
+      (client as any).getAutomationHeaders();
+    }).toThrow(ToolError);
+  });
+
+  it("should perform successful getAutomation request", async () => {
+    const mockResponse = { data: [] };
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      headers: { get: () => "10" },
+      text: async () => JSON.stringify(mockResponse),
+    });
+
+    const client = new ApiClient(
+      "token",
+      "https://api.example.com",
+      () => "automation-key",
+    );
+    const result = await client.getAutomation("/automation", { page: 1 });
+
+    expect(result).toEqual(mockResponse);
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining("page=1"),
+      expect.objectContaining({ method: "GET" }),
+    );
+  });
+
+  it("should perform successful postAutomation request", async () => {
+    const mockResponse = { trackingId: "abc-123" };
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      headers: { get: () => "20" },
+      text: async () => JSON.stringify(mockResponse),
+    });
+
+    const client = new ApiClient(
+      "token",
+      "https://api.example.com",
+      () => "automation-key",
+    );
+    const result = await client.postAutomation("/import", { format: "junit" });
+
+    expect(result).toEqual(mockResponse);
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining("/import"),
+      expect.objectContaining({ method: "POST" }),
+    );
+  });
+
+  it("should perform successful delete request", async () => {
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      status: 204,
+      headers: { get: () => null },
+      text: async () => "",
+    });
+
+    const client = new ApiClient("token", "https://api.example.com");
+    const result = await client.delete("/resource/1");
+
+    expect(result).toEqual({});
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining("/resource/1"),
+      expect.objectContaining({ method: "DELETE" }),
+    );
+  });
+
+  it("should perform delete request with body", async () => {
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      headers: { get: () => "10" },
+      text: async () => "{}",
+    });
+
+    const client = new ApiClient("token", "https://api.example.com");
+    await client.delete("/resource/1", { ids: [1, 2] });
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ body: JSON.stringify({ ids: [1, 2] }) }),
+    );
+  });
+
+  it("should perform successful uploadFileMultipart request", async () => {
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+    });
+
+    const client = new ApiClient("token", "https://api.example.com");
+    await expect(
+      client.uploadFileMultipart(
+        "https://s3.example.com/upload",
+        Buffer.from("data"),
+      ),
+    ).resolves.not.toThrow();
+  });
+
+  it("should throw ToolError when uploadFileMultipart returns non-ok response", async () => {
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: false,
+      status: 403,
+      text: async () => "Request has expired",
+    });
+
+    const client = new ApiClient("token", "https://api.example.com");
+    await expect(
+      client.uploadFileMultipart(
+        "https://s3.example.com/upload",
+        Buffer.from("data"),
+      ),
+    ).rejects.toThrow(ToolError);
+  });
 });

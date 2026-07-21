@@ -10,6 +10,7 @@ describe("TestCaseUidResolver", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockApiClient = { get: vi.fn() };
+    mockApiClient.skipAnalytics = vi.fn().mockReturnValue(mockApiClient);
     resolver = new TestCaseUidResolver(mockApiClient);
   });
 

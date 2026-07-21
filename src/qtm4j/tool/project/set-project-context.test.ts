@@ -26,6 +26,7 @@ describe("SetProjectContext", () => {
     mockApiClient = {
       post: vi.fn(),
     };
+    mockApiClient.skipAnalytics = vi.fn().mockReturnValue(mockApiClient);
 
     mockClient = {
       getApiClient: vi.fn().mockReturnValue(mockApiClient),

@@ -208,9 +208,9 @@ export const ComponentSchema = zod.object({
 
 export const TestCaseSchema = zod
   .object({
-    id: zod.string().describe("Internal test case ID"),
-    key: zod.string().describe("Test case key, e.g. 'SCRUM-TC-145'"),
-    summary: zod.string().describe("Test case title"),
+    id: zod.string().optional().describe("Internal test case ID"),
+    key: zod.string().optional().describe("Test case key, e.g. 'SCRUM-TC-145'"),
+    summary: zod.string().nullable().optional().describe("Test case title"),
     description: zod.string().nullable().optional(),
     priority: PrioritySchema.optional(),
     status: StatusSchema.optional(),

@@ -1,5 +1,9 @@
 import { getUserAgent } from "../../common/info";
-import { CONTENT_TYPES, HTTP_HEADERS } from "../config/constants";
+import {
+  CLIENT_CONFIG,
+  CONTENT_TYPES,
+  HTTP_HEADERS,
+} from "../config/constants";
 
 /**
  * AuthService handles authentication for QTM4J API requests
@@ -22,6 +26,7 @@ export class AuthService {
       [HTTP_HEADERS.CONTENT_TYPE]: CONTENT_TYPES.JSON,
       [HTTP_HEADERS.USER_AGENT]: getUserAgent(),
       [HTTP_HEADERS.ACCEPT]: CONTENT_TYPES.JSON,
+      [HTTP_HEADERS.X_REQUEST_SOURCE]: CLIENT_CONFIG.SOURCE_VALUE,
     };
   }
 }

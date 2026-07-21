@@ -8,10 +8,10 @@ describe("GetProjects", () => {
   let instance: GetProjects;
 
   beforeEach(() => {
+    const apiMock = { post: vi.fn(), skipAnalytics: vi.fn() };
+    apiMock.skipAnalytics.mockReturnValue(apiMock);
     mockClient = {
-      getApiClient: vi.fn().mockReturnValue({
-        post: vi.fn(),
-      }),
+      getApiClient: vi.fn().mockReturnValue(apiMock),
     };
     instance = new GetProjects(mockClient as any);
   });
