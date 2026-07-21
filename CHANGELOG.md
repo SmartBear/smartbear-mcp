@@ -10,8 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - [Swagger] Added `get_test_history` Functional Testing tool that retrieves the execution history for a given test, returning past runs with pass/fail status, run time, creation timestamp, and per-step failure details for failed runs.
-- [QTM4J] Added test execution tools to start executions, update test case and step executions, link Jira bugs, and retrieve linked bugs
-- [QTM4J] Added API request tracking and suppressed internal API calls from analytics.
+- [QTM4J] Added test execution tools to start executions, update test case and step executions.
+- [QTM4J] Added API request tracking.
 
 ### Changed
 
