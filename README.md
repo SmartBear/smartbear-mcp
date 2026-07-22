@@ -53,6 +53,12 @@ For BugSnag, Swagger, and Zephyr, SmartBear hosts Remote MCP Servers that you ca
 
 See the [Remote MCP Servers guide](https://developer.smartbear.com/smartbear-mcp/docs/remote-mcp-servers) for per-client setup instructions. You can connect to multiple remote servers at the same time.
 
+### Kiro (AWS)
+
+Add the Swagger remote MCP server to Kiro with one click:
+
+[![Add to Kiro](https://kiro.dev/images/add-to-kiro.svg)](https://kiro.dev/launch/mcp/add?name=smartbear-swagger&config=%7B%22type%22%3A%22http%22%2C%22url%22%3A%22https%3A%2F%2Fswagger.mcp.smartbear.com%2Fmcp%22%2C%22oauth%22%3A%7B%22redirectUri%22%3A%22127.0.0.1%3A8080%22%2C%22oauthScopes%22%3A%5B%5D%7D%2C%22disabled%22%3Afalse%7D)
+
 > **Need BearQ, Reflect, QMetry, QTM4J, PactFlow, Collaborator, or Functional Testing?** These products are only available via the local npm package below, which bundles all products into a single MCP server.
 
 ## Prerequisites
