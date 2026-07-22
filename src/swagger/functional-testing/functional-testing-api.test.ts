@@ -55,7 +55,10 @@ describe("FunctionalTestingAPI", () => {
   });
 
   describe("createTest", () => {
-    const createResponseMock = { id: 12345 };
+    const createResponseMock = {
+      id: 12345,
+      url: "https://app.reflect.run/tests/12345/definition?accountId=54321",
+    };
 
     it("should POST to the correct endpoint with X-API-KEY header", async () => {
       fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
@@ -167,12 +170,12 @@ describe("FunctionalTestingAPI", () => {
       expect(body.steps).toBeUndefined();
     });
 
-    it("should return the new test id", async () => {
+    it("should return the new test id and url", async () => {
       fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
 
       const result = await api.createTest({ name: "My New Test" });
 
-      expect(result).toEqual({ id: 12345 });
+      expect(result).toEqual(createResponseMock);
     });
 
     it("should throw ToolError on HTTP error", async () => {

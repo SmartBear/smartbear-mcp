@@ -1,6 +1,7 @@
 import {
   CancelFunctionalTestingSuiteExecutionSchema,
   CreateFunctionalTestingTestParamsSchema,
+  CreateFunctionalTestingTestResponseSchema,
   GetFunctionalTestHistoryParamsSchema,
   GetFunctionalTestingExecutionTestSchema,
   GetFunctionalTestingSuiteExecutionSchema,
@@ -30,8 +31,9 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
       "This tool only creates API tests (not browser or native-mobile tests). " +
       "Use this when you need to programmatically create a test with a defined set of API request steps. " +
       "Each step requires a URL and may specify an HTTP method (defaults to GET), request body, headers, and redirect handling. " +
-      "Returns the ID of the newly created test, which can be used with `swagger_run_test`.",
+      "Returns the ID and the URL to definition of the newly created test; the ID can be used with `swagger_run_test` to run it.",
     inputSchema: CreateFunctionalTestingTestParamsSchema,
+    outputSchema: CreateFunctionalTestingTestResponseSchema,
     handler: "createFunctionalTestingTest",
     idempotent: false,
     readOnly: false,

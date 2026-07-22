@@ -211,6 +211,13 @@ export type CreateFunctionalTestingTestParams = z.infer<
   typeof CreateFunctionalTestingTestParamsSchema
 >;
 
-export interface CreateFunctionalTestingTestResponse {
-  id: number;
-}
+export const CreateFunctionalTestingTestResponseSchema = z.object({
+  id: z.number().describe("ID of the newly created test"),
+  url: z
+    .string()
+    .describe("Link to the created test definition in the Swagger UI"),
+});
+
+export type CreateFunctionalTestingTestResponse = z.infer<
+  typeof CreateFunctionalTestingTestResponseSchema
+>;

@@ -405,8 +405,11 @@ describe("SwaggerClient — Functional Testing integration", () => {
   });
 
   describe("createFunctionalTestingTest", () => {
-    it("should POST to api.reflect.run and return the new test id", async () => {
-      const createResponseMock = { id: 12345 };
+    it("should POST to api.reflect.run and return the new test id and url", async () => {
+      const createResponseMock = {
+        id: 12345,
+        url: "https://app.reflect.run/tests/12345/definition?accountId=54321",
+      };
       fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
 
       await client.configure({} as any, {
