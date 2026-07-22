@@ -116,6 +116,13 @@ describe("deepMerge", () => {
 
     expect(() => deepMerge({ name: "", extra: 1 }, {}, schema)).toThrow();
   });
+
+  it("should return the base object unchanged when the updates argument itself is undefined", () => {
+    const baseObject = { a: 1, b: 2 };
+    const result = deepMerge(baseObject, undefined as any, passthrough);
+
+    expect(result).toEqual({ a: 1, b: 2 });
+  });
 });
 
 describe("deepStrip", () => {
@@ -142,5 +149,25 @@ describe("deepStrip", () => {
     const schema = z.object({ n: z.number().min(1) }).strict();
 
     expect(() => deepStrip(schema).parse({ n: 0 })).toThrow();
+  });
+
+  it("applies the default value on a default()-wrapped field", () => {
+    const schema = z.object({ status: z.string().default("open") }).strict();
+
+    const parsed = deepStrip(schema).parse({ extra: "drop me" });
+
+    expect(parsed).toEqual({ status: "open" });
+  });
+
+  it("loosens strict objects nested inside a union", () => {
+    const branchA = z.object({ type: z.literal("a"), a: z.number() }).strict();
+    const branchB = z.object({ type: z.literal("b"), b: z.number() }).strict();
+    const schema = z.object({ payload: z.union([branchA, branchB]) }).strict();
+
+    const parsed = deepStrip(schema).parse({
+      payload: { type: "a", a: 1, extra: "drop me" },
+    });
+
+    expect(parsed).toEqual({ payload: { type: "a", a: 1 } });
   });
 });
