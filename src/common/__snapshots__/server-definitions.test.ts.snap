@@ -14159,7 +14159,9 @@ Expected Output: The test cycle should be updated, but no output is expected.
 \`\`\`json
 {
   "testCycleIdOrKey": "SA-R40",
-  "folder": 100006,
+  "folder": {
+    "id": 100006
+  },
   "status": {
     "id": 10000
   }
