@@ -215,7 +215,9 @@ export const CreateFunctionalTestingTestResponseSchema = z.object({
   id: z.number().describe("ID of the newly created test"),
   url: z
     .string()
-    .describe("Link to the created test definition in the Swagger UI"),
+    .describe(
+      "Link to the created test definition in Swagger Functional Testing UI",
+    ),
 });
 
 export type CreateFunctionalTestingTestResponse = z.infer<
