@@ -32,7 +32,7 @@ const UpdateTestCaseBodyToolInput = UpdateTestCaseBody.extend({
     .regex(updateTestCaseBodyOwnerAccountIdRegExp)
     .nullish()
     .describe("Atlassian Account ID of the Jira user to set as owner."),
-});
+}).partial();
 
 export class UpdateTestCase extends Tool<ZephyrClient> {
   specification: ToolParams = {
@@ -42,9 +42,7 @@ export class UpdateTestCase extends Tool<ZephyrClient> {
       'Update an existing Test Case in Zephyr. This operation fetches the current test case and merges your updates with it to prevent accidental property deletion. Properties which are not included in the tool call will be left unchanged. To remove a property, set it to null explicitly. For fields that accept multiple values, such as `labels`, if the field is provided, it will override the previous values. For example, if `labels` is provided with the values `["label1", "label2"]`, the Test Case will now only have those two labels, and any previous labels will be removed. If you want to add a label, you would need to specify in the prompt the intention to add a label.',
     readOnly: false,
     idempotent: true,
-    inputSchema: UpdateTestCaseParams.and(
-      UpdateTestCaseBodyToolInput.partial(),
-    ),
+    inputSchema: UpdateTestCaseParams.and(UpdateTestCaseBodyToolInput),
     examples: [
       {
         description:
@@ -117,9 +115,9 @@ export class UpdateTestCase extends Tool<ZephyrClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args) => {
-    const parsed = UpdateTestCaseParams.and(
-      UpdateTestCaseBodyToolInput.partial(),
-    ).parse(args);
+    const parsed = UpdateTestCaseParams.and(UpdateTestCaseBodyToolInput).parse(
+      args,
+    );
 
     const { testCaseKey, ...updatesFromToolInput } = parsed;
 
@@ -155,9 +153,7 @@ export class UpdateTestCase extends Tool<ZephyrClient> {
   // expanding the primitive folder/component/owner IDs back into the `{ id }` /
   // `{ accountId }` objects the REST API's UpdateTestCaseBody shape expects.
   private toRestApiUpdates(
-    updatesFromToolInput: Partial<
-      zod.infer<typeof UpdateTestCaseBodyToolInput>
-    >,
+    updatesFromToolInput: zod.infer<typeof UpdateTestCaseBodyToolInput>,
   ) {
     const restApiCompatibleFields: Partial<
       zod.infer<typeof UpdateTestCaseBody>

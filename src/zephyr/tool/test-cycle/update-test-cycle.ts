@@ -33,7 +33,7 @@ const UpdateTestCycleBodyToolInput = UpdateTestCycleBody.extend({
     .regex(updateTestCycleBodyOwnerAccountIdRegExp)
     .nullish()
     .describe("Atlassian Account ID of the Jira user to set as owner."),
-});
+}).partial();
 
 export class UpdateTestCycle extends Tool<ZephyrClient> {
   specification: ToolParams = {
@@ -43,9 +43,7 @@ export class UpdateTestCycle extends Tool<ZephyrClient> {
       "Update an existing Test Cycle in Zephyr. This operation fetches the current test cycle and merges your updates with it to prevent accidental property deletion. To remove a property, set it to null explicitly. The plannedStartDate and plannedEndDate fields cannot be cleared",
     readOnly: false,
     idempotent: true,
-    inputSchema: UpdateTestCycleParams.and(
-      UpdateTestCycleBodyToolInput.partial(),
-    ),
+    inputSchema: UpdateTestCycleParams.and(UpdateTestCycleBodyToolInput),
     examples: [
       {
         description:
@@ -120,7 +118,7 @@ export class UpdateTestCycle extends Tool<ZephyrClient> {
 
   handle: ToolCallback<ZodRawShape> = async (args) => {
     const parsed = UpdateTestCycleParams.and(
-      UpdateTestCycleBodyToolInput.partial(),
+      UpdateTestCycleBodyToolInput,
     ).parse(args);
 
     const { testCycleIdOrKey, ...updatesFromToolInput } = parsed;
@@ -158,9 +156,7 @@ export class UpdateTestCycle extends Tool<ZephyrClient> {
   // API treats null on those fields as "leave unchanged", so no special handling
   // is needed here.
   private toRestApiUpdates(
-    updatesFromToolInput: Partial<
-      zod.infer<typeof UpdateTestCycleBodyToolInput>
-    >,
+    updatesFromToolInput: zod.infer<typeof UpdateTestCycleBodyToolInput>,
   ) {
     const restApiCompatibleFields: Partial<
       zod.infer<typeof UpdateTestCycleBody>
