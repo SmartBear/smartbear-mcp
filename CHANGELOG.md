@@ -10,12 +10,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - [Swagger] Adjusted some of the Swagger Functional Testing tools responses to return `url` of test or test Suite execution.
-- [QTM4J] Added test execution tools to start executions, update test case and step executions.
-- [QTM4J] Added API request tracking.
+
+## [0.32.0] - 2026-07-23
+
+### Added
+
+- [QTM4J] Added test execution tools to start executions, update test case and step executions. [#604](https://github.com/SmartBear/smartbear-mcp/pull/604)
+- [QTM4J] Added API request tracking. [#604](https://github.com/SmartBear/smartbear-mcp/pull/604)
 
 ### Fixed
 
-- [QTM4J] Fixed `search_test_cases` response validation errors when test case fields are missing.
+- [QTM4J] Fixed `search_test_cases` response validation errors when test case fields are missing. [#604](https://github.com/SmartBear/smartbear-mcp/pull/604)
 
 ## [0.31.0] - 2026-07-16
 
