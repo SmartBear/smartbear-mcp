@@ -113,37 +113,61 @@ export const CreateTableOfContentsArgsSchema = z.object({
         .enum(["internal", "external"])
         .optional()
         .describe(
-          "Source of the document content - 'internal' allows to edit content in both UI and API, 'external' enables editing only via API.",
+          "Source of the document content - 'internal' allows to edit content in both UI and API, 'external' enables editing only via API. Not used when type is 'apiUrl'.",
         ),
       url: z
         .string()
         .optional()
         .describe(
-          "URL for API reference content (required when type is 'apiUrl')",
+          "URL for API reference content - required when type is 'apiUrl', must end with '/swagger.json' or '/swagger.yaml'. Not used for 'html'/'markdown'.",
         ),
       apiSpec: z
         .string()
         .nullable()
         .optional()
-        .describe("API specification format for API URL content"),
+        .describe(
+          "API specification format for API URL content - only used when type is 'apiUrl'",
+        ),
       documentId: z
         .string()
         .nullable()
         .optional()
-        .describe("Document ID for HTML or Markdown content"),
+        .describe(
+          "Document ID for HTML or Markdown content - only used when type is 'html' or 'markdown'",
+        ),
+    })
+    .meta({
+      // Structural rule (in addition to the .refine() below) so the generated
+      // JSON Schema states which fields are required per content.type, instead
+      // of leaving every field optional with the constraint only in prose.
+      allOf: [
+        {
+          if: { properties: { type: { const: "apiUrl" } } },
+          // biome-ignore lint/suspicious/noThenProperty: JSON Schema if/then/else keyword, not a thenable
+          then: { required: ["url"], properties: { documentId: false } },
+          message: "URL is required when content type is 'apiUrl'",
+        },
+        {
+          if: { properties: { type: { enum: ["html", "markdown"] } } },
+          // biome-ignore lint/suspicious/noThenProperty: JSON Schema if/then/else keyword, not a thenable
+          then: { properties: { url: false, apiSpec: false } },
+          message:
+            "url must not be set when content type is 'html' or 'markdown'",
+        },
+      ],
     })
     .optional()
     .describe("Content configuration for the table of contents item")
+    .refine((content) => content?.type !== "apiUrl" || !!content.url, {
+      message: "URL is required when content type is 'apiUrl'",
+      path: ["url"],
+    })
     .refine(
-      (content) => {
-        if (content?.type === "apiUrl") {
-          return (
-            content.url?.endsWith("/swagger.json") ||
-            content.url?.endsWith("/swagger.yaml")
-          );
-        }
-        return true;
-      },
+      (content) =>
+        content?.type !== "apiUrl" ||
+        !content.url ||
+        content.url.endsWith("/swagger.json") ||
+        content.url.endsWith("/swagger.yaml"),
       {
         message:
           "URL must end with '/swagger.json' or '/swagger.yaml' when content type is 'apiUrl'",
@@ -594,7 +618,13 @@ export const CreateDocumentationPageArgsSchema = z.object({
   pageTitle: z
     .string()
     .describe(
-      "Title of the documentation page - will be displayed in navigation (3-255 characters, used to generate the page slug)",
+      "Title of the documentation page - will be displayed in navigation (3-255 characters)",
+    ),
+  pageSlug: z
+    .string()
+    .optional()
+    .describe(
+      "URL slug for the documentation page. 3-255 characters, lowercase, alphanumeric with hyphens, underscores, or dots (e.g. 'my-page'). If not provided, the slug is generated from the page title.",
     ),
   pageContent: z
     .string()
@@ -653,3 +683,121 @@ export interface CreateDocumentationPageResult {
   };
   draftUrl?: string;
 }
+
+// Output schemas for MCP tool responses — all fields optional to tolerate partial API responses
+const PageSchema = z.object({
+  number: z.number().optional(),
+  size: z.number().optional(),
+  totalElements: z.number().optional(),
+  totalPages: z.number().optional(),
+});
+
+export const PortalOutputSchema = z.looseObject({
+  id: z.string().optional(),
+  name: z.string().optional(),
+  subdomain: z.string().optional(),
+  customDomain: z.string().optional(),
+  offline: z.boolean().optional(),
+  openapiRenderer: z.string().optional(),
+  routing: z.string().optional(),
+  credentialsEnabled: z.boolean().optional(),
+  swaggerHubOrganizationId: z.string().optional(),
+});
+
+export const PortalsListOutputSchema = z.object({
+  page: PageSchema.optional(),
+  items: z.array(PortalOutputSchema).optional(),
+});
+
+export const ProductOutputSchema = z.looseObject({
+  id: z.string().optional(),
+  name: z.string().optional(),
+  slug: z.string().optional(),
+  portalId: z.string().optional(),
+  description: z.string().optional(),
+  public: z.boolean().optional(),
+  hidden: z.boolean().optional(),
+});
+
+export const ProductsListOutputSchema = z.object({
+  page: PageSchema.optional(),
+  items: z.array(ProductOutputSchema).optional(),
+});
+
+export const SectionOutputSchema = z.looseObject({
+  id: z.string().optional(),
+  productId: z.string().optional(),
+  title: z.string().optional(),
+  slug: z.string().optional(),
+  order: z.number().optional(),
+});
+
+export const SectionsListOutputSchema = z.object({
+  page: PageSchema.optional(),
+  items: z.array(SectionOutputSchema).optional(),
+});
+
+export const CreateTocOutputSchema = z.object({
+  id: z.string().optional(),
+  documentId: z.string().optional(),
+});
+
+export const DocumentOutputSchema = z.object({
+  id: z.string().optional(),
+  type: z.enum(["html", "markdown"]).optional(),
+  source: z.enum(["internal", "external"]).optional(),
+  content: z.string().optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+
+export const PublishOutputSchema = z.looseObject({
+  success: z.boolean().optional(),
+  preview: z.boolean().optional(),
+  liveUrl: z.string().nullable().optional(),
+  previewUrl: z.string().nullable().optional(),
+});
+
+export const ResolvePortalOutputSchema = z.object({
+  organizationId: z.string().optional(),
+  portalId: z.string().optional(),
+  subdomain: z.string().optional(),
+  customDomain: z.string().optional(),
+  portalCreated: z.boolean().optional(),
+  products: z
+    .array(
+      z.object({
+        productId: z.string().optional(),
+        productSlug: z.string().optional(),
+        productName: z.string().optional(),
+      }),
+    )
+    .optional(),
+});
+
+export const CreateDocPageOutputSchema = z.looseObject({
+  productId: z.string().optional(),
+  sectionId: z.string().optional(),
+  sectionSlug: z.string().optional(),
+  draftUrl: z.string().optional(),
+});
+
+export const DeleteProductOutputSchema = z.object({
+  message: z.string(),
+});
+
+export const DeleteTableOfContentsOutputSchema = z.object({
+  success: z.boolean().optional(),
+});
+
+export const TocListOutputSchema = z.object({
+  items: z.array(
+    z.looseObject({
+      id: z.string().optional(),
+      slug: z.string().optional(),
+      title: z.string().optional(),
+      order: z.number().optional(),
+      parentId: z.string().nullable().optional(),
+    }),
+  ),
+});

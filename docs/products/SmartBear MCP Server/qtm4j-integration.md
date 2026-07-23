@@ -346,6 +346,123 @@ The following environment variables configure the QTM4J integration:
 - **Use case**: Removing incorrect requirement links from a test cycle; clearing all linked requirements before relinking.
 - **Note**: Provide either `requirementKeys` or set `unLinkAll: true` — not both.
 
+## Test Executions
+
+### Creation Operations
+
+#### Start New Execution
+
+- **Purpose**: Start a new test case execution within a test cycle. Test step executions are created automatically.
+- **Parameters**:
+  - Test cycle key (`testCycleKey`) — format: `{PROJECT_KEY}-TR-{number}`, e.g., `SCRUM-TR-101`. **Required.**
+  - Test case key (`testCaseKey`) — format: `{PROJECT_KEY}-TC-{number}`, e.g., `SCRUM-TC-42`. **Required.**
+  - optional Jira account ID of the assignee (`assignee`)
+  - optional planned execution date (`executionPlannedDate`) — format: `dd/MMM/yyyy`, e.g., `"15/Oct/2025"`. Month must be capitalized.
+  - optional environment name (`environmentId`) — e.g., `"Production"`.
+  - optional build name (`buildId`) — e.g., `"Build 2.0"`.
+  - optional actual time spent (`actualTime`) — format: `HH:mm:ss`, e.g., `"02:30:00"`
+  - optional source execution ID to clone from (`cloneFrom`) — when set, the server ignores all body fields.
+  - optional flag to copy custom field values from the previous execution into this new execution (`cloneExecutionCustomFields`).
+- **Returns**: Confirmation object with `testCycleKey`, `testCaseKey`, and `created: true`.
+- **Use case**: Starting a new execution before recording results; Creating a new execution by cloning an existing execution.
+- **Note**: The test case must already be linked to the test cycle.
+
+### Update Operations
+
+#### Update Test Case Execution
+
+- **Purpose**: Update an existing test case execution — set the result, comment, environment, build, assignee, planned date, or actual time.
+- **Parameters**:
+  - Test cycle key (`testCycleKey`) — format: `{PROJECT_KEY}-TR-{number}`, e.g., `SCRUM-TR-101`. **Required.**
+  - Test case key (`testCaseKey`) — format: `{PROJECT_KEY}-TC-{number}`, e.g., `SCRUM-TC-42`. **Required.**
+  - optional execution result name (`executionResult`) — e.g., `"Pass"`, `"Fail"`, `"Blocked"`. Project-specific custom results are supported.
+  - optional comment (`comment`).
+  - optional actual time spent (`actualTime`) — format: `HH:mm:ss`, e.g., `"01:30:00"`.
+  - optional Jira account ID of the execution assignee (`executionAssignee`).
+  - optional environment name (`environmentId`) — e.g., `"Production"`.
+  - optional planned execution date (`executionPlannedDate`) — format: `dd/MMM/yyyy`, e.g., `"15/Oct/2025"`.
+  - optional build name (`buildId`) — e.g., `"Build 2.0"`.
+- **Returns**: Confirmation object with `testCycleKey`, `testCaseKey`, and `updated: true`. Any unrecognized field values are reported as warnings.
+- **Use case**: Setting a Pass/Fail result on a test case execution; recording environment, build, or time spent; clearing a comment or planned date.
+- **Note**: At least one updatable field must be provided. An execution must already be started before it can be updated.
+
+#### Update Test Step Execution
+
+- **Purpose**: Update an existing test step execution — set the result, actual result text, or comment for a specific step.
+- **Parameters**:
+  - Test cycle key (`testCycleKey`) — format: `{PROJECT_KEY}-TR-{number}`, e.g., `SCRUM-TR-101`. **Required.**
+  - Test case key (`testCaseKey`) — format: `{PROJECT_KEY}-TC-{number}`, e.g., `SCRUM-TC-42`. **Required.**
+  - Sequence number of the step to update (`testStepSeqNo`) — e.g., `2` for the second step. **Required.**
+  - optional execution result name (`executionResult`) — e.g., `"Pass"`, `"Fail"`, `"Blocked"`.
+  - optional actual result text (`actualResult`).
+  - optional comment (`comment`).
+- **Returns**: Confirmation object with `testCycleKey`, `testCaseKey`, `testStepSeqNo`, and `updated: true`. Any unrecognized field values are reported as warnings.
+- **Use case**: Recording pass/fail at the individual step level; adding actual result, text, or a comment to a specific step.
+- **Note**: At least one updatable field must be provided. An execution must already be started for the test case before step executions can be updated.
+
+### Link Operations
+
+#### Link Bugs to Test Case Execution
+
+- **Purpose**: Link one or more Jira bugs to a test case execution.
+- **Parameters**:
+  - Test cycle key (`testCycleKey`) — format: `{PROJECT_KEY}-TR-{number}`, e.g., `SCRUM-TR-101`
+  - Test case key (`testCaseKey`) — format: `{PROJECT_KEY}-TC-{number}`, e.g., `SCRUM-TC-42`
+  - optional jira issue keys of the bugs to link (`defectIDs`) — e.g., `["PROJ-456", "PROJ-789"]`. duplicates are removed automatically.
+  - optional JQL expression to select Jira bugs to be linked (`jql`)
+  - optional flag to include the linked defect count in the response (`returnLinkedDefectCount`) — defaults to `true`
+- **Returns**: Confirmation object with `testCycleKey`, `testCaseKey`, `linked: true`, and `linkedDefectCount` (by default). Any unrecognized field values are reported as warnings.
+- **Use case**: Linking a Jira bug to a test case execution after it fails; Link multiple bugs in a single request.
+- **Note**: An execution must already be started before bugs can be linked.
+
+#### Link Bugs to Test Step Execution
+
+- **Purpose**: Link one or more Jira bugs to a specific test step execution.
+- **Parameters**:
+  - Test cycle key (`testCycleKey`) — format: `{PROJECT_KEY}-TR-{number}`, e.g., `SCRUM-TR-101`
+  - Test case key (`testCaseKey`) — format: `{PROJECT_KEY}-TC-{number}`, e.g., `SCRUM-TC-42`
+  - Sequence number of the test step (`testStepSeqNo`) — e.g., `2` for the second step
+  - optional jira issue keys of the bugs to link (`defectIDs`) — e.g., `["PROJ-456", "PROJ-789"]`. duplicates are removed automatically.
+  - optional JQL expression to select Jira bugs to be linked (`jql`)
+  - optional flag to include the linked defect count in the response (`returnLinkedDefectCount`) — defaults to `true`
+- **Returns**: Confirmation object with `testCycleKey`, `testCaseKey`, `linked: true`, and `linkedDefectCount` (by default). Any unrecognized field values are reported as warnings.
+- **Use case**: Linking a Jira bug to a specific failed test step; Link multiple Jira bugs to a test step execution in a single request.
+- **Note**: An execution must already be started for the test case before bugs can be linked to step executions.
+
+### Retrieval Operations
+
+#### Get Linked Bugs of Test Case Execution
+
+- **Purpose**: Retrieve Jira bugs linked to a test case execution.
+- **Parameters**:
+  - Test cycle key (`testCycleKey`) — format: `{PROJECT_KEY}-TR-{number}`, e.g., `SCRUM-TR-101`
+  - Test case key (`testCaseKey`) — format: `{PROJECT_KEY}-TC-{number}`, e.g., `SCRUM-TC-42`
+  - optional filter object (`filter`) with:
+    - bug priority names to filter by (`priority`) — e.g., `["High", "Medium"]`
+    - bug status names to filter by (`status`) — e.g., `["To Do", "In Progress"]`
+  - optional execution level filter (`level`) — defaults to both levels; use `"testcase_execution"` or `"teststep_execution"` to narrow.
+  - optional starting position for pagination (`startAt`) — default `0`
+  - optional max results per page (`maxResults`) — range 1–100, default `20`
+- **Returns**: A paginated result with `startAt`, `maxResults`, `total`, and `bug data`. Each bug includes: `id`, `key`, `summary`, `status`, `priority`, `issueType`, `level`, `stepSeqNo`, `parameterGroup`.
+- **Use case**: Listing all Jira bugs linked to a test case execution; filtering linked bugs by priority or status.
+- **Note**: An empty result (`total = 0`) means no bugs are linked.
+
+#### Get Linked Bugs of Test Step Execution
+
+- **Purpose**: Retrieve Jira bugs linked to a specific test step execution, with optional priority and status filtering.
+- **Parameters**:
+  - Test cycle key (`testCycleKey`) — format: `{PROJECT_KEY}-TR-{number}`, e.g., `SCRUM-TR-101`
+  - Test case key (`testCaseKey`) — format: `{PROJECT_KEY}-TC-{number}`, e.g., `SCRUM-TC-42`
+  - Sequence number of the test step (`testStepSeqNo`) — e.g., `2` for the second step
+  - optional filter object (`filter`) with:
+    - bug priority names to filter by (`priority`) — e.g., `["High"]`
+    - bug status names to filter by (`status`) — e.g., `["In Progress"]`
+  - optional starting position for pagination (`startAt`) — default `0`
+  - optional max results per page (`maxResults`) — range 1–100, default `20`
+- **Returns**: A paginated result with `startAt`, `maxResults`, `total`, and `bug data`. Each bug includes: `id`, `key`, `summary`, `status`, `priority`, `issueType`, `level`, `stepSeqNo`, `parameterGroup`.
+- **Use case**: Listing all Jira bugs linked to a specific test step; filtering step-level bugs by priority or status.
+- **Note**: An empty result (`total = 0`) means no bugs are linked.
+
 ## Automation
 
 Automation tools authenticate using `QTM4J_AUTOMATION_API_KEY` and do not require an active project context.

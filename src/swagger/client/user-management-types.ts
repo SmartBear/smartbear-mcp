@@ -13,6 +13,9 @@ export interface Organization {
   memberCount?: number; // Total number of members
 }
 
+// Exposed to agents. The User Management API may return admin email addresses, but we strip them at the MCP boundary.
+export type OrganizationListItem = Omit<Organization, "email">;
+
 // Pagination support for User Management API
 export interface PagedResult {
   totalCount: number; // Total number of results
@@ -22,7 +25,7 @@ export interface PagedResult {
 
 // Response from User Management API /orgs endpoint
 export interface OrganizationsListResponse extends PagedResult {
-  items: Organization[]; // List of organizations
+  items: OrganizationListItem[]; // List of organizations
 }
 
 // Query parameters for getting organizations
@@ -52,3 +55,20 @@ export const OrganizationsQuerySchema = z.object({
 });
 
 export type OrganizationsQueryParams = z.infer<typeof OrganizationsQuerySchema>;
+
+export const OrganizationsListOutputSchema = z.object({
+  totalCount: z.number().optional(),
+  pageSize: z.number().optional(),
+  page: z.number().optional(),
+  items: z
+    .array(
+      z.looseObject({
+        id: z.string().optional(),
+        name: z.string().optional(),
+        description: z.string().optional(),
+        url: z.string().optional(),
+        memberCount: z.number().optional(),
+      }),
+    )
+    .optional(),
+});

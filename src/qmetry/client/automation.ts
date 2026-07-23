@@ -1,4 +1,4 @@
-import { USER_AGENT } from "../../common/info";
+import { getUserAgent } from "../../common/info";
 import { QMETRY_DEFAULTS } from "../config/constants";
 import { QMETRY_PATHS } from "../config/rest-endpoints";
 import type { ImportAutomationResultsPayload } from "../types/automation";
@@ -138,7 +138,7 @@ export async function importAutomationResults(
   const headers: Record<string, string> = {
     apikey: token,
     project: finalPayload.projectID || project || QMETRY_DEFAULTS.PROJECT_KEY,
-    "User-Agent": USER_AGENT,
+    "User-Agent": getUserAgent(),
     "qmetry-source": "smartbear-mcp",
     // Note: Content-Type will be set automatically by fetch for FormData
   };

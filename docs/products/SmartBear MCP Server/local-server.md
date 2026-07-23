@@ -662,3 +662,6 @@ Once configured, you can interact with SmartBear tools through natural language 
 -   "Update the status of SCRUM-TR-101 to In Progress"
 -   "Upload JUnit test results to QTM4J"
 -   "Check whether last automation import succeeded"
+-   "Start a new execution for SCRUM-TC-42 in test cycle SCRUM-TR-101"
+-   "Update execution and step details for SCRUM-TC-42 in SCRUM-TR-101"
+-   "Link and retrieve Jira bugs at test case and step executions for SCRUM-TC-42 in SCRUM-TR-101"

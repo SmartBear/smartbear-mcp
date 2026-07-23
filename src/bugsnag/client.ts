@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { CacheService } from "../common/cache";
-import { USER_AGENT } from "../common/info";
+import { getUserAgent } from "../common/info";
 import { getRequestHeader } from "../common/request-context";
 import type { SmartBearMcpServer } from "../common/server";
 import { ToolError } from "../common/tools";
@@ -189,7 +189,7 @@ export class BugsnagClient implements Client {
         );
       },
       headers: {
-        "User-Agent": USER_AGENT,
+        "User-Agent": getUserAgent(),
         "Content-Type": "application/json",
         "X-Bugsnag-API": "true",
         "X-Version": "2",
