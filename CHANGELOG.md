@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.32.0] - 2026-07-23
+
 ### Added
 
 - [Swagger] Adjusted some of the Swagger Functional Testing tools responses to return `url` of test or test Suite execution.
