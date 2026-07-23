@@ -9,7 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- [Swagger] Adjusted some of the Swagger Functional Testing tools responses to return `url` of test or test Suite execution.
 - [Swagger] Added `create_test` Functional Testing tool that creates a new API test from a name, optional description, and set of steps (URL, HTTP method, request body/headers, redirect handling), returning the ID of the newly created test for use with `swagger_run_test`.
 
 ## [0.32.0] - 2026-07-23
@@ -28,6 +27,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - [BearQ] Remove draft-test refinement tools and add `bearq_delete_test_cases` [#593](https://github.com/SmartBear/smartbear-mcp/pull/593)
+
+### Fixed
+
+- [Swagger] Adjusted some of the Swagger Functional Testing tools responses to return `url` of test or test Suite execution.
 
 ## [0.30.0] - 2026-07-16
 
