@@ -137,6 +137,7 @@ describe("SwaggerClient — Functional Testing integration", () => {
       const registeredTitles = mockRegister.mock.calls.map(
         (call) => call[0].title,
       );
+      expect(registeredTitles).toContain("Create Test");
       expect(registeredTitles).toContain("List Tests");
       expect(registeredTitles).toContain("List Suites");
     });
@@ -400,6 +401,42 @@ describe("SwaggerClient — Functional Testing integration", () => {
         }),
       );
       expect(result).toEqual(suiteExecutionMock);
+    });
+  });
+
+  describe("createFunctionalTestingTest", () => {
+    it("should POST to api.reflect.run and return the new test id and url", async () => {
+      const createResponseMock = {
+        id: 12345,
+        url: "https://app.reflect.run/tests/12345/definition?accountId=54321",
+      };
+      fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
+
+      await client.configure({} as any, {
+        api_key: "swagger-key",
+        functional_testing_api_token: "ft-token",
+      });
+
+      const result = await requestContextStorage.run({ headers: {} }, () =>
+        client.createFunctionalTestingTest({ name: "My New Test" }),
+      );
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://api.reflect.run/v1/tests",
+        expect.objectContaining({
+          method: "POST",
+          headers: expect.objectContaining({ "X-API-KEY": "ft-token" }),
+        }),
+      );
+      expect(result).toEqual(createResponseMock);
+    });
+
+    it("should throw when FT API is not configured", async () => {
+      await client.configure({} as any, { api_key: "swagger-key" });
+
+      await expect(
+        client.createFunctionalTestingTest({ name: "My New Test" }),
+      ).rejects.toThrow("Functional Testing API not configured");
     });
   });
 

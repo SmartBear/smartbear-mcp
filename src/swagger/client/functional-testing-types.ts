@@ -164,3 +164,62 @@ export interface TestRunHistoryResponse {
   totalRuns: number;
   runs: TestRun[];
 }
+
+export const CreateFunctionalTestingTestHeaderSchema = z.object({
+  name: z.string().describe("Header name").trim().min(1),
+  value: z.string().describe("Header value"),
+});
+
+export const HTTP_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"] as const;
+
+export const CreateFunctionalTestingTestStepSchema = z.object({
+  url: z.url().describe("URL for the API call"),
+  httpMethod: z
+    .enum(HTTP_METHODS)
+    .describe("HTTP method for the API call (defaults to GET server-side)")
+    .optional(),
+  requestBody: z.string().describe("Request body").optional(),
+  requestHeaders: z
+    .array(CreateFunctionalTestingTestHeaderSchema)
+    .describe("HTTP headers")
+    .optional(),
+  followRedirects: z
+    .boolean()
+    .describe("Whether to follow redirects")
+    .optional(),
+  description: z
+    .string()
+    .trim()
+    .describe("Human-readable label for this step")
+    .optional(),
+});
+
+export const CreateFunctionalTestingTestParamsSchema = z.object({
+  name: z.string().describe("Name for the new test").trim().min(1),
+  description: z
+    .string()
+    .trim()
+    .describe("Optional description for the test")
+    .optional(),
+  steps: z
+    .array(CreateFunctionalTestingTestStepSchema)
+    .describe("Test steps to include in the test")
+    .optional(),
+});
+
+export type CreateFunctionalTestingTestParams = z.infer<
+  typeof CreateFunctionalTestingTestParamsSchema
+>;
+
+export const CreateFunctionalTestingTestResponseSchema = z.object({
+  id: z.number().describe("ID of the newly created test"),
+  url: z
+    .string()
+    .describe(
+      "Link to the created test definition in Swagger Functional Testing UI",
+    ),
+});
+
+export type CreateFunctionalTestingTestResponse = z.infer<
+  typeof CreateFunctionalTestingTestResponseSchema
+>;

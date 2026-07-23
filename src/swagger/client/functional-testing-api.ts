@@ -2,6 +2,8 @@ import { appendClientIdentity } from "../../common/info";
 import { ToolError } from "../../common/tools";
 import type {
   CancelFunctionalTestingSuiteExecutionParams,
+  CreateFunctionalTestingTestParams,
+  CreateFunctionalTestingTestResponse,
   GetFunctionalTestHistoryParams,
   GetFunctionalTestingExecutionTestParams,
   GetFunctionalTestingSuiteExecutionParams,
@@ -73,6 +75,37 @@ export class FunctionalTestingAPI {
     }
 
     return response;
+  }
+
+  async createTest(
+    args: CreateFunctionalTestingTestParams,
+  ): Promise<CreateFunctionalTestingTestResponse> {
+    const {
+      type: _type,
+      steps,
+      ...rest
+    } = args as Record<string, unknown> & {
+      steps?: unknown[];
+    };
+    const sanitizedSteps = steps?.map((step) => {
+      const { type: _stepType, ...stepRest } = step as Record<string, unknown>;
+      return { ...stepRest, type: "api" };
+    });
+    const response = await this.ftFetch(
+      `tests`,
+      {
+        method: "POST",
+        headers: this.getFtHeaders(),
+        body: JSON.stringify({
+          ...rest,
+          type: "api",
+          steps: sanitizedSteps,
+        }),
+      },
+      errorMessageFor(`create Functional Testing test`),
+    );
+
+    return response.json();
   }
 
   async listTests(): Promise<unknown> {
