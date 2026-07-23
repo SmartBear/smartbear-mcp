@@ -66,3 +66,27 @@ Edit your `claude_desktop_config.json` file:
 ```
 claude mcp add --transport http smartbear-swagger https://swagger.mcp.smartbear.com/mcp
 ```
+
+### Kiro (AWS)
+
+Add to your `~/.kiro/settings/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "smartbear-swagger": {
+      "type": "http",
+      "url": "https://swagger.mcp.smartbear.com/mcp",
+      "oauth": {
+        "redirectUri": "127.0.0.1:8080",
+        "oauthScopes": []
+      },
+      "disabled": false
+    }
+  }
+}
+```
+
+Or install with one click:
+
+[![Add to Kiro](https://kiro.dev/images/add-to-kiro.svg)](https://kiro.dev/launch/mcp/add?name=smartbear-swagger&config=%7B%22type%22%3A%22http%22%2C%22url%22%3A%22https%3A%2F%2Fswagger.mcp.smartbear.com%2Fmcp%22%2C%22oauth%22%3A%7B%22redirectUri%22%3A%22127.0.0.1%3A8080%22%2C%22oauthScopes%22%3A%5B%5D%7D%2C%22disabled%22%3Afalse%7D)
