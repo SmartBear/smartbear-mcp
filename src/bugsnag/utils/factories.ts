@@ -1,4 +1,5 @@
 import type {
+  CollaboratorApiView,
   ErrorApiView,
   EventApiView,
   ReleaseApiView,
@@ -144,5 +145,28 @@ export function getMockTrace(name: string, type: string): TraceField {
       match_types: [<any>"eq"],
     },
     custom: true,
+  };
+}
+
+export function getMockCollaborator(
+  id: string,
+  name: string,
+  email: string,
+  extra: Partial<CollaboratorApiView> = {},
+): CollaboratorApiView {
+  return {
+    id,
+    name,
+    email,
+    show_time_in_utc: false,
+    heroku: false,
+    created_at: new Date().toISOString(),
+    is_admin: false,
+    pending_invitation: false,
+    project_ids: ["proj-1"],
+    paid_for: true,
+    project_roles: {},
+    managed_by_smartbear_id: false,
+    ...extra,
   };
 }

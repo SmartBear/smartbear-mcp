@@ -42,6 +42,8 @@ import { ListProjects } from "./tool/project/list-projects";
 import { GetBuild } from "./tool/release/get-build";
 import { GetRelease } from "./tool/release/get-release";
 import { ListReleases } from "./tool/release/list-releases";
+import { ListProjectCollaborators } from "./tool/project/list-project-collaborators";
+
 
 const HUB_PREFIX = "00000";
 const DEFAULT_DOMAIN = "bugsnag.com";
@@ -451,6 +453,7 @@ export class BugsnagClient implements Client {
       new ListTraceFields(this),
       new GetNetworkEndpointGroupings(this),
       new SetNetworkEndpointGroupings(this),
+      new ListProjectCollaborators(this),
     ];
 
     for (const tool of tools) {
