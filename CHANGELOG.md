@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - [Swagger] Adjusted some of the Swagger Functional Testing tools responses to return `url` of test or test Suite execution.
+- [Swagger] Added Kiro (AWS) setup instructions and one-click install badge for the Swagger Remote MCP Server.
 
 ## [0.32.0] - 2026-07-23
 
