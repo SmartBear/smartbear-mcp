@@ -544,6 +544,68 @@ describe("UpdateTestCase", () => {
       expect(mergedBody.objective).toBe("Original objective"); // Preserved
     });
 
+    it("should expand a primitive folder ID into a folder object", async () => {
+      const args = {
+        testCaseKey: "SA-T10",
+        id: 12345,
+        key: "SA-T10",
+        name: "Original Test Case",
+        project: { id: 100 },
+        priority: { id: 1 },
+        status: { id: 1 },
+        folder: 456,
+      };
+
+      await instance.handle(args, EXTRA_REQUEST_HANDLER);
+
+      const putCall = mockClient.getApiClient().put.mock.calls[0];
+      const mergedBody = putCall[1];
+
+      expect(mergedBody.folder).toEqual({ id: 456 });
+    });
+
+    it("should expand a primitive owner accountId into an owner object", async () => {
+      const args = {
+        testCaseKey: "SA-T10",
+        id: 12345,
+        key: "SA-T10",
+        name: "Original Test Case",
+        project: { id: 100 },
+        priority: { id: 1 },
+        status: { id: 1 },
+        owner: "5b10a2844c20165700ede21g",
+      };
+
+      await instance.handle(args, EXTRA_REQUEST_HANDLER);
+
+      const putCall = mockClient.getApiClient().put.mock.calls[0];
+      const mergedBody = putCall[1];
+
+      expect(mergedBody.owner).toEqual({
+        accountId: "5b10a2844c20165700ede21g",
+      });
+    });
+
+    it("should expand a primitive component ID into a component object", async () => {
+      const args = {
+        testCaseKey: "SA-T10",
+        id: 12345,
+        key: "SA-T10",
+        name: "Original Test Case",
+        project: { id: 100 },
+        priority: { id: 1 },
+        status: { id: 1 },
+        component: 789,
+      };
+
+      await instance.handle(args, EXTRA_REQUEST_HANDLER);
+
+      const putCall = mockClient.getApiClient().put.mock.calls[0];
+      const mergedBody = putCall[1];
+
+      expect(mergedBody.component).toEqual({ id: 789 });
+    });
+
     it("Links and the createdOn field should not be included in the PUT request", async () => {
       const args = {
         testCaseKey: "SA-T10",
