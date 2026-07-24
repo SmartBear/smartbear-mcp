@@ -75,7 +75,7 @@ describe("deepMerge", () => {
     expect(result).toEqual({ labels: ["new", "labels"] });
   });
 
-  it("should replace non-plain objects (e.g. Date) wholesale", () => {
+  it("should replace non-plain objects (e.g. Date) completely", () => {
     const baseObject = { when: new Date("2020-01-01T00:00:00Z") };
     const updated = new Date("2024-06-01T00:00:00Z");
     const result = deepMerge(baseObject, { when: updated }, passthrough);

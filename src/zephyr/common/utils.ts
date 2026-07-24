@@ -8,7 +8,7 @@ import { z } from "zod";
  * - `undefined` in `objectWithUpdates` is skipped (the base value is kept).
  * - `null` is treated as a real value and overwrites the base value.
  * - Plain objects are merged recursively; arrays and non-plain objects
- *   (e.g. Date, Map, class instances) are replaced wholesale.
+ *   (e.g. Date, Map, class instances) are replaced completely.
  *
  * The merged result is parsed through `targetSchema` so the output shape/type
  * is guaranteed. The schema is deep-stripped first (see {@link deepStrip}), so
@@ -49,7 +49,7 @@ function mergeValues(base: unknown, updated: unknown): unknown {
     return result;
   }
 
-  // Primitives, arrays, null, and non-plain objects: overwrite wholesale.
+  // Primitives, arrays, null, and non-plain objects: overwrite the whole value.
   return updated;
 }
 
