@@ -9,13 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- [Swagger] Adjusted some of the Swagger Functional Testing tools responses to return `url` of test or test Suite execution.
-- [QTM4J] Added test execution tools to start executions, update test case and step executions.
-- [QTM4J] Added API request tracking.
+- [Swagger] Added `create_test` Functional Testing tool that creates a new API test with set of steps.
+
+## [0.32.0] - 2026-07-23
+
+### Added
+
+- [QTM4J] Added test execution tools to start executions, update test case and step executions. [#604](https://github.com/SmartBear/smartbear-mcp/pull/604)
+- [QTM4J] Added API request tracking. [#604](https://github.com/SmartBear/smartbear-mcp/pull/604)
 
 ### Fixed
 
-- [QTM4J] Fixed `search_test_cases` response validation errors when test case fields are missing.
+- [QTM4J] Fixed `search_test_cases` response validation errors when test case fields are missing. [#604](https://github.com/SmartBear/smartbear-mcp/pull/604)
 
 ## [0.31.0] - 2026-07-16
 
@@ -24,11 +29,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [BearQ] Remove draft-test refinement tools and add `bearq_delete_test_cases` [#593](https://github.com/SmartBear/smartbear-mcp/pull/593)
 - [Zephyr] Refactor to keep REST API schemas unmodified and ensure correct payload for update operations [#609](https://github.com/SmartBear/smartbear-mcp/pull/609)
 
+### Fixed
+
+- [Swagger] Adjusted some of the Swagger Functional Testing tools responses to return `url` of test or test Suite execution.
+
 ## [0.30.0] - 2026-07-16
 
 ### Added
 
-- [Swagger] Added `get_test_history` Functional Testing tool that retrieves the execution history for a given test, returning past runs with pass/fail status, run time, creation timestamp, and per-step failure details for failed runs.
 - [Swagger] Added output schemas to Swagger Portal and Registry tools, enabling structured, validated responses for all portal, product, section, document, table-of-contents, and registry operations.
 - [Swagger] Introduced tool constants (`READ_ONLY`, `WRITE`, `WRITE_DESTRUCTIVE`) to annotate each Swagger tool with semantic flags (`readOnly`, `openWorld`, `destructive`) for better client-side tool classification.
 - [Swagger] Added `get_test_history` Functional Testing tool that retrieves the execution history for a given test, returning past runs with pass/fail status, run time, creation timestamp, and per-step failure details for failed runs.
