@@ -1,5 +1,6 @@
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ZodRawShape, z as zod } from "zod";
+import type { ZodRawShape } from "zod";
+import { z as zod } from "zod";
 import { Tool } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { ZephyrClient } from "../../client";
@@ -7,8 +8,31 @@ import {
   type GetTestCase200Response,
   UpdateTestCaseBody,
   UpdateTestCaseParams,
+  updateTestCaseBodyOwnerAccountIdRegExp,
 } from "../../common/rest-api-schemas";
 import { deepMerge } from "../../common/utils";
+
+// The update API expects a folder/component/owner as `{ id }` / `{ accountId }`
+// optional objects, but that optional objects are not supported the same way by all LLMs.
+// Expose them as plain IDs here and expand them back into objects before merging into the
+// real UpdateTestCaseBody shape (i.e., the one required by the REST API).
+const UpdateTestCaseBodyToolInput = UpdateTestCaseBody.extend({
+  folder: zod
+    .number()
+    .min(1)
+    .nullish()
+    .describe("The ID of the folder to move the test case into."),
+  component: zod
+    .number()
+    .min(1)
+    .nullish()
+    .describe("The ID of the Jira component to associate."),
+  owner: zod
+    .string()
+    .regex(updateTestCaseBodyOwnerAccountIdRegExp)
+    .nullish()
+    .describe("Atlassian Account ID of the Jira user to set as owner."),
+}).partial();
 
 export class UpdateTestCase extends Tool<ZephyrClient> {
   specification: ToolParams = {
@@ -18,7 +42,7 @@ export class UpdateTestCase extends Tool<ZephyrClient> {
       'Update an existing Test Case in Zephyr. This operation fetches the current test case and merges your updates with it to prevent accidental property deletion. Properties which are not included in the tool call will be left unchanged. To remove a property, set it to null explicitly. For fields that accept multiple values, such as `labels`, if the field is provided, it will override the previous values. For example, if `labels` is provided with the values `["label1", "label2"]`, the Test Case will now only have those two labels, and any previous labels will be removed. If you want to add a label, you would need to specify in the prompt the intention to add a label.',
     readOnly: false,
     idempotent: true,
-    inputSchema: UpdateTestCaseParams.and(UpdateTestCaseBody.partial()),
+    inputSchema: UpdateTestCaseParams.and(UpdateTestCaseBodyToolInput),
     examples: [
       {
         description:
@@ -91,31 +115,13 @@ export class UpdateTestCase extends Tool<ZephyrClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args) => {
-    const parsed = UpdateTestCaseParams.and(UpdateTestCaseBody.partial()).parse(
+    const parsed = UpdateTestCaseParams.and(UpdateTestCaseBodyToolInput).parse(
       args,
     );
 
-    const { testCaseKey, ...rawUpdates } = parsed;
+    const { testCaseKey, ...updatesFromToolInput } = parsed;
 
-    const nullValuesObject: Record<string, any> = {};
-
-    if (rawUpdates.folder) {
-      //do nothing when null or undefined
-      nullValuesObject.folder = { id: rawUpdates.folder };
-    }
-    if (rawUpdates.owner) {
-      //do nothing when null or undefined
-      nullValuesObject.owner = { accountId: rawUpdates.owner };
-    }
-    if (rawUpdates.component) {
-      //do nothing when null or undefined
-      nullValuesObject.component = { id: rawUpdates.component };
-    }
-
-    const updates = {
-      ...rawUpdates,
-      ...nullValuesObject,
-    };
+    const updatesForRestApi = this.toRestApiUpdates(updatesFromToolInput);
 
     // Fetch the existing test case to ensure we have all properties
     // This is necessary because Zephyr's PUT endpoints requires the complete resource
@@ -123,11 +129,15 @@ export class UpdateTestCase extends Tool<ZephyrClient> {
     const existingTestCase: zod.infer<typeof GetTestCase200Response> =
       await this.client.getApiClient().get(`/testcases/${testCaseKey}`);
 
-    // Deep merge the updates with the existing test case
-    // For nested objects like customFields, we merge instead of replacing
-    const mergedBody = deepMerge(existingTestCase, updates);
-    delete mergedBody.createdOn;
-    delete mergedBody.links;
+    // Deep merge the updatesForRestApi with the existing test case, then coerce to the
+    // update body schema. For nested objects like customFields we merge instead
+    // of replacing, and the schema strips fields the PUT endpoint rejects
+    // (e.g. createdOn, links).
+    const mergedBody = deepMerge(
+      existingTestCase,
+      updatesForRestApi,
+      UpdateTestCaseBody.partial(),
+    );
 
     await this.client
       .getApiClient()
@@ -138,4 +148,32 @@ export class UpdateTestCase extends Tool<ZephyrClient> {
       content: [],
     };
   };
+
+  // Convert the tool input into updates compatible with the REST API by
+  // expanding the primitive folder/component/owner IDs back into the `{ id }` /
+  // `{ accountId }` objects the REST API's UpdateTestCaseBody shape expects.
+  private toRestApiUpdates(
+    updatesFromToolInput: zod.infer<typeof UpdateTestCaseBodyToolInput>,
+  ) {
+    const restApiCompatibleFields: Partial<
+      zod.infer<typeof UpdateTestCaseBody>
+    > = {};
+
+    if (updatesFromToolInput.folder) {
+      restApiCompatibleFields.folder = { id: updatesFromToolInput.folder };
+    }
+    if (updatesFromToolInput.owner) {
+      restApiCompatibleFields.owner = { accountId: updatesFromToolInput.owner };
+    }
+    if (updatesFromToolInput.component) {
+      restApiCompatibleFields.component = {
+        id: updatesFromToolInput.component,
+      };
+    }
+
+    return {
+      ...updatesFromToolInput,
+      ...restApiCompatibleFields,
+    };
+  }
 }

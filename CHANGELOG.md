@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [Swagger] Added `create_test` Functional Testing tool that creates a new API test with set of steps.
 
+### Changed
+
+- [Zephyr] Refactor to keep REST API schemas unmodified and ensure correct payload for update operations [#609](https://github.com/SmartBear/smartbear-mcp/pull/609)
+
 ## [0.32.0] - 2026-07-23
 
 ### Added
