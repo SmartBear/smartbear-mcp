@@ -1,5 +1,6 @@
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ZodRawShape, z as zod } from "zod";
+import type { ZodRawShape } from "zod";
+import { z as zod } from "zod";
 import { Tool } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { ZephyrClient } from "../../client";
@@ -7,8 +8,32 @@ import {
   type GetTestCycle200Response,
   UpdateTestCycleBody,
   UpdateTestCycleParams,
+  updateTestCycleBodyOwnerAccountIdRegExp,
 } from "../../common/rest-api-schemas";
 import { deepMerge } from "../../common/utils";
+
+// The update API expects folder/jiraProjectVersion/owner as `{ id }` /
+// `{ accountId }` objects, but not all LLMs handle optional nested objects the
+// same way. Expose them as plain IDs here and expand them back into objects
+// before merging into the real UpdateTestCycleBody shape (i.e., the one
+// required by the REST API).
+const UpdateTestCycleBodyToolInput = UpdateTestCycleBody.extend({
+  folder: zod
+    .number()
+    .min(1)
+    .nullish()
+    .describe("The ID of the folder to move the test cycle into."),
+  jiraProjectVersion: zod
+    .number()
+    .min(1)
+    .nullish()
+    .describe("The ID of the Jira project version (release) to associate."),
+  owner: zod
+    .string()
+    .regex(updateTestCycleBodyOwnerAccountIdRegExp)
+    .nullish()
+    .describe("Atlassian Account ID of the Jira user to set as owner."),
+}).partial();
 
 export class UpdateTestCycle extends Tool<ZephyrClient> {
   specification: ToolParams = {
@@ -18,7 +43,7 @@ export class UpdateTestCycle extends Tool<ZephyrClient> {
       "Update an existing Test Cycle in Zephyr. This operation fetches the current test cycle and merges your updates with it to prevent accidental property deletion. To remove a property, set it to null explicitly. The plannedStartDate and plannedEndDate fields cannot be cleared",
     readOnly: false,
     idempotent: true,
-    inputSchema: UpdateTestCycleParams.and(UpdateTestCycleBody.partial()),
+    inputSchema: UpdateTestCycleParams.and(UpdateTestCycleBodyToolInput),
     examples: [
       {
         description:
@@ -47,7 +72,7 @@ export class UpdateTestCycle extends Tool<ZephyrClient> {
           "Change folder and status for test cycle 'SA-R40' by setting folder id and status id.",
         parameters: {
           testCycleIdOrKey: "SA-R40",
-          folder: { id: 100006 },
+          folder: 100006,
           status: { id: 10000 },
         },
         expectedOutput:
@@ -93,43 +118,26 @@ export class UpdateTestCycle extends Tool<ZephyrClient> {
 
   handle: ToolCallback<ZodRawShape> = async (args) => {
     const parsed = UpdateTestCycleParams.and(
-      UpdateTestCycleBody.partial(),
+      UpdateTestCycleBodyToolInput,
     ).parse(args);
 
-    const { testCycleIdOrKey, ...rawUpdates } = parsed;
-    const nullValuesObject: Record<string, any> = {};
+    const { testCycleIdOrKey, ...updatesFromToolInput } = parsed;
 
-    if (rawUpdates.folder) {
-      //do nothing when null or undefined
-      nullValuesObject.folder = { id: rawUpdates.folder };
-    }
-    if (rawUpdates.owner) {
-      //do nothing when null or undefined
-      nullValuesObject.owner = { accountId: rawUpdates.owner };
-    }
-    if (rawUpdates.jiraProjectVersion) {
-      //do nothing when null or undefined
-      nullValuesObject.jiraProjectVersion = {
-        id: rawUpdates.jiraProjectVersion,
-      };
-    }
-
-    const updates: Record<string, unknown> = {
-      ...rawUpdates,
-      ...nullValuesObject,
-    };
-
-    if (updates.plannedStartDate === null) delete updates.plannedStartDate;
-    if (updates.plannedEndDate === null) delete updates.plannedEndDate;
+    const updatesForRestApi = this.toRestApiUpdates(updatesFromToolInput);
 
     // Fetch the existing test cycle to ensure we have all properties.
     // Zephyr's PUT endpoints require the complete resource and clear unspecified fields.
     const existingTestCycle: zod.infer<typeof GetTestCycle200Response> =
       await this.client.getApiClient().get(`/testcycles/${testCycleIdOrKey}`);
 
-    // Merge updates into the existing resource so unspecified fields remain unchanged.
-    const mergedBody = deepMerge(existingTestCycle, updates);
-    delete mergedBody.links;
+    // Merge updates into the existing resource so unspecified fields remain
+    // unchanged, then coerce to the update body schema, which strips fields the
+    // PUT endpoint rejects (e.g. links).
+    const mergedBody = deepMerge(
+      existingTestCycle,
+      updatesForRestApi,
+      UpdateTestCycleBody.partial(),
+    );
 
     await this.client
       .getApiClient()
@@ -140,4 +148,35 @@ export class UpdateTestCycle extends Tool<ZephyrClient> {
       content: [],
     };
   };
+
+  // Convert the tool input into updates compatible with the REST API by
+  // expanding the primitive folder/jiraProjectVersion/owner IDs back into the
+  // `{ id }` / `{ accountId }` objects the REST API's UpdateTestCycleBody shape
+  // expects. A null plannedStartDate/plannedEndDate is passed through as-is: the
+  // API treats null on those fields as "leave unchanged", so no special handling
+  // is needed here.
+  private toRestApiUpdates(
+    updatesFromToolInput: zod.infer<typeof UpdateTestCycleBodyToolInput>,
+  ) {
+    const restApiCompatibleFields: Partial<
+      zod.infer<typeof UpdateTestCycleBody>
+    > = {};
+
+    if (updatesFromToolInput.folder) {
+      restApiCompatibleFields.folder = { id: updatesFromToolInput.folder };
+    }
+    if (updatesFromToolInput.owner) {
+      restApiCompatibleFields.owner = { accountId: updatesFromToolInput.owner };
+    }
+    if (updatesFromToolInput.jiraProjectVersion) {
+      restApiCompatibleFields.jiraProjectVersion = {
+        id: updatesFromToolInput.jiraProjectVersion,
+      };
+    }
+
+    return {
+      ...updatesFromToolInput,
+      ...restApiCompatibleFields,
+    };
+  }
 }
