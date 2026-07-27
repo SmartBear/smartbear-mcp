@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - [Swagger] Added `create_test` Functional Testing tool that creates a new API test with set of steps.
+- [Zephyr] Added `Get Test Plans` tool that retrieves Test Plans using the cursor-paginated NextGen endpoint.
 
 ## [0.32.0] - 2026-07-23
 
