@@ -4,6 +4,24 @@ import type { Client } from "./types";
 import { fullyUnwrapZodType, isOptionalType } from "./zod-utils";
 
 /**
+ * Create a fresh client instance for each configuration/session.
+ * Real clients are class instances and are cloned via their constructor.
+ * Plain object mocks used in tests are returned as-is.
+ */
+function cloneClient(entry: Client): Client {
+  const withClone = entry as unknown as { clone?: () => Client };
+  if (typeof withClone.clone === "function") {
+    return withClone.clone();
+  }
+  const ctor = (entry as unknown as { constructor?: new () => Client })
+    .constructor;
+  if (ctor && (ctor as any) !== Object && typeof ctor === "function") {
+    return new ctor();
+  }
+  return entry;
+}
+
+/**
  * Central registry for all MCP clients
  * Add new clients here to make them automatically available
  */
@@ -121,23 +139,24 @@ class ClientRegistry {
   ): Promise<number> {
     let configuredCount = 0;
     entryLoop: for (const entry of this.getAll()) {
+      const client = cloneClient(entry);
       const config: Record<string, string> = {};
-      for (const configKey of Object.keys(entry.config.shape)) {
-        const value = getConfigValue(entry, configKey);
+      for (const configKey of Object.keys(client.config.shape)) {
+        const value = getConfigValue(client, configKey);
         if (value !== null) {
           // validate if a config option is an Allowed Endpoint URL
-          this.validateAllowedEndpoint(entry.config.shape[configKey], value);
+          this.validateAllowedEndpoint(client.config.shape[configKey], value);
           config[configKey] = value;
         } else if (
           !ignoreMissingRequiredConfigs &&
-          !isOptionalType(entry.config.shape[configKey])
+          !isOptionalType(client.config.shape[configKey])
         ) {
           continue entryLoop; // Skip configuring this client - missing required config
         }
       }
-      await entry.configure(server, config);
-      if (entry.isConfigured()) {
-        await server.addClient(entry);
+      await client.configure(server, config);
+      if (client.isConfigured()) {
+        await server.addClient(client);
         configuredCount++;
       }
     }
