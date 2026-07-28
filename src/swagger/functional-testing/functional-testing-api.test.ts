@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
-import { FunctionalTestingAPI, normalizePath } from "../client/functional-testing-api";
+import { FunctionalTestingAPI } from "../client/functional-testing-api";
 import {
   CreateFunctionalTestingSuiteParamsSchema,
   CreateFunctionalTestingTestParamsSchema,
+  normalizePath,
 } from "../client/functional-testing-types";
 
 const fetchMock = createFetchMock(vi);
