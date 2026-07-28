@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
-import { FunctionalTestingAPI, normalizePath } from "../client/functional-testing-api";
+import { FunctionalTestingAPI } from "../client/functional-testing-api";
+import {
+  CreateFunctionalTestingTestParamsSchema,
+  normalizePath,
+} from "../client/functional-testing-types";
 
 const fetchMock = createFetchMock(vi);
 fetchMock.enableMocks();
@@ -210,31 +214,53 @@ describe("FunctionalTestingAPI", () => {
 
       const [, init] = fetchMock.mock.calls[0];
       const body = JSON.parse((init as RequestInit).body as string);
-      expect(body.steps[0].expectedStatusCodes).toEqual([{ start: 200, end: 299 }]);
+      expect(body.steps[0].expectedStatusCodes).toEqual([
+        { start: 200, end: 299 },
+      ]);
     });
 
-    it("should normalize dot-notation paths in expectedBodyRules to bracket notation", async () => {
+    it("forwards expectedBodyRules paths already normalized by the input schema", async () => {
       fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
 
-      await api.createTest({
+      const args = CreateFunctionalTestingTestParamsSchema.parse({
         name: "Body Rule Test",
         steps: [
           {
             url: "https://example.com/api",
             httpMethod: "POST",
             expectedBodyRules: [
-              { path: "$.data.name", assertionType: "string", operator: "eq", target: "Alice" },
-              { path: "$.data.token", assertionType: "regex", pattern: "nonempty" },
+              {
+                path: "$.data.name",
+                assertionType: "string",
+                operator: "eq",
+                target: "Alice",
+              },
+              {
+                path: "$.data.token",
+                assertionType: "regex",
+                pattern: "nonempty",
+              },
             ],
           },
         ],
       });
 
+      await api.createTest(args);
+
       const [, init] = fetchMock.mock.calls[0];
       const body = JSON.parse((init as RequestInit).body as string);
       expect(body.steps[0].expectedBodyRules).toEqual([
-        { path: '["data"]["name"]', assertionType: "string", operator: "eq", target: "Alice" },
-        { path: '["data"]["token"]', assertionType: "regex", pattern: "nonempty" },
+        {
+          path: '["data"]["name"]',
+          assertionType: "string",
+          operator: "eq",
+          target: "Alice",
+        },
+        {
+          path: '["data"]["token"]',
+          assertionType: "regex",
+          pattern: "nonempty",
+        },
       ]);
     });
 
@@ -249,7 +275,12 @@ describe("FunctionalTestingAPI", () => {
             httpMethod: "GET",
             expectedBodyType: "xml",
             expectedBodyRules: [
-              { path: "$.root.item", assertionType: "string", operator: "contains", target: "foo" },
+              {
+                path: "$.root.item",
+                assertionType: "string",
+                operator: "contains",
+                target: "foo",
+              },
             ],
           },
         ],
