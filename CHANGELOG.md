@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.33.0] - 2026-07-28
+
 ### Added
 
 - [Swagger] Added `create_test` Functional Testing tool that creates a new API test with set of steps.
