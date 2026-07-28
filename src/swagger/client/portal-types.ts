@@ -186,7 +186,7 @@ export const CreatePortalArgsSchema = z.object({
   subdomain: z
     .string()
     .describe(
-      "The portal subdomain - used in the portal URL (e.g., 'myportal' for myportal.example.com). Must be unique, lowercase, 3-20 characters, alphanumeric with hyphens",
+      "The portal subdomain - used in the portal URL (e.g., 'myportal' for myportal.example.com). Must be unique, lowercase, 3-20 characters, alphanumeric with hyphens. Recommended: slugified organization name plus a random 3-character suffix (e.g., 'acmecorp-k7p') to avoid collisions",
     ),
   offline: z
     .boolean()

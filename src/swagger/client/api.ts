@@ -33,7 +33,6 @@ import type {
 import {
   buildPortalName,
   buildSubdomainCandidate,
-  buildSuffixedSubdomain,
   isConflictError,
   isOrganizationPortalConflict,
 } from "./portal-utils";
@@ -460,19 +459,15 @@ export class SwaggerAPI {
   /**
    * Create a portal for an organization that has none yet. The subdomain is
    * derived from the organization name; on a subdomain conflict a candidate
-   * suffixed with part of the organization UUID is retried.
+   * with a fresh random suffix is retried.
    */
   private async createPortalForOrganization(
     organizationId: string,
   ): Promise<{ portal: Portal; created: boolean }> {
     const organization = await this.findOrganizationById(organizationId);
-    const baseSubdomain = buildSubdomainCandidate(
-      organizationId,
-      organization?.name,
-    );
     const candidates = [
-      baseSubdomain,
-      buildSuffixedSubdomain(baseSubdomain, organizationId),
+      buildSubdomainCandidate(organization?.name),
+      buildSubdomainCandidate(organization?.name),
     ];
 
     const portalName = buildPortalName(organization?.name);
