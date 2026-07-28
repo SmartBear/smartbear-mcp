@@ -4,6 +4,29 @@ import { clientRegistry } from "./client-registry";
 import type { SmartBearMcpServer } from "./server";
 import type { Client } from "./types";
 
+class StatefulClient implements Client {
+  name = "stateful";
+  capabilityPrefix = "stateful";
+  configPrefix = "Stateful";
+  config = z.object({ endpoint: z.url() });
+
+  endpoint?: string;
+  configured = false;
+
+  async configure(_server: SmartBearMcpServer, config: any): Promise<void> {
+    this.endpoint = config.endpoint;
+    this.configured = true;
+  }
+
+  isConfigured(): boolean {
+    return this.configured;
+  }
+
+  registerTools(): Promise<void> {
+    return Promise.resolve();
+  }
+}
+
 describe("ClientRegistry", () => {
   let mockServer: SmartBearMcpServer;
   let mockClient: Client;
@@ -585,6 +608,33 @@ describe("ClientRegistry", () => {
         // Invalid client should not be configured
         expect(invalidClient.configure).not.toHaveBeenCalled();
       });
+    });
+
+    it("clones class-based clients so each session gets its own state", async () => {
+      const original = new StatefulClient();
+      clientRegistry.register(original);
+
+      const getConfig = vi
+        .fn()
+        .mockReturnValueOnce("https://first.example.com")
+        .mockReturnValueOnce("https://second.example.com");
+
+      const firstCount = await clientRegistry.configure(mockServer, getConfig);
+      const secondCount = await clientRegistry.configure(mockServer, getConfig);
+
+      expect(firstCount).toBe(1);
+      expect(secondCount).toBe(1);
+
+      const added = vi
+        .mocked(mockServer.addClient)
+        .mock.calls.map((call) => call[0] as StatefulClient);
+      expect(added.length).toBe(2);
+      expect(added[0]).not.toBe(original);
+      expect(added[1]).not.toBe(original);
+      expect(added[0]).not.toBe(added[1]);
+      expect(added[0].endpoint).toBe("https://first.example.com");
+      expect(added[1].endpoint).toBe("https://second.example.com");
+      expect(original.endpoint).toBeUndefined();
     });
   });
 });
