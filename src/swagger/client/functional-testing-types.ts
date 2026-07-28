@@ -1,5 +1,25 @@
 import { z } from "zod";
 
+/**
+ * Converts dot-notation JSON paths (e.g. "$.data.name", "items[0].id") to the
+ * bracket notation the reflect frontend expects (e.g. ["data"]["name"], ["items"][0]["id"]).
+ * Paths already in bracket notation are returned unchanged.
+ */
+export function normalizePath(path: string): string {
+  if (path.startsWith("[")) return path;
+  const stripped = path.replace(/^\$\.?/, "");
+  if (!stripped) return "";
+  return stripped
+    .split(".")
+    .map((segment) =>
+      segment.replace(
+        /^([^[]+)(.*)$/,
+        (_m, name, rest) => `["${name}"]${rest}`,
+      ),
+    )
+    .join("");
+}
+
 export const RunFunctionalTestingTestParamsSchema = z.object({
   testId: z
     .string()
@@ -257,12 +277,23 @@ export const CreateFunctionalTestingTestHeaderSchema = z.object({
 export const HTTP_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"] as const;
 
 export const CreateFunctionalTestingStatusRangeSchema = z.object({
-  start: z.number().int().describe("Start of the HTTP status code range, inclusive"),
-  end: z.number().int().describe("End of the HTTP status code range, inclusive"),
+  start: z
+    .number()
+    .int()
+    .describe("Start of the HTTP status code range, inclusive"),
+  end: z
+    .number()
+    .int()
+    .describe("End of the HTTP status code range, inclusive"),
 });
 
 export const CreateFunctionalTestingBodyRuleSchema = z.object({
-  path: z.string().describe("Path to the field to assert. Accepts dot notation (e.g. '$.data.id', 'items[0].name') or bracket notation (e.g. '[\"data\"][\"id\"]')."),
+  path: z
+    .string()
+    .describe(
+      "Path to the field to assert. Accepts dot notation (e.g. '$.data.id', 'items[0].name') or bracket notation (e.g. '[\"data\"][\"id\"]').",
+    )
+    .transform(normalizePath),
   assertionType: z
     .enum(["string", "number", "regex"])
     .describe("Type of assertion"),
@@ -270,13 +301,22 @@ export const CreateFunctionalTestingBodyRuleSchema = z.object({
     .enum(["eq", "lt", "gt", "lte", "gte", "contains"])
     .optional()
     .describe("Comparison operator for compare assertions"),
-  target: z.string().optional().describe("Expected value for compare assertions"),
+  target: z
+    .string()
+    .optional()
+    .describe("Expected value for compare assertions"),
   targets: z
     .array(z.string())
     .optional()
     .describe("List of allowed values for list-match assertions"),
-  lower: z.string().optional().describe("Lower bound for number range assertions"),
-  upper: z.string().optional().describe("Upper bound for number range assertions"),
+  lower: z
+    .string()
+    .optional()
+    .describe("Lower bound for number range assertions"),
+  upper: z
+    .string()
+    .optional()
+    .describe("Upper bound for number range assertions"),
   pattern: z
     .enum(["nonempty"])
     .optional()
@@ -310,11 +350,15 @@ export const CreateFunctionalTestingTestStepSchema = z.object({
   expectedStatusCodes: z
     .array(CreateFunctionalTestingStatusRangeSchema)
     .optional()
-    .describe("Expected HTTP status code ranges, e.g. [{start: 200, end: 299}]"),
+    .describe(
+      "Expected HTTP status code ranges, e.g. [{start: 200, end: 299}]",
+    ),
   expectedBody: z
     .string()
     .optional()
-    .describe("Expected response body (required when expectedBodyRules is set)"),
+    .describe(
+      "Expected response body (required when expectedBodyRules is set)",
+    ),
   expectedBodyType: z
     .enum(["json", "xml"])
     .optional()
