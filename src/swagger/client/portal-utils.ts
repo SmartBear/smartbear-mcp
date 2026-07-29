@@ -51,9 +51,9 @@ export function convertToValidSubdomain(
 /**
  * Append a random "-<suffix>" to a subdomain base while staying within the
  * maximum length. Each call yields a fresh candidate, used to retry portal
- * creation after a subdomain conflict. Deliberately stricter than the Portal
- * UI equivalent: the suffix is padded to a full 3 characters and no hyphen is
- * left at the cut point, so the result always stays subdomain-valid.
+ * creation after a subdomain conflict. The suffix is padded to a full 3
+ * characters and no hyphen is left at the cut point; the base must already be
+ * a sanitized slug (see convertToValidSubdomain) for the result to be valid.
  */
 export function appendRandomSuffix(
   base: string,
