@@ -323,7 +323,7 @@ export const TOOLS: SwaggerToolParams[] = [
     title: "Standardize API",
     toolset: "Registry API",
     summary:
-      "Standardize and fix an API definition using AI to ensure compliance with governance policies. Scans the API definition for standardization errors and automatically fixes them using SmartBear AI. Optionally provide 'newVersion' (e.g. patch bump '1.0.0' → '1.0.1') to save the fixed definition as a new version — omitting it will overwrite the current version. Returns the number of errors found, the fixed definition, and a URL to view the standardized API (URL is environment-specific and determined by the server configuration). Use this tool when users ask to standardize, fix, govern, or ensure governance compliance of APIs.",
+      "Standardize and fix an API definition using AI to ensure compliance with governance policies. Scans the API definition for standardization errors and automatically fixes them using SmartBear AI. Optionally provide 'newVersion' (e.g. patch bump '1.0.0' → '1.0.1') to save the fixed definition as a new version — omitting it will overwrite the current version. Returns the number of errors found, the fixed definition, and a URL to view the standardized API. Use this tool when users ask to standardize, fix, govern, or ensure governance compliance of APIs.",
     inputSchema: StandardizeApiParamsSchema,
     outputSchema: StandardizeOutputSchema,
     handler: "standardizeApi",
