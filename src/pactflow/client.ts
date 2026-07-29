@@ -1,11 +1,10 @@
 import z from "zod";
-
+import type { CacheService } from "../common/cache";
 import { getUserAgent } from "../common/info";
 import {
   isSamplingPolyfillResult,
   type SamplingPolyfillResult,
 } from "../common/pollyfills";
-import type { CacheService } from "../common/cache";
 import { getRequestHeader } from "../common/request-context";
 import type { SmartBearMcpServer } from "../common/server";
 import { ToolError } from "../common/tools";
@@ -54,11 +53,11 @@ import type {
   UpdatePacticipantInput,
   UpdateVersionInput,
 } from "./client/base";
+import { withPagination } from "./client/pagination";
 import {
   getOADMatcherRecommendations,
   getUserMatcherSelection,
 } from "./client/prompt-utils";
-import { withPagination } from "./client/pagination";
 import { PROMPTS } from "./client/prompts";
 import { type ClientType, TOOLS } from "./client/tools";
 

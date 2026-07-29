@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - [Swagger] Added `create_test` Functional Testing tool that creates a new API test with set of steps.
+- [PactFlow] Added `pageNumber`/`pageSize` pagination (default page size 5) across list and Bi-Directional Contract Testing tools, with tool-layer caching for PactFlow endpoints that don't paginate natively. [#623](https://github.com/SmartBear/smartbear-mcp/pull/623)
 
 ### Changed
 

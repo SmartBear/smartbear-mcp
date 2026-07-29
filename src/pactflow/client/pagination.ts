@@ -1,8 +1,17 @@
-import { createHash } from "node:crypto";
+import { createHmac, randomBytes } from "node:crypto";
 import type { CacheService } from "../../common/cache";
 
 /** TTL for tool-layer pagination cache entries, distinct from CacheService's global default. */
 export const PAGINATION_CACHE_TTL_SECONDS = 30;
+
+/**
+ * Process-local secret used to key the cache-key HMAC below. Generated once
+ * per process and never derived from (or persisted alongside) caller
+ * credentials — this keeps `buildCacheKey` from ever running a bare hash
+ * over an auth token, while still deriving a stable, collision-safe key for
+ * the lifetime of this process.
+ */
+const CACHE_KEY_SECRET = randomBytes(32);
 
 export interface PaginationMeta {
   pageNumber: number;
@@ -39,7 +48,7 @@ export function buildCacheKey(
   authToken: string | undefined,
 ): string {
   const raw = `${handlerName}|${stableStringify(keyParams)}|${baseUrl}|${authToken ?? ""}`;
-  return createHash("sha256").update(raw).digest("hex");
+  return createHmac("sha256", CACHE_KEY_SECRET).update(raw).digest("hex");
 }
 
 function buildMeta(
