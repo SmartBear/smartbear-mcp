@@ -523,3 +523,150 @@ describe("TOOLS definitions for deployed/released version tools", () => {
     });
   }
 });
+
+describe("Group A pagination defaults", () => {
+  const casesUsingPageNumber: Array<{
+    title: string;
+    base: Record<string, unknown>;
+  }> = [
+    { title: "List Pacticipants", base: {} },
+    { title: "List Branches", base: { pacticipantName: "p" } },
+    { title: "List Pacticipant Versions", base: { pacticipantName: "p" } },
+    {
+      title: "Get Branch Versions",
+      base: { pacticipantName: "p", branchName: "b" },
+    },
+    { title: "List Labels", base: {} },
+    { title: "Get Audit Log", base: {} },
+  ];
+
+  it.each(
+    casesUsingPageNumber,
+  )("$title defaults pageNumber=1 and pageSize=5", ({ title, base }) => {
+    const tool = TOOLS.find((t) => t.title === title);
+    expect(tool).toBeDefined();
+    const schema = tool?.inputSchema as ZodObject<{
+      [key: string]: ZodTypeAny;
+    }>;
+    const parsed = schema.parse(base);
+    expect(parsed.pageNumber).toBe(1);
+    expect(parsed.pageSize).toBe(5);
+  });
+
+  it.each([
+    "Admin List Users",
+    "Admin List Teams",
+  ])("%s defaults page=1 and size=5", (title) => {
+    const tool = TOOLS.find((t) => t.title === title);
+    expect(tool).toBeDefined();
+    const schema = tool?.inputSchema as ZodObject<{
+      [key: string]: ZodTypeAny;
+    }>;
+    const parsed = schema.parse({});
+    expect(parsed.page).toBe(1);
+    expect(parsed.size).toBe(5);
+  });
+});
+
+describe("Group B non-BDCT pagination", () => {
+  const paginatedTitles = [
+    "Get Provider States",
+    "List Environments",
+    "List Integrations",
+    "Get Integrations by Team",
+    "List Webhooks",
+    "List Secrets",
+    "Admin List Roles",
+    "Admin List Permissions",
+    "Admin List Team Users",
+    "List Pacticipants by Label",
+    "Get Currently Deployed Versions",
+    "Get Currently Supported Versions",
+    "Get Deployed Versions for Version",
+    "Get Released Versions for Version",
+    "Get Pacticipant Network",
+    "List API Tokens",
+    "Admin Get System Account Tokens",
+  ];
+
+  it.each(
+    paginatedTitles,
+  )("%s is flagged paginated with pageNumber/pageSize defaults", (title) => {
+    const tool = TOOLS.find((t) => t.title === title);
+    expect(tool).toBeDefined();
+    expect(tool?.paginated).toBe(true);
+    const schema = tool?.inputSchema as ZodObject<{
+      [key: string]: ZodTypeAny;
+    }>;
+    const parsed = schema.parse(
+      title === "Get Provider States"
+        ? { provider: "x" }
+        : title === "Get Integrations by Team"
+          ? { teamId: "t" }
+          : title === "List Pacticipants by Label"
+            ? { labelName: "l" }
+            : title === "Get Currently Deployed Versions" ||
+                title === "Get Currently Supported Versions"
+              ? { environmentId: "e" }
+              : title === "Get Deployed Versions for Version" ||
+                  title === "Get Released Versions for Version"
+                ? {
+                    pacticipantName: "p",
+                    versionNumber: "1",
+                    environmentId: "e",
+                  }
+                : title === "Get Pacticipant Network"
+                  ? { pacticipantName: "p" }
+                  : title === "Admin Get System Account Tokens"
+                    ? { accountId: "a" }
+                    : title === "Admin List Team Users"
+                      ? { teamId: "t" }
+                      : {},
+    );
+    expect(parsed.pageNumber).toBe(1);
+    expect(parsed.pageSize).toBe(5);
+  });
+});
+
+describe("Group B BDCT pagination", () => {
+  const bdctTitles = [
+    "Get BDCT Provider Contract",
+    "Get BDCT Provider Contract Verification Results",
+    "Get BDCT Consumer Contracts",
+    "Get BDCT Consumer Contract Verification Results",
+    "Get BDCT Cross-Contract Verification Results",
+    "Get BDCT Consumer by Consumer Version",
+    "Get BDCT Provider by Consumer Version",
+    "Get BDCT Provider Check Results by Consumer",
+    "Get BDCT Consumer Pact Test Results by Consumer",
+    "Get BDCT X-Contract Test Results by Consumer",
+  ];
+
+  it.each(
+    bdctTitles,
+  )("%s is flagged paginated with pageNumber/pageSize defaults", (title) => {
+    const tool = TOOLS.find((t) => t.title === title);
+    expect(tool).toBeDefined();
+    expect(tool?.paginated).toBe(true);
+    const schema = tool?.inputSchema as ZodObject<{
+      [key: string]: ZodTypeAny;
+    }>;
+    const isByConsumer =
+      title.includes("by Consumer") ||
+      title.includes("Consumer Version") ||
+      title.includes("Consumer Pact Test") ||
+      title.includes("X-Contract");
+    const parsed = schema.parse(
+      isByConsumer
+        ? {
+            providerName: "prov",
+            providerVersionNumber: "1.0.0",
+            consumerName: "cons",
+            consumerVersionNumber: "2.0.0",
+          }
+        : { providerName: "prov", providerVersionNumber: "1.0.0" },
+    );
+    expect(parsed.pageNumber).toBe(1);
+    expect(parsed.pageSize).toBe(5);
+  });
+});
