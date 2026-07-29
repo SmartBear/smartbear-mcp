@@ -1508,7 +1508,7 @@ export class SwaggerAPI {
       );
     }
 
-    // Attach `url` only when the server returned a non-empty `savedVersion`. 
+    // Attach `url` only when the server returned a non-empty `savedVersion`.
     // Always ensure `errorsFound` exists (default 0) so callers don't have to guard.
     const updated: StandardizeApiResponse = {
       ...result,
