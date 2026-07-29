@@ -30,9 +30,9 @@ The Swagger Functional Testing client provides tools for discovering and executi
 
 #### `create_test`
 
-- Purpose: Creates a new API test in your Swagger Functional Testing workspace based on given API spec. Use this tool when you need to create an end-to-end test for a given API spec.
+- Purpose: Creates a new API test in your Swagger Functional Testing workspace. Use this tool when you need to create an end-to-end API test, either from an existing API spec or by directly providing the request steps (URL, HTTP method, headers, body, redirect handling).
 - Returns: The created test ID and the URL to test definition; the ID can be used with `run_test` to run it.
-- Use case: Create an API test by providing an existing API spec.
+- Use case: Create an API test from an existing API spec or from directly supplied endpoint data.
 
 ---
 
