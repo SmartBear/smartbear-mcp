@@ -30,13 +30,12 @@ export function convertToValidSubdomain(
   value = "",
   rng: Rng = Math.random,
 ): string {
-  let converted =
-    value
-      .toLowerCase()
-      .replace(/[^a-z0-9-]+/g, "")
-      .split("-")
-      .filter(Boolean)
-      .join("-") || "";
+  let converted = value
+    .toLowerCase()
+    .replace(/[^a-z0-9-]+/g, "")
+    .split("-")
+    .filter(Boolean)
+    .join("-");
   while (converted.length < SUBDOMAIN_MIN_LENGTH) {
     converted = `${converted}${Math.floor(rng() * 10)}`;
   }
@@ -52,14 +51,18 @@ export function convertToValidSubdomain(
 /**
  * Append a random "-<suffix>" to a subdomain base while staying within the
  * maximum length. Each call yields a fresh candidate, used to retry portal
- * creation after a subdomain conflict.
+ * creation after a subdomain conflict. Deliberately stricter than the Portal
+ * UI equivalent: the suffix is padded to a full 3 characters and no hyphen is
+ * left at the cut point, so the result always stays subdomain-valid.
  */
 export function appendRandomSuffix(
   base: string,
   rng: Rng = Math.random,
 ): string {
-  const randomChars = `-${rng().toString(36).substring(2, 5)}`;
-  const baseSlug = base.slice(0, SUBDOMAIN_MAX_LENGTH - randomChars.length);
+  const randomChars = `-${rng().toString(36).substring(2, 5).padEnd(3, "0")}`;
+  const baseSlug = base
+    .slice(0, SUBDOMAIN_MAX_LENGTH - randomChars.length)
+    .replace(/-+$/, "");
   return `${baseSlug}${randomChars}`;
 }
 

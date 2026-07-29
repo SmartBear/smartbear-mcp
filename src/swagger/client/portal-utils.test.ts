@@ -9,7 +9,8 @@ import {
 
 const SUBDOMAIN_REGEX = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
-const suffixFor = (r: number) => r.toString(36).substring(2, 5);
+const suffixFor = (r: number) =>
+  r.toString(36).substring(2, 5).padEnd(3, "0");
 
 const constRng =
   (value: number): Rng =>
@@ -62,6 +63,22 @@ describe("appendRandomSuffix", () => {
     const first = appendRandomSuffix("acmecorp", constRng(0.111111));
     const second = appendRandomSuffix("acmecorp", constRng(0.777777));
     expect(first).not.toBe(second);
+  });
+
+  it("strips a hyphen left at the cut point when trimming the base", () => {
+    // 15 chars + "-" + 4 chars: the slice to fit the suffix cuts right after
+    // the hyphen, which must not survive as "--" in the result.
+    const base = `${"a".repeat(15)}-${"b".repeat(4)}`;
+    const subdomain = appendRandomSuffix(base, constRng(0.123456789));
+    expect(subdomain).toBe(`${"a".repeat(15)}-${suffixFor(0.123456789)}`);
+    expect(subdomain).toMatch(SUBDOMAIN_REGEX);
+  });
+
+  it("pads the suffix to 3 characters when the base-36 expansion is short", () => {
+    // (0).toString(36) === "0" and (0.5).toString(36) === "0.i" would yield
+    // empty or 1-char suffixes without padding.
+    expect(appendRandomSuffix("acmecorp", constRng(0))).toBe("acmecorp-000");
+    expect(appendRandomSuffix("acmecorp", constRng(0.5))).toBe("acmecorp-i00");
   });
 });
 

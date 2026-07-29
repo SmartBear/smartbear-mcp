@@ -1083,7 +1083,8 @@ describe("SwaggerAPI", () => {
     const jsonHeaders = { "content-type": "application/json" };
 
     const suffixRandom = 0.123456789;
-    const suffixFor = (r: number) => r.toString(36).substring(2, 5);
+    const suffixFor = (r: number) =>
+      r.toString(36).substring(2, 5).padEnd(3, "0");
 
     beforeEach(() => {
       vi.spyOn(Math, "random").mockReturnValue(suffixRandom);
