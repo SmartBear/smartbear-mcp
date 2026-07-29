@@ -9,8 +9,7 @@ import {
 
 const SUBDOMAIN_REGEX = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
-const suffixFor = (r: number) =>
-  r.toString(36).substring(2, 5).padEnd(3, "0");
+const suffixFor = (r: number) => r.toString(36).substring(2, 5).padEnd(3, "0");
 
 const constRng =
   (value: number): Rng =>

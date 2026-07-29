@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+
+- [Swagger] `resolve_organization_portal` tool: the generated subdomain now follows the Portal UI convention - slugified organization name plus a random 3-character suffix (e.g. `acmecorp-k7p`), appended even without a collision.
+- [Swagger] `create_portal` tool: the `subdomain` parameter description now recommends the same convention, while the client still picks the value.
+
 ## [0.33.0] - 2026-07-28
 
 ### Added
