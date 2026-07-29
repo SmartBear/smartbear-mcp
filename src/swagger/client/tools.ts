@@ -317,6 +317,7 @@ export const TOOLS: SwaggerToolParams[] = [
     outputSchema: CreateApiFromPromptOutputSchema,
     handler: "createApiFromPrompt",
     ...WRITE_DESTRUCTIVE,
+    openWorld: true,
   },
   {
     title: "Standardize API",
@@ -327,6 +328,7 @@ export const TOOLS: SwaggerToolParams[] = [
     outputSchema: StandardizeOutputSchema,
     handler: "standardizeApi",
     ...WRITE_DESTRUCTIVE,
+    openWorld: true,
   },
 
   ...FUNCTIONAL_TESTING_TOOLS,
