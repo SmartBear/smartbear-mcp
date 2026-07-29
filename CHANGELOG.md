@@ -7,9 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.33.0] - 2026-07-28
+
 ### Added
 
 - [Swagger] Added `create_test` Functional Testing tool that creates a new API test with set of steps.
+- [Zephyr] Added `Get Test Plans` tool that retrieves Test Plans using the cursor-paginated NextGen endpoint.
+
+### Changed
+
+- [Zephyr] Refactor to keep REST API schemas unmodified and ensure correct payload for update operations [#609](https://github.com/SmartBear/smartbear-mcp/pull/609)
+
+### Security
+
+- Fixed session isolation vulnerability (Base Path Injection / SSRF): `ClientRegistry.configure()` now calls `cloneClient()` to produce a fresh client instance per session, preventing per-session state (base-path URLs, auth tokens) stored on one session's client from leaking into concurrent sessions.
+- Fixed credential leakage vulnerability: because each session receives its own client clone, an unauthenticated session no longer inherits a previously authenticated session's `SwaggerClient` API instance or API key. An unauthenticated session has no Swagger tools available.
+- [Swagger] Changed `portal_base_path`, `registry_base_path`, `ui_base_path`, and `functional_testing_base_path` config fields from `z.string()` to `z.url()`, enabling allowlist enforcement via `MCP_ALLOWED_ENDPOINTS` and rejecting non-URL values at parse time.
 
 ## [0.32.0] - 2026-07-23
 

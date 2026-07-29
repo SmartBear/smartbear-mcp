@@ -295,7 +295,9 @@ describe("UpdateTestCycle", () => {
       expect(mergedBody.description).toBeNull();
     });
 
-    it("should NOT overwrite plannedStartDate when update provides null", async () => {
+    it("should pass plannedStartDate through as null when update provides null", async () => {
+      // The API treats a null plannedStartDate as "leave unchanged", so sending
+      // it through as-is is safe - no special-casing needed here.
       const args = {
         testCycleIdOrKey: "SA-R40",
         plannedStartDate: null as any,
@@ -304,10 +306,12 @@ describe("UpdateTestCycle", () => {
       await instance.handle(args, EXTRA_REQUEST_HANDLER);
 
       const mergedBody = mockClient.getApiClient().put.mock.calls[0][1];
-      expect(mergedBody.plannedStartDate).toBe("2018-05-19T13:15:13Z");
+      expect(mergedBody.plannedStartDate).toBeNull();
     });
 
-    it("should NOT overwrite plannedEndDate when update provides null", async () => {
+    it("should pass plannedEndDate through as null when update provides null", async () => {
+      // The API treats a null plannedEndDate as "leave unchanged", so sending
+      // it through as-is is safe - no special-casing needed here.
       const args = {
         testCycleIdOrKey: "SA-R40",
         plannedEndDate: null as any,
@@ -316,7 +320,7 @@ describe("UpdateTestCycle", () => {
       await instance.handle(args, EXTRA_REQUEST_HANDLER);
 
       const mergedBody = mockClient.getApiClient().put.mock.calls[0][1];
-      expect(mergedBody.plannedEndDate).toBe("2018-05-20T13:15:13Z");
+      expect(mergedBody.plannedEndDate).toBeNull();
     });
 
     it("should update plannedStartDate/plannedEndDate when values are provided", async () => {

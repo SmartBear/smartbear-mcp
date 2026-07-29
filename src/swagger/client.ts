@@ -78,15 +78,15 @@ import type {
 const ConfigurationSchema = z.object({
   api_key: z.string().optional().describe("Swagger API key for authentication"),
   portal_base_path: z
-    .string()
+    .url()
     .optional()
-    .describe("Base path for Portal API requests (optional)"),
+    .describe("Base URL for Portal API requests (optional)"),
   registry_base_path: z
-    .string()
+    .url()
     .optional()
     .describe("Base path for Registry API requests (optional)"),
   ui_base_path: z
-    .string()
+    .url()
     .optional()
     .describe("Base URL for the SwaggerHub UI (optional)"),
   functional_testing_api_token: z
@@ -96,7 +96,7 @@ const ConfigurationSchema = z.object({
       "Swagger Functional Testing API token. Leave empty to disable Functional Testing tools.",
     ),
   functional_testing_base_path: z
-    .string()
+    .url()
     .optional()
     .describe(
       "Base URL for Swagger Functional Testing API requests (optional)",

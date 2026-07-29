@@ -13972,6 +13972,85 @@ Expected Output: The List of test executions linked to Jira issue PROJ-123 with 
     "outputSchema": undefined,
     "title": "Zephyr: Get test executions linked to a Jira issue",
   },
+  "zephyr_get_test_plans": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "Zephyr: Get Test Plans",
+    },
+    "description": "Get details of Test Plans in Zephyr
+
+**Toolset:** Test Plans
+
+**Parameters:**
+- projectKey (string): Jira project key filter
+- limit (number): Specifies the maximum number of results to return in a single call. The default value is 10, and the maximum value that can be requested is 1000.
+
+Note that the server may enforce a lower limit than requested, depending on resource availability or other internal constraints. If this happens, the result set may be truncated. Always check the limit value in the response to confirm how many results were actually returned.
+ (default: 10)
+- startAtId (number): Zero-indexed starting position for ID-based pagination. (default: 0)
+- updatedAfter (string): Filter only entities updated after the given time. Format: yyyy-MM-dd'T'HH:mm:ss'Z'
+
+**Examples:**
+1. Get the first 10 Test Plans
+\`\`\`json
+{
+  "limit": 10,
+  "startAtId": 0
+}
+\`\`\`
+Expected Output: The first 10 Test Plans with their details
+
+2. Get any Test Plan
+\`\`\`json
+{
+  "limit": 1
+}
+\`\`\`
+Expected Output: One Test Plan with its details
+
+3. Get five Test Plans starting from the ID 123
+\`\`\`json
+{
+  "limit": 5,
+  "startAtId": 123
+}
+\`\`\`
+Expected Output: Five Test Plans starting from the ID 123 with their details
+
+4. Get one Test Plan from the project PROJ
+\`\`\`json
+{
+  "projectKey": "PROJ",
+  "limit": 1
+}
+\`\`\`
+Expected Output: One Test Plan from project PROJ with its details
+
+5. Get Test Plans updated after a given time
+\`\`\`json
+{
+  "updatedAfter": "2024-01-01T00:00:00Z",
+  "limit": 10
+}
+\`\`\`
+Expected Output: Up to 10 Test Plans updated after 2024-01-01 with their details",
+    "inputSchema": [
+      "limit",
+      "projectKey",
+      "startAtId",
+      "updatedAfter",
+    ],
+    "outputSchema": [
+      "limit",
+      "next",
+      "nextStartAtId",
+      "values",
+    ],
+    "title": "Zephyr: Get Test Plans",
+  },
   "zephyr_get_test_script": {
     "annotations": {
       "destructiveHint": false,
@@ -14159,9 +14238,7 @@ Expected Output: The test cycle should be updated, but no output is expected.
 \`\`\`json
 {
   "testCycleIdOrKey": "SA-R40",
-  "folder": {
-    "id": 100006
-  },
+  "folder": 100006,
   "status": {
     "id": 10000
   }
