@@ -11681,7 +11681,7 @@ None",
       "readOnlyHint": true,
       "title": "Swagger: Get API Definition",
     },
-    "description": "Fetch resolved API definition from SwaggerHub Registry based on owner, API name, and version.
+    "description": "Fetch an API definition from SwaggerHub Registry based on owner, API name, and version. By default returns the definition as JSON (converting YAML-stored definitions to JSON). Set format:'text' to instead get the raw definition text exactly as stored in the registry — required as the source for swagger_patch_api edits.
 
 **Toolset:** Registry API
 
@@ -11690,10 +11690,12 @@ None",
 - api (string) *required*: API name (case-sensitive)
 - version (string) *required*: Version identifier
 - resolved (boolean): Set to true to get the resolved version with all external $refs included (default false)
-- flatten (boolean): Set to true to create models from inline schemas in OpenAPI definition (default false)",
+- flatten (boolean): Set to true to create models from inline schemas in OpenAPI definition (default false)
+- format (enum): Response format to request - 'json' (default) or 'text'. 'text' returns the raw stored definition text verbatim (needed as the source for swagger_patch_api edits); 'json' may reformat/convert the definition (e.g. YAML converted to JSON) and won't match the stored text exactly.",
     "inputSchema": [
       "api",
       "flatten",
+      "format",
       "owner",
       "resolved",
       "version",
@@ -11918,6 +11920,45 @@ None",
       "items",
     ],
     "title": "Swagger: List Table Of Contents",
+  },
+  "swagger_patch_api": {
+    "annotations": {
+      "destructiveHint": true,
+      "idempotentHint": true,
+      "openWorldHint": true,
+      "readOnlyHint": false,
+      "title": "Swagger: Patch API",
+    },
+    "description": "Apply targeted search/replace edits to a YAML API definition in SwaggerHub Registry and save the result. Each edit's 'oldString' text must be copied exactly, character for character, from the raw definition text returned by swagger_get_api_definition with format:'text', and it must match the stored YAML exactly. JSON definitions are not supported by this tool. Nothing is saved unless every edit applies; failed edits are returned with 'no_match' or 'ambiguous' plus the match count so they can be corrected and resent. Optionally provide 'newVersion' to save the result as a new version — omitting it patches and overwrites the base version. If newVersion already exists it is updated in place, so batches and retries keep refining the same version. info.version is set to the saved version automatically. Set 'runStandardizationScan' to true when you also want a fresh governance scan of the saved version in the response; otherwise the tool only saves. Use this tool to fix specific issues in an existing API (e.g. governance findings) without regenerating the whole definition — never ask the model to emit a full definition for targeted fixes.
+
+**Toolset:** Registry API
+
+**Parameters:**
+- owner (string) *required*: API owner (organization or user, case-sensitive)
+- apiName (string) *required*: API name (case-sensitive)
+- version (string) *required*: Version of the definition to patch (base version, e.g. '1.0.0')
+- newVersion (string): Optional version to save the patched definition as (e.g. '1.0.1'). If this version already exists it is patched and updated in place, so repeated calls keep refining the same version. Omitting this patches and overwrites the base version. info.version is set to the saved version automatically.
+- runStandardizationScan (boolean): Whether to run a governance standardization scan after saving the patched definition (default false). Enable this for governance remediation workflows when you need the fresh scan result in the response.
+- edits (array) *required*: Search/replace edits applied sequentially to the raw YAML definition text. swagger_patch_api supports YAML definitions only. Nothing is saved unless every edit applies (atomic).",
+    "inputSchema": [
+      "apiName",
+      "edits",
+      "newVersion",
+      "owner",
+      "runStandardizationScan",
+      "version",
+    ],
+    "outputSchema": [
+      "applied",
+      "failed",
+      "operation",
+      "saved",
+      "scan",
+      "scanError",
+      "url",
+      "version",
+    ],
+    "title": "Swagger: Patch API",
   },
   "swagger_publish_portal_product": {
     "annotations": {

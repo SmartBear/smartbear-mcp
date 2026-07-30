@@ -48,6 +48,10 @@ import type {
   CreateApiFromPromptResponse,
   CreateApiParams,
   CreateApiResponse,
+  PatchApiEdit,
+  PatchApiFailedEdit,
+  PatchApiParams,
+  PatchApiResponse,
   ScanApiStandardizationFromRegistryParams,
   ScanApiStandardizationFromRegistryResult,
   ScanStandardizationParams,
@@ -117,6 +121,129 @@ function isStandardizationResult(
     "validation" in value &&
     Array.isArray((value as StandardizationScanApiResponse).validation)
   );
+}
+
+/**
+ * Count non-overlapping occurrences of `search` in `text`.
+ */
+function countOccurrences(text: string, search: string): number {
+  if (!search) return 0;
+  let count = 0;
+  let index = text.indexOf(search);
+  while (index !== -1) {
+    count++;
+    index = text.indexOf(search, index + search.length);
+  }
+  return count;
+}
+
+/**
+ * Replace occurrence(s) of `search` with `replace` in `text`.
+ * Replaces only the first occurrence unless `replaceAll` is set.
+ */
+function replaceOccurrences(
+  text: string,
+  oldString: string,
+  replaceString: string,
+  replaceAll?: boolean,
+): string {
+  if (replaceAll) {
+    return text.split(oldString).join(replaceString);
+  }
+  const index = text.indexOf(oldString);
+  return (
+    text.slice(0, index) +
+    replaceString +
+    text.slice(index + oldString.length)
+  );
+}
+
+/**
+ * Preserve the quoting style (or lack thereof) of a YAML scalar value when
+ * substituting in a new value.
+ */
+function formatYamlScalar(originalValue: string, newValue: string): string {
+  const trimmed = originalValue.trim();
+  if (trimmed.startsWith('"')) return `"${newValue}"`;
+  if (trimmed.startsWith("'")) return `'${newValue}'`;
+  return newValue;
+}
+
+/**
+ * Set `info.version` in a raw OpenAPI/AsyncAPI definition using a
+ * format-preserving targeted replacement, so YAML comments, key order, and
+ * formatting elsewhere in the document are left untouched.
+ */
+function setInfoVersion(
+  text: string,
+  newVersion: string,
+  format: "json" | "yaml",
+): string {
+  if (format === "json") {
+    const infoKeyIndex = text.indexOf('"info"');
+    if (infoKeyIndex === -1) return text;
+    const braceStart = text.indexOf("{", infoKeyIndex);
+    if (braceStart === -1) return text;
+
+    let depth = 0;
+    let braceEnd = -1;
+    for (let i = braceStart; i < text.length; i++) {
+      if (text[i] === "{") depth++;
+      else if (text[i] === "}") {
+        depth--;
+        if (depth === 0) {
+          braceEnd = i;
+          break;
+        }
+      }
+    }
+    if (braceEnd === -1) return text;
+
+    const infoBlock = text.slice(braceStart, braceEnd + 1);
+    const versionRegex = /("version"\s*:\s*)"(?:[^"\\]|\\.)*"/;
+    if (!versionRegex.test(infoBlock)) return text;
+    const patchedInfoBlock = infoBlock.replace(
+      versionRegex,
+      `$1"${newVersion}"`,
+    );
+    return (
+      text.slice(0, braceStart) + patchedInfoBlock + text.slice(braceEnd + 1)
+    );
+  }
+
+  // YAML: find the top-level `info:` block, then the `version:` line nested under it.
+  const lines = text.split("\n");
+  let inInfoBlock = false;
+  let infoIndent = -1;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const infoMatch = /^(\s*)info:\s*$/.exec(line);
+    if (infoMatch) {
+      inInfoBlock = true;
+      infoIndent = infoMatch[1].length;
+      continue;
+    }
+
+    if (!inInfoBlock) continue;
+
+    if (line.trim() === "") continue;
+
+    const currentIndent = /^(\s*)/.exec(line)?.[1].length ?? 0;
+    if (currentIndent <= infoIndent) {
+      inInfoBlock = false;
+      continue;
+    }
+
+    const versionMatch = /^(\s*version:\s*)(.*)$/.exec(line);
+    if (versionMatch) {
+      lines[i] =
+        `${versionMatch[1]}${formatYamlScalar(versionMatch[2], newVersion)}`;
+      break;
+    }
+  }
+
+  return lines.join("\n");
 }
 
 export class SwaggerAPI {
@@ -1180,15 +1307,12 @@ export class SwaggerAPI {
   }
 
   /**
-   * Get API definition from SwaggerHub Registry
-   * @param params Parameters including owner, api name, version, and options
-   * @param options Optional transport options
-   * @returns API definition (OpenAPI/Swagger specification)
+   * Execute the shared GET request for an API definition.
    */
-  async getApiDefinition(
+  private async fetchApiDefinitionResponse(
     params: ApiDefinitionParams,
     options?: { accept?: "text/plain" | "application/json" },
-  ): Promise<unknown> {
+  ): Promise<Response> {
     const searchParams = new URLSearchParams();
 
     if (params.resolved !== undefined)
@@ -1198,12 +1322,25 @@ export class SwaggerAPI {
 
     const url = `${this.config.registryBasePath}/apis/${encodeURIComponent(params.owner)}/${encodeURIComponent(params.api)}/${encodeURIComponent(params.version)}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
 
-    const response = await fetch(url, {
+    return fetch(url, {
       method: "GET",
       headers: options?.accept
         ? { ...this.headers, Accept: options.accept }
         : this.headers,
     });
+  }
+
+  /**
+   * Get API definition from SwaggerHub Registry
+   * @param params Parameters including owner, api name, version, and options
+   * @param options Optional transport options
+   * @returns API definition (OpenAPI/Swagger specification)
+   */
+  async getApiDefinition(
+    params: ApiDefinitionParams,
+    options?: { accept?: "text/plain" | "application/json" },
+  ): Promise<unknown> {
+    const response = await this.fetchApiDefinitionResponse(params, options);
 
     if (!response.ok) {
       throw new ToolError(
@@ -1506,5 +1643,142 @@ export class SwaggerAPI {
     }
 
     return result as StandardizeApiResponse;
+  }
+
+  /**
+   * Check whether a given API version already exists in the registry.
+   */
+  private async versionExists(
+    owner: string,
+    apiName: string,
+    version: string,
+  ): Promise<boolean> {
+    const response = await this.fetchApiDefinitionResponse(
+      { owner, api: apiName, version },
+      { accept: "text/plain" },
+    );
+
+    if (response.status === 404) return false;
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "");
+      throw new ToolError(
+        `SwaggerHub Registry API patchApi failed while checking version - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}. owner=${owner}, apiName=${apiName}, version=${version}`,
+      );
+    }
+    return true;
+  }
+
+  /**
+   * Fetch the raw (unresolved) text of an API definition, preserving the
+   * original formatting so it can be safely patched with text edits.
+   */
+  private async getApiDefinitionRaw(
+    owner: string,
+    apiName: string,
+    version: string,
+  ): Promise<string> {
+    const result = await this.getApiDefinition(
+      { owner, api: apiName, version },
+      { accept: "text/plain" },
+    );
+    return typeof result === "string" ? result : JSON.stringify(result);
+  }
+
+  /**
+   * Apply targeted search/replace edits to an API definition and save the
+    * result as a new version. Raw-text editing preserves YAML comments, key
+    * order, and formatting. JSON definitions are not supported by this tool.
+   * @param params Owner, API name, base version, target version, and edits to apply
+  * @returns Applied/failed edit indices, save status, and optionally a governance scan of the saved version
+   */
+  async patchApi(params: PatchApiParams): Promise<PatchApiResponse> {
+    const targetVersion = params.newVersion || params.version;
+    const newVersionExists =
+      targetVersion === params.version ||
+      (await this.versionExists(params.owner, params.apiName, targetVersion));
+    const baseVersion = newVersionExists ? targetVersion : params.version;
+
+    let text = await this.getApiDefinitionRaw(
+      params.owner,
+      params.apiName,
+      baseVersion,
+    );
+
+    const applied: number[] = [];
+    const failed: PatchApiFailedEdit[] = [];
+
+    params.edits.forEach((edit: PatchApiEdit, index: number) => {
+      const matchCount = countOccurrences(text, edit.oldString);
+      if (matchCount === 0) {
+        failed.push({ index, error: "no_match", matchCount: 0 });
+      } else if (matchCount > 1 && !edit.replaceAll) {
+        failed.push({ index, error: "ambiguous", matchCount });
+      } else {
+        text = replaceOccurrences(
+          text,
+          edit.oldString,
+          edit.replaceString,
+          edit.replaceAll,
+        );
+        applied.push(index);
+      }
+    });
+
+    if (failed.length > 0) {
+      return { applied, failed, saved: false };
+    }
+
+    const format = this.detectDefinitionFormat(text);
+    if (format !== "yaml") {
+      throw new ToolError(
+        "swagger_patch_api only supports YAML definitions. Fetch or store the API in YAML format before patching.",
+      );
+    }
+    text = setInfoVersion(text, targetVersion, format);
+
+    const saveResult = await this.createOrUpdateApi({
+      owner: params.owner,
+      apiName: params.apiName,
+      definition: text,
+    });
+
+    if (!params.runStandardizationScan) {
+      return {
+        applied,
+        failed: [],
+        saved: true,
+        operation: saveResult.operation,
+        version: saveResult.version,
+        url: saveResult.url,
+      };
+    }
+
+    let scan: ScanApiStandardizationFromRegistryResult | undefined;
+    let scanError: string | undefined;
+    try {
+      const scanResult = await this.scanApiStandardizationFromRegistry({
+        orgName: params.owner,
+        apiName: params.apiName,
+        version: saveResult.version,
+      });
+      if (isStandardizationResult(scanResult)) {
+        scan = scanResult as ScanApiStandardizationFromRegistryResult;
+      } else {
+        scanError = `Unexpected response format from the standardization scan of version ${saveResult.version}: ${JSON.stringify(scanResult)}`;
+      }
+    } catch (error) {
+      scanError = `Failed to scan patched API version ${saveResult.version} for standardization: ${error instanceof Error ? error.message : String(error)}`;
+    }
+
+    return {
+      applied,
+      failed: [],
+      saved: true,
+      operation: saveResult.operation,
+      version: saveResult.version,
+      url: saveResult.url,
+      ...(scan ? { scan } : {}),
+      ...(scanError ? { scanError } : {}),
+    };
   }
 }

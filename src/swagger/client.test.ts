@@ -180,6 +180,51 @@ describe("SwaggerClient", () => {
       );
       expect(result).toEqual(mockResponse);
     });
+
+    it("should request json by default in getApiDefinition", async () => {
+      const definition = { openapi: "3.0.0", info: { title: "Pets" } };
+      fetchMock.mockResponseOnce(JSON.stringify(definition), {
+        headers: { "content-type": "application/json" },
+      });
+
+      const result = await client.getApiDefinition({
+        owner: "orgname",
+        api: "petstore",
+        version: "1.0.0",
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://api.swaggerhub.com/apis/orgname/petstore/1.0.0",
+        expect.objectContaining({
+          method: "GET",
+          headers: expect.objectContaining({ Accept: "application/json" }),
+        }),
+      );
+      expect(result).toEqual(definition);
+    });
+
+    it("should request the raw stored text (text/plain) when format is 'text'", async () => {
+      const rawYaml = 'openapi: "3.0.0"\ninfo:\n  title: "Pets"\n';
+      fetchMock.mockResponseOnce(rawYaml, {
+        headers: { "content-type": "text/plain" },
+      });
+
+      const result = await client.getApiDefinition({
+        owner: "orgname",
+        api: "petstore",
+        version: "1.0.0",
+        format: "text",
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://api.swaggerhub.com/apis/orgname/petstore/1.0.0",
+        expect.objectContaining({
+          method: "GET",
+          headers: expect.objectContaining({ Accept: "text/plain" }),
+        }),
+      );
+      expect(result).toBe(rawYaml);
+    });
   });
 
   describe("registerTools", () => {

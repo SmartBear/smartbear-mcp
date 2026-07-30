@@ -1452,4 +1452,315 @@ describe("SwaggerAPI", () => {
       expect(createCalls).toHaveLength(1);
     });
   });
+
+  describe("patchApi", () => {
+    const owner = "orgname";
+    const apiName = "petstore";
+    const jsonHeaders = { "content-type": "application/json" };
+    const textHeaders = { "content-type": "text/plain" };
+
+    const baseDefinition = [
+      "openapi: 3.0.0",
+      "info:",
+      "  title: Pets",
+      "  version: 1.0.0",
+      "paths:",
+      "  /pets:",
+      "    get:",
+      "      summary: List all pets",
+      "      responses:",
+      "        '200':",
+      "          description: OK",
+      "  /pets/{id}:",
+      "    get:",
+      "      summary: Get a pet",
+      "      responses:",
+      "        '200':",
+      "          description: OK",
+      "",
+    ].join("\n");
+
+    function mockRoutes(handlers: {
+      getVersion?: (version: string) => { status: number; body?: string };
+      save?: () => { status: number; version: string };
+      scan?: () => { validation: unknown[] };
+      scanResponse?: () => { status: number; body: string };
+    }) {
+      fetchMock.mockResponse(async (req) => {
+        const url = req.url;
+        const method = req.method;
+
+        const getMatch = /\/apis\/orgname\/petstore\/([^/?]+)$/.exec(
+          url.split("?")[0],
+        );
+        if (getMatch && method === "GET") {
+          const version = decodeURIComponent(getMatch[1]);
+          const result = handlers.getVersion?.(version) ?? {
+            status: 404,
+          };
+          return {
+            status: result.status,
+            body: result.body ?? "",
+            headers: textHeaders,
+          };
+        }
+
+        if (
+          url.startsWith(`https://api.swaggerhub.com/apis/orgname/petstore?`) &&
+          method === "POST"
+        ) {
+          const result = handlers.save?.() ?? { status: 200, version: "1.0.1" };
+          return {
+            status: result.status,
+            body: "",
+            headers: { ...jsonHeaders, "X-Version": result.version },
+          };
+        }
+
+        if (url === "https://api.swaggerhub.com/standardization/orgname/scan") {
+          if (handlers.scanResponse) {
+            return { ...handlers.scanResponse(), headers: jsonHeaders };
+          }
+          if (handlers.scan) {
+            const result = handlers.scan();
+            return { body: JSON.stringify(result), headers: jsonHeaders };
+          }
+          throw new Error(`Unexpected request: ${method} ${url}`);
+        }
+
+        throw new Error(`Unexpected request: ${method} ${url}`);
+      });
+    }
+
+    it("applies edits, sets info.version, and saves without scanning by default", async () => {
+      let saved = false;
+      mockRoutes({
+        getVersion: (version) => {
+          if (version === "1.0.1") {
+            return saved
+              ? { status: 200, body: baseDefinition }
+              : { status: 404 };
+          }
+          if (version === "1.0.0") return { status: 200, body: baseDefinition };
+          return { status: 404 };
+        },
+        save: () => {
+          saved = true;
+          return { status: 200, version: "1.0.1" };
+        },
+      });
+
+      const result = await api.patchApi({
+        owner,
+        apiName,
+        version: "1.0.0",
+        newVersion: "1.0.1",
+        edits: [
+          {
+            oldString: "      summary: List all pets",
+            replaceString:
+              "      operationId: listPets\n      summary: List all pets",
+          },
+        ],
+      });
+
+      expect(result.saved).toBe(true);
+      expect(result.applied).toEqual([0]);
+      expect(result.failed).toEqual([]);
+      expect(result.operation).toBe("update");
+      expect(result.version).toBe("1.0.1");
+      expect(result.url).toBe(
+        "https://app.swaggerhub.com/apis/orgname/petstore/1.0.1",
+      );
+      expect(result.scan).toBeUndefined();
+      expect(result.scanError).toBeUndefined();
+    });
+
+    it("returns a scan when explicitly requested", async () => {
+      let saved = false;
+      mockRoutes({
+        getVersion: (version) => {
+          if (version === "1.0.1") {
+            return saved
+              ? { status: 200, body: baseDefinition }
+              : { status: 404 };
+          }
+          if (version === "1.0.0") return { status: 200, body: baseDefinition };
+          return { status: 404 };
+        },
+        save: () => {
+          saved = true;
+          return { status: 200, version: "1.0.1" };
+        },
+        scan: () => ({
+          validation: [{ severity: "Warning", description: "x", line: 1 }],
+        }),
+      });
+
+      const result = await api.patchApi({
+        owner,
+        apiName,
+        version: "1.0.0",
+        newVersion: "1.0.1",
+        runStandardizationScan: true,
+        edits: [
+          {
+            oldString: "      summary: List all pets",
+            replaceString:
+              "      operationId: listPets\n      summary: List all pets",
+          },
+        ],
+      });
+
+      expect(result.scan).toEqual({
+        validation: [{ severity: "Warning", description: "x", line: 1 }],
+        count: 1,
+        countsBySeverity: { Warning: 1 },
+        url: "https://app.swaggerhub.com/apis/orgname/petstore/1.0.1",
+      });
+    });
+
+    it("patches the existing newVersion in place on repeated calls", async () => {
+      const refinedDefinition = baseDefinition.replace(
+        "version: 1.0.0",
+        "version: 1.0.1",
+      );
+      const fetchedVersions: string[] = [];
+      mockRoutes({
+        getVersion: (version) => {
+          fetchedVersions.push(version);
+          if (version === "1.0.1") {
+            return { status: 200, body: refinedDefinition };
+          }
+          return { status: 404 };
+        },
+        save: () => ({ status: 200, version: "1.0.1" }),
+      });
+
+      await api.patchApi({
+        owner,
+        apiName,
+        version: "1.0.0",
+        newVersion: "1.0.1",
+        edits: [
+          { oldString: "title: Pets", replaceString: "title: Pet Store" },
+        ],
+      });
+
+      // Should never fetch the base "1.0.0" version once "1.0.1" exists.
+      expect(fetchedVersions).not.toContain("1.0.0");
+      expect(fetchedVersions).toContain("1.0.1");
+    });
+
+    it("overwrites the base version when newVersion is omitted", async () => {
+      const fetchedVersions: string[] = [];
+      mockRoutes({
+        getVersion: (version) => {
+          fetchedVersions.push(version);
+          return version === "1.0.0"
+            ? { status: 200, body: baseDefinition }
+            : { status: 404 };
+        },
+        save: () => ({ status: 200, version: "1.0.0" }),
+      });
+
+      const result = await api.patchApi({
+        owner,
+        apiName,
+        version: "1.0.0",
+        runStandardizationScan: true,
+        edits: [
+          { oldString: "title: Pets", replaceString: "title: Pet Store" },
+        ],
+      });
+
+      expect(new Set(fetchedVersions)).toEqual(new Set(["1.0.0"]));
+      expect(result.saved).toBe(true);
+      expect(result.version).toBe("1.0.0");
+    });
+
+    it("returns scanError when the governance scan fails after saving", async () => {
+      mockRoutes({
+        getVersion: (version) =>
+          version === "1.0.0"
+            ? { status: 200, body: baseDefinition }
+            : { status: 404 },
+        save: () => ({ status: 200, version: "1.0.0" }),
+        scanResponse: () => ({ status: 500, body: "scan blew up" }),
+      });
+
+      const result = await api.patchApi({
+        owner,
+        apiName,
+        version: "1.0.0",
+        runStandardizationScan: true,
+        edits: [
+          { oldString: "title: Pets", replaceString: "title: Pet Store" },
+        ],
+      });
+
+      expect(result.saved).toBe(true);
+      expect(result.scan).toBeUndefined();
+      expect(result.scanError).toContain("1.0.0");
+      expect(result.scanError).toContain("scan blew up");
+    });
+
+    it("reports no_match and ambiguous failures without saving", async () => {
+      mockRoutes({
+        getVersion: (version) =>
+          version === "1.0.0"
+            ? { status: 200, body: baseDefinition }
+            : { status: 404 },
+      });
+
+      const result = await api.patchApi({
+        owner,
+        apiName,
+        version: "1.0.0",
+        newVersion: "1.0.1",
+        edits: [
+          { oldString: "does not exist anywhere", replaceString: "x" },
+          { oldString: "  version: 1.0.0\npaths:", replaceString: "y" },
+          { oldString: "description: OK", replaceString: "description: OK!" },
+        ],
+      });
+
+      expect(result.saved).toBe(false);
+      expect(result.applied).toEqual([1]);
+      expect(result.failed).toEqual([
+        { index: 0, error: "no_match", matchCount: 0 },
+        { index: 2, error: "ambiguous", matchCount: 2 },
+      ]);
+    });
+
+    it("rejects JSON definitions", async () => {
+      mockRoutes({
+        getVersion: (version) =>
+          version === "1.0.0"
+            ? {
+                status: 200,
+                body: JSON.stringify({
+                  openapi: "3.0.0",
+                  info: { title: "Pets", version: "1.0.0" },
+                  paths: {},
+                }),
+              }
+            : { status: 404 },
+      });
+
+      await expect(
+        api.patchApi({
+          owner,
+          apiName,
+          version: "1.0.0",
+          edits: [
+            {
+              oldString: '"title":"Pets"',
+              replaceString: '"title":"Pet Store"',
+            },
+          ],
+        }),
+      ).rejects.toThrow(/only supports YAML definitions/i);
+    });
+  });
 });

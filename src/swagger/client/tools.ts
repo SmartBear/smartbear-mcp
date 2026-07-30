@@ -46,6 +46,8 @@ import {
   CreateApiFromPromptParamsSchema,
   CreateApiOutputSchema,
   CreateApiParamsSchema,
+  PatchApiOutputSchema,
+  PatchApiParamsSchema,
   ScanApiStandardizationFromRegistryParamsSchema,
   ScanFromRegistryOutputSchema,
   ScanOutputSchema,
@@ -257,7 +259,7 @@ export const TOOLS: SwaggerToolParams[] = [
     title: "Get API Definition",
     toolset: "Registry API",
     summary:
-      "Fetch resolved API definition from SwaggerHub Registry based on owner, API name, and version.",
+      "Fetch an API definition from SwaggerHub Registry based on owner, API name, and version. By default returns the definition as JSON (converting YAML-stored definitions to JSON). Set format:'text' to instead get the raw definition text exactly as stored in the registry — required as the source for swagger_patch_api edits.",
     inputSchema: ApiDefinitionParamsSchema,
     outputSchema: ApiDefinitionOutputSchema,
     formatResponse: (result: unknown) => ({
@@ -326,6 +328,16 @@ export const TOOLS: SwaggerToolParams[] = [
     inputSchema: StandardizeApiParamsSchema,
     outputSchema: StandardizeOutputSchema,
     handler: "standardizeApi",
+    ...WRITE_DESTRUCTIVE,
+  },
+  {
+    title: "Patch API",
+    toolset: "Registry API",
+    summary:
+      "Apply targeted search/replace edits to a YAML API definition in SwaggerHub Registry and save the result. Each edit's 'oldString' text must be copied exactly, character for character, from the raw definition text returned by swagger_get_api_definition with format:'text', and it must match the stored YAML exactly. JSON definitions are not supported by this tool. Nothing is saved unless every edit applies; failed edits are returned with 'no_match' or 'ambiguous' plus the match count so they can be corrected and resent. Optionally provide 'newVersion' to save the result as a new version — omitting it patches and overwrites the base version. If newVersion already exists it is updated in place, so batches and retries keep refining the same version. info.version is set to the saved version automatically. Set 'runStandardizationScan' to true when you also want a fresh governance scan of the saved version in the response; otherwise the tool only saves. Use this tool to fix specific issues in an existing API (e.g. governance findings) without regenerating the whole definition — never ask the model to emit a full definition for targeted fixes.",
+    inputSchema: PatchApiParamsSchema,
+    outputSchema: PatchApiOutputSchema,
+    handler: "patchApi",
     ...WRITE_DESTRUCTIVE,
   },
 

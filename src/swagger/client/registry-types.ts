@@ -62,6 +62,12 @@ export const ApiDefinitionParamsSchema = z.object({
     .describe(
       "Set to true to create models from inline schemas in OpenAPI definition (default false)",
     ),
+  format: z
+    .enum(["json", "text"])
+    .optional()
+    .describe(
+      "Response format to request - 'json' (default) or 'text'. 'text' returns the raw stored definition text verbatim (needed as the source for swagger_patch_api edits); 'json' may reformat/convert the definition (e.g. YAML converted to JSON) and won't match the stored text exactly.",
+    ),
 });
 
 export const CreateApiParamsSchema = z.object({
@@ -132,6 +138,60 @@ export const StandardizeApiParamsSchema = z.object({
       "The version to save the fixed definition as (e.g. '1.0.1'). Omitting this will overwrite the current version — prefer providing a patch bump (e.g. '1.0.0' → '1.0.1') unless the user specifies otherwise.",
     ),
 });
+
+export const PatchApiEditSchema = z.object({
+  oldString: z
+    .string()
+    .min(1)
+    .describe(
+      "Exact text fragment to find in the definition, copied character for character (including indentation and newlines) from the raw definition text returned by swagger_get_api_definition. The definition is edited in its stored format — if it is YAML, quote YAML text, never a JSON rendering of it. Must match exactly one location in the definition unless replaceAll is true. For repeated text (e.g. 'responses:', 'description: OK'), start the quote at the nearest unique parent key above the target (path name, schema name, operationId).",
+    ),
+  replaceString: z
+    .string()
+    .describe(
+      "Replacement text. Repeat the quoted context unchanged and change only the minimal part. An empty string deletes the matched text.",
+    ),
+  replaceAll: z
+    .boolean()
+    .optional()
+    .describe(
+      "Replace every occurrence of oldString instead of requiring a unique match (default false). Use for identical fixes at many flagged locations.",
+    ),
+});
+
+export const PatchApiParamsSchema = z.object({
+  owner: z
+    .string()
+    .describe("API owner (organization or user, case-sensitive)"),
+  apiName: z.string().describe("API name (case-sensitive)"),
+  version: z
+    .string()
+    .describe(
+      "Version of the definition to patch (base version, e.g. '1.0.0')",
+    ),
+  newVersion: z
+    .string()
+    .optional()
+    .describe(
+      "Optional version to save the patched definition as (e.g. '1.0.1'). If this version already exists it is patched and updated in place, so repeated calls keep refining the same version. Omitting this patches and overwrites the base version. info.version is set to the saved version automatically.",
+    ),
+  runStandardizationScan: z
+    .boolean()
+    .optional()
+    .describe(
+      "Whether to run a governance standardization scan after saving the patched definition (default false). Enable this for governance remediation workflows when you need the fresh scan result in the response.",
+    ),
+  edits: z
+    .array(PatchApiEditSchema)
+    .min(1)
+    .max(50)
+    .describe(
+      "Search/replace edits applied sequentially to the raw YAML definition text. swagger_patch_api supports YAML definitions only. Nothing is saved unless every edit applies (atomic).",
+    ),
+});
+
+export type PatchApiEdit = z.infer<typeof PatchApiEditSchema>;
+export type PatchApiParams = z.infer<typeof PatchApiParamsSchema>;
 
 // Registry API types for SwaggerHub Design functionality - generated from Zod schemas
 export type ApiSearchParams = z.infer<typeof ApiSearchParamsSchema>;
@@ -312,3 +372,49 @@ export const SearchApisOutputSchema = z.object({
     }),
   ),
 });
+
+const PatchApiFailedEditSchema = z.object({
+  index: z
+    .number()
+    .describe("Position of the failed edit in the request's edits array"),
+  error: z.enum(["no_match", "ambiguous"]),
+  matchCount: z
+    .number()
+    .describe("How many times search matched (0 for no_match)"),
+  detail: z.string().optional(),
+});
+
+export const PatchApiOutputSchema = z.looseObject({
+  applied: z.array(z.number()).optional(),
+  failed: z.array(PatchApiFailedEditSchema).optional(),
+  saved: z.boolean().optional(),
+  operation: z.enum(["create", "update"]).optional(),
+  version: z.string().optional(),
+  url: z.string().optional(),
+  scan: ScanFromRegistryOutputSchema.optional(),
+  scanError: z
+    .string()
+    .optional()
+    .describe(
+      "Why the governance scan of the saved version could not be returned. The patch itself was still saved.",
+    ),
+});
+
+// Response type
+export interface PatchApiFailedEdit {
+  index: number;
+  error: "no_match" | "ambiguous";
+  matchCount: number;
+  detail?: string;
+}
+
+export interface PatchApiResponse {
+  applied: number[];
+  failed: PatchApiFailedEdit[];
+  saved: boolean;
+  operation?: "create" | "update";
+  version?: string;
+  url?: string;
+  scan?: ScanApiStandardizationFromRegistryResult;
+  scanError?: string;
+}
