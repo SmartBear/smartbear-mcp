@@ -1,5 +1,50 @@
 import { describe, expect, it } from "vitest";
-import { CreateFunctionalTestingBodyRuleSchema } from "../client/functional-testing-types";
+import {
+  CreateFunctionalTestingBodyRuleSchema,
+  CreateFunctionalTestingStatusRangeSchema,
+} from "../client/functional-testing-types";
+
+describe("CreateFunctionalTestingStatusRangeSchema", () => {
+  it("accepts a valid ascending range", () => {
+    const result = CreateFunctionalTestingStatusRangeSchema.safeParse({
+      start: 200,
+      end: 299,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts a single status code as start === end", () => {
+    const result = CreateFunctionalTestingStatusRangeSchema.safeParse({
+      start: 200,
+      end: 200,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects start greater than end", () => {
+    const result = CreateFunctionalTestingStatusRangeSchema.safeParse({
+      start: 500,
+      end: 200,
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects status codes below 100", () => {
+    const result = CreateFunctionalTestingStatusRangeSchema.safeParse({
+      start: -1,
+      end: 200,
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects status codes above 599", () => {
+    const result = CreateFunctionalTestingStatusRangeSchema.safeParse({
+      start: 200,
+      end: 9999,
+    });
+    expect(result.success).toBe(false);
+  });
+});
 
 describe("CreateFunctionalTestingBodyRuleSchema", () => {
   const basePath = '["data"]["name"]';

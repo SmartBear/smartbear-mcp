@@ -172,23 +172,32 @@ export const CreateFunctionalTestingTestHeaderSchema = z.object({
 
 export const HTTP_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"] as const;
 
-export const CreateFunctionalTestingStatusRangeSchema = z.object({
-  start: z
-    .number()
-    .int()
-    .describe("Start of the HTTP status code range, inclusive"),
-  end: z
-    .number()
-    .int()
-    .describe("End of the HTTP status code range, inclusive"),
-});
+export const CreateFunctionalTestingStatusRangeSchema = z
+  .object({
+    start: z
+      .number()
+      .int()
+      .min(100)
+      .max(599)
+      .describe("Start of the HTTP status code range, inclusive"),
+    end: z
+      .number()
+      .int()
+      .min(100)
+      .max(599)
+      .describe("End of the HTTP status code range, inclusive"),
+  })
+  .refine((range) => range.start <= range.end, {
+    message: "start must be less than or equal to end",
+    path: ["start"],
+  });
 
 export const CreateFunctionalTestingBodyRuleSchema = z
   .object({
     path: z
       .string()
       .describe(
-        "Path to the field to assert, in bracket notation (e.g. '[\"data\"][\"id\"]').",
+        'Path to the field to assert, in bracket notation (e.g. \'["data"]["id"]\').',
       ),
     assertionType: z
       .enum(["string", "number", "regex"])
@@ -238,6 +247,67 @@ export const CreateFunctionalTestingBodyRuleSchema = z
       .optional()
       .describe("Variable name to assign the extracted value to"),
   })
+  .meta({
+    // Structural rules (in addition to the .superRefine() below) so the generated
+    // JSON Schema states which fields are required/forbidden per assertionType and
+    // assertion mode, instead of leaving every field optional with the constraint
+    // only in prose.
+    allOf: [
+      {
+        if: { properties: { assertionType: { const: "regex" } } },
+        // biome-ignore lint/suspicious/noThenProperty: JSON Schema if/then/else keyword, not a thenable
+        then: {
+          required: ["pattern"],
+          properties: {
+            operator: false,
+            target: false,
+            targets: false,
+            lower: false,
+            upper: false,
+          },
+        },
+        message:
+          "pattern is required, and operator/target/targets/lower/upper must not be set, when assertionType is 'regex'",
+      },
+      {
+        if: { not: { properties: { assertionType: { const: "regex" } } } },
+        // biome-ignore lint/suspicious/noThenProperty: JSON Schema if/then/else keyword, not a thenable
+        then: { properties: { pattern: false } },
+        message: "pattern must not be set unless assertionType is 'regex'",
+      },
+      {
+        if: { required: ["targets"] },
+        // biome-ignore lint/suspicious/noThenProperty: JSON Schema if/then/else keyword, not a thenable
+        then: {
+          properties: {
+            operator: false,
+            target: false,
+            lower: false,
+            upper: false,
+          },
+        },
+        message:
+          "targets cannot be combined with operator/target or lower/upper",
+      },
+      {
+        if: {
+          anyOf: [{ required: ["lower"] }, { required: ["upper"] }],
+        },
+        // biome-ignore lint/suspicious/noThenProperty: JSON Schema if/then/else keyword, not a thenable
+        then: {
+          required: ["lower", "upper"],
+          properties: {
+            assertionType: { const: "number" },
+            operator: false,
+            target: false,
+            targets: false,
+          },
+        },
+        message:
+          "lower and upper must both be set together, only with assertionType 'number', and cannot be combined with operator/target/targets",
+      },
+    ],
+  })
   .superRefine((rule, ctx) => {
     const hasRange = rule.lower !== undefined || rule.upper !== undefined;
     const hasCompare = rule.operator !== undefined || rule.target !== undefined;
@@ -275,8 +345,10 @@ export const CreateFunctionalTestingBodyRuleSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["lower"],
-        message: "lower/upper range assertions are only valid with assertionType 'number'.",
+        message:
+          "lower/upper range assertions are only valid with assertionType 'number'.",
       });
+      return;
     }
 
     if (hasTargets) {
