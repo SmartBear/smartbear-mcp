@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- [Swagger] Extended the `create_test` Functional Testing tool's steps with assertion support: `expectedStatusCodes` for HTTP status code ranges, and `expectedBody`/`expectedBodyType`/`expectedBodyRules` for asserting on response body fields.
+
 ### Changed
 
 - [Swagger] `resolve_organization_portal` tool: the generated subdomain now follows the Portal UI convention - slugified organization name plus a random 3-character suffix (e.g. `acmecorp-k7p`), appended even without a collision.
