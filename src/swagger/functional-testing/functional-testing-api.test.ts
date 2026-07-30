@@ -198,7 +198,7 @@ describe("FunctionalTestingAPI", () => {
       );
     });
 
-    it("should forward expectedStatusCodes on a step", async () => {
+    it("should forward apiResponse.statusCodes on a step", async () => {
       fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
 
       await api.createTest({
@@ -207,19 +207,19 @@ describe("FunctionalTestingAPI", () => {
           {
             url: "https://example.com/api",
             httpMethod: "GET",
-            expectedStatusCodes: [{ start: 200, end: 299 }],
+            apiResponse: { statusCodes: [{ start: 200, end: 299 }] },
           },
         ],
       });
 
       const [, init] = fetchMock.mock.calls[0];
       const body = JSON.parse((init as RequestInit).body as string);
-      expect(body.steps[0].expectedStatusCodes).toEqual([
+      expect(body.steps[0].apiResponse.statusCodes).toEqual([
         { start: 200, end: 299 },
       ]);
     });
 
-    it("forwards expectedBodyRules paths in bracket notation", async () => {
+    it("forwards apiResponse.bodyRules paths in bracket notation", async () => {
       fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
 
       const args = CreateFunctionalTestingTestParamsSchema.parse({
@@ -228,19 +228,21 @@ describe("FunctionalTestingAPI", () => {
           {
             url: "https://example.com/api",
             httpMethod: "POST",
-            expectedBodyRules: [
-              {
-                path: '["data"]["name"]',
-                assertionType: "string",
-                operator: "eq",
-                target: "Alice",
-              },
-              {
-                path: '["data"]["token"]',
-                assertionType: "regex",
-                pattern: "nonempty",
-              },
-            ],
+            apiResponse: {
+              bodyRules: [
+                {
+                  path: '["data"]["name"]',
+                  assertionType: "string",
+                  operator: "eq",
+                  target: "Alice",
+                },
+                {
+                  path: '["data"]["token"]',
+                  assertionType: "regex",
+                  pattern: "nonempty",
+                },
+              ],
+            },
           },
         ],
       });
@@ -249,7 +251,7 @@ describe("FunctionalTestingAPI", () => {
 
       const [, init] = fetchMock.mock.calls[0];
       const body = JSON.parse((init as RequestInit).body as string);
-      expect(body.steps[0].expectedBodyRules).toEqual([
+      expect(body.steps[0].apiResponse.bodyRules).toEqual([
         {
           path: '["data"]["name"]',
           assertionType: "string",
@@ -264,7 +266,7 @@ describe("FunctionalTestingAPI", () => {
       ]);
     });
 
-    it("should forward expectedBodyType on a step", async () => {
+    it("should forward apiResponse.bodyType on a step", async () => {
       fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
 
       await api.createTest({
@@ -273,22 +275,67 @@ describe("FunctionalTestingAPI", () => {
           {
             url: "https://example.com/api",
             httpMethod: "GET",
-            expectedBodyType: "xml",
-            expectedBodyRules: [
-              {
-                path: '["root"]["item"]',
-                assertionType: "string",
-                operator: "contains",
-                target: "foo",
-              },
-            ],
+            apiResponse: {
+              bodyType: "xml",
+              bodyRules: [
+                {
+                  path: '["root"]["item"]',
+                  assertionType: "string",
+                  operator: "contains",
+                  target: "foo",
+                },
+              ],
+            },
           },
         ],
       });
 
       const [, init] = fetchMock.mock.calls[0];
       const body = JSON.parse((init as RequestInit).body as string);
-      expect(body.steps[0].expectedBodyType).toBe("xml");
+      expect(body.steps[0].apiResponse.bodyType).toBe("xml");
+    });
+
+    it("should forward status codes, body, bodyType and bodyRules under apiResponse", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
+
+      await api.createTest({
+        name: "Nested Assertion Test",
+        steps: [
+          {
+            url: "https://example.com/api",
+            httpMethod: "POST",
+            apiResponse: {
+              statusCodes: [{ start: 200, end: 299 }],
+              body: '{"name":"doggie"}',
+              bodyType: "json",
+              bodyRules: [
+                {
+                  path: '["category"]["name"]',
+                  assertionType: "string",
+                  operator: "eq",
+                  target: "Dogs",
+                },
+              ],
+            },
+          },
+        ],
+      });
+
+      const [, init] = fetchMock.mock.calls[0];
+      const body = JSON.parse((init as RequestInit).body as string);
+      expect(body.steps[0].apiResponse).toEqual({
+        statusCodes: [{ start: 200, end: 299 }],
+        body: '{"name":"doggie"}',
+        bodyType: "json",
+        bodyRules: [
+          {
+            path: '["category"]["name"]',
+            assertionType: "string",
+            operator: "eq",
+            target: "Dogs",
+          },
+        ],
+      });
     });
   });
 

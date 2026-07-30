@@ -30,7 +30,7 @@ The Swagger Functional Testing client provides tools for discovering and executi
 
 #### `create_test`
 
-- Purpose: Creates a new API test in your Swagger Functional Testing workspace. Use this tool when you need to create an end-to-end API test, either from an existing API spec or by directly providing the request steps (URL, HTTP method, headers, body, redirect handling). Each step can optionally define assertions: `expectedStatusCodes` (HTTP status code ranges the response must fall within) and `expectedBody`/`expectedBodyType`/`expectedBodyRules` (assertions evaluated against the response body, e.g. matching, comparing, or extracting a field by path).
+- Purpose: Creates a new API test in your Swagger Functional Testing workspace. Use this tool when you need to create an end-to-end API test, either from an existing API spec or by directly providing the request steps (URL, HTTP method, headers, body, redirect handling). Each step can optionally define assertions via an `apiResponse` object: `statusCodes` (HTTP status code ranges the response must fall within) and `body`/`bodyType`/`bodyRules` (assertions evaluated against the response body, e.g. matching, comparing, or extracting a field by path).
 - Returns: The created test ID and the URL to test definition; the ID can be used with `run_test` to run it.
 - Use case: Create an API test from an existing API spec or from directly supplied endpoint data, optionally with assertions to validate the response status and body.
 

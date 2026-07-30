@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - [PactFlow] `publish_provider_contract` tool: added support for AsyncAPI provider contracts (`specification: "asyncapi"`), alongside the existing OpenAPI (`"oas"`) support.
-- [Swagger] Extended the `create_test` Functional Testing tool's steps with assertion support: `expectedStatusCodes` for HTTP status code ranges, and `expectedBody`/`expectedBodyType`/`expectedBodyRules` for asserting on response body fields.
+- [Swagger] Extended the `create_test` Functional Testing tool's steps with assertion support via a step-level `apiResponse` object: `statusCodes` for HTTP status code ranges, and `body`/`bodyType`/`bodyRules` for asserting on response body fields.
 
 ### Changed
 
