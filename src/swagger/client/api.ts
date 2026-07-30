@@ -458,8 +458,8 @@ export class SwaggerAPI {
 
   /**
    * Create a portal for an organization that has none yet. The subdomain is
-   * derived from the organization name; on a subdomain conflict a candidate
-   * with a fresh random suffix is retried.
+   * derived from the organization name with an additional random suffix,
+   * mirroring the Portal UI's subdomain generation.
    */
   private async createPortalForOrganization(
     organizationId: string,
