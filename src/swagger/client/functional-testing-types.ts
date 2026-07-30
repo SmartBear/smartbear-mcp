@@ -183,43 +183,170 @@ export const CreateFunctionalTestingStatusRangeSchema = z.object({
     .describe("End of the HTTP status code range, inclusive"),
 });
 
-export const CreateFunctionalTestingBodyRuleSchema = z.object({
-  path: z
-    .string()
+export const CreateFunctionalTestingBodyRuleSchema = z
+  .object({
+    path: z
+      .string()
+      .describe(
+        "Path to the field to assert, in bracket notation (e.g. '[\"data\"][\"id\"]').",
+      ),
+    assertionType: z
+      .enum(["string", "number", "regex"])
+      .describe("Type of assertion"),
+    operator: z
+      .enum(["eq", "lt", "gt", "lte", "gte", "contains"])
+      .optional()
+      .describe(
+        "Comparison operator for compare assertions. Required (with target) when targets is not set; " +
+          "not usable together with targets, lower/upper, or with assertionType 'regex'.",
+      ),
+    target: z
+      .string()
+      .optional()
+      .describe(
+        "Expected value for compare assertions. Required (with operator) when targets is not set; " +
+          "not usable together with targets, lower/upper, or with assertionType 'regex'.",
+      ),
+    targets: z
+      .array(z.string())
+      .optional()
+      .describe(
+        "List of allowed values for a list-match assertion (assertionType 'string' or 'number' only). " +
+          "Not usable together with operator/target or lower/upper.",
+      ),
+    lower: z
+      .string()
+      .optional()
+      .describe(
+        "Lower bound for a number range assertion (assertionType 'number' only). Must be set together with upper.",
+      ),
+    upper: z
+      .string()
+      .optional()
+      .describe(
+        "Upper bound for a number range assertion (assertionType 'number' only). Must be set together with lower.",
+      ),
+    pattern: z
+      .enum(["nonempty"])
+      .optional()
+      .describe(
+        "Pattern type for regex assertions. Required when assertionType is 'regex' (only 'nonempty' is supported " +
+          "- there is no way to assert against an arbitrary regex string).",
+      ),
+    assignment: z
+      .string()
+      .optional()
+      .describe("Variable name to assign the extracted value to"),
+  })
+  .superRefine((rule, ctx) => {
+    const hasRange = rule.lower !== undefined || rule.upper !== undefined;
+    const hasCompare = rule.operator !== undefined || rule.target !== undefined;
+    const hasTargets = rule.targets !== undefined;
+
+    if (rule.assertionType === "regex") {
+      if (rule.pattern === undefined) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["pattern"],
+          message: "pattern is required when assertionType is 'regex'.",
+        });
+      }
+      if (hasCompare || hasTargets || hasRange) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["assertionType"],
+          message:
+            "operator, target, targets, lower and upper have no effect with assertionType 'regex' " +
+            "(the backend silently ignores them) and must not be set.",
+        });
+      }
+      return;
+    }
+
+    if (rule.pattern !== undefined) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["pattern"],
+        message: "pattern is only valid with assertionType 'regex'.",
+      });
+    }
+
+    if (hasRange && rule.assertionType !== "number") {
+      ctx.addIssue({
+        code: "custom",
+        path: ["lower"],
+        message: "lower/upper range assertions are only valid with assertionType 'number'.",
+      });
+    }
+
+    if (hasTargets) {
+      if (hasCompare || hasRange) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["targets"],
+          message:
+            "targets defines a list-match assertion and cannot be combined with operator/target or lower/upper.",
+        });
+      }
+      return;
+    }
+
+    if (hasRange) {
+      if (hasCompare) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["lower"],
+          message: "lower/upper cannot be combined with operator/target.",
+        });
+      }
+      if (rule.lower === undefined || rule.upper === undefined) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["lower"],
+          message:
+            "Both lower and upper are required for a range assertion; setting only one silently evaluates as always-false at runtime.",
+        });
+      }
+      return;
+    }
+
+    if (rule.operator === undefined) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["operator"],
+        message:
+          "operator is required for a compare assertion when targets/lower/upper are not set.",
+      });
+    }
+    if (rule.target === undefined) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["target"],
+        message:
+          "target is required for a compare assertion when targets/lower/upper are not set.",
+      });
+    }
+  });
+
+export const CreateFunctionalTestingApiResponseSchema = z.object({
+  statusCodes: z
+    .array(CreateFunctionalTestingStatusRangeSchema)
+    .optional()
     .describe(
-      "Path to the field to assert, in bracket notation (e.g. '[\"data\"][\"id\"]').",
+      "Expected HTTP status code ranges, e.g. [{start: 200, end: 299}]",
     ),
-  assertionType: z
-    .enum(["string", "number", "regex"])
-    .describe("Type of assertion"),
-  operator: z
-    .enum(["eq", "lt", "gt", "lte", "gte", "contains"])
-    .optional()
-    .describe("Comparison operator for compare assertions"),
-  target: z
+  body: z
     .string()
     .optional()
-    .describe("Expected value for compare assertions"),
-  targets: z
-    .array(z.string())
+    .describe("Expected exact response body, compared as-is"),
+  bodyType: z
+    .enum(["json", "xml"])
     .optional()
-    .describe("List of allowed values for list-match assertions"),
-  lower: z
-    .string()
+    .describe('Response body format, defaults to "json"'),
+  bodyRules: z
+    .array(CreateFunctionalTestingBodyRuleSchema)
     .optional()
-    .describe("Lower bound for number range assertions"),
-  upper: z
-    .string()
-    .optional()
-    .describe("Upper bound for number range assertions"),
-  pattern: z
-    .enum(["nonempty"])
-    .optional()
-    .describe("Pattern type for regex assertions"),
-  assignment: z
-    .string()
-    .optional()
-    .describe("Variable name to assign the extracted value to"),
+    .describe("Assertion rules evaluated against the response body"),
 });
 
 export const CreateFunctionalTestingTestStepSchema = z.object({
@@ -242,26 +369,9 @@ export const CreateFunctionalTestingTestStepSchema = z.object({
     .trim()
     .describe("Human-readable label for this step")
     .optional(),
-  expectedStatusCodes: z
-    .array(CreateFunctionalTestingStatusRangeSchema)
-    .optional()
-    .describe(
-      "Expected HTTP status code ranges, e.g. [{start: 200, end: 299}]",
-    ),
-  expectedBody: z
-    .string()
-    .optional()
-    .describe(
-      "Expected response body (required when expectedBodyRules is set)",
-    ),
-  expectedBodyType: z
-    .enum(["json", "xml"])
-    .optional()
-    .describe('Response body format, defaults to "json"'),
-  expectedBodyRules: z
-    .array(CreateFunctionalTestingBodyRuleSchema)
-    .optional()
-    .describe("Assertion rules evaluated against the response body"),
+  apiResponse: CreateFunctionalTestingApiResponseSchema.optional().describe(
+    "Expected response assertions: status code ranges, exact body match, and/or field-level body rules.",
+  ),
 });
 
 export const CreateFunctionalTestingTestParamsSchema = z.object({
@@ -285,6 +395,9 @@ export type CreateFunctionalTestingStatusRange = z.infer<
 >;
 export type CreateFunctionalTestingBodyRule = z.infer<
   typeof CreateFunctionalTestingBodyRuleSchema
+>;
+export type CreateFunctionalTestingApiResponse = z.infer<
+  typeof CreateFunctionalTestingApiResponseSchema
 >;
 
 export const CreateFunctionalTestingTestResponseSchema = z.object({
