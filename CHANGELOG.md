@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- [Swagger] Corrected `openWorldHint` tool annotations: portal, product, table-of-contents, document, and registry write tools are now declared as closed-world (`openWorldHint: false`); only the AI-backed `create_api_from_prompt` and `standardize_api` tools remain open-world.
+
 ## [0.33.0] - 2026-07-28
 
 ### Added
