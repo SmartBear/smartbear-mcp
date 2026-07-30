@@ -4,6 +4,7 @@ import { SwaggerAPI } from "./client/api";
 import { SwaggerConfiguration } from "./client/configuration";
 
 const fetchMock = createFetchMock(vi);
+const DUMMY_REGISTRY_BASE_PATH = "https://registry.example.test";
 
 describe("SwaggerAPI", () => {
   let api: SwaggerAPI;
@@ -14,7 +15,10 @@ describe("SwaggerAPI", () => {
     fetchMock.enableMocks();
     fetchMock.resetMocks();
 
-    config = new SwaggerConfiguration({ token: "test-token" });
+    config = new SwaggerConfiguration({
+      token: "test-token",
+      registryBasePath: DUMMY_REGISTRY_BASE_PATH,
+    });
     api = new SwaggerAPI(config, "SmartBear-MCP/1.0.0");
   });
 
@@ -319,7 +323,7 @@ describe("SwaggerAPI", () => {
       });
 
       expect(fetchMock).toHaveBeenCalledWith(
-        "https://api.swaggerhub.com/apis/orgname/petstore/1.0.0",
+        `${config.registryBasePath}/apis/orgname/petstore/1.0.0`,
         {
           method: "GET",
           headers: {
@@ -332,7 +336,7 @@ describe("SwaggerAPI", () => {
       );
 
       expect(fetchMock).toHaveBeenCalledWith(
-        "https://api.swaggerhub.com/standardization/orgname/scan",
+        `${config.registryBasePath}/standardization/orgname/scan`,
         expect.objectContaining({
           method: "POST",
           body: JSON.stringify(definition),
@@ -1506,7 +1510,7 @@ describe("SwaggerAPI", () => {
         }
 
         if (
-          url.startsWith(`https://api.swaggerhub.com/apis/orgname/petstore?`) &&
+          url.startsWith(`${config.registryBasePath}/apis/orgname/petstore?`) &&
           method === "POST"
         ) {
           const result = handlers.save?.() ?? { status: 200, version: "1.0.1" };
@@ -1517,7 +1521,7 @@ describe("SwaggerAPI", () => {
           };
         }
 
-        if (url === "https://api.swaggerhub.com/standardization/orgname/scan") {
+        if (url === `${config.registryBasePath}/standardization/orgname/scan`) {
           if (handlers.scanResponse) {
             return { ...handlers.scanResponse(), headers: jsonHeaders };
           }

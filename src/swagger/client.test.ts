@@ -5,6 +5,7 @@ import { SwaggerClient } from "./client";
 import { TOOLS } from "./client/tools";
 
 const fetchMock = createFetchMock(vi);
+const DUMMY_REGISTRY_BASE_PATH = "https://registry.example.test";
 
 describe("SwaggerClient", () => {
   let client: SwaggerClient;
@@ -15,7 +16,10 @@ describe("SwaggerClient", () => {
     fetchMock.resetMocks();
 
     client = new SwaggerClient();
-    await client.configure({} as any, { api_key: "test-token" });
+    await client.configure({} as any, {
+      api_key: "test-token",
+      registry_base_path: DUMMY_REGISTRY_BASE_PATH,
+    });
   });
 
   afterEach(() => {
@@ -194,7 +198,7 @@ describe("SwaggerClient", () => {
       });
 
       expect(fetchMock).toHaveBeenCalledWith(
-        "https://api.swaggerhub.com/apis/orgname/petstore/1.0.0",
+        expect.stringMatching(/\/apis\/orgname\/petstore\/1\.0\.0$/),
         expect.objectContaining({
           method: "GET",
           headers: expect.objectContaining({ Accept: "application/json" }),
@@ -217,7 +221,7 @@ describe("SwaggerClient", () => {
       });
 
       expect(fetchMock).toHaveBeenCalledWith(
-        "https://api.swaggerhub.com/apis/orgname/petstore/1.0.0",
+        expect.stringMatching(/\/apis\/orgname\/petstore\/1\.0\.0$/),
         expect.objectContaining({
           method: "GET",
           headers: expect.objectContaining({ Accept: "text/plain" }),
