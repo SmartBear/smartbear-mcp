@@ -1,10 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
 import { FunctionalTestingAPI } from "../client/functional-testing-api";
-import {
-  CreateFunctionalTestingTestParamsSchema,
-  normalizePath,
-} from "../client/functional-testing-types";
+import { CreateFunctionalTestingTestParamsSchema } from "../client/functional-testing-types";
 
 const fetchMock = createFetchMock(vi);
 fetchMock.enableMocks();
@@ -219,7 +216,7 @@ describe("FunctionalTestingAPI", () => {
       ]);
     });
 
-    it("forwards expectedBodyRules paths already normalized by the input schema", async () => {
+    it("forwards expectedBodyRules paths in bracket notation", async () => {
       fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
 
       const args = CreateFunctionalTestingTestParamsSchema.parse({
@@ -230,13 +227,13 @@ describe("FunctionalTestingAPI", () => {
             httpMethod: "POST",
             expectedBodyRules: [
               {
-                path: "$.data.name",
+                path: '["data"]["name"]',
                 assertionType: "string",
                 operator: "eq",
                 target: "Alice",
               },
               {
-                path: "$.data.token",
+                path: '["data"]["token"]',
                 assertionType: "regex",
                 pattern: "nonempty",
               },
@@ -276,7 +273,7 @@ describe("FunctionalTestingAPI", () => {
             expectedBodyType: "xml",
             expectedBodyRules: [
               {
-                path: "$.root.item",
+                path: '["root"]["item"]',
                 assertionType: "string",
                 operator: "contains",
                 target: "foo",
@@ -978,32 +975,6 @@ describe("FunctionalTestingAPI", () => {
       ).rejects.toThrow(
         "Swagger Functional Testing service is currently unreachable. Retry after a moment.",
       );
-    });
-  });
-
-  describe("normalizePath", () => {
-    it("should convert $. dot notation to bracket notation", () => {
-      expect(normalizePath("$.data.name")).toBe('["data"]["name"]');
-    });
-
-    it("should convert bare dot notation (no $) to bracket notation", () => {
-      expect(normalizePath("data.name")).toBe('["data"]["name"]');
-    });
-
-    it("should handle a single segment after $.", () => {
-      expect(normalizePath("$.id")).toBe('["id"]');
-    });
-
-    it("should preserve array index segments", () => {
-      expect(normalizePath("$.items[0].name")).toBe('["items"][0]["name"]');
-    });
-
-    it("should leave already-bracket-notation paths unchanged", () => {
-      expect(normalizePath('["data"]["name"]')).toBe('["data"]["name"]');
-    });
-
-    it("should return empty string for bare $ root", () => {
-      expect(normalizePath("$")).toBe("");
     });
   });
 

@@ -1,25 +1,5 @@
 import { z } from "zod";
 
-/**
- * Converts dot-notation JSON paths (e.g. "$.data.name", "items[0].id") to the
- * bracket notation the reflect frontend expects (e.g. ["data"]["name"], ["items"][0]["id"]).
- * Paths already in bracket notation are returned unchanged.
- */
-export function normalizePath(path: string): string {
-  if (path.startsWith("[")) return path;
-  const stripped = path.replace(/^\$\.?/, "");
-  if (!stripped) return "";
-  return stripped
-    .split(".")
-    .map((segment) =>
-      segment.replace(
-        /^([^[]+)(.*)$/,
-        (_m, name, rest) => `["${name}"]${rest}`,
-      ),
-    )
-    .join("");
-}
-
 export const RunFunctionalTestingTestParamsSchema = z.object({
   testId: z
     .string()
@@ -207,9 +187,8 @@ export const CreateFunctionalTestingBodyRuleSchema = z.object({
   path: z
     .string()
     .describe(
-      "Path to the field to assert. Accepts dot notation (e.g. '$.data.id', 'items[0].name') or bracket notation (e.g. '[\"data\"][\"id\"]').",
-    )
-    .transform(normalizePath),
+      "Path to the field to assert, in bracket notation (e.g. '[\"data\"][\"id\"]').",
+    ),
   assertionType: z
     .enum(["string", "number", "regex"])
     .describe("Type of assertion"),
