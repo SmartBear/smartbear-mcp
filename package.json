@@ -1,6 +1,9 @@
 {
   "name": "@smartbear/mcp",
   "version": "0.33.0",
+  "engines": {
+    "node": ">=20"
+  },
   "description": "MCP server for interacting SmartBear Products",
   "keywords": [
     "smartbear",
@@ -51,13 +54,15 @@
   },
   "dependencies": {
     "@bugsnag/js": "^8.8.1",
-    "@modelcontextprotocol/sdk": "^1.27.1",
     "js-yaml": "^4.2.0",
     "node-cache": "^5.1.2",
     "swagger-client": "^3.37.1",
     "vite": "^7.3.1",
     "ws": "^8.19.0",
-    "zod": "^4.3.6"
+    "zod": "^4.3.6",
+    "@modelcontextprotocol/server": "^2.0.0-beta.5",
+    "@modelcontextprotocol/node": "^2.0.0-beta.5",
+    "@modelcontextprotocol/server-legacy": "^2.0.0-beta.5"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.8",

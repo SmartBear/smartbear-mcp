@@ -1,11 +1,11 @@
-import type { PromptCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { GetPromptResult } from "@modelcontextprotocol/sdk/types.js";
-import { type ZodRawShape, z } from "zod";
+import type { GetPromptResult } from "@modelcontextprotocol/server";
+import { z } from "zod";
+import type { PromptHandler } from "../../common/prompts";
 import type { PromptParams } from "../../common/types";
 import { EndpointMatcherSchema } from "./ai";
 
 export interface PactflowPromptParams extends PromptParams {
-  callback: PromptCallback<ZodRawShape>;
+  callback: PromptHandler;
 }
 
 const OADMatcherPromptOpenAPIDocExample = {
