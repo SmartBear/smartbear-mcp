@@ -1,5 +1,6 @@
 import {
   CancelFunctionalTestingSuiteExecutionSchema,
+  CreateFunctionalTestingSuiteParamsSchema,
   CreateFunctionalTestingTestParamsSchema,
   CreateFunctionalTestingTestResponseSchema,
   GetFunctionalTestHistoryParamsSchema,
@@ -85,6 +86,22 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
     handler: "cancelFunctionalTestingSuiteExecution",
     readOnly: false,
     idempotent: false,
+  },
+  {
+    title: "Create Suite",
+    toolset: "Functional Testing",
+    summary:
+      "Creates a new test suite in your Swagger Functional Testing workspace with a specified name and one or more ordered blocks of tests. " +
+      "Use this tool when you need to group existing tests into a suite for collective execution. " +
+      "Within a block, tests run sequentially by default — set `parallel: true` on a block to run its tests in parallel instead. " +
+      "Blocks themselves always run one after another. " +
+      "Set `maxRetryAttempts` (1-3) on a block to automatically retry its failed tests before they count as failed. " +
+      "Optionally accepts `agentName` to save a tunnel agent override for future runs of the suite. " +
+      "Omit `runApiTestsBlocks` to create an empty suite.",
+    inputSchema: CreateFunctionalTestingSuiteParamsSchema,
+    handler: "createFunctionalTestingSuite",
+    idempotent: false,
+    readOnly: false,
   },
   {
     title: "List Suites",

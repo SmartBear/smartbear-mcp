@@ -37,6 +37,67 @@ export const CancelFunctionalTestingSuiteExecutionSchema = z.object({
     .min(1),
 });
 
+export const RunApiTestsBlockSchema = z.object({
+  testIds: z
+    .array(z.number())
+    .min(1)
+    .describe("IDs of existing tests to include in this block."),
+  parallel: z
+    .boolean()
+    .optional()
+    .describe(
+      "Whether to run this block's tests in parallel instead of sequentially. " +
+        "Defaults to false (sequential). When true, tests run at the account's maximum parallelism.",
+    ),
+  maxRetryAttempts: z
+    .number()
+    .int()
+    .min(1)
+    .max(3)
+    .optional()
+    .describe(
+      "Number of times to retry a failed test in this block before it counts as failed (1-3).",
+    ),
+  title: z
+    .string()
+    .trim()
+    .min(1)
+    .optional()
+    .describe(
+      "Label for this block, shown in the suite workflow. Must be unique among the suite's blocks.",
+    ),
+});
+
+export const CreateFunctionalTestingSuiteParamsSchema = z.object({
+  name: z.string().describe("Name for the new suite").trim().min(1),
+  agentName: z
+    .string()
+    .trim()
+    .min(1)
+    .optional()
+    .describe(
+      "Tunnel agent name to save as this suite's tunnel override for future runs.",
+    ),
+  runApiTestsBlocks: z
+    .array(RunApiTestsBlockSchema)
+    .min(1)
+    .optional()
+    .describe(
+      'Ordered groups ("blocks") of tests to run one after another. ' +
+        "Within a block, tests run sequentially unless `parallel` is set. Omit to create an empty suite.",
+    ),
+});
+
+export type CreateFunctionalTestingSuiteParams = z.infer<
+  typeof CreateFunctionalTestingSuiteParamsSchema
+>;
+
+export interface CreateFunctionalTestingSuiteResponse {
+  id: number;
+  slug: string;
+  url?: string;
+}
+
 export const RunFunctionalTestingSuiteParamsSchema = z.object({
   suiteId: z
     .string()

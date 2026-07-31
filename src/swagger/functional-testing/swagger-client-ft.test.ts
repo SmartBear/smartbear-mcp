@@ -440,6 +440,49 @@ describe("SwaggerClient — Functional Testing integration", () => {
     });
   });
 
+  describe("createFunctionalTestingSuite", () => {
+    it("should POST to api.reflect.run and return the created suite", async () => {
+      const createSuiteResponseMock = {
+        id: 4821,
+        slug: "nightly-api-regression",
+        url: "https://app.reflect.run/suites/nightly-api-regression?accountId=1",
+      };
+      fetchMock.mockResponseOnce(JSON.stringify(createSuiteResponseMock));
+
+      await client.configure({} as any, {
+        api_key: "swagger-key",
+        functional_testing_api_token: "ft-token",
+      });
+
+      const result = await requestContextStorage.run({ headers: {} }, () =>
+        client.createFunctionalTestingSuite({
+          name: "Nightly API Regression",
+          runApiTestsBlocks: [{ testIds: [101, 102] }],
+        }),
+      );
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://api.reflect.run/v1/suites",
+        expect.objectContaining({
+          method: "POST",
+          headers: expect.objectContaining({ "X-API-KEY": "ft-token" }),
+        }),
+      );
+      expect(result).toEqual(createSuiteResponseMock);
+    });
+
+    it("should throw when FT API is not configured", async () => {
+      await client.configure({} as any, { api_key: "swagger-key" });
+
+      await expect(
+        client.createFunctionalTestingSuite({
+          name: "Nightly API Regression",
+          runApiTestsBlocks: [{ testIds: [101] }],
+        }),
+      ).rejects.toThrow("Functional Testing API not configured");
+    });
+  });
+
   describe("getFunctionalTestingTestHistory", () => {
     const historyMock = {
       totalRuns: 5,

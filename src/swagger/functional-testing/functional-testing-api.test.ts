@@ -558,6 +558,114 @@ describe("FunctionalTestingAPI", () => {
     });
   });
 
+  describe("createSuite", () => {
+    const createSuiteResponseMock = {
+      id: 4821,
+      slug: "nightly-api-regression",
+      url: "https://app.reflect.run/suites/nightly-api-regression?accountId=1",
+    };
+
+    it("should POST to the correct endpoint with X-API-KEY header", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createSuiteResponseMock));
+
+      await api.createSuite({
+        name: "Nightly API Regression",
+        runApiTestsBlocks: [{ testIds: [101, 102] }],
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://api.reflect.run/v1/suites",
+        expect.objectContaining({
+          method: "POST",
+          headers: expect.objectContaining({ "X-API-KEY": "test-api-key" }),
+          body: JSON.stringify({
+            name: "Nightly API Regression",
+            runApiTestsBlocks: [{ testIds: [101, 102] }],
+          }),
+        }),
+      );
+    });
+
+    it("should forward agentName and per-block parallel/maxRetryAttempts/title", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createSuiteResponseMock));
+
+      await api.createSuite({
+        name: "Nightly API Regression",
+        agentName: "my-tunnel-agent",
+        runApiTestsBlocks: [
+          {
+            testIds: [101, 102],
+            parallel: true,
+            maxRetryAttempts: 2,
+            title: "Smoke",
+          },
+          { testIds: [201] },
+        ],
+      });
+
+      const [, init] = fetchMock.mock.calls[0];
+      const body = JSON.parse((init as RequestInit).body as string);
+      expect(body).toEqual({
+        name: "Nightly API Regression",
+        agentName: "my-tunnel-agent",
+        runApiTestsBlocks: [
+          {
+            testIds: [101, 102],
+            parallel: true,
+            maxRetryAttempts: 2,
+            title: "Smoke",
+          },
+          { testIds: [201] },
+        ],
+      });
+    });
+
+    it("should create an empty suite when runApiTestsBlocks is omitted", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createSuiteResponseMock));
+
+      await api.createSuite({ name: "Empty Suite" });
+
+      const [, init] = fetchMock.mock.calls[0];
+      const body = JSON.parse((init as RequestInit).body as string);
+      expect(body).toEqual({ name: "Empty Suite" });
+    });
+
+    it("should return the created suite", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createSuiteResponseMock));
+
+      const result = await api.createSuite({
+        name: "Nightly API Regression",
+        runApiTestsBlocks: [{ testIds: [101, 102] }],
+      });
+
+      expect(result).toEqual(createSuiteResponseMock);
+    });
+
+    it("should throw ToolError with the server message on HTTP error", async () => {
+      fetchMock.mockResponseOnce("Internal Server Error", { status: 500 });
+
+      await expect(
+        api.createSuite({ name: "Nightly API Regression" }),
+      ).rejects.toThrow("Failed to create Functional Testing suite");
+    });
+
+    it("should map network errors to an unreachable message", async () => {
+      fetchMock.mockRejectOnce(new Error("Network error"));
+
+      await expect(
+        api.createSuite({ name: "Nightly API Regression" }),
+      ).rejects.toThrow(UNREACHABLE_MESSAGE);
+    });
+
+    it("should throw an authentication error on 401", async () => {
+      fetchMock.mockResponseOnce("Unauthorized", { status: 401 });
+
+      await expect(
+        api.createSuite({ name: "Nightly API Regression" }),
+      ).rejects.toThrow(AUTH_FAILED_MESSAGE);
+    });
+  });
+
   describe("listSuites", () => {
     it("should call the correct endpoint with X-API-KEY header", async () => {
       fetchMock.mockResponseOnce(JSON.stringify(suitesResponseMock));
