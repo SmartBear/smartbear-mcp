@@ -2,9 +2,9 @@
 
 The Swagger Functional Testing client provides tools for discovering and executing API tests and test Suites. Tools for Swagger Functional Testing require a `SWAGGER_FUNCTIONAL_TESTING_API_TOKEN`.
 
-> **Availability:** The Swagger Functional Testing tools listed below are only available through the Local MCP Server. They are not available on the Remote MCP Servers.
-
 ## Available Tools
+
+All tools listed below are only available through the Local MCP Server. They are not available on the Remote MCP Server.
 
 ### Test Discovery
 
