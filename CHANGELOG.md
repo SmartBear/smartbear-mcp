@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- [Swagger] Fixed Swagger Functional Testing Integration documentation to include all available tools and their descriptions, as well as adjusts wrong tool sections.
 - [Swagger] Corrected `openWorldHint` tool annotations: portal, product, table-of-contents, document, and registry write tools are now declared as closed-world (`openWorldHint: false`); only the AI-backed `create_api_from_prompt` and `standardize_api` tools remain open-world.
 
 ## [0.33.0] - 2026-07-28
@@ -123,17 +124,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Zephyr] Update Zephyr schemas [#562](https://github.com/SmartBear/smartbear-mcp/pull/562)
 
 ## [0.27.2] - 2026-07-01
+
 - [CI] Extracted publishing of the standalone `com.smartbear/swagger-mcp` registry entry (`server.swagger.json`) into a dedicated, manually triggered `publish-swagger-mcp.yaml` workflow (`workflow_dispatch`), removing those steps from the main `publish.yaml`. [#554](https://github.com/SmartBear/smartbear-mcp/pull/554)
 
 ## [0.27.1] - 2026-06-29
+
 - [Swagger]: Removed the https://swagger.mcp.smartbear.com/mcp streamable-http remote from the remotes array in server.json.[#550](https://github.com/SmartBear/smartbear-mcp/pull/550)
+
 ## [0.27.0] - 2026-06-29
+
 - [Qmetry]: add Test Run UDF workflow support and customer fixes [#538](https://github.com/SmartBear/smartbear-mcp/pull/538)
 
 ### Added
 
 - [Swagger] Extended `publish_portal_product` to build published URLs dynamically from `SWAGGER_PORTAL_BASE_PATH`, support preview and section/table-of-contents paths, and return the resolved `liveUrl` or `previewUrl` plus product, portal, and table-of-contents metadata in the publish response. If `portal.customDomain` is present, the client now uses it as the full host without appending the portal UI suffix. For url generation product and portal details ar required and section and toc details are optional.
-[#525](https://github.com/SmartBear/smartbear-mcp/pull/525)
+  [#525](https://github.com/SmartBear/smartbear-mcp/pull/525)
 
 - [Swagger] Add `create_documentation_page` tool to create a documentation page in a portal product in a single call. Supports `markdown` and `html` content types with `internal` or `external` source. Returns page details and a `draftUrl` to edit the page in the portal admin.
 
@@ -165,6 +170,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.25.0] - 2026-06-03
 
 ### Added
+
 - [Common] Add `MCP_TOOLSETS` environment variable to allow tools to be grouped into sets for better organization and client control [#474](https://github.com/SmartBear/smartbear-mcp/pull/474)
 - [Common] Split authorization and configuration options to better suit OAuth flow [#487](https://github.com/SmartBear/smartbear-mcp/pull/487)
 - [QTM4J] Added support for linking and unlinking requirements, test cases, and test cycles through new tools. [#505](https://github.com/SmartBear/smartbear-mcp/pull/505)
@@ -181,7 +187,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [PactFlow] Remove `.email()` Zod validator from PactFlow admin user tool schemas — the generated JSON Schema pattern used regex lookahead which is rejected by strict JSON Schema validators (e.g. OpenAI gpt-5.5) [#491](https://github.com/SmartBear/smartbear-mcp/issues/491)
 - [BearQ] Fix BearQ integration page not appearing in live docs [#496](https://github.com/SmartBear/smartbear-mcp/pull/496)
-- [Swagger]  Add constraint in the create_portal tool schema description, that allows only one Portal per organization.
+- [Swagger] Add constraint in the create_portal tool schema description, that allows only one Portal per organization.
 
 ## [0.23.0] - 2026-05-22
 
@@ -204,6 +210,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.20.0] - 2026-05-15
 
 ### Added
+
 - [Common] Add graceful shutdown on SIGTERM/SIGINT in HTTP mode: drains active sessions (closes Streamable HTTP and SSE transports, runs per-client `cleanupSession` hooks including Reflect WebSocket teardown), with a configurable deadline via `MCP_SHUTDOWN_TIMEOUT_MS` (default 25s) [#455](https://github.com/SmartBear/smartbear-mcp/pull/455)
 - [Common] Split health/readiness probes: `GET /health` is now liveness-only and always returns 200 when the process is responsive; `GET /ready` is the readiness probe and returns 503 during drain so load balancers stop routing new sessions to draining pods. Both probes set `Cache-Control: no-store`. [#455](https://github.com/SmartBear/smartbear-mcp/pull/455)
 - [Common] Add product prefix to registered resources and prompts [#458](https://github.com/SmartBear/smartbear-mcp/pull/458)
@@ -267,7 +274,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - [Pactflow] Added tools for CRUD over BDCT, Pacticipants, Environments, Permissions management [#414](https://github.com/SmartBear/smartbear-mcp/pull/414)
-
 
 ## [0.17.0] - 2026-04-07
 
