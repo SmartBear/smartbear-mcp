@@ -441,6 +441,20 @@ describe("SwaggerClient — Functional Testing integration", () => {
   });
 
   describe("createFunctionalTestingSuite", () => {
+    it("should register the Create Suite tool when FT token is configured", async () => {
+      await client.configure({} as any, {
+        functional_testing_api_token: "ft-token",
+      });
+
+      const mockRegister = vi.fn();
+      await client.registerTools(mockRegister, vi.fn());
+
+      const registeredTitles = mockRegister.mock.calls.map(
+        (call) => call[0].title,
+      );
+      expect(registeredTitles).toContain("Create Suite");
+    });
+
     it("should POST to api.reflect.run and return the created suite", async () => {
       const createSuiteResponseMock = {
         id: 4821,

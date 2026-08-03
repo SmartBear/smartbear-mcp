@@ -632,6 +632,26 @@ describe("FunctionalTestingAPI", () => {
       expect(result).toEqual(createSuiteResponseMock);
     });
 
+    it("should send a minimal body for a single test in a single block with no optional fields", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createSuiteResponseMock));
+
+      await api.createSuite({
+        name: "Nightly API Regression",
+        runApiTests: [{ testIds: [101] }],
+      });
+
+      const [, init] = fetchMock.mock.calls[0];
+      const body = JSON.parse((init as RequestInit).body as string);
+      expect(body).toEqual({
+        name: "Nightly API Regression",
+        runApiTests: [{ testIds: [101] }],
+      });
+      expect(body.agentName).toBeUndefined();
+      expect(body.runApiTests[0].parallel).toBeUndefined();
+      expect(body.runApiTests[0].maxRetryAttempts).toBeUndefined();
+      expect(body.runApiTests[0].title).toBeUndefined();
+    });
+
     it("should throw ToolError with the server message on HTTP error", async () => {
       fetchMock.mockResponseOnce("Internal Server Error", { status: 500 });
 
@@ -708,6 +728,98 @@ describe("FunctionalTestingAPI", () => {
           "title",
         ]);
       }
+    });
+
+    it("should reject a duplicate title anywhere in the suite, not just between adjacent blocks", () => {
+      const result = CreateFunctionalTestingSuiteParamsSchema.safeParse({
+        name: "Nightly API Regression",
+        runApiTests: [
+          { testIds: [101], title: "Smoke" },
+          { testIds: [201] },
+          { testIds: [301], title: "Smoke" },
+        ],
+      });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0].path).toEqual([
+          "runApiTests",
+          2,
+          "title",
+        ]);
+      }
+    });
+
+    it("should reject an empty name", () => {
+      const result = CreateFunctionalTestingSuiteParamsSchema.safeParse({
+        name: "",
+        runApiTests: [{ testIds: [101] }],
+      });
+
+      expect(result.success).toBe(false);
+    });
+
+    it("should reject a missing runApiTests", () => {
+      const result = CreateFunctionalTestingSuiteParamsSchema.safeParse({
+        name: "Nightly API Regression",
+      });
+
+      expect(result.success).toBe(false);
+    });
+
+    it("should reject an empty runApiTests array", () => {
+      const result = CreateFunctionalTestingSuiteParamsSchema.safeParse({
+        name: "Nightly API Regression",
+        runApiTests: [],
+      });
+
+      expect(result.success).toBe(false);
+    });
+
+    it("should reject a block with an empty testIds array", () => {
+      const result = CreateFunctionalTestingSuiteParamsSchema.safeParse({
+        name: "Nightly API Regression",
+        runApiTests: [{ testIds: [] }],
+      });
+
+      expect(result.success).toBe(false);
+    });
+
+    it("should reject maxRetryAttempts below 0", () => {
+      const result = CreateFunctionalTestingSuiteParamsSchema.safeParse({
+        name: "Nightly API Regression",
+        runApiTests: [{ testIds: [101], maxRetryAttempts: -1 }],
+      });
+
+      expect(result.success).toBe(false);
+    });
+
+    it("should reject maxRetryAttempts above 3", () => {
+      const result = CreateFunctionalTestingSuiteParamsSchema.safeParse({
+        name: "Nightly API Regression",
+        runApiTests: [{ testIds: [101], maxRetryAttempts: 4 }],
+      });
+
+      expect(result.success).toBe(false);
+    });
+
+    it("should accept maxRetryAttempts within the 0-3 range", () => {
+      const result = CreateFunctionalTestingSuiteParamsSchema.safeParse({
+        name: "Nightly API Regression",
+        runApiTests: [{ testIds: [101], maxRetryAttempts: 3 }],
+      });
+
+      expect(result.success).toBe(true);
+    });
+
+    it("should reject an empty agentName", () => {
+      const result = CreateFunctionalTestingSuiteParamsSchema.safeParse({
+        name: "Nightly API Regression",
+        agentName: "",
+        runApiTests: [{ testIds: [101] }],
+      });
+
+      expect(result.success).toBe(false);
     });
   });
 
