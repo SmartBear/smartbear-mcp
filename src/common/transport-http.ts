@@ -2,10 +2,9 @@ import { randomUUID } from "node:crypto";
 import type { IncomingMessage, Server, ServerResponse } from "node:http";
 import { createServer } from "node:http";
 import querystring from "node:querystring";
-
-import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
+import { isInitializeRequest } from "@modelcontextprotocol/server";
+import { NodeStreamableHTTPServerTransport } from "@modelcontextprotocol/node";
+import { SSEServerTransport } from "@modelcontextprotocol/server-legacy/sse";
 import { clientRegistry } from "./client-registry";
 import { handleInitializeMessage } from "./initialize";
 import { setRequestMcpClient, withRequestContext } from "./request-context";
@@ -16,7 +15,7 @@ import { getTypeDescription, isOptionalType } from "./zod-utils";
 
 type SessionEntry = {
   server: SmartBearMcpServer;
-  transport: StreamableHTTPServerTransport | SSEServerTransport;
+  transport: NodeStreamableHTTPServerTransport | SSEServerTransport;
 };
 
 /**
@@ -298,13 +297,13 @@ function getExistingTransport(
     string,
     {
       server: SmartBearMcpServer;
-      transport: StreamableHTTPServerTransport | SSEServerTransport;
+      transport: NodeStreamableHTTPServerTransport | SSEServerTransport;
     }
   >,
   res: ServerResponse,
-): StreamableHTTPServerTransport | null {
+): NodeStreamableHTTPServerTransport | null {
   const existing = transports.get(sessionId);
-  if (existing && existing.transport instanceof StreamableHTTPServerTransport) {
+  if (existing && existing.transport instanceof NodeStreamableHTTPServerTransport) {
     return existing.transport;
   }
 
@@ -337,10 +336,10 @@ async function createNewTransport(
     string,
     {
       server: SmartBearMcpServer;
-      transport: StreamableHTTPServerTransport | SSEServerTransport;
+      transport: NodeStreamableHTTPServerTransport | SSEServerTransport;
     }
   >,
-): Promise<StreamableHTTPServerTransport | null> {
+): Promise<NodeStreamableHTTPServerTransport | null> {
   // Create and configure server with headers from the request
   const server = await newServer(req, res);
   if (!server) {
@@ -348,7 +347,7 @@ async function createNewTransport(
   }
 
   // Create transport with session management
-  const transport = new StreamableHTTPServerTransport({
+  const transport = new NodeStreamableHTTPServerTransport({
     sessionIdGenerator: () => randomUUID(),
     onsessioninitialized: (newSessionId) => {
       console.log(`[MCP] New session initialized: ${newSessionId}`);
@@ -392,7 +391,7 @@ export async function handleStreamableHttpRequest(
     string,
     {
       server: SmartBearMcpServer;
-      transport: StreamableHTTPServerTransport | SSEServerTransport;
+      transport: NodeStreamableHTTPServerTransport | SSEServerTransport;
     }
   >,
 ) {
@@ -423,7 +422,7 @@ export async function handleStreamableHttpRequest(
 
     const parsedBody = await parseRequestBody(req);
 
-    let transport: StreamableHTTPServerTransport;
+    let transport: NodeStreamableHTTPServerTransport;
 
     // Case 2: Existing session - route to existing transport
     if (sessionId) {
@@ -497,7 +496,7 @@ async function handleLegacySseRequest(
     string,
     {
       server: SmartBearMcpServer;
-      transport: StreamableHTTPServerTransport | SSEServerTransport;
+      transport: NodeStreamableHTTPServerTransport | SSEServerTransport;
     }
   >,
 ) {
@@ -546,7 +545,7 @@ async function handleLegacyMessageRequest(
     string,
     {
       server: SmartBearMcpServer;
-      transport: StreamableHTTPServerTransport | SSEServerTransport;
+      transport: NodeStreamableHTTPServerTransport | SSEServerTransport;
     }
   >,
 ) {

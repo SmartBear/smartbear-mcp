@@ -13022,7 +13022,11 @@ Expected Output: The List of test cases linked to Jira issue PROJ-123 with their
     "inputSchema": [
       "issueKey",
     ],
-    "outputSchema": undefined,
+    "outputSchema": [
+      "key",
+      "self",
+      "version",
+    ],
     "title": "Zephyr: Get Issue Link Test Cases",
   },
   "zephyr_get_priorities": {
@@ -13684,7 +13688,10 @@ Expected Output: The List of test cycles linked to Jira issue PROJ-123 with thei
     "inputSchema": [
       "issueKey",
     ],
-    "outputSchema": undefined,
+    "outputSchema": [
+      "id",
+      "self",
+    ],
     "title": "Zephyr: Get Test Cycles linked to a Jira issue",
   },
   "zephyr_get_test_execution": {
@@ -13969,7 +13976,10 @@ Expected Output: The List of test executions linked to Jira issue PROJ-123 with 
     "inputSchema": [
       "issueKey",
     ],
-    "outputSchema": undefined,
+    "outputSchema": [
+      "id",
+      "self",
+    ],
     "title": "Zephyr: Get test executions linked to a Jira issue",
   },
   "zephyr_get_test_plans": {
