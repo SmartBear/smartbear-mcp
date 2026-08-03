@@ -69,36 +69,60 @@ export const RunApiTestsBlockSchema = z.object({
     ),
 });
 
-export const CreateFunctionalTestingSuiteParamsSchema = z.object({
-  name: z.string().describe("Name for the new suite").trim().min(1),
-  agentName: z
-    .string()
-    .trim()
-    .min(1)
-    .optional()
-    .describe(
-      "Tunnel agent name to save as this suite's tunnel override for future runs.",
-    ),
-  runApiTests: z
-    .array(RunApiTestsBlockSchema)
-    .min(1)
-    .describe(
-      'Required — ordered groups ("blocks") of tests to run one after another. ' +
-        "Must include at least one entry; suites cannot be created without a workflow. " +
-        "Within a block, tests run sequentially unless `parallel` is set. " +
-        "Block `title`s must be unique within the suite.",
-    ),
-});
+export const CreateFunctionalTestingSuiteParamsSchema = z
+  .object({
+    name: z.string().describe("Name for the new suite").trim().min(1),
+    agentName: z
+      .string()
+      .trim()
+      .min(1)
+      .optional()
+      .describe(
+        "Tunnel agent name to save as this suite's tunnel override for future runs.",
+      ),
+    runApiTests: z
+      .array(RunApiTestsBlockSchema)
+      .min(1)
+      .describe(
+        'Required — ordered groups ("blocks") of tests to run one after another. ' +
+          "Must include at least one entry; suites cannot be created without a workflow. " +
+          "Within a block, tests run sequentially unless `parallel` is set. " +
+          "Block `title`s must be unique within the suite.",
+      ),
+  })
+  .superRefine((data, ctx) => {
+    const seen = new Set<string>();
+    data.runApiTests.forEach((block, index) => {
+      if (!block.title) return;
+      if (seen.has(block.title)) {
+        ctx.addIssue({
+          code: "custom",
+          message: `Duplicate block title "${block.title}". Block titles must be unique within the suite.`,
+          path: ["runApiTests", index, "title"],
+        });
+      }
+      seen.add(block.title);
+    });
+  });
 
 export type CreateFunctionalTestingSuiteParams = z.infer<
   typeof CreateFunctionalTestingSuiteParamsSchema
 >;
 
-export interface CreateFunctionalTestingSuiteResponse {
-  id: number;
-  slug: string;
-  url?: string;
-}
+export const CreateFunctionalTestingSuiteResponseSchema = z.object({
+  id: z.number().describe("ID of the newly created suite"),
+  slug: z.string().describe("Slug of the newly created suite"),
+  url: z
+    .string()
+    .describe(
+      "Link to the created suite in Swagger Functional Testing UI",
+    )
+    .optional(),
+});
+
+export type CreateFunctionalTestingSuiteResponse = z.infer<
+  typeof CreateFunctionalTestingSuiteResponseSchema
+>;
 
 export const RunFunctionalTestingSuiteParamsSchema = z.object({
   suiteId: z

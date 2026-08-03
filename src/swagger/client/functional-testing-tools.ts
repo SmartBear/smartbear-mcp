@@ -1,6 +1,7 @@
 import {
   CancelFunctionalTestingSuiteExecutionSchema,
   CreateFunctionalTestingSuiteParamsSchema,
+  CreateFunctionalTestingSuiteResponseSchema,
   CreateFunctionalTestingTestParamsSchema,
   CreateFunctionalTestingTestResponseSchema,
   GetFunctionalTestHistoryParamsSchema,
@@ -100,6 +101,7 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
       "Set `maxRetryAttempts` (0-3) on a block to automatically retry its failed tests before they count as failed. " +
       "Optionally accepts `agentName` to save a tunnel agent override for future runs of the suite.",
     inputSchema: CreateFunctionalTestingSuiteParamsSchema,
+    outputSchema: CreateFunctionalTestingSuiteResponseSchema,
     handler: "createFunctionalTestingSuite",
     idempotent: false,
     readOnly: false,

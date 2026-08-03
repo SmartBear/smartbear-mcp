@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
 import { FunctionalTestingAPI } from "../client/functional-testing-api";
+import { CreateFunctionalTestingSuiteParamsSchema } from "../client/functional-testing-types";
 
 const fetchMock = createFetchMock(vi);
 fetchMock.enableMocks();
@@ -662,6 +663,51 @@ describe("FunctionalTestingAPI", () => {
           runApiTests: [{ testIds: [1] }],
         }),
       ).rejects.toThrow(AUTH_FAILED_MESSAGE);
+    });
+  });
+
+  describe("CreateFunctionalTestingSuiteParamsSchema", () => {
+    it("should accept blocks with distinct titles", () => {
+      const result = CreateFunctionalTestingSuiteParamsSchema.safeParse({
+        name: "Nightly API Regression",
+        runApiTests: [
+          { testIds: [101], title: "Smoke" },
+          { testIds: [201], title: "Regression" },
+        ],
+      });
+
+      expect(result.success).toBe(true);
+    });
+
+    it("should accept multiple blocks without a title", () => {
+      const result = CreateFunctionalTestingSuiteParamsSchema.safeParse({
+        name: "Nightly API Regression",
+        runApiTests: [{ testIds: [101] }, { testIds: [201] }],
+      });
+
+      expect(result.success).toBe(true);
+    });
+
+    it("should reject duplicate block titles", () => {
+      const result = CreateFunctionalTestingSuiteParamsSchema.safeParse({
+        name: "Nightly API Regression",
+        runApiTests: [
+          { testIds: [101], title: "Smoke" },
+          { testIds: [201], title: "Smoke" },
+        ],
+      });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0].message).toContain(
+          'Duplicate block title "Smoke"',
+        );
+        expect(result.error.issues[0].path).toEqual([
+          "runApiTests",
+          1,
+          "title",
+        ]);
+      }
     });
   });
 
