@@ -16,6 +16,7 @@ import type {
   RunFunctionalTestingTestParams,
   TestRunHistoryResponse,
 } from "./functional-testing-types";
+import { applyBaseUrlTemplating } from "./functional-testing-url-utils";
 
 const API_HOSTNAME = "api.reflect.run";
 
@@ -94,12 +95,26 @@ export class FunctionalTestingAPI {
     const {
       type: _type,
       steps,
+      parameters,
       ...rest
     } = args as Record<string, unknown> & {
-      steps?: unknown[];
+      steps?: Record<string, unknown>[];
+      parameters?: { name: string; value?: string }[];
     };
-    const sanitizedSteps = steps?.map((step) => {
-      const { type: _stepType, ...stepRest } = step as Record<string, unknown>;
+
+    let templatedSteps: Record<string, unknown>[] | undefined;
+    let mergedParameters: { name: string; value?: string }[];
+    try {
+      ({ steps: templatedSteps, parameters: mergedParameters } =
+        applyBaseUrlTemplating(steps, parameters));
+    } catch (error) {
+      throw new ToolError(
+        error instanceof Error ? error.message : String(error),
+      );
+    }
+
+    const sanitizedSteps = templatedSteps?.map((step) => {
+      const { type: _stepType, ...stepRest } = step;
       return { ...stepRest, type: "api" };
     });
     const response = await this.ftFetch(
@@ -111,6 +126,9 @@ export class FunctionalTestingAPI {
           ...rest,
           type: "api",
           steps: sanitizedSteps,
+          ...(mergedParameters.length > 0
+            ? { parameters: mergedParameters }
+            : {}),
         }),
       },
       errorMessageFor(`create Functional Testing test`),

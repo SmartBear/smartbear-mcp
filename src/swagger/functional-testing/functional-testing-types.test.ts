@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   CreateFunctionalTestingBodyRuleSchema,
   CreateFunctionalTestingStatusRangeSchema,
+  CreateFunctionalTestingTestParamsSchema,
+  CreateFunctionalTestingTestStepSchema,
 } from "../client/functional-testing-types";
 
 describe("CreateFunctionalTestingStatusRangeSchema", () => {
@@ -244,5 +246,57 @@ describe("CreateFunctionalTestingBodyRuleSchema", () => {
       });
       expect(result.success).toBe(true);
     });
+  });
+});
+
+describe("CreateFunctionalTestingTestStepSchema", () => {
+  it("accepts a plain url without baseUrl", () => {
+    const result = CreateFunctionalTestingTestStepSchema.safeParse({
+      url: "https://example.com/api/users",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts a url with baseUrl set", () => {
+    const result = CreateFunctionalTestingTestStepSchema.safeParse({
+      url: "https://petstore.swagger.io/v2/pet/{petId}",
+      baseUrl: "https://petstore.swagger.io/v2",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts an already-templated url", () => {
+    const result = CreateFunctionalTestingTestStepSchema.safeParse({
+      url: "${var(baseURLPetstore)}/pet/${var(petId)}",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects an empty url", () => {
+    const result = CreateFunctionalTestingTestStepSchema.safeParse({
+      url: "",
+    });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("CreateFunctionalTestingTestParamsSchema", () => {
+  it("accepts top-level parameters", () => {
+    const result = CreateFunctionalTestingTestParamsSchema.safeParse({
+      name: "My Test",
+      parameters: [
+        { name: "baseURLPetstore", value: "https://petstore.swagger.io/v2" },
+        { name: "petId" },
+      ],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects a parameter with an empty name", () => {
+    const result = CreateFunctionalTestingTestParamsSchema.safeParse({
+      name: "My Test",
+      parameters: [{ name: "" }],
+    });
+    expect(result.success).toBe(false);
   });
 });

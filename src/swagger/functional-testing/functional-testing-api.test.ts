@@ -339,6 +339,206 @@ describe("FunctionalTestingAPI", () => {
     });
   });
 
+  describe("createTest baseUrl templating", () => {
+    const createResponseMock = {
+      id: 12345,
+      url: "https://app.reflect.run/tests/12345/definition?accountId=54321",
+    };
+
+    it("templates a step url with baseUrl and creates a base-URL parameter", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
+
+      await api.createTest({
+        name: "Petstore Test",
+        steps: [
+          {
+            url: "https://petstore.swagger.io/v2/pet/{petId}",
+            baseUrl: "https://petstore.swagger.io/v2",
+          },
+        ],
+      });
+
+      const [, init] = fetchMock.mock.calls[0];
+      const body = JSON.parse((init as RequestInit).body as string);
+      expect(body.steps[0].url).toBe(
+        "${var(baseURLpetstoreswaggerio)}/pet/${var(petId)}",
+      );
+      expect(body.steps[0].baseUrl).toBeUndefined();
+      expect(body.parameters).toEqual([
+        {
+          name: "baseURLpetstoreswaggerio",
+          value: "https://petstore.swagger.io/v2",
+        },
+        { name: "petId", value: "" },
+      ]);
+    });
+
+    it("strips a trailing slash on baseUrl before templating", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
+
+      await api.createTest({
+        name: "Trailing Slash Test",
+        steps: [
+          {
+            url: "https://petstore.swagger.io/v2/pet/1",
+            baseUrl: "https://petstore.swagger.io/v2/",
+          },
+        ],
+      });
+
+      const [, init] = fetchMock.mock.calls[0];
+      const body = JSON.parse((init as RequestInit).body as string);
+      expect(body.steps[0].url).toBe("${var(baseURLpetstoreswaggerio)}/pet/1");
+    });
+
+    it("reuses the same base-URL parameter for multiple steps sharing a baseUrl", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
+
+      await api.createTest({
+        name: "Petstore Multi Step Test",
+        steps: [
+          {
+            url: "https://petstore.swagger.io/v2/pet/{petId}",
+            baseUrl: "https://petstore.swagger.io/v2",
+          },
+          {
+            url: "https://petstore.swagger.io/v2/store/order/{orderId}",
+            baseUrl: "https://petstore.swagger.io/v2",
+          },
+        ],
+      });
+
+      const [, init] = fetchMock.mock.calls[0];
+      const body = JSON.parse((init as RequestInit).body as string);
+      expect(body.steps[0].url).toBe(
+        "${var(baseURLpetstoreswaggerio)}/pet/${var(petId)}",
+      );
+      expect(body.steps[1].url).toBe(
+        "${var(baseURLpetstoreswaggerio)}/store/order/${var(orderId)}",
+      );
+      expect(body.parameters).toEqual([
+        {
+          name: "baseURLpetstoreswaggerio",
+          value: "https://petstore.swagger.io/v2",
+        },
+        { name: "petId", value: "" },
+        { name: "orderId", value: "" },
+      ]);
+    });
+
+    it("creates distinct base-URL parameters for multiple distinct base URLs", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
+
+      await api.createTest({
+        name: "Multi API Test",
+        steps: [
+          {
+            url: "https://petstore.swagger.io/v2/pet/{petId}",
+            baseUrl: "https://petstore.swagger.io/v2",
+          },
+          {
+            url: "https://api.example.com/v1/users/{userId}",
+            baseUrl: "https://api.example.com/v1",
+          },
+        ],
+      });
+
+      const [, init] = fetchMock.mock.calls[0];
+      const body = JSON.parse((init as RequestInit).body as string);
+      expect(body.parameters).toEqual([
+        {
+          name: "baseURLpetstoreswaggerio",
+          value: "https://petstore.swagger.io/v2",
+        },
+        { name: "petId", value: "" },
+        { name: "baseURLapiexamplecom", value: "https://api.example.com/v1" },
+        { name: "userId", value: "" },
+      ]);
+    });
+
+    it("merges generated parameters with caller-supplied parameters", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
+
+      await api.createTest({
+        name: "With Extra Param",
+        parameters: [{ name: "apiKey", value: "secret" }],
+        steps: [
+          {
+            url: "https://petstore.swagger.io/v2/pet/{petId}",
+            baseUrl: "https://petstore.swagger.io/v2",
+          },
+        ],
+      });
+
+      const [, init] = fetchMock.mock.calls[0];
+      const body = JSON.parse((init as RequestInit).body as string);
+      expect(body.parameters).toEqual([
+        {
+          name: "baseURLpetstoreswaggerio",
+          value: "https://petstore.swagger.io/v2",
+        },
+        { name: "petId", value: "" },
+        { name: "apiKey", value: "secret" },
+      ]);
+    });
+
+    it("dedupes the generated base-URL parameter name against a caller-supplied name", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
+
+      await api.createTest({
+        name: "Name Collision Test",
+        parameters: [{ name: "baseURLpetstoreswaggerio", value: "existing" }],
+        steps: [
+          {
+            url: "https://petstore.swagger.io/v2/pet/1",
+            baseUrl: "https://petstore.swagger.io/v2",
+          },
+        ],
+      });
+
+      const [, init] = fetchMock.mock.calls[0];
+      const body = JSON.parse((init as RequestInit).body as string);
+      expect(body.parameters).toEqual([
+        {
+          name: "baseURLpetstoreswaggerio2",
+          value: "https://petstore.swagger.io/v2",
+        },
+        { name: "baseURLpetstoreswaggerio", value: "existing" },
+      ]);
+      expect(body.steps[0].url).toBe("${var(baseURLpetstoreswaggerio2)}/pet/1");
+    });
+
+    it("leaves steps without baseUrl untouched", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
+
+      await api.createTest({
+        name: "No BaseUrl Test",
+        steps: [{ url: "https://example.com/api/users" }],
+      });
+
+      const [, init] = fetchMock.mock.calls[0];
+      const body = JSON.parse((init as RequestInit).body as string);
+      expect(body.steps[0].url).toBe("https://example.com/api/users");
+      expect(body.parameters).toBeUndefined();
+    });
+
+    it("throws a ToolError when the step url does not start with baseUrl", async () => {
+      await expect(
+        api.createTest({
+          name: "Mismatched Base Test",
+          steps: [
+            {
+              url: "https://other.example.com/pet/1",
+              baseUrl: "https://petstore.swagger.io/v2",
+            },
+          ],
+        }),
+      ).rejects.toThrow(
+        'Step url "https://other.example.com/pet/1" must start with its baseUrl "https://petstore.swagger.io/v2"',
+      );
+    });
+  });
+
   describe("listTests", () => {
     it("should call the correct endpoint with X-API-KEY header", async () => {
       fetchMock.mockResponseOnce(JSON.stringify(testsMock));
