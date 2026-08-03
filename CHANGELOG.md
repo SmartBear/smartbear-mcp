@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- [Swagger] Added `create_suite` Functional Testing tool that creates a new test Suite from one or more ordered blocks of tests, with optional parallel execution, retry attempts, and tunnel agent override.
+
 ### Fixed
 
 - [Swagger] Fixed Swagger Functional Testing Integration documentation to include all available tools and their descriptions, as well as adjusts wrong tool sections.

@@ -52,11 +52,12 @@ export const RunApiTestsBlockSchema = z.object({
   maxRetryAttempts: z
     .number()
     .int()
-    .min(1)
+    .min(0)
     .max(3)
     .optional()
     .describe(
-      "Number of times to retry a failed test in this block before it counts as failed (1-3).",
+      "Number of times to retry a failed test in this block before it counts as failed (0-3). " +
+        "Omit or set to 0 for no retry.",
     ),
   title: z
     .string()
@@ -78,13 +79,14 @@ export const CreateFunctionalTestingSuiteParamsSchema = z.object({
     .describe(
       "Tunnel agent name to save as this suite's tunnel override for future runs.",
     ),
-  runApiTestsBlocks: z
+  runApiTests: z
     .array(RunApiTestsBlockSchema)
     .min(1)
-    .optional()
     .describe(
-      'Ordered groups ("blocks") of tests to run one after another. ' +
-        "Within a block, tests run sequentially unless `parallel` is set. Omit to create an empty suite.",
+      'Required — ordered groups ("blocks") of tests to run one after another. ' +
+        "Must include at least one entry; suites cannot be created without a workflow. " +
+        "Within a block, tests run sequentially unless `parallel` is set. " +
+        "Block `title`s must be unique within the suite.",
     ),
 });
 

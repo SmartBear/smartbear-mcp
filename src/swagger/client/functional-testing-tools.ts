@@ -32,7 +32,8 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
       "This tool only creates API tests (not browser or native-mobile tests). " +
       "Use this when you need to programmatically create a test with a defined set of API request steps. " +
       "Each step requires a URL and may specify an HTTP method (defaults to GET), request body, headers, and redirect handling. " +
-      "Returns the ID and the URL to definition of the newly created test; the ID can be used with `swagger_run_test` to run it.",
+      "Returns the ID and the URL to definition of the newly created test; the ID can be used with `swagger_run_test` to run it, " +
+      "or grouped with other test IDs into a Suite via `swagger_create_suite`.",
     inputSchema: CreateFunctionalTestingTestParamsSchema,
     outputSchema: CreateFunctionalTestingTestResponseSchema,
     handler: "createFunctionalTestingTest",
@@ -91,13 +92,13 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
     title: "Create Suite",
     toolset: "Functional Testing",
     summary:
-      "Creates a new test suite in your Swagger Functional Testing workspace with a specified name and one or more ordered blocks of tests. " +
+      "Creates a new test suite in your Swagger Functional Testing workspace with a specified name and `runApiTests`, " +
+      "one or more required ordered blocks of tests. " +
       "Use this tool when you need to group existing tests into a suite for collective execution. " +
       "Within a block, tests run sequentially by default — set `parallel: true` on a block to run its tests in parallel instead. " +
       "Blocks themselves always run one after another. " +
-      "Set `maxRetryAttempts` (1-3) on a block to automatically retry its failed tests before they count as failed. " +
-      "Optionally accepts `agentName` to save a tunnel agent override for future runs of the suite. " +
-      "Omit `runApiTestsBlocks` to create an empty suite.",
+      "Set `maxRetryAttempts` (0-3) on a block to automatically retry its failed tests before they count as failed. " +
+      "Optionally accepts `agentName` to save a tunnel agent override for future runs of the suite.",
     inputSchema: CreateFunctionalTestingSuiteParamsSchema,
     handler: "createFunctionalTestingSuite",
     idempotent: false,

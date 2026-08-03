@@ -220,7 +220,7 @@ export class FunctionalTestingAPI {
         body: JSON.stringify({
           name: args.name,
           agentName: args.agentName,
-          runApiTestsBlocks: args.runApiTestsBlocks,
+          runApiTests: args.runApiTests,
         }),
       },
       errorMessageFor("create Functional Testing suite"),

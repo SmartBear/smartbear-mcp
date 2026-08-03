@@ -457,7 +457,7 @@ describe("SwaggerClient — Functional Testing integration", () => {
       const result = await requestContextStorage.run({ headers: {} }, () =>
         client.createFunctionalTestingSuite({
           name: "Nightly API Regression",
-          runApiTestsBlocks: [{ testIds: [101, 102] }],
+          runApiTests: [{ testIds: [101, 102] }],
         }),
       );
 
@@ -477,7 +477,7 @@ describe("SwaggerClient — Functional Testing integration", () => {
       await expect(
         client.createFunctionalTestingSuite({
           name: "Nightly API Regression",
-          runApiTestsBlocks: [{ testIds: [101] }],
+          runApiTests: [{ testIds: [101] }],
         }),
       ).rejects.toThrow("Functional Testing API not configured");
     });
