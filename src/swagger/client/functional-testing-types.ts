@@ -332,7 +332,7 @@ export const CreateFunctionalTestingBodyRuleSchema = z
       .describe("Variable name to assign the extracted value to"),
   });
 
-export const CreateFunctionalTestingApiResponseSchema = z.object({
+export const CreateFunctionalTestingAssertionsSchema = z.object({
   statusCodes: z
     .array(CreateFunctionalTestingStatusRangeSchema)
     .optional()
@@ -373,7 +373,7 @@ export const CreateFunctionalTestingTestStepSchema = z.object({
     .trim()
     .describe("Human-readable label for this step")
     .optional(),
-  apiResponse: CreateFunctionalTestingApiResponseSchema.optional().describe(
+  assertions: CreateFunctionalTestingAssertionsSchema.optional().describe(
     "Expected response assertions: status code ranges, exact body match, and/or field-level body rules.",
   ),
 });
@@ -400,8 +400,8 @@ export type CreateFunctionalTestingStatusRange = z.infer<
 export type CreateFunctionalTestingBodyRule = z.infer<
   typeof CreateFunctionalTestingBodyRuleSchema
 >;
-export type CreateFunctionalTestingApiResponse = z.infer<
-  typeof CreateFunctionalTestingApiResponseSchema
+export type CreateFunctionalTestingAssertions = z.infer<
+  typeof CreateFunctionalTestingAssertionsSchema
 >;
 
 export const CreateFunctionalTestingTestResponseSchema = z.object({
