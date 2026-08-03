@@ -195,7 +195,7 @@ describe("FunctionalTestingAPI", () => {
       );
     });
 
-    it("should forward apiResponse.statusCodes on a step", async () => {
+    it("should forward assertions.statusCodes on a step", async () => {
       fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
 
       await api.createTest({
@@ -204,19 +204,19 @@ describe("FunctionalTestingAPI", () => {
           {
             url: "https://example.com/api",
             httpMethod: "GET",
-            apiResponse: { statusCodes: [{ start: 200, end: 299 }] },
+            assertions: { statusCodes: [{ start: 200, end: 299 }] },
           },
         ],
       });
 
       const [, init] = fetchMock.mock.calls[0];
       const body = JSON.parse((init as RequestInit).body as string);
-      expect(body.steps[0].apiResponse.statusCodes).toEqual([
+      expect(body.steps[0].assertions.statusCodes).toEqual([
         { start: 200, end: 299 },
       ]);
     });
 
-    it("forwards apiResponse.bodyRules paths in bracket notation", async () => {
+    it("forwards assertions.bodyRules paths in bracket notation", async () => {
       fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
 
       const args = CreateFunctionalTestingTestParamsSchema.parse({
@@ -225,7 +225,7 @@ describe("FunctionalTestingAPI", () => {
           {
             url: "https://example.com/api",
             httpMethod: "POST",
-            apiResponse: {
+            assertions: {
               bodyRules: [
                 {
                   path: '["data"]["name"]',
@@ -248,7 +248,7 @@ describe("FunctionalTestingAPI", () => {
 
       const [, init] = fetchMock.mock.calls[0];
       const body = JSON.parse((init as RequestInit).body as string);
-      expect(body.steps[0].apiResponse.bodyRules).toEqual([
+      expect(body.steps[0].assertions.bodyRules).toEqual([
         {
           path: '["data"]["name"]',
           assertionType: "string",
@@ -263,7 +263,7 @@ describe("FunctionalTestingAPI", () => {
       ]);
     });
 
-    it("should forward apiResponse.bodyType on a step", async () => {
+    it("should forward assertions.bodyType on a step", async () => {
       fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
 
       await api.createTest({
@@ -272,7 +272,7 @@ describe("FunctionalTestingAPI", () => {
           {
             url: "https://example.com/api",
             httpMethod: "GET",
-            apiResponse: {
+            assertions: {
               bodyType: "xml",
               bodyRules: [
                 {
@@ -289,10 +289,10 @@ describe("FunctionalTestingAPI", () => {
 
       const [, init] = fetchMock.mock.calls[0];
       const body = JSON.parse((init as RequestInit).body as string);
-      expect(body.steps[0].apiResponse.bodyType).toBe("xml");
+      expect(body.steps[0].assertions.bodyType).toBe("xml");
     });
 
-    it("should forward status codes, body, bodyType and bodyRules under apiResponse", async () => {
+    it("should forward status codes, body, bodyType and bodyRules under assertions", async () => {
       fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
 
       await api.createTest({
@@ -301,7 +301,7 @@ describe("FunctionalTestingAPI", () => {
           {
             url: "https://example.com/api",
             httpMethod: "POST",
-            apiResponse: {
+            assertions: {
               statusCodes: [{ start: 200, end: 299 }],
               body: '{"name":"doggie"}',
               bodyType: "json",
@@ -320,7 +320,7 @@ describe("FunctionalTestingAPI", () => {
 
       const [, init] = fetchMock.mock.calls[0];
       const body = JSON.parse((init as RequestInit).body as string);
-      expect(body.steps[0].apiResponse).toEqual({
+      expect(body.steps[0].assertions).toEqual({
         statusCodes: [{ start: 200, end: 299 }],
         body: '{"name":"doggie"}',
         bodyType: "json",
