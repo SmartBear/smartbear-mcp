@@ -11520,7 +11520,7 @@ None",
 
 **Parameters:**
 - name (string): The display name for the portal - shown to users and in branding (3-40 characters)
-- subdomain (string) *required*: The portal subdomain - used in the portal URL (e.g., 'myportal' for myportal.example.com). Must be unique, lowercase, 3-20 characters, alphanumeric with hyphens
+- subdomain (string) *required*: The portal subdomain - used in the portal URL (e.g., 'myportal' for myportal.example.com). Must be unique, lowercase, 3-20 characters, alphanumeric with hyphens. Recommended: slugified organization name plus a random 3-character suffix (e.g., 'acmecorp-k7p') to avoid collisions
 - offline (boolean): If true, the portal will not be visible to customers - useful for development/staging environments. Defaults to false
 - routing (string): Routing strategy for the portal - either 'browser' (client-side routing) or 'proxy' (server-side routing). Defaults to 'browser'
 - credentialsEnabled (boolean): Whether authentication credentials are enabled for accessing the portal. When true, users can authenticate to access private content. Defaults to true

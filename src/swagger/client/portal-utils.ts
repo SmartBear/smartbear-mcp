@@ -7,6 +7,8 @@ export const SUBDOMAIN_MAX_LENGTH = 20;
 export const PORTAL_NAME_MIN_LENGTH = 3;
 export const PORTAL_NAME_MAX_LENGTH = 40;
 
+export type Rng = () => number;
+
 /**
  * Whether a string's length falls within an inclusive range. Generic helper
  * reused for the various entity length rules (subdomain 3-20, portal/product
@@ -21,61 +23,61 @@ export function isLengthWithin(
 }
 
 /**
- * Sanitize a free-form string into a subdomain-safe slug: lowercase,
- * alphanumeric segments separated by single hyphens, trimmed to maxLength
- * with no trailing hyphen. Matches ^[a-z0-9]+(-[a-z0-9]+)*$.
+ * Sanitize a free-form string into a subdomain-safe slug.
+ * Matches ^[a-z0-9]+(-[a-z0-9]+)*$ within the 3-20 length limits.
  */
-export function slugify(value: string, maxLength: number): string {
-  return value
+export function convertToValidSubdomain(
+  value = "",
+  rng: Rng = Math.random,
+): string {
+  let converted = value
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, maxLength)
-    .replace(/-+$/, "");
+    .replace(/[^a-z0-9-]+/g, "")
+    .split("-")
+    .filter(Boolean)
+    .join("-");
+  while (converted.length < SUBDOMAIN_MIN_LENGTH) {
+    converted = `${converted}${Math.floor(rng() * 10)}`;
+  }
+  if (converted.length > SUBDOMAIN_MAX_LENGTH) {
+    converted = converted.slice(0, SUBDOMAIN_MAX_LENGTH);
+    if (converted.endsWith("-")) {
+      converted = converted.slice(0, -1);
+    }
+  }
+  return converted;
 }
 
 /**
- * Build a portal subdomain candidate from the organization name, falling back
- * to an identifier derived from the organization UUID when the name is missing
- * or sanitizes to fewer than the minimum number of characters.
+ * Append a random "-<suffix>" to a subdomain base while staying within the
+ * maximum length. Each call yields a fresh candidate, used to retry portal
+ * creation after a subdomain conflict. The suffix is padded to a full 3
+ * characters and no hyphen is left at the cut point; the base must already be
+ * a sanitized slug (see convertToValidSubdomain) for the result to be valid.
+ */
+export function appendRandomSuffix(
+  base: string,
+  rng: Rng = Math.random,
+): string {
+  const randomChars = `-${rng().toString(36).substring(2, 5).padEnd(3, "0")}`;
+  const baseSlug = base
+    .slice(0, SUBDOMAIN_MAX_LENGTH - randomChars.length)
+    .replace(/-+$/, "");
+  return `${baseSlug}${randomChars}`;
+}
+
+/**
+ * Build a portal subdomain candidate from the organization name: a sanitized
+ * slug followed by a random suffix, appended even without a collision.
  */
 export function buildSubdomainCandidate(
-  organizationId: string,
   organizationName?: string,
+  rng: Rng = Math.random,
 ): string {
-  const fallback = `portal-${organizationId
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, "")
-    .slice(0, 8)}`;
-
-  if (!organizationName) {
-    return fallback;
-  }
-
-  const sanitized = slugify(organizationName, SUBDOMAIN_MAX_LENGTH);
-
-  return sanitized.length >= SUBDOMAIN_MIN_LENGTH ? sanitized : fallback;
-}
-
-/**
- * Build a subdomain candidate suffixed with part of the organization UUID,
- * used to retry portal creation after a subdomain conflict while staying
- * within the maximum length.
- */
-export function buildSuffixedSubdomain(
-  baseSubdomain: string,
-  organizationId: string,
-): string {
-  const idSuffix = organizationId
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, "")
-    .slice(0, 4);
-
-  const trimmedBase = baseSubdomain
-    .slice(0, SUBDOMAIN_MAX_LENGTH - idSuffix.length - 1)
-    .replace(/-+$/, "");
-
-  return `${trimmedBase}-${idSuffix}`;
+  return appendRandomSuffix(
+    convertToValidSubdomain(organizationName, rng),
+    rng,
+  );
 }
 
 /**
