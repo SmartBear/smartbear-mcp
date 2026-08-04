@@ -245,6 +245,7 @@ export interface StandardizeApiResponse {
   errorsFound: number;
   fixedDefinition?: string;
   savedVersion?: string;
+  url?: string;
   errors?: Array<{
     description: string;
     line?: number;
@@ -294,6 +295,7 @@ export const StandardizeOutputSchema = z.looseObject({
   errorsFound: z.number().optional(),
   fixedDefinition: z.string().optional(),
   savedVersion: z.string().optional(),
+  url: z.string().optional(),
 });
 
 export const ApiDefinitionOutputSchema = z.object({
