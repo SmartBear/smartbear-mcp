@@ -3,29 +3,42 @@
 /**
  * registry-remove-remote.js
  *
- * Removes a `remotes[].url` entry from one or more versions of a server that is
- * published to the official MCP registry (registry.modelcontextprotocol.io).
+ * Frees a `remotes[].url` so it can be claimed by another server in the same
+ * MCP registry namespace (registry.modelcontextprotocol.io), by changing the
+ * lifecycle `status` of every version that still references it.
  *
- * Why this exists:
- *   The registry rejects publishing a remote URL that is already claimed by any
- *   non-deleted version of another server (see `validateNoDuplicateRemoteURLs`
- *   in modelcontextprotocol/registry). To move a remote URL to a new server
- *   (e.g. hand `https://swagger.mcp.smartbear.com/mcp` from
- *   `com.smartbear/smartbear-mcp` to `com.smartbear/swagger-mcp`), every active
- *   version that still lists that URL must have it removed first.
+ * Why status, not edit:
+ *   The registry rejects publishing a remote URL that is already claimed by
+ *   any *non-deleted* version of another server (see
+ *   `validateNoDuplicateRemoteURLs` in modelcontextprotocol/registry). The
+ *   obvious fix — PUT an edited server body with the remote stripped out — is
+ *   NOT usable here: that endpoint requires `edit` permission, and DNS/GitHub
+ *   publisher auth only ever grants `publish` (confirmed against the registry
+ *   source: only an admin-configured generic OIDC provider or local dev auth
+ *   grant `edit`). Confirmed empirically too: PUT returns 403 with a
+ *   publish-scoped token.
  *
- *   Editing (rather than deleting) the old versions frees the URL WITHOUT
- *   destroying version history — the versions stay `active`, they just no
- *   longer advertise the remote.
+ *   The status-only `PATCH .../versions/{version}/status` endpoint is
+ *   different: it accepts `publish` OR `edit` permission. Setting a version's
+ *   status to `deleted` removes it from the duplicate-remote-URL scan (which
+ *   explicitly excludes deleted versions), freeing any remote URL it held —
+ *   with a normal publisher token.
  *
- * This is generic: pass any server name, any remote URL, and any set of
- * versions, so it can be reused for future remote-URL migrations.
+ * Safety:
+ *   This script refuses to touch whichever version is currently flagged
+ *   `isLatest`, however it was selected (explicit --versions or --remote-url
+ *   auto-detection). It also never uses the registry's bulk
+ *   "all versions" status endpoint, which would apply to literally every
+ *   version including the current latest — a single wrong `--status` there
+ *   would take down the live published server. Per-version PATCH calls only.
  *
  * Usage:
  *   node scripts/registry-remove-remote.js \
  *     --server com.smartbear/smartbear-mcp \
  *     --remote-url https://swagger.mcp.smartbear.com/mcp \
  *     [--versions 0.25.0,0.26.0,0.27.0]   # default: every version that has the URL
+ *     [--status deleted]                  # default: deleted (also: active, deprecated)
+ *     [--message "superseded by com.smartbear/swagger-mcp"]
  *     [--registry https://registry.modelcontextprotocol.io]
  *     [--token <jwt>]                     # else $MCP_REGISTRY_TOKEN, else token.json
  *     [--apply]                           # actually write; omit for a dry run
@@ -36,9 +49,7 @@
  *     1. --token <jwt>
  *     2. $MCP_REGISTRY_TOKEN
  *     3. ~/.config/mcp-publisher/token.json  (written by `mcp-publisher login`)
- *   The token must carry `edit` permission for the server's namespace (the same
- *   permission publishing uses). A 403 means the token lacks edit scope — fall
- *   back to the OSS admins in Discord #registry-dev.
+ *   A `publish`-scoped token for the server's namespace is sufficient.
  */
 
 import fs from "node:fs";
@@ -47,6 +58,7 @@ import path from "node:path";
 import readline from "node:readline";
 
 const DEFAULT_REGISTRY = "https://registry.modelcontextprotocol.io";
+const VALID_STATUSES = ["active", "deprecated", "deleted"];
 const TOKEN_FILE = path.join(
   os.homedir(),
   ".config",
@@ -62,7 +74,9 @@ function parseArgs(argv) {
   const args = {
     server: undefined,
     remoteUrl: undefined,
-    versions: undefined, // array | undefined (undefined = auto-detect)
+    versions: undefined, // array | undefined (undefined = auto-detect via remoteUrl)
+    status: "deleted",
+    message: undefined,
     registry: DEFAULT_REGISTRY,
     token: undefined,
     apply: false,
@@ -92,6 +106,12 @@ function parseArgs(argv) {
           .map((v) => v.trim())
           .filter(Boolean);
         break;
+      case "--status":
+        args.status = next();
+        break;
+      case "--message":
+        args.message = next();
+        break;
       case "--registry":
         args.registry = next().replace(/\/+$/, "");
         break;
@@ -117,22 +137,29 @@ function parseArgs(argv) {
 
   if (!args.server)
     fail("--server is required (e.g. com.smartbear/smartbear-mcp)");
-  if (!args.remoteUrl) fail("--remote-url is required");
+  if (!args.versions && !args.remoteUrl)
+    fail("Specify which versions to target via --remote-url or --versions");
+  if (!VALID_STATUSES.includes(args.status))
+    fail(`--status must be one of: ${VALID_STATUSES.join(", ")}`);
   return args;
 }
 
 function printHelp() {
   console.log(
-    `Remove a remote URL from versions of an MCP registry server.\n\n` +
+    `Free a remote URL by changing the status of registry server versions that hold it.\n\n` +
       `Required:\n` +
       `  --server <name>        e.g. com.smartbear/smartbear-mcp\n` +
-      `  --remote-url <url>     the remotes[].url to strip\n\n` +
+      `  --remote-url <url>     target every version that still has this remote\n` +
+      `                         (or) --versions a,b,c  target an explicit list instead\n\n` +
       `Optional:\n` +
-      `  --versions a,b,c       explicit versions (default: every version that has the URL)\n` +
+      `  --status <status>      one of: ${VALID_STATUSES.join(", ")} (default: deleted)\n` +
+      `  --message <text>       status message (e.g. reason for deletion)\n` +
       `  --registry <url>       default: ${DEFAULT_REGISTRY}\n` +
       `  --token <jwt>          default: $MCP_REGISTRY_TOKEN or ~/.config/mcp-publisher/token.json\n` +
-      `  --apply                perform the edits (default is a dry run)\n` +
-      `  --yes, -y              skip the confirmation prompt when applying\n`,
+      `  --apply                perform the change (default is a dry run)\n` +
+      `  --yes, -y              skip the confirmation prompt when applying\n\n` +
+      `Note: whichever version is currently flagged 'isLatest' is always refused,\n` +
+      `to avoid accidentally taking down the live published server.\n`,
   );
 }
 
@@ -211,8 +238,9 @@ function serverHasRemote(serverJson, remoteUrl) {
   return (serverJson.remotes ?? []).some((r) => r?.url === remoteUrl);
 }
 
-function statusOf(record) {
-  return record._meta?.["io.modelcontextprotocol.registry/official"]?.status;
+/** The registry-managed `_meta` block: { status, statusMessage, isLatest, ... }. */
+function officialMeta(record) {
+  return record._meta?.["io.modelcontextprotocol.registry/official"];
 }
 
 // ---------------------------------------------------------------------------
@@ -234,10 +262,12 @@ async function main() {
   // A dry run is read-only, so only demand a token when we're actually writing.
   const token = args.apply ? resolveToken(args.token) : undefined;
 
-  console.log(`Registry : ${args.registry}`);
-  console.log(`Server   : ${args.server}`);
-  console.log(`Remote   : ${args.remoteUrl}`);
-  console.log(`Mode     : ${args.apply ? "APPLY" : "dry-run"}\n`);
+  console.log(`Registry   : ${args.registry}`);
+  console.log(`Server     : ${args.server}`);
+  console.log(
+    `New status : ${args.status}${args.message ? `  ("${args.message}")` : ""}`,
+  );
+  console.log(`Mode       : ${args.apply ? "APPLY" : "dry-run"}\n`);
 
   const allVersions = await fetchAllVersions(args.registry, args.server);
   if (allVersions.length === 0) {
@@ -256,57 +286,59 @@ async function main() {
     );
   }
 
-  // Candidate = version whose server JSON still lists the remote URL.
-  let candidates = allVersions.filter((rec) =>
-    serverHasRemote(rec.server, args.remoteUrl),
-  );
-
-  // Restrict to an explicit version list if provided.
-  if (args.versions) {
+  let candidates;
+  if (args.remoteUrl) {
+    candidates = allVersions.filter((rec) =>
+      serverHasRemote(rec.server, args.remoteUrl),
+    );
+  } else {
     const wanted = new Set(args.versions);
-    const matched = candidates.filter((rec) => wanted.has(rec.server.version));
-    const found = new Set(matched.map((rec) => rec.server.version));
+    candidates = allVersions.filter((rec) => wanted.has(rec.server.version));
+    const found = new Set(candidates.map((rec) => rec.server.version));
     for (const v of args.versions) {
       if (!found.has(v)) {
-        // Distinguish "version doesn't have the URL" from "version doesn't exist".
-        const exists = allVersions.some((rec) => rec.server.version === v);
-        console.warn(
-          exists
-            ? `⚠️  ${v}: does not reference ${args.remoteUrl}, skipping`
-            : `⚠️  ${v}: no such version, skipping`,
-        );
+        console.warn(`⚠️  ${v}: no such version, skipping`);
       }
     }
-    candidates = matched;
   }
 
   if (candidates.length === 0) {
-    console.log(
-      `✅ Nothing to do — no matching version references the remote URL.`,
-    );
+    console.log(`✅ Nothing to do — no matching version found.`);
     return;
   }
 
-  console.log(`Versions to edit (${candidates.length}):`);
+  // Hard safety rail: never let this tool touch the currently-latest version,
+  // however it was selected. The registry has no bulk-scoped-to-non-latest
+  // status endpoint, so this per-version guard is what keeps a wrong
+  // --versions list (or a future remote-url match) from taking down the live
+  // published server.
+  const latestHit = candidates.filter((rec) => officialMeta(rec)?.isLatest);
+  if (latestHit.length > 0) {
+    fail(
+      `Refusing: ${latestHit.map((r) => r.server.version).join(", ")} ` +
+        `${latestHit.length > 1 ? "are" : "is"} the current 'latest' version. ` +
+        `Changing its status is a deliberate, separate action this tool won't take.`,
+    );
+  }
+
+  console.log(`Versions to update (${candidates.length}):`);
   for (const rec of candidates) {
-    const status = statusOf(rec) ?? "unknown";
-    const remaining = (rec.server.remotes ?? [])
-      .filter((r) => r.url !== args.remoteUrl)
-      .map((r) => r.url);
+    const meta = officialMeta(rec);
     console.log(
-      `  • ${rec.server.version} [${status}]  remotes after edit: ` +
-        `${remaining.length ? remaining.join(", ") : "(none)"}`,
+      `  • ${rec.server.version}  ${meta?.status ?? "unknown"} → ${args.status}`,
     );
   }
   console.log("");
 
   if (!args.apply) {
-    console.log(`Dry run — re-run with --apply to perform these edits.`);
+    console.log(`Dry run — re-run with --apply to perform this change.`);
     return;
   }
 
   if (!args.yes) {
-    const ok = await confirm(`Apply ${candidates.length} edit(s)? [y/N] `);
+    const ok = await confirm(
+      `Apply status change to ${candidates.length} version(s)? [y/N] `,
+    );
     if (!ok) {
       console.log("Aborted.");
       return;
@@ -317,23 +349,19 @@ async function main() {
   let failures = 0;
   for (const rec of candidates) {
     const version = rec.server.version;
-    const updated = {
-      ...rec.server,
-      remotes: (rec.server.remotes ?? []).filter(
-        (r) => r.url !== args.remoteUrl,
-      ),
-    };
-    const url = `${args.registry}/v0/servers/${encoded}/versions/${encodeURIComponent(version)}`;
+    const body = { status: args.status };
+    if (args.message) body.statusMessage = args.message;
+    const url = `${args.registry}/v0/servers/${encoded}/versions/${encodeURIComponent(version)}/status`;
     try {
       await registryFetch(url, {
-        method: "PUT",
+        method: "PATCH",
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(updated),
+        body: JSON.stringify(body),
       });
-      console.log(`  ✅ ${version} updated`);
+      console.log(`  ✅ ${version} → ${args.status}`);
     } catch (error) {
       failures++;
       console.error(`  ❌ ${version} failed: ${error.message}`);
@@ -341,14 +369,9 @@ async function main() {
   }
 
   if (failures > 0) {
-    fail(
-      `${failures} edit(s) failed. A 403 means the token lacks 'edit' scope for ` +
-        `this namespace — escalate to the OSS admins in Discord #registry-dev.`,
-    );
+    fail(`${failures} update(s) failed.`);
   }
-  console.log(
-    `\n✅ Done. The remote URL is now free to claim on another server.`,
-  );
+  console.log(`\n✅ Done.`);
 }
 
 main().catch((error) => {
