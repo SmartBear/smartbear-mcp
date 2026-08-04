@@ -1635,9 +1635,13 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
 **Toolset:** Admin
 
 **Parameters:**
-- accountId (string) *required*: UUID of the system account",
+- accountId (string) *required*: UUID of the system account
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
       "accountId",
+      "pageNumber",
+      "pageSize",
     ],
     "outputSchema": undefined,
     "title": "Contract Testing: Admin Get System Account Tokens",
@@ -1737,8 +1741,12 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
 **Toolset:** Admin
 
 **Parameters:**
-None",
-    "inputSchema": [],
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
+    "inputSchema": [
+      "pageNumber",
+      "pageSize",
+    ],
     "outputSchema": undefined,
     "title": "Contract Testing: Admin List Permissions",
   },
@@ -1755,8 +1763,12 @@ None",
 **Toolset:** Admin
 
 **Parameters:**
-None",
-    "inputSchema": [],
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
+    "inputSchema": [
+      "pageNumber",
+      "pageSize",
+    ],
     "outputSchema": undefined,
     "title": "Contract Testing: Admin List Roles",
   },
@@ -1773,8 +1785,12 @@ None",
 **Toolset:** Admin
 
 **Parameters:**
-- teamId (string) *required*: UUID of the team",
+- teamId (string) *required*: UUID of the team
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
+      "pageNumber",
+      "pageSize",
       "teamId",
     ],
     "outputSchema": undefined,
@@ -1794,8 +1810,8 @@ None",
 
 **Parameters:**
 - q (string): Filter teams by name
-- page (number): Page number
-- size (number): Results per page",
+- page (number): Page number (default: 1)
+- size (number): Results per page (default: 5)",
     "inputSchema": [
       "page",
       "q",
@@ -1820,8 +1836,8 @@ None",
 - active (boolean): Filter by active/inactive status
 - q (string): Filter by name or email
 - userType (number): 0 = regular users, 1 = system accounts
-- page (number): Page number
-- size (number): Results per page",
+- page (number): Page number (default: 1)
+- size (number): Results per page (default: 5)",
     "inputSchema": [
       "active",
       "page",
@@ -2409,8 +2425,8 @@ None",
 - type (string): Filter events by type (e.g. 'pact_publication')
 - sort (string): Sort order: '+timestamp' (asc, default) or '-timestamp' (desc)
 - from (string): Start result set from this audit event UUID (keyset pagination)
-- pageNumber (number): Page number
-- pageSize (number): Results per page (max 100)
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (max 100) (default: 5)
 
 **Use Cases:** 1. Review recent changes to pacticipants, webhooks, or secrets 2. Investigate who published a specific pact or verification 3. Filter events by user or event type for compliance reporting 4. Track deployment recording activity across environments",
     "inputSchema": [
@@ -2441,10 +2457,14 @@ None",
 - providerName (string) *required*: Name of the provider
 - providerVersionNumber (string) *required*: Provider version number
 - consumerName (string) *required*: Name of the consumer
-- consumerVersionNumber (string) *required*: Consumer version number",
+- consumerVersionNumber (string) *required*: Consumer version number
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
       "consumerName",
       "consumerVersionNumber",
+      "pageNumber",
+      "pageSize",
       "providerName",
       "providerVersionNumber",
     ],
@@ -2465,8 +2485,12 @@ None",
 
 **Parameters:**
 - providerName (string) *required*: Name of the provider
-- providerVersionNumber (string) *required*: Provider version number",
+- providerVersionNumber (string) *required*: Provider version number
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
+      "pageNumber",
+      "pageSize",
       "providerName",
       "providerVersionNumber",
     ],
@@ -2487,8 +2511,12 @@ None",
 
 **Parameters:**
 - providerName (string) *required*: Name of the provider
-- providerVersionNumber (string) *required*: Provider version number",
+- providerVersionNumber (string) *required*: Provider version number
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
+      "pageNumber",
+      "pageSize",
       "providerName",
       "providerVersionNumber",
     ],
@@ -2511,10 +2539,14 @@ None",
 - providerName (string) *required*: Name of the provider
 - providerVersionNumber (string) *required*: Provider version number
 - consumerName (string) *required*: Name of the consumer
-- consumerVersionNumber (string) *required*: Consumer version number",
+- consumerVersionNumber (string) *required*: Consumer version number
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
       "consumerName",
       "consumerVersionNumber",
+      "pageNumber",
+      "pageSize",
       "providerName",
       "providerVersionNumber",
     ],
@@ -2535,8 +2567,12 @@ None",
 
 **Parameters:**
 - providerName (string) *required*: Name of the provider
-- providerVersionNumber (string) *required*: Provider version number",
+- providerVersionNumber (string) *required*: Provider version number
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
+      "pageNumber",
+      "pageSize",
       "providerName",
       "providerVersionNumber",
     ],
@@ -2559,10 +2595,14 @@ None",
 - providerName (string) *required*: Name of the provider
 - providerVersionNumber (string) *required*: Provider version number
 - consumerName (string) *required*: Name of the consumer
-- consumerVersionNumber (string) *required*: Consumer version number",
+- consumerVersionNumber (string) *required*: Consumer version number
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
       "consumerName",
       "consumerVersionNumber",
+      "pageNumber",
+      "pageSize",
       "providerName",
       "providerVersionNumber",
     ],
@@ -2585,10 +2625,14 @@ None",
 - providerName (string) *required*: Name of the provider
 - providerVersionNumber (string) *required*: Provider version number
 - consumerName (string) *required*: Name of the consumer
-- consumerVersionNumber (string) *required*: Consumer version number",
+- consumerVersionNumber (string) *required*: Consumer version number
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
       "consumerName",
       "consumerVersionNumber",
+      "pageNumber",
+      "pageSize",
       "providerName",
       "providerVersionNumber",
     ],
@@ -2609,8 +2653,12 @@ None",
 
 **Parameters:**
 - providerName (string) *required*: Name of the provider
-- providerVersionNumber (string) *required*: Provider version number",
+- providerVersionNumber (string) *required*: Provider version number
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
+      "pageNumber",
+      "pageSize",
       "providerName",
       "providerVersionNumber",
     ],
@@ -2631,8 +2679,12 @@ None",
 
 **Parameters:**
 - providerName (string) *required*: Name of the provider
-- providerVersionNumber (string) *required*: Provider version number",
+- providerVersionNumber (string) *required*: Provider version number
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
+      "pageNumber",
+      "pageSize",
       "providerName",
       "providerVersionNumber",
     ],
@@ -2655,10 +2707,14 @@ None",
 - providerName (string) *required*: Name of the provider
 - providerVersionNumber (string) *required*: Provider version number
 - consumerName (string) *required*: Name of the consumer
-- consumerVersionNumber (string) *required*: Consumer version number",
+- consumerVersionNumber (string) *required*: Consumer version number
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
       "consumerName",
       "consumerVersionNumber",
+      "pageNumber",
+      "pageSize",
       "providerName",
       "providerVersionNumber",
     ],
@@ -2702,8 +2758,8 @@ None",
 **Parameters:**
 - pacticipantName (string) *required*: Name of the pacticipant
 - branchName (string) *required*: Name of the branch
-- pageNumber (number): Page number
-- pageSize (number): Results per page",
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
       "branchName",
       "pacticipantName",
@@ -2744,9 +2800,13 @@ None",
 **Toolset:** Environments and Deployments
 
 **Parameters:**
-- environmentId (string) *required*: UUID of the environment",
+- environmentId (string) *required*: UUID of the environment
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
       "environmentId",
+      "pageNumber",
+      "pageSize",
     ],
     "outputSchema": undefined,
     "title": "Contract Testing: Get Currently Deployed Versions",
@@ -2764,9 +2824,13 @@ None",
 **Toolset:** Environments and Deployments
 
 **Parameters:**
-- environmentId (string) *required*: UUID of the environment",
+- environmentId (string) *required*: UUID of the environment
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
       "environmentId",
+      "pageNumber",
+      "pageSize",
     ],
     "outputSchema": undefined,
     "title": "Contract Testing: Get Currently Supported Versions",
@@ -2786,10 +2850,14 @@ None",
 **Parameters:**
 - pacticipantName (string) *required*: Name of the pacticipant
 - versionNumber (string) *required*: Version number
-- environmentId (string) *required*: UUID of the environment",
+- environmentId (string) *required*: UUID of the environment
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
       "environmentId",
       "pacticipantName",
+      "pageNumber",
+      "pageSize",
       "versionNumber",
     ],
     "outputSchema": undefined,
@@ -2828,8 +2896,12 @@ None",
 **Toolset:** Integrations and Network
 
 **Parameters:**
-- teamId (string) *required*: UUID of the team",
+- teamId (string) *required*: UUID of the team
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
+      "pageNumber",
+      "pageSize",
       "teamId",
     ],
     "outputSchema": undefined,
@@ -2930,9 +3002,13 @@ None",
 **Toolset:** Integrations and Network
 
 **Parameters:**
-- pacticipantName (string) *required*: Name of the pacticipant to get network for",
+- pacticipantName (string) *required*: Name of the pacticipant to get network for
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
       "pacticipantName",
+      "pageNumber",
+      "pageSize",
     ],
     "outputSchema": undefined,
     "title": "Contract Testing: Get Pacticipant Network",
@@ -3002,8 +3078,12 @@ None",
 **Toolset:** Fetch Provider States
 
 **Parameters:**
-- provider (string) *required*: name of the provider to retrieve states for",
+- provider (string) *required*: name of the provider to retrieve states for
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
+      "pageNumber",
+      "pageSize",
       "provider",
     ],
     "outputSchema": undefined,
@@ -3024,10 +3104,14 @@ None",
 **Parameters:**
 - pacticipantName (string) *required*: Name of the pacticipant
 - versionNumber (string) *required*: Version number
-- environmentId (string) *required*: UUID of the environment",
+- environmentId (string) *required*: UUID of the environment
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
       "environmentId",
       "pacticipantName",
+      "pageNumber",
+      "pageSize",
       "versionNumber",
     ],
     "outputSchema": undefined,
@@ -3140,8 +3224,12 @@ None",
 **Toolset:** User, Tokens and Preferences
 
 **Parameters:**
-None",
-    "inputSchema": [],
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
+    "inputSchema": [
+      "pageNumber",
+      "pageSize",
+    ],
     "outputSchema": undefined,
     "title": "Contract Testing: List API Tokens",
   },
@@ -3161,7 +3249,7 @@ None",
 - pacticipantName (string) *required*: Name of the pacticipant
 - q (string): Filter branches by name
 - pageNumber (number): Page number (default: 1)
-- pageSize (number): Results per page (default: 100)",
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
       "pacticipantName",
       "pageNumber",
@@ -3184,8 +3272,12 @@ None",
 **Toolset:** Environments and Deployments
 
 **Parameters:**
-None",
-    "inputSchema": [],
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
+    "inputSchema": [
+      "pageNumber",
+      "pageSize",
+    ],
     "outputSchema": undefined,
     "title": "Contract Testing: List Environments",
   },
@@ -3202,8 +3294,12 @@ None",
 **Toolset:** Integrations and Network
 
 **Parameters:**
-None",
-    "inputSchema": [],
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
+    "inputSchema": [
+      "pageNumber",
+      "pageSize",
+    ],
     "outputSchema": undefined,
     "title": "Contract Testing: List Integrations",
   },
@@ -3220,8 +3316,8 @@ None",
 **Toolset:** Labels
 
 **Parameters:**
-- pageNumber (number): Page number
-- pageSize (number): Results per page",
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
       "pageNumber",
       "pageSize",
@@ -3243,8 +3339,8 @@ None",
 
 **Parameters:**
 - pacticipantName (string) *required*: Name of the pacticipant
-- pageNumber (number): Page number
-- pageSize (number): Results per page",
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
       "pacticipantName",
       "pageNumber",
@@ -3267,7 +3363,7 @@ None",
 
 **Parameters:**
 - pageNumber (number): Page number (default: 1)
-- pageSize (number): Number of results per page",
+- pageSize (number): Number of results per page (default: 5)",
     "inputSchema": [
       "pageNumber",
       "pageSize",
@@ -3288,9 +3384,13 @@ None",
 **Toolset:** Labels
 
 **Parameters:**
-- labelName (string) *required*: Label name to filter by",
+- labelName (string) *required*: Label name to filter by
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
       "labelName",
+      "pageNumber",
+      "pageSize",
     ],
     "outputSchema": undefined,
     "title": "Contract Testing: List Pacticipants by Label",
@@ -3308,8 +3408,12 @@ None",
 **Toolset:** Secrets
 
 **Parameters:**
-None",
-    "inputSchema": [],
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
+    "inputSchema": [
+      "pageNumber",
+      "pageSize",
+    ],
     "outputSchema": undefined,
     "title": "Contract Testing: List Secrets",
   },
@@ -3326,8 +3430,12 @@ None",
 **Toolset:** Webhooks
 
 **Parameters:**
-None",
-    "inputSchema": [],
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
+    "inputSchema": [
+      "pageNumber",
+      "pageSize",
+    ],
     "outputSchema": undefined,
     "title": "Contract Testing: List Webhooks",
   },

@@ -10,6 +10,11 @@ export interface ProviderStatesResponse {
   providerStates: ProviderState[];
 }
 
+export const PaginationSchema = z.object({
+  pageNumber: z.number().default(1).optional().describe("Page number"),
+  pageSize: z.number().default(5).optional().describe("Results per page"),
+});
+
 export const CanIDeploySchema = z.object({
   pacticipant: z
     .string()
@@ -137,14 +142,14 @@ export const GetPacticipantSchema = z.object({
 export const ListBranchesSchema = z.object({
   pacticipantName: z.string().describe("Name of the pacticipant"),
   q: z.string().optional().describe("Filter branches by name"),
-  pageNumber: z.number().optional().describe("Page number (default: 1)"),
-  pageSize: z.number().optional().describe("Results per page (default: 100)"),
+  pageNumber: z.number().default(1).optional().describe("Page number"),
+  pageSize: z.number().default(5).optional().describe("Results per page"),
 });
 
 export const ListVersionsSchema = z.object({
   pacticipantName: z.string().describe("Name of the pacticipant"),
-  pageNumber: z.number().optional().describe("Page number"),
-  pageSize: z.number().optional().describe("Results per page"),
+  pageNumber: z.number().default(1).optional().describe("Page number"),
+  pageSize: z.number().default(5).optional().describe("Results per page"),
 });
 
 export const GetVersionSchema = z.object({
@@ -180,9 +185,11 @@ export const RecordDeploymentSchema = z.object({
     ),
 });
 
-export const GetCurrentlyDeployedSchema = z.object({
-  environmentId: z.string().describe("UUID of the environment"),
-});
+export const GetCurrentlyDeployedSchema = z
+  .object({
+    environmentId: z.string().describe("UUID of the environment"),
+  })
+  .extend(PaginationSchema.shape);
 
 export const RecordReleaseSchema = z.object({
   pacticipantName: z
@@ -192,9 +199,11 @@ export const RecordReleaseSchema = z.object({
   environmentId: z.string().describe("UUID of the target environment"),
 });
 
-export const GetCurrentlySupportedSchema = z.object({
-  environmentId: z.string().describe("UUID of the environment"),
-});
+export const GetCurrentlySupportedSchema = z
+  .object({
+    environmentId: z.string().describe("UUID of the environment"),
+  })
+  .extend(PaginationSchema.shape);
 
 export const PublishConsumerContractsSchema = z.object({
   pacticipantName: z
@@ -349,9 +358,11 @@ export const GetLabelSchema = z.object({
   labelName: z.string().describe("Name of the label"),
 });
 
-export const LabelByNameSchema = z.object({
-  labelName: z.string().describe("Label name to filter by"),
-});
+export const LabelByNameSchema = z
+  .object({
+    labelName: z.string().describe("Label name to filter by"),
+  })
+  .extend(PaginationSchema.shape);
 
 export const UpdatePacticipantSchema = z.object({
   pacticipantName: z.string().describe("Name of the pacticipant to update"),
@@ -380,15 +391,17 @@ export const UpdateVersionSchema = z.object({
 export const GetBranchVersionsSchema = z.object({
   pacticipantName: z.string().describe("Name of the pacticipant"),
   branchName: z.string().describe("Name of the branch"),
-  pageNumber: z.number().optional().describe("Page number"),
-  pageSize: z.number().optional().describe("Results per page"),
+  pageNumber: z.number().default(1).optional().describe("Page number"),
+  pageSize: z.number().default(5).optional().describe("Results per page"),
 });
 
-export const GetVersionDeployedSchema = z.object({
-  pacticipantName: z.string().describe("Name of the pacticipant"),
-  versionNumber: z.string().describe("Version number"),
-  environmentId: z.string().describe("UUID of the environment"),
-});
+export const GetVersionDeployedSchema = z
+  .object({
+    pacticipantName: z.string().describe("Name of the pacticipant"),
+    versionNumber: z.string().describe("Version number"),
+    environmentId: z.string().describe("UUID of the environment"),
+  })
+  .extend(PaginationSchema.shape);
 
 export type GetLabelInput = z.infer<typeof GetLabelSchema>;
 export type LabelByNameInput = z.infer<typeof LabelByNameSchema>;
@@ -397,17 +410,21 @@ export type UpdateVersionInput = z.infer<typeof UpdateVersionSchema>;
 export type GetBranchVersionsInput = z.infer<typeof GetBranchVersionsSchema>;
 export type GetVersionDeployedInput = z.infer<typeof GetVersionDeployedSchema>;
 
-export const GetBiDirectionalProviderVersionSchema = z.object({
-  providerName: z.string().describe("Name of the provider"),
-  providerVersionNumber: z.string().describe("Provider version number"),
-});
+export const GetBiDirectionalProviderVersionSchema = z
+  .object({
+    providerName: z.string().describe("Name of the provider"),
+    providerVersionNumber: z.string().describe("Provider version number"),
+  })
+  .extend(PaginationSchema.shape);
 
-export const GetBiDirectionalConsumerProviderVersionSchema = z.object({
-  providerName: z.string().describe("Name of the provider"),
-  providerVersionNumber: z.string().describe("Provider version number"),
-  consumerName: z.string().describe("Name of the consumer"),
-  consumerVersionNumber: z.string().describe("Consumer version number"),
-});
+export const GetBiDirectionalConsumerProviderVersionSchema = z
+  .object({
+    providerName: z.string().describe("Name of the provider"),
+    providerVersionNumber: z.string().describe("Provider version number"),
+    consumerName: z.string().describe("Name of the consumer"),
+    consumerVersionNumber: z.string().describe("Consumer version number"),
+  })
+  .extend(PaginationSchema.shape);
 
 export type GetBiDirectionalProviderVersionInput = z.infer<
   typeof GetBiDirectionalProviderVersionSchema
@@ -481,9 +498,11 @@ export const ManageLabelSchema = z.object({
   labelName: z.string().describe("Name of the label"),
 });
 export type ManageLabelInput = z.infer<typeof ManageLabelSchema>;
-export const GetIntegrationsByTeamSchema = z.object({
-  teamId: z.string().describe("UUID of the team"),
-});
+export const GetIntegrationsByTeamSchema = z
+  .object({
+    teamId: z.string().describe("UUID of the team"),
+  })
+  .extend(PaginationSchema.shape);
 export type GetIntegrationsByTeamInput = z.infer<
   typeof GetIntegrationsByTeamSchema
 >;
@@ -632,12 +651,19 @@ export const AuditSchema = z.object({
     .describe(
       "Start result set from this audit event UUID (keyset pagination)",
     ),
-  pageNumber: z.number().int().min(1).optional().describe("Page number"),
+  pageNumber: z
+    .number()
+    .int()
+    .min(1)
+    .default(1)
+    .optional()
+    .describe("Page number"),
   pageSize: z
     .number()
     .int()
     .min(1)
     .max(100)
+    .default(5)
     .optional()
     .describe("Results per page (max 100)"),
 });
@@ -651,8 +677,8 @@ export const ListAdminUsersSchema = z.object({
     .max(1)
     .optional()
     .describe("0 = regular users, 1 = system accounts"),
-  page: z.number().optional().describe("Page number"),
-  size: z.number().optional().describe("Results per page"),
+  page: z.number().default(1).optional().describe("Page number"),
+  size: z.number().default(5).optional().describe("Results per page"),
 });
 export type ListAdminUsersInput = z.infer<typeof ListAdminUsersSchema>;
 
@@ -713,8 +739,8 @@ export const UserRoleSchema = z.object({
 export type UserRoleInput = z.infer<typeof UserRoleSchema>;
 export const ListAdminTeamsSchema = z.object({
   q: z.string().optional().describe("Filter teams by name"),
-  page: z.number().optional().describe("Page number"),
-  size: z.number().optional().describe("Results per page"),
+  page: z.number().default(1).optional().describe("Page number"),
+  size: z.number().default(5).optional().describe("Results per page"),
 });
 export type ListAdminTeamsInput = z.infer<typeof ListAdminTeamsSchema>;
 
@@ -722,6 +748,10 @@ export const AdminTeamIdSchema = z.object({
   teamId: z.string().describe("UUID of the team"),
 });
 export type AdminTeamIdInput = z.infer<typeof AdminTeamIdSchema>;
+
+export const ListTeamUsersSchema = AdminTeamIdSchema.extend(
+  PaginationSchema.shape,
+);
 
 export const CreateTeamSchema = z.object({
   name: z.string().min(1).describe("Name of the team"),
@@ -829,18 +859,22 @@ export type CreateSystemAccountInput = z.infer<
   typeof CreateSystemAccountSchema
 >;
 
-export const GetSystemAccountTokensSchema = z.object({
-  accountId: z.string().describe("UUID of the system account"),
-});
+export const GetSystemAccountTokensSchema = z
+  .object({
+    accountId: z.string().describe("UUID of the system account"),
+  })
+  .extend(PaginationSchema.shape);
 export type GetSystemAccountTokensInput = z.infer<
   typeof GetSystemAccountTokensSchema
 >;
 
-export const GetPacticipantNetworkSchema = z.object({
-  pacticipantName: z
-    .string()
-    .describe("Name of the pacticipant to get network for"),
-});
+export const GetPacticipantNetworkSchema = z
+  .object({
+    pacticipantName: z
+      .string()
+      .describe("Name of the pacticipant to get network for"),
+  })
+  .extend(PaginationSchema.shape);
 
 export type GetPacticipantInput = z.infer<typeof GetPacticipantSchema>;
 export type ListBranchesInput = z.infer<typeof ListBranchesSchema>;

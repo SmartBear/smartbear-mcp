@@ -51,9 +51,11 @@ import {
   ListAdminTeamsSchema,
   ListAdminUsersSchema,
   ListBranchesSchema,
+  ListTeamUsersSchema,
   ListVersionsSchema,
   ManageLabelSchema,
   MatrixSchema,
+  PaginationSchema,
   PatchTeamUsersSchema,
   PublishConsumerContractsSchema,
   PublishProviderContractSchema,
@@ -83,6 +85,7 @@ export interface PactflowToolParams extends ToolParams {
   clients: ClientType[];
   formatResponse?: (result: any) => any;
   enableElicitation?: boolean;
+  paginated?: boolean;
   tags?: Array<string>;
 }
 
@@ -129,6 +132,8 @@ export const TOOLS: PactflowToolParams[] = [
       provider: z
         .string()
         .describe("name of the provider to retrieve states for"),
+      pageNumber: z.number().default(1).optional().describe("Page number"),
+      pageSize: z.number().default(5).optional().describe("Results per page"),
     }),
     handler: "getProviderStates",
     readOnly: true,
@@ -136,6 +141,7 @@ export const TOOLS: PactflowToolParams[] = [
     idempotent: true,
     openWorld: false,
     clients: ["pactflow", "pact_broker"],
+    paginated: true,
   },
   {
     title: "Can I Deploy",
@@ -232,8 +238,12 @@ export const TOOLS: PactflowToolParams[] = [
     purpose:
       "Get an overview of all registered services and their metadata. Use this to discover what applications are participating in contract testing, check their main branches, and find repository URLs.",
     inputSchema: z.object({
-      pageNumber: z.number().optional().describe("Page number (default: 1)"),
-      pageSize: z.number().optional().describe("Number of results per page"),
+      pageNumber: z.number().default(1).optional().describe("Page number"),
+      pageSize: z
+        .number()
+        .default(5)
+        .optional()
+        .describe("Number of results per page"),
     }),
     handler: "listPacticipants",
     readOnly: true,
@@ -321,13 +331,14 @@ export const TOOLS: PactflowToolParams[] = [
       "Retrieve all environments configured in the Pact Broker or PactFlow workspace.",
     purpose:
       "Get the list of deployment environments (e.g. development, staging, production) so you can use their UUIDs in record-deployment and can-i-deploy operations.",
-    inputSchema: z.object({}),
+    inputSchema: PaginationSchema,
     handler: "listEnvironments",
     readOnly: true,
     destructive: false,
     idempotent: true,
     openWorld: false,
     clients: ["pactflow", "pact_broker"],
+    paginated: true,
   },
   {
     title: "Get Environment",
@@ -371,6 +382,7 @@ export const TOOLS: PactflowToolParams[] = [
     idempotent: true,
     openWorld: false,
     clients: ["pactflow", "pact_broker"],
+    paginated: true,
   },
   {
     title: "Record Release",
@@ -401,6 +413,7 @@ export const TOOLS: PactflowToolParams[] = [
     idempotent: true,
     openWorld: false,
     clients: ["pactflow", "pact_broker"],
+    paginated: true,
   },
   {
     title: "Publish Consumer Contracts",
@@ -461,6 +474,7 @@ export const TOOLS: PactflowToolParams[] = [
     idempotent: true,
     openWorld: false,
     clients: ["pactflow"],
+    paginated: true,
   },
   {
     title: "Get BDCT Provider Contract Verification Results",
@@ -476,6 +490,7 @@ export const TOOLS: PactflowToolParams[] = [
     idempotent: true,
     openWorld: false,
     clients: ["pactflow"],
+    paginated: true,
   },
   {
     title: "Get BDCT Consumer Contracts",
@@ -491,6 +506,7 @@ export const TOOLS: PactflowToolParams[] = [
     idempotent: true,
     openWorld: false,
     clients: ["pactflow"],
+    paginated: true,
   },
   {
     title: "Get BDCT Consumer Contract Verification Results",
@@ -506,6 +522,7 @@ export const TOOLS: PactflowToolParams[] = [
     idempotent: true,
     openWorld: false,
     clients: ["pactflow"],
+    paginated: true,
   },
   {
     title: "Get BDCT Cross-Contract Verification Results",
@@ -521,6 +538,7 @@ export const TOOLS: PactflowToolParams[] = [
     idempotent: true,
     openWorld: false,
     clients: ["pactflow"],
+    paginated: true,
   },
   {
     title: "Get BDCT Consumer by Consumer Version",
@@ -536,6 +554,7 @@ export const TOOLS: PactflowToolParams[] = [
     idempotent: true,
     openWorld: false,
     clients: ["pactflow"],
+    paginated: true,
   },
   {
     title: "Get BDCT Provider by Consumer Version",
@@ -551,6 +570,7 @@ export const TOOLS: PactflowToolParams[] = [
     idempotent: true,
     openWorld: false,
     clients: ["pactflow"],
+    paginated: true,
   },
   {
     title: "Get BDCT Provider Check Results by Consumer",
@@ -566,6 +586,7 @@ export const TOOLS: PactflowToolParams[] = [
     idempotent: true,
     openWorld: false,
     clients: ["pactflow"],
+    paginated: true,
   },
   {
     title: "Get BDCT Consumer Pact Test Results by Consumer",
@@ -581,6 +602,7 @@ export const TOOLS: PactflowToolParams[] = [
     idempotent: true,
     openWorld: false,
     clients: ["pactflow"],
+    paginated: true,
   },
   {
     title: "Get BDCT X-Contract Test Results by Consumer",
@@ -596,6 +618,7 @@ export const TOOLS: PactflowToolParams[] = [
     idempotent: true,
     openWorld: false,
     clients: ["pactflow"],
+    paginated: true,
   },
   {
     title: "List Integrations",
@@ -604,13 +627,14 @@ export const TOOLS: PactflowToolParams[] = [
       "Retrieve all consumer-provider integrations registered in the workspace.",
     purpose:
       "Get a high-level view of all the consumer-provider pairings that have pacts published. An integration is automatically created when a consumer publishes a pact for a provider.",
-    inputSchema: z.object({}),
+    inputSchema: PaginationSchema,
     handler: "listIntegrations",
     readOnly: true,
     destructive: false,
     idempotent: true,
     openWorld: false,
     clients: ["pactflow", "pact_broker"],
+    paginated: true,
   },
   {
     title: "Get Pacticipant Network",
@@ -626,6 +650,7 @@ export const TOOLS: PactflowToolParams[] = [
     idempotent: true,
     openWorld: false,
     clients: ["pactflow", "pact_broker"],
+    paginated: true,
   },
   {
     title: "List Labels",
@@ -634,8 +659,8 @@ export const TOOLS: PactflowToolParams[] = [
     purpose:
       "Get a list of every label that has been applied to any pacticipant. Labels are used to categorise services and enable label-based queries.",
     inputSchema: z.object({
-      pageNumber: z.number().optional().describe("Page number"),
-      pageSize: z.number().optional().describe("Results per page"),
+      pageNumber: z.number().default(1).optional().describe("Page number"),
+      pageSize: z.number().default(5).optional().describe("Results per page"),
     }),
     handler: "listLabels",
     readOnly: true,
@@ -671,6 +696,7 @@ export const TOOLS: PactflowToolParams[] = [
     idempotent: true,
     openWorld: false,
     clients: ["pactflow", "pact_broker"],
+    paginated: true,
   },
   {
     title: "Update Pacticipant",
@@ -745,6 +771,7 @@ export const TOOLS: PactflowToolParams[] = [
     idempotent: true,
     openWorld: false,
     clients: ["pactflow", "pact_broker"],
+    paginated: true,
   },
   {
     title: "Get Released Versions for Version",
@@ -760,6 +787,7 @@ export const TOOLS: PactflowToolParams[] = [
     idempotent: true,
     openWorld: false,
     clients: ["pactflow", "pact_broker"],
+    paginated: true,
   },
   {
     title: "Create Environment",
@@ -902,6 +930,7 @@ export const TOOLS: PactflowToolParams[] = [
     idempotent: true,
     openWorld: false,
     clients: ["pactflow"],
+    paginated: true,
   },
   {
     title: "Delete Integration",
@@ -937,13 +966,14 @@ export const TOOLS: PactflowToolParams[] = [
     summary: "Retrieve all webhooks configured in the workspace.",
     purpose:
       "Get an overview of all webhook triggers, their target URLs, and enabled/disabled status.",
-    inputSchema: z.object({}),
+    inputSchema: PaginationSchema,
     handler: "listWebhooks",
     readOnly: true,
     destructive: false,
     idempotent: true,
     openWorld: false,
     clients: ["pactflow", "pact_broker"],
+    paginated: true,
   },
   {
     title: "Get Webhook",
@@ -1036,13 +1066,14 @@ export const TOOLS: PactflowToolParams[] = [
     summary: "Retrieve all secrets stored in the workspace.",
     purpose:
       "Get an overview of all configured secrets. Note: secret values are never returned — only metadata.",
-    inputSchema: z.object({}),
+    inputSchema: PaginationSchema,
     handler: "listSecrets",
     readOnly: true,
     destructive: false,
     idempotent: true,
     openWorld: false,
     clients: ["pactflow"],
+    paginated: true,
   },
   {
     title: "Get Secret",
@@ -1120,13 +1151,14 @@ export const TOOLS: PactflowToolParams[] = [
     summary: "Retrieve API tokens for the current user.",
     purpose:
       "List the read-only and read-write API tokens for the authenticated user.",
-    inputSchema: z.object({}),
+    inputSchema: PaginationSchema,
     handler: "listTokens",
     readOnly: true,
     destructive: false,
     idempotent: true,
     openWorld: false,
     clients: ["pactflow"],
+    paginated: true,
   },
   {
     title: "Regenerate API Token",
@@ -1388,13 +1420,14 @@ export const TOOLS: PactflowToolParams[] = [
     toolset: "Admin",
     summary: "List all users in a specific team (admin).",
     purpose: "Retrieve all user members of a team.",
-    inputSchema: AdminTeamIdSchema,
+    inputSchema: ListTeamUsersSchema,
     handler: "listTeamUsers",
     readOnly: true,
     destructive: false,
     idempotent: true,
     openWorld: false,
     clients: ["pactflow"],
+    paginated: true,
   },
   {
     title: "Admin Get Team User",
@@ -1458,13 +1491,14 @@ export const TOOLS: PactflowToolParams[] = [
     summary: "List all roles defined in the workspace (admin).",
     purpose:
       "Get an overview of all role definitions and their associated permissions.",
-    inputSchema: z.object({}),
+    inputSchema: PaginationSchema,
     handler: "listAdminRoles",
     readOnly: true,
     destructive: false,
     idempotent: true,
     openWorld: false,
     clients: ["pactflow"],
+    paginated: true,
   },
   {
     title: "Admin Get Role",
@@ -1541,13 +1575,14 @@ export const TOOLS: PactflowToolParams[] = [
     toolset: "Admin",
     summary: "List all available permission scopes (admin).",
     purpose: "Retrieve all permission scopes that can be assigned to roles.",
-    inputSchema: z.object({}),
+    inputSchema: PaginationSchema,
     handler: "listAdminPermissions",
     readOnly: true,
     destructive: false,
     idempotent: true,
     openWorld: false,
     clients: ["pactflow"],
+    paginated: true,
   },
   {
     title: "Admin Create System Account",
@@ -1576,5 +1611,6 @@ export const TOOLS: PactflowToolParams[] = [
     idempotent: true,
     openWorld: false,
     clients: ["pactflow"],
+    paginated: true,
   },
 ];
