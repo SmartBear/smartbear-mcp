@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Swagger] `resolve_organization_portal` tool: the generated subdomain now follows the Portal UI convention - slugified organization name plus a random 3-character suffix (e.g. `acmecorp-k7p`), appended even without a collision.
 - [Swagger] `create_portal` tool: the `subdomain` parameter description now recommends the same convention, while the client still picks the value.
 - [PactFlow] Added `pageNumber`/`pageSize` pagination (default page size 5) across list and Bi-Directional Contract Testing tools, with tool-layer caching for PactFlow endpoints that don't paginate natively. [#623](https://github.com/SmartBear/smartbear-mcp/pull/623)
-- [QTM4J] Added API quota information to the QTM4J integration documentation.
+- [QTM4J] Added API quota information to the QTM4J integration documentation. [#638](https://github.com/SmartBear/smartbear-mcp/pull/638)
 
 ### Fixed
 
