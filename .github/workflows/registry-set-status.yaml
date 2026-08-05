@@ -1,15 +1,16 @@
-name: Registry — Remove Remote URL
+name: Registry — Set Version Status
 
-# Frees a remotes[].url that is still claimed by old versions of a server in
-# the official MCP registry, so it can be re-published under a new server in
-# the same namespace (the registry's validateNoDuplicateRemoteURLs rejects a
-# URL used by any non-deleted version of another server).
+# Changes the lifecycle status of one or more versions of a server published
+# to the official MCP registry. Primary use: freeing a remotes[].url that is
+# still claimed by old versions of a server, so it can be re-published under a
+# new server in the same namespace (the registry's validateNoDuplicateRemoteURLs
+# rejects a URL used by any non-deleted version of another server).
 #
 # Works by setting the `status` of the affected versions (default: deleted) —
 # NOT by editing their remotes. The full edit-server endpoint requires `edit`
 # permission, which DNS/GitHub publisher auth never grants; the status-only
 # endpoint accepts `publish` OR `edit`, so this works with the same
-# credentials used to publish. See scripts/registry-remove-remote.js for the
+# credentials used to publish. See scripts/registry-set-status.js for the
 # full rationale and the safety rail against ever touching the current
 # 'latest' version.
 #
@@ -56,7 +57,7 @@ on:
         default: false
 
 jobs:
-  remove-remote:
+  set-status:
     name: Update registry version status
     runs-on: ubuntu-24.04
     environment: Production
@@ -102,4 +103,4 @@ jobs:
           [ -n "$VERSIONS" ] && args+=(--versions "$VERSIONS")
           [ -n "$MESSAGE" ] && args+=(--message "$MESSAGE")
           [ "$APPLY" = "true" ] && args+=(--apply --yes)
-          node scripts/registry-remove-remote.js "${args[@]}"
+          node scripts/registry-set-status.js "${args[@]}"

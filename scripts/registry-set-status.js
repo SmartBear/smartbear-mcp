@@ -1,11 +1,14 @@
 #!/usr/bin/env node
 
 /**
- * registry-remove-remote.js
+ * registry-set-status.js
  *
- * Frees a `remotes[].url` so it can be claimed by another server in the same
- * MCP registry namespace (registry.modelcontextprotocol.io), by changing the
- * lifecycle `status` of every version that still references it.
+ * Changes the lifecycle `status` of one or more versions of a server
+ * published to the official MCP registry (registry.modelcontextprotocol.io).
+ *
+ * Primary use: freeing a `remotes[].url` so it can be claimed by another
+ * server in the same namespace, by setting `deleted` on every version that
+ * still references it.
  *
  * Why status, not edit:
  *   The registry rejects publishing a remote URL that is already claimed by
@@ -33,10 +36,10 @@
  *   would take down the live published server. Per-version PATCH calls only.
  *
  * Usage:
- *   node scripts/registry-remove-remote.js \
+ *   node scripts/registry-set-status.js \
  *     --server com.smartbear/smartbear-mcp \
  *     --remote-url https://swagger.mcp.smartbear.com/mcp \
- *     [--versions 0.25.0,0.26.0,0.27.0]   # default: every version that has the URL
+ *     [--versions 0.25.0,0.26.0,0.27.0]   # narrows the above to just these (or use alone, no --remote-url)
  *     [--status deleted]                  # default: deleted (also: active, deprecated)
  *     [--message "superseded by com.smartbear/swagger-mcp"]
  *     [--registry https://registry.modelcontextprotocol.io]
@@ -146,11 +149,13 @@ function parseArgs(argv) {
 
 function printHelp() {
   console.log(
-    `Free a remote URL by changing the status of registry server versions that hold it.\n\n` +
-      `Required:\n` +
-      `  --server <name>        e.g. com.smartbear/smartbear-mcp\n` +
+    `Change the lifecycle status of registry server versions.\n\n` +
+      `Required (at least one of):\n` +
       `  --remote-url <url>     target every version that still has this remote\n` +
-      `                         (or) --versions a,b,c  target an explicit list instead\n\n` +
+      `  --versions a,b,c       target an explicit list; combined with --remote-url,\n` +
+      `                         narrows it down to just these versions\n\n` +
+      `Required:\n` +
+      `  --server <name>        e.g. com.smartbear/smartbear-mcp\n\n` +
       `Optional:\n` +
       `  --status <status>      one of: ${VALID_STATUSES.join(", ")} (default: deleted)\n` +
       `  --message <text>       status message (e.g. reason for deletion)\n` +
@@ -286,20 +291,30 @@ async function main() {
     );
   }
 
-  let candidates;
+  // --remote-url and --versions compose: --remote-url alone auto-detects every
+  // version holding that remote; --versions alone targets an explicit list;
+  // passing both narrows the auto-detected set down to just those versions
+  // (e.g. "only these specific old versions, even if others also hold the URL").
+  let candidates = allVersions;
   if (args.remoteUrl) {
-    candidates = allVersions.filter((rec) =>
+    candidates = candidates.filter((rec) =>
       serverHasRemote(rec.server, args.remoteUrl),
     );
-  } else {
+  }
+  if (args.versions) {
     const wanted = new Set(args.versions);
-    candidates = allVersions.filter((rec) => wanted.has(rec.server.version));
-    const found = new Set(candidates.map((rec) => rec.server.version));
+    const matched = candidates.filter((rec) => wanted.has(rec.server.version));
+    const found = new Set(matched.map((rec) => rec.server.version));
     for (const v of args.versions) {
-      if (!found.has(v)) {
+      if (found.has(v)) continue;
+      const exists = allVersions.some((rec) => rec.server.version === v);
+      if (!exists) {
         console.warn(`⚠️  ${v}: no such version, skipping`);
+      } else {
+        console.warn(`⚠️  ${v}: does not reference ${args.remoteUrl}, skipping`);
       }
     }
+    candidates = matched;
   }
 
   if (candidates.length === 0) {
