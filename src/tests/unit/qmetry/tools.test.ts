@@ -1160,13 +1160,13 @@ describe("QmetryClient tools", () => {
       expect(parsed.data[0].udfjson).toBeUndefined();
       expect(parsed.data[0].testRunUdfs).toBeDefined();
       expect(parsed.data[0].testRunUdfs["8260LUP"]).toBe("l1");
-      expect(parsed.data[0].testRunUdfs["NB_Multilppup_TR"]).toEqual(["ahd"]);
-      expect(parsed.data[0].testRunUdfs["cascade_vK"]).toEqual({
+      expect(parsed.data[0].testRunUdfs.NB_Multilppup_TR).toEqual(["ahd"]);
+      expect(parsed.data[0].testRunUdfs.cascade_vK).toEqual({
         child: "aa",
         parent: "abc",
       });
       // HTML stripped from rich text field
-      expect(parsed.data[0].testRunUdfs["Jal_Largetext"]).toBe("hello world");
+      expect(parsed.data[0].testRunUdfs.Jal_Largetext).toBe("hello world");
 
       // Row without udfjson: no testRunUdfs added, original fields preserved
       expect(parsed.data[1].udfjson).toBeUndefined();

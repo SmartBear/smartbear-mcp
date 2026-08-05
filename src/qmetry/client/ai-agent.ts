@@ -30,11 +30,10 @@ export async function getGateConfiguration(
     );
   }
 
-  const path =
-    QMETRY_PATHS.AI_AGENT.GET_GATE_CONFIG.replace(
-      ":projectId",
-      String(payload.projectId),
-    ) + `?agentIdentifier=${encodeURIComponent(payload.agentIdentifier)}`;
+  const path = `${QMETRY_PATHS.AI_AGENT.GET_GATE_CONFIG.replace(
+    ":projectId",
+    String(payload.projectId),
+  )}?agentIdentifier=${encodeURIComponent(payload.agentIdentifier)}`;
 
   return qmetryRequest<unknown>({
     method: "GET",

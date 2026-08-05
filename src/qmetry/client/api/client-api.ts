@@ -44,9 +44,9 @@ export async function qmetryRequest<T>({
   }
   const transportMode = process.env.MCP_TRANSPORT?.toLowerCase() || "stdio";
   if (transportMode === "http") {
-    headers["Authorization"] = `Bearer ${token}`;
+    headers.Authorization = `Bearer ${token}`;
   } else {
-    headers["apikey"] = token;
+    headers.apikey = token;
   }
   const init: RequestInit = {
     method,
