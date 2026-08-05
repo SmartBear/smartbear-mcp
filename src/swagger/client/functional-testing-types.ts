@@ -192,60 +192,213 @@ export const CreateFunctionalTestingStatusRangeSchema = z
     path: ["start"],
   });
 
-export const CreateFunctionalTestingBodyRuleSchema = z.object({
-  path: z
-    .string()
-    .describe(
-      'Path to the field to assert, in bracket notation (e.g. \'["data"]["id"]\').',
-    ),
-  assertionType: z
-    .enum(["string", "number", "regex"])
-    .describe("Type of assertion"),
-  operator: z
-    .enum(["eq", "lt", "gt", "lte", "gte", "contains"])
-    .optional()
-    .describe(
-      "Comparison operator for compare assertions. Required (with target) when targets is not set; " +
-        "not usable together with targets, lower/upper, or with assertionType 'regex'.",
-    ),
-  target: z
-    .string()
-    .optional()
-    .describe(
-      "Expected value for compare assertions. Required (with operator) when targets is not set; " +
-        "not usable together with targets, lower/upper, or with assertionType 'regex'.",
-    ),
-  targets: z
-    .array(z.string())
-    .optional()
-    .describe(
-      "List of allowed values for a list-match assertion (assertionType 'string' or 'number' only). " +
-        "Not usable together with operator/target or lower/upper.",
-    ),
-  lower: z
-    .string()
-    .optional()
-    .describe(
-      "Lower bound for a number range assertion (assertionType 'number' only). Must be set together with upper.",
-    ),
-  upper: z
-    .string()
-    .optional()
-    .describe(
-      "Upper bound for a number range assertion (assertionType 'number' only). Must be set together with lower.",
-    ),
-  pattern: z
-    .enum(["nonempty"])
-    .optional()
-    .describe(
-      "Pattern type for regex assertions. Required when assertionType is 'regex' (only 'nonempty' is supported " +
-        "- there is no way to assert against an arbitrary regex string).",
-    ),
-  assignment: z
-    .string()
-    .optional()
-    .describe("Variable name to assign the extracted value to"),
-});
+export const CreateFunctionalTestingBodyRuleSchema = z
+  .object({
+    path: z
+      .string()
+      .describe(
+        'Path to the field to assert, in bracket notation (e.g. \'["data"]["id"]\').',
+      ),
+    assertionType: z
+      .enum(["string", "number", "regex"])
+      .describe("Type of assertion"),
+    operator: z
+      .enum(["eq", "lt", "gt", "lte", "gte", "contains"])
+      .optional()
+      .describe(
+        "Comparison operator for compare assertions. Required (with target) when targets is not set; " +
+          "not usable together with targets, lower/upper, or with assertionType 'regex'.",
+      ),
+    target: z
+      .string()
+      .optional()
+      .describe(
+        "Expected value for compare assertions. Required (with operator) when targets is not set; " +
+          "not usable together with targets, lower/upper, or with assertionType 'regex'.",
+      ),
+    targets: z
+      .array(z.string())
+      .optional()
+      .describe(
+        "List of allowed values for a list-match assertion (assertionType 'string' or 'number' only). " +
+          "Not usable together with operator/target or lower/upper.",
+      ),
+    lower: z
+      .string()
+      .optional()
+      .describe(
+        "Lower bound for a number range assertion (assertionType 'number' only). Must be set together with upper.",
+      ),
+    upper: z
+      .string()
+      .optional()
+      .describe(
+        "Upper bound for a number range assertion (assertionType 'number' only). Must be set together with lower.",
+      ),
+    pattern: z
+      .enum(["nonempty"])
+      .optional()
+      .describe(
+        "Pattern type for regex assertions. Required when assertionType is 'regex' (only 'nonempty' is supported " +
+          "- there is no way to assert against an arbitrary regex string).",
+      ),
+    assignment: z
+      .string()
+      .optional()
+      .describe("Variable name to assign the extracted value to"),
+  })
+  .meta({
+    // Structural rules (in addition to the .superRefine() below) so the generated
+    // JSON Schema states which fields are required/forbidden per assertionType and
+    // assertion mode, instead of leaving every field optional with the constraint
+    // only in prose.
+    allOf: [
+      {
+        if: { properties: { assertionType: { const: "regex" } } },
+        // biome-ignore lint/suspicious/noThenProperty: JSON Schema if/then/else keyword, not a thenable
+        then: {
+          required: ["pattern"],
+          properties: {
+            operator: false,
+            target: false,
+            targets: false,
+            lower: false,
+            upper: false,
+          },
+        },
+        message:
+          "pattern is required, and operator/target/targets/lower/upper must not be set, when assertionType is 'regex'",
+      },
+      {
+        if: { not: { properties: { assertionType: { const: "regex" } } } },
+        // biome-ignore lint/suspicious/noThenProperty: JSON Schema if/then/else keyword, not a thenable
+        then: { properties: { pattern: false } },
+        message: "pattern must not be set unless assertionType is 'regex'",
+      },
+      {
+        if: { required: ["targets"] },
+        // biome-ignore lint/suspicious/noThenProperty: JSON Schema if/then/else keyword, not a thenable
+        then: {
+          properties: {
+            operator: false,
+            target: false,
+            lower: false,
+            upper: false,
+          },
+        },
+        message:
+          "targets cannot be combined with operator/target or lower/upper",
+      },
+      {
+        if: {
+          anyOf: [{ required: ["lower"] }, { required: ["upper"] }],
+        },
+        // biome-ignore lint/suspicious/noThenProperty: JSON Schema if/then/else keyword, not a thenable
+        then: {
+          required: ["lower", "upper"],
+          properties: {
+            assertionType: { const: "number" },
+            operator: false,
+            target: false,
+            targets: false,
+          },
+        },
+        message:
+          "lower and upper must both be set together, only with assertionType 'number', and cannot be combined with operator/target/targets",
+      },
+    ],
+  })
+  .superRefine((rule, ctx) => {
+    const hasRange = rule.lower !== undefined || rule.upper !== undefined;
+    const hasCompare = rule.operator !== undefined || rule.target !== undefined;
+    const hasTargets = rule.targets !== undefined;
+
+    if (rule.assertionType === "regex") {
+      if (rule.pattern === undefined) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["pattern"],
+          message: "pattern is required when assertionType is 'regex'.",
+        });
+      }
+      if (hasCompare || hasTargets || hasRange) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["assertionType"],
+          message:
+            "operator, target, targets, lower and upper have no effect with assertionType 'regex' " +
+            "(the backend silently ignores them) and must not be set.",
+        });
+      }
+      return;
+    }
+
+    if (rule.pattern !== undefined) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["pattern"],
+        message: "pattern is only valid with assertionType 'regex'.",
+      });
+    }
+
+    if (hasRange && rule.assertionType !== "number") {
+      ctx.addIssue({
+        code: "custom",
+        path: ["lower"],
+        message:
+          "lower/upper range assertions are only valid with assertionType 'number'.",
+      });
+      return;
+    }
+
+    if (hasTargets) {
+      if (hasCompare || hasRange) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["targets"],
+          message:
+            "targets defines a list-match assertion and cannot be combined with operator/target or lower/upper.",
+        });
+      }
+      return;
+    }
+
+    if (hasRange) {
+      if (hasCompare) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["lower"],
+          message: "lower/upper cannot be combined with operator/target.",
+        });
+      }
+      if (rule.lower === undefined || rule.upper === undefined) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["lower"],
+          message:
+            "Both lower and upper are required for a range assertion; setting only one silently evaluates as always-false at runtime.",
+        });
+      }
+      return;
+    }
+
+    if (rule.operator === undefined) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["operator"],
+        message:
+          "operator is required for a compare assertion when targets/lower/upper are not set.",
+      });
+    }
+    if (rule.target === undefined) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["target"],
+        message:
+          "target is required for a compare assertion when targets/lower/upper are not set.",
+      });
+    }
+  });
 
 export const CreateFunctionalTestingAssertionsSchema = z.object({
   statusCodes: z
