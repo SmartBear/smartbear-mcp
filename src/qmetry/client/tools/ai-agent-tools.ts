@@ -26,10 +26,10 @@ export const AI_AGENT_TOOLS: QMetryToolParams[] = [
     examples: [
       {
         description:
-          "Fetch gate configuration for project 45851 and agent 'claude'",
+          "Fetch gate configuration for project 45851 and agent 'RR'",
         parameters: {
           projectId: 45851,
-          agentIdentifier: "claude",
+          agentIdentifier: "RR",
         },
         expectedOutput:
           "Gate configuration object with assessment scope, gate criteria, and thresholds.",
