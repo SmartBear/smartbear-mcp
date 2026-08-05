@@ -1,3 +1,4 @@
+import { setProcessClientIdentity, toClientIdentity } from "./client-identity";
 import type { SmartBearMcpServer } from "./server";
 import type { ClientInfo } from "./types";
 
@@ -24,6 +25,15 @@ export function handleInitializeMessage(
   }
 
   const params = (message as { params?: Record<string, unknown> }).params;
+
+  const identity = toClientIdentity(
+    params?.clientInfo as { name?: string; version?: string } | undefined,
+    params?.protocolVersion as string | undefined,
+  );
+
+  server.setMcpClientIdentity(identity);
+  setProcessClientIdentity(identity);
+
   const clientInfo = params?.clientInfo as ClientInfo | undefined;
   if (clientInfo) {
     server.setClientInfo(clientInfo);

@@ -100,7 +100,9 @@ export class SetProjectContext extends Tool<Qtm4jClient> {
       search: projectKey,
     };
 
-    const response = await apiClient.post(ENDPOINTS.PROJECTS, body);
+    const response = await apiClient
+      .skipAnalytics()
+      .post(ENDPOINTS.PROJECTS, body);
     const parsed = GetProjectsResponse.parse(response);
 
     if (parsed.data.length === 0) {

@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# Install the PactFlow unified CLI
+#
+# Installs the Pact CLI into ${HOME}/.pact and creates a pact-broker shim so
+# existing scripts continue to work. The new CLI (0.10+) consolidates all
+# commands under a single `pact` binary; pact-broker is now a subcommand
+# (`pact broker`).
+#
+# In GitHub Actions this also appends the bin directory to GITHUB_PATH.
+#
+# Usage:
+#   scripts/ci/pact-install-cli
+#
+set -euo pipefail
+
+curl -fsSL https://d.pactflow.io/pact/install.sh | bash
+
+# shellcheck source=/dev/null
+source "${HOME}/.pact/bin/env"
+
+if [ -n "${GITHUB_PATH-}" ]; then
+  printf '%s\n' "${HOME}/.pact/bin" >> "$GITHUB_PATH"
+fi
+
+# Shim so `pact-broker <cmd>` delegates to `pact broker <cmd>`
+cat > "${HOME}/.pact/bin/pact-broker" <<'SHIM'
+#!/usr/bin/env bash
+exec pact broker "$@"
+SHIM
+chmod +x "${HOME}/.pact/bin/pact-broker"
+
+command -v pact-broker >/dev/null 2>&1 || { echo "pact-broker not found after install" >&2; exit 1; }

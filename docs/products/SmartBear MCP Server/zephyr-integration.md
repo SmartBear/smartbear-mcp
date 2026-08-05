@@ -2,6 +2,8 @@
 
 The Zephyr client provides test management and execution capabilities within Zephyr as listed on [Available Tools](#Available-Tools).
 
+**Note:** Zephyr MCP client is available on Zephyr Standard and Advanced plans only. Zephyr Essential is not supported.
+
 # Setup
 
 ## Environment Variables
@@ -417,6 +419,21 @@ The following environment variables configure the Zephyr integration:
   - Test Execution key or id (`testExecutionIdOrKey`)
 - **Returns**: A list of links associated with the specified Test Execution, including their details.
 - **Use case**: Retrieve links associated with a specific Test Execution.
+
+## Test Plans
+
+### Retrieval Operations
+
+#### Get Test Plans
+
+- **Purpose**: Retrieve Test Plans available within your Zephyr account.
+- **Parameters**:
+  - optional Project key (`projectKey`)
+  - optional max results to return (`limit`)
+  - optional starting cursor position for pagination (`startAtId`)
+  - optional filter for entities updated after a given time (`updatedAfter`)
+- **Returns**: A list of Test Plans along with their properties.
+- **Use case**: Retrieve the Test Plans, it can be filtered by Project Key and update time.
 
 ## Statuses
 

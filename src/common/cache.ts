@@ -34,13 +34,16 @@ export class CacheService {
   }
 
   /**
-   * Set a value in the cache
+   * Set a value in the cache, optionally overriding the default TTL
+   * (in seconds) for this key only.
    */
-  set<T>(key: string, value: T): boolean {
+  set<T>(key: string, value: T, ttl?: number): boolean {
     if (!this.enabled || !this.cache) {
       return false;
     }
-    return this.cache.set(key, value);
+    return ttl !== undefined
+      ? this.cache.set(key, value, ttl)
+      : this.cache.set(key, value);
   }
 
   /**

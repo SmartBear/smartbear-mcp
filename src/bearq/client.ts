@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { USER_AGENT } from "../common/info";
+import { getUserAgent } from "../common/info";
 import { getRequestHeader } from "../common/request-context";
 import type { SmartBearMcpServer } from "../common/server";
 import { ToolError } from "../common/tools";
@@ -12,12 +12,10 @@ import type {
 import { AUTHORIZATION_HEADER, DEFAULT_API_BASE_URL } from "./config/constants";
 import { ListEnvironments } from "./tool/environments/list-environments";
 import { ChatWithQaLead } from "./tool/tasks/chat-with-qa-lead";
+import { DeleteTestCases } from "./tool/tasks/delete-test-cases";
 import { ExpandApplicationModel } from "./tool/tasks/expand-application-model";
 import { GetTask } from "./tool/tasks/get-task";
 import { GetTaskStatus } from "./tool/tasks/get-task-status";
-import { RefineAllDraftTests } from "./tool/tasks/refine-all-draft-tests";
-import { RefineTestCases } from "./tool/tasks/refine-test-cases";
-import { RefineTestsInFunctionalAreas } from "./tool/tasks/refine-tests-in-functional-areas";
 import { RunRegressionTests } from "./tool/tasks/run-regression-tests";
 import { RunTestCases } from "./tool/tasks/run-test-cases";
 import { RunTestsInFunctionalAreas } from "./tool/tasks/run-tests-in-functional-areas";
@@ -77,7 +75,7 @@ export class BearQClient implements Client {
     return {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
-      "User-Agent": USER_AGENT,
+      "User-Agent": getUserAgent(),
     };
   }
 
@@ -89,9 +87,7 @@ export class BearQClient implements Client {
       new RunRegressionTests(this),
       new RunTestCases(this),
       new RunTestsInFunctionalAreas(this),
-      new RefineTestCases(this),
-      new RefineTestsInFunctionalAreas(this),
-      new RefineAllDraftTests(this),
+      new DeleteTestCases(this),
       new ExpandApplicationModel(this),
       new ChatWithQaLead(this),
       new GetTask(this),

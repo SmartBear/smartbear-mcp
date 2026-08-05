@@ -1,4 +1,8 @@
 import {
+  CancelFunctionalTestingSuiteExecutionSchema,
+  CreateFunctionalTestingTestParamsSchema,
+  CreateFunctionalTestingTestResponseSchema,
+  GetFunctionalTestHistoryParamsSchema,
   GetFunctionalTestingExecutionTestSchema,
   GetFunctionalTestingSuiteExecutionSchema,
   ListFunctionalTestingSuiteExecutionsSchema,
@@ -20,12 +24,27 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
     readOnly: true,
   },
   {
+    title: "Create Test",
+    toolset: "Functional Testing",
+    summary:
+      "Creates a new API test in your Swagger Functional Testing workspace. " +
+      "This tool only creates API tests (not browser or native-mobile tests). " +
+      "Use this when you need to programmatically create a test with a defined set of API request steps. " +
+      "Each step requires a URL and may specify an HTTP method (defaults to GET), request body, headers, and redirect handling. " +
+      "Returns the ID and the URL to definition of the newly created test; the ID can be used with `swagger_run_test` to run it.",
+    inputSchema: CreateFunctionalTestingTestParamsSchema,
+    outputSchema: CreateFunctionalTestingTestResponseSchema,
+    handler: "createFunctionalTestingTest",
+    idempotent: false,
+    readOnly: false,
+  },
+  {
     title: "Run Test",
     toolset: "Functional Testing",
     summary:
       "Runs a specific API test in your Swagger Functional Testing workspace. " +
       "The execution is asynchronous — it returns an executionId, not the result directly. " +
-      "Use swagger_get_test_status with that executionId to track progress and retrieve the final result.",
+      "Use `swagger_get_test_status` with that executionId to track progress and retrieve the final result.",
     inputSchema: RunFunctionalTestingTestParamsSchema,
     handler: "runFunctionalTestingTest",
     idempotent: false,
@@ -54,6 +73,18 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
     handler: "listFunctionalTestingSuiteExecutions",
     readOnly: true,
     idempotent: true,
+  },
+  {
+    title: "Cancel Suite Execution",
+    toolset: "Functional Testing",
+    summary:
+      "Cancels an ongoing test suite execution in your Swagger Functional Testing workspace. " +
+      "Use this tool when you need to stop a long-running or accidentally triggered suite run. " +
+      "Do not use this tool to cancel individual test runs.",
+    inputSchema: CancelFunctionalTestingSuiteExecutionSchema,
+    handler: "cancelFunctionalTestingSuiteExecution",
+    readOnly: false,
+    idempotent: false,
   },
   {
     title: "List Suites",
@@ -90,6 +121,20 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
       "Requires both `suiteId` and the `executionId` arguments returned by `swagger_run_suite`.",
     inputSchema: GetFunctionalTestingSuiteExecutionSchema,
     handler: "getFunctionalTestingSuiteExecution",
+    idempotent: true,
+    readOnly: true,
+  },
+  {
+    title: "Get Test Execution History",
+    toolset: "Functional Testing",
+    summary:
+      "Retrieves the execution history for a given test in your Swagger Functional Testing workspace. " +
+      "Returns a list of past runs, each including pass/fail status, run time, creation timestamp, " +
+      "and — for failed runs — a per-step breakdown of failure details. " +
+      "Use this tool when you need to check past run results, identify failures, or assess test reliability over time. " +
+      "Do not use this tool to run a test or retrieve suite-level execution results.",
+    inputSchema: GetFunctionalTestHistoryParamsSchema,
+    handler: "getFunctionalTestingTestHistory",
     idempotent: true,
     readOnly: true,
   },

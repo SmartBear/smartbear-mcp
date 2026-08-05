@@ -33,6 +33,7 @@ export const ResolverKeys = {
     PRIORITY: "priority",
     TESTCASE_FOLDER: "testcase_folder",
     TEST_CYCLE_FOLDER: "testcycle_folder",
+    EXECUTION_RESULT: "execution_result",
   } as const,
 
   /**
@@ -45,6 +46,13 @@ export const ResolverKeys = {
     TEST_CASE_KEY_TO_UID: "testCaseKeyToUid",
     TEST_CYCLE_KEY_TO_UID: "testCycleKeyToUid",
     REQUIREMENT_KEY_TO_ID: "requirementKeyToId",
+    ENVIRONMENT: "environment",
+    BUILD: "build",
+    DEFECT_KEY_TO_ID: "defectKeyToId",
+    DEFECT_STATUS: "defectStatus",
+    DEFECT_PRIORITY: "defectPriority",
+    EXECUTION_CONTEXT: "executionContext",
+    STEP_EXECUTION_CONTEXT: "stepExecutionContext",
   } as const,
 } as const;
 
@@ -72,4 +80,6 @@ export enum InputField {
   COMPONENTS = "components",
   LABELS = "labels",
   FOLDER = "folderId",
+  ENVIRONMENT = "environment",
+  BUILD = "build",
 }

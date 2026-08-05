@@ -1,6 +1,6 @@
 import z from "zod";
-
-import { USER_AGENT } from "../common/info";
+import type { CacheService } from "../common/cache";
+import { getUserAgent } from "../common/info";
 import {
   isSamplingPolyfillResult,
   type SamplingPolyfillResult,
@@ -53,6 +53,7 @@ import type {
   UpdatePacticipantInput,
   UpdateVersionInput,
 } from "./client/base";
+import { withPagination } from "./client/pagination";
 import {
   getOADMatcherRecommendations,
   getUserMatcherSelection,
@@ -87,6 +88,7 @@ export class PactflowClient implements Client {
   private baseUrl: string | undefined;
   private _clientType: ClientType | undefined;
   private _server: SmartBearMcpServer | undefined;
+  private cache: CacheService | undefined;
 
   /** Returns the configured MCP server instance. @throws Error if not yet configured. */
   get server(): SmartBearMcpServer {
@@ -125,6 +127,7 @@ export class PactflowClient implements Client {
     this.baseUrl = config.base_url;
     this.aiBaseUrl = `${this.baseUrl}/api/ai`;
     this._server = server;
+    this.cache = server.getCache();
   }
 
   /** Returns true if the client has been configured with a base URL and credentials. */
@@ -285,13 +288,6 @@ export class PactflowClient implements Client {
       contextToken = contextToken[0];
     }
 
-    const clientInfo = this._server?.getClientInfo();
-    const sourceApplicationHeader: Record<string, string> = {
-      SOURCE_APPLICATION: clientInfo
-        ? `${clientInfo.name}/${clientInfo.version}`
-        : "unknown",
-    };
-
     if (contextToken) {
       let authHeader = contextToken;
       if (
@@ -304,8 +300,7 @@ export class PactflowClient implements Client {
       return {
         Authorization: authHeader,
         "Content-Type": "application/json",
-        "User-Agent": USER_AGENT,
-        ...sourceApplicationHeader,
+        "User-Agent": getUserAgent(),
       };
     }
 
@@ -321,16 +316,14 @@ export class PactflowClient implements Client {
       return {
         Authorization: authHeader,
         "Content-Type": "application/json",
-        "User-Agent": USER_AGENT,
-        ...sourceApplicationHeader,
+        "User-Agent": getUserAgent(),
       };
     } else if (this.username && this.password) {
       const authString = `${this.username}:${this.password}`;
       return {
         Authorization: `Basic ${Buffer.from(authString).toString("base64")}`,
         "Content-Type": "application/json",
-        "User-Agent": USER_AGENT,
-        ...sourceApplicationHeader,
+        "User-Agent": getUserAgent(),
       };
     }
     return undefined;
@@ -2171,7 +2164,7 @@ export class PactflowClient implements Client {
       `${this.baseUrl}/admin/teams/${encodeURIComponent(teamId)}/users`,
       {
         method: "PUT",
-        body: { uuids },
+        body: { users: uuids },
         errorContext: "Set Team Users",
       },
     );
@@ -2407,7 +2400,18 @@ export class PactflowClient implements Client {
         }
 
         let result: any;
-        if (tool.enableElicitation) {
+        if (tool.paginated) {
+          if (!this.baseUrl || !this.cache) {
+            throw new ToolError(
+              "PactflowClient must be configured before registering paginated tools",
+            );
+          }
+          result = await withPagination(handler_fn.bind(this), handler, args, {
+            baseUrl: this.baseUrl,
+            authToken: this.requestHeaders?.Authorization,
+            cache: this.cache,
+          });
+        } else if (tool.enableElicitation) {
           result = await handler_fn.call(this, args, getInput);
         } else {
           result = await handler_fn.call(this, args);

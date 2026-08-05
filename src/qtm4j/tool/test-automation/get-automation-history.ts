@@ -71,13 +71,12 @@ export class GetAutomationHistory extends Tool<Qtm4jClient> {
     const args = GetAutomationHistoryBody.parse(rawArgs);
     const apiClient = this.client.getApiClient();
 
-    const response = await apiClient.getAutomation(
-      ENDPOINTS.AUTOMATION_HISTORY,
-      {
+    const response = await apiClient
+      .skipAnalytics()
+      .getAutomation(ENDPOINTS.AUTOMATION_HISTORY, {
         startAt: args.startAt,
         maxResults: args.maxResults,
-      },
-    );
+      });
 
     const result: GetAutomationHistoryResponseType =
       GetAutomationHistoryResponse.parse(response);

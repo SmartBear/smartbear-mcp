@@ -38,28 +38,14 @@ The BearQ client provides AI-powered QA test management and execution capabiliti
 
 ---
 
-### Refining Draft Tests
+### Deleting Tests
 
-#### `bearq_refine_test_cases`
+#### `bearq_delete_test_cases`
 
-- Purpose: Refines specific BearQ draft test cases — improves their steps so they can eventually be promoted to regression tests.
-- Parameters: `testCaseIds` — list of draft test case IDs.
-- Returns: Task IDs for the started refine job.
-- Use case: A draft test is incomplete or has drifted from its original intent.
-
-#### `bearq_refine_tests_in_functional_areas`
-
-- Purpose: Refines every draft test case tagged with one or more functional areas.
-- Parameters: `functionalAreas` — list of functional area IDs or names.
-- Returns: Task IDs for the started refine job.
-- Use case: Bulk-refine drafts across a feature area after a UI rework.
-
-#### `bearq_refine_all_draft_tests`
-
-- Purpose: Refines every draft test case in the workspace.
-- Parameters: None.
-- Returns: Task IDs for the started refine job.
-- Use case: Push an entire draft backlog forward; may take multiple passes.
+- Purpose: Deletes specific BearQ test cases by ID.
+- Parameters: `testCaseIds` — list of test case IDs.
+- Returns: `{ results }` — per-id `{ testCaseId, deleted }` (with an `error` string when a delete fails).
+- Use case: Remove tests you no longer want. Works on any unprotected test; protected tests are rejected. Deletion is reversible — tests are archived and can be restored. Deleting a draft test also stops its autonomous refinement.
 
 ---
 
@@ -103,7 +89,7 @@ The BearQ client provides AI-powered QA test management and execution capabiliti
 - Purpose: Retrieves a task's current state, metadata, and activity log.
 - Parameters: `taskId` — BearQ task ID.
 - Returns: Full task object with current state, metadata, and activity log. Returns immediately — does not block on completion.
-- Use case: Poll task progress or retrieve results after a run or refine job.
+- Use case: Poll task progress or retrieve results after a test run.
 
 #### `bearq_get_task_status`
 
@@ -117,11 +103,11 @@ The BearQ client provides AI-powered QA test management and execution capabiliti
 - Purpose: Cancels a running task.
 - Parameters: `taskId` — BearQ task ID.
 - Returns: Empty response on success.
-- Use case: Cancel a long-running run or refine job that is no longer needed.
+- Use case: Cancel a long-running test run that is no longer needed.
 
 #### `bearq_wait_for_task`
 
 - Purpose: Blocks until a BearQ task reaches a terminal state (completed / failed / cancelled), then returns its full metadata, activity log, and final result.
 - Parameters: `taskId` — BearQ task ID.
 - Returns: `{ events }` — the ordered sequence of SSE events from the BearQ task stream (`metadata`, `activityLogEntries`, and a terminal `done` or `timeout` event). The `done` event carries the task's final status and result; a `timeout` event means the task has already been terminated and no follow-up call is needed.
-- Use case: Wait on a run or refine job and inspect results in one call. Blocks for the lifetime of the task — use `bearq_get_task_status` for a quick non-blocking check.
+- Use case: Wait on a test run and inspect results in one call. Blocks for the lifetime of the task — use `bearq_get_task_status` for a quick non-blocking check.

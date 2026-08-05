@@ -93,7 +93,7 @@ The Swagger Studio client provides comprehensive API and Domain management capab
 #### `standardize_api`
 
 -   Purpose: Standardize and fix an API definition using AI to ensure compliance with governance policies. Scans the API definition for standardization errors and automatically fixes them using SmartBear AI. If errors are found, they will be sent to SmartBear AI to generate a corrected definition, which is then saved back to the registry.
--   Returns: Standardization result including a message, the number of errors found, and the fixed definition if successful. Also includes details about each error (description, line number, severity).
+ -   Returns: Standardization result including a message, the number of errors found, and the fixed definition if successful. Also includes details about each error (description, line number, severity). If the fixed definition was saved, the response includes a `url` to view the API in SwaggerHub (server returns `savedVersion`); otherwise `url` is omitted.
 -   Use case: Automatically fix API definitions that fail standardization scans, ensure governance compliance in existing APIs, or clean up imported/legacy API definitions to meet current organization standards.
 -   Parameters:
 
@@ -107,7 +107,7 @@ The Swagger Studio client provides comprehensive API and Domain management capab
 #### `list_organizations`
 
 -   Purpose: Get organizations for the authenticated user. Returns a list of organizations that the authenticating user is a member of. On-Premise admins get a list of all organizations in the system.
--   Returns: Paged list of organizations, each including id, name, description, email, url, and memberCount.
+-   Returns: Paged list of organizations, each including id, name, description, url, and memberCount.
 -   Use case: Discover which organizations the current user belongs to before performing organization-scoped operations (e.g., `scan_api_standardization`, creating APIs under a specific owner), or enumerate organizations on On-Premise installations.
 -   Parameters:
 
