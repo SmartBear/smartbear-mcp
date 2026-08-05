@@ -114,8 +114,7 @@ export const CreateFunctionalTestingSuiteResponseSchema = z.object({
   slug: z.string().describe("Slug of the newly created suite"),
   url: z
     .string()
-    .describe("Link to the created suite in Swagger Functional Testing UI")
-    .optional(),
+    .describe("Link to the created suite in Swagger Functional Testing UI"),
 });
 
 export type CreateFunctionalTestingSuiteResponse = z.infer<
