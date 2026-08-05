@@ -49,6 +49,58 @@ describe("CreateFunctionalTestingStatusRangeSchema", () => {
 describe("CreateFunctionalTestingBodyRuleSchema", () => {
   const basePath = '["data"]["name"]';
 
+  describe("path", () => {
+    it("accepts a single bracket segment", () => {
+      const result = CreateFunctionalTestingBodyRuleSchema.safeParse({
+        path: '["data"]',
+        assertionType: "string",
+        operator: "eq",
+        target: "Alice",
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("accepts multiple chained bracket segments", () => {
+      const result = CreateFunctionalTestingBodyRuleSchema.safeParse({
+        path: basePath,
+        assertionType: "string",
+        operator: "eq",
+        target: "Alice",
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("rejects dot notation", () => {
+      const result = CreateFunctionalTestingBodyRuleSchema.safeParse({
+        path: "data.name",
+        assertionType: "string",
+        operator: "eq",
+        target: "Alice",
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it("rejects an unbracketed path", () => {
+      const result = CreateFunctionalTestingBodyRuleSchema.safeParse({
+        path: "data",
+        assertionType: "string",
+        operator: "eq",
+        target: "Alice",
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it("rejects an empty path", () => {
+      const result = CreateFunctionalTestingBodyRuleSchema.safeParse({
+        path: "",
+        assertionType: "string",
+        operator: "eq",
+        target: "Alice",
+      });
+      expect(result.success).toBe(false);
+    });
+  });
+
   describe("compare assertions (string/number)", () => {
     it("accepts operator + target", () => {
       const result = CreateFunctionalTestingBodyRuleSchema.safeParse({

@@ -280,6 +280,10 @@ export const CreateFunctionalTestingBodyRuleSchema = z
   .object({
     path: z
       .string()
+      .regex(
+        /^(\["[^"]*"\])+$/,
+        'Path must be in bracket notation, e.g. \'["data"]["id"]\'.',
+      )
       .describe(
         'Path to the field to assert, in bracket notation (e.g. \'["data"]["id"]\').',
       ),
