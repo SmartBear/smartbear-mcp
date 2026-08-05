@@ -1,5 +1,9 @@
 import { QMetryToolsHandlers } from "../config/constants";
-import { executeAnalyticsQuery } from "./analytics";
+import {
+  executeGateReport,
+  exportHtmlReport,
+  getGateConfiguration,
+} from "./ai-agent";
 import { getAutomationStatus, importAutomationResults } from "./automation";
 import {
   createIssue,
@@ -122,7 +126,6 @@ export const QMETRY_HANDLER_MAP: Record<string, QMetryHandler> = {
   [QMetryToolsHandlers.LINK_PLATFORMS_TO_TESTSUITE]: linkPlatformsToTestSuite,
   [QMetryToolsHandlers.IMPORT_AUTOMATION_RESULTS]: importAutomationResults,
   [QMetryToolsHandlers.FETCH_AUTOMATION_STATUS]: getAutomationStatus,
-  [QMetryToolsHandlers.EXECUTE_ANALYTICS_QUERY]: executeAnalyticsQuery,
   [QMetryToolsHandlers.FETCH_UDF_FIELD_TYPES]: fetchUdfFieldTypes,
   [QMetryToolsHandlers.FETCH_UDF_MODULES]: fetchUdfModules,
   [QMetryToolsHandlers.BULK_UPDATE_TEST_RUN_UDFS]: bulkUpdateTestRunUdfs,
@@ -130,4 +133,7 @@ export const QMETRY_HANDLER_MAP: Record<string, QMetryHandler> = {
   [QMetryToolsHandlers.FETCH_TEST_RUN_UDF_VALUES]: fetchTestRunUdfValues,
   [QMetryToolsHandlers.FETCH_ISSUE_EXECUTIONS]: fetchIssueExecutions,
   [QMetryToolsHandlers.FETCH_CASCADE_CHILD_VALUES]: fetchCascadeChildValues,
+  [QMetryToolsHandlers.FETCH_GATE_CONFIGURATION]: getGateConfiguration,
+  [QMetryToolsHandlers.EXECUTE_GATE_REPORT]: executeGateReport,
+  [QMetryToolsHandlers.EXPORT_HTML_REPORT]: exportHtmlReport,
 };

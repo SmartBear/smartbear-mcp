@@ -4643,71 +4643,110 @@ Expected Output: Test suite created with details and metadata. Example uses: par
     "outputSchema": undefined,
     "title": "QMetry: Create Test Suite",
   },
-  "qmetry_execute_analytics_sql_query": {
+  "qmetry_execute_quality_gate_report": {
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
       "openWorldHint": false,
       "readOnlyHint": true,
-      "title": "QMetry: Execute Analytics SQL Query",
+      "title": "QMetry: Execute Quality Gate Report",
     },
-    "description": "Execute a custom SQL query against QMetry Analytics to fetch cross-entity data for reporting and traceability
+    "description": "Execute a quality gate report by forwarding the request to the backend analytics engine and returning the results.
+
+**Toolset:** AI Agent
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
-- baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
-- query (string) *required*: SQL query to execute against QMetry analytics. Supports tables like requirements, testcases, testexecutions, testsuites, issues, and their relationship tables (requirementtestcase, testexecutionissue, etc.). Use JOINs to combine data across entities for custom reporting.
-- page (number): Page number for pagination (starts from 0) (default: 0)
-- filterValue (array): Filter values for parameterized queries (default: [])
+- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
+- reportName (string) *required*: Report name identifier (e.g. 'RR' for Release Readiness).
+- gateIdentifier (string) *required*: Gate identifier to execute the report against (e.g. 'GATE1').
+- projectId (number) *required*: Numeric project ID for the report scope.
+- releaseId (number): Optional release ID to scope the report to a specific release.
+- cycleIds (array): Optional array of cycle IDs to scope the report to specific cycles.
+- page (number): Optional page number for paginated report results.
+- limit (number): Maximum number of records to return per page. Defaults to 100 if not specified. (default: 100)
 
-**Output Description:** JSON object containing tabular query results with column headers and row data matching the SQL SELECT columns
-
-**Use Cases:** 1. Build traceability matrix linking requirements to test cases, executions, and defects 2. Generate custom cross-entity reports combining data from multiple QMetry modules 3. Query test execution status across multiple requirements or test suites 4. Fetch linked issues and their resolution status for specific requirements 5. Analyze test coverage by joining requirements with test cases and execution results 6. Create custom dashboards by querying aggregated test execution data 7. Filter and retrieve data using complex SQL WHERE clauses with JOINs 8. Export structured data for external reporting tools
+**Use Cases:** 1. Generate a release readiness report for a specific project, release, and cycle 2. Execute a quality gate assessment to evaluate project health against gate criteria 3. Run a gate report scoped to specific cycles within a release 4. Produce analytics data for quality gate evaluation and decision-making
 
 **Examples:**
-1. Get traceability data: requirements → test cases → executions → issues
+1. Execute a release readiness report for project 45851, release 90698, cycle 129140
 \`\`\`json
 {
-  "query": "SELECT r.extKey as \\"rqExtKey\\", r.entityKey as \\"rqKey\\", t.entityKey as \\"tckey\\", te.tcExecutionStatusName as \\"TestExecution Status\\", i.issueID, te.platformName, i.issueStatus, ts.entityKey as \\"Testsuitname\\", te.tsExecutionID as \\"tsRunId\\", i.summary as \\"issuename\\", i.priority as \\"issuePriority\\", i.resolution as \\"issueResolution\\", te.releaseName as \\"Release Name\\", te.cycleName as \\"Cycle Name\\" FROM requirements r JOIN requirementtestcase rtc ON r.requirementID = rtc.requirementID JOIN testcases t ON rtc.testcaseID = t.testcaseID LEFT JOIN testexecutions te ON t.testcaseID = te.testcaseID AND t.tcVersion = te.executedVersion LEFT JOIN testsuites ts ON te.testsuiteID = ts.testsuiteID LEFT JOIN testexecutionissue tei ON te.tcExecutionID = tei.tcExecutionID AND te.executedVersion = tei.executedVersion LEFT JOIN issues i ON tei.issueID = i.issueID WHERE r.extKey IN ('PE17G-107', 'PE17G-105')"
+  "reportName": "RR",
+  "gateIdentifier": "GATE1",
+  "projectId": 45851,
+  "releaseId": 90698,
+  "cycleIds": [
+    129140
+  ]
 }
 \`\`\`
-Expected Output: Tabular data with requirement keys, test case keys, execution status, linked issues, platform, test suite, release, and cycle information
+Expected Output: { "data": [...], "total": 0, "success": true, "page": {} }
 
-2. Get all test cases with their execution status for a requirement
+2. Execute a gate report without release/cycle scoping
 \`\`\`json
 {
-  "query": "SELECT r.entityKey as \\"Requirement\\", t.entityKey as \\"TestCase\\", te.tcExecutionStatusName as \\"Status\\", te.platformName as \\"Platform\\" FROM requirements r JOIN requirementtestcase rtc ON r.requirementID = rtc.requirementID JOIN testcases t ON rtc.testcaseID = t.testcaseID LEFT JOIN testexecutions te ON t.testcaseID = te.testcaseID WHERE r.entityKey = 'PROJ-RQ-100'"
+  "reportName": "RR",
+  "gateIdentifier": "GATE1",
+  "projectId": 45851
 }
 \`\`\`
-Expected Output: List of test cases linked to requirement PROJ-RQ-100 with their execution status and platform
+Expected Output: { "data": [...], "total": 0, "success": true, "page": {} }
 
-3. Get test execution summary with issue counts
-\`\`\`json
-{
-  "query": "SELECT ts.entityKey as \\"TestSuite\\", t.entityKey as \\"TestCase\\", te.tcExecutionStatusName as \\"Status\\", COUNT(i.issueID) as \\"IssueCount\\" FROM testsuites ts JOIN testexecutions te ON ts.testsuiteID = te.testsuiteID JOIN testcases t ON te.testcaseID = t.testcaseID LEFT JOIN testexecutionissue tei ON te.tcExecutionID = tei.tcExecutionID LEFT JOIN issues i ON tei.issueID = i.issueID GROUP BY ts.entityKey, t.entityKey, te.tcExecutionStatusName"
-}
-\`\`\`
-Expected Output: Aggregated test execution data with issue counts per test case and suite
-
-4. Query with pagination (page 0 is first page)
-\`\`\`json
-{
-  "query": "SELECT t.entityKey, t.summary FROM testcases t ORDER BY t.entityKey",
-  "page": 0
-}
-\`\`\`
-Expected Output: First page of test cases ordered by entity key
-
-**Hints:** 1. CRITICAL: The 'query' parameter is REQUIRED - must provide a valid SQL query 2. AVAILABLE TABLES: requirements, testcases, testexecutions, testsuites, issues 3. RELATIONSHIP TABLES: requirementtestcase, testexecutionissue (join tables for linking entities) 4. COMMON COLUMNS - requirements: requirementID, entityKey, extKey, summary 5. COMMON COLUMNS - testcases: testcaseID, entityKey, summary, tcVersion 6. COMMON COLUMNS - testexecutions: tcExecutionID, testcaseID, testsuiteID, executedVersion, tcExecutionStatusName, platformName, releaseName, cycleName, tsExecutionID 7. COMMON COLUMNS - testsuites: testsuiteID, entityKey, summary 8. COMMON COLUMNS - issues: issueID, summary, priority, issueStatus, resolution 9. COMMON COLUMNS - requirementtestcase: requirementID, testcaseID 10. COMMON COLUMNS - testexecutionissue: tcExecutionID, issueID, executedVersion 11. Use JOINs to combine data across entities - standard SQL JOIN syntax is supported 12. Use WHERE clause with IN operator to filter by multiple entity keys or ext keys 13. Use column aliases with AS or double quotes for readable output column names 14. The 'page' parameter starts from 0 (default). Increment for subsequent pages of results 15. The 'filterValue' parameter is optional and used for parameterized queries 16. Use LEFT JOIN when relationships may not exist (e.g., test cases without executions) 17. Use INNER JOIN when relationships must exist (e.g., only test cases linked to requirements) 18. extKey column in requirements refers to external system keys (e.g., Jira issue keys) 19. entityKey column refers to QMetry internal keys (e.g., PROJ-RQ-100, PROJ-TC-200)",
+**Hints:** 1. REQUIRED: 'reportName' identifies the report type (e.g. 'RR' for Release Readiness). 2. REQUIRED: 'gateIdentifier' identifies which gate to evaluate (e.g. 'GATE1'). 3. REQUIRED: 'projectId' must be a valid numeric project ID. 4. OPTIONAL: 'releaseId' scopes the report to a specific release. 5. OPTIONAL: 'cycleIds' scopes the report to specific test cycles within the release. 6. OPTIONAL: 'page' specifies the page number for paginated report results. 7. OPTIONAL: 'limit' sets the maximum number of records per page (defaults to 100). 8. Call 'Fetch Quality Gate Configuration' first to discover available gates and report parameters. 9. The response is returned exactly as received from the backend — no transformation is applied.",
     "inputSchema": [
       "baseUrl",
-      "filterValue",
+      "cycleIds",
+      "gateIdentifier",
+      "limit",
       "page",
+      "projectId",
       "projectKey",
-      "query",
+      "releaseId",
+      "reportName",
     ],
     "outputSchema": undefined,
-    "title": "QMetry: Execute Analytics SQL Query",
+    "title": "QMetry: Execute Quality Gate Report",
+  },
+  "qmetry_export_html_report": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+      "title": "QMetry: Export HTML Report",
+    },
+    "description": "Export HTML content as a downloadable report file via the backend.
+
+**Toolset:** AI Agent
+
+**Parameters:**
+- projectKey (string): Project key - unique identifier for the project (default: "default")
+- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
+- htmlContent (string) *required*: HTML content to be exported as a report.
+- fileName (string) *required*: Name for the exported report file (without extension).
+
+**Use Cases:** 1. Export a generated release readiness report as an HTML file 2. Save AI-generated quality gate analysis as a downloadable report 3. Create a shareable HTML document from report content
+
+**Examples:**
+1. Export a release readiness report
+\`\`\`json
+{
+  "htmlContent": "<h1>Release Readiness Report</h1><p>Generated by AI Agent.</p>",
+  "fileName": "release-readiness-report"
+}
+\`\`\`
+Expected Output: Report file generated and returned by the backend.
+
+**Hints:** 1. REQUIRED: 'htmlContent' is the full HTML string to export. 2. REQUIRED: 'fileName' is the report file name (without extension). 3. Typically called after generating report content from 'Execute Quality Gate Report' results.",
+    "inputSchema": [
+      "baseUrl",
+      "fileName",
+      "htmlContent",
+      "projectKey",
+    ],
+    "outputSchema": undefined,
+    "title": "QMetry: Export HTML Report",
   },
   "qmetry_fetch_automation_status": {
     "annotations": {
@@ -5650,6 +5689,46 @@ Expected Output: MAC project configuration with available views and folders
     ],
     "outputSchema": undefined,
     "title": "QMetry: Fetch QMetry Project Info",
+  },
+  "qmetry_fetch_quality_gate_configuration": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "QMetry: Fetch Quality Gate Configuration",
+    },
+    "description": "Fetch the quality gate configuration for a project and AI agent, including assessment scope and gate criteria.
+
+**Toolset:** AI Agent
+
+**Parameters:**
+- projectKey (string): Project key - unique identifier for the project (default: "default")
+- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
+- projectId (number) *required*: Numeric project ID for which to fetch the quality gate configuration. This is the internal numeric identifier, not the project key.
+- agentIdentifier (string) *required*: Unique identifier of the AI agent whose gate configuration should be retrieved.
+
+**Use Cases:** 1. Retrieve gate criteria and thresholds before generating a quality gate report 2. Check which quality gates are configured for a project and agent 3. Inspect assessment scope and gate parameters for release readiness evaluation
+
+**Examples:**
+1. Fetch gate configuration for project 45851 and agent 'claude'
+\`\`\`json
+{
+  "projectId": 45851,
+  "agentIdentifier": "claude"
+}
+\`\`\`
+Expected Output: Gate configuration object with assessment scope, gate criteria, and thresholds.
+
+**Hints:** 1. REQUIRED: 'projectId' must be a valid numeric project ID (not the project key). 2. REQUIRED: 'agentIdentifier' must match a registered AI agent identifier. 3. Call this tool before 'Execute Quality Gate Report' to understand the gate criteria and available gates. 4. If AI Agent is not enabled for the project, the backend will return an appropriate error.",
+    "inputSchema": [
+      "agentIdentifier",
+      "baseUrl",
+      "projectId",
+      "projectKey",
+    ],
+    "outputSchema": undefined,
+    "title": "QMetry: Fetch Quality Gate Configuration",
   },
   "qmetry_fetch_releases_and_cycles": {
     "annotations": {

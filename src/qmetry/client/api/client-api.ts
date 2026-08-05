@@ -76,5 +76,7 @@ export async function qmetryRequest<T>({
     await handleQMetryApiError(res, baseUrl, project, path);
   }
 
-  return (await res.json()) as T;
+  const data = await res.json();
+
+  return data as T;
 }

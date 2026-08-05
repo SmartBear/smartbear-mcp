@@ -102,7 +102,6 @@ export const QMetryToolsHandlers = {
   CREATE_RELEASE: "createRelease",
   CREATE_CYCLE: "createCycle",
   UPDATE_CYCLE: "updateCycle",
-  EXECUTE_ANALYTICS_QUERY: "executeAnalyticsQuery",
   FETCH_UDF_FIELD_TYPES: "fetchUdfFieldTypes",
   FETCH_UDF_MODULES: "fetchUdfModules",
   BULK_UPDATE_TEST_RUN_UDFS: "bulkUpdateTestRunUdfs",
@@ -110,4 +109,7 @@ export const QMetryToolsHandlers = {
   FETCH_TEST_RUN_UDF_VALUES: "fetchTestRunUdfValues",
   FETCH_ISSUE_EXECUTIONS: "getIssueExecutions",
   FETCH_CASCADE_CHILD_VALUES: "fetchCascadeChildValues",
+  FETCH_GATE_CONFIGURATION: "getGateConfiguration",
+  EXECUTE_GATE_REPORT: "executeGateReport",
+  EXPORT_HTML_REPORT: "exportHtmlReport",
 };
