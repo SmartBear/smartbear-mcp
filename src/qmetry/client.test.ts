@@ -53,7 +53,7 @@ describe("QmetryClient", () => {
     it("should extract OAuth Bearer token from Authorization header", async () => {
       const testClient = await createConfiguredClient();
       const { requestContextStorage } = await import(
-        "../../../common/request-context.js"
+        "../common/request-context.js"
       );
       const result = requestContextStorage.run(
         { headers: { authorization: "Bearer oauth-qmetry-token-xyz" } },
@@ -65,7 +65,7 @@ describe("QmetryClient", () => {
     it("should handle Bearer token with different casing", async () => {
       const testClient = await createConfiguredClient();
       const { requestContextStorage } = await import(
-        "../../../common/request-context.js"
+        "../common/request-context.js"
       );
       const result = requestContextStorage.run(
         { headers: { authorization: "Bearer TEST-TOKEN-123" } },
@@ -77,7 +77,7 @@ describe("QmetryClient", () => {
     it("should fall back to Qmetry-Token header when Authorization not present", async () => {
       const testClient = await createConfiguredClient();
       const { requestContextStorage } = await import(
-        "../../../common/request-context.js"
+        "../common/request-context.js"
       );
       const result = requestContextStorage.run(
         { headers: { "qmetry-token": "direct-api-key" } },
@@ -89,7 +89,7 @@ describe("QmetryClient", () => {
     it("should fall back to apikey header when Qmetry-Token not present", async () => {
       const testClient = await createConfiguredClient();
       const { requestContextStorage } = await import(
-        "../../../common/request-context.js"
+        "../common/request-context.js"
       );
       const result = requestContextStorage.run(
         { headers: { apikey: "fallback-api-key" } },
@@ -101,7 +101,7 @@ describe("QmetryClient", () => {
     it("should use configured token when no headers present", async () => {
       const testClient = await createConfiguredClient("configured-token");
       const { requestContextStorage } = await import(
-        "../../../common/request-context.js"
+        "../common/request-context.js"
       );
       const result = requestContextStorage.run({ headers: {} }, () =>
         testClient.getToken(),
@@ -112,7 +112,7 @@ describe("QmetryClient", () => {
     it("should throw when no token is available", async () => {
       const testClient = new QmetryClient();
       const { requestContextStorage } = await import(
-        "../../../common/request-context.js"
+        "../common/request-context.js"
       );
       expect(() =>
         requestContextStorage.run({ headers: {} }, () => testClient.getToken()),
@@ -122,7 +122,7 @@ describe("QmetryClient", () => {
     it("should prioritize Authorization Bearer over Qmetry-Token header", async () => {
       const testClient = await createConfiguredClient();
       const { requestContextStorage } = await import(
-        "../../../common/request-context.js"
+        "../common/request-context.js"
       );
       const result = requestContextStorage.run(
         {

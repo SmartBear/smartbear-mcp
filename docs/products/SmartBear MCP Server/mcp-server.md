@@ -30,7 +30,7 @@ The MCP Server is available in two deployment modes. Pick the one that fits your
 
 | | [Remote MCP Servers](/smartbear-mcp/docs/remote-mcp-servers) | [Local MCP Server](/smartbear-mcp/docs/local-server)                |
 |---|---|---------------------------------------------------------------------|
-| **Products** | Swagger, BugSnag, Zephyr | All products (incl. Reflect, QMetry, QTM4J, PactFlow, Collaborator) |
+| **Products** | Swagger, BugSnag, Zephyr, QMetry | All products (incl. Reflect, QTM4J, PactFlow, Collaborator) |
 | **Setup** | None — add a URL to your MCP client | Install via npm (Node.js 20+)                                       |
 | **Authentication** | OAuth browser flow | API tokens via environment variables                                |
 | **Configuration** | Headers and query string | Environment variables                                               |

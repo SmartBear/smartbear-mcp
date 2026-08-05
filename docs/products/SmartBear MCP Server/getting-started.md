@@ -4,7 +4,7 @@ The SmartBear MCP Server is available in two deployment modes: **remote hosted s
 
 | | [Remote MCP Servers](/smartbear-mcp/docs/remote-mcp-servers) | [Local MCP Server](/smartbear-mcp/docs/local-server)                |
 |---|---|---------------------------------------------------------------------|
-| **Products** | Swagger, BugSnag, Zephyr | All products (incl. Reflect, QMetry, QTM4J, PactFlow, Collaborator, Functional Testing) |
+| **Products** | Swagger, BugSnag, Zephyr, QMetry | All products (incl. Reflect, QTM4J, PactFlow, Collaborator, Functional Testing) |
 | **Setup** | None — add a URL to your MCP client | Install via npm (Node.js 20+)                                       |
 | **Authentication** | OAuth browser flow | API tokens via environment variables                                |
 | **Configuration** | Headers and query string | Environment variables                                               |
@@ -13,12 +13,12 @@ The SmartBear MCP Server is available in two deployment modes: **remote hosted s
 ## Which should I use?
 
 **Use Remote MCP Servers if:**
-- You only need Swagger, BugSnag, or Zephyr tools
+- You only need Swagger, BugSnag, Zephyr, or QMetry tools
 - You want to get started immediately without installing anything
 - You prefer OAuth login over managing API tokens in environment variables
 
 **Use the Local MCP Server if:**
-- You need access to Reflect, QMetry, QTM4J, PactFlow, Collaborator or Functional Testing tools
+- You need access to Reflect, QTM4J, PactFlow, Collaborator or Functional Testing tools
 - You want all SmartBear tools available in a single MCP server
 - You are using an MCP client that does not yet support HTTP/OAuth transport
 

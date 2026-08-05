@@ -1,6 +1,6 @@
 Remote MCP Servers are hosted by SmartBear and connect directly to your MCP client via a URL — no installation or Node.js required. Authentication is handled through an OAuth browser flow, so there are no API tokens to manage manually.
 
-> **Need access to Reflect, QMetry, PactFlow, or Collaborator?** These products are only available in the [Local MCP Server](/smartbear-mcp/docs/local-server), which provides all products in a single npm package.
+> **Need access to Reflect, PactFlow, or Collaborator?** These products are only available in the [Local MCP Server](/smartbear-mcp/docs/local-server), which provides all products in a single npm package.
 
 ## Available Remote Servers
 
@@ -9,6 +9,7 @@ Remote MCP Servers are hosted by SmartBear and connect directly to your MCP clie
 | **Swagger** | `https://swagger.mcp.smartbear.com/mcp` | [Swagger Remote Server](/smartbear-mcp/docs/remote-swagger) |
 | **BugSnag** | `https://bugsnag.mcp.smartbear.com/mcp` | [BugSnag Remote Server](/smartbear-mcp/docs/remote-bugsnag) |
 | **Zephyr** | `https://zephyr.mcp.smartbear.com/mcp` | [Zephyr Remote Server](/smartbear-mcp/docs/remote-zephyr) |
+| **QMetry** | `https://qmetry.mcp.smartbear.com/mcp` | [QMetry Remote Server](/smartbear-mcp/docs/remote-qmetry) |
 
 ## Authentication
 

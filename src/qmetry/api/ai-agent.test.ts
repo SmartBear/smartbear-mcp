@@ -3,12 +3,12 @@ import {
   executeGateReport,
   exportHtmlReport,
   getGateConfiguration,
-} from "../../../../qmetry/client/ai-agent.js";
+} from "../../qmetry/client/ai-agent.js";
 import type {
   ExecuteGateReportPayload,
   ExportHtmlReportPayload,
   GetGateConfigurationPayload,
-} from "../../../../qmetry/types/ai-agent.js";
+} from "../../qmetry/types/ai-agent.js";
 
 const token = "fake-token";
 const baseUrl = "https://qmetry.example";
@@ -222,9 +222,7 @@ describe("AI Agent API clients", () => {
 
       await expect(
         executeGateReport(token, baseUrl, projectKey, payload),
-      ).rejects.toThrow(
-        "Missing or invalid required parameter: 'reportName'",
-      );
+      ).rejects.toThrow("Missing or invalid required parameter: 'reportName'");
     });
 
     it("should throw when gateIdentifier is missing", async () => {
@@ -250,9 +248,7 @@ describe("AI Agent API clients", () => {
 
       await expect(
         executeGateReport(token, baseUrl, projectKey, payload),
-      ).rejects.toThrow(
-        "Missing or invalid required parameter: 'projectId'",
-      );
+      ).rejects.toThrow("Missing or invalid required parameter: 'projectId'");
     });
 
     it("should throw when projectId is NaN", async () => {
@@ -264,9 +260,7 @@ describe("AI Agent API clients", () => {
 
       await expect(
         executeGateReport(token, baseUrl, projectKey, payload),
-      ).rejects.toThrow(
-        "Missing or invalid required parameter: 'projectId'",
-      );
+      ).rejects.toThrow("Missing or invalid required parameter: 'projectId'");
     });
   });
 

@@ -5781,11 +5781,11 @@ Expected Output: MAC project configuration with available views and folders
 **Use Cases:** 1. Retrieve gate criteria and thresholds before generating a quality gate report 2. Check which quality gates are configured for a project and agent 3. Inspect assessment scope and gate parameters for release readiness evaluation
 
 **Examples:**
-1. Fetch gate configuration for project 45851 and agent 'claude'
+1. Fetch gate configuration for project 45851 and agent 'RR'
 \`\`\`json
 {
   "projectId": 45851,
-  "agentIdentifier": "claude"
+  "agentIdentifier": "RR"
 }
 \`\`\`
 Expected Output: Gate configuration object with assessment scope, gate criteria, and thresholds.
