@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
 import { FunctionalTestingAPI } from "../client/functional-testing-api";
+import { CreateFunctionalTestingSuiteParamsSchema } from "../client/functional-testing-types";
 
 const fetchMock = createFetchMock(vi);
 fetchMock.enableMocks();
@@ -555,6 +556,270 @@ describe("FunctionalTestingAPI", () => {
       fetchMock.mockResponseOnce("Forbidden", { status: 403 });
 
       await expect(api.listTests()).rejects.toThrow(AUTH_FAILED_MESSAGE);
+    });
+  });
+
+  describe("createSuite", () => {
+    const createSuiteResponseMock = {
+      id: 4821,
+      slug: "nightly-api-regression",
+      url: "https://app.reflect.run/suites/nightly-api-regression?accountId=1",
+    };
+
+    it("should POST to the correct endpoint with X-API-KEY header", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createSuiteResponseMock));
+
+      await api.createSuite({
+        name: "Nightly API Regression",
+        runApiTests: [{ testIds: [101, 102] }],
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://api.reflect.run/v1/suites",
+        expect.objectContaining({
+          method: "POST",
+          headers: expect.objectContaining({ "X-API-KEY": "test-api-key" }),
+          body: JSON.stringify({
+            name: "Nightly API Regression",
+            runApiTests: [{ testIds: [101, 102] }],
+          }),
+        }),
+      );
+    });
+
+    it("should forward agentName and per-block parallel/maxRetryAttempts/title", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createSuiteResponseMock));
+
+      await api.createSuite({
+        name: "Nightly API Regression",
+        agentName: "my-tunnel-agent",
+        runApiTests: [
+          {
+            testIds: [101, 102],
+            parallel: true,
+            maxRetryAttempts: 2,
+            title: "Smoke",
+          },
+          { testIds: [201] },
+        ],
+      });
+
+      const [, init] = fetchMock.mock.calls[0];
+      const body = JSON.parse((init as RequestInit).body as string);
+      expect(body).toEqual({
+        name: "Nightly API Regression",
+        agentName: "my-tunnel-agent",
+        runApiTests: [
+          {
+            testIds: [101, 102],
+            parallel: true,
+            maxRetryAttempts: 2,
+            title: "Smoke",
+          },
+          { testIds: [201] },
+        ],
+      });
+    });
+
+    it("should return the created suite", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createSuiteResponseMock));
+
+      const result = await api.createSuite({
+        name: "Nightly API Regression",
+        runApiTests: [{ testIds: [101, 102] }],
+      });
+
+      expect(result).toEqual(createSuiteResponseMock);
+    });
+
+    it("should send a minimal body for a single test in a single block with no optional fields", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createSuiteResponseMock));
+
+      await api.createSuite({
+        name: "Nightly API Regression",
+        runApiTests: [{ testIds: [101] }],
+      });
+
+      const [, init] = fetchMock.mock.calls[0];
+      const body = JSON.parse((init as RequestInit).body as string);
+      expect(body).toEqual({
+        name: "Nightly API Regression",
+        runApiTests: [{ testIds: [101] }],
+      });
+      expect(body.agentName).toBeUndefined();
+      expect(body.runApiTests[0].parallel).toBeUndefined();
+      expect(body.runApiTests[0].maxRetryAttempts).toBeUndefined();
+      expect(body.runApiTests[0].title).toBeUndefined();
+    });
+
+    it("should throw ToolError with the server message on HTTP error", async () => {
+      fetchMock.mockResponseOnce("Internal Server Error", { status: 500 });
+
+      await expect(
+        api.createSuite({
+          name: "Nightly API Regression",
+          runApiTests: [{ testIds: [1] }],
+        }),
+      ).rejects.toThrow("Failed to create Functional Testing suite");
+    });
+
+    it("should map network errors to an unreachable message", async () => {
+      fetchMock.mockRejectOnce(new Error("Network error"));
+
+      await expect(
+        api.createSuite({
+          name: "Nightly API Regression",
+          runApiTests: [{ testIds: [1] }],
+        }),
+      ).rejects.toThrow(UNREACHABLE_MESSAGE);
+    });
+
+    it("should throw an authentication error on 401", async () => {
+      fetchMock.mockResponseOnce("Unauthorized", { status: 401 });
+
+      await expect(
+        api.createSuite({
+          name: "Nightly API Regression",
+          runApiTests: [{ testIds: [1] }],
+        }),
+      ).rejects.toThrow(AUTH_FAILED_MESSAGE);
+    });
+  });
+
+  describe("CreateFunctionalTestingSuiteParamsSchema", () => {
+    it("should accept blocks with distinct titles", () => {
+      const result = CreateFunctionalTestingSuiteParamsSchema.safeParse({
+        name: "Nightly API Regression",
+        runApiTests: [
+          { testIds: [101], title: "Smoke" },
+          { testIds: [201], title: "Regression" },
+        ],
+      });
+
+      expect(result.success).toBe(true);
+    });
+
+    it("should accept multiple blocks without a title", () => {
+      const result = CreateFunctionalTestingSuiteParamsSchema.safeParse({
+        name: "Nightly API Regression",
+        runApiTests: [{ testIds: [101] }, { testIds: [201] }],
+      });
+
+      expect(result.success).toBe(true);
+    });
+
+    it("should reject duplicate block titles", () => {
+      const result = CreateFunctionalTestingSuiteParamsSchema.safeParse({
+        name: "Nightly API Regression",
+        runApiTests: [
+          { testIds: [101], title: "Smoke" },
+          { testIds: [201], title: "Smoke" },
+        ],
+      });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0].message).toContain(
+          'Duplicate block title "Smoke"',
+        );
+        expect(result.error.issues[0].path).toEqual([
+          "runApiTests",
+          1,
+          "title",
+        ]);
+      }
+    });
+
+    it("should reject a duplicate title anywhere in the suite, not just between adjacent blocks", () => {
+      const result = CreateFunctionalTestingSuiteParamsSchema.safeParse({
+        name: "Nightly API Regression",
+        runApiTests: [
+          { testIds: [101], title: "Smoke" },
+          { testIds: [201] },
+          { testIds: [301], title: "Smoke" },
+        ],
+      });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0].path).toEqual([
+          "runApiTests",
+          2,
+          "title",
+        ]);
+      }
+    });
+
+    it("should reject an empty name", () => {
+      const result = CreateFunctionalTestingSuiteParamsSchema.safeParse({
+        name: "",
+        runApiTests: [{ testIds: [101] }],
+      });
+
+      expect(result.success).toBe(false);
+    });
+
+    it("should reject a missing runApiTests", () => {
+      const result = CreateFunctionalTestingSuiteParamsSchema.safeParse({
+        name: "Nightly API Regression",
+      });
+
+      expect(result.success).toBe(false);
+    });
+
+    it("should reject an empty runApiTests array", () => {
+      const result = CreateFunctionalTestingSuiteParamsSchema.safeParse({
+        name: "Nightly API Regression",
+        runApiTests: [],
+      });
+
+      expect(result.success).toBe(false);
+    });
+
+    it("should reject a block with an empty testIds array", () => {
+      const result = CreateFunctionalTestingSuiteParamsSchema.safeParse({
+        name: "Nightly API Regression",
+        runApiTests: [{ testIds: [] }],
+      });
+
+      expect(result.success).toBe(false);
+    });
+
+    it("should reject maxRetryAttempts below 0", () => {
+      const result = CreateFunctionalTestingSuiteParamsSchema.safeParse({
+        name: "Nightly API Regression",
+        runApiTests: [{ testIds: [101], maxRetryAttempts: -1 }],
+      });
+
+      expect(result.success).toBe(false);
+    });
+
+    it("should reject maxRetryAttempts above 3", () => {
+      const result = CreateFunctionalTestingSuiteParamsSchema.safeParse({
+        name: "Nightly API Regression",
+        runApiTests: [{ testIds: [101], maxRetryAttempts: 4 }],
+      });
+
+      expect(result.success).toBe(false);
+    });
+
+    it("should accept maxRetryAttempts within the 0-3 range", () => {
+      const result = CreateFunctionalTestingSuiteParamsSchema.safeParse({
+        name: "Nightly API Regression",
+        runApiTests: [{ testIds: [101], maxRetryAttempts: 3 }],
+      });
+
+      expect(result.success).toBe(true);
+    });
+
+    it("should reject an empty agentName", () => {
+      const result = CreateFunctionalTestingSuiteParamsSchema.safeParse({
+        name: "Nightly API Regression",
+        agentName: "",
+        runApiTests: [{ testIds: [101] }],
+      });
+
+      expect(result.success).toBe(false);
     });
   });
 

@@ -37,6 +37,90 @@ export const CancelFunctionalTestingSuiteExecutionSchema = z.object({
     .min(1),
 });
 
+export const RunApiTestsBlockSchema = z.object({
+  testIds: z
+    .array(z.number())
+    .min(1)
+    .describe("IDs of existing tests to include in this block."),
+  parallel: z
+    .boolean()
+    .optional()
+    .describe(
+      "Whether to run this block's tests in parallel instead of sequentially. " +
+        "Defaults to false (sequential). When true, tests run at the account's maximum parallelism.",
+    ),
+  maxRetryAttempts: z
+    .number()
+    .int()
+    .min(0)
+    .max(3)
+    .optional()
+    .describe(
+      "Number of times to retry a failed test in this block before it counts as failed (0-3). " +
+        "Omit or set to 0 for no retry.",
+    ),
+  title: z
+    .string()
+    .trim()
+    .min(1)
+    .optional()
+    .describe(
+      "Label for this block, shown in the suite workflow. Must be unique among the suite's blocks.",
+    ),
+});
+
+export const CreateFunctionalTestingSuiteParamsSchema = z
+  .object({
+    name: z.string().describe("Name for the new suite").trim().min(1),
+    agentName: z
+      .string()
+      .trim()
+      .min(1)
+      .optional()
+      .describe(
+        "Tunnel agent name to save as this suite's tunnel override for future runs.",
+      ),
+    runApiTests: z
+      .array(RunApiTestsBlockSchema)
+      .min(1)
+      .describe(
+        'Required — ordered groups ("blocks") of tests to run one after another. ' +
+          "Must include at least one entry; suites cannot be created without a workflow. " +
+          "Within a block, tests run sequentially unless `parallel` is set. " +
+          "Block `title`s must be unique within the suite.",
+      ),
+  })
+  .superRefine((data, ctx) => {
+    const seen = new Set<string>();
+    data.runApiTests.forEach((block, index) => {
+      if (!block.title) return;
+      if (seen.has(block.title)) {
+        ctx.addIssue({
+          code: "custom",
+          message: `Duplicate block title "${block.title}". Block titles must be unique within the suite.`,
+          path: ["runApiTests", index, "title"],
+        });
+      }
+      seen.add(block.title);
+    });
+  });
+
+export type CreateFunctionalTestingSuiteParams = z.infer<
+  typeof CreateFunctionalTestingSuiteParamsSchema
+>;
+
+export const CreateFunctionalTestingSuiteResponseSchema = z.object({
+  id: z.number().describe("ID of the newly created suite"),
+  slug: z.string().describe("Slug of the newly created suite"),
+  url: z
+    .string()
+    .describe("Link to the created suite in Swagger Functional Testing UI"),
+});
+
+export type CreateFunctionalTestingSuiteResponse = z.infer<
+  typeof CreateFunctionalTestingSuiteResponseSchema
+>;
+
 export const RunFunctionalTestingSuiteParamsSchema = z.object({
   suiteId: z
     .string()
