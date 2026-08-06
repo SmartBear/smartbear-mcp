@@ -363,6 +363,51 @@ describe("SwaggerAPI", () => {
     });
   });
 
+  describe("createApiFromPrompt", () => {
+    it("should always send createOnly=true and return operation 'create'", async () => {
+      fetchMock.mockResponseOnce("", {
+        status: 201,
+        headers: { "X-Version": "1.0.0" },
+      });
+
+      const result = await api.createApiFromPrompt({
+        owner: "orgname",
+        apiName: "petstore",
+        prompt: "Create a RESTful API for managing a pet store",
+        specType: "openapi30x",
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://api.swaggerhub.com/apis/orgname/petstore/.ai?specType=openapi30x&createOnly=true",
+        expect.objectContaining({ method: "POST" }),
+      );
+      expect(result).toEqual({
+        owner: "orgname",
+        apiName: "petstore",
+        specType: "openapi30x",
+        version: "1.0.0",
+        url: "https://app.swaggerhub.com/apis/orgname/petstore/1.0.0",
+        operation: "create",
+      });
+    });
+
+    it("should throw when the generated version already exists (409 Conflict)", async () => {
+      fetchMock.mockResponseOnce("API 'petstore' version '1.0.0' already exists", {
+        status: 409,
+        statusText: "Conflict",
+      });
+
+      await expect(
+        api.createApiFromPrompt({
+          owner: "orgname",
+          apiName: "petstore",
+          prompt: "Create a RESTful API for managing a pet store",
+          specType: "openapi30x",
+        }),
+      ).rejects.toThrow(/createApiFromPrompt failed - status: 409 Conflict/);
+    });
+  });
+
   describe("publishPortalProduct", () => {
     const headers = {
       Authorization: "Bearer test-token",
