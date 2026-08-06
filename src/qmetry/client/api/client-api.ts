@@ -26,7 +26,6 @@ export async function qmetryRequest<T>({
 }: RequestOptions): Promise<T> {
   const url: string = `${baseUrl}${path}`;
   const headers: Record<string, string> = {
-    apikey: token,
     project: project || QMETRY_DEFAULTS.PROJECT_KEY,
     "User-Agent": getUserAgent(),
     "qmetry-source": "smartbear-mcp",
@@ -42,6 +41,12 @@ export async function qmetryRequest<T>({
   }
   if (body) {
     headers["Content-Type"] = "application/json";
+  }
+  const transportMode = process.env.MCP_TRANSPORT?.toLowerCase() || "stdio";
+  if (transportMode === "http") {
+    headers.Authorization = `Bearer ${token}`;
+  } else {
+    headers.apikey = token;
   }
   const init: RequestInit = {
     method,
@@ -71,5 +76,7 @@ export async function qmetryRequest<T>({
     await handleQMetryApiError(res, baseUrl, project, path);
   }
 
-  return (await res.json()) as T;
+  const data = await res.json();
+
+  return data as T;
 }
