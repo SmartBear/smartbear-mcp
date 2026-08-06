@@ -8356,7 +8356,7 @@ Expected Output: description updated only. Field IDs auto-resolved from project 
 **Parameters:**
 - summary (string) *required*: Test case summary/title
 - description (string): Test case description
-- folderId (number): Folder ID to place the test case in
+- folderId (number): Numeric ID of the folder to place the test case in — never a folder name. Get it from the user (right-click the folder in QTM4J → 'Copy Folder Id'). Defaults to the 'MCP Generated' folder when omitted.
 - priority (string): Priority name (e.g., 'High', 'Medium', 'Low'). Auto-resolved to ID.
 - status (string): Status name (e.g., 'To Do', 'In Progress', 'Done'). Auto-resolved to ID.
 - assignee (string): Assignee account ID
@@ -8367,7 +8367,7 @@ Expected Output: description updated only. Field IDs auto-resolved from project 
 
 **Output Description:** JSON object with test case ID, key, version number, and summary. Warnings included if any fields were skipped.
 
-**Use Cases:** 1. Create a basic test case with just a summary 2. Create a test case with priority and status using names from set_project_context response 3. Create a test case with labels and components by exact name 4. Add detailed test steps with step descriptions, test data, and expected results 5. Create a test case in a specific folder using folderId 6. Set assignee and reporter using Jira account IDs 7. Create test cases for manual testing with step-by-step instructions 8. Create test cases with all metadata fields for comprehensive test management
+**Use Cases:** 1. Create a basic test case with just a summary 2. Create a test case with priority and status using names from set_project_context response 3. Create a test case with labels and components by exact name 4. Add detailed test steps with step descriptions, test data, and expected results 5. Create a test case in a specific folder using its numeric folderId 6. Set assignee and reporter using Jira account IDs 7. Create test cases for manual testing with step-by-step instructions 8. Create test cases with all metadata fields for comprehensive test management
 
 **Examples:**
 1. Create a simple test case (project must be set via set_project_context first)
@@ -8425,7 +8425,16 @@ Expected Output: Test case created with resolved priority and status IDs
 \`\`\`
 Expected Output: Test case created with resolved labels/components/priority/status and 3 steps
 
-**Hints:** 1. PREREQUISITE: set_project_context must be called before this tool. NEVER auto-select a project. 2. Priority and status values were returned by set_project_context. Use NLP to map user input (e.g., 'Major' → 'High', 'Critical' → 'Blocker'). 3. If priority or status name is not found, the operation proceeds without that field and a warning is returned. 4. Labels and components are resolved on demand. If a name is not found, it is skipped with a warning. 5. Steps: ALWAYS include all three fields — stepDetails, testData, and expectedResult. Generate reasonable values if not provided. 6. folderId is optional. assignee and reporter accept Jira account IDs.",
+4. Create a test case in a specific folder
+\`\`\`json
+{
+  "summary": "Login with SSO",
+  "folderId": 109987
+}
+\`\`\`
+Expected Output: Test case created inside folder 109987
+
+**Hints:** 1. PREREQUISITE: set_project_context must be called before this tool. NEVER auto-select a project. 2. Priority and status values were returned by set_project_context. Use NLP to map user input (e.g., 'Major' → 'High', 'Critical' → 'Blocker'). 3. If priority or status name is not found, the operation proceeds without that field and a warning is returned. 4. Labels and components are resolved on demand. If a name is not found, it is skipped with a warning. 5. Steps: ALWAYS include all three fields — stepDetails, testData, and expectedResult. Generate reasonable values if not provided. 6. folderId is optional and must be the numeric folder ID — never a folder name. Ask the user for the ID directly (right-click the target folder in QTM4J → 'Copy Folder Id'); never guess it. When omitted, the test case is created in the 'MCP Generated' folder. 7. assignee and reporter accept Jira account IDs.",
     "inputSchema": [
       "assignee",
       "components",
@@ -8454,13 +8463,14 @@ Expected Output: Test case created with resolved labels/components/priority/stat
       "readOnlyHint": false,
       "title": "QTM4J: Create Test Cycle",
     },
-    "description": "Create a new test cycle in a QTM4J project. Supports auto-resolving human-readable names for priority and status. Always creates in the 'MCP Generated' folder. projectId is injected automatically from the active project context.
+    "description": "Create a new test cycle in a QTM4J project. Supports auto-resolving human-readable names for priority and status. Creates it in the folder given by the numeric folderId, or in the 'MCP Generated' folder when folderId is omitted. projectId is injected automatically from the active project context.
 
 **Toolset:** Test Cycles
 
 **Parameters:**
 - summary (string) *required*: Short title of the test cycle. Must not be blank. Max 255 chars.
 - description (string): Detailed description of the test cycle. Max 65 535 characters.
+- folderId (number): Numeric ID of the folder to place the test cycle in — never a folder name. Get it from the user (right-click the folder in QTM4J → 'Copy Folder Id'). Defaults to the 'MCP Generated' folder when omitted.
 - priority (string): Priority name (e.g., 'High', 'Medium', 'Low'). Auto-resolved to ID.
 - status (string): Status name (e.g., 'To Do', 'In Progress', 'Done'). Auto-resolved to ID.
 - assignee (string): Assignee account ID
@@ -8472,7 +8482,7 @@ Expected Output: Test case created with resolved labels/components/priority/stat
 
 **Output Description:** JSON object with the new test cycle's id and key (e.g. 'TRWT-TR-218'). Warnings included if any fields were skipped.
 
-**Use Cases:** 1. Create a test cycle with summary, priority, status, labels, or components 2. Set planned start and end dates on a new test cycle
+**Use Cases:** 1. Create a test cycle with summary, priority, status, labels, or components 2. Set planned start and end dates on a new test cycle 3. Create a test cycle in a specific folder using its numeric folderId
 
 **Examples:**
 1. Create a simple test cycle (project must be set via set_project_context first)
@@ -8504,11 +8514,21 @@ Expected Output: Test cycle created with key 'SCRUM-TR-xxx'
 \`\`\`
 Expected Output: Test cycle created with resolved priority, status, labels, and components
 
-**Hints:** 1. PREREQUISITE: set_project_context must be called before this tool. NEVER auto-select a project. 2. If any priority, status, label, or component name cannot be resolved, the cycle is still created but a warning is returned. Suggest the closest available value from the set_project_context response and ask the user to confirm before retrying. 3. All cycles are placed in the 'MCP Generated' folder — do not pass folderId. 4. Date format: 'dd/MMM/yyyy HH:mm' e.g. '10/May/2026 00:00'. Month must be capitalised. plannedStartDate must be ≤ plannedEndDate.",
+3. Create a test cycle in a specific folder
+\`\`\`json
+{
+  "summary": "Sprint 42 Smoke",
+  "folderId": 109987
+}
+\`\`\`
+Expected Output: Test cycle created inside folder 109987
+
+**Hints:** 1. PREREQUISITE: set_project_context must be called before this tool. NEVER auto-select a project. 2. If any priority, status, label, or component name cannot be resolved, the cycle is still created but a warning is returned. Suggest the closest available value from the set_project_context response and ask the user to confirm before retrying. 3. folderId is optional and must be the numeric folder ID — never a folder name. Ask the user for the ID directly (right-click the target folder in QTM4J → 'Copy Folder Id'); never guess it. When omitted, the cycle is created in the 'MCP Generated' folder. 4. Date format: 'dd/MMM/yyyy HH:mm' e.g. '10/May/2026 00:00'. Month must be capitalised. plannedStartDate must be ≤ plannedEndDate.",
     "inputSchema": [
       "assignee",
       "components",
       "description",
+      "folderId",
       "labels",
       "plannedEndDate",
       "plannedStartDate",

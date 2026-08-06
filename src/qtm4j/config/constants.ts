@@ -417,7 +417,7 @@ export const TOOL_NAMES = {
   CREATE_TEST_CYCLE: {
     TITLE: "Create Test Cycle",
     SUMMARY:
-      "Create a new test cycle in a QTM4J project. Supports auto-resolving human-readable names for priority and status. Always creates in the 'MCP Generated' folder. projectId is injected automatically from the active project context.",
+      "Create a new test cycle in a QTM4J project. Supports auto-resolving human-readable names for priority and status. Creates it in the folder given by the numeric folderId, or in the 'MCP Generated' folder when folderId is omitted. projectId is injected automatically from the active project context.",
   },
 
   /** Update Test Cycle tool */

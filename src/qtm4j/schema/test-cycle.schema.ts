@@ -6,7 +6,9 @@
 import * as zod from "zod";
 
 /**
- * projectId and folderId are injected automatically by the tool.
+ * projectId is injected automatically by the tool.
+ * folderId is a numeric folder ID and defaults to the 'MCP Generated' folder
+ * when omitted.
  * priority, status, labels, and components accept human-readable names
  * and are auto-resolved to numeric IDs before the API call.
  */
@@ -23,6 +25,15 @@ export const CreateTestCycleBody = zod.object({
     .max(65535)
     .optional()
     .describe("Detailed description of the test cycle. Max 65 535 characters."),
+  folderId: zod
+    .number()
+    .int()
+    .optional()
+    .describe(
+      "Numeric ID of the folder to place the test cycle in — never a folder name. " +
+        "Get it from the user (right-click the folder in QTM4J → 'Copy Folder Id'). " +
+        "Defaults to the 'MCP Generated' folder when omitted.",
+    ),
   priority: zod
     .string()
     .optional()

@@ -13,9 +13,15 @@ import {
 const FIELD_CONFIG: Record<string, string> = {
   [InputField.PRIORITY]: ResolverKeys.CommonAttribute.PRIORITY,
   [InputField.STATUS]: ResolverKeys.CommonAttribute.TESTCASE_STATUS,
-  [InputField.FOLDER]: ResolverKeys.CommonAttribute.TESTCASE_FOLDER,
   [InputField.COMPONENTS]: ResolverKeys.SearchableField.COMPONENTS,
   [InputField.LABELS]: ResolverKeys.SearchableField.LABEL,
+};
+
+// Folder used when the caller does not pass a folderId. Resolved by name, so it
+// is only added to FIELD_CONFIG on the fallback path.
+const DEFAULT_FOLDER_NAME = "MCP Generated";
+const FOLDER_FIELD_CONFIG: Record<string, string> = {
+  [InputField.FOLDER]: ResolverKeys.CommonAttribute.TESTCASE_FOLDER,
 };
 
 /**
@@ -31,6 +37,9 @@ const FIELD_CONFIG: Record<string, string> = {
  *   - status     → EAGER
  *   - labels     → LAZY
  *   - components → LAZY
+ *
+ * folderId: a caller-supplied numeric folder ID is used as-is. When omitted, the
+ * test case falls back to the 'MCP Generated' folder.
  */
 export class CreateTestCase extends Tool<Qtm4jClient> {
   // ─── Tool Specification ────────────────────────────────────────────────────
@@ -53,7 +62,7 @@ export class CreateTestCase extends Tool<Qtm4jClient> {
       "Create a test case with priority and status using names from set_project_context response",
       "Create a test case with labels and components by exact name",
       "Add detailed test steps with step descriptions, test data, and expected results",
-      "Create a test case in a specific folder using folderId",
+      "Create a test case in a specific folder using its numeric folderId",
       "Set assignee and reporter using Jira account IDs",
       "Create test cases for manual testing with step-by-step instructions",
       "Create test cases with all metadata fields for comprehensive test management",
@@ -108,6 +117,11 @@ export class CreateTestCase extends Tool<Qtm4jClient> {
         expectedOutput:
           "Test case created with resolved labels/components/priority/status and 3 steps",
       },
+      {
+        description: "Create a test case in a specific folder",
+        parameters: { summary: "Login with SSO", folderId: 109987 },
+        expectedOutput: "Test case created inside folder 109987",
+      },
     ],
     hints: [
       "PREREQUISITE: set_project_context must be called before this tool. NEVER auto-select a project.",
@@ -115,7 +129,10 @@ export class CreateTestCase extends Tool<Qtm4jClient> {
       "If priority or status name is not found, the operation proceeds without that field and a warning is returned.",
       "Labels and components are resolved on demand. If a name is not found, it is skipped with a warning.",
       "Steps: ALWAYS include all three fields — stepDetails, testData, and expectedResult. Generate reasonable values if not provided.",
-      "folderId is optional. assignee and reporter accept Jira account IDs.",
+      "folderId is optional and must be the numeric folder ID — never a folder name. Ask the user for the ID directly " +
+        "(right-click the target folder in QTM4J → 'Copy Folder Id'); never guess it. " +
+        "When omitted, the test case is created in the 'MCP Generated' folder.",
+      "assignee and reporter accept Jira account IDs.",
     ],
     outputDescription:
       "JSON object with test case ID, key, version number, and summary. Warnings included if any fields were skipped.",
@@ -126,15 +143,25 @@ export class CreateTestCase extends Tool<Qtm4jClient> {
   handle = async (rawArgs: any) => {
     const fieldResolver = this.client.getResolverRegistry();
     const context = fieldResolver.requireProjectContext();
+    const parsed = CreateTestCaseBody.parse(rawArgs) as Record<string, unknown>;
+    const usesDefaultFolder = parsed[InputField.FOLDER] === undefined;
     const body = {
-      ...(CreateTestCaseBody.parse(rawArgs) as Record<string, unknown>),
+      ...parsed,
       projectId: String(context.projectId),
-      folderId: "MCP Generated",
+      ...(usesDefaultFolder
+        ? { [InputField.FOLDER]: DEFAULT_FOLDER_NAME }
+        : {}),
     };
     const warnings: string[] = [];
 
+    // A caller-supplied folderId is already an ID — only the default folder name
+    // needs resolving.
+    const fieldConfig = usesDefaultFolder
+      ? { ...FIELD_CONFIG, ...FOLDER_FIELD_CONFIG }
+      : FIELD_CONFIG;
+
     await Promise.all(
-      Object.entries(FIELD_CONFIG).map(([inputField, resolverKey]) =>
+      Object.entries(fieldConfig).map(([inputField, resolverKey]) =>
         fieldResolver
           .getResolver(resolverKey)
           .resolve(inputField, resolverKey, body, context, warnings),

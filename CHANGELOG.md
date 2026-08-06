@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- [QTM4J] `create_test_case` and `create_test_cycle` no longer discard the caller's `folderId`: a numeric folder ID is now sent to the API as given, so test cases and cycles can be created in a specific folder. Both tools still fall back to the `MCP Generated` folder when `folderId` is omitted, and `create_test_cycle` accepts `folderId` for the first time.
+
 ## [0.34.0] - 2026-08-06
 
 ### Changed

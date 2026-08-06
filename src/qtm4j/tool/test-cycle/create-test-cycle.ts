@@ -13,23 +13,30 @@ import {
 const FIELD_CONFIG: Record<string, string> = {
   [InputField.PRIORITY]: ResolverKeys.CommonAttribute.PRIORITY,
   [InputField.STATUS]: ResolverKeys.CommonAttribute.TEST_CYCLE_STATUS,
-  [InputField.FOLDER]: ResolverKeys.CommonAttribute.TEST_CYCLE_FOLDER,
   [InputField.LABELS]: ResolverKeys.SearchableField.LABEL,
   [InputField.COMPONENTS]: ResolverKeys.SearchableField.COMPONENTS,
+};
+
+// Folder used when the caller does not pass a folderId. Resolved by name, so it
+// is only added to FIELD_CONFIG on the fallback path.
+const DEFAULT_FOLDER_NAME = "MCP Generated";
+const FOLDER_FIELD_CONFIG: Record<string, string> = {
+  [InputField.FOLDER]: ResolverKeys.CommonAttribute.TEST_CYCLE_FOLDER,
 };
 
 /**
  * CreateTestCycle Tool
  *
- * Creates a new test cycle in QTM4J. All cycles are placed in the
- * 'MCP Generated' folder automatically.
+ * Creates a new test cycle in QTM4J, in the folder given by folderId or — when
+ * that is omitted — in the 'MCP Generated' folder.
  *
  * Resolved fields (driven by FIELD_CONFIG):
  *   - priority → numeric ID via CommonAttribute resolver
  *   - status → numeric ID via TEST_CYCLE_STATUS resolver
- *   - folderId → resolved to 'MCP Generated' folder ID
  *   - labels → numeric IDs via SearchableField resolver
  *   - components → numeric IDs via SearchableField resolver
+ *
+ * folderId is a numeric folder ID and is used as-is.
  *
  * Safety: if any field fails to resolve, the cycle is still created without that
  * field, and a warning is returned alongside the response.
@@ -52,6 +59,7 @@ export class CreateTestCycle extends Tool<Qtm4jClient> {
     useCases: [
       "Create a test cycle with summary, priority, status, labels, or components",
       "Set planned start and end dates on a new test cycle",
+      "Create a test cycle in a specific folder using its numeric folderId",
     ],
     examples: [
       {
@@ -77,11 +85,18 @@ export class CreateTestCycle extends Tool<Qtm4jClient> {
         expectedOutput:
           "Test cycle created with resolved priority, status, labels, and components",
       },
+      {
+        description: "Create a test cycle in a specific folder",
+        parameters: { summary: "Sprint 42 Smoke", folderId: 109987 },
+        expectedOutput: "Test cycle created inside folder 109987",
+      },
     ],
     hints: [
       "PREREQUISITE: set_project_context must be called before this tool. NEVER auto-select a project.",
       "If any priority, status, label, or component name cannot be resolved, the cycle is still created but a warning is returned. Suggest the closest available value from the set_project_context response and ask the user to confirm before retrying.",
-      "All cycles are placed in the 'MCP Generated' folder — do not pass folderId.",
+      "folderId is optional and must be the numeric folder ID — never a folder name. Ask the user for the ID directly " +
+        "(right-click the target folder in QTM4J → 'Copy Folder Id'); never guess it. " +
+        "When omitted, the cycle is created in the 'MCP Generated' folder.",
       "Date format: 'dd/MMM/yyyy HH:mm' e.g. '10/May/2026 00:00'. Month must be capitalised. plannedStartDate must be ≤ plannedEndDate.",
     ],
     outputDescription:
@@ -94,17 +109,30 @@ export class CreateTestCycle extends Tool<Qtm4jClient> {
     const fieldResolver = this.client.getResolverRegistry();
     const context = fieldResolver.requireProjectContext();
 
-    // Inject projectId and default folderId before resolution.
+    // Inject projectId, and fall back to the default folder when none is given.
+    const parsed = CreateTestCycleBody.parse(rawArgs) as Record<
+      string,
+      unknown
+    >;
+    const usesDefaultFolder = parsed[InputField.FOLDER] === undefined;
     const body: Record<string, unknown> = {
-      ...(CreateTestCycleBody.parse(rawArgs) as Record<string, unknown>),
+      ...parsed,
       projectId: context.projectId,
-      folderId: "MCP Generated",
+      ...(usesDefaultFolder
+        ? { [InputField.FOLDER]: DEFAULT_FOLDER_NAME }
+        : {}),
     };
     const warnings: string[] = [];
 
-    // Resolve all configured fields (priority, status, folderId, labels, components).
+    // A caller-supplied folderId is already an ID — only the default folder name
+    // needs resolving.
+    const fieldConfig = usesDefaultFolder
+      ? { ...FIELD_CONFIG, ...FOLDER_FIELD_CONFIG }
+      : FIELD_CONFIG;
+
+    // Resolve all configured fields (priority, status, labels, components, folder).
     await Promise.all(
-      Object.entries(FIELD_CONFIG).map(([inputField, resolverKey]) =>
+      Object.entries(fieldConfig).map(([inputField, resolverKey]) =>
         fieldResolver
           .getResolver(resolverKey)
           .resolve(inputField, resolverKey, body, context, warnings),

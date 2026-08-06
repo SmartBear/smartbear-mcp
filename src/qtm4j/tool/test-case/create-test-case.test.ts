@@ -100,6 +100,51 @@ describe("CreateTestCase", () => {
       );
     });
 
+    it("should default folderId to 'MCP Generated' when none is given", async () => {
+      mockApiClient.post.mockResolvedValueOnce({
+        id: "1",
+        key: "PROJ-TC-1",
+        versionNo: 1,
+        summary: "Test",
+      });
+
+      await instance.handle({ summary: "Test" });
+
+      const resolveCall = mockFieldResolver
+        .getResolver()
+        .resolve.mock.calls.find((call: any[]) => call[0] === "folderId");
+      expect(resolveCall).toBeDefined();
+      expect(resolveCall[1]).toBe("testcase_folder");
+      expect(resolveCall[2]).toMatchObject({ folderId: "MCP Generated" });
+    });
+
+    it("should pass a caller-supplied folderId straight through to the API", async () => {
+      mockApiClient.post.mockResolvedValueOnce({
+        id: "1",
+        key: "PROJ-TC-1",
+        versionNo: 1,
+        summary: "Test",
+      });
+
+      await instance.handle({ summary: "Test", folderId: 109987 });
+
+      const resolveCalls = mockFieldResolver
+        .getResolver()
+        .resolve.mock.calls.filter((call: any[]) => call[0] === "folderId");
+      expect(resolveCalls).toHaveLength(0);
+      expect(mockApiClient.post).toHaveBeenCalledWith(
+        ENDPOINTS.CREATE_TEST_CASE,
+        expect.objectContaining({ folderId: 109987 }),
+      );
+    });
+
+    it("should reject a non-numeric folderId", async () => {
+      await expect(
+        instance.handle({ summary: "Test", folderId: "Regression" }),
+      ).rejects.toThrow();
+      expect(mockApiClient.post).not.toHaveBeenCalled();
+    });
+
     it("should return warnings when resolve pushes them", async () => {
       const rawArgs = { summary: "Test", priority: "NonExistent" };
       mockFieldResolver.getResolver.mockReturnValue({

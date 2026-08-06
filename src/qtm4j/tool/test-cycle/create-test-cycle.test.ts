@@ -79,7 +79,7 @@ describe("CreateTestCycle", () => {
       expect(result.content).toEqual([]);
     });
 
-    it("should always set folderId to 'MCP Generated' before resolution", async () => {
+    it("should default folderId to 'MCP Generated' when none is given", async () => {
       mockApiClient.post.mockResolvedValueOnce(MINIMAL_RESPONSE);
 
       await instance.handle(MINIMAL_ARGS);
@@ -89,6 +89,28 @@ describe("CreateTestCycle", () => {
         .resolve.mock.calls.find((call: any[]) => call[0] === "folderId");
       expect(resolveCall).toBeDefined();
       expect(resolveCall[2]).toMatchObject({ folderId: "MCP Generated" });
+    });
+
+    it("should pass a caller-supplied folderId straight through to the API", async () => {
+      mockApiClient.post.mockResolvedValueOnce(MINIMAL_RESPONSE);
+
+      await instance.handle({ ...MINIMAL_ARGS, folderId: 109987 });
+
+      const resolveCalls = mockFieldResolver
+        .getResolver()
+        .resolve.mock.calls.filter((call: any[]) => call[0] === "folderId");
+      expect(resolveCalls).toHaveLength(0);
+      expect(mockApiClient.post).toHaveBeenCalledWith(
+        ENDPOINTS.CREATE_TEST_CYCLE,
+        expect.objectContaining({ folderId: 109987 }),
+      );
+    });
+
+    it("should reject a non-numeric folderId", async () => {
+      await expect(
+        instance.handle({ ...MINIMAL_ARGS, folderId: "Sprint 42" }),
+      ).rejects.toThrow();
+      expect(mockApiClient.post).not.toHaveBeenCalled();
     });
 
     it("should call the create endpoint with projectId from context", async () => {
