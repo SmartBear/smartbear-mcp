@@ -60,7 +60,16 @@ export class FunctionalTestingAPI {
     let response: Response;
     try {
       response = await fetch(`${this.baseUrl}/${relativePath}`, init);
-    } catch {
+    } catch (err: any) {
+      // An exception being thrown by fetch() can happen for networking or TLS issues. Attempt to
+      // extract the code to include it in the error message.
+      const code = err.cause?.code;
+      if (code) {
+        throw new ToolError(
+          `Failed to reach Swagger Functional Testing API: ${code}. Please verify your settings and network connectivity`,
+        );
+      }
+
       throw new ToolError(
         "Swagger Functional Testing service is currently unreachable. Retry after a moment.",
       );

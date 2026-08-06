@@ -545,6 +545,18 @@ describe("FunctionalTestingAPI", () => {
     });
   });
 
+  describe("ftFetch network error with cause code", () => {
+    it("should include the cause code in the error message when fetch throws with err.cause.code", async () => {
+      const err = new Error("connect ECONNREFUSED 127.0.0.1:443");
+      (err as any).cause = { code: "ECONNREFUSED" };
+      fetchMock.mockRejectOnce(err);
+
+      await expect(api.listTests()).rejects.toThrow(
+        "Failed to reach Swagger Functional Testing API: ECONNREFUSED. Please verify your settings and network connectivity",
+      );
+    });
+  });
+
   describe("ftFetch authentication errors", () => {
     it("should map 401 responses to an auth-failed message", async () => {
       fetchMock.mockResponseOnce("Unauthorized", { status: 401 });

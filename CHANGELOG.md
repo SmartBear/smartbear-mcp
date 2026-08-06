@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [QMetry] Added OAuth authentication support and 3 new Release Readiness tools (`fetch_quality_gate_configuration`, `execute_quality_gate_report`, `export_html_report`). [#637](https://github.com/SmartBear/smartbear-mcp/pull/637)
 
+### Changed
+
+- [Swagger] Improved error handling on Swagger Functional Testing, providing more information when requests to the upstream API fail
+
 ## [0.34.0] - 2026-08-06
 
 ### Changed
