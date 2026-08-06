@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Swagger] `create_portal` tool: the `subdomain` parameter description now recommends the same convention, while the client still picks the value.
 - [PactFlow] Added `pageNumber`/`pageSize` pagination (default page size 5) across list and Bi-Directional Contract Testing tools, with tool-layer caching for PactFlow endpoints that don't paginate natively. [#623](https://github.com/SmartBear/smartbear-mcp/pull/623)
 
+### Added
+
+- [Swagger] Added `create_suite` Functional Testing tool that creates a new test Suite from one or more ordered blocks of tests, with optional parallel execution, retry attempts, and tunnel agent override.
+
 ### Fixed
 
 - [Swagger] Fixed Swagger Functional Testing Integration documentation to include all available tools and their descriptions, as well as adjusts wrong tool sections.

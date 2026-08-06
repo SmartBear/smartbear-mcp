@@ -36,6 +36,21 @@ All tools listed below are only available through the Local MCP Server. They are
 
 ---
 
+### Suite Creation
+
+#### `create_suite`
+
+- Purpose: Creates a new test Suite in your Swagger Functional Testing workspace by grouping existing tests into ordered blocks for collective execution. Requires a `name` and one or more `runApiTests` blocks, each with a non-empty `testIds` array (from `list_tests`). Blocks always run one after another; within a block, tests run sequentially by default. Each block may optionally set:
+  - `parallel` — run the block's tests in parallel instead of sequentially (default `false`)
+  - `maxRetryAttempts` — retry a block's failed tests before they count as failed, 0-3 (default no retry)
+  - `title` — a label that must be unique across the Suite's blocks
+
+  Optionally accepts `agentName` to save a tunnel agent override for future runs of the Suite.
+- Returns: The created Suite's `id`, `slug`, and `url`.
+- Use case: Group existing tests into a Suite, optionally with parallel/sequential blocks and retry behavior, for collective execution.
+
+---
+
 ### Test Execution
 
 #### `run_test`
