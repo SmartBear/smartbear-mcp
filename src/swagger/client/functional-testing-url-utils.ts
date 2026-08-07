@@ -128,11 +128,7 @@ export function applyBaseUrlTemplating(
     const templatedRemainder = convertPathVarsToReflectVars(
       remainder,
       (pathParamName) =>
-        getOrCreateParamName(
-          `pathParam:${pathParamName}`,
-          pathParamName,
-          "",
-        ),
+        getOrCreateParamName(`pathParam:${pathParamName}`, pathParamName, ""),
     );
 
     return { ...rest, url: `\${var(${paramName})}${templatedRemainder}` };
