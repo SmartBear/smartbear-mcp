@@ -265,6 +265,14 @@ describe("CreateFunctionalTestingTestStepSchema", () => {
     expect(result.success).toBe(true);
   });
 
+  it("rejects a baseUrl that is not a valid URL", () => {
+    const result = CreateFunctionalTestingTestStepSchema.safeParse({
+      url: "https://petstore.swagger.io/v2/pet/1",
+      baseUrl: "petstore",
+    });
+    expect(result.success).toBe(false);
+  });
+
   it("accepts an already-templated url", () => {
     const result = CreateFunctionalTestingTestStepSchema.safeParse({
       url: "${var(baseURLPetstore)}/pet/${var(petId)}",
