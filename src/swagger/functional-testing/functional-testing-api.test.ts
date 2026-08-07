@@ -522,6 +522,73 @@ describe("FunctionalTestingAPI", () => {
       expect(body.steps[0].url).toBe("${var(baseURLpetstoreswaggerio2)}/pet/1");
     });
 
+    it("reuses the same base-URL parameter across steps whose baseUrl differs only by a trailing slash", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
+
+      await api.createTest({
+        name: "Trailing Slash Reuse Test",
+        steps: [
+          {
+            url: "https://petstore.swagger.io/v2/pet/1",
+            baseUrl: "https://petstore.swagger.io/v2",
+          },
+          {
+            url: "https://petstore.swagger.io/v2/store/order/1",
+            baseUrl: "https://petstore.swagger.io/v2/",
+          },
+        ],
+      });
+
+      const [, init] = fetchMock.mock.calls[0];
+      const body = JSON.parse((init as RequestInit).body as string);
+      expect(body.steps[0].url).toBe("${var(baseURLpetstoreswaggerio)}/pet/1");
+      expect(body.steps[1].url).toBe(
+        "${var(baseURLpetstoreswaggerio)}/store/order/1",
+      );
+      expect(body.parameters).toEqual([
+        {
+          name: "baseURLpetstoreswaggerio",
+          value: "https://petstore.swagger.io/v2",
+        },
+      ]);
+    });
+
+    it("dedupes a generated path-param name against a caller-supplied name without rebinding other steps sharing that path param", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
+
+      await api.createTest({
+        name: "Path Param Collision Test",
+        parameters: [{ name: "petId", value: "unrelated-config-value" }],
+        steps: [
+          {
+            url: "https://petstore.swagger.io/v2/pet/{petId}",
+            baseUrl: "https://petstore.swagger.io/v2",
+          },
+          {
+            url: "https://petstore.swagger.io/v2/pet/{petId}/uploadImage",
+            baseUrl: "https://petstore.swagger.io/v2",
+          },
+        ],
+      });
+
+      const [, init] = fetchMock.mock.calls[0];
+      const body = JSON.parse((init as RequestInit).body as string);
+      expect(body.steps[0].url).toBe(
+        "${var(baseURLpetstoreswaggerio)}/pet/${var(petId2)}",
+      );
+      expect(body.steps[1].url).toBe(
+        "${var(baseURLpetstoreswaggerio)}/pet/${var(petId2)}/uploadImage",
+      );
+      expect(body.parameters).toEqual([
+        {
+          name: "baseURLpetstoreswaggerio",
+          value: "https://petstore.swagger.io/v2",
+        },
+        { name: "petId2", value: "" },
+        { name: "petId", value: "unrelated-config-value" },
+      ]);
+    });
+
     it("leaves steps without baseUrl untouched", async () => {
       fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
 

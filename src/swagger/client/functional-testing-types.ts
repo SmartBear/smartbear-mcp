@@ -545,13 +545,12 @@ export const CreateFunctionalTestingTestStepSchema = z.object({
     .trim()
     .min(1)
     .describe(
-      "Full URL for the API call. May include OAS-style {pathParam} placeholders. " +
-        "When baseUrl is set, url must start with it.",
+      "Full URL for the API call. May include OAS-style {pathParam} placeholders, " +
+        "but these are only converted into reusable parameters when this step's baseUrl is " +
+        "also set. When baseUrl is set, url must start with it.",
     ),
   baseUrl: z
-    .string()
-    .trim()
-    .min(1)
+    .url()
     .optional()
     .describe(
       "Server/common URL for this step's endpoint (e.g. https://petstore.swagger.io/v2). " +
