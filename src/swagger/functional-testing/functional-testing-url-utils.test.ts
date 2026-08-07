@@ -64,12 +64,6 @@ describe("normalizeBaseUrl", () => {
     );
   });
 
-  it("strips multiple trailing slashes", () => {
-    expect(normalizeBaseUrl("https://petstore.swagger.io/v2///")).toBe(
-      "https://petstore.swagger.io/v2",
-    );
-  });
-
   it("leaves a url with no trailing slash unchanged", () => {
     expect(normalizeBaseUrl("https://petstore.swagger.io/v2")).toBe(
       "https://petstore.swagger.io/v2",

@@ -18,7 +18,10 @@ import type {
   RunFunctionalTestingTestParams,
   TestRunHistoryResponse,
 } from "./functional-testing-types";
-import { applyBaseUrlTemplating } from "./functional-testing-url-utils";
+import {
+  applyBaseUrlTemplating,
+  type TemplatedFunctionalTestingTestStep,
+} from "./functional-testing-url-utils";
 
 const API_HOSTNAME = "api.reflect.run";
 
@@ -106,18 +109,10 @@ export class FunctionalTestingAPI {
   async createTest(
     args: CreateFunctionalTestingTestParams,
   ): Promise<CreateFunctionalTestingTestResponse> {
-    const {
-      type: _type,
-      steps,
-      parameters,
-      ...rest
-    } = args as Record<string, unknown> & {
-      steps?: Record<string, unknown>[];
-      parameters?: { name: string; value?: string }[];
-    };
+    const { steps, parameters, ...rest } = args;
 
-    let templatedSteps: Record<string, unknown>[] | undefined;
-    let mergedParameters: { name: string; value?: string }[];
+    let templatedSteps: TemplatedFunctionalTestingTestStep[] | undefined;
+    let mergedParameters: CreateFunctionalTestingTestParameter[];
     try {
       ({ steps: templatedSteps, parameters: mergedParameters } =
         applyBaseUrlTemplating(steps, parameters));
@@ -127,10 +122,10 @@ export class FunctionalTestingAPI {
       );
     }
 
-    const sanitizedSteps = templatedSteps?.map((step) => {
-      const { type: _stepType, ...stepRest } = step;
-      return { ...stepRest, type: "api" };
-    });
+    const sanitizedSteps = templatedSteps?.map((step) => ({
+      ...step,
+      type: "api",
+    }));
     const response = await this.ftFetch(
       `tests`,
       {
