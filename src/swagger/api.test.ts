@@ -392,10 +392,13 @@ describe("SwaggerAPI", () => {
     });
 
     it("should throw when the generated version already exists (409 Conflict)", async () => {
-      fetchMock.mockResponseOnce("API 'petstore' version '1.0.0' already exists", {
-        status: 409,
-        statusText: "Conflict",
-      });
+      fetchMock.mockResponseOnce(
+        "API 'petstore' version '1.0.0' already exists",
+        {
+          status: 409,
+          statusText: "Conflict",
+        },
+      );
 
       await expect(
         api.createApiFromPrompt({
