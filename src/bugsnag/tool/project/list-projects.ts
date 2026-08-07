@@ -30,7 +30,7 @@ export class ListProjects extends Tool<BugsnagClient> {
     ],
   };
 
-  handle: ToolHandler = async (args, _extra) => {
+  handle: ToolHandler = async (args, _ctx) => {
     const params = inputSchema.parse(args);
     let projects = await this.client.getProjects();
     if (!projects || projects.length === 0) {

@@ -26,7 +26,7 @@ export class GetCurrentProject extends Tool<BugsnagClient> {
     ],
   };
 
-  handle: ToolHandler = async (_args, _extra) => {
+  handle: ToolHandler = async (_args, _ctx) => {
     const project = await this.client.getCurrentProject();
     if (!project) {
       throw new ToolError(

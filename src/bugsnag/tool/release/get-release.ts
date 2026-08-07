@@ -52,7 +52,7 @@ export class GetRelease extends Tool<BugsnagClient> {
       "JSON object containing release details along with stability metrics such as user and session stability, and whether it meets project targets",
   };
 
-  handle: ToolHandler = async (args, _extra) => {
+  handle: ToolHandler = async (args, _ctx) => {
     const params = inputSchema.parse(args);
     const project = await this.client.getInputProject(params.projectId);
     const releaseResponse = await this.client.projectApi.getReleaseGroup(

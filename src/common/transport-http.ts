@@ -2,8 +2,8 @@ import { randomUUID } from "node:crypto";
 import type { IncomingMessage, Server, ServerResponse } from "node:http";
 import { createServer } from "node:http";
 import querystring from "node:querystring";
-import { isInitializeRequest } from "@modelcontextprotocol/server";
 import { NodeStreamableHTTPServerTransport } from "@modelcontextprotocol/node";
+import { isInitializeRequest } from "@modelcontextprotocol/server";
 import { SSEServerTransport } from "@modelcontextprotocol/server-legacy/sse";
 import { clientRegistry } from "./client-registry";
 import { handleInitializeMessage } from "./initialize";
@@ -303,7 +303,10 @@ function getExistingTransport(
   res: ServerResponse,
 ): NodeStreamableHTTPServerTransport | null {
   const existing = transports.get(sessionId);
-  if (existing && existing.transport instanceof NodeStreamableHTTPServerTransport) {
+  if (
+    existing &&
+    existing.transport instanceof NodeStreamableHTTPServerTransport
+  ) {
     return existing.transport;
   }
 

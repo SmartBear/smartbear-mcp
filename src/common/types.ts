@@ -1,8 +1,4 @@
 import type {
-  PromptCallback,
-  ToolCallback,
-} from "@modelcontextprotocol/sdk/server/mcp.js";
-import type {
   ElicitRequest,
   ElicitResult,
   ReadResourceTemplateCallback,
@@ -11,7 +7,7 @@ import type {
   RegisteredTool,
   RequestOptions,
 } from "@modelcontextprotocol/server";
-import type { ZodObject, ZodRawShape, ZodType } from "zod";
+import type { ZodObject, ZodType } from "zod";
 import type { PromptHandler } from "./prompts";
 import type { SmartBearMcpServer } from "./server";
 import type { ToolHandler } from "./tools";
@@ -56,32 +52,20 @@ export interface ResourceParams {
   path: string;
 }
 
-/**
- * Overloaded (rather than unioned) so a bare closure passed as `cb` is still
- * contextually typed against each candidate signature in turn — a plain union
- * parameter type defeats contextual inference for untyped closure params/return
- * literals. Drop the `ToolCallback<ZodRawShape>` overload once every product
- * has switched to `ToolHandler`.
- */
-export type RegisterToolsFunction = {
-  (params: ToolParams, cb: ToolHandler): RegisteredTool | null;
-  (params: ToolParams, cb: ToolCallback<ZodRawShape>): RegisteredTool | null;
-};
+export type RegisterToolsFunction = (
+  params: ToolParams,
+  cb: ToolHandler,
+) => RegisteredTool | null;
 
 export type RegisterResourceFunction = (
   params: ResourceParams,
   cb: ReadResourceTemplateCallback,
 ) => RegisteredResourceTemplate;
 
-/**
- * Overloaded for the same reason as {@link RegisterToolsFunction}. Drop the
- * `PromptCallback<ZodRawShape>` overload once every product has switched to
- * `PromptHandler`.
- */
-export type RegisterPromptFunction = {
-  (params: PromptParams, cb: PromptHandler): RegisteredPrompt;
-  (params: PromptParams, cb: PromptCallback<ZodRawShape>): RegisteredPrompt;
-};
+export type RegisterPromptFunction = (
+  params: PromptParams,
+  cb: PromptHandler,
+) => RegisteredPrompt;
 
 export type GetInputFunction = (
   params: ElicitRequest["params"],

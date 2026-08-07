@@ -191,7 +191,7 @@ export class UpdateError extends Tool<BugsnagClient> {
     this.getInput = getInput;
   }
 
-  handle: ToolHandler = async (args, _extra) => {
+  handle: ToolHandler = async (args, _ctx) => {
     const params = inputSchema.parse(args);
     const project = await this.client.getInputProject(params.projectId);
 

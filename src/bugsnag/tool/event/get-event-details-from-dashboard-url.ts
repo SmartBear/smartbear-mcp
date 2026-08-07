@@ -42,7 +42,7 @@ export class GetEventDetailsFromDashboardUrl extends Tool<BugsnagClient> {
     ],
   };
 
-  handle: ToolHandler = async (args, _extra) => {
+  handle: ToolHandler = async (args, _ctx) => {
     const params = inputSchema.parse(args);
     const url = new URL(params.link);
     const eventId = url.searchParams.get("event_id");

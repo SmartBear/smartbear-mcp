@@ -41,7 +41,7 @@ export class ListErrorEvents extends Tool<BugsnagClient> {
     ],
   };
 
-  handle: ToolHandler = async (args, _extra) => {
+  handle: ToolHandler = async (args, _ctx) => {
     const params = inputSchema.parse(args);
     const project = await this.client.getInputProject(params.projectId);
     const response = await this.client.errorsApi.listErrorEvents(

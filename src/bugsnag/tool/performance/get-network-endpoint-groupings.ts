@@ -38,7 +38,7 @@ export class GetNetworkEndpointGroupings extends Tool<BugsnagClient> {
     idempotent: true,
   };
 
-  handle: ToolHandler = async (args, _extra) => {
+  handle: ToolHandler = async (args, _ctx) => {
     const params = inputSchema.parse(args);
     const project = await this.client.getInputProject(params.projectId);
     const result =

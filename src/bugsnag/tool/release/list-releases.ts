@@ -75,7 +75,7 @@ export class ListReleases extends Tool<BugsnagClient> {
       "JSON array of release summary objects with metadata, with a URL to the next page if more results are available",
   };
 
-  handle: ToolHandler = async (args, _extra) => {
+  handle: ToolHandler = async (args, _ctx) => {
     const params = inputSchema.parse(args);
     const project = await this.client.getInputProject(params.projectId);
     const response = await this.client.projectApi.listProjectReleaseGroups(

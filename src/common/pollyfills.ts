@@ -1,4 +1,8 @@
-import type { RequestOptions, ElicitRequest, ElicitResult } from "@modelcontextprotocol/server";
+import type {
+  ElicitRequest,
+  ElicitResult,
+  RequestOptions,
+} from "@modelcontextprotocol/server";
 import type { SmartBearMcpServer } from "./server";
 import { ToolError } from "./tools";
 

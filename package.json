@@ -54,7 +54,6 @@
   },
   "dependencies": {
     "@bugsnag/js": "^8.8.1",
-    "@modelcontextprotocol/sdk": "^1.27.1",
     "@modelcontextprotocol/server": "^2.0.0-beta.5",
     "@modelcontextprotocol/node": "^2.0.0-beta.5",
     "@modelcontextprotocol/server-legacy": "^2.0.0-beta.5",

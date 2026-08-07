@@ -106,7 +106,7 @@ export class CollaboratorClient implements Client {
           reviewId: z.string().describe("The Collaborator review ID to find."),
         }),
       },
-      async (args, _extra) => {
+      async (args, _ctx) => {
         const { reviewId } = args;
         const commands = [
           {
@@ -153,7 +153,7 @@ export class CollaboratorClient implements Client {
             ),
         }),
       },
-      async (args, _extra) => {
+      async (args, _ctx) => {
         const commandArgs: any = {};
         if (args.creator !== undefined) commandArgs.creator = args.creator;
         if (args.title !== undefined) commandArgs.title = args.title;
@@ -188,7 +188,7 @@ export class CollaboratorClient implements Client {
           reason: z.string().describe("Reason for rejecting the review."),
         }),
       },
-      async (args, _extra) => {
+      async (args, _ctx) => {
         const { reviewId, reason } = args;
         const commands = [
           {
@@ -222,7 +222,7 @@ export class CollaboratorClient implements Client {
           args: z.record(z.string(), z.any()),
         }),
       },
-      async (params, _extra) => {
+      async (params, _ctx) => {
         const { action, args } = params;
         const commands = [{ command: `ReviewService.${action}`, args }];
         const result = await this.call(commands);
@@ -270,7 +270,7 @@ export class CollaboratorClient implements Client {
             .describe('Maximal creation date in format "yyyy-MM-dd"'),
         }),
       },
-      async (args, _extra) => {
+      async (args, _ctx) => {
         const reviewArgs: any = {};
         if (args.login !== undefined) reviewArgs.login = args.login;
         if (args.role !== undefined) reviewArgs.role = args.role;
@@ -318,7 +318,7 @@ export class CollaboratorClient implements Client {
             ),
         }),
       },
-      async (args, _extra) => {
+      async (args, _ctx) => {
         const { token, title, config, reviewTemplateId } = args;
         const commandArgs: any = { token, title, config };
         if (reviewTemplateId) commandArgs.reviewTemplateId = reviewTemplateId;
@@ -361,7 +361,7 @@ export class CollaboratorClient implements Client {
             ),
         }),
       },
-      async (args, _extra) => {
+      async (args, _ctx) => {
         const { id, title, config, reviewTemplateId } = args;
         const commandArgs: any = { id };
         if (title) commandArgs.title = title;
@@ -393,7 +393,7 @@ export class CollaboratorClient implements Client {
             .describe("ID of the remote system Configuration to delete."),
         }),
       },
-      async (args, _extra) => {
+      async (args, _ctx) => {
         const commandArgs: any = {};
         if (args.id !== undefined)
           commandArgs.id =
@@ -427,7 +427,7 @@ export class CollaboratorClient implements Client {
             ),
         }),
       },
-      async (args, _extra) => {
+      async (args, _ctx) => {
         const commandArgs: any = {};
         if (args.id !== undefined)
           commandArgs.id =
@@ -462,7 +462,7 @@ export class CollaboratorClient implements Client {
             ),
         }),
       },
-      async (args, _extra) => {
+      async (args, _ctx) => {
         const commandArgs: any = {};
         if (args.id !== undefined)
           commandArgs.id =
