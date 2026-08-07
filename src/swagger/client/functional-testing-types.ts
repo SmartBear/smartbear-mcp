@@ -580,6 +580,9 @@ export type CreateFunctionalTestingTestParams = z.infer<
 export type CreateFunctionalTestingTestParameter = z.infer<
   typeof CreateFunctionalTestingTestParameterSchema
 >;
+export type CreateFunctionalTestingTestStep = z.infer<
+  typeof CreateFunctionalTestingTestStepSchema
+>;
 export type CreateFunctionalTestingStatusRange = z.infer<
   typeof CreateFunctionalTestingStatusRangeSchema
 >;

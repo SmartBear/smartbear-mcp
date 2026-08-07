@@ -1,9 +1,9 @@
-const MAX_SANITIZED_NAME_LENGTH = 25;
+import type {
+  CreateFunctionalTestingTestParameter,
+  CreateFunctionalTestingTestStep,
+} from "./functional-testing-types";
 
-export interface FunctionalTestingParameter {
-  name: string;
-  value?: string;
-}
+const MAX_SANITIZED_NAME_LENGTH = 25;
 
 export function convertPathVarsToReflectVars(
   value: string,
@@ -49,7 +49,7 @@ export function splitUrlByBaseUrl(url: string, baseUrl: string): string | null {
   return null;
 }
 
-/** Returns `base`, or `base` suffixed with the first unused numeric suffix starting at 2. */
+/** Returns `base`, or `base` suffixed with the first unused numeric suffix. */
 export function generateUniqueParamName(
   base: string,
   usedNames: Set<string>,
@@ -64,9 +64,14 @@ export function generateUniqueParamName(
   return `${base}${counter}`;
 }
 
+export type TemplatedFunctionalTestingTestStep = Omit<
+  CreateFunctionalTestingTestStep,
+  "baseUrl"
+>;
+
 export interface BaseUrlTemplatingResult {
-  steps: Record<string, unknown>[] | undefined;
-  parameters: FunctionalTestingParameter[];
+  steps: TemplatedFunctionalTestingTestStep[] | undefined;
+  parameters: CreateFunctionalTestingTestParameter[];
 }
 
 /**
@@ -75,14 +80,14 @@ export interface BaseUrlTemplatingResult {
  * definition-level parameters.
  */
 export function applyBaseUrlTemplating(
-  steps: Record<string, unknown>[] | undefined,
-  callerParameters: FunctionalTestingParameter[] | undefined,
+  steps: CreateFunctionalTestingTestStep[] | undefined,
+  callerParameters: CreateFunctionalTestingTestParameter[] | undefined,
 ): BaseUrlTemplatingResult {
   const usedNames = new Set<string>(
     (callerParameters ?? []).map((p) => p.name),
   );
   const paramNamesByKey = new Map<string, string>();
-  const generatedParams: FunctionalTestingParameter[] = [];
+  const generatedParams: CreateFunctionalTestingTestParameter[] = [];
 
   const getOrCreateParamName = (
     key: string,
@@ -100,12 +105,9 @@ export function applyBaseUrlTemplating(
   };
 
   const resultSteps = steps?.map((step) => {
-    const { baseUrl, url, ...rest } = step as {
-      baseUrl?: string;
-      url?: string;
-    } & Record<string, unknown>;
+    const { baseUrl, url, ...rest } = step;
 
-    if (!baseUrl || typeof url !== "string") {
+    if (!baseUrl) {
       return { ...rest, url };
     }
 
