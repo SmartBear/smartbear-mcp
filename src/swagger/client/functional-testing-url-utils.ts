@@ -5,11 +5,6 @@ export interface FunctionalTestingParameter {
   value?: string;
 }
 
-/**
- * Converts OAS-style `{pathParam}` placeholders into Reflect `${var(pathParam)}` references.
- * By default the variable name is the placeholder's own name; pass `resolveName` to remap it
- * (e.g. to a deduped/generated parameter name).
- */
 export function convertPathVarsToReflectVars(
   value: string,
   resolveName: (name: string) => string = (name) => name,
@@ -20,7 +15,7 @@ export function convertPathVarsToReflectVars(
   );
 }
 
-/** Strips non-alphanumeric characters and truncates so generated param names match the UI's naming convention. */
+/** Strips non-alphanumeric characters and truncates so generated param names. */
 export function sanitizeForParamName(value: string): string {
   return value
     .replace(/[^a-zA-Z0-9]/g, "")
@@ -75,14 +70,9 @@ export interface BaseUrlTemplatingResult {
 }
 
 /**
- * Mirrors the Functional Testing UI's behavior for MCP-created tests: extracts each step's
- * `baseUrl` into a definition-level `baseURL<Host>` parameter, templates it into the step's
+ * Extracts each step's `baseUrl` into a definition-level `baseURL<Host>` parameter, templates it into the step's
  * `url`, and converts any remaining `{pathParam}` placeholders into `${var(pathParam)}`
- * definition-level parameters. Steps without a `baseUrl` are left completely untouched
- * (including any `{pathParam}` placeholders in their `url`) since there is no base URL to
- * split the OAS-style placeholders away from.
- *
- * Throws if a step declares a `baseUrl` that its `url` does not start with.
+ * definition-level parameters.
  */
 export function applyBaseUrlTemplating(
   steps: Record<string, unknown>[] | undefined,
@@ -91,9 +81,23 @@ export function applyBaseUrlTemplating(
   const usedNames = new Set<string>(
     (callerParameters ?? []).map((p) => p.name),
   );
-  const baseUrlParamNames = new Map<string, string>();
-  const pathParamNames = new Map<string, string>();
+  const paramNamesByKey = new Map<string, string>();
   const generatedParams: FunctionalTestingParameter[] = [];
+
+  const getOrCreateParamName = (
+    key: string,
+    desiredName: string,
+    value: string,
+  ): string => {
+    let paramName = paramNamesByKey.get(key);
+    if (!paramName) {
+      paramName = generateUniqueParamName(desiredName, usedNames);
+      paramNamesByKey.set(key, paramName);
+      usedNames.add(paramName);
+      generatedParams.push({ name: paramName, value });
+    }
+    return paramName;
+  };
 
   const resultSteps = steps?.map((step) => {
     const { baseUrl, url, ...rest } = step as {
@@ -113,33 +117,20 @@ export function applyBaseUrlTemplating(
     }
 
     const normalizedBase = normalizeBaseUrl(baseUrl);
-    let paramName = baseUrlParamNames.get(normalizedBase);
-    if (!paramName) {
-      paramName = generateUniqueParamName(
-        `baseURL${sanitizeForParamName(hostnameFor(baseUrl))}`,
-        usedNames,
-      );
-      baseUrlParamNames.set(normalizedBase, paramName);
-      usedNames.add(paramName);
-      generatedParams.push({ name: paramName, value: normalizedBase });
-    }
+    const paramName = getOrCreateParamName(
+      `baseUrl:${normalizedBase}`,
+      `baseURL${sanitizeForParamName(hostnameFor(baseUrl))}`,
+      normalizedBase,
+    );
 
-    for (const match of remainder.matchAll(/{([^}]+)}/g)) {
-      const pathParamName = match[1];
-      if (pathParamNames.has(pathParamName)) {
-        continue;
-      }
-      const uniquePathParamName = generateUniqueParamName(
-        pathParamName,
-        usedNames,
-      );
-      pathParamNames.set(pathParamName, uniquePathParamName);
-      usedNames.add(uniquePathParamName);
-      generatedParams.push({ name: uniquePathParamName, value: "" });
-    }
     const templatedRemainder = convertPathVarsToReflectVars(
       remainder,
-      (pathParamName) => pathParamNames.get(pathParamName) ?? pathParamName,
+      (pathParamName) =>
+        getOrCreateParamName(
+          `pathParam:${pathParamName}`,
+          pathParamName,
+          "",
+        ),
     );
 
     return { ...rest, url: `\${var(${paramName})}${templatedRemainder}` };
