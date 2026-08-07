@@ -529,8 +529,7 @@ export const CreateFunctionalTestingTestStepSchema = z.object({
     .optional()
     .describe(
       "Server/common URL for this step's endpoint (e.g. https://petstore.swagger.io/v2). " +
-        "When set, it is extracted into a definition-level parameter and templated into " +
-        "the step url, mirroring how the Swagger Functional Testing UI stores API base URLs.",
+        "When set, it is extracted into a definition-level parameter and templated into the step url."
     ),
   httpMethod: z
     .enum(HTTP_METHODS)
