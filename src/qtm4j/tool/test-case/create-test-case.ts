@@ -13,7 +13,6 @@ import {
 const FIELD_CONFIG: Record<string, string> = {
   [InputField.PRIORITY]: ResolverKeys.CommonAttribute.PRIORITY,
   [InputField.STATUS]: ResolverKeys.CommonAttribute.TESTCASE_STATUS,
-  [InputField.FOLDER]: ResolverKeys.CommonAttribute.TESTCASE_FOLDER,
   [InputField.COMPONENTS]: ResolverKeys.SearchableField.COMPONENTS,
   [InputField.LABELS]: ResolverKeys.SearchableField.LABEL,
 };
@@ -126,10 +125,11 @@ export class CreateTestCase extends Tool<Qtm4jClient> {
   handle = async (rawArgs: any) => {
     const fieldResolver = this.client.getResolverRegistry();
     const context = fieldResolver.requireProjectContext();
+    const parsed = CreateTestCaseBody.parse(rawArgs) as Record<string, unknown>;
     const body = {
-      ...(CreateTestCaseBody.parse(rawArgs) as Record<string, unknown>),
+      ...parsed,
       projectId: String(context.projectId),
-      folderId: "MCP Generated",
+      folderId: parsed.folderId ?? "MCP Generated",
     };
     const warnings: string[] = [];
 

@@ -43,12 +43,12 @@ export const SearchTestCaseFilter = zod
         "Component names to include (OR logic within array). Example: ['UI', 'Cloud', 'API']. " +
           "Use exact component names as configured in the project.",
       ),
-    folders: zod
-      .array(zod.number())
+    folderId: zod
+      .number()
       .optional()
       .describe(
-        "Folder IDs (numeric, OR logic within array). Example: [123, 456]. " +
-          "Retrieve folder IDs from the project's folder structure.",
+        "Folder ID to filter test cases by. Example: 123. " +
+          "Retrieve the folder ID by right-clicking the target folder in QTM4J and selecting 'Copy Folder Id'.",
       ),
     assignee: zod
       .array(zod.string())
