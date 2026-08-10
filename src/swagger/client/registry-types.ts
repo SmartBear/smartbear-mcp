@@ -173,7 +173,7 @@ export const PatchApiParamsSchema = z.object({
     .string()
     .optional()
     .describe(
-      "Optional version to save the patched definition as (e.g. '1.0.1'). If this version already exists it is patched and updated in place, so repeated calls keep refining the same version. Omitting this patches and overwrites the base version. info.version is set to the saved version automatically.",
+      "Optional version to save the patched definition as (e.g. '1.0.1'). Must not already exist — if it does, a conflict error is returned. Omit to patch and overwrite the base version. info.version is set to the saved version automatically.",
     ),
   edits: z
     .array(PatchApiEditSchema)

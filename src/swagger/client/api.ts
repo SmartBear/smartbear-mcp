@@ -48,8 +48,6 @@ import type {
   CreateApiFromPromptResponse,
   CreateApiParams,
   CreateApiResponse,
-  PatchApiEdit,
-  PatchApiFailedEdit,
   PatchApiParams,
   PatchApiResponse,
   ScanApiStandardizationFromRegistryParams,
@@ -66,6 +64,7 @@ import type {
   OrganizationsListResponse,
   OrganizationsQueryParams,
 } from "./user-management-types";
+import { applyEdits, setVersionToYamlSpec } from "./patch-utils";
 import {
   buildPortalLiveUrl,
   findTableOfContentsItem,
@@ -123,128 +122,8 @@ function isStandardizationResult(
   );
 }
 
-/**
- * Count non-overlapping occurrences of `search` in `text`.
- */
-function countOccurrences(text: string, search: string): number {
-  if (!search) return 0;
-  let count = 0;
-  let index = text.indexOf(search);
-  while (index !== -1) {
-    count++;
-    index = text.indexOf(search, index + search.length);
-  }
-  return count;
-}
 
-/**
- * Replace occurrence(s) of `search` with `replace` in `text`.
- * Replaces only the first occurrence unless `replaceAll` is set.
- */
-function replaceOccurrences(
-  text: string,
-  oldString: string,
-  replaceString: string,
-  replaceAll?: boolean,
-): string {
-  if (replaceAll) {
-    return text.split(oldString).join(replaceString);
-  }
-  const index = text.indexOf(oldString);
-  return (
-    text.slice(0, index) +
-    replaceString +
-    text.slice(index + oldString.length)
-  );
-}
 
-/**
- * Preserve the quoting style (or lack thereof) of a YAML scalar value when
- * substituting in a new value.
- */
-function formatYamlScalar(originalValue: string, newValue: string): string {
-  const trimmed = originalValue.trim();
-  if (trimmed.startsWith('"')) return `"${newValue}"`;
-  if (trimmed.startsWith("'")) return `'${newValue}'`;
-  return newValue;
-}
-
-/**
- * Set `info.version` in a raw OpenAPI/AsyncAPI definition using a
- * format-preserving targeted replacement, so YAML comments, key order, and
- * formatting elsewhere in the document are left untouched.
- */
-function setInfoVersion(
-  text: string,
-  newVersion: string,
-  format: "json" | "yaml",
-): string {
-  if (format === "json") {
-    const infoKeyIndex = text.indexOf('"info"');
-    if (infoKeyIndex === -1) return text;
-    const braceStart = text.indexOf("{", infoKeyIndex);
-    if (braceStart === -1) return text;
-
-    let depth = 0;
-    let braceEnd = -1;
-    for (let i = braceStart; i < text.length; i++) {
-      if (text[i] === "{") depth++;
-      else if (text[i] === "}") {
-        depth--;
-        if (depth === 0) {
-          braceEnd = i;
-          break;
-        }
-      }
-    }
-    if (braceEnd === -1) return text;
-
-    const infoBlock = text.slice(braceStart, braceEnd + 1);
-    const versionRegex = /("version"\s*:\s*)"(?:[^"\\]|\\.)*"/;
-    if (!versionRegex.test(infoBlock)) return text;
-    const patchedInfoBlock = infoBlock.replace(
-      versionRegex,
-      `$1"${newVersion}"`,
-    );
-    return (
-      text.slice(0, braceStart) + patchedInfoBlock + text.slice(braceEnd + 1)
-    );
-  }
-
-  // YAML: find the top-level `info:` block, then the `version:` line nested under it.
-  const lines = text.split("\n");
-  let inInfoBlock = false;
-  let infoIndent = -1;
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    const infoMatch = /^(\s*)info:\s*$/.exec(line);
-    if (infoMatch) {
-      inInfoBlock = true;
-      infoIndent = infoMatch[1].length;
-      continue;
-    }
-
-    if (!inInfoBlock) continue;
-
-    if (line.trim() === "") continue;
-
-    const currentIndent = /^(\s*)/.exec(line)?.[1].length ?? 0;
-    if (currentIndent <= infoIndent) {
-      inInfoBlock = false;
-      continue;
-    }
-
-    const versionMatch = /^(\s*version:\s*)(.*)$/.exec(line);
-    if (versionMatch) {
-      lines[i] =
-        `${versionMatch[1]}${formatYamlScalar(versionMatch[2], newVersion)}`;
-      break;
-    }
-  }
-
-  return lines.join("\n");
-}
 
 export class SwaggerAPI {
   private config: SwaggerConfiguration;
@@ -1692,49 +1571,35 @@ export class SwaggerAPI {
   * @returns Applied/failed edit indices, save status, and optionally a governance scan of the saved version
    */
   async patchApi(params: PatchApiParams): Promise<PatchApiResponse> {
+    if (params.newVersion) {
+      const exists = await this.versionExists(
+        params.owner,
+        params.apiName,
+        params.newVersion,
+      );
+      if (exists) {
+        throw new ToolError(
+          `Version ${params.newVersion} already exists for ${params.owner}/${params.apiName}. Choose a different version name or omit newVersion to patch ${params.version} in place.`,
+        );
+      }
+    }
+
     const targetVersion = params.newVersion || params.version;
-    const newVersionExists =
-      targetVersion === params.version ||
-      (await this.versionExists(params.owner, params.apiName, targetVersion));
-    const baseVersion = newVersionExists ? targetVersion : params.version;
 
     let text = await this.getApiDefinitionRaw(
       params.owner,
       params.apiName,
-      baseVersion,
+      params.version,
     );
 
-    const applied: number[] = [];
-    const failed: PatchApiFailedEdit[] = [];
-
-    params.edits.forEach((edit: PatchApiEdit, index: number) => {
-      const matchCount = countOccurrences(text, edit.oldString);
-      if (matchCount === 0) {
-        failed.push({ index, error: "no_match", matchCount: 0 });
-      } else if (matchCount > 1 && !edit.replaceAll) {
-        failed.push({ index, error: "ambiguous", matchCount });
-      } else {
-        text = replaceOccurrences(
-          text,
-          edit.oldString,
-          edit.replaceString,
-          edit.replaceAll,
-        );
-        applied.push(index);
-      }
-    });
+    const { text: patchedText, applied, failed } = applyEdits(text, params.edits);
+    text = patchedText;
 
     if (failed.length > 0) {
       return { applied, failed, saved: false };
     }
 
-    const format = this.detectDefinitionFormat(text);
-    if (format !== "yaml") {
-      throw new ToolError(
-        "swagger_patch_api only supports YAML definitions. Fetch or store the API in YAML format before patching.",
-      );
-    }
-    text = setInfoVersion(text, targetVersion, format);
+    text = setVersionToYamlSpec(text, targetVersion);
 
     const saveResult = await this.createOrUpdateApi({
       owner: params.owner,
