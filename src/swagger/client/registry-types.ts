@@ -175,12 +175,6 @@ export const PatchApiParamsSchema = z.object({
     .describe(
       "Optional version to save the patched definition as (e.g. '1.0.1'). If this version already exists it is patched and updated in place, so repeated calls keep refining the same version. Omitting this patches and overwrites the base version. info.version is set to the saved version automatically.",
     ),
-  runStandardizationScan: z
-    .boolean()
-    .optional()
-    .describe(
-      "Whether to run a governance standardization scan after saving the patched definition (default false). Enable this for governance remediation workflows when you need the fresh scan result in the response.",
-    ),
   edits: z
     .array(PatchApiEditSchema)
     .min(1)
@@ -391,13 +385,6 @@ export const PatchApiOutputSchema = z.looseObject({
   operation: z.enum(["create", "update"]).optional(),
   version: z.string().optional(),
   url: z.string().optional(),
-  scan: ScanFromRegistryOutputSchema.optional(),
-  scanError: z
-    .string()
-    .optional()
-    .describe(
-      "Why the governance scan of the saved version could not be returned. The patch itself was still saved.",
-    ),
 });
 
 // Response type
@@ -415,6 +402,4 @@ export interface PatchApiResponse {
   operation?: "create" | "update";
   version?: string;
   url?: string;
-  scan?: ScanApiStandardizationFromRegistryResult;
-  scanError?: string;
 }

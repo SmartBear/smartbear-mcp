@@ -1742,34 +1742,6 @@ export class SwaggerAPI {
       definition: text,
     });
 
-    if (!params.runStandardizationScan) {
-      return {
-        applied,
-        failed: [],
-        saved: true,
-        operation: saveResult.operation,
-        version: saveResult.version,
-        url: saveResult.url,
-      };
-    }
-
-    let scan: ScanApiStandardizationFromRegistryResult | undefined;
-    let scanError: string | undefined;
-    try {
-      const scanResult = await this.scanApiStandardizationFromRegistry({
-        orgName: params.owner,
-        apiName: params.apiName,
-        version: saveResult.version,
-      });
-      if (isStandardizationResult(scanResult)) {
-        scan = scanResult as ScanApiStandardizationFromRegistryResult;
-      } else {
-        scanError = `Unexpected response format from the standardization scan of version ${saveResult.version}: ${JSON.stringify(scanResult)}`;
-      }
-    } catch (error) {
-      scanError = `Failed to scan patched API version ${saveResult.version} for standardization: ${error instanceof Error ? error.message : String(error)}`;
-    }
-
     return {
       applied,
       failed: [],
@@ -1777,8 +1749,6 @@ export class SwaggerAPI {
       operation: saveResult.operation,
       version: saveResult.version,
       url: saveResult.url,
-      ...(scan ? { scan } : {}),
-      ...(scanError ? { scanError } : {}),
     };
   }
 }

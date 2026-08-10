@@ -1487,8 +1487,6 @@ describe("SwaggerAPI", () => {
     function mockRoutes(handlers: {
       getVersion?: (version: string) => { status: number; body?: string };
       save?: () => { status: number; version: string };
-      scan?: () => { validation: unknown[] };
-      scanResponse?: () => { status: number; body: string };
     }) {
       fetchMock.mockResponse(async (req) => {
         const url = req.url;
@@ -1519,17 +1517,6 @@ describe("SwaggerAPI", () => {
             body: "",
             headers: { ...jsonHeaders, "X-Version": result.version },
           };
-        }
-
-        if (url === `${config.registryBasePath}/standardization/orgname/scan`) {
-          if (handlers.scanResponse) {
-            return { ...handlers.scanResponse(), headers: jsonHeaders };
-          }
-          if (handlers.scan) {
-            const result = handlers.scan();
-            return { body: JSON.stringify(result), headers: jsonHeaders };
-          }
-          throw new Error(`Unexpected request: ${method} ${url}`);
         }
 
         throw new Error(`Unexpected request: ${method} ${url}`);
@@ -1576,52 +1563,6 @@ describe("SwaggerAPI", () => {
       expect(result.url).toBe(
         "https://app.swaggerhub.com/apis/orgname/petstore/1.0.1",
       );
-      expect(result.scan).toBeUndefined();
-      expect(result.scanError).toBeUndefined();
-    });
-
-    it("returns a scan when explicitly requested", async () => {
-      let saved = false;
-      mockRoutes({
-        getVersion: (version) => {
-          if (version === "1.0.1") {
-            return saved
-              ? { status: 200, body: baseDefinition }
-              : { status: 404 };
-          }
-          if (version === "1.0.0") return { status: 200, body: baseDefinition };
-          return { status: 404 };
-        },
-        save: () => {
-          saved = true;
-          return { status: 200, version: "1.0.1" };
-        },
-        scan: () => ({
-          validation: [{ severity: "Warning", description: "x", line: 1 }],
-        }),
-      });
-
-      const result = await api.patchApi({
-        owner,
-        apiName,
-        version: "1.0.0",
-        newVersion: "1.0.1",
-        runStandardizationScan: true,
-        edits: [
-          {
-            oldString: "      summary: List all pets",
-            replaceString:
-              "      operationId: listPets\n      summary: List all pets",
-          },
-        ],
-      });
-
-      expect(result.scan).toEqual({
-        validation: [{ severity: "Warning", description: "x", line: 1 }],
-        count: 1,
-        countsBySeverity: { Warning: 1 },
-        url: "https://app.swaggerhub.com/apis/orgname/petstore/1.0.1",
-      });
     });
 
     it("patches the existing newVersion in place on repeated calls", async () => {
@@ -1672,7 +1613,6 @@ describe("SwaggerAPI", () => {
         owner,
         apiName,
         version: "1.0.0",
-        runStandardizationScan: true,
         edits: [
           { oldString: "title: Pets", replaceString: "title: Pet Store" },
         ],
@@ -1681,32 +1621,6 @@ describe("SwaggerAPI", () => {
       expect(new Set(fetchedVersions)).toEqual(new Set(["1.0.0"]));
       expect(result.saved).toBe(true);
       expect(result.version).toBe("1.0.0");
-    });
-
-    it("returns scanError when the governance scan fails after saving", async () => {
-      mockRoutes({
-        getVersion: (version) =>
-          version === "1.0.0"
-            ? { status: 200, body: baseDefinition }
-            : { status: 404 },
-        save: () => ({ status: 200, version: "1.0.0" }),
-        scanResponse: () => ({ status: 500, body: "scan blew up" }),
-      });
-
-      const result = await api.patchApi({
-        owner,
-        apiName,
-        version: "1.0.0",
-        runStandardizationScan: true,
-        edits: [
-          { oldString: "title: Pets", replaceString: "title: Pet Store" },
-        ],
-      });
-
-      expect(result.saved).toBe(true);
-      expect(result.scan).toBeUndefined();
-      expect(result.scanError).toContain("1.0.0");
-      expect(result.scanError).toContain("scan blew up");
     });
 
     it("reports no_match and ambiguous failures without saving", async () => {
