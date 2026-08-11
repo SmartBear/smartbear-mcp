@@ -324,8 +324,6 @@ export class SwaggerClient implements Client {
   async getApiDefinition(
     args: ApiDefinitionParams,
   ): Promise<unknown | FallbackResponse> {
-    // format:"text" keeps the raw stored format so it matches what patchApi edits;
-    // defaults to json otherwise.
     const accept = args.format === "text" ? "text/plain" : "application/json";
     return this.getApi().getApiDefinition(args, { accept });
   }

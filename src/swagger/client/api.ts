@@ -1,6 +1,7 @@
 import { appendClientIdentity } from "../../common/info";
 import { ToolError } from "../../common/tools";
 import type { SwaggerConfiguration } from "./configuration";
+import { applyEdits, setVersionToYamlSpec } from "./patch-spec-utils";
 import type {
   CreateDocumentationPageArgs,
   CreateDocumentationPageResult,
@@ -64,7 +65,6 @@ import type {
   OrganizationsListResponse,
   OrganizationsQueryParams,
 } from "./user-management-types";
-import { applyEdits, setVersionToYamlSpec } from "./patch-utils";
 import {
   buildPortalLiveUrl,
   findTableOfContentsItem,
@@ -121,9 +121,6 @@ function isStandardizationResult(
     Array.isArray((value as StandardizationScanApiResponse).validation)
   );
 }
-
-
-
 
 export class SwaggerAPI {
   private config: SwaggerConfiguration;
@@ -1524,75 +1521,53 @@ export class SwaggerAPI {
     return result as StandardizeApiResponse;
   }
 
-  /**
-   * Check whether a given API version already exists in the registry.
-   */
-  private async versionExists(
-    owner: string,
-    apiName: string,
-    version: string,
-  ): Promise<boolean> {
+  private async assertVersionNotExists({
+    owner,
+    apiName,
+    version,
+  }: {
+    owner: string;
+    apiName: string;
+    version: string;
+  }): Promise<void> {
     const response = await this.fetchApiDefinitionResponse(
       { owner, api: apiName, version },
       { accept: "text/plain" },
     );
-
-    if (response.status === 404) return false;
+    if (response.status === 404) return;
     if (!response.ok) {
       const errorText = await response.text().catch(() => "");
       throw new ToolError(
         `SwaggerHub Registry API patchApi failed while checking version - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}. owner=${owner}, apiName=${apiName}, version=${version}`,
       );
     }
-    return true;
-  }
-
-  /**
-   * Fetch the raw (unresolved) text of an API definition, preserving the
-   * original formatting so it can be safely patched with text edits.
-   */
-  private async getApiDefinitionRaw(
-    owner: string,
-    apiName: string,
-    version: string,
-  ): Promise<string> {
-    const result = await this.getApiDefinition(
-      { owner, api: apiName, version },
-      { accept: "text/plain" },
+    throw new ToolError(
+      `Version ${version} already exists for ${owner}/${apiName}. Choose a different version name or omit newVersion to patch in place.`,
     );
-    return typeof result === "string" ? result : JSON.stringify(result);
   }
 
-  /**
-   * Apply targeted search/replace edits to an API definition and save the
-    * result as a new version. Raw-text editing preserves YAML comments, key
-    * order, and formatting. JSON definitions are not supported by this tool.
-   * @param params Owner, API name, base version, target version, and edits to apply
-  * @returns Applied/failed edit indices, save status, and optionally a governance scan of the saved version
-   */
   async patchApi(params: PatchApiParams): Promise<PatchApiResponse> {
     if (params.newVersion) {
-      const exists = await this.versionExists(
-        params.owner,
-        params.apiName,
-        params.newVersion,
-      );
-      if (exists) {
-        throw new ToolError(
-          `Version ${params.newVersion} already exists for ${params.owner}/${params.apiName}. Choose a different version name or omit newVersion to patch ${params.version} in place.`,
-        );
-      }
+      await this.assertVersionNotExists({
+        owner: params.owner,
+        apiName: params.apiName,
+        version: params.newVersion,
+      });
     }
 
     const targetVersion = params.newVersion || params.version;
 
-    let text = await this.getApiDefinitionRaw(
-      params.owner,
-      params.apiName,
-      params.version,
+    const rawResult = await this.getApiDefinition(
+      { owner: params.owner, api: params.apiName, version: params.version },
+      { accept: "text/plain" },
     );
+    let text = rawResult as string;
 
-    const { text: patchedText, applied, failed } = applyEdits(text, params.edits);
+    const {
+      text: patchedText,
+      applied,
+      failed,
+    } = applyEdits(text, params.edits);
     text = patchedText;
 
     if (failed.length > 0) {

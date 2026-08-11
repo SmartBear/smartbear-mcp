@@ -2,70 +2,34 @@ import type { PatchApiEdit, PatchApiFailedEdit } from "./registry-types";
 
 function countOccurrences(text: string, search: string): number {
   if (!search) return 0;
-  let count = 0;
-  let index = text.indexOf(search);
-  while (index !== -1) {
-    count++;
-    index = text.indexOf(search, index + search.length);
-  }
-  return count;
+  return text.split(search).length - 1;
 }
 
-function replaceOccurrences(
-  text: string,
-  oldString: string,
-  replaceString: string,
-  replaceAll?: boolean,
-): string {
-  if (replaceAll) {
-    return text.split(oldString).join(replaceString);
-  }
-  const index = text.indexOf(oldString);
-  return (
-    text.slice(0, index) + replaceString + text.slice(index + oldString.length)
-  );
-}
-
-function formatYamlScalar(originalValue: string, newValue: string): string {
-  const trimmed = originalValue.trim();
-  if (trimmed.startsWith('"')) return `"${newValue}"`;
-  if (trimmed.startsWith("'")) return `'${newValue}'`;
-  return newValue;
+function indentWidth(line: string): number {
+  return /^\s*/.exec(line)?.[0].length ?? 0;
 }
 
 export function setVersionToYamlSpec(text: string, newVersion: string): string {
   const lines = text.split("\n");
-  let inInfoBlock = false;
-  let infoIndent = -1;
+  const infoIndex = lines.findIndex((line) => /^\s*info:\s*$/.test(line));
+  if (infoIndex === -1) return text;
 
-  for (let i = 0; i < lines.length; i++) {
+  const infoIndent = indentWidth(lines[infoIndex]);
+
+  for (let i = infoIndex + 1; i < lines.length; i++) {
     const line = lines[i];
-    const infoMatch = /^(\s*)info:\s*$/.exec(line);
-    if (infoMatch) {
-      inInfoBlock = true;
-      infoIndent = infoMatch[1].length;
-      continue;
-    }
+    if (!line.trim()) continue;
+    if (indentWidth(line) <= infoIndent) break;
 
-    if (!inInfoBlock) continue;
-
-    if (line.trim() === "") continue;
-
-    const currentIndent = /^(\s*)/.exec(line)?.[1].length ?? 0;
-    if (currentIndent <= infoIndent) {
-      inInfoBlock = false;
-      continue;
-    }
-
-    const versionMatch = /^(\s*version:\s*)(.*)$/.exec(line);
-    if (versionMatch) {
-      lines[i] =
-        `${versionMatch[1]}${formatYamlScalar(versionMatch[2], newVersion)}`;
-      break;
+    // Capture the quoting style so it is preserved around the new value.
+    const match = /^(\s*version:\s*)(["']?).*?\2\s*$/.exec(line);
+    if (match) {
+      lines[i] = `${match[1]}${match[2]}${newVersion}${match[2]}`;
+      return lines.join("\n");
     }
   }
 
-  return lines.join("\n");
+  return text;
 }
 
 export function applyEdits(
@@ -82,12 +46,7 @@ export function applyEdits(
     } else if (matchCount > 1 && !edit.replaceAll) {
       failed.push({ index, error: "ambiguous", matchCount });
     } else {
-      text = replaceOccurrences(
-        text,
-        edit.oldString,
-        edit.replaceString,
-        edit.replaceAll,
-      );
+      text = text.split(edit.oldString).join(edit.replaceString);
       applied.push(index);
     }
   });

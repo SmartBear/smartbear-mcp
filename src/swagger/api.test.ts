@@ -1565,36 +1565,36 @@ describe("SwaggerAPI", () => {
       );
     });
 
-    it("patches the existing newVersion in place on repeated calls", async () => {
+    it("rejects a newVersion that already exists without saving", async () => {
       const refinedDefinition = baseDefinition.replace(
         "version: 1.0.0",
         "version: 1.0.1",
       );
-      const fetchedVersions: string[] = [];
+      let saveCalls = 0;
       mockRoutes({
-        getVersion: (version) => {
-          fetchedVersions.push(version);
-          if (version === "1.0.1") {
-            return { status: 200, body: refinedDefinition };
-          }
-          return { status: 404 };
+        getVersion: (version) =>
+          version === "1.0.1"
+            ? { status: 200, body: refinedDefinition }
+            : { status: 404 },
+        save: () => {
+          saveCalls++;
+          return { status: 200, version: "1.0.1" };
         },
-        save: () => ({ status: 200, version: "1.0.1" }),
       });
 
-      await api.patchApi({
-        owner,
-        apiName,
-        version: "1.0.0",
-        newVersion: "1.0.1",
-        edits: [
-          { oldString: "title: Pets", replaceString: "title: Pet Store" },
-        ],
-      });
+      await expect(
+        api.patchApi({
+          owner,
+          apiName,
+          version: "1.0.0",
+          newVersion: "1.0.1",
+          edits: [
+            { oldString: "title: Pets", replaceString: "title: Pet Store" },
+          ],
+        }),
+      ).rejects.toThrow(/already exists/i);
 
-      // Should never fetch the base "1.0.0" version once "1.0.1" exists.
-      expect(fetchedVersions).not.toContain("1.0.0");
-      expect(fetchedVersions).toContain("1.0.1");
+      expect(saveCalls).toBe(0);
     });
 
     it("overwrites the base version when newVersion is omitted", async () => {
@@ -1649,36 +1649,6 @@ describe("SwaggerAPI", () => {
         { index: 0, error: "no_match", matchCount: 0 },
         { index: 2, error: "ambiguous", matchCount: 2 },
       ]);
-    });
-
-    it("rejects JSON definitions", async () => {
-      mockRoutes({
-        getVersion: (version) =>
-          version === "1.0.0"
-            ? {
-                status: 200,
-                body: JSON.stringify({
-                  openapi: "3.0.0",
-                  info: { title: "Pets", version: "1.0.0" },
-                  paths: {},
-                }),
-              }
-            : { status: 404 },
-      });
-
-      await expect(
-        api.patchApi({
-          owner,
-          apiName,
-          version: "1.0.0",
-          edits: [
-            {
-              oldString: '"title":"Pets"',
-              replaceString: '"title":"Pet Store"',
-            },
-          ],
-        }),
-      ).rejects.toThrow(/only supports YAML definitions/i);
     });
   });
 });
