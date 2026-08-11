@@ -259,7 +259,7 @@ export const TOOLS: SwaggerToolParams[] = [
     title: "Get API Definition",
     toolset: "Registry API",
     summary:
-      "Fetch an API definition from SwaggerHub Registry based on owner, API name, and version. By default returns the definition as JSON (converting YAML-stored definitions to JSON). Set format:'text' to instead get the raw definition text exactly as stored in the registry — required as the source for swagger_patch_api edits.",
+      "Fetch resolved API definition from SwaggerHub Registry based on owner, API name, and version. By default returns the definition as JSON (converting YAML-stored definitions to JSON). Set format:'text' to get the YAML definition — required as the source for swagger_patch_api edits.",
     inputSchema: ApiDefinitionParamsSchema,
     outputSchema: ApiDefinitionOutputSchema,
     formatResponse: (result: unknown) => ({
@@ -334,7 +334,7 @@ export const TOOLS: SwaggerToolParams[] = [
     title: "Patch API",
     toolset: "Registry API",
     summary:
-      "Apply targeted search/replace edits to a YAML API definition in SwaggerHub Registry and save the result. Each edit's 'oldString' text must be copied exactly, character for character, from the raw definition text returned by swagger_get_api_definition with format:'text', and it must match the stored YAML exactly. JSON definitions are not supported by this tool. Nothing is saved unless every edit applies; failed edits are returned with 'no_match' or 'ambiguous' plus the match count so they can be corrected and resent. Optionally provide 'newVersion' to save the result as a new version — omitting it patches and overwrites the base version. info.version is set to the saved version automatically. Use this tool to fix specific issues in an existing API (e.g. governance findings) without regenerating the whole definition — never ask the model to emit a full definition for targeted fixes.",
+      "Apply targeted search/replace edits to a YAML API definition in SwaggerHub Registry. Each edit's 'oldString' must be copied exactly from swagger_get_api_definition with format:'text'. JSON definitions are not supported. Nothing is saved unless every edit applies — failed edits are returned with 'no_match' or 'ambiguous' status. Use this tool to fix specific issues in an existing API without regenerating the whole definition.",
     inputSchema: PatchApiParamsSchema,
     outputSchema: PatchApiOutputSchema,
     handler: "patchApi",

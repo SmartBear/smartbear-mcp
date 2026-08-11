@@ -66,7 +66,7 @@ export const ApiDefinitionParamsSchema = z.object({
     .enum(["json", "text"])
     .optional()
     .describe(
-      "Response format to request - 'json' (default) or 'text'. 'text' returns the raw stored definition text verbatim (needed as the source for swagger_patch_api edits); 'json' may reformat/convert the definition (e.g. YAML converted to JSON) and won't match the stored text exactly.",
+      "Response format: 'json' (default) may convert YAML to JSON; 'text' returns the definition as YAML — required for swagger_patch_api edits.",
     ),
 });
 
@@ -144,7 +144,7 @@ export const PatchApiEditSchema = z.object({
     .string()
     .min(1)
     .describe(
-      "Exact text fragment to find in the definition, copied character for character (including indentation and newlines) from the raw definition text returned by swagger_get_api_definition. The definition is edited in its stored format — if it is YAML, quote YAML text, never a JSON rendering of it. Must match exactly one location in the definition unless replaceAll is true. For repeated text (e.g. 'responses:', 'description: OK'), start the quote at the nearest unique parent key above the target (path name, schema name, operationId).",
+      "Exact text to find in the YAML definition (including indentation and newlines), copied from swagger_get_api_definition with format:'text'. Must match exactly one location unless replaceAll is true. For repeated text (e.g. 'responses:', 'description: OK'), start from the nearest unique parent key (path name, schema name, operationId).",
     ),
   replaceString: z
     .string()
@@ -173,14 +173,14 @@ export const PatchApiParamsSchema = z.object({
     .string()
     .optional()
     .describe(
-      "Optional version to save the patched definition as (e.g. '1.0.1'). Must not already exist — if it does, a conflict error is returned. Omit to patch and overwrite the base version. info.version is set to the saved version automatically.",
+      "Version to save the patched definition as (e.g. '1.0.1'). Must not already exist. Omit to overwrite the base version.",
     ),
   edits: z
     .array(PatchApiEditSchema)
     .min(1)
     .max(50)
     .describe(
-      "Search/replace edits applied sequentially to the raw YAML definition text. swagger_patch_api supports YAML definitions only. Nothing is saved unless every edit applies (atomic).",
+      "Search/replace edits applied sequentially to the YAML definition. Nothing is saved unless every edit applies (atomic).",
     ),
 });
 
