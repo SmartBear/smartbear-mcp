@@ -19,7 +19,23 @@ export const requestContextStorage = new AsyncLocalStorage<RequestContext>();
  * This ensures request headers are available via AsyncLocalStorage to downstream code.
  */
 export function withRequestContext<T>(req: IncomingMessage, fn: () => T): T {
-  return requestContextStorage.run({ headers: req.headers }, fn);
+  return withRequestHeaders(req.headers, fn);
+}
+
+/**
+ * Run a callback within the request context for an already-extracted header
+ * map. Used by the modern (2026-07-28) HTTP path, which works with a
+ * web-standard `Request` rather than a Node `IncomingMessage`, so that
+ * `getRequestHeader()` behaves identically on both transports.
+ *
+ * Web `Headers` keys are lower-cased by the platform, matching Node's
+ * `IncomingMessage.headers`, so downstream lookups resolve the same way.
+ */
+export function withRequestHeaders<T>(
+  headers: Record<string, string | string[] | undefined>,
+  fn: () => T,
+): T {
+  return requestContextStorage.run({ headers }, fn);
 }
 
 // Helper to get the current context

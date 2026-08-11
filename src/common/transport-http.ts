@@ -1,13 +1,26 @@
+import { AsyncLocalStorage } from "node:async_hooks";
 import { randomUUID } from "node:crypto";
 import type { IncomingMessage, Server, ServerResponse } from "node:http";
 import { createServer } from "node:http";
 import querystring from "node:querystring";
-import { NodeStreamableHTTPServerTransport } from "@modelcontextprotocol/node";
-import { isInitializeRequest } from "@modelcontextprotocol/server";
+import {
+  NodeStreamableHTTPServerTransport,
+  toNodeHandler,
+  toWebRequest,
+} from "@modelcontextprotocol/node";
+import {
+  createMcpHandler,
+  isInitializeRequest,
+  isLegacyRequest,
+} from "@modelcontextprotocol/server";
 import { SSEServerTransport } from "@modelcontextprotocol/server-legacy/sse";
 import { clientRegistry } from "./client-registry";
 import { handleInitializeMessage } from "./initialize";
-import { setRequestMcpClient, withRequestContext } from "./request-context";
+import {
+  setRequestMcpClient,
+  withRequestContext,
+  withRequestHeaders,
+} from "./request-context";
 import { SmartBearMcpServer } from "./server";
 import { isDraining, registerShutdownHandler } from "./shutdown";
 import { getEnvVarName } from "./transport-stdio";
@@ -89,6 +102,16 @@ export async function runHttpMode() {
   // Store transports by session ID
   const transports = new Map<string, SessionEntry>();
 
+  // Modern (2026-07-28) leg. Created once for the process; the per-request
+  // server is injected via modernServerStorage. 2025-era traffic never reaches
+  // it — see handleMcpEndpoint.
+  const modernHandler = createModernHandler();
+  const modernNodeHandler = toNodeHandler(modernHandler, {
+    onerror: (error) => {
+      console.error("[MCP][modern] Node adapter error:", error);
+    },
+  });
+
   // Get dynamic list of allowed headers from registered clients
   const allowedAuthHeaders = getHttpHeaders();
   const allowedHeaders = [
@@ -97,6 +120,10 @@ export async function runHttpMode() {
     "MCP-Session-Id", // Required for StreamableHTTP
     "x-custom-auth-headers", // used by mcp-inspector
     "mcp-protocol-version",
+    // Modern (2026-07-28) per-request routing headers. Browser-based modern
+    // clients are blocked by CORS preflight without these.
+    "mcp-method",
+    "mcp-name",
     ...allowedAuthHeaders,
   ].join(", ");
 
@@ -159,7 +186,7 @@ export async function runHttpMode() {
 
       // STREAMABLE HTTP ENDPOINT (modern, preferred)
       if (url.pathname === "/mcp") {
-        await handleStreamableHttpRequest(req, res, transports);
+        await handleMcpEndpoint(req, res, transports, modernNodeHandler);
         return;
       }
 
@@ -205,6 +232,14 @@ export async function runHttpMode() {
   // Register graceful shutdown. Tears down active
   // transports before any subsystem registered earlier (e.g. logging).
   registerShutdownHandler("http-transport", async () => {
+    // Tear down the modern leg first: it aborts in-flight modern exchanges and
+    // closes their per-request instances. The sessionful legacy transports are
+    // drained separately below.
+    try {
+      await modernHandler.close();
+    } catch (err) {
+      console.error("[MCP][shutdown] Error closing modern handler:", err);
+    }
     await drainHttpTransport(httpServer, transports);
   });
 }
@@ -375,6 +410,100 @@ async function createNewTransport(
 }
 
 /**
+ * Carries the per-request, already-configured server into the
+ * {@link createMcpHandler} factory.
+ *
+ * The factory itself cannot send an HTTP response, but configuration failure
+ * must still produce the 401 + `WWW-Authenticate` OAuth-discovery response.
+ * So the server is built (and any 401 written) in the route, then handed to
+ * the factory through this store rather than being rebuilt inside it.
+ */
+const modernServerStorage = new AsyncLocalStorage<SmartBearMcpServer>();
+
+/**
+ * The modern (2026-07-28) request handler.
+ *
+ * `legacy: "reject"` is deliberate: 2025-era traffic is *not* served here. It
+ * keeps going to the existing sessionful Streamable HTTP / SSE wiring below,
+ * which supports session ids, resumable GET streams and DELETE teardown that
+ * the SDK's stateless legacy fallback answers with `405`. The era router
+ * ({@link handleMcpEndpoint}) decides which leg serves each request, using the
+ * SDK's own classifier so the two can never disagree.
+ */
+function createModernHandler() {
+  return createMcpHandler(
+    () => {
+      const server = modernServerStorage.getStore();
+      if (!server) {
+        // Unreachable via handleMcpEndpoint, which always runs the handler
+        // inside modernServerStorage.run().
+        throw new Error(
+          "No configured server available for the modern MCP request",
+        );
+      }
+      return server;
+    },
+    {
+      legacy: "reject",
+      onerror: (error) => {
+        console.error("[MCP][modern] Handler error:", error);
+      },
+    },
+  );
+}
+
+/**
+ * Route one `/mcp` request to the era that should serve it.
+ *
+ * - Requests carrying `mcp-session-id` are 2025-era session operations by
+ *   construction (the modern era is per-request and sessionless), so they go
+ *   straight to the legacy handler. Routing on the header alone preserves that
+ *   handler's unknown-session 404, which deliberately fires *before* the body
+ *   is buffered so a junk session id cannot force JSON parsing of an arbitrary
+ *   payload.
+ * - Everything else is classified by the SDK's own {@link isLegacyRequest}
+ *   predicate — the same code `createMcpHandler` runs internally — so a
+ *   claim-less `initialize` still opens a legacy session, while envelope-
+ *   carrying requests are served by the modern handler.
+ */
+async function handleMcpEndpoint(
+  req: IncomingMessage,
+  res: ServerResponse,
+  transports: Map<string, SessionEntry>,
+  modern: ReturnType<typeof toNodeHandler>,
+) {
+  if (req.headers["mcp-session-id"]) {
+    await handleStreamableHttpRequest(req, res, transports);
+    return;
+  }
+
+  const parsedBody = await parseRequestBody(req);
+  // Passing the parsed body means the predicate classifies from the value
+  // directly, cloning nothing — required here because the Node stream has
+  // already been drained.
+  const probe = await toWebRequest(req, parsedBody);
+
+  if (await isLegacyRequest(probe, parsedBody)) {
+    await handleStreamableHttpRequest(req, res, transports, {
+      body: parsedBody,
+    });
+    return;
+  }
+
+  // Modern leg: configure the server up front so a config failure still
+  // produces the shared 401/OAuth-discovery response.
+  const server = await newServerFromWebRequest(probe, res);
+  if (!server) {
+    return;
+  }
+
+  const headers = webHeadersToRecord(probe.headers);
+  await modernServerStorage.run(server, () =>
+    withRequestHeaders(headers, () => modern(req, res, parsedBody)),
+  );
+}
+
+/**
  * Handle modern Streamable HTTP requests
  * This is the main endpoint (/mcp) for the modern MCP StreamableHTTP transport.
  *
@@ -397,6 +526,10 @@ export async function handleStreamableHttpRequest(
       transport: NodeStreamableHTTPServerTransport | SSEServerTransport;
     }
   >,
+  // Boxed so an explicitly-`undefined` parsed body (e.g. a GET) is still
+  // recognised as "already read" — the era router drains the stream to
+  // classify, so re-parsing here would yield nothing.
+  preParsed?: { body: unknown },
 ) {
   try {
     const sessionId = req.headers["mcp-session-id"] as string | undefined;
@@ -423,7 +556,7 @@ export async function handleStreamableHttpRequest(
       return;
     }
 
-    const parsedBody = await parseRequestBody(req);
+    const parsedBody = preParsed ? preParsed.body : await parseRequestBody(req);
 
     let transport: NodeStreamableHTTPServerTransport;
 
@@ -630,31 +763,77 @@ function getConfigValue(
 }
 
 /**
- * Create a new MCP server instance with configuration from HTTP headers
+ * Read a configuration value from a web-standard `Request`.
  *
- * Configuration is read from HTTP headers in the format:
- * {ClientPrefix}-{Field-Name} (e.g., Bugsnag-Auth-Token, Reflect-Api-Token)
+ * The modern (2026-07-28) path is served from a web `Request` rather than a
+ * Node `IncomingMessage`, so header access goes through `Headers.get()` —
+ * which is case-insensitive per spec, removing the need for the dual-case
+ * lookup the Node variant performs.
  *
- * The ClientRegistry validates the configuration and initializes enabled clients.
- * If configuration fails, an error response is sent and null is returned.
+ * Resolution order matches {@link getConfigValue}: query string, then header,
+ * then environment variable.
+ */
+function getConfigValueFromWebRequest(
+  clientPrefix: string,
+  key: string,
+  request: Request,
+): string | null {
+  // 1. Try query string
+  const queryStringName = getQueryStringName(clientPrefix, key);
+  const searchParams = new URL(request.url).searchParams;
+  const queryValue =
+    searchParams.get(queryStringName) ??
+    searchParams.get(queryStringName.toLowerCase());
+  if (queryValue) {
+    return queryValue;
+  }
+
+  // 2. Try headers
+  const headerValue = request.headers.get(getHeaderName(clientPrefix, key));
+  if (headerValue) {
+    return headerValue;
+  }
+
+  // 3. Fall back to environment variable
+  const envVarName = getEnvVarName(clientPrefix, key);
+  return process.env[envVarName] || null;
+}
+
+/** Flatten web `Headers` into the record shape the request context stores. */
+function webHeadersToRecord(
+  headers: Headers,
+): Record<string, string | string[] | undefined> {
+  return Object.fromEntries(headers.entries());
+}
+
+/**
+ * Build and configure a server instance from a transport-neutral config
+ * reader, writing the shared 401/OAuth-discovery response when configuration
+ * fails.
+ *
+ * Both HTTP eras funnel through here — the legacy path supplies a Node
+ * `IncomingMessage` reader, the modern path a web `Request` reader — so
+ * configuration, auth checking and the error response can never drift between
+ * them.
  *
  * @returns SmartBearMcpServer instance if successful, null if configuration fails
  */
-export async function newServer(
-  req: IncomingMessage,
+async function buildConfiguredServer(
+  getConfig: (clientPrefix: string, key: string) => string | null,
+  headers: Record<string, string | string[] | undefined>,
+  host: string | undefined,
   res: ServerResponse,
 ): Promise<SmartBearMcpServer | null> {
-  const enabledToolsets =
-    getConfigValue("smartbear", "toolsets", req) || undefined;
+  const enabledToolsets = getConfig("smartbear", "toolsets") || undefined;
   const server = new SmartBearMcpServer(enabledToolsets);
   try {
     // Run configuration within request context so that client getAuthToken()
     // methods can access request headers via AsyncLocalStorage
-    const configuredCount = await withRequestContext(req, () =>
+    const configuredCount = await withRequestHeaders(headers, () =>
       clientRegistry.configure(
         server,
         (client, key) => {
-          return getConfigValue(client.configPrefix, key, req);
+          return getConfig(client.configPrefix, key);
         },
         true, // ignoreMissingRequiredConfigs
       ),
@@ -673,7 +852,7 @@ export async function newServer(
     // Check if any configured client actually has auth credentials for this request.
     // Some clients (e.g., Bugsnag, Reflect) configure successfully with optional auth
     // and resolve tokens per-request. If none of them have auth, trigger OAuth flow.
-    const hasAuth = withRequestContext(req, () =>
+    const hasAuth = withRequestHeaders(headers, () =>
       server.getClients().some((client) => {
         // Client doesn't support dynamic auth — auth was provided at config time
         if (!client.getAuthToken) return true;
@@ -695,22 +874,64 @@ export async function newServer(
         ? `Configuration error: ${error instanceof Error ? error.message : String(error)}. Please provide valid headers:\n${headerHelp.join("\n")}`
         : "No clients support HTTP header configuration.";
 
-    const headers: Record<string, string> = {
+    const responseHeaders: Record<string, string> = {
       "Content-Type": "text/plain",
     };
 
     // Add WWW-Authenticate header to support OAuth discovery flow
     // This points the client to the Protected Resource Metadata endpoint
-    if (req.headers.host) {
-      headers["WWW-Authenticate"] =
-        `OAuth resource_metadata="http://${req.headers.host}/.well-known/oauth-protected-resource"`;
+    if (host) {
+      responseHeaders["WWW-Authenticate"] =
+        `OAuth resource_metadata="http://${host}/.well-known/oauth-protected-resource"`;
     }
 
-    res.writeHead(401, headers);
+    res.writeHead(401, responseHeaders);
     res.end(errorMessage);
     return null;
   }
   return server;
+}
+
+/**
+ * Create a new MCP server instance with configuration from HTTP headers
+ *
+ * Configuration is read from HTTP headers in the format:
+ * {ClientPrefix}-{Field-Name} (e.g., Bugsnag-Auth-Token, Reflect-Api-Token)
+ *
+ * The ClientRegistry validates the configuration and initializes enabled clients.
+ * If configuration fails, an error response is sent and null is returned.
+ *
+ * @returns SmartBearMcpServer instance if successful, null if configuration fails
+ */
+export async function newServer(
+  req: IncomingMessage,
+  res: ServerResponse,
+): Promise<SmartBearMcpServer | null> {
+  return buildConfiguredServer(
+    (clientPrefix, key) => getConfigValue(clientPrefix, key, req),
+    req.headers,
+    req.headers.host,
+    res,
+  );
+}
+
+/**
+ * Create a new MCP server instance configured from a web-standard `Request`.
+ *
+ * The modern (2026-07-28) counterpart of {@link newServer}: same configuration
+ * and auth semantics, sourced from `Request.headers` / the request URL.
+ */
+export async function newServerFromWebRequest(
+  request: Request,
+  res: ServerResponse,
+): Promise<SmartBearMcpServer | null> {
+  return buildConfiguredServer(
+    (clientPrefix, key) =>
+      getConfigValueFromWebRequest(clientPrefix, key, request),
+    webHeadersToRecord(request.headers),
+    request.headers.get("host") ?? undefined,
+    res,
+  );
 }
 
 /**

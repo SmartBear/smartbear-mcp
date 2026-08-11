@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Changed
+- [Common] Rewrote the transport bootstrap to serve both the 2025-11-25 and 2026-07-28 (RC) MCP protocol revisions from a single deployment, on stdio (`serveStdio`, `legacy: "serve"`) and HTTP (per-request routing between the existing sessionful wiring and a new stateless `createMcpHandler` leg). Existing 2025-11-25 clients are unaffected. [#687](https://github.com/SmartBear/smartbear-mcp/pull/687)
 - [PactFlow] Refactored the internal PactFlow client from a monolithic 2,400-line class into six domain API classes (`PacticipantApi`, `EnvironmentApi`, `ContractApi`, `WebhookApi`, `AdminApi`, `AIApi`) backed by a shared `HttpClient`. This is an internal implementation change; all tool behaviour and the external `PactflowClient` interface are unchanged. [#686](https://github.com/SmartBear/smartbear-mcp/pull/686)
 
 ## [0.38.0] - 2026-08-27
