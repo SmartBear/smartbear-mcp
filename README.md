@@ -1,3 +1,5 @@
+[![MCP Toplist](https://mcptoplist.com/badge/com.smartbear%2Fsmartbear-mcp.svg)](https://mcptoplist.com/server/com.smartbear%2Fsmartbear-mcp)
+
 <div align="center">
   <a href="https://www.smartbear.com">
     <picture>
