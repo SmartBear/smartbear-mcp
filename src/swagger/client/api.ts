@@ -1566,15 +1566,11 @@ export class SwaggerAPI {
     );
     let text = rawResult as string;
 
-    const {
-      text: patchedText,
-      applied,
-      failed,
-    } = applyEdits(text, params.edits);
+    const { text: patchedText, failed } = applyEdits(text, params.edits);
     text = patchedText;
 
     if (failed.length > 0) {
-      return { applied, failed, saved: false };
+      return { failed, saved: false };
     }
 
     text = setVersionToYamlSpec(text, targetVersion);
@@ -1586,8 +1582,6 @@ export class SwaggerAPI {
     });
 
     return {
-      applied,
-      failed: [],
       saved: true,
       operation: saveResult.operation,
       version: saveResult.version,

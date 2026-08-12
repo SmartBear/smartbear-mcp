@@ -173,7 +173,7 @@ export const PatchApiParamsSchema = z.object({
     .string()
     .optional()
     .describe(
-      "Version to save the patched definition as (e.g. '1.0.1'). Must not already exist. Omit to overwrite the base version.",
+      "Version to save the patched definition as (e.g. '1.0.1'). Must not already exist. Omit to overwrite the base version. The definition's info.version is updated automatically — do not add an edit for it.",
     ),
   edits: z
     .array(PatchApiEditSchema)
@@ -371,16 +371,18 @@ const PatchApiFailedEditSchema = z.object({
   index: z
     .number()
     .describe("Position of the failed edit in the request's edits array"),
+  oldString: z.string().describe("The failed edit's oldString"),
   error: z.enum(["no_match", "ambiguous"]),
   matchCount: z
     .number()
     .describe("How many times search matched (0 for no_match)"),
-  detail: z.string().optional(),
 });
 
 export const PatchApiOutputSchema = z.looseObject({
-  applied: z.array(z.number()).optional(),
-  failed: z.array(PatchApiFailedEditSchema).optional(),
+  failed: z
+    .array(PatchApiFailedEditSchema)
+    .optional()
+    .describe("Only present when at least one edit failed"),
   saved: z.boolean().optional(),
   operation: z.enum(["create", "update"]).optional(),
   version: z.string().optional(),
@@ -390,14 +392,13 @@ export const PatchApiOutputSchema = z.looseObject({
 // Response type
 export interface PatchApiFailedEdit {
   index: number;
+  oldString: string;
   error: "no_match" | "ambiguous";
   matchCount: number;
-  detail?: string;
 }
 
 export interface PatchApiResponse {
-  applied: number[];
-  failed: PatchApiFailedEdit[];
+  failed?: PatchApiFailedEdit[];
   saved: boolean;
   operation?: "create" | "update";
   version?: string;

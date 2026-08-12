@@ -35,21 +35,29 @@ export function setVersionToYamlSpec(text: string, newVersion: string): string {
 export function applyEdits(
   text: string,
   edits: PatchApiEdit[],
-): { text: string; applied: number[]; failed: PatchApiFailedEdit[] } {
-  const applied: number[] = [];
+): { text: string; failed: PatchApiFailedEdit[] } {
   const failed: PatchApiFailedEdit[] = [];
 
   edits.forEach((edit, index) => {
     const matchCount = countOccurrences(text, edit.oldString);
     if (matchCount === 0) {
-      failed.push({ index, error: "no_match", matchCount: 0 });
+      failed.push({
+        index,
+        oldString: edit.oldString,
+        error: "no_match",
+        matchCount: 0,
+      });
     } else if (matchCount > 1 && !edit.replaceAll) {
-      failed.push({ index, error: "ambiguous", matchCount });
+      failed.push({
+        index,
+        oldString: edit.oldString,
+        error: "ambiguous",
+        matchCount,
+      });
     } else {
       text = text.split(edit.oldString).join(edit.replaceString);
-      applied.push(index);
     }
   });
 
-  return { text, applied, failed };
+  return { text, failed };
 }

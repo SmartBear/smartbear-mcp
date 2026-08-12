@@ -139,7 +139,6 @@ describe("applyEdits", () => {
     ]);
 
     expect(result.text).toContain("title: Pet Store");
-    expect(result.applied).toEqual([0]);
     expect(result.failed).toEqual([]);
   });
 
@@ -150,7 +149,6 @@ describe("applyEdits", () => {
     ]);
 
     expect(result.text).toContain("title: Pet Shop");
-    expect(result.applied).toEqual([0, 1]);
     expect(result.failed).toEqual([]);
   });
 
@@ -160,7 +158,7 @@ describe("applyEdits", () => {
     ]);
 
     expect(result.text).not.toContain("title: Pets");
-    expect(result.applied).toEqual([0]);
+    expect(result.failed).toEqual([]);
   });
 
   it("reports no_match when oldString is not found", () => {
@@ -169,9 +167,13 @@ describe("applyEdits", () => {
     ]);
 
     expect(result.text).toBe(text);
-    expect(result.applied).toEqual([]);
     expect(result.failed).toEqual([
-      { index: 0, error: "no_match", matchCount: 0 },
+      {
+        index: 0,
+        oldString: "does not exist",
+        error: "no_match",
+        matchCount: 0,
+      },
     ]);
   });
 
@@ -181,9 +183,13 @@ describe("applyEdits", () => {
     ]);
 
     expect(result.text).toBe(text);
-    expect(result.applied).toEqual([]);
     expect(result.failed).toEqual([
-      { index: 0, error: "ambiguous", matchCount: 2 },
+      {
+        index: 0,
+        oldString: "description: OK",
+        error: "ambiguous",
+        matchCount: 2,
+      },
     ]);
   });
 
@@ -198,7 +204,6 @@ describe("applyEdits", () => {
 
     expect(result.text).not.toContain("description: OK");
     expect(result.text.split("description: Done")).toHaveLength(3);
-    expect(result.applied).toEqual([0]);
     expect(result.failed).toEqual([]);
   });
 
@@ -211,10 +216,19 @@ describe("applyEdits", () => {
 
     expect(result.text).toContain("title: Pet Store");
     expect(result.text).toContain("description: OK");
-    expect(result.applied).toEqual([1]);
     expect(result.failed).toEqual([
-      { index: 0, error: "no_match", matchCount: 0 },
-      { index: 2, error: "ambiguous", matchCount: 2 },
+      {
+        index: 0,
+        oldString: "missing",
+        error: "no_match",
+        matchCount: 0,
+      },
+      {
+        index: 2,
+        oldString: "description: OK",
+        error: "ambiguous",
+        matchCount: 2,
+      },
     ]);
   });
 });
