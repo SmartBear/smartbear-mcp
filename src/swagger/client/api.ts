@@ -34,7 +34,6 @@ import type {
 import {
   buildPortalName,
   buildSubdomainCandidate,
-  buildSuffixedSubdomain,
   isConflictError,
   isOrganizationPortalConflict,
 } from "./portal-utils";
@@ -106,6 +105,18 @@ function hasErrorsFound(
   value: unknown,
 ): value is { errorsFound: number } & Record<string, unknown> {
   return typeof value === "object" && value !== null && "errorsFound" in value;
+}
+
+/**
+ * Type guard to check if a value has a 'savedVersion' property
+ */
+function hasSavedVersion(
+  value: unknown,
+): value is { savedVersion: string } & Record<string, unknown> {
+  // Ensure the value is an object and the savedVersion is a non-empty string.
+  if (typeof value !== "object" || value === null) return false;
+  const sv = (value as { savedVersion?: unknown }).savedVersion;
+  return typeof sv === "string" && sv.length > 0;
 }
 
 /**
@@ -462,20 +473,16 @@ export class SwaggerAPI {
 
   /**
    * Create a portal for an organization that has none yet. The subdomain is
-   * derived from the organization name; on a subdomain conflict a candidate
-   * suffixed with part of the organization UUID is retried.
+   * derived from the organization name with an additional random suffix,
+   * mirroring the Portal UI's subdomain generation.
    */
   private async createPortalForOrganization(
     organizationId: string,
   ): Promise<{ portal: Portal; created: boolean }> {
     const organization = await this.findOrganizationById(organizationId);
-    const baseSubdomain = buildSubdomainCandidate(
-      organizationId,
-      organization?.name,
-    );
     const candidates = [
-      baseSubdomain,
-      buildSuffixedSubdomain(baseSubdomain, organizationId),
+      buildSubdomainCandidate(organization?.name),
+      buildSubdomainCandidate(organization?.name),
     ];
 
     const portalName = buildPortalName(organization?.name);
@@ -1481,7 +1488,7 @@ export class SwaggerAPI {
   /**
    * Standardize and fix an API definition using AI
    * @param params Parameters including owner, API name, version, and optional newVersion
-   * @returns Standardization response with status and fixed definition
+   * @returns Standardization response with status, fixed definition, and URL to the API
    */
   async standardizeApi(
     params: StandardizeApiParams,
@@ -1514,11 +1521,18 @@ export class SwaggerAPI {
       );
     }
 
-    if (!hasErrorsFound(result)) {
-      return { ...result, errorsFound: 0 } as StandardizeApiResponse;
+    // Attach `url` only when the server returned a non-empty `savedVersion`.
+    // Always ensure `errorsFound` exists (default 0) so callers don't have to guard.
+    const updated: StandardizeApiResponse = {
+      ...result,
+      errorsFound: hasErrorsFound(result) ? (result as any).errorsFound : 0,
+    } as StandardizeApiResponse;
+
+    if (hasSavedVersion(result)) {
+      updated.url = `${this.config.uiBasePath}/apis/${params.owner}/${params.api}/${result.savedVersion}`;
     }
 
-    return result as StandardizeApiResponse;
+    return updated;
   }
 
   async apiVersionExists({

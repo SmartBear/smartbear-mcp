@@ -1,4 +1,9 @@
 import { QMetryToolsHandlers } from "../config/constants";
+import {
+  executeGateReport,
+  exportHtmlReport,
+  getGateConfiguration,
+} from "./ai-agent";
 import { getAutomationStatus, importAutomationResults } from "./automation";
 import {
   createIssue,
@@ -128,4 +133,7 @@ export const QMETRY_HANDLER_MAP: Record<string, QMetryHandler> = {
   [QMetryToolsHandlers.FETCH_TEST_RUN_UDF_VALUES]: fetchTestRunUdfValues,
   [QMetryToolsHandlers.FETCH_ISSUE_EXECUTIONS]: fetchIssueExecutions,
   [QMetryToolsHandlers.FETCH_CASCADE_CHILD_VALUES]: fetchCascadeChildValues,
+  [QMetryToolsHandlers.FETCH_GATE_CONFIGURATION]: getGateConfiguration,
+  [QMetryToolsHandlers.EXECUTE_GATE_REPORT]: executeGateReport,
+  [QMetryToolsHandlers.EXPORT_HTML_REPORT]: exportHtmlReport,
 };

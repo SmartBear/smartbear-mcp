@@ -21,6 +21,10 @@ The following environment variables configure the QTM4J integration:
 
 **Most tools require an active project context.** Call `qtm4j_set_project_context` to set the active project before performing any project-specific operation. Automation tools (`qtm4j_upload_automation_result` and `qtm4j_get_automation_history`) are the exception — they work independently without any project context.
 
+## API Quota
+
+**MCP tools use the QMetry Open API, and their usage counts toward your per-customer quota limit.** Monitor your MCP tool usage to ensure you do not exceed your allocation. Refer to [QMetry Open API Call Limit](https://support.smartbear.com/qmetry-test-management-for-jira-cloud/docs/en/user-guide/qmetry-open-api/api-call-limit-for-qtm4j-cloud.html) for more details.
+
 # Available Tools
 
 ## Project Context

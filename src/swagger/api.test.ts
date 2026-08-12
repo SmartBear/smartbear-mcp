@@ -1086,6 +1086,18 @@ describe("SwaggerAPI", () => {
     const organizationId = "d36ff595-6406-4a1b-a1d5-90153ac8f334";
     const jsonHeaders = { "content-type": "application/json" };
 
+    const suffixRandom = 0.123456789;
+    const suffixFor = (r: number) =>
+      r.toString(36).substring(2, 5).padEnd(3, "0");
+
+    beforeEach(() => {
+      vi.spyOn(Math, "random").mockReturnValue(suffixRandom);
+    });
+
+    afterEach(() => {
+      vi.mocked(Math.random).mockRestore();
+    });
+
     it("should return portal details and products for an existing portal", async () => {
       fetchMock.mockResponse(async (req) => {
         const url = req.url;
@@ -1219,21 +1231,22 @@ describe("SwaggerAPI", () => {
 
       const result = await api.resolveOrganizationPortal({ organizationId });
 
+      const expectedSubdomain = `acmecorp-${suffixFor(suffixRandom)}`;
       expect(createBody).toEqual({
-        subdomain: "acme-corp",
+        subdomain: expectedSubdomain,
         swaggerHubOrganizationId: organizationId,
         name: "Acme Corp",
       });
       expect(result).toEqual({
         organizationId,
         portalId: "new-portal-id",
-        subdomain: "acme-corp",
+        subdomain: expectedSubdomain,
         portalCreated: true,
         products: [],
       });
     });
 
-    it("should fall back to a UUID-derived subdomain when the organization is not found", async () => {
+    it("should pad a missing organization name with random digits", async () => {
       let createBody: any;
       fetchMock.mockResponse(async (req) => {
         const url = req.url;
@@ -1267,11 +1280,12 @@ describe("SwaggerAPI", () => {
 
       const result = await api.resolveOrganizationPortal({ organizationId });
 
+      const expectedSubdomain = `111-${suffixFor(suffixRandom)}`;
       expect(createBody).toEqual({
-        subdomain: "portal-d36ff595",
+        subdomain: expectedSubdomain,
         swaggerHubOrganizationId: organizationId,
       });
-      expect(result.subdomain).toBe("portal-d36ff595");
+      expect(result.subdomain).toBe(expectedSubdomain);
       expect(result.portalCreated).toBe(true);
     });
 
@@ -1334,7 +1348,13 @@ describe("SwaggerAPI", () => {
       expect(result.portalCreated).toBe(false);
     });
 
-    it("should retry with a suffixed subdomain when the subdomain is taken", async () => {
+    it("should retry with a freshly randomized subdomain when the subdomain is taken", async () => {
+      const firstRandom = 0.111111;
+      const secondRandom = 0.777777;
+      vi.mocked(Math.random)
+        .mockReturnValueOnce(firstRandom)
+        .mockReturnValueOnce(secondRandom);
+
       const createBodies: any[] = [];
       fetchMock.mockResponse(async (req) => {
         const url = req.url;
@@ -1375,9 +1395,13 @@ describe("SwaggerAPI", () => {
 
       const result = await api.resolveOrganizationPortal({ organizationId });
 
-      expect(createBodies[0].subdomain).toBe("acme-corp");
-      expect(createBodies[1].subdomain).toBe("acme-corp-d36f");
-      expect(result.subdomain).toBe("acme-corp-d36f");
+      expect(createBodies[0].subdomain).toBe(
+        `acmecorp-${suffixFor(firstRandom)}`,
+      );
+      expect(createBodies[1].subdomain).toBe(
+        `acmecorp-${suffixFor(secondRandom)}`,
+      );
+      expect(result.subdomain).toBe(`acmecorp-${suffixFor(secondRandom)}`);
       expect(result.portalCreated).toBe(true);
     });
 

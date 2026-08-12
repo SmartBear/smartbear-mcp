@@ -1,5 +1,5 @@
 import z from "zod";
-
+import type { CacheService } from "../common/cache";
 import { getUserAgent } from "../common/info";
 import {
   isSamplingPolyfillResult,
@@ -53,6 +53,7 @@ import type {
   UpdatePacticipantInput,
   UpdateVersionInput,
 } from "./client/base";
+import { withPagination } from "./client/pagination";
 import {
   getOADMatcherRecommendations,
   getUserMatcherSelection,
@@ -87,6 +88,7 @@ export class PactflowClient implements Client {
   private baseUrl: string | undefined;
   private _clientType: ClientType | undefined;
   private _server: SmartBearMcpServer | undefined;
+  private cache: CacheService | undefined;
 
   /** Returns the configured MCP server instance. @throws Error if not yet configured. */
   get server(): SmartBearMcpServer {
@@ -125,6 +127,7 @@ export class PactflowClient implements Client {
     this.baseUrl = config.base_url;
     this.aiBaseUrl = `${this.baseUrl}/api/ai`;
     this._server = server;
+    this.cache = server.getCache();
   }
 
   /** Returns true if the client has been configured with a base URL and credentials. */
@@ -2397,7 +2400,18 @@ export class PactflowClient implements Client {
         }
 
         let result: any;
-        if (tool.enableElicitation) {
+        if (tool.paginated) {
+          if (!this.baseUrl || !this.cache) {
+            throw new ToolError(
+              "PactflowClient must be configured before registering paginated tools",
+            );
+          }
+          result = await withPagination(handler_fn.bind(this), handler, args, {
+            baseUrl: this.baseUrl,
+            authToken: this.requestHeaders?.Authorization,
+            cache: this.cache,
+          });
+        } else if (tool.enableElicitation) {
           result = await handler_fn.call(this, args, getInput);
         } else {
           result = await handler_fn.call(this, args);

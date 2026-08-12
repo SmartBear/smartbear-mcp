@@ -1635,9 +1635,13 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
 **Toolset:** Admin
 
 **Parameters:**
-- accountId (string) *required*: UUID of the system account",
+- accountId (string) *required*: UUID of the system account
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
       "accountId",
+      "pageNumber",
+      "pageSize",
     ],
     "outputSchema": undefined,
     "title": "Contract Testing: Admin Get System Account Tokens",
@@ -1737,8 +1741,12 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
 **Toolset:** Admin
 
 **Parameters:**
-None",
-    "inputSchema": [],
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
+    "inputSchema": [
+      "pageNumber",
+      "pageSize",
+    ],
     "outputSchema": undefined,
     "title": "Contract Testing: Admin List Permissions",
   },
@@ -1755,8 +1763,12 @@ None",
 **Toolset:** Admin
 
 **Parameters:**
-None",
-    "inputSchema": [],
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
+    "inputSchema": [
+      "pageNumber",
+      "pageSize",
+    ],
     "outputSchema": undefined,
     "title": "Contract Testing: Admin List Roles",
   },
@@ -1773,8 +1785,12 @@ None",
 **Toolset:** Admin
 
 **Parameters:**
-- teamId (string) *required*: UUID of the team",
+- teamId (string) *required*: UUID of the team
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
+      "pageNumber",
+      "pageSize",
       "teamId",
     ],
     "outputSchema": undefined,
@@ -1794,8 +1810,8 @@ None",
 
 **Parameters:**
 - q (string): Filter teams by name
-- page (number): Page number
-- size (number): Results per page",
+- page (number): Page number (default: 1)
+- size (number): Results per page (default: 5)",
     "inputSchema": [
       "page",
       "q",
@@ -1820,8 +1836,8 @@ None",
 - active (boolean): Filter by active/inactive status
 - q (string): Filter by name or email
 - userType (number): 0 = regular users, 1 = system accounts
-- page (number): Page number
-- size (number): Results per page",
+- page (number): Page number (default: 1)
+- size (number): Results per page (default: 5)",
     "inputSchema": [
       "active",
       "page",
@@ -2409,8 +2425,8 @@ None",
 - type (string): Filter events by type (e.g. 'pact_publication')
 - sort (string): Sort order: '+timestamp' (asc, default) or '-timestamp' (desc)
 - from (string): Start result set from this audit event UUID (keyset pagination)
-- pageNumber (number): Page number
-- pageSize (number): Results per page (max 100)
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (max 100) (default: 5)
 
 **Use Cases:** 1. Review recent changes to pacticipants, webhooks, or secrets 2. Investigate who published a specific pact or verification 3. Filter events by user or event type for compliance reporting 4. Track deployment recording activity across environments",
     "inputSchema": [
@@ -2441,10 +2457,14 @@ None",
 - providerName (string) *required*: Name of the provider
 - providerVersionNumber (string) *required*: Provider version number
 - consumerName (string) *required*: Name of the consumer
-- consumerVersionNumber (string) *required*: Consumer version number",
+- consumerVersionNumber (string) *required*: Consumer version number
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
       "consumerName",
       "consumerVersionNumber",
+      "pageNumber",
+      "pageSize",
       "providerName",
       "providerVersionNumber",
     ],
@@ -2465,8 +2485,12 @@ None",
 
 **Parameters:**
 - providerName (string) *required*: Name of the provider
-- providerVersionNumber (string) *required*: Provider version number",
+- providerVersionNumber (string) *required*: Provider version number
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
+      "pageNumber",
+      "pageSize",
       "providerName",
       "providerVersionNumber",
     ],
@@ -2487,8 +2511,12 @@ None",
 
 **Parameters:**
 - providerName (string) *required*: Name of the provider
-- providerVersionNumber (string) *required*: Provider version number",
+- providerVersionNumber (string) *required*: Provider version number
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
+      "pageNumber",
+      "pageSize",
       "providerName",
       "providerVersionNumber",
     ],
@@ -2511,10 +2539,14 @@ None",
 - providerName (string) *required*: Name of the provider
 - providerVersionNumber (string) *required*: Provider version number
 - consumerName (string) *required*: Name of the consumer
-- consumerVersionNumber (string) *required*: Consumer version number",
+- consumerVersionNumber (string) *required*: Consumer version number
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
       "consumerName",
       "consumerVersionNumber",
+      "pageNumber",
+      "pageSize",
       "providerName",
       "providerVersionNumber",
     ],
@@ -2535,8 +2567,12 @@ None",
 
 **Parameters:**
 - providerName (string) *required*: Name of the provider
-- providerVersionNumber (string) *required*: Provider version number",
+- providerVersionNumber (string) *required*: Provider version number
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
+      "pageNumber",
+      "pageSize",
       "providerName",
       "providerVersionNumber",
     ],
@@ -2559,10 +2595,14 @@ None",
 - providerName (string) *required*: Name of the provider
 - providerVersionNumber (string) *required*: Provider version number
 - consumerName (string) *required*: Name of the consumer
-- consumerVersionNumber (string) *required*: Consumer version number",
+- consumerVersionNumber (string) *required*: Consumer version number
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
       "consumerName",
       "consumerVersionNumber",
+      "pageNumber",
+      "pageSize",
       "providerName",
       "providerVersionNumber",
     ],
@@ -2585,10 +2625,14 @@ None",
 - providerName (string) *required*: Name of the provider
 - providerVersionNumber (string) *required*: Provider version number
 - consumerName (string) *required*: Name of the consumer
-- consumerVersionNumber (string) *required*: Consumer version number",
+- consumerVersionNumber (string) *required*: Consumer version number
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
       "consumerName",
       "consumerVersionNumber",
+      "pageNumber",
+      "pageSize",
       "providerName",
       "providerVersionNumber",
     ],
@@ -2609,8 +2653,12 @@ None",
 
 **Parameters:**
 - providerName (string) *required*: Name of the provider
-- providerVersionNumber (string) *required*: Provider version number",
+- providerVersionNumber (string) *required*: Provider version number
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
+      "pageNumber",
+      "pageSize",
       "providerName",
       "providerVersionNumber",
     ],
@@ -2631,8 +2679,12 @@ None",
 
 **Parameters:**
 - providerName (string) *required*: Name of the provider
-- providerVersionNumber (string) *required*: Provider version number",
+- providerVersionNumber (string) *required*: Provider version number
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
+      "pageNumber",
+      "pageSize",
       "providerName",
       "providerVersionNumber",
     ],
@@ -2655,10 +2707,14 @@ None",
 - providerName (string) *required*: Name of the provider
 - providerVersionNumber (string) *required*: Provider version number
 - consumerName (string) *required*: Name of the consumer
-- consumerVersionNumber (string) *required*: Consumer version number",
+- consumerVersionNumber (string) *required*: Consumer version number
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
       "consumerName",
       "consumerVersionNumber",
+      "pageNumber",
+      "pageSize",
       "providerName",
       "providerVersionNumber",
     ],
@@ -2702,8 +2758,8 @@ None",
 **Parameters:**
 - pacticipantName (string) *required*: Name of the pacticipant
 - branchName (string) *required*: Name of the branch
-- pageNumber (number): Page number
-- pageSize (number): Results per page",
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
       "branchName",
       "pacticipantName",
@@ -2744,9 +2800,13 @@ None",
 **Toolset:** Environments and Deployments
 
 **Parameters:**
-- environmentId (string) *required*: UUID of the environment",
+- environmentId (string) *required*: UUID of the environment
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
       "environmentId",
+      "pageNumber",
+      "pageSize",
     ],
     "outputSchema": undefined,
     "title": "Contract Testing: Get Currently Deployed Versions",
@@ -2764,9 +2824,13 @@ None",
 **Toolset:** Environments and Deployments
 
 **Parameters:**
-- environmentId (string) *required*: UUID of the environment",
+- environmentId (string) *required*: UUID of the environment
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
       "environmentId",
+      "pageNumber",
+      "pageSize",
     ],
     "outputSchema": undefined,
     "title": "Contract Testing: Get Currently Supported Versions",
@@ -2786,10 +2850,14 @@ None",
 **Parameters:**
 - pacticipantName (string) *required*: Name of the pacticipant
 - versionNumber (string) *required*: Version number
-- environmentId (string) *required*: UUID of the environment",
+- environmentId (string) *required*: UUID of the environment
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
       "environmentId",
       "pacticipantName",
+      "pageNumber",
+      "pageSize",
       "versionNumber",
     ],
     "outputSchema": undefined,
@@ -2828,8 +2896,12 @@ None",
 **Toolset:** Integrations and Network
 
 **Parameters:**
-- teamId (string) *required*: UUID of the team",
+- teamId (string) *required*: UUID of the team
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
+      "pageNumber",
+      "pageSize",
       "teamId",
     ],
     "outputSchema": undefined,
@@ -2930,9 +3002,13 @@ None",
 **Toolset:** Integrations and Network
 
 **Parameters:**
-- pacticipantName (string) *required*: Name of the pacticipant to get network for",
+- pacticipantName (string) *required*: Name of the pacticipant to get network for
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
       "pacticipantName",
+      "pageNumber",
+      "pageSize",
     ],
     "outputSchema": undefined,
     "title": "Contract Testing: Get Pacticipant Network",
@@ -3002,8 +3078,12 @@ None",
 **Toolset:** Fetch Provider States
 
 **Parameters:**
-- provider (string) *required*: name of the provider to retrieve states for",
+- provider (string) *required*: name of the provider to retrieve states for
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
+      "pageNumber",
+      "pageSize",
       "provider",
     ],
     "outputSchema": undefined,
@@ -3024,10 +3104,14 @@ None",
 **Parameters:**
 - pacticipantName (string) *required*: Name of the pacticipant
 - versionNumber (string) *required*: Version number
-- environmentId (string) *required*: UUID of the environment",
+- environmentId (string) *required*: UUID of the environment
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
       "environmentId",
       "pacticipantName",
+      "pageNumber",
+      "pageSize",
       "versionNumber",
     ],
     "outputSchema": undefined,
@@ -3140,8 +3224,12 @@ None",
 **Toolset:** User, Tokens and Preferences
 
 **Parameters:**
-None",
-    "inputSchema": [],
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
+    "inputSchema": [
+      "pageNumber",
+      "pageSize",
+    ],
     "outputSchema": undefined,
     "title": "Contract Testing: List API Tokens",
   },
@@ -3161,7 +3249,7 @@ None",
 - pacticipantName (string) *required*: Name of the pacticipant
 - q (string): Filter branches by name
 - pageNumber (number): Page number (default: 1)
-- pageSize (number): Results per page (default: 100)",
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
       "pacticipantName",
       "pageNumber",
@@ -3184,8 +3272,12 @@ None",
 **Toolset:** Environments and Deployments
 
 **Parameters:**
-None",
-    "inputSchema": [],
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
+    "inputSchema": [
+      "pageNumber",
+      "pageSize",
+    ],
     "outputSchema": undefined,
     "title": "Contract Testing: List Environments",
   },
@@ -3202,8 +3294,12 @@ None",
 **Toolset:** Integrations and Network
 
 **Parameters:**
-None",
-    "inputSchema": [],
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
+    "inputSchema": [
+      "pageNumber",
+      "pageSize",
+    ],
     "outputSchema": undefined,
     "title": "Contract Testing: List Integrations",
   },
@@ -3220,8 +3316,8 @@ None",
 **Toolset:** Labels
 
 **Parameters:**
-- pageNumber (number): Page number
-- pageSize (number): Results per page",
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
       "pageNumber",
       "pageSize",
@@ -3243,8 +3339,8 @@ None",
 
 **Parameters:**
 - pacticipantName (string) *required*: Name of the pacticipant
-- pageNumber (number): Page number
-- pageSize (number): Results per page",
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
       "pacticipantName",
       "pageNumber",
@@ -3267,7 +3363,7 @@ None",
 
 **Parameters:**
 - pageNumber (number): Page number (default: 1)
-- pageSize (number): Number of results per page",
+- pageSize (number): Number of results per page (default: 5)",
     "inputSchema": [
       "pageNumber",
       "pageSize",
@@ -3288,9 +3384,13 @@ None",
 **Toolset:** Labels
 
 **Parameters:**
-- labelName (string) *required*: Label name to filter by",
+- labelName (string) *required*: Label name to filter by
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
     "inputSchema": [
       "labelName",
+      "pageNumber",
+      "pageSize",
     ],
     "outputSchema": undefined,
     "title": "Contract Testing: List Pacticipants by Label",
@@ -3308,8 +3408,12 @@ None",
 **Toolset:** Secrets
 
 **Parameters:**
-None",
-    "inputSchema": [],
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
+    "inputSchema": [
+      "pageNumber",
+      "pageSize",
+    ],
     "outputSchema": undefined,
     "title": "Contract Testing: List Secrets",
   },
@@ -3326,8 +3430,12 @@ None",
 **Toolset:** Webhooks
 
 **Parameters:**
-None",
-    "inputSchema": [],
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
+    "inputSchema": [
+      "pageNumber",
+      "pageSize",
+    ],
     "outputSchema": undefined,
     "title": "Contract Testing: List Webhooks",
   },
@@ -4605,6 +4713,111 @@ Expected Output: Test suite created with details and metadata. Example uses: par
     "outputSchema": undefined,
     "title": "QMetry: Create Test Suite",
   },
+  "qmetry_execute_quality_gate_report": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "QMetry: Execute Quality Gate Report",
+    },
+    "description": "Execute a quality gate report by forwarding the request to the backend analytics engine and returning the results.
+
+**Toolset:** AI Agent
+
+**Parameters:**
+- projectKey (string): Project key - unique identifier for the project (default: "default")
+- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
+- reportName (string) *required*: Report name identifier (e.g. 'RR' for Release Readiness).
+- gateIdentifier (string) *required*: Gate identifier to execute the report against (e.g. 'GATE1').
+- projectId (number) *required*: Numeric project ID for the report scope.
+- releaseId (number): Optional release ID to scope the report to a specific release.
+- cycleIds (array): Optional array of cycle IDs to scope the report to specific cycles.
+- page (number): Optional page number for paginated report results.
+- limit (number): Maximum number of records to return per page. Defaults to 100 if not specified. (default: 100)
+
+**Use Cases:** 1. Generate a release readiness report for a specific project, release, and cycle 2. Execute a quality gate assessment to evaluate project health against gate criteria 3. Run a gate report scoped to specific cycles within a release 4. Produce analytics data for quality gate evaluation and decision-making
+
+**Examples:**
+1. Execute a release readiness report for project 45851, release 90698, cycle 129140
+\`\`\`json
+{
+  "reportName": "RR",
+  "gateIdentifier": "GATE1",
+  "projectId": 45851,
+  "releaseId": 90698,
+  "cycleIds": [
+    129140
+  ]
+}
+\`\`\`
+Expected Output: { "data": [...], "total": 0, "success": true, "page": {} }
+
+2. Execute a gate report without release/cycle scoping
+\`\`\`json
+{
+  "reportName": "RR",
+  "gateIdentifier": "GATE1",
+  "projectId": 45851
+}
+\`\`\`
+Expected Output: { "data": [...], "total": 0, "success": true, "page": {} }
+
+**Hints:** 1. REQUIRED: 'reportName' identifies the report type (e.g. 'RR' for Release Readiness). 2. REQUIRED: 'gateIdentifier' identifies which gate to evaluate (e.g. 'GATE1'). 3. REQUIRED: 'projectId' must be a valid numeric project ID. 4. OPTIONAL: 'releaseId' scopes the report to a specific release. 5. OPTIONAL: 'cycleIds' scopes the report to specific test cycles within the release. 6. OPTIONAL: 'page' specifies the page number for paginated report results. 7. OPTIONAL: 'limit' sets the maximum number of records per page (defaults to 100). 8. Call 'Fetch Quality Gate Configuration' first to discover available gates and report parameters. 9. The response is returned exactly as received from the backend — no transformation is applied.",
+    "inputSchema": [
+      "baseUrl",
+      "cycleIds",
+      "gateIdentifier",
+      "limit",
+      "page",
+      "projectId",
+      "projectKey",
+      "releaseId",
+      "reportName",
+    ],
+    "outputSchema": undefined,
+    "title": "QMetry: Execute Quality Gate Report",
+  },
+  "qmetry_export_html_report": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+      "title": "QMetry: Export HTML Report",
+    },
+    "description": "Export HTML content as a downloadable report file via the backend.
+
+**Toolset:** AI Agent
+
+**Parameters:**
+- projectKey (string): Project key - unique identifier for the project (default: "default")
+- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
+- htmlContent (string) *required*: HTML content to be exported as a report.
+- fileName (string) *required*: Name for the exported report file (without extension).
+
+**Use Cases:** 1. Export a generated release readiness report as an HTML file 2. Save AI-generated quality gate analysis as a downloadable report 3. Create a shareable HTML document from report content
+
+**Examples:**
+1. Export a release readiness report
+\`\`\`json
+{
+  "htmlContent": "<h1>Release Readiness Report</h1><p>Generated by AI Agent.</p>",
+  "fileName": "release-readiness-report"
+}
+\`\`\`
+Expected Output: Report file generated and returned by the backend.
+
+**Hints:** 1. REQUIRED: 'htmlContent' is the full HTML string to export. 2. REQUIRED: 'fileName' is the report file name (without extension). 3. Typically called after generating report content from 'Execute Quality Gate Report' results.",
+    "inputSchema": [
+      "baseUrl",
+      "fileName",
+      "htmlContent",
+      "projectKey",
+    ],
+    "outputSchema": undefined,
+    "title": "QMetry: Export HTML Report",
+  },
   "qmetry_fetch_automation_status": {
     "annotations": {
       "destructiveHint": false,
@@ -5546,6 +5759,46 @@ Expected Output: MAC project configuration with available views and folders
     ],
     "outputSchema": undefined,
     "title": "QMetry: Fetch QMetry Project Info",
+  },
+  "qmetry_fetch_quality_gate_configuration": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "QMetry: Fetch Quality Gate Configuration",
+    },
+    "description": "Fetch the quality gate configuration for a project and AI agent, including assessment scope and gate criteria.
+
+**Toolset:** AI Agent
+
+**Parameters:**
+- projectKey (string): Project key - unique identifier for the project (default: "default")
+- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
+- projectId (number) *required*: Numeric project ID for which to fetch the quality gate configuration. This is the internal numeric identifier, not the project key.
+- agentIdentifier (string) *required*: Unique identifier of the AI agent whose gate configuration should be retrieved.
+
+**Use Cases:** 1. Retrieve gate criteria and thresholds before generating a quality gate report 2. Check which quality gates are configured for a project and agent 3. Inspect assessment scope and gate parameters for release readiness evaluation
+
+**Examples:**
+1. Fetch gate configuration for project 45851 and agent 'RR'
+\`\`\`json
+{
+  "projectId": 45851,
+  "agentIdentifier": "RR"
+}
+\`\`\`
+Expected Output: Gate configuration object with assessment scope, gate criteria, and thresholds.
+
+**Hints:** 1. REQUIRED: 'projectId' must be a valid numeric project ID (not the project key). 2. REQUIRED: 'agentIdentifier' must match a registered AI agent identifier. 3. Call this tool before 'Execute Quality Gate Report' to understand the gate criteria and available gates. 4. If AI Agent is not enabled for the project, the backend will return an appropriate error.",
+    "inputSchema": [
+      "agentIdentifier",
+      "baseUrl",
+      "projectId",
+      "projectKey",
+    ],
+    "outputSchema": undefined,
+    "title": "QMetry: Fetch Quality Gate Configuration",
   },
   "qmetry_fetch_releases_and_cycles": {
     "annotations": {
@@ -11439,7 +11692,7 @@ None",
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
-      "openWorldHint": true,
+      "openWorldHint": false,
       "readOnlyHint": false,
       "title": "Swagger: Create Documentation Page",
     },
@@ -11480,7 +11733,7 @@ None",
     "annotations": {
       "destructiveHint": true,
       "idempotentHint": true,
-      "openWorldHint": true,
+      "openWorldHint": false,
       "readOnlyHint": false,
       "title": "Swagger: Create or Update API",
     },
@@ -11510,7 +11763,7 @@ None",
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
-      "openWorldHint": true,
+      "openWorldHint": false,
       "readOnlyHint": false,
       "title": "Swagger: Create Portal",
     },
@@ -11520,7 +11773,7 @@ None",
 
 **Parameters:**
 - name (string): The display name for the portal - shown to users and in branding (3-40 characters)
-- subdomain (string) *required*: The portal subdomain - used in the portal URL (e.g., 'myportal' for myportal.example.com). Must be unique, lowercase, 3-20 characters, alphanumeric with hyphens
+- subdomain (string) *required*: The portal subdomain - used in the portal URL (e.g., 'myportal' for myportal.example.com). Must be unique, lowercase, 3-20 characters, alphanumeric with hyphens. Recommended: slugified organization name plus a random 3-character suffix (e.g., 'acmecorp-k7p') to avoid collisions
 - offline (boolean): If true, the portal will not be visible to customers - useful for development/staging environments. Defaults to false
 - routing (string): Routing strategy for the portal - either 'browser' (client-side routing) or 'proxy' (server-side routing). Defaults to 'browser'
 - credentialsEnabled (boolean): Whether authentication credentials are enabled for accessing the portal. When true, users can authenticate to access private content. Defaults to true
@@ -11554,7 +11807,7 @@ None",
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
-      "openWorldHint": true,
+      "openWorldHint": false,
       "readOnlyHint": false,
       "title": "Swagger: Create Portal Product",
     },
@@ -11596,7 +11849,7 @@ None",
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
-      "openWorldHint": true,
+      "openWorldHint": false,
       "readOnlyHint": false,
       "title": "Swagger: Create Table Of Contents",
     },
@@ -11631,7 +11884,7 @@ None",
     "annotations": {
       "destructiveHint": true,
       "idempotentHint": true,
-      "openWorldHint": true,
+      "openWorldHint": false,
       "readOnlyHint": false,
       "title": "Swagger: Delete Portal Product",
     },
@@ -11653,7 +11906,7 @@ None",
     "annotations": {
       "destructiveHint": true,
       "idempotentHint": true,
-      "openWorldHint": true,
+      "openWorldHint": false,
       "readOnlyHint": false,
       "title": "Swagger: Delete Table Of Contents",
     },
@@ -11959,7 +12212,7 @@ None",
     "annotations": {
       "destructiveHint": true,
       "idempotentHint": true,
-      "openWorldHint": true,
+      "openWorldHint": false,
       "readOnlyHint": false,
       "title": "Swagger: Publish Portal Product",
     },
@@ -11988,7 +12241,7 @@ None",
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
-      "openWorldHint": true,
+      "openWorldHint": false,
       "readOnlyHint": false,
       "title": "Swagger: Resolve Organization Portal",
     },
@@ -12112,7 +12365,7 @@ None",
       "readOnlyHint": false,
       "title": "Swagger: Standardize API",
     },
-    "description": "Standardize and fix an API definition using AI to ensure compliance with governance policies. Scans the API definition for standardization errors and automatically fixes them using SmartBear AI. Optionally provide 'newVersion' (e.g. patch bump '1.0.0' → '1.0.1') to save the fixed definition as a new version — omitting it will overwrite the current version. Returns the number of errors found and the fixed definition if successful. Use this tool when users ask to standardize, fix, govern, or ensure governance compliance of APIs.
+    "description": "Standardize and fix an API definition using AI to ensure compliance with governance policies. Scans the API definition for standardization errors and automatically fixes them using SmartBear AI. Optionally provide 'newVersion' (e.g. patch bump '1.0.0' → '1.0.1') to save the fixed definition as a new version — omitting it will overwrite the current version. Returns the number of errors found, the fixed definition, and a URL to view the standardized API. Use this tool when users ask to standardize, fix, govern, or ensure governance compliance of APIs.
 
 **Toolset:** Registry API
 
@@ -12132,6 +12385,7 @@ None",
       "fixedDefinition",
       "message",
       "savedVersion",
+      "url",
     ],
     "title": "Swagger: Standardize API",
   },
@@ -12139,7 +12393,7 @@ None",
     "annotations": {
       "destructiveHint": true,
       "idempotentHint": true,
-      "openWorldHint": true,
+      "openWorldHint": false,
       "readOnlyHint": false,
       "title": "Swagger: Update Document",
     },
@@ -12172,7 +12426,7 @@ None",
     "annotations": {
       "destructiveHint": true,
       "idempotentHint": true,
-      "openWorldHint": true,
+      "openWorldHint": false,
       "readOnlyHint": false,
       "title": "Swagger: Update Portal",
     },
@@ -12220,7 +12474,7 @@ None",
     "annotations": {
       "destructiveHint": true,
       "idempotentHint": true,
-      "openWorldHint": true,
+      "openWorldHint": false,
       "readOnlyHint": false,
       "title": "Swagger: Update Portal Product",
     },

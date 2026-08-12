@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
+import { CacheService } from "../common/cache";
 import { setProcessClientIdentity } from "../common/client-identity";
 import { USER_AGENT } from "../common/info";
 import { PactflowClient } from "./client";
@@ -20,6 +21,7 @@ async function createConfiguredClient(config: {
   const mockServer = {
     server: vi.fn(),
     getClientInfo: vi.fn().mockReturnValue(config.clientInfo),
+    getCache: vi.fn().mockReturnValue(new CacheService()),
   } as any;
   const defaultConfig = {
     base_url: "https://example.com",
@@ -149,6 +151,44 @@ describe("PactFlowClient", () => {
       await client.registerTools(mockRegister, mockGetInput);
 
       expect(mockRegister).not.toHaveBeenCalled();
+    });
+
+    it("routes paginated tools through withPagination and reuses the cached result across pages", async () => {
+      const fakeTools = [
+        {
+          title: "Fake Paginated Tool",
+          summary: "summary",
+          purpose: "purpose",
+          inputSchema: undefined,
+          handler: "listWebhooks",
+          clients: ["pactflow"],
+          paginated: true,
+        },
+      ];
+      vi.spyOn(toolsModule, "TOOLS", "get").mockReturnValue(fakeTools as any);
+
+      const client = await createConfiguredClient({ token: "token" });
+      // 1st fetch: registerTools' internal checkAIEntitlements() call — reuses
+      // the same canned body, which is harmless since it has no `aiEnabled`
+      // field and this fake tool has no `tags`, so it's registered either way.
+      fetchMock.mockResponse(
+        JSON.stringify({ _embedded: { webhooks: [{ id: "a" }, { id: "b" }] } }),
+      );
+
+      const registered: Array<(args: any, extra: any) => Promise<any>> = [];
+      const register = vi.fn((_params, callback) => registered.push(callback));
+
+      await client.registerTools(register as any, vi.fn());
+
+      const page1 = await registered[0]({ pageNumber: 1, pageSize: 1 }, {});
+      const page2 = await registered[0]({ pageNumber: 2, pageSize: 1 }, {});
+
+      // 2 total: 1 for checkAIEntitlements + 1 for listWebhooks (page 2 is a cache hit).
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      const page1Body = JSON.parse(page1.content[0].text);
+      const page2Body = JSON.parse(page2.content[0].text);
+      expect(page1Body._embedded.webhooks).toEqual([{ id: "a" }]);
+      expect(page2Body._embedded.webhooks).toEqual([{ id: "b" }]);
     });
   });
 
@@ -3452,6 +3492,75 @@ describe("PactFlowClient", () => {
         ).rejects.toThrow(
           "Get System Account Tokens Failed - status: 404 Not Found",
         );
+      });
+    });
+
+    describe("BDCT pagination integration", () => {
+      it("caches the raw BDCT response across pages and passes it through unchanged (no array to paginate)", async () => {
+        // An earlier "registerTools" test leaves `toolsModule.TOOLS` permanently
+        // stubbed via vi.spyOn(...).mockReturnValue(...) (vi.clearAllMocks() in
+        // the outer beforeEach clears call history but not that stub). Restore
+        // it so this test drives the real TOOLS array, as intended.
+        vi.restoreAllMocks();
+
+        // 1st fetch: registerTools' internal checkAIEntitlements() call.
+        fetchMock.mockResponseOnce(JSON.stringify({ aiEnabled: true }));
+        // 2nd fetch: the actual BDCT provider-contract request (cache miss on page 1).
+        fetchMock.mockResponseOnce(
+          JSON.stringify({
+            verificationStatus: "success",
+            _embedded: { providerVersion: { number: "1.0.0" } },
+          }),
+        );
+
+        const registered: Array<(args: any, extra: any) => Promise<any>> = [];
+        const register = vi.fn((params: any, callback: any) => {
+          if (params.title === "Get BDCT Provider Contract")
+            registered.push(callback);
+        });
+
+        await client.registerTools(register as any, vi.fn());
+        expect(registered).toHaveLength(1);
+
+        const page1 = await registered[0](
+          {
+            providerName: "prov",
+            providerVersionNumber: "1.0.0",
+            pageNumber: 1,
+            pageSize: 5,
+          },
+          {},
+        );
+        const page2 = await registered[0](
+          {
+            providerName: "prov",
+            providerVersionNumber: "1.0.0",
+            pageNumber: 2,
+            pageSize: 5,
+          },
+          {},
+        );
+
+        // Only 2 fetches total (entitlements + one BDCT fetch) — page 2 is a cache hit.
+        expect(fetchMock).toHaveBeenCalledTimes(2);
+
+        const page1Body = JSON.parse(page1.content[0].text);
+        const page2Body = JSON.parse(page2.content[0].text);
+        expect(page1Body.verificationStatus).toBe("success");
+        expect(page1Body.pagination).toEqual({
+          pageNumber: 1,
+          pageSize: 5,
+          totalItems: 1,
+          totalPages: 1,
+        });
+        expect(page2Body).toEqual({
+          pagination: {
+            pageNumber: 2,
+            pageSize: 5,
+            totalItems: 1,
+            totalPages: 1,
+          },
+        });
       });
     });
   });
