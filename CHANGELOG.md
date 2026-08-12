@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- [Swagger] Corrected tool annotation hints for the Functional Testing tools so they no longer fall back to registration defaults: `run_test` and `run_suite` are now declared open-world (`openWorldHint: true`), `cancel_suite_execution` is declared destructive (`destructiveHint: true`), and all tools use the shared `READ_ONLY`/`WRITE`/`WRITE_DESTRUCTIVE` presets to set `readOnlyHint`/`destructiveHint`/`openWorldHint` explicitly.
+
 ## [0.35.0] - 2026-08-11
 
 ### Added
