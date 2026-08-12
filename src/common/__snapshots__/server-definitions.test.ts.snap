@@ -12178,7 +12178,7 @@ None",
     "annotations": {
       "destructiveHint": true,
       "idempotentHint": true,
-      "openWorldHint": true,
+      "openWorldHint": false,
       "readOnlyHint": false,
       "title": "Swagger: Patch API",
     },
