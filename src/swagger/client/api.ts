@@ -1521,7 +1521,7 @@ export class SwaggerAPI {
     return result as StandardizeApiResponse;
   }
 
-  private async assertVersionNotExists({
+  async apiVersionExists({
     owner,
     apiName,
     version,
@@ -1529,30 +1529,33 @@ export class SwaggerAPI {
     owner: string;
     apiName: string;
     version: string;
-  }): Promise<void> {
+  }): Promise<boolean> {
     const response = await this.fetchApiDefinitionResponse(
       { owner, api: apiName, version },
       { accept: "text/plain" },
     );
-    if (response.status === 404) return;
+    if (response.status === 404) return false;
     if (!response.ok) {
       const errorText = await response.text().catch(() => "");
       throw new ToolError(
-        `SwaggerHub Registry API patchApi failed while checking version - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}. owner=${owner}, apiName=${apiName}, version=${version}`,
+        `SwaggerHub Registry API apiVersionExists failed - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}. owner=${owner}, apiName=${apiName}, version=${version}`,
       );
     }
-    throw new ToolError(
-      `Version ${version} already exists for ${owner}/${apiName}. Choose a different version name or omit newVersion to patch in place.`,
-    );
+    return true;
   }
 
   async patchApi(params: PatchApiParams): Promise<PatchApiResponse> {
     if (params.newVersion) {
-      await this.assertVersionNotExists({
+      const exists = await this.apiVersionExists({
         owner: params.owner,
         apiName: params.apiName,
         version: params.newVersion,
       });
+      if (exists) {
+        throw new ToolError(
+          `Version ${params.newVersion} already exists for ${params.owner}/${params.apiName}. Choose a different version name or omit newVersion to patch in place.`,
+        );
+      }
     }
 
     const targetVersion = params.newVersion || params.version;

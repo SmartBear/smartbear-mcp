@@ -1460,8 +1460,6 @@ describe("SwaggerAPI", () => {
   describe("patchApi", () => {
     const owner = "orgname";
     const apiName = "petstore";
-    const jsonHeaders = { "content-type": "application/json" };
-    const textHeaders = { "content-type": "text/plain" };
 
     const baseDefinition = [
       "openapi: 3.0.0",
@@ -1484,62 +1482,11 @@ describe("SwaggerAPI", () => {
       "",
     ].join("\n");
 
-    function mockRoutes(handlers: {
-      getVersion?: (version: string) => { status: number; body?: string };
-      save?: () => { status: number; version: string };
-    }) {
-      fetchMock.mockResponse(async (req) => {
-        const url = req.url;
-        const method = req.method;
-
-        const getMatch = /\/apis\/orgname\/petstore\/([^/?]+)$/.exec(
-          url.split("?")[0],
-        );
-        if (getMatch && method === "GET") {
-          const version = decodeURIComponent(getMatch[1]);
-          const result = handlers.getVersion?.(version) ?? {
-            status: 404,
-          };
-          return {
-            status: result.status,
-            body: result.body ?? "",
-            headers: textHeaders,
-          };
-        }
-
-        if (
-          url.startsWith(`${config.registryBasePath}/apis/orgname/petstore?`) &&
-          method === "POST"
-        ) {
-          const result = handlers.save?.() ?? { status: 200, version: "1.0.1" };
-          return {
-            status: result.status,
-            body: "",
-            headers: { ...jsonHeaders, "X-Version": result.version },
-          };
-        }
-
-        throw new Error(`Unexpected request: ${method} ${url}`);
-      });
-    }
-
-    it("applies edits, sets info.version, and saves without scanning by default", async () => {
-      let saved = false;
-      mockRoutes({
-        getVersion: (version) => {
-          if (version === "1.0.1") {
-            return saved
-              ? { status: 200, body: baseDefinition }
-              : { status: 404 };
-          }
-          if (version === "1.0.0") return { status: 200, body: baseDefinition };
-          return { status: 404 };
-        },
-        save: () => {
-          saved = true;
-          return { status: 200, version: "1.0.1" };
-        },
-      });
+    it("applies edits, sets info.version, and saves api", async () => {
+      fetchMock
+        .mockResponseOnce("", { status: 404 })
+        .mockResponseOnce(baseDefinition)
+        .mockResponseOnce("", { headers: { "X-Version": "1.0.1" } });
 
       const result = await api.patchApi({
         owner,
@@ -1555,6 +1502,22 @@ describe("SwaggerAPI", () => {
         ],
       });
 
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        1,
+        `${DUMMY_REGISTRY_BASE_PATH}/apis/orgname/petstore/1.0.1`,
+        expect.objectContaining({ method: "GET" }),
+      );
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        2,
+        `${DUMMY_REGISTRY_BASE_PATH}/apis/orgname/petstore/1.0.0`,
+        expect.objectContaining({ method: "GET" }),
+      );
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        3,
+        `${DUMMY_REGISTRY_BASE_PATH}/apis/orgname/petstore?isPrivate=true`,
+        expect.objectContaining({ method: "POST" }),
+      );
+
       expect(result.saved).toBe(true);
       expect(result.applied).toEqual([0]);
       expect(result.failed).toEqual([]);
@@ -1566,21 +1529,7 @@ describe("SwaggerAPI", () => {
     });
 
     it("rejects a newVersion that already exists without saving", async () => {
-      const refinedDefinition = baseDefinition.replace(
-        "version: 1.0.0",
-        "version: 1.0.1",
-      );
-      let saveCalls = 0;
-      mockRoutes({
-        getVersion: (version) =>
-          version === "1.0.1"
-            ? { status: 200, body: refinedDefinition }
-            : { status: 404 },
-        save: () => {
-          saveCalls++;
-          return { status: 200, version: "1.0.1" };
-        },
-      });
+      fetchMock.mockResponseOnce(baseDefinition);
 
       await expect(
         api.patchApi({
@@ -1594,20 +1543,13 @@ describe("SwaggerAPI", () => {
         }),
       ).rejects.toThrow(/already exists/i);
 
-      expect(saveCalls).toBe(0);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
     });
 
-    it("overwrites the base version when newVersion is omitted", async () => {
-      const fetchedVersions: string[] = [];
-      mockRoutes({
-        getVersion: (version) => {
-          fetchedVersions.push(version);
-          return version === "1.0.0"
-            ? { status: 200, body: baseDefinition }
-            : { status: 404 };
-        },
-        save: () => ({ status: 200, version: "1.0.0" }),
-      });
+    it("overwrites the base version when newVersion is not provided", async () => {
+      fetchMock
+        .mockResponseOnce(baseDefinition)
+        .mockResponseOnce("", { headers: { "X-Version": "1.0.0" } });
 
       const result = await api.patchApi({
         owner,
@@ -1618,18 +1560,19 @@ describe("SwaggerAPI", () => {
         ],
       });
 
-      expect(new Set(fetchedVersions)).toEqual(new Set(["1.0.0"]));
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        1,
+        `${DUMMY_REGISTRY_BASE_PATH}/apis/orgname/petstore/1.0.0`,
+        expect.objectContaining({ method: "GET" }),
+      );
       expect(result.saved).toBe(true);
       expect(result.version).toBe("1.0.0");
     });
 
     it("reports no_match and ambiguous failures without saving", async () => {
-      mockRoutes({
-        getVersion: (version) =>
-          version === "1.0.0"
-            ? { status: 200, body: baseDefinition }
-            : { status: 404 },
-      });
+      fetchMock
+        .mockResponseOnce("", { status: 404 })
+        .mockResponseOnce(baseDefinition);
 
       const result = await api.patchApi({
         owner,
@@ -1649,6 +1592,7 @@ describe("SwaggerAPI", () => {
         { index: 0, error: "no_match", matchCount: 0 },
         { index: 2, error: "ambiguous", matchCount: 2 },
       ]);
+      expect(fetchMock).toHaveBeenCalledTimes(2);
     });
   });
 });
