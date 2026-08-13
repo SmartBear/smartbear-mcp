@@ -281,5 +281,8 @@ The QMetry client provides the following test management capabilities as listed 
 
 ## Notes
 
--   Test Run UDFs support in `qmetry_testcase_executions`, `get_testcase_runs_by_testsuite_run`, and `fetch_issue_executions` is available from QMetry version 8.26.0
-onwards.
+-   UDF (User Defined Field) support is available from QMetry version 8.26.0 onwards for the following tools:
+    -   **Test Run UDFs** — readable via `qmetry_testcase_executions`, `get_testcase_runs_by_testsuite_run`, and `fetch_issue_executions`.
+    -   **Test Case UDFs** — configurable during creation and updates via `create_test_case` and `update_test_case`.
+    -   **Test Suite UDFs** — configurable during creation and updates via `create_test_suite` and `update_test_suite`.
+    -   **Issue UDFs** — configurable during creation and updates via `create_issue` and `update_issue`.
