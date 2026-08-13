@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- [Swagger] Fixed `swagger_get_document` and `swagger_update_document` tools returning `MCP error -32602` schema mismatch when the API response contained additional properties not defined in the output schema.
+
 ## [0.35.0] - 2026-08-11
 
 ### Added
