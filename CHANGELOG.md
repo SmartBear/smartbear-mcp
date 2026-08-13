@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- [QMetry] `Fetch Issue Executions` now resolves lookup/multi-lookup Test Run UDF values to display labels (raw ID retained in `rawValue`). [#662](https://github.com/SmartBear/smartbear-mcp/pull/662)
+
 ## [0.35.0] - 2026-08-11
 
 ### Added
