@@ -21,18 +21,36 @@ For accessing the API, you must generate an access key in Jira. To generate an a
 choose the option “Zephyr API keys". For more information, please check out the [documentation](https://support.smartbear.com/zephyr/docs/en/rest-api/api-access-tokens-management.html).
 
 ## Accessing the API
-The API is available at the following base URL:
+The API is available at different base URLs depending on your data residency region:
+
+**US region:**
 ```
 https://api.zephyrscale.smartbear.com/v2
 ```
-For example, the final URL for retrieving test cases would be:
-```
-https://api.zephyrscale.smartbear.com/v2/testcases
-```
-For EU region, the API can be accessed at the following base URL:
+
+**EU(eu-west-1) region:**
 ```
 https://eu.api.zephyrscale.smartbear.com/v2
 ```
+
+**AU(ap-southeast-1) region:**
+```
+https://au.api.zephyrscale.smartbear.com/v2
+```
+
+**DE(eu-central-1) region:**
+```
+https://de.api.zephyrscale.smartbear.com/v2
+```
+
+### Example API Calls
+
+Append the specific endpoint path to your region's base URL. For example, to retrieve test cases:
+
+- **US:** `https://api.zephyrscale.smartbear.com/v2/testcases`
+- **EU:** `https://eu.api.zephyrscale.smartbear.com/v2/testcases`
+- **AU:** `https://au.api.zephyrscale.smartbear.com/v2/testcases`
+- **DE:** `https://de.api.zephyrscale.smartbear.com/v2/testcases`
 
 ## Making Authenticated Requests
 To authenticate subsequent API requests, you must provide a valid token in an HTTP header, which is the key generated on the previous step:
@@ -370,6 +388,100 @@ export const ListTestCases200Response = zod
   })
   .strict();
 
+export const ListTestCases400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A query parameter failed validation at the API layer (projectKey pattern, or the numeric bounds maxResults >= 1, startAt 0..1000000, folderId >= 1, jiraProjectVersionId >= 1).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("A numeric query parameter was sent with a non-numeric value."),
+]);
+
+export const ListTestCases401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const ListTestCases404Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The projectKey filter refers to a project that does not exist or is deactivated.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource does not exist, or the caller does not have access to its project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource belongs to a disabled project, or a project that does not exist.",
+    ),
+]);
+
+export const ListTestCases500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
 export const ListTestCasesDefaultResponse = zod
   .object({
     errorCode: zod.number(),
@@ -387,8 +499,6 @@ export const createTestCaseBodyNameMax = 255;
 
 export const createTestCaseBodyNameRegExp = /^(?!\\s*$).+/;
 export const createTestCaseBodyEstimatedTimeMin = 0;
-
-export const createTestCaseBodyComponentIdMin = 0;
 
 export const createTestCaseBodyPriorityNameMax = 255;
 
@@ -423,7 +533,7 @@ export const CreateTestCaseBody = zod
       .describe("Estimated duration in milliseconds."),
     componentId: zod
       .number()
-      .min(createTestCaseBodyComponentIdMin)
+      .min(1)
       .optional()
       .describe("ID of a component from Jira."),
     priorityName: zod
@@ -469,6 +579,255 @@ export const CreateTestCase201Response = zod
     key: zod.string().optional(),
   })
   .strict();
+
+export const CreateTestCase400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A request body field failed validation at the API layer (required field missing, pattern mismatch, size, or numeric bound).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A request body field has the wrong type or format (for example a non-ISO-8601 date).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("The request body is not valid JSON."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The folderId in the body refers to a folder that does not exist.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The folderId refers to a folder that is not a TEST_CYCLE folder.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The folderId refers to a folder that belongs to a different project than the one being targeted.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("The labels array contains more than the maximum of 50 items."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("The labels array contains an empty or blank label."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A label in the labels array contains spaces, which is not allowed.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A custom field name in the body does not exist for the project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      'A custom field value has the wrong type for the field definition. The message names the field and the expected type, e.g. "requires a number value", "requires a string value", "requires a boolean value", "requires a string which is in the format yyyy-MM-dd", or "requires a list".\n',
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A choice custom field value references an option name that does not exist.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The project has required custom fields but the request omitted them.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "Custom fields were provided but not all required ones are present.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A required custom field was provided with a null or empty value.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A required multi-choice custom field was set to an empty collection.",
+    ),
+]);
+
+export const CreateTestCase401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const CreateTestCase403Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The caller lacks a required Zephyr permission (when the project's permission system is enabled).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("Referenced custom fields do not belong to the current client."),
+]);
+
+export const CreateTestCase404Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The projectKey filter refers to a project that does not exist or is deactivated.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("The statusName does not exist for the project."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("The priorityName does not exist for the project."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource does not exist, or the caller does not have access to its project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource belongs to a disabled project, or a project that does not exist.",
+    ),
+]);
+
+export const CreateTestCase500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
 
 export const CreateTestCaseDefaultResponse = zod
   .object({
@@ -793,6 +1152,100 @@ export const ListTestCasesCursorPaginated200Response = zod
   })
   .strict();
 
+export const ListTestCasesCursorPaginated400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A query parameter failed validation at the API layer (projectKey pattern, or the numeric bounds maxResults >= 1, startAt 0..1000000, folderId >= 1, jiraProjectVersionId >= 1).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("A numeric query parameter was sent with a non-numeric value."),
+]);
+
+export const ListTestCasesCursorPaginated401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const ListTestCasesCursorPaginated404Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The projectKey filter refers to a project that does not exist or is deactivated.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource does not exist, or the caller does not have access to its project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource belongs to a disabled project, or a project that does not exist.",
+    ),
+]);
+
+export const ListTestCasesCursorPaginated500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
 export const ListTestCasesCursorPaginatedDefaultResponse = zod
   .object({
     errorCode: zod.number(),
@@ -1035,6 +1488,89 @@ export const GetTestCase200Response = zod
   })
   .strict();
 
+export const GetTestCase400Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe(
+    "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+  );
+
+export const GetTestCase401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const GetTestCase404Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("No test case exists for the given testCaseKey."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource does not exist, or the caller does not have access to its project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource belongs to a disabled project, or a project that does not exist.",
+    ),
+]);
+
+export const GetTestCase500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
 export const GetTestCaseDefaultResponse = zod
   .object({
     errorCode: zod.number(),
@@ -1043,7 +1579,7 @@ export const GetTestCaseDefaultResponse = zod
   .strict();
 
 /**
- * Updates an existing test case.  Please take into account that for each non-specified field the value will be cleared. If the project has test case custom fields, all custom fields should be present in the request. To leave any of them blank, please set them null if they are not required custom fields.
+ * Updates an existing test case. Please take into account that for each non-specified field the value will be cleared. If the project has test case custom fields, all custom fields should be present in the request. To leave any of them blank, please set them null if they are not required custom fields.
 
  * @summary Update test case
  */
@@ -1113,10 +1649,16 @@ export const UpdateTestCaseBody = zod
       .optional()
       .describe("Array of labels associated to this entity."),
     component: zod
-      .number()
-      .min(1)
-      .nullable()
-      .optional()
+      .object({
+        id: zod.number().min(1).describe("The ID of the entity"),
+        self: zod
+          .string()
+          .url()
+          .optional()
+          .describe("The REST API endpoint to get more resource details."),
+      })
+      .strict()
+      .nullish()
       .describe("ID and link to the Jira component resource."),
     priority: zod
       .object({
@@ -1141,18 +1683,34 @@ export const UpdateTestCaseBody = zod
       .strict()
       .describe("ID and link to the status resource."),
     folder: zod
-      .number()
-      .min(1)
-      .nullable()
-      .optional()
-      .describe(
-        "The ID of the folder, to remove folder set it's value to null",
-      ),
+      .object({
+        id: zod.number().min(1).describe("The ID of the entity"),
+        self: zod
+          .string()
+          .url()
+          .optional()
+          .describe("The REST API endpoint to get more resource details."),
+      })
+      .strict()
+      .nullish()
+      .describe("ID and link to the folder resource."),
     owner: zod
-      .string()
-      .regex(updateTestCaseBodyOwnerAccountIdRegExp)
-      .nullable()
-      .describe("Atlassian Account ID of the Jira user."),
+      .object({
+        accountId: zod
+          .string()
+          .regex(updateTestCaseBodyOwnerAccountIdRegExp)
+          .nullable()
+          .describe("Atlassian Account ID of the Jira user."),
+        self: zod
+          .string()
+          .url()
+          .optional()
+          .describe(
+            "The Jira REST API endpoint to get the full representation of the Jira user.",
+          ),
+      })
+      .strict()
+      .nullish(),
     customFields: zod
       .record(zod.string(), zod.unknown())
       .optional()
@@ -1161,6 +1719,273 @@ export const UpdateTestCaseBody = zod
       ),
   })
   .strict();
+
+export const UpdateTestCase400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A request body field failed validation at the API layer (required field missing, pattern mismatch, size, or numeric bound).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A request body field has the wrong type or format (for example a non-ISO-8601 date).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("The request body is not valid JSON."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The key in the request body does not match the testCaseKey in the path.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The project id in the request body does not match the test case's actual project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The folderId in the body refers to a folder that does not exist.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The folderId refers to a folder that is not a TEST_CYCLE folder.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The folderId refers to a folder that belongs to a different project than the one being targeted.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("The status id does not exist for the project."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("The priority id does not exist for the project."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("The labels array contains more than the maximum of 50 items."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("The labels array contains an empty or blank label."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A label in the labels array contains spaces, which is not allowed.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A custom field name in the body does not exist for the project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      'A custom field value has the wrong type for the field definition. The message names the field and the expected type, e.g. "requires a number value", "requires a string value", "requires a boolean value", "requires a string which is in the format yyyy-MM-dd", or "requires a list".\n',
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A choice custom field value references an option name that does not exist.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The project has required custom fields but the request omitted them.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "Custom fields were provided but not all required ones are present.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A required custom field was provided with a null or empty value.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A required multi-choice custom field was set to an empty collection.",
+    ),
+]);
+
+export const UpdateTestCase401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const UpdateTestCase403Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The caller lacks a required Zephyr permission (when the project's permission system is enabled).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("Referenced custom fields do not belong to the current client."),
+]);
+
+export const UpdateTestCase404Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "No test case exists for the id supplied in the request body (used by the update endpoint, which resolves the test case by its body id).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource does not exist, or the caller does not have access to its project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource belongs to a disabled project, or a project that does not exist.",
+    ),
+]);
+
+export const UpdateTestCase500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
 
 export const UpdateTestCaseDefaultResponse = zod
   .object({
@@ -1258,6 +2083,89 @@ export const GetTestCaseLinks200Response = zod
   .strict()
   .describe("A list of links for this test case.");
 
+export const GetTestCaseLinks400Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe(
+    "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+  );
+
+export const GetTestCaseLinks401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const GetTestCaseLinks404Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("No test case exists for the given testCaseKey."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource does not exist, or the caller does not have access to its project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource belongs to a disabled project, or a project that does not exist.",
+    ),
+]);
+
+export const GetTestCaseLinks500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
 export const GetTestCaseLinksDefaultResponse = zod
   .object({
     errorCode: zod.number(),
@@ -1294,6 +2202,135 @@ export const CreateTestCaseIssueLink201Response = zod
     self: zod.string().optional(),
   })
   .strict();
+
+export const CreateTestCaseIssueLink400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A request body field failed validation at the API layer (required field missing, pattern mismatch, size, or numeric bound).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("The request body is not valid JSON."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The Jira issue already has a coverage link to this test case. (Backend-asserted; not reproducible locally because the Jira issue lookup is unavailable and fails first.)",
+    ),
+]);
+
+export const CreateTestCaseIssueLink401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const CreateTestCaseIssueLink403Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe(
+    "The caller lacks a required Zephyr permission (when the project's permission system is enabled).",
+  );
+
+export const CreateTestCaseIssueLink404Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A referenced Jira entity (e.g. jiraProjectVersion) does not exist or is not accessible.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("No test case exists for the given testCaseKey."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource does not exist, or the caller does not have access to its project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource belongs to a disabled project, or a project that does not exist.",
+    ),
+]);
+
+export const CreateTestCaseIssueLink500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
 
 export const CreateTestCaseIssueLinkDefaultResponse = zod
   .object({
@@ -1332,6 +2369,128 @@ export const CreateTestCaseWebLink201Response = zod
     self: zod.string().optional(),
   })
   .strict();
+
+export const CreateTestCaseWebLink400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A request body field failed validation at the API layer (required field missing, pattern mismatch, size, or numeric bound).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("The request body is not valid JSON."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A web link with the same URL and description already exists on the test case.",
+    ),
+]);
+
+export const CreateTestCaseWebLink401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const CreateTestCaseWebLink403Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe(
+    "The caller lacks a required Zephyr permission (when the project's permission system is enabled).",
+  );
+
+export const CreateTestCaseWebLink404Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "No test case exists for the given testCaseKey (returned by the web-link and test-script write endpoints).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource does not exist, or the caller does not have access to its project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource belongs to a disabled project, or a project that does not exist.",
+    ),
+]);
+
+export const CreateTestCaseWebLink500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
 
 export const CreateTestCaseWebLinkDefaultResponse = zod
   .object({
@@ -1434,6 +2593,100 @@ export const ListTestCaseVersions200Response = zod
       .describe("A list of versions for a test case"),
   })
   .strict();
+
+export const ListTestCaseVersions400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A query parameter failed validation at the API layer (projectKey pattern, or the numeric bounds maxResults >= 1, startAt 0..1000000, folderId >= 1, jiraProjectVersionId >= 1).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("A numeric query parameter was sent with a non-numeric value."),
+]);
+
+export const ListTestCaseVersions401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const ListTestCaseVersions404Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource does not exist, or the caller does not have access to its project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource belongs to a disabled project, or a project that does not exist.",
+    ),
+]);
+
+export const ListTestCaseVersions500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
 
 export const ListTestCaseVersionsDefaultResponse = zod
   .object({
@@ -1678,6 +2931,100 @@ export const GetTestCaseVersion200Response = zod
   })
   .strict();
 
+export const GetTestCaseVersion400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A numeric path parameter was sent with a non-numeric value (for example a non-numeric test case version).",
+    ),
+]);
+
+export const GetTestCaseVersion401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const GetTestCaseVersion404Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("No test case exists for the given testCaseKey."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource does not exist, or the caller does not have access to its project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource belongs to a disabled project, or a project that does not exist.",
+    ),
+]);
+
+export const GetTestCaseVersion500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
 export const GetTestCaseVersionDefaultResponse = zod
   .object({
     errorCode: zod.number(),
@@ -1714,6 +3061,101 @@ export const GetTestCaseTestScript200Response = zod
   })
   .strict()
   .describe("Response body when retrieving test scripts");
+
+export const GetTestCaseTestScript400Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe(
+    "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+  );
+
+export const GetTestCaseTestScript401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const GetTestCaseTestScript404Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "No test script (and no test case) exists for the given testCaseKey.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource does not exist, or the caller does not have access to its project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource belongs to a disabled project, or a project that does not exist.",
+    ),
+]);
+
+export const GetTestCaseTestScript422Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe(
+    "The test case uses step-by-step test steps rather than a plain/BDD script; use the teststeps endpoint instead.",
+  );
+
+export const GetTestCaseTestScript500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
 
 export const GetTestCaseTestScriptDefaultResponse = zod
   .object({
@@ -1757,6 +3199,126 @@ export const CreateTestCaseTestScript201Response = zod
     self: zod.string().optional(),
   })
   .strict();
+
+export const CreateTestCaseTestScript400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A request body field failed validation at the API layer (required field missing, pattern mismatch, size, or numeric bound).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("The request body is not valid JSON."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("The BDD test script text is not valid Gherkin."),
+]);
+
+export const CreateTestCaseTestScript401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const CreateTestCaseTestScript403Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe(
+    "The caller lacks a required Zephyr permission (when the project's permission system is enabled).",
+  );
+
+export const CreateTestCaseTestScript404Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "No test case exists for the given testCaseKey (returned by the web-link and test-script write endpoints).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource does not exist, or the caller does not have access to its project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource belongs to a disabled project, or a project that does not exist.",
+    ),
+]);
+
+export const CreateTestCaseTestScript500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
 
 export const CreateTestCaseTestScriptDefaultResponse = zod
   .object({
@@ -1849,6 +3411,11 @@ export const GetTestCaseTestSteps200Response = zod
       .array(
         zod
           .object({
+            id: zod
+              .number()
+              .min(1)
+              .nullish()
+              .describe("The ID of the test step."),
             inline: zod
               .object({
                 description: zod
@@ -1935,6 +3502,117 @@ export const GetTestCaseTestSteps200Response = zod
   })
   .strict()
   .describe("Response body when retrieving test steps");
+
+export const GetTestCaseTestSteps400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A query parameter failed validation at the API layer (projectKey pattern, or the numeric bounds maxResults >= 1, startAt 0..1000000, folderId >= 1, jiraProjectVersionId >= 1).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("A numeric query parameter was sent with a non-numeric value."),
+]);
+
+export const GetTestCaseTestSteps401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const GetTestCaseTestSteps404Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("No test case exists for the given testCaseKey."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource does not exist, or the caller does not have access to its project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource belongs to a disabled project, or a project that does not exist.",
+    ),
+]);
+
+export const GetTestCaseTestSteps422Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe(
+    "The test case uses a plain-text or BDD script rather than step-by-step steps; use the testscript endpoint instead.",
+  );
+
+export const GetTestCaseTestSteps500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
 
 export const GetTestCaseTestStepsDefaultResponse = zod
   .object({
@@ -2072,7 +3750,944 @@ export const CreateTestCaseTestSteps201Response = zod
   })
   .strict();
 
+export const CreateTestCaseTestSteps400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A request body field failed validation at the API layer (required field missing, pattern mismatch, size, or numeric bound).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("The request body is not valid JSON."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("The test step write `mode` is not one of APPEND or OVERWRITE."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The request must contain at least 1 and at most 100 test steps.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      'A test step is malformed. Covers several variants that share this response shape:\n- "The step should be inline or call to test." (neither inline nor testCase set)\n- "The step should be inline or call to test, not both." (both set)\n- "Test Data, Description and Expected Result are empty." (inline step with no content)\n',
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A call-to-test step references the same test case (circular reference).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A call-to-test step references a test case that does not exist.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A custom field name in the body does not exist for the project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      'A custom field value has the wrong type for the field definition. The message names the field and the expected type, e.g. "requires a number value", "requires a string value", "requires a boolean value", "requires a string which is in the format yyyy-MM-dd", or "requires a list".\n',
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A choice custom field value references an option name that does not exist.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The project has required custom fields but the request omitted them.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "Custom fields were provided but not all required ones are present.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A required custom field was provided with a null or empty value.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A required multi-choice custom field was set to an empty collection.",
+    ),
+]);
+
+export const CreateTestCaseTestSteps401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const CreateTestCaseTestSteps403Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The caller lacks a required Zephyr permission (when the project's permission system is enabled).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("Referenced custom fields do not belong to the current client."),
+]);
+
+export const CreateTestCaseTestSteps404Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "No test case exists for the given testCaseKey (returned by the web-link and test-script write endpoints).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource does not exist, or the caller does not have access to its project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource belongs to a disabled project, or a project that does not exist.",
+    ),
+]);
+
+export const CreateTestCaseTestSteps500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
 export const CreateTestCaseTestStepsDefaultResponse = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+/**
+ * Returns the content of an attachment for the given test case.
+ * @summary Get attachment
+ */
+export const getTestCaseAttachmentPathTestCaseKeyRegExp = /(.+-T[0-9]+)/;
+
+export const GetTestCaseAttachmentParams = zod
+  .object({
+    testCaseKey: zod
+      .string()
+      .regex(getTestCaseAttachmentPathTestCaseKeyRegExp)
+      .describe(
+        "The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+",
+      ),
+    attachmentId: zod
+      .number()
+      .min(1)
+      .describe("The numeric ID of the attachment."),
+  })
+  .strict();
+
+export const GetTestCaseAttachment400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A numeric path parameter was sent with a non-numeric value (for example a non-numeric test case version).",
+    ),
+]);
+
+export const GetTestCaseAttachment401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const GetTestCaseAttachment500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
+export const GetTestCaseAttachmentDefaultResponse = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+/**
+ * Uploads a file and attaches it to a test case.
+Send the file as the raw request body. The attachment's display name is taken from the `fileName` path parameter.
+Maximum file size is 1 GB per attachment.
+File name must contain 1 to 255 characters. It cannot contain `/`, `\`, `..`, or
+null bytes. URL-encode any special characters (for example, spaces
+become `%20`).
+
+Uploading the same `fileName` again creates an additional attachment for test case;
+existing attachments are not replaced.
+
+ * @summary Upload attachment
+ */
+export const uploadTestCaseAttachmentPathTestCaseKeyRegExp = /(.+-T[0-9]+)/;
+export const uploadTestCaseAttachmentPathFileNameMax = 255;
+
+export const UploadTestCaseAttachmentParams = zod
+  .object({
+    testCaseKey: zod
+      .string()
+      .regex(uploadTestCaseAttachmentPathTestCaseKeyRegExp)
+      .describe(
+        "The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+",
+      ),
+    fileName: zod
+      .string()
+      .min(1)
+      .max(uploadTestCaseAttachmentPathFileNameMax)
+      .describe(
+        "The name of the file being uploaded, including its extension (for example, `screenshot.png`).\nThis is used as the attachment's display name. URL-encode any special characters and keep\nthe name to 255 characters or fewer.\n",
+      ),
+  })
+  .strict();
+
+export const UploadTestCaseAttachment400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A request body field failed validation at the API layer (required field missing, pattern mismatch, size, or numeric bound).",
+    ),
+]);
+
+export const UploadTestCaseAttachment401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const UploadTestCaseAttachment500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
+export const UploadTestCaseAttachmentDefaultResponse = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+/**
+ * Uploads a file and attaches it to a test case step.
+Send the file as the raw request body. The attachment's display name is taken from the `fileName` path parameter.
+Maximum file size is 1 GB per attachment.
+File name must contain 1 to 255 characters. It cannot contain `/`, `\`, `..`, or
+null bytes. URL-encode any special characters (for example, spaces
+become `%20`).
+
+Uploading the same `fileName` again creates an additional attachment for test cycle;
+existing attachments are not replaced.
+
+`testExecutionStepId` is the numeric ID of
+the step within the test execution. Retrieve it from
+`GET /testcases/{testCaseKey}/teststeps`.
+
+ * @summary Upload test step attachment
+ */
+export const createTestCaseTestStepAttachmentPathTestCaseIdOrKeyRegExp =
+  /([0-9]+)|([A-Z][A-Z_0-9]+-T[0-9]+)/;
+
+export const createTestCaseTestStepAttachmentPathFileNameMax = 255;
+
+export const CreateTestCaseTestStepAttachmentParams = zod
+  .object({
+    testCaseIdOrKey: zod
+      .string()
+      .regex(createTestCaseTestStepAttachmentPathTestCaseIdOrKeyRegExp)
+      .describe("The ID or key of the test case."),
+    testCaseStepId: zod
+      .number()
+      .min(1)
+      .describe("The ID of the step within the test case."),
+    fileName: zod
+      .string()
+      .min(1)
+      .max(createTestCaseTestStepAttachmentPathFileNameMax)
+      .describe(
+        "The name of the file being uploaded, including its extension (for example, `screenshot.png`).\nThis is used as the attachment's display name. URL-encode any special characters and keep\nthe name to 255 characters or fewer.\n",
+      ),
+  })
+  .strict();
+
+export const CreateTestCaseTestStepAttachment400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A numeric path parameter was sent with a non-numeric value (for example a non-numeric test case version).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A request body field failed validation at the API layer (required field missing, pattern mismatch, size, or numeric bound).",
+    ),
+]);
+
+export const CreateTestCaseTestStepAttachment401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const CreateTestCaseTestStepAttachment500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
+export const CreateTestCaseTestStepAttachmentDefaultResponse = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+/**
+ * Returns the content of an attachment for the given test case step. `testCaseStepId` is the numeric ID of the step within the test case. Retrieve it from `GET /testcases/{testCaseKey}/teststeps`.
+ * @summary Get step attachment
+ */
+export const getTestCaseStepAttachmentPathTestCaseIdOrKeyRegExp =
+  /([0-9]+)|([A-Z][A-Z_0-9]+-T[0-9]+)/;
+
+export const GetTestCaseStepAttachmentParams = zod
+  .object({
+    testCaseIdOrKey: zod
+      .string()
+      .regex(getTestCaseStepAttachmentPathTestCaseIdOrKeyRegExp)
+      .describe("The ID or key of the test case."),
+    testCaseStepId: zod
+      .number()
+      .min(1)
+      .describe("The ID of the step within the test case."),
+    attachmentId: zod
+      .number()
+      .min(1)
+      .describe("The numeric ID of the attachment."),
+  })
+  .strict();
+
+export const GetTestCaseStepAttachment400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A numeric path parameter was sent with a non-numeric value (for example a non-numeric test case version).",
+    ),
+]);
+
+export const GetTestCaseStepAttachment401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const GetTestCaseStepAttachment500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
+export const GetTestCaseStepAttachmentDefaultResponse = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+/**
+ * Returns a paged list of attachments for a test case step, including their database ID and file name.
+ * @summary Get test case step attachments
+ */
+export const getTestCaseTestStepAttachmentsReferencePathTestCaseIdOrKeyRegExp =
+  /([0-9]+)|([A-Z][A-Z_0-9]+-T[0-9]+)/;
+export const getTestCaseTestStepAttachmentsReferencePathTestStepIdRegExp =
+  /([0-9]+)/;
+
+export const GetTestCaseTestStepAttachmentsReferenceParams = zod
+  .object({
+    testCaseIdOrKey: zod
+      .string()
+      .regex(getTestCaseTestStepAttachmentsReferencePathTestCaseIdOrKeyRegExp)
+      .describe("The ID or key of the test case."),
+    testStepId: zod
+      .string()
+      .regex(getTestCaseTestStepAttachmentsReferencePathTestStepIdRegExp)
+      .describe(
+        "The ID of the test case step. Test step IDs are numeric, of the format [0-9]+",
+      ),
+  })
+  .strict();
+
+export const GetTestCaseTestStepAttachmentsReference200Response = zod
+  .object({
+    attachments: zod
+      .array(
+        zod
+          .object({
+            id: zod
+              .number()
+              .optional()
+              .describe("Database ID of the attachment."),
+            name: zod
+              .string()
+              .optional()
+              .describe("File name of the attachment."),
+          })
+          .strict(),
+      )
+      .optional(),
+  })
+  .strict();
+
+export const GetTestCaseTestStepAttachmentsReference400Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe(
+    "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+  );
+
+export const GetTestCaseTestStepAttachmentsReference401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const GetTestCaseTestStepAttachmentsReference404Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "No test case exists for the given testCaseKey (returned by the web-link and test-script write endpoints).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("The given test step id does not exist for the test case."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("The test case step exists but has no attachment metadata."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource does not exist, or the caller does not have access to its project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource belongs to a disabled project, or a project that does not exist.",
+    ),
+]);
+
+export const GetTestCaseTestStepAttachmentsReference500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
+export const GetTestCaseTestStepAttachmentsReferenceDefaultResponse = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+/**
+ * Returns a paged list of attachments for a test case, including their database ID and file name.
+ * @summary Get test case attachments
+ */
+export const getTestCaseAttachmentsReferencePathTestCaseIdOrKeyRegExp =
+  /([0-9]+)|([A-Z][A-Z_0-9]+-T[0-9]+)/;
+
+export const GetTestCaseAttachmentsReferenceParams = zod
+  .object({
+    testCaseIdOrKey: zod
+      .string()
+      .regex(getTestCaseAttachmentsReferencePathTestCaseIdOrKeyRegExp)
+      .describe("The ID or key of the test case."),
+  })
+  .strict();
+
+export const GetTestCaseAttachmentsReference200Response = zod
+  .object({
+    attachments: zod
+      .array(
+        zod
+          .object({
+            id: zod
+              .number()
+              .optional()
+              .describe("Database ID of the attachment."),
+            name: zod
+              .string()
+              .optional()
+              .describe("File name of the attachment."),
+          })
+          .strict(),
+      )
+      .optional(),
+  })
+  .strict();
+
+export const GetTestCaseAttachmentsReference400Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe(
+    "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+  );
+
+export const GetTestCaseAttachmentsReference401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const GetTestCaseAttachmentsReference404Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "No test case exists for the given testCaseKey (returned by the web-link and test-script write endpoints).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("The test case exists but has no attachment metadata."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource does not exist, or the caller does not have access to its project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource belongs to a disabled project, or a project that does not exist.",
+    ),
+]);
+
+export const GetTestCaseAttachmentsReference500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
+export const GetTestCaseAttachmentsReferenceDefaultResponse = zod
   .object({
     errorCode: zod.number(),
     message: zod.string(),
@@ -2404,6 +5019,107 @@ export const ListTestCycles200Response = zod
   })
   .strict();
 
+export const ListTestCycles400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A query parameter failed validation at the API layer (projectKey pattern, or the numeric bounds maxResults >= 1, startAt 0..1000000, folderId >= 1, jiraProjectVersionId >= 1).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("A numeric query parameter was sent with a non-numeric value."),
+]);
+
+export const ListTestCycles401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const ListTestCycles404Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The projectKey filter refers to a project that does not exist or is deactivated.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("The folderId filter refers to a folder that does not exist."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource does not exist, or the caller does not have access to its project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource belongs to a disabled project, or a project that does not exist.",
+    ),
+]);
+
+export const ListTestCycles500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
 export const ListTestCyclesDefaultResponse = zod
   .object({
     errorCode: zod.number(),
@@ -2493,7 +5209,666 @@ export const CreateTestCycle201Response = zod
   })
   .strict();
 
+export const CreateTestCycle400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A request body field failed validation at the API layer (required field missing, pattern mismatch, size, or numeric bound).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A request body field has the wrong type or format (for example a non-ISO-8601 date).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("The request body is not valid JSON."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The folderId in the body refers to a folder that does not exist.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The folderId refers to a folder that is not a TEST_CYCLE folder.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A custom field name in the body does not exist for the project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      'A custom field value has the wrong type for the field definition. The message names the field and the expected type, e.g. "requires a number value", "requires a string value", "requires a boolean value", "requires a string which is in the format yyyy-MM-dd", or "requires a list".\n',
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A choice custom field value references an option name that does not exist.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The project has required custom fields but the request omitted them.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "Custom fields were provided but not all required ones are present.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A required custom field was provided with a null or empty value.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A required multi-choice custom field was set to an empty collection.",
+    ),
+]);
+
+export const CreateTestCycle401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const CreateTestCycle403Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The caller lacks a required Zephyr permission (when the project's permission system is enabled).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("Referenced custom fields do not belong to the current client."),
+]);
+
+export const CreateTestCycle404Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The projectKey filter refers to a project that does not exist or is deactivated.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("The statusName does not exist for the project."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "No statusName was supplied and the project has no default status of the relevant group.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A referenced Jira entity (e.g. jiraProjectVersion) does not exist or is not accessible.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource does not exist, or the caller does not have access to its project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource belongs to a disabled project, or a project that does not exist.",
+    ),
+]);
+
+export const CreateTestCycle500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
 export const CreateTestCycleDefaultResponse = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+/**
+ * Retrieves all test cycles. Query parameters can be used to filter the results.
+
+Use this endpoint for retrieving large volumes of test cycles.
+
+Results are split in different pages, of size equal to the `limit` query parameter.
+To fetch the next page, use the `next` URL returned in the response.
+It should have the same parameters as the original request, with the updated value for `startAtId` parameter.
+Alternatively, the same request can be made with the `startAtId` parameter set to the `nextStartAtId` value
+returned in the response.
+
+ * @summary Get test cycles (NextGen)
+ */
+export const listTestCyclesCursorPaginatedQueryProjectKeyRegExp =
+  /([A-Z][A-Z_0-9]+)/;
+
+export const listTestCyclesCursorPaginatedQueryLimitDefault = 10;
+export const listTestCyclesCursorPaginatedQueryLimitMax = 1000;
+
+export const listTestCyclesCursorPaginatedQueryStartAtIdDefault = 0;
+export const listTestCyclesCursorPaginatedQueryStartAtIdMin = 0;
+
+export const ListTestCyclesCursorPaginatedQueryParams = zod.object({
+  projectKey: zod
+    .string()
+    .regex(listTestCyclesCursorPaginatedQueryProjectKeyRegExp)
+    .optional()
+    .describe("Jira project key filter"),
+  folderId: zod.number().min(1).optional().describe("Folder ID filter"),
+  jiraProjectVersionId: zod
+    .number()
+    .min(1)
+    .optional()
+    .describe(
+      "Jira Project Version ID. Relates to 'Version' or 'Releases' in Jira projects.",
+    ),
+  limit: zod
+    .number()
+    .min(1)
+    .max(listTestCyclesCursorPaginatedQueryLimitMax)
+    .default(listTestCyclesCursorPaginatedQueryLimitDefault)
+    .describe(
+      "Specifies the maximum number of results to return in a single call. The default value is 10, and the maximum value that can be requested is 1000.\n\nNote that the server may enforce a lower limit than requested, depending on resource availability or other internal constraints. If this happens, the result set may be truncated. Always check the limit value in the response to confirm how many results were actually returned.\n",
+    ),
+  startAtId: zod
+    .number()
+    .min(listTestCyclesCursorPaginatedQueryStartAtIdMin)
+    .default(listTestCyclesCursorPaginatedQueryStartAtIdDefault)
+    .describe("Zero-indexed starting position for ID-based pagination."),
+  updatedAfter: zod
+    .string()
+    .datetime({})
+    .optional()
+    .describe(
+      "Filter only entities updated after the given time. Format: yyyy-MM-dd'T'HH:mm:ss'Z'",
+    ),
+});
+
+export const listTestCyclesCursorPaginated200ResponseOneNextStartAtIdMin = 0;
+
+export const listTestCyclesCursorPaginated200ResponseOneLimitMin = 0;
+
+export const listTestCyclesCursorPaginated200ResponseTwoValuesItemKeyRegExp =
+  /([A-Z][A-Z_0-9]+-R[0-9]+)/;
+export const listTestCyclesCursorPaginated200ResponseTwoValuesItemNameRegExp =
+  /^(?!\s*$).+/;
+
+export const listTestCyclesCursorPaginated200ResponseTwoValuesItemOwnerAccountIdRegExp =
+  /^[-:a-zA-Z0-9]{1,128}$/;
+
+export const ListTestCyclesCursorPaginated200Response = zod
+  .object({
+    next: zod.string().url().nullish(),
+    nextStartAtId: zod
+      .number()
+      .min(listTestCyclesCursorPaginated200ResponseOneNextStartAtIdMin)
+      .nullable(),
+    limit: zod
+      .number()
+      .min(listTestCyclesCursorPaginated200ResponseOneLimitMin),
+    values: zod
+      .array(
+        zod
+          .object({
+            id: zod.number().min(1).describe("The ID of the entity"),
+            key: zod
+              .string()
+              .regex(
+                listTestCyclesCursorPaginated200ResponseTwoValuesItemKeyRegExp,
+              )
+              .describe("Unique key of the test cycle"),
+            name: zod
+              .string()
+              .regex(
+                listTestCyclesCursorPaginated200ResponseTwoValuesItemNameRegExp,
+              )
+              .describe("Name of the Test Cycle"),
+            project: zod
+              .object({
+                id: zod.number().min(1).describe("The ID of the entity"),
+                self: zod
+                  .string()
+                  .url()
+                  .optional()
+                  .describe(
+                    "The REST API endpoint to get more resource details.",
+                  ),
+              })
+              .strict()
+              .describe("ID and link relative to Zephyr project."),
+            jiraProjectVersion: zod
+              .object({
+                id: zod.number().min(1).describe("The ID of the entity"),
+                self: zod
+                  .string()
+                  .url()
+                  .optional()
+                  .describe(
+                    "The REST API endpoint to get more resource details.",
+                  ),
+              })
+              .strict()
+              .nullish()
+              .describe(
+                "ID and Link to fetch information about Jira Project version. Relates to 'Version' or 'Releases' in Jira projects.",
+              ),
+            status: zod
+              .object({
+                id: zod.number().min(1).describe("The ID of the entity"),
+                self: zod
+                  .string()
+                  .url()
+                  .optional()
+                  .describe(
+                    "The REST API endpoint to get more resource details.",
+                  ),
+              })
+              .strict()
+              .describe("ID and link to the status resource."),
+            folder: zod
+              .object({
+                id: zod.number().min(1).describe("The ID of the entity"),
+                self: zod
+                  .string()
+                  .url()
+                  .optional()
+                  .describe(
+                    "The REST API endpoint to get more resource details.",
+                  ),
+              })
+              .strict()
+              .nullish()
+              .describe("ID and link to the folder resource."),
+            description: zod
+              .string()
+              .nullish()
+              .describe("Description outlining the scope."),
+            plannedStartDate: zod
+              .string()
+              .datetime({})
+              .nullish()
+              .describe(
+                "Planned start date of the test cycle. This field cannot be blank. Setting it as null or excluding it from the request will leave the field values unchanged. ISO 8601 Format (i.e., yyyy-MM-dd'T'HH:mm:ss'Z')",
+              ),
+            plannedEndDate: zod
+              .string()
+              .datetime({})
+              .nullish()
+              .describe(
+                "The planned end date of the test cycle. This field cannot be blank. Setting it as null or excluding it from the request will leave the field values unchanged. ISO 8601 Format (i.e., yyyy-MM-dd'T'HH:mm:ss'Z')",
+              ),
+            owner: zod
+              .object({
+                accountId: zod
+                  .string()
+                  .regex(
+                    listTestCyclesCursorPaginated200ResponseTwoValuesItemOwnerAccountIdRegExp,
+                  )
+                  .nullable()
+                  .describe("Atlassian Account ID of the Jira user."),
+                self: zod
+                  .string()
+                  .url()
+                  .optional()
+                  .describe(
+                    "The Jira REST API endpoint to get the full representation of the Jira user.",
+                  ),
+              })
+              .strict()
+              .nullish(),
+            customFields: zod
+              .record(zod.string(), zod.unknown())
+              .optional()
+              .describe(
+                "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
+              ),
+            links: zod
+              .object({
+                self: zod
+                  .string()
+                  .url()
+                  .optional()
+                  .describe(
+                    "The REST API endpoint to get more resource details.",
+                  ),
+                issues: zod
+                  .array(
+                    zod
+                      .object({
+                        issueId: zod
+                          .number()
+                          .min(1)
+                          .describe("The Jira issue ID"),
+                        self: zod
+                          .string()
+                          .url()
+                          .optional()
+                          .describe(
+                            "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
+                          ),
+                        id: zod
+                          .number()
+                          .min(1)
+                          .optional()
+                          .describe(
+                            "The ID that represents the link between the entity and the Jira issue.",
+                          ),
+                        target: zod
+                          .string()
+                          .url()
+                          .optional()
+                          .describe(
+                            "The Jira Cloud REST API endpoint to get the full representation of the issue",
+                          ),
+                        type: zod
+                          .enum(["COVERAGE", "BLOCKS", "RELATED"])
+                          .optional()
+                          .describe("The link type"),
+                      })
+                      .strict(),
+                  )
+                  .optional()
+                  .describe("A list of Jira issues linked to this entity"),
+                webLinks: zod
+                  .array(
+                    zod
+                      .object({
+                        description: zod
+                          .string()
+                          .optional()
+                          .describe("The web link description"),
+                        url: zod.string().describe("The web link URL"),
+                        self: zod
+                          .string()
+                          .url()
+                          .optional()
+                          .describe(
+                            "The Zephyr REST API endpoint relative to the link between the entity and this web link.",
+                          ),
+                        id: zod
+                          .number()
+                          .min(1)
+                          .optional()
+                          .describe("The ID of the entity"),
+                        type: zod
+                          .enum(["COVERAGE", "BLOCKS", "RELATED"])
+                          .optional()
+                          .describe("The link type"),
+                      })
+                      .strict(),
+                  )
+                  .optional()
+                  .describe("A list of web links for this entity"),
+                testPlans: zod
+                  .array(
+                    zod
+                      .object({
+                        id: zod
+                          .number()
+                          .min(1)
+                          .optional()
+                          .describe(
+                            "The ID that represents the link between the Test Cycle and the Test Plan.",
+                          ),
+                        self: zod
+                          .string()
+                          .url()
+                          .optional()
+                          .describe(
+                            "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
+                          ),
+                        testPlanId: zod
+                          .number()
+                          .optional()
+                          .describe("The ID of the test plan"),
+                        type: zod
+                          .enum(["COVERAGE", "BLOCKS", "RELATED"])
+                          .optional()
+                          .describe("The link type"),
+                        target: zod
+                          .string()
+                          .url()
+                          .optional()
+                          .describe(
+                            "The Zephyr REST API endpoint to get the full representation of the test plan",
+                          ),
+                      })
+                      .strict(),
+                  )
+                  .optional()
+                  .describe("A list of test plans linked to a test cycle"),
+              })
+              .strict()
+              .optional()
+              .describe("Represents all links that a Test Cycle has."),
+          })
+          .strict()
+          .describe("Details of a test cycle"),
+      )
+      .optional(),
+  })
+  .strict();
+
+export const ListTestCyclesCursorPaginated400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A query parameter failed validation at the API layer (projectKey pattern, or the numeric bounds maxResults >= 1, startAt 0..1000000, folderId >= 1, jiraProjectVersionId >= 1).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("A numeric query parameter was sent with a non-numeric value."),
+]);
+
+export const ListTestCyclesCursorPaginated401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const ListTestCyclesCursorPaginated404Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The projectKey filter refers to a project that does not exist or is deactivated.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("The folderId filter refers to a folder that does not exist."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource does not exist, or the caller does not have access to its project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource belongs to a disabled project, or a project that does not exist.",
+    ),
+]);
+
+export const ListTestCyclesCursorPaginated500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
+export const ListTestCyclesCursorPaginatedDefaultResponse = zod
   .object({
     errorCode: zod.number(),
     message: zod.string(),
@@ -2740,6 +6115,89 @@ export const GetTestCycle200Response = zod
   .strict()
   .describe("Details of a test cycle");
 
+export const GetTestCycle400Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe(
+    "The `testCycleIdOrKey` path parameter does not match the required pattern",
+  );
+
+export const GetTestCycle401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const GetTestCycle404Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("No test cycle exists with the given id or key."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource does not exist, or the caller does not have access to its project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource belongs to a disabled project, or a project that does not exist.",
+    ),
+]);
+
+export const GetTestCycle500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
 export const GetTestCycleDefaultResponse = zod
   .object({
     errorCode: zod.number(),
@@ -2748,7 +6206,7 @@ export const GetTestCycleDefaultResponse = zod
   .strict();
 
 /**
- * Updates an existing test cycle.  Please take into account that for each non-specified field the value will be cleared. If the project has test cycle custom fields, all custom fields should be present in the request. To leave any of them blank, please set them null if they are not required custom fields.
+ * Updates an existing test cycle. Please take into account that for each non-specified field the value will be cleared. If the project has test cycle custom fields, all custom fields should be present in the request. To leave any of them blank, please set them null if they are not required custom fields.
 
  * @summary Update test cycle
  */
@@ -2795,10 +6253,16 @@ export const UpdateTestCycleBody = zod
       .strict()
       .describe("ID and link relative to Zephyr project."),
     jiraProjectVersion: zod
-      .number()
-      .min(1)
-      .nullable()
-      .optional()
+      .object({
+        id: zod.number().min(1).describe("The ID of the entity"),
+        self: zod
+          .string()
+          .url()
+          .optional()
+          .describe("The REST API endpoint to get more resource details."),
+      })
+      .strict()
+      .nullish()
       .describe(
         "ID and Link to fetch information about Jira Project version. Relates to 'Version' or 'Releases' in Jira projects.",
       ),
@@ -2814,10 +6278,16 @@ export const UpdateTestCycleBody = zod
       .strict()
       .describe("ID and link to the status resource."),
     folder: zod
-      .number()
-      .min(1)
-      .nullable()
-      .optional()
+      .object({
+        id: zod.number().min(1).describe("The ID of the entity"),
+        self: zod
+          .string()
+          .url()
+          .optional()
+          .describe("The REST API endpoint to get more resource details."),
+      })
+      .strict()
+      .nullish()
       .describe("ID and link to the folder resource."),
     description: zod
       .string()
@@ -2838,10 +6308,22 @@ export const UpdateTestCycleBody = zod
         "The planned end date of the test cycle. This field cannot be blank. Setting it as null or excluding it from the request will leave the field values unchanged. ISO 8601 Format (i.e., yyyy-MM-dd'T'HH:mm:ss'Z')",
       ),
     owner: zod
-      .string()
-      .regex(updateTestCycleBodyOwnerAccountIdRegExp)
-      .nullable()
-      .describe("Atlassian Account ID of the Jira user."),
+      .object({
+        accountId: zod
+          .string()
+          .regex(updateTestCycleBodyOwnerAccountIdRegExp)
+          .nullable()
+          .describe("Atlassian Account ID of the Jira user."),
+        self: zod
+          .string()
+          .url()
+          .optional()
+          .describe(
+            "The Jira REST API endpoint to get the full representation of the Jira user.",
+          ),
+      })
+      .strict()
+      .nullish(),
     customFields: zod
       .record(zod.string(), zod.unknown())
       .optional()
@@ -2850,6 +6332,214 @@ export const UpdateTestCycleBody = zod
       ),
   })
   .strict();
+
+export const UpdateTestCycle400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A request body field failed validation at the API layer (required field missing, pattern mismatch, size, or numeric bound).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("The request body is not valid JSON."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A request body field has the wrong type or format (for example a non-ISO-8601 date).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The `testCycleIdOrKey` path parameter does not match the required pattern",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("The status id does not exist for the project."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "On update, custom fields were provided but not all of the project's custom fields are present in the request.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The folderId in the body refers to a folder that does not exist.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The folderId refers to a folder that is not a TEST_CYCLE folder.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A custom field name in the body does not exist for the project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      'A custom field value has the wrong type for the field definition. The message names the field and the expected type, e.g. "requires a number value", "requires a string value", "requires a boolean value", "requires a string which is in the format yyyy-MM-dd", or "requires a list".\n',
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A choice custom field value references an option name that does not exist.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A required custom field was provided with a null or empty value.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A required multi-choice custom field was set to an empty collection.",
+    ),
+]);
+
+export const UpdateTestCycle401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const UpdateTestCycle403Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The caller lacks a required Zephyr permission (when the project's permission system is enabled).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("Referenced custom fields do not belong to the current client."),
+]);
+
+export const UpdateTestCycle404Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("No test cycle exists with the given id or key."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource does not exist, or the caller does not have access to its project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource belongs to a disabled project, or a project that does not exist.",
+    ),
+]);
+
+export const UpdateTestCycle500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
 
 export const UpdateTestCycleDefaultResponse = zod
   .object({
@@ -2984,6 +6674,89 @@ export const GetTestCycleLinks200Response = zod
   .strict()
   .describe("Represents all links that a Test Cycle has.");
 
+export const GetTestCycleLinks400Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe(
+    "The `testCycleIdOrKey` path parameter does not match the required pattern",
+  );
+
+export const GetTestCycleLinks401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const GetTestCycleLinks404Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("No test cycle exists with the given id or key."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource does not exist, or the caller does not have access to its project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource belongs to a disabled project, or a project that does not exist.",
+    ),
+]);
+
+export const GetTestCycleLinks500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
 export const GetTestCycleLinksDefaultResponse = zod
   .object({
     errorCode: zod.number(),
@@ -3012,6 +6785,144 @@ export const CreateTestCycleIssueLinkBody = zod
     issueId: zod.number().min(1).describe("The Jira issue ID"),
   })
   .strict();
+
+export const CreateTestCycleIssueLink400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The `testCycleIdOrKey` path parameter does not match the required pattern",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A request body field failed validation at the API layer (required field missing, pattern mismatch, size, or numeric bound).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("The request body is not valid JSON."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A request body field has the wrong type or format (for example a non-ISO-8601 date).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "An issue link of the requested type already exists between the test cycle and the Jira issue.",
+    ),
+]);
+
+export const CreateTestCycleIssueLink401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const CreateTestCycleIssueLink403Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe(
+    "The caller lacks a required Zephyr permission (when the project's permission system is enabled).",
+  );
+
+export const CreateTestCycleIssueLink404Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("No test cycle exists with the given id or key."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A referenced Jira entity (e.g. jiraProjectVersion) does not exist or is not accessible.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource does not exist, or the caller does not have access to its project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource belongs to a disabled project, or a project that does not exist.",
+    ),
+]);
+
+export const CreateTestCycleIssueLink500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
 
 export const CreateTestCycleIssueLinkDefaultResponse = zod
   .object({
@@ -3043,7 +6954,321 @@ export const CreateTestCycleWebLinkBody = zod
   })
   .strict();
 
+export const CreateTestCycleWebLink400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The `testCycleIdOrKey` path parameter does not match the required pattern",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A request body field failed validation at the API layer (required field missing, pattern mismatch, size, or numeric bound).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("The request body is not valid JSON."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("No test cycle exists with the given id or key."),
+]);
+
+export const CreateTestCycleWebLink401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const CreateTestCycleWebLink403Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe(
+    "The caller lacks a required Zephyr permission (when the project's permission system is enabled).",
+  );
+
+export const CreateTestCycleWebLink404Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource does not exist, or the caller does not have access to its project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource belongs to a disabled project, or a project that does not exist.",
+    ),
+]);
+
+export const CreateTestCycleWebLink500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
 export const CreateTestCycleWebLinkDefaultResponse = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+/**
+ * Returns the content of an attachment for the given test cycle.
+ * @summary Get test cycle attachment
+ */
+export const getTestCycleAttachmentPathTestCycleIdOrKeyRegExp =
+  /([0-9]+)|([A-Z][A-Z_0-9]+-R[0-9]+)/;
+
+export const GetTestCycleAttachmentParams = zod
+  .object({
+    testCycleIdOrKey: zod
+      .string()
+      .regex(getTestCycleAttachmentPathTestCycleIdOrKeyRegExp)
+      .describe("The ID or key of the test cycle."),
+    attachmentId: zod
+      .number()
+      .min(1)
+      .describe("The numeric ID of the attachment."),
+  })
+  .strict();
+
+export const GetTestCycleAttachment401Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const GetTestCycleAttachment403Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const GetTestCycleAttachment404Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const GetTestCycleAttachment500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const GetTestCycleAttachmentDefaultResponse = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+/**
+ * Uploads a file and attaches it to a test cycle.
+Send the file as the raw request body. The attachment's display name is taken from the `fileName` path parameter.
+Maximum file size is 1 GB per attachment.
+
+File name must contain 1 to 255 characters. It cannot contain `/`, `\`, `..`, or
+null bytes. URL-encode any special characters (for example, spaces
+become `%20`).
+
+Uploading the same `fileName` again creates an additional attachment for test cycle;
+existing attachments are not replaced.
+
+ * @summary Upload attachment
+ */
+export const uploadTestCycleAttachmentPathTestCycleIdOrKeyRegExp =
+  /([0-9]+)|([A-Z][A-Z_0-9]+-R[0-9]+)/;
+export const uploadTestCycleAttachmentPathFileNameMax = 255;
+
+export const UploadTestCycleAttachmentParams = zod
+  .object({
+    testCycleIdOrKey: zod
+      .string()
+      .regex(uploadTestCycleAttachmentPathTestCycleIdOrKeyRegExp)
+      .describe("The ID or key of the test cycle."),
+    fileName: zod
+      .string()
+      .min(1)
+      .max(uploadTestCycleAttachmentPathFileNameMax)
+      .describe(
+        "The name of the file being uploaded, including its extension (for example, `screenshot.png`).\nThis is used as the attachment's display name. URL-encode any special characters and keep\nthe name to 255 characters or fewer.\n",
+      ),
+  })
+  .strict();
+
+export const UploadTestCycleAttachment400Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const UploadTestCycleAttachment401Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const UploadTestCycleAttachment403Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const UploadTestCycleAttachment404Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const UploadTestCycleAttachment413Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const UploadTestCycleAttachment500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const UploadTestCycleAttachmentDefaultResponse = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+/**
+ * Returns a paged list of attachments for a test cycle, including their database ID and file name.
+ * @summary Get test cycle attachments
+ */
+export const getTestCycleAttachmentsPathTestCycleIdOrKeyRegExp =
+  /([0-9]+)|([A-Z][A-Z_0-9]+-R[0-9]+)/;
+
+export const GetTestCycleAttachmentsParams = zod
+  .object({
+    testCycleIdOrKey: zod
+      .string()
+      .regex(getTestCycleAttachmentsPathTestCycleIdOrKeyRegExp)
+      .describe("The ID or key of the test cycle."),
+  })
+  .strict();
+
+export const GetTestCycleAttachments200Response = zod
+  .object({
+    attachments: zod
+      .array(
+        zod
+          .object({
+            id: zod
+              .number()
+              .optional()
+              .describe("Database ID of the attachment."),
+            name: zod
+              .string()
+              .optional()
+              .describe("File name of the attachment."),
+          })
+          .strict(),
+      )
+      .optional(),
+  })
+  .strict();
+
+export const GetTestCycleAttachments401Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const GetTestCycleAttachments404Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const GetTestCycleAttachments500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const GetTestCycleAttachmentsDefaultResponse = zod
   .object({
     errorCode: zod.number(),
     message: zod.string(),
@@ -3333,6 +7558,70 @@ export const ListTestPlans200Response = zod
   })
   .strict();
 
+export const ListTestPlans400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A query parameter failed validation at the API layer (projectKey pattern, or the numeric bounds maxResults >= 1, startAt 0..1000000, folderId >= 1, jiraProjectVersionId >= 1).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("A numeric query parameter was sent with a non-numeric value."),
+]);
+
+export const ListTestPlans401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const ListTestPlans500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
 export const ListTestPlansDefaultResponse = zod
   .object({
     errorCode: zod.number(),
@@ -3407,7 +7696,573 @@ export const CreateTestPlan201Response = zod
   })
   .strict();
 
+export const CreateTestPlan400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A request body field failed validation at the API layer (required field missing, pattern mismatch, size, or numeric bound).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A request body field has the wrong type or format (for example a non-ISO-8601 date).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("The request body is not valid JSON."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The folderId in the body refers to a folder that does not exist.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("The labels array contains more than the maximum of 50 items."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("The labels array contains an empty or blank label."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A label in the labels array contains spaces, which is not allowed.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A custom field name in the body does not exist for the project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      'A custom field value has the wrong type for the field definition. The message names the field and the expected type, e.g. "requires a number value", "requires a string value", "requires a boolean value", "requires a string which is in the format yyyy-MM-dd", or "requires a list".\n',
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A choice custom field value references an option name that does not exist.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The project has required custom fields but the request omitted them.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "Custom fields were provided but not all required ones are present.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A required custom field was provided with a null or empty value.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A required multi-choice custom field was set to an empty collection.",
+    ),
+]);
+
+export const CreateTestPlan401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const CreateTestPlan403Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe(
+    "The caller lacks a required Zephyr permission (when the project's permission system is enabled).",
+  );
+
+export const CreateTestPlan404Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The projectKey filter refers to a project that does not exist or is deactivated.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("The statusName does not exist for the project."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource does not exist, or the caller does not have access to its project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource belongs to a disabled project, or a project that does not exist.",
+    ),
+]);
+
+export const CreateTestPlan500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
 export const CreateTestPlanDefaultResponse = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+/**
+ * Retrieves all test plans. Query parameters can be used to filter the results.
+Use this endpoint for retrieving large volumes of test plans.
+Results are split in different pages, of size equal to the `limit` query parameter.
+To fetch the next page, use the `next` URL returned in the response.
+It should have the same parameters as the original request, with the updated value for `startAtId` parameter.
+Alternatively, the same request can be made with the `startAtId` parameter set to the `nextStartAtId` value
+returned in the response.
+
+ * @summary Get test plans (NextGen)
+ */
+export const listTestPlansCursorPaginatedQueryProjectKeyRegExp =
+  /([A-Z][A-Z_0-9]+)/;
+export const listTestPlansCursorPaginatedQueryLimitDefault = 10;
+export const listTestPlansCursorPaginatedQueryLimitMax = 1000;
+
+export const listTestPlansCursorPaginatedQueryStartAtIdDefault = 0;
+export const listTestPlansCursorPaginatedQueryStartAtIdMin = 0;
+
+export const ListTestPlansCursorPaginatedQueryParams = zod.object({
+  projectKey: zod
+    .string()
+    .regex(listTestPlansCursorPaginatedQueryProjectKeyRegExp)
+    .optional()
+    .describe("Jira project key filter"),
+  limit: zod
+    .number()
+    .min(1)
+    .max(listTestPlansCursorPaginatedQueryLimitMax)
+    .default(listTestPlansCursorPaginatedQueryLimitDefault)
+    .describe(
+      "Specifies the maximum number of results to return in a single call. The default value is 10, and the maximum value that can be requested is 1000.\n\nNote that the server may enforce a lower limit than requested, depending on resource availability or other internal constraints. If this happens, the result set may be truncated. Always check the limit value in the response to confirm how many results were actually returned.\n",
+    ),
+  startAtId: zod
+    .number()
+    .min(listTestPlansCursorPaginatedQueryStartAtIdMin)
+    .default(listTestPlansCursorPaginatedQueryStartAtIdDefault)
+    .describe("Zero-indexed starting position for ID-based pagination."),
+  updatedAfter: zod
+    .string()
+    .datetime({})
+    .optional()
+    .describe(
+      "Filter only entities updated after the given time. Format: yyyy-MM-dd'T'HH:mm:ss'Z'",
+    ),
+});
+
+export const listTestPlansCursorPaginated200ResponseOneNextStartAtIdMin = 0;
+
+export const listTestPlansCursorPaginated200ResponseOneLimitMin = 0;
+
+export const listTestPlansCursorPaginated200ResponseTwoValuesItemKeyRegExp =
+  /.+-P[0-9]+/;
+export const listTestPlansCursorPaginated200ResponseTwoValuesItemNameMax = 255;
+
+export const listTestPlansCursorPaginated200ResponseTwoValuesItemNameRegExp =
+  /^(?!\\s*$).+/;
+
+export const listTestPlansCursorPaginated200ResponseTwoValuesItemOwnerAccountIdRegExp =
+  /^[-:a-zA-Z0-9]{1,128}$/;
+export const listTestPlansCursorPaginated200ResponseTwoValuesItemLabelsMax = 50;
+
+export const ListTestPlansCursorPaginated200Response = zod
+  .object({
+    next: zod.string().url().nullish(),
+    nextStartAtId: zod
+      .number()
+      .min(listTestPlansCursorPaginated200ResponseOneNextStartAtIdMin)
+      .nullable(),
+    limit: zod.number().min(listTestPlansCursorPaginated200ResponseOneLimitMin),
+    values: zod
+      .array(
+        zod
+          .object({
+            id: zod.number().min(1).describe("The ID of the entity"),
+            key: zod
+              .string()
+              .regex(
+                listTestPlansCursorPaginated200ResponseTwoValuesItemKeyRegExp,
+              )
+              .describe("Key of the test plan"),
+            name: zod
+              .string()
+              .min(1)
+              .max(listTestPlansCursorPaginated200ResponseTwoValuesItemNameMax)
+              .regex(
+                listTestPlansCursorPaginated200ResponseTwoValuesItemNameRegExp,
+              ),
+            objective: zod
+              .string()
+              .nullish()
+              .describe("A description of the objective."),
+            project: zod
+              .object({
+                id: zod.number().min(1).describe("The ID of the entity"),
+                self: zod
+                  .string()
+                  .url()
+                  .optional()
+                  .describe(
+                    "The REST API endpoint to get more resource details.",
+                  ),
+              })
+              .strict()
+              .describe("ID and link relative to Zephyr project."),
+            status: zod
+              .object({
+                id: zod.number().min(1).describe("The ID of the entity"),
+                self: zod
+                  .string()
+                  .url()
+                  .optional()
+                  .describe(
+                    "The REST API endpoint to get more resource details.",
+                  ),
+              })
+              .strict()
+              .describe("ID and link to the status resource."),
+            folder: zod
+              .object({
+                id: zod.number().min(1).describe("The ID of the entity"),
+                self: zod
+                  .string()
+                  .url()
+                  .optional()
+                  .describe(
+                    "The REST API endpoint to get more resource details.",
+                  ),
+              })
+              .strict()
+              .nullish()
+              .describe("ID and link to the folder resource."),
+            owner: zod
+              .object({
+                accountId: zod
+                  .string()
+                  .regex(
+                    listTestPlansCursorPaginated200ResponseTwoValuesItemOwnerAccountIdRegExp,
+                  )
+                  .nullable()
+                  .describe("Atlassian Account ID of the Jira user."),
+                self: zod
+                  .string()
+                  .url()
+                  .optional()
+                  .describe(
+                    "The Jira REST API endpoint to get the full representation of the Jira user.",
+                  ),
+              })
+              .strict()
+              .nullish(),
+            customFields: zod
+              .record(zod.string(), zod.unknown())
+              .optional()
+              .describe(
+                "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
+              ),
+            labels: zod
+              .array(zod.string())
+              .max(
+                listTestPlansCursorPaginated200ResponseTwoValuesItemLabelsMax,
+              )
+              .optional()
+              .describe("Array of labels associated to this entity."),
+            links: zod
+              .object({
+                webLinks: zod
+                  .array(
+                    zod
+                      .object({
+                        description: zod
+                          .string()
+                          .optional()
+                          .describe("The web link description"),
+                        url: zod.string().describe("The web link URL"),
+                        self: zod
+                          .string()
+                          .url()
+                          .optional()
+                          .describe(
+                            "The Zephyr REST API endpoint relative to the link between the entity and this web link.",
+                          ),
+                        id: zod
+                          .number()
+                          .min(1)
+                          .optional()
+                          .describe("The ID of the entity"),
+                        type: zod
+                          .enum(["COVERAGE", "BLOCKS", "RELATED"])
+                          .optional()
+                          .describe("The link type"),
+                      })
+                      .strict(),
+                  )
+                  .optional()
+                  .describe("A list of web links for this entity"),
+                issues: zod
+                  .array(
+                    zod
+                      .object({
+                        issueId: zod
+                          .number()
+                          .min(1)
+                          .describe("The Jira issue ID"),
+                        self: zod
+                          .string()
+                          .url()
+                          .optional()
+                          .describe(
+                            "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
+                          ),
+                        id: zod
+                          .number()
+                          .min(1)
+                          .optional()
+                          .describe(
+                            "The ID that represents the link between the entity and the Jira issue.",
+                          ),
+                        target: zod
+                          .string()
+                          .url()
+                          .optional()
+                          .describe(
+                            "The Jira Cloud REST API endpoint to get the full representation of the issue",
+                          ),
+                        type: zod
+                          .enum(["COVERAGE", "BLOCKS", "RELATED"])
+                          .optional()
+                          .describe("The link type"),
+                      })
+                      .strict(),
+                  )
+                  .optional()
+                  .describe("A list of Jira issues linked to this entity"),
+                testCycles: zod
+                  .array(
+                    zod
+                      .object({
+                        id: zod
+                          .number()
+                          .min(1)
+                          .describe("The ID of the entity"),
+                        self: zod
+                          .string()
+                          .url()
+                          .optional()
+                          .describe(
+                            "The REST API endpoint to get more resource details.",
+                          ),
+                        testCycleId: zod
+                          .number()
+                          .min(1)
+                          .optional()
+                          .describe("The ID of the entity"),
+                        type: zod
+                          .enum(["COVERAGE", "BLOCKS", "RELATED"])
+                          .optional()
+                          .describe("The link type"),
+                        target: zod
+                          .string()
+                          .optional()
+                          .describe("The test cycle resource"),
+                      })
+                      .strict()
+                      .describe(
+                        "ID and link to a test cycle associated with a test plan.",
+                      ),
+                  )
+                  .optional()
+                  .describe("A list of test cycle links for a test plan"),
+              })
+              .strict()
+              .optional(),
+          })
+          .strict(),
+      )
+      .optional(),
+  })
+  .strict();
+
+export const ListTestPlansCursorPaginated400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A query parameter failed validation at the API layer (projectKey pattern, or the numeric bounds maxResults >= 1, startAt 0..1000000, folderId >= 1, jiraProjectVersionId >= 1).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("A numeric query parameter was sent with a non-numeric value."),
+]);
+
+export const ListTestPlansCursorPaginated401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const ListTestPlansCursorPaginated500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
+export const ListTestPlansCursorPaginatedDefaultResponse = zod
   .object({
     errorCode: zod.number(),
     message: zod.string(),
@@ -3624,6 +8479,89 @@ export const GetTestPlan200Response = zod
   })
   .strict();
 
+export const GetTestPlan400Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe(
+    "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+  );
+
+export const GetTestPlan401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const GetTestPlan404Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("No test plan exists for the given ID or key."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource does not exist, or the caller does not have access to its project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource belongs to a disabled project, or a project that does not exist.",
+    ),
+]);
+
+export const GetTestPlan500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
 export const GetTestPlanDefaultResponse = zod
   .object({
     errorCode: zod.number(),
@@ -3664,6 +8602,125 @@ export const CreateTestPlanWebLink201Response = zod
   })
   .strict();
 
+export const CreateTestPlanWebLink400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A request body field failed validation at the API layer (required field missing, pattern mismatch, size, or numeric bound).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("The request body is not valid JSON."),
+]);
+
+export const CreateTestPlanWebLink401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const CreateTestPlanWebLink403Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe(
+    "The caller lacks a required Zephyr permission (when the project's permission system is enabled).",
+  );
+
+export const CreateTestPlanWebLink404Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("No test plan exists for the given ID or key."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource does not exist, or the caller does not have access to its project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource belongs to a disabled project, or a project that does not exist.",
+    ),
+]);
+
+export const CreateTestPlanWebLink422Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("A web link with the same URL already exists on the test plan.");
+
+export const CreateTestPlanWebLink500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
 export const CreateTestPlanWebLinkDefaultResponse = zod
   .object({
     errorCode: zod.number(),
@@ -3701,6 +8758,136 @@ export const CreateTestPlanIssueLink201Response = zod
     self: zod.string().optional(),
   })
   .strict();
+
+export const CreateTestPlanIssueLink400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A request body field failed validation at the API layer (required field missing, pattern mismatch, size, or numeric bound).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("The request body is not valid JSON."),
+]);
+
+export const CreateTestPlanIssueLink401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const CreateTestPlanIssueLink403Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe(
+    "The caller lacks a required Zephyr permission (when the project's permission system is enabled).",
+  );
+
+export const CreateTestPlanIssueLink404Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("No test plan exists for the given ID or key."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A referenced Jira entity (e.g. jiraProjectVersion) does not exist or is not accessible.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource does not exist, or the caller does not have access to its project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource belongs to a disabled project, or a project that does not exist.",
+    ),
+]);
+
+export const CreateTestPlanIssueLink422Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe(
+    "An issue link with the same issueId already exists on the entity.",
+  );
+
+export const CreateTestPlanIssueLink500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
 
 export const CreateTestPlanIssueLinkDefaultResponse = zod
   .object({
@@ -3746,7 +8933,481 @@ export const CreateTestPlanTestCycleLink201Response = zod
   })
   .strict();
 
+export const CreateTestPlanTestCycleLink400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A request body field failed validation at the API layer (required field missing, pattern mismatch, size, or numeric bound).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("The request body is not valid JSON."),
+]);
+
+export const CreateTestPlanTestCycleLink401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const CreateTestPlanTestCycleLink403Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe(
+    "The caller lacks a required Zephyr permission (when the project's permission system is enabled).",
+  );
+
+export const CreateTestPlanTestCycleLink404Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("No test plan exists for the given ID or key."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("No test cycle exists with the given id or key."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource does not exist, or the caller does not have access to its project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource belongs to a disabled project, or a project that does not exist.",
+    ),
+]);
+
+export const CreateTestPlanTestCycleLink422Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("A link to the same test cycle already exists on the entity.");
+
+export const CreateTestPlanTestCycleLink500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
 export const CreateTestPlanTestCycleLinkDefaultResponse = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+/**
+ * Returns the content of an attachment for the given test plan.
+ * @summary Get test plan attachment
+ */
+export const getTestPlanAttachmentPathTestPlanIdOrKeyRegExp =
+  /([0-9]+)|(.+-P[0-9]+)/;
+
+export const GetTestPlanAttachmentParams = zod
+  .object({
+    testPlanIdOrKey: zod
+      .string()
+      .regex(getTestPlanAttachmentPathTestPlanIdOrKeyRegExp)
+      .describe(
+        "The ID or key of the test plan. Test plan keys are of the format [A-Z]+-P[0-9]+",
+      ),
+    attachmentId: zod
+      .number()
+      .min(1)
+      .describe("The numeric ID of the attachment."),
+  })
+  .strict();
+
+export const GetTestPlanAttachment400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A query parameter failed validation at the API layer (projectKey pattern, or the numeric bounds maxResults >= 1, startAt 0..1000000, folderId >= 1, jiraProjectVersionId >= 1).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A numeric path parameter was sent with a non-numeric value (for example a non-numeric test case version).",
+    ),
+]);
+
+export const GetTestPlanAttachment401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const GetTestPlanAttachment500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
+export const GetTestPlanAttachmentDefaultResponse = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+/**
+ * Returns a paged list of attachments for a test plan, including their database ID and file name.
+ * @summary Get test plan attachments
+ */
+export const getTestPlanAttachmentsReferencePathTestPlanIdOrKeyRegExp =
+  /([0-9]+)|(.+-P[0-9]+)/;
+
+export const GetTestPlanAttachmentsReferenceParams = zod
+  .object({
+    testPlanIdOrKey: zod
+      .string()
+      .regex(getTestPlanAttachmentsReferencePathTestPlanIdOrKeyRegExp)
+      .describe(
+        "The ID or key of the test plan. Test plan keys are of the format [A-Z]+-P[0-9]+",
+      ),
+  })
+  .strict();
+
+export const GetTestPlanAttachmentsReference200Response = zod
+  .object({
+    attachments: zod
+      .array(
+        zod
+          .object({
+            id: zod
+              .number()
+              .optional()
+              .describe("Database ID of the attachment."),
+            name: zod
+              .string()
+              .optional()
+              .describe("File name of the attachment."),
+          })
+          .strict(),
+      )
+      .optional(),
+  })
+  .strict();
+
+export const GetTestPlanAttachmentsReference400Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe(
+    "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+  );
+
+export const GetTestPlanAttachmentsReference401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const GetTestPlanAttachmentsReference404Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("No test plan exists for the given ID or key."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("The test plan exists but has no attachment metadata."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource does not exist, or the caller does not have access to its project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource belongs to a disabled project, or a project that does not exist.",
+    ),
+]);
+
+export const GetTestPlanAttachmentsReference500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
+export const GetTestPlanAttachmentsReferenceDefaultResponse = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+/**
+ * Uploads a file and attaches it to a test plan.
+Send the file as the raw request body. The attachment's display name is taken from the `fileName` path parameter.
+Maximum file size is 1 GB per attachment.
+File name must contain 1 to 255 characters. It cannot contain `/`, `\`, `..`, or
+null bytes. URL-encode any special characters (for example, spaces
+become `%20`).
+
+Uploading the same `fileName` again creates an additional attachment for test cycle;
+existing attachments are not replaced.
+
+ * @summary Upload test plan attachment
+ */
+export const createTestPlanAttachmentPathTestPlanIdOrKeyRegExp =
+  /([0-9]+)|(.+-P[0-9]+)/;
+export const createTestPlanAttachmentPathFileNameMax = 255;
+
+export const CreateTestPlanAttachmentParams = zod
+  .object({
+    testPlanIdOrKey: zod
+      .string()
+      .regex(createTestPlanAttachmentPathTestPlanIdOrKeyRegExp)
+      .describe(
+        "The ID or key of the test plan. Test plan keys are of the format [A-Z]+-P[0-9]+",
+      ),
+    fileName: zod
+      .string()
+      .min(1)
+      .max(createTestPlanAttachmentPathFileNameMax)
+      .describe(
+        "The name of the file being uploaded, including its extension (for example, `screenshot.png`).\nThis is used as the attachment's display name. URL-encode any special characters and keep\nthe name to 255 characters or fewer.\n",
+      ),
+  })
+  .strict();
+
+export const CreateTestPlanAttachment400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A request body field failed validation at the API layer (required field missing, pattern mismatch, size, or numeric bound).",
+    ),
+]);
+
+export const CreateTestPlanAttachment401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const CreateTestPlanAttachment500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
+export const CreateTestPlanAttachmentDefaultResponse = zod
   .object({
     errorCode: zod.number(),
     message: zod.string(),
@@ -4085,6 +9746,70 @@ export const ListTestExecutions200Response = zod
   })
   .strict();
 
+export const ListTestExecutions400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A query parameter failed validation at the API layer (projectKey pattern, or the numeric bounds maxResults >= 1, startAt 0..1000000, folderId >= 1, jiraProjectVersionId >= 1).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("A numeric query parameter was sent with a non-numeric value."),
+]);
+
+export const ListTestExecutions401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const ListTestExecutions500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
 export const ListTestExecutionsDefaultResponse = zod
   .object({
     errorCode: zod.number(),
@@ -4204,6 +9929,187 @@ export const CreateTestExecution201Response = zod
   })
   .strict();
 
+export const CreateTestExecution400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A request body field failed validation at the API layer (required field missing, pattern mismatch, size, or numeric bound).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("The request body is not valid JSON."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A custom field name in the body does not exist for the project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      'A custom field value has the wrong type for the field definition. The message names the field and the expected type, e.g. "requires a number value", "requires a string value", "requires a boolean value", "requires a string which is in the format yyyy-MM-dd", or "requires a list".\n',
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The statusName provided for creating a test execution does not exist in the project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The project has required custom fields but the request omitted them.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "Custom fields were provided but not all required ones are present.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A required custom field was provided with a null or empty value.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A required multi-choice custom field was set to an empty collection.",
+    ),
+]);
+
+export const CreateTestExecution401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const CreateTestExecution403Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe(
+    "The caller lacks a required Zephyr permission (when the project's permission system is enabled).",
+  );
+
+export const CreateTestExecution404Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("No test case exists for the given testCaseKey."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("No test cycle exists with the given id or key."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The projectKey filter refers to a project that does not exist or is deactivated.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource does not exist, or the caller does not have access to its project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource belongs to a disabled project, or a project that does not exist.",
+    ),
+]);
+
+export const CreateTestExecution500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
 export const CreateTestExecutionDefaultResponse = zod
   .object({
     errorCode: zod.number(),
@@ -4300,6 +10206,13 @@ export const ListTestExecutionsNextgenQueryParams = zod.object({
     .min(listTestExecutionsNextgenQueryStartAtIdMin)
     .default(listTestExecutionsNextgenQueryStartAtIdDefault)
     .describe("Zero-indexed starting position for ID-based pagination."),
+  updatedAfter: zod
+    .string()
+    .datetime({})
+    .optional()
+    .describe(
+      "Filter only entities updated after the given time. Format: yyyy-MM-dd'T'HH:mm:ss'Z'",
+    ),
 });
 
 export const listTestExecutionsNextgen200ResponseOneNextStartAtIdMin = 0;
@@ -4533,6 +10446,70 @@ export const ListTestExecutionsNextgen200Response = zod
   })
   .strict();
 
+export const ListTestExecutionsNextgen400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A query parameter failed validation at the API layer (projectKey pattern, or the numeric bounds maxResults >= 1, startAt 0..1000000, folderId >= 1, jiraProjectVersionId >= 1).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("A numeric query parameter was sent with a non-numeric value."),
+]);
+
+export const ListTestExecutionsNextgen401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const ListTestExecutionsNextgen500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
 export const ListTestExecutionsNextgenDefaultResponse = zod
   .object({
     errorCode: zod.number(),
@@ -4746,6 +10723,89 @@ export const GetTestExecution200Response = zod
   })
   .strict();
 
+export const GetTestExecution400Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe(
+    "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+  );
+
+export const GetTestExecution401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const GetTestExecution404Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("No test execution exists with the given id or key."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource does not exist, or the caller does not have access to its project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource belongs to a disabled project, or a project that does not exist.",
+    ),
+]);
+
+export const GetTestExecution500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
 export const GetTestExecutionDefaultResponse = zod
   .object({
     errorCode: zod.number(),
@@ -4820,6 +10880,138 @@ export const UpdateTestExecutionBody = zod
       .describe("Comment added against overall test case execution."),
   })
   .strict();
+
+export const UpdateTestExecution400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A request body field failed validation at the API layer (required field missing, pattern mismatch, size, or numeric bound).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("The request body is not valid JSON."),
+]);
+
+export const UpdateTestExecution401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const UpdateTestExecution403Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe(
+    "The caller lacks a required Zephyr permission (when the project's permission system is enabled).",
+  );
+
+export const UpdateTestExecution404Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("No test execution exists with the given id or key."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource does not exist, or the caller does not have access to its project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource belongs to a disabled project, or a project that does not exist.",
+    ),
+]);
+
+export const UpdateTestExecution422Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The provided status name does not exist for the test execution's project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The provided environment name does not exist for the test execution's project.",
+    ),
+]);
+
+export const UpdateTestExecution500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
 
 export const UpdateTestExecutionDefaultResponse = zod
   .object({
@@ -4917,6 +11109,10 @@ export const GetTestExecutionTestSteps200Response = zod
       .array(
         zod
           .object({
+            id: zod
+              .number()
+              .nullish()
+              .describe("The id of the test step (test script result)"),
             inline: zod
               .object({
                 description: zod
@@ -4974,6 +11170,114 @@ export const GetTestExecutionTestSteps200Response = zod
   .strict()
   .describe("Response body when retrieving test steps for a test execution");
 
+export const GetTestExecutionTestSteps400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A query parameter failed validation at the API layer (projectKey pattern, or the numeric bounds maxResults >= 1, startAt 0..1000000, folderId >= 1, jiraProjectVersionId >= 1).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("A numeric query parameter was sent with a non-numeric value."),
+]);
+
+export const GetTestExecutionTestSteps401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const GetTestExecutionTestSteps404Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("No test execution exists with the given id or key."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource does not exist, or the caller does not have access to its project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource belongs to a disabled project, or a project that does not exist.",
+    ),
+]);
+
+export const GetTestExecutionTestSteps500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
+export const GetTestExecutionTestStepsDefaultResponse = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
 /**
  * Updates the test steps for the given test execution.
  * @summary Update test steps
@@ -5017,12 +11321,108 @@ export const PutTestExecutionTestStepsBody = zod
   })
   .strict();
 
-export const PutTestExecutionTestSteps404Response = zod
+export const PutTestExecutionTestSteps400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A request body field failed validation at the API layer (required field missing, pattern mismatch, size, or numeric bound).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("The request body is not valid JSON."),
+]);
+
+export const PutTestExecutionTestSteps401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const PutTestExecutionTestSteps403Response = zod
   .object({
     errorCode: zod.number(),
     message: zod.string(),
   })
-  .strict();
+  .strict()
+  .describe(
+    "The caller lacks a required Zephyr permission (when the project's permission system is enabled).",
+  );
+
+export const PutTestExecutionTestSteps404Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("No test execution exists with the given id or key."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource does not exist, or the caller does not have access to its project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource belongs to a disabled project, or a project that does not exist.",
+    ),
+]);
 
 export const PutTestExecutionTestSteps409Response = zod
   .object({
@@ -5044,7 +11444,24 @@ export const PutTestExecutionTestSteps422Response = zod.union([
       message: zod.string(),
     })
     .strict(),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The provided status name does not exist for the test execution's project.",
+    ),
 ]);
+
+export const PutTestExecutionTestSteps500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
 
 export const PutTestExecutionTestStepsDefaultResponse = zod
   .object({
@@ -5081,12 +11498,90 @@ export const SyncTestExecutionScript200Response = zod
   })
   .strict();
 
-export const SyncTestExecutionScript404Response = zod
+export const SyncTestExecutionScript400Response = zod
   .object({
     errorCode: zod.number(),
     message: zod.string(),
   })
-  .strict();
+  .strict()
+  .describe(
+    "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+  );
+
+export const SyncTestExecutionScript401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const SyncTestExecutionScript403Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe(
+    "The caller lacks a required Zephyr permission (when the project's permission system is enabled).",
+  );
+
+export const SyncTestExecutionScript404Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("No test execution exists with the given id or key."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource does not exist, or the caller does not have access to its project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource belongs to a disabled project, or a project that does not exist.",
+    ),
+]);
 
 export const SyncTestExecutionScript409Response = zod
   .object({
@@ -5095,7 +11590,123 @@ export const SyncTestExecutionScript409Response = zod
   })
   .strict();
 
+export const SyncTestExecutionScript500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
 export const SyncTestExecutionScriptDefaultResponse = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+/**
+ * Uploads a file and attaches it to a test execution step.
+Send the file as the raw request body. The attachment's display name is taken from the `fileName` path parameter.
+Maximum file size is 1 GB per attachment.
+File name must contain 1 to 255 characters. It cannot contain `/`, `\`, `..`, or
+null bytes. URL-encode any special characters (for example, spaces
+become `%20`).
+
+Uploading the same `fileName` again creates an additional attachment for test cycle;
+existing attachments are not replaced.
+
+`testExecutionStepId` is the numeric ID of
+the step within the test execution. Retrieve it from
+`GET /testexecutions/{testExecutionIdOrKey}/teststeps`.
+
+ * @summary Upload test step attachment
+ */
+export const createTestExecutionTestStepAttachmentPathTestExecutionIdOrKeyRegExp =
+  /([0-9]+)|(.+-E[0-9]+)/;
+
+export const createTestExecutionTestStepAttachmentPathFileNameMax = 255;
+
+export const CreateTestExecutionTestStepAttachmentParams = zod
+  .object({
+    testExecutionIdOrKey: zod
+      .string()
+      .regex(
+        createTestExecutionTestStepAttachmentPathTestExecutionIdOrKeyRegExp,
+      )
+      .describe(
+        "The ID or key of the test execution. Test execution keys are of the format [A-Z]+-E[0-9]+",
+      ),
+    testExecutionStepId: zod
+      .number()
+      .min(1)
+      .describe("The ID of the step within the test execution."),
+    fileName: zod
+      .string()
+      .min(1)
+      .max(createTestExecutionTestStepAttachmentPathFileNameMax)
+      .describe(
+        "The name of the file being uploaded, including its extension (for example, `screenshot.png`).\nThis is used as the attachment's display name. URL-encode any special characters and keep\nthe name to 255 characters or fewer.\n",
+      ),
+  })
+  .strict();
+
+export const CreateTestExecutionTestStepAttachment400Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe(
+    "A request body field failed validation at the API layer (required field missing, pattern mismatch, size, or numeric bound).",
+  );
+
+export const CreateTestExecutionTestStepAttachment401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const CreateTestExecutionTestStepAttachment500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
+export const CreateTestExecutionTestStepAttachmentDefaultResponse = zod
   .object({
     errorCode: zod.number(),
     message: zod.string(),
@@ -5165,6 +11776,72 @@ export const ListTestExecutionLinks200Response = zod
   })
   .strict();
 
+export const ListTestExecutionLinks400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The test execution key is well-formed but not found in the database (returned as 400 by the links endpoint).",
+    ),
+]);
+
+export const ListTestExecutionLinks401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const ListTestExecutionLinks500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
 export const ListTestExecutionLinksDefaultResponse = zod
   .object({
     errorCode: zod.number(),
@@ -5196,7 +11873,716 @@ export const CreateTestExecutionIssueLinkBody = zod
   })
   .strict();
 
+export const CreateTestExecutionIssueLink400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A request body field failed validation at the API layer (required field missing, pattern mismatch, size, or numeric bound).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("The request body is not valid JSON."),
+]);
+
+export const CreateTestExecutionIssueLink401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const CreateTestExecutionIssueLink403Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe(
+    "The caller lacks a required Zephyr permission (when the project's permission system is enabled).",
+  );
+
+export const CreateTestExecutionIssueLink404Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("No test execution exists with the given id or key."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A referenced Jira entity (e.g. jiraProjectVersion) does not exist or is not accessible.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource does not exist, or the caller does not have access to its project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource belongs to a disabled project, or a project that does not exist.",
+    ),
+]);
+
+export const CreateTestExecutionIssueLink500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
 export const CreateTestExecutionIssueLinkDefaultResponse = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+/**
+ * Returns a paged list of attachments for a test execution step, including their database ID and file name.
+ * @summary Get test execution step attachments
+ */
+export const getTestExecutionTestStepAttachmentsReferencePathTestExecutionIdOrKeyRegExp =
+  /([0-9]+)|(.+-E[0-9]+)/;
+export const getTestExecutionTestStepAttachmentsReferencePathTestStepIdRegExp =
+  /([0-9]+)/;
+
+export const GetTestExecutionTestStepAttachmentsReferenceParams = zod
+  .object({
+    testExecutionIdOrKey: zod
+      .string()
+      .regex(
+        getTestExecutionTestStepAttachmentsReferencePathTestExecutionIdOrKeyRegExp,
+      )
+      .describe(
+        "The ID or key of the test execution. Test execution keys are of the format [A-Z]+-E[0-9]+",
+      ),
+    testStepId: zod
+      .string()
+      .regex(getTestExecutionTestStepAttachmentsReferencePathTestStepIdRegExp)
+      .describe(
+        "The ID of the test case step. Test step IDs are numeric, of the format [0-9]+",
+      ),
+  })
+  .strict();
+
+export const GetTestExecutionTestStepAttachmentsReference200Response = zod
+  .object({
+    attachments: zod
+      .array(
+        zod
+          .object({
+            id: zod
+              .number()
+              .optional()
+              .describe("Database ID of the attachment."),
+            name: zod
+              .string()
+              .optional()
+              .describe("File name of the attachment."),
+          })
+          .strict(),
+      )
+      .optional(),
+  })
+  .strict();
+
+export const GetTestExecutionTestStepAttachmentsReference400Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe(
+    "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+  );
+
+export const GetTestExecutionTestStepAttachmentsReference401Response =
+  zod.union([
+    zod
+      .object({
+        error: zod.string(),
+      })
+      .strict()
+      .describe("The Authorization header is missing."),
+    zod
+      .object({
+        error: zod.string(),
+      })
+      .strict()
+      .describe(
+        "The bearer token does not have the three dot-separated parts of a JWT.",
+      ),
+    zod
+      .object({
+        error: zod.string(),
+      })
+      .strict()
+      .describe("A segment of the bearer token is not valid base64."),
+    zod
+      .object({
+        error: zod.string(),
+      })
+      .strict()
+      .describe("A decoded segment of the bearer token is not valid JSON."),
+    zod
+      .object({
+        error: zod.string(),
+      })
+      .strict()
+      .describe(
+        "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+      ),
+  ]);
+
+export const GetTestExecutionTestStepAttachmentsReference404Response =
+  zod.union([
+    zod
+      .object({
+        errorCode: zod.number(),
+        message: zod.string(),
+      })
+      .strict()
+      .describe("No test execution exists with the given id or key."),
+    zod
+      .object({
+        errorCode: zod.number(),
+        message: zod.string(),
+      })
+      .strict()
+      .describe(
+        "The test execution step with the given ID does not exist in the test execution.",
+      ),
+    zod
+      .object({
+        errorCode: zod.number(),
+        message: zod.string(),
+      })
+      .strict()
+      .describe(
+        "No attachment metadata was found for the given test execution step.",
+      ),
+    zod
+      .object({
+        errorCode: zod.number(),
+        message: zod.string(),
+      })
+      .strict()
+      .describe(
+        "The referenced resource does not exist, or the caller does not have access to its project.",
+      ),
+    zod
+      .object({
+        errorCode: zod.number(),
+        message: zod.string(),
+      })
+      .strict()
+      .describe(
+        "The referenced resource belongs to a disabled project, or a project that does not exist.",
+      ),
+  ]);
+
+export const GetTestExecutionTestStepAttachmentsReference500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
+export const GetTestExecutionTestStepAttachmentsReferenceDefaultResponse = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+/**
+ * Returns a paged list of attachments for a test execution, including their database ID and file name.
+ * @summary Get test execution attachments
+ */
+export const getTestExecutionAttachmentsReferencePathTestExecutionIdOrKeyRegExp =
+  /([0-9]+)|(.+-E[0-9]+)/;
+
+export const GetTestExecutionAttachmentsReferenceParams = zod
+  .object({
+    testExecutionIdOrKey: zod
+      .string()
+      .regex(getTestExecutionAttachmentsReferencePathTestExecutionIdOrKeyRegExp)
+      .describe(
+        "The ID or key of the test execution. Test execution keys are of the format [A-Z]+-E[0-9]+",
+      ),
+  })
+  .strict();
+
+export const GetTestExecutionAttachmentsReference200Response = zod
+  .object({
+    attachments: zod
+      .array(
+        zod
+          .object({
+            id: zod
+              .number()
+              .optional()
+              .describe("Database ID of the attachment."),
+            name: zod
+              .string()
+              .optional()
+              .describe("File name of the attachment."),
+          })
+          .strict(),
+      )
+      .optional(),
+  })
+  .strict();
+
+export const GetTestExecutionAttachmentsReference400Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe(
+    "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+  );
+
+export const GetTestExecutionAttachmentsReference401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const GetTestExecutionAttachmentsReference404Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("No test execution exists with the given id or key."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe("No attachment metadata was found for the given test execution."),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource does not exist, or the caller does not have access to its project.",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The referenced resource belongs to a disabled project, or a project that does not exist.",
+    ),
+]);
+
+export const GetTestExecutionAttachmentsReference500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
+export const GetTestExecutionAttachmentsReferenceDefaultResponse = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+/**
+ * Uploads a file and attaches it to a test execution.
+Send the file as the raw request body. Set the `Content-Type` header to match the file you upload (for example,
+`image/png` for a PNG screenshot or `application/pdf` for a PDF report).
+The attachment's display name is taken from the `fileName` path parameter.
+Maximum file size is 1 GB per attachment.
+
+File name must contain 1 to 255 characters. It cannot contain `/`, `\`, `..`, or
+null bytes. URL-encode any special characters (for example, spaces
+become `%20`).
+
+Uploading the same `fileName` again creates an additional attachment for test execution;
+existing attachments are not replaced.
+
+ * @summary Upload attachment
+ */
+export const uploadTestExecutionAttachmentPathTestExecutionIdOrKeyRegExp =
+  /([0-9]+)|(.+-E[0-9]+)/;
+export const uploadTestExecutionAttachmentPathFileNameMax = 255;
+
+export const UploadTestExecutionAttachmentParams = zod
+  .object({
+    testExecutionIdOrKey: zod
+      .string()
+      .regex(uploadTestExecutionAttachmentPathTestExecutionIdOrKeyRegExp)
+      .describe(
+        "The ID or key of the test execution. Test execution keys are of the format [A-Z]+-E[0-9]+",
+      ),
+    fileName: zod
+      .string()
+      .min(1)
+      .max(uploadTestExecutionAttachmentPathFileNameMax)
+      .describe(
+        "The name of the file being uploaded, including its extension (for example, `screenshot.png`).\nThis is used as the attachment's display name. URL-encode any special characters and keep\nthe name to 255 characters or fewer.\n",
+      ),
+  })
+  .strict();
+
+export const UploadTestExecutionAttachment400Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe(
+    "A request body field failed validation at the API layer (required field missing, pattern mismatch, size, or numeric bound).",
+  );
+
+export const UploadTestExecutionAttachment401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const UploadTestExecutionAttachment500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
+export const UploadTestExecutionAttachmentDefaultResponse = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+/**
+ * Returns the content of an attachment for the given test execution step. `testExecutionStepId` is the numeric ID of the step within the test execution. Retrieve it from `GET /testexecutions/{testExecutionIdOrKey}/teststeps`.
+ * @summary Get test executions step attachment
+ */
+export const getTestExecutionStepAttachmentPathTestExecutionIdOrKeyRegExp =
+  /([0-9]+)|(.+-E[0-9]+)/;
+
+export const GetTestExecutionStepAttachmentParams = zod
+  .object({
+    testExecutionIdOrKey: zod
+      .string()
+      .regex(getTestExecutionStepAttachmentPathTestExecutionIdOrKeyRegExp)
+      .describe(
+        "The ID or key of the test execution. Test execution keys are of the format [A-Z]+-E[0-9]+",
+      ),
+    testExecutionStepId: zod
+      .number()
+      .min(1)
+      .describe("The ID of the step within the test execution."),
+    attachmentId: zod
+      .number()
+      .min(1)
+      .describe("The numeric ID of the attachment."),
+  })
+  .strict();
+
+export const GetTestExecutionStepAttachment400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A query parameter failed validation at the API layer (projectKey pattern, or the numeric bounds maxResults >= 1, startAt 0..1000000, folderId >= 1, jiraProjectVersionId >= 1).",
+    ),
+]);
+
+export const GetTestExecutionStepAttachment401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const GetTestExecutionStepAttachment500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
+export const GetTestExecutionStepAttachmentDefaultResponse = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+/**
+ * Returns the content of an attachment for the given test execution.
+ * @summary Get test execution attachment
+ */
+export const getTestExecutionAttachmentPathTestExecutionIdOrKeyRegExp =
+  /([0-9]+)|(.+-E[0-9]+)/;
+
+export const GetTestExecutionAttachmentParams = zod
+  .object({
+    testExecutionIdOrKey: zod
+      .string()
+      .regex(getTestExecutionAttachmentPathTestExecutionIdOrKeyRegExp)
+      .describe(
+        "The ID or key of the test execution. Test execution keys are of the format [A-Z]+-E[0-9]+",
+      ),
+    attachmentId: zod
+      .number()
+      .min(1)
+      .describe("The numeric ID of the attachment."),
+  })
+  .strict();
+
+export const GetTestExecutionAttachment400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A query parameter failed validation at the API layer (projectKey pattern, or the numeric bounds maxResults >= 1, startAt 0..1000000, folderId >= 1, jiraProjectVersionId >= 1).",
+    ),
+]);
+
+export const GetTestExecutionAttachment401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const GetTestExecutionAttachment500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
+export const GetTestExecutionAttachmentDefaultResponse = zod
   .object({
     errorCode: zod.number(),
     message: zod.string(),
@@ -5288,6 +12674,20 @@ export const ListProjects200Response = zod
   })
   .strict();
 
+export const ListProjects401Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const ListProjects500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
 export const ListProjectsDefaultResponse = zod
   .object({
     errorCode: zod.number(),
@@ -5318,6 +12718,27 @@ export const GetProject200Response = zod
     enabled: zod
       .boolean()
       .describe("Indicates whether the project has Zephyr enabled on it."),
+  })
+  .strict();
+
+export const GetProject401Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const GetProject404Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const GetProject500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
   })
   .strict();
 
@@ -5450,6 +12871,20 @@ export const ListFolders200Response = zod
   })
   .strict();
 
+export const ListFolders401Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const ListFolders500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
 export const ListFoldersDefaultResponse = zod
   .object({
     errorCode: zod.number(),
@@ -5496,6 +12931,20 @@ export const CreateFolder201Response = zod
   .object({
     id: zod.number().min(1).optional().describe("The ID of the entity"),
     self: zod.string().optional(),
+  })
+  .strict();
+
+export const CreateFolder401Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const CreateFolder500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
   })
   .strict();
 
@@ -5547,6 +12996,27 @@ export const GetFolder200Response = zod
       .strict()
       .optional()
       .describe("ID and link relative to Zephyr project."),
+  })
+  .strict();
+
+export const GetFolder401Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const GetFolder404Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const GetFolder500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
   })
   .strict();
 
@@ -5683,6 +13153,20 @@ export const ListPriorities200Response = zod
   })
   .strict();
 
+export const ListPriorities401Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const ListPriorities500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
 export const ListPrioritiesDefaultResponse = zod
   .object({
     errorCode: zod.number(),
@@ -5730,6 +13214,20 @@ export const CreatePriority201Response = zod
   .object({
     id: zod.number().min(1).optional().describe("The ID of the entity"),
     self: zod.string().optional(),
+  })
+  .strict();
+
+export const CreatePriority401Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const CreatePriority500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
   })
   .strict();
 
@@ -5793,7 +13291,21 @@ export const GetPriority200Response = zod
   })
   .strict();
 
+export const GetPriority401Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
 export const GetPriority404Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const GetPriority500Response = zod
   .object({
     errorCode: zod.number(),
     message: zod.string(),
@@ -5808,7 +13320,7 @@ export const GetPriorityDefaultResponse = zod
   .strict();
 
 /**
- * Update an existing priority.  Please take into account that for each non-specified field the value will be cleared.
+ * Update an existing priority. Please take into account that for each non-specified field the value will be cleared.
 
  * @summary Update priority
  */
@@ -5859,6 +13371,27 @@ export const UpdatePriorityBody = zod
       .regex(updatePriorityBodyColorRegExp)
       .optional()
       .describe("A color in hexadecimal format"),
+  })
+  .strict();
+
+export const UpdatePriority401Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const UpdatePriority404Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const UpdatePriority500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
   })
   .strict();
 
@@ -5999,6 +13532,20 @@ export const ListStatuses200Response = zod
   })
   .strict();
 
+export const ListStatuses401Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const ListStatuses500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
 export const ListStatusesDefaultResponse = zod
   .object({
     errorCode: zod.number(),
@@ -6049,6 +13596,20 @@ export const CreateStatus201Response = zod
   .object({
     id: zod.number().min(1).optional().describe("The ID of the entity"),
     self: zod.string().optional(),
+  })
+  .strict();
+
+export const CreateStatus401Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const CreateStatus500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
   })
   .strict();
 
@@ -6113,7 +13674,21 @@ export const GetStatus200Response = zod
   })
   .strict();
 
+export const GetStatus401Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
 export const GetStatus404Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const GetStatus500Response = zod
   .object({
     errorCode: zod.number(),
     message: zod.string(),
@@ -6128,7 +13703,7 @@ export const GetStatusDefaultResponse = zod
   .strict();
 
 /**
- * Update an existing status.  Please take into account that for each non-specified field the value will be cleared.
+ * Update an existing status. Please take into account that for each non-specified field the value will be cleared.
 
  * @summary Update status
  */
@@ -6180,6 +13755,27 @@ export const UpdateStatusBody = zod
       .regex(updateStatusBodyColorRegExp)
       .optional()
       .describe("A color in hexadecimal format"),
+  })
+  .strict();
+
+export const UpdateStatus401Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const UpdateStatus404Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const UpdateStatus500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
   })
   .strict();
 
@@ -6310,6 +13906,20 @@ export const ListEnvironments200Response = zod
   })
   .strict();
 
+export const ListEnvironments401Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const ListEnvironments500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
 export const ListEnvironmentsDefaultResponse = zod
   .object({
     errorCode: zod.number(),
@@ -6380,6 +13990,20 @@ export const CreateEnvironment400Response = zod.union([
     .strict(),
 ]);
 
+export const CreateEnvironment401Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const CreateEnvironment500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
 export const CreateEnvironmentDefaultResponse = zod
   .object({
     errorCode: zod.number(),
@@ -6435,7 +14059,21 @@ export const GetEnvironment200Response = zod
   })
   .strict();
 
+export const GetEnvironment401Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
 export const GetEnvironment404Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const GetEnvironment500Response = zod
   .object({
     errorCode: zod.number(),
     message: zod.string(),
@@ -6450,7 +14088,7 @@ export const GetEnvironmentDefaultResponse = zod
   .strict();
 
 /**
- * Update an existing environment.  Please take into account that for each non-specified field the value will be cleared.
+ * Update an existing environment. Please take into account that for each non-specified field the value will be cleared.
 
  * @summary Update an environment
  */
@@ -6529,6 +14167,27 @@ export const UpdateEnvironment400Response = zod.union([
     .strict(),
 ]);
 
+export const UpdateEnvironment401Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const UpdateEnvironment404Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const UpdateEnvironment500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
 export const UpdateEnvironmentDefaultResponse = zod
   .object({
     errorCode: zod.number(),
@@ -6544,6 +14203,27 @@ export const UpdateEnvironmentDefaultResponse = zod
 export const DeleteLinkParams = zod
   .object({
     linkId: zod.number().min(1),
+  })
+  .strict();
+
+export const DeleteLink401Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const DeleteLink404Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const DeleteLink500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
   })
   .strict();
 
@@ -6584,6 +14264,27 @@ export const GetIssueLinkTestCases200Response = zod.array(
   GetIssueLinkTestCases200ResponseItem,
 );
 
+export const GetIssueLinkTestCases401Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const GetIssueLinkTestCases404Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const GetIssueLinkTestCases500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
 export const GetIssueLinkTestCasesDefaultResponse = zod
   .object({
     errorCode: zod.number(),
@@ -6620,6 +14321,27 @@ export const GetIssueLinkTestCycles200ResponseItem = zod
 export const GetIssueLinkTestCycles200Response = zod.array(
   GetIssueLinkTestCycles200ResponseItem,
 );
+
+export const GetIssueLinkTestCycles401Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const GetIssueLinkTestCycles404Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const GetIssueLinkTestCycles500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
 
 export const GetIssueLinkTestCyclesDefaultResponse = zod
   .object({
@@ -6658,6 +14380,27 @@ export const GetIssueLinkTestPlans200Response = zod.array(
   GetIssueLinkTestPlans200ResponseItem,
 );
 
+export const GetIssueLinkTestPlans401Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const GetIssueLinkTestPlans404Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const GetIssueLinkTestPlans500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
 export const GetIssueLinkTestPlansDefaultResponse = zod
   .object({
     errorCode: zod.number(),
@@ -6694,6 +14437,27 @@ export const GetIssueLinkTestExecutions200ResponseItem = zod
 export const GetIssueLinkTestExecutions200Response = zod.array(
   GetIssueLinkTestExecutions200ResponseItem,
 );
+
+export const GetIssueLinkTestExecutions401Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const GetIssueLinkTestExecutions404Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const GetIssueLinkTestExecutions500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
 
 export const GetIssueLinkTestExecutionsDefaultResponse = zod
   .object({
@@ -6798,6 +14562,20 @@ export const CreateCustomExecutions200Response = zod
       })
       .strict()
       .optional(),
+  })
+  .strict();
+
+export const CreateCustomExecutions401Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const CreateCustomExecutions500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
   })
   .strict();
 
@@ -6908,6 +14686,20 @@ export const CreateCucumberExecutions200Response = zod
   })
   .strict();
 
+export const CreateCucumberExecutions401Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const CreateCucumberExecutions500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
 export const CreateCucumberExecutionsDefaultResponse = zod
   .object({
     errorCode: zod.number(),
@@ -7014,6 +14806,20 @@ export const CreateJUnitExecutions200Response = zod
   })
   .strict();
 
+export const CreateJUnitExecutions401Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const CreateJUnitExecutions500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
 export const CreateJUnitExecutionsDefaultResponse = zod
   .object({
     errorCode: zod.number(),
@@ -7037,6 +14843,20 @@ export const RetrieveBDDTestCasesHeader = zod.object({
   Accept: zod.enum(["application/zip"]),
 });
 
+export const RetrieveBDDTestCases401Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const RetrieveBDDTestCases500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
 export const RetrieveBDDTestCasesDefaultResponse = zod
   .object({
     errorCode: zod.number(),
@@ -7047,6 +14867,20 @@ export const RetrieveBDDTestCasesDefaultResponse = zod
 /**
  * @summary Check the health of this API
  */
+export const Healthcheck401Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const Healthcheck500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
 export const HealthcheckDefaultResponse = zod
   .object({
     errorCode: zod.number(),

@@ -1,10 +1,14 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import type { IncomingMessage } from "node:http";
+import type { McpClientIdentity } from "./client-identity";
 
 // Storage for pre-request data that can be retrieved from a tool to prevent caching as part of the server instance in a session.
 // For example, the auth token.
 export interface RequestContext {
   headers: Record<string, string | string[] | undefined>;
+  // Identity of the MCP client for this session, captured at `initialize`.
+  // Used to forward client attribution to downstream APIs (User-Agent).
+  mcpClient?: McpClientIdentity;
 }
 
 // Create the storage instance
@@ -21,6 +25,18 @@ export function withRequestContext<T>(req: IncomingMessage, fn: () => T): T {
 // Helper to get the current context
 export function getRequestContext(): RequestContext | undefined {
   return requestContextStorage.getStore();
+}
+
+/**
+ * Attach the captured MCP client identity to the current request context so
+ * downstream code (e.g. User-Agent construction) can forward it. No-op when
+ * called outside a request context.
+ */
+export function setRequestMcpClient(identity: McpClientIdentity): void {
+  const context = getRequestContext();
+  if (context) {
+    context.mcpClient = identity;
+  }
 }
 
 /**

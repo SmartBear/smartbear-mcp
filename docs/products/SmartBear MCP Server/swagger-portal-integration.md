@@ -226,8 +226,9 @@ The Swagger Portal client provides comprehensive portal and product management c
 | ------------- | ---------------------------------------------------------------------------------------------------------------------- | ----------- | -------- |
 | `portalId`    | Portal UUID or subdomain - unique identifier for the portal                                                            | string      | Yes      |
 | `productId`   | Product UUID - unique identifier for the product                                                                       | string      | Yes      |
-| `pageTitle`   | Title of the documentation page - displayed in navigation and used to generate the page slug (3-255 characters)        | string      | Yes      |
+| `pageTitle`   | Title of the documentation page - displayed in navigation (3-255 characters)                                           | string      | Yes      |
 | `pageContent` | Content of the documentation page. Provide HTML when `contentType` is `html`, Markdown when `contentType` is `markdown` | string      | No       |
+| `pageSlug`    | URL slug for the page - 3-255 characters, lowercase, alphanumeric with hyphens, underscores, or dots (e.g. `my-page`). If not provided, the slug is generated from the page title. | string      | No       |
 | `contentType` | Content type of the page: `markdown` (default) or `html`.                                                              | string      | No       |
 | `source`      | Where content is managed: `internal` (default, editable in portal UI and API) or `external` (API only).               | string      | No       |
 | `order`       | Order position of the page within its parent section or item (default: 0)                                              | number      | No       |

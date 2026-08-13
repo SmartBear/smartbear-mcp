@@ -1,6 +1,6 @@
 ![qmetry.png](./images/embedded/qmetry.png)
 
-The QMetry client provides the following test management capabilities as listed below. Tools for QMetry require a `QMETRY_API_KEY`.
+The QMetry client provides the following test management capabilities as listed below. Tools for QMetry require a `QMETRY_API_KEY`. These QMetry MCP tools are available from QMetry version 8.23.0 onwards, for both cloud and on-prem deployment.
 
 ## Available Tools
 
@@ -278,3 +278,8 @@ The QMetry client provides the following test management capabilities as listed 
 -   Parameters: Request identifier (`requestId`).
 -   Returns: JSON object containing the automation status details (e.g., PASS, FAIL, IN_PROGRESS, etc.).
 -   Use case: Check and track the processing status of a specific automation results import job.
+
+## Notes
+
+-   Test Run UDFs support in `qmetry_testcase_executions`, `get_testcase_runs_by_testsuite_run`, and `fetch_issue_executions` is available from QMetry version 8.26.0
+onwards.

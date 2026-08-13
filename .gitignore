@@ -7,3 +7,4 @@ coverage
 build/
 /smartbear*.mcpb
 /smartbear*.tgz
+pacts/

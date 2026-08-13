@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { USER_AGENT } from "../common/info";
+import { getUserAgent } from "../common/info";
 import { getRequestHeader } from "../common/request-context";
 import type { SmartBearMcpServer } from "../common/server";
 import { ToolError } from "../common/tools";
@@ -26,6 +26,8 @@ import { ExecuteSuite } from "./tool/suites/execute-suite";
 import { GetSuiteExecutionStatus } from "./tool/suites/get-suite-execution-status";
 import { ListSuiteExecutions } from "./tool/suites/list-suite-executions";
 import { ListSuites } from "./tool/suites/list-suites";
+import { CreateSegment } from "./tool/tests/create-segment";
+import { CreateTest } from "./tool/tests/create-test";
 import { GetTestDetail } from "./tool/tests/get-test-detail";
 import { GetTestStatus } from "./tool/tests/get-test-status";
 import { ListSegments } from "./tool/tests/list-segments";
@@ -119,7 +121,7 @@ export class ReflectClient implements Client {
     return {
       ...this.getAuthHeader(),
       "Content-Type": "application/json",
-      "User-Agent": USER_AGENT,
+      "User-Agent": getUserAgent(),
     };
   }
 
@@ -189,6 +191,8 @@ export class ReflectClient implements Client {
       new GetTestDetail(this),
       new RunTest(this),
       new GetTestStatus(this),
+      new CreateTest(this),
+      new CreateSegment(this),
     ];
 
     // Available for both OAuth and API key authentication

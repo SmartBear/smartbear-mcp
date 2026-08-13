@@ -5,7 +5,6 @@ import type { ToolParams } from "../../../common/types";
 import type { Qtm4jClient } from "../../client";
 import {
   ENDPOINTS,
-  PAGINATION,
   RESPONSE_FIELDS,
   TOOL_NAMES,
   TOOLSETS,
@@ -121,9 +120,8 @@ export class GetProjects extends Tool<Qtm4jClient> {
 
     // Build request body with pagination and optional filters
     const body = {
-      [RESPONSE_FIELDS.START_AT]: input.startAt ?? PAGINATION.DEFAULT_START_AT,
-      [RESPONSE_FIELDS.MAX_RESULTS]:
-        input.maxResults ?? PAGINATION.DEFAULT_MAX_RESULTS_PROJECTS,
+      [RESPONSE_FIELDS.START_AT]: input.startAt,
+      [RESPONSE_FIELDS.MAX_RESULTS]: input.maxResults,
       ...(input.projectId !== undefined && { projectId: input.projectId }),
       ...(input.search && { search: input.search }),
       ...(input.qmetryEnabled !== undefined && {

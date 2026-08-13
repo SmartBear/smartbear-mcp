@@ -14,13 +14,14 @@ import {
 } from "zod";
 import Bugsnag, { type BugsnagEvent } from "../common/bugsnag";
 import { CacheService } from "./cache";
+import { type McpClientIdentity, toClientIdentity } from "./client-identity";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./info";
 import {
   executeElicitationOrPolyfill,
   isElicitationPolyfillResult,
 } from "./pollyfills";
 import { ToolError } from "./tools";
-import type { Client, ToolParams } from "./types";
+import type { Client, ClientInfo, ToolParams } from "./types";
 import {
   getDefaultValue,
   getReadableTypeName,
@@ -32,8 +33,10 @@ export class SmartBearMcpServer extends McpServer {
   private cache: CacheService;
   private samplingSupported = false;
   private elicitationSupported = false;
+  private clientInfo?: ClientInfo;
   private clients: Client[] = [];
   private enabledToolsets?: string[];
+  private mcpClientIdentity?: McpClientIdentity;
 
   constructor(enabledToolsets?: string) {
     super(
@@ -77,8 +80,48 @@ export class SmartBearMcpServer extends McpServer {
     return this.elicitationSupported;
   }
 
+  setClientInfo(info: ClientInfo): void {
+    this.clientInfo = info;
+  }
+
+  getClientInfo(): ClientInfo | undefined {
+    return this.clientInfo;
+  }
+
   getClients(): Client[] {
     return this.clients;
+  }
+
+  /**
+   * Record the MCP client identity reported in the `initialize` handshake.
+   * Captured once per session by the transport layer.
+   */
+  setMcpClientIdentity(identity: McpClientIdentity): void {
+    this.mcpClientIdentity = identity;
+  }
+
+  /**
+   * Return the MCP client identity for this session. Prefers the value captured
+   * at `initialize`; falls back to the SDK's `getClientVersion()` so callers
+   * still get an answer if the explicit capture was skipped.
+   */
+  getMcpClientIdentity(): McpClientIdentity {
+    return (
+      this.mcpClientIdentity ?? toClientIdentity(this.server.getClientVersion())
+    );
+  }
+
+  /**
+   * Attach MCP client attribution to a Bugsnag event so errors can be segmented
+   * by originating client/marketplace.
+   */
+  private addClientMetadata(event: BugsnagEvent): void {
+    const identity = this.getMcpClientIdentity();
+    event.addMetadata("mcpClient", {
+      mcp_client_name: identity.name ?? null,
+      mcp_client_version: identity.version ?? null,
+      mcp_protocol_version: identity.protocolVersion ?? null,
+    });
   }
 
   async cleanupSession(mcpSessionId: string): Promise<void> {
@@ -109,7 +152,14 @@ export class SmartBearMcpServer extends McpServer {
             inputSchema: params.inputSchema
               ? this.schemaToRawShape(params.inputSchema)
               : {},
-            outputSchema: this.schemaToRawShape(params.outputSchema),
+            // Pass ZodObject-based schemas through as-is (rather than via schemaToRawShape)
+            // so that z.looseObject()'s additionalProperties:true is preserved in the JSON
+            // schema sent to clients — extracting `.shape` would rebuild a strict object and
+            // cause "additional properties" validation errors on real API responses.
+            outputSchema:
+              params.outputSchema instanceof ZodObject
+                ? params.outputSchema
+                : this.schemaToRawShape(params.outputSchema),
             annotations: this.getAnnotations(toolTitle, params),
           },
           async (args: any, extra: any) => {
@@ -140,6 +190,7 @@ export class SmartBearMcpServer extends McpServer {
               } else {
                 Bugsnag.notify(e as unknown as Error, (event: BugsnagEvent) => {
                   event.addMetadata("app", { tool: toolName });
+                  this.addClientMetadata(event);
                   event.unhandled = true;
                 });
               }
@@ -192,6 +243,7 @@ export class SmartBearMcpServer extends McpServer {
                   resource: resourceName,
                   url: url,
                 });
+                this.addClientMetadata(event);
                 event.unhandled = true;
               });
               throw e;
@@ -218,6 +270,7 @@ export class SmartBearMcpServer extends McpServer {
                 event.addMetadata("app", {
                   prompt: this.getCapabilityName(client, params.title),
                 });
+                this.addClientMetadata(event);
                 event.unhandled = true;
               });
               throw e;

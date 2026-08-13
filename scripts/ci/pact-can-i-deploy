@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# Check Pact deployment compatibility
+#
+# Runs `pact-broker can-i-deploy` for smartbear-mcp against the production
+# environment, waiting up to 5 minutes for pending BDCT verification.
+#
+# Usage:
+#   scripts/ci/pact-can-i-deploy
+#
+# Environment:
+#   PACT_BROKER_BASE_URL - PactFlow base URL
+#   PACT_BROKER_TOKEN    - PactFlow API token
+#   GITHUB_SHA           - Version to check (git commit SHA)
+#
+set -euo pipefail
+
+: "${PACT_BROKER_BASE_URL:?need PACT_BROKER_BASE_URL}"
+: "${PACT_BROKER_TOKEN:?need PACT_BROKER_TOKEN}"
+: "${GITHUB_SHA:?need GITHUB_SHA}"
+
+pact-broker can-i-deploy \
+  --pacticipant smartbear-mcp \
+  --version "${GITHUB_SHA}" \
+  --to-environment production \
+  --retry-while-unknown 30 \
+  --retry-interval 10

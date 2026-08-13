@@ -52,4 +52,9 @@ export const QMETRY_PATHS = {
     TEST_RUN_UDF_METADATA: "/rest/admin/udf/metadata",
     FETCH_CASCADE_CHILD_VALUES: "/rest/admin/udf/cascade/childValue",
   },
+  AI_AGENT: {
+    GET_GATE_CONFIG: "/rest/aiagent/project/:projectId/gate-config",
+    EXECUTE_REPORT: "/rest/aiagent/report",
+    EXPORT_HTML_REPORT: "/rest/aiagent/htmlreport",
+  },
 };

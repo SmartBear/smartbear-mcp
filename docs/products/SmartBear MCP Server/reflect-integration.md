@@ -75,12 +75,26 @@ The Reflect client provides test management, execution, and test authoring capab
 
 ### Test Authoring & Agent Interaction
 
+#### `create_test`
+
+- Purpose: Create a new Reflect test from an ordered list of steps.
+- Parameters: Name (`name`), platform (`type`: `web`, `api`, or `native-mobile`), ordered `steps`, and optional `description`, `parameters`, and `deviceProfile` (for `web` tests). Each step's `type` (e.g. `click`, `input`, `text-validation`, `prompt`, `segment`) determines its required fields; the tool schema describes the available options.
+- Returns: The id of the created test.
+- Use case: Import tests from other frameworks (Selenium, Cypress, Playwright) or SmartBear products (TestComplete, BearQ) into Reflect.
+
 #### `list_segments`
 
 - Purpose: List reusable test step segments available in the account.
 - Parameters: Platform (`platform`), optional offset and limit for pagination (`offset`, `limit`).
 - Returns: List of segments along with relevant metadata.
 - Use case: Discover reusable steps that can help accomplish a task more efficiently.
+
+#### `create_segment`
+
+- Purpose: Create a new reusable segment from an ordered list of steps. Segments can be referenced from tests but cannot reference other segments.
+- Parameters: Name (`name`), platform (`type`: `web`, `api`, or `native-mobile`), ordered `steps`, and optional `description`, `parameters`, and `deviceProfile` (for `web` segments).
+- Returns: The id of the created segment.
+- Use case: Build reusable step groups to share across multiple tests.
 
 #### `connect_to_session`
 

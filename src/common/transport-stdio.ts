@@ -3,6 +3,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 
 import { clientRegistry } from "./client-registry";
 import { USER_AGENT } from "./info";
+import { handleInitializeMessage } from "./initialize";
 import { SmartBearMcpServer } from "./server";
 import { registerShutdownHandler } from "./shutdown";
 import { getTypeDescription, isOptionalType } from "./zod-utils";
@@ -92,27 +93,7 @@ export async function runStdioMode() {
     }
   });
 
-  transport.onmessage = (message) => {
-    if ("method" in message && message.method === "initialize") {
-      if (message.params?.protocolVersion === "2025-11-25") {
-        const clientCapabilities = message.params?.capabilities as Record<
-          string,
-          unknown
-        >;
-
-        if (Object.hasOwn(clientCapabilities, "sampling")) {
-          server.setSamplingSupported(true);
-        }
-
-        if (Object.hasOwn(clientCapabilities, "elicitation")) {
-          server.setElicitationSupported(true);
-        }
-      }
-
-      // Other protocolVersion handling can be added below
-      // to maintain backwards compatibility.
-    }
-  };
+  transport.onmessage = (message) => handleInitializeMessage(server, message);
   await server.connect(transport);
 }
 

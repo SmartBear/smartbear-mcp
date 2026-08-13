@@ -412,10 +412,19 @@ const TestCycleExecutionSchema = z
     summary: z.string().optional().describe("Test case summary."),
     description: z.string().nullable().optional(),
     executionResult: z
-      .string()
+      .union([
+        z.object({
+          id: z.number().optional(),
+          name: z.string().optional(),
+          color: z.string().optional(),
+        }),
+        z.string(),
+      ])
       .nullable()
       .optional()
-      .describe("Execution result (e.g., 'Pass', 'Fail', 'Blocked')."),
+      .describe(
+        "Execution result object (e.g., { id, name, color }) or string label.",
+      ),
     status: z.any().optional().describe("Test case status."),
     priority: z.any().optional().describe("Test case priority."),
     environment: z.string().nullable().optional(),

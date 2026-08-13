@@ -5,13 +5,15 @@ FROM ${BUILDER_IMAGE_NAME} AS builder
 WORKDIR /app
 
 COPY src/ ./src/
-COPY package.json package-lock.json tsconfig.json vite.config.ts ./
+COPY package.json package-lock.json tsconfig.json vite.config.ts vitest.config.ts ./
 
 RUN --mount=type=cache,target=/root/.npm npm ci
 
 RUN npm run build
 
 FROM node:22-alpine AS release
+
+RUN apk add --no-cache libcrypto3=3.5.7-r0 libssl3=3.5.7-r0
 
 COPY --from=builder /app/dist /app/dist
 COPY --from=builder /app/package.json /app/package.json

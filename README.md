@@ -35,7 +35,7 @@ See individual guides for suggested prompts and supported tools and resources:
   - [Portal](https://developer.smartbear.com/smartbear-mcp/docs/swagger-portal-integration) - Portal and product management capabilities
   - [Studio](https://developer.smartbear.com/smartbear-mcp/docs/swagger-studio-integration) - API and Domain management capabilities, including AI-powered API generation from prompts and automatic standardization
   - [Contract Testing (PactFlow)](https://developer.smartbear.com/pactflow/default/getting-started) - Contract testing capabilities
-  - [Functional Testing](https://developer.smartbear.com/smartbear-mcp/docs/functional-testing-integration) - API test discovery capabilities
+  - [Functional Testing](https://developer.smartbear.com/smartbear-mcp/docs/swagger-functional-testing-integration) - API test discovery capabilities
 - [QMetry](https://developer.smartbear.com/smartbear-mcp/docs/qmetry-integration) - QMetry Test Management capabilities
 - [Zephyr](https://developer.smartbear.com/smartbear-mcp/docs/zephyr-integration) - Zephyr Test Management capabilities
 - [Collaborator](https://developer.smartbear.com/smartbear-mcp/docs/collaborator-integration) - Review and Remote System Configuration management capabilities
