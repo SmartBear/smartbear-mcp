@@ -4080,6 +4080,115 @@ export const GetTestCaseAttachmentDefaultResponse = zod
   .strict();
 
 /**
+ * Deletes the attachment with the given ID from the test case.
+ * @summary Delete attachment
+ */
+export const deleteTestCaseAttachmentMetadataPathTestCaseKeyRegExp =
+  /(.+-T[0-9]+)/;
+
+export const DeleteTestCaseAttachmentMetadataParams = zod
+  .object({
+    testCaseKey: zod
+      .string()
+      .regex(deleteTestCaseAttachmentMetadataPathTestCaseKeyRegExp)
+      .describe(
+        "The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+",
+      ),
+    attachmentId: zod
+      .number()
+      .min(1)
+      .describe("The numeric ID of the attachment."),
+  })
+  .strict();
+
+export const DeleteTestCaseAttachmentMetadata400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A numeric path parameter was sent with a non-numeric value (for example a non-numeric test case version).",
+    ),
+]);
+
+export const DeleteTestCaseAttachmentMetadata401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const DeleteTestCaseAttachmentMetadata403Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const DeleteTestCaseAttachmentMetadata404Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const DeleteTestCaseAttachmentMetadata500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
+export const DeleteTestCaseAttachmentMetadataDefaultResponse = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+/**
  * Uploads a file and attaches it to a test case.
 Send the file as the raw request body. The attachment's display name is taken from the `fileName` path parameter.
 Maximum file size is 1 GB per attachment.
@@ -4401,6 +4510,117 @@ export const GetTestCaseStepAttachment500Response = zod
   .describe("The backend service returned a 5xx or could not be reached.");
 
 export const GetTestCaseStepAttachmentDefaultResponse = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+/**
+ * Deletes the attachment with the given ID from the test case step. `testCaseStepId` is the numeric ID of the step within the test case. Retrieve it from `GET /testcases/{testCaseKey}/teststeps`.
+ * @summary Delete step attachment
+ */
+export const deleteTestCaseStepAttachmentMetadataPathTestCaseIdOrKeyRegExp =
+  /([0-9]+)|([A-Z][A-Z_0-9]+-T[0-9]+)/;
+
+export const DeleteTestCaseStepAttachmentMetadataParams = zod
+  .object({
+    testCaseIdOrKey: zod
+      .string()
+      .regex(deleteTestCaseStepAttachmentMetadataPathTestCaseIdOrKeyRegExp)
+      .describe("The ID or key of the test case."),
+    testCaseStepId: zod
+      .number()
+      .min(1)
+      .describe("The ID of the step within the test case."),
+    attachmentId: zod
+      .number()
+      .min(1)
+      .describe("The numeric ID of the attachment."),
+  })
+  .strict();
+
+export const DeleteTestCaseStepAttachmentMetadata400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A numeric path parameter was sent with a non-numeric value (for example a non-numeric test case version).",
+    ),
+]);
+
+export const DeleteTestCaseStepAttachmentMetadata401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const DeleteTestCaseStepAttachmentMetadata403Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const DeleteTestCaseStepAttachmentMetadata404Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const DeleteTestCaseStepAttachmentMetadata500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
+export const DeleteTestCaseStepAttachmentMetadataDefaultResponse = zod
   .object({
     errorCode: zod.number(),
     message: zod.string(),
@@ -7128,6 +7348,61 @@ export const GetTestCycleAttachmentDefaultResponse = zod
   .strict();
 
 /**
+ * Deletes the attachment with the given ID from the test cycle.
+ * @summary Delete attachment
+ */
+export const deleteTestCycleAttachmentMetadataPathTestCycleIdOrKeyRegExp =
+  /([0-9]+)|([A-Z][A-Z_0-9]+-R[0-9]+)/;
+
+export const DeleteTestCycleAttachmentMetadataParams = zod
+  .object({
+    testCycleIdOrKey: zod
+      .string()
+      .regex(deleteTestCycleAttachmentMetadataPathTestCycleIdOrKeyRegExp)
+      .describe("The ID or key of the test cycle."),
+    attachmentId: zod
+      .number()
+      .min(1)
+      .describe("The numeric ID of the attachment."),
+  })
+  .strict();
+
+export const DeleteTestCycleAttachmentMetadata401Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const DeleteTestCycleAttachmentMetadata403Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const DeleteTestCycleAttachmentMetadata404Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const DeleteTestCycleAttachmentMetadata500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const DeleteTestCycleAttachmentMetadataDefaultResponse = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+/**
  * Uploads a file and attaches it to a test cycle.
 Send the file as the raw request body. The attachment's display name is taken from the `fileName` path parameter.
 Maximum file size is 1 GB per attachment.
@@ -9164,6 +9439,115 @@ export const GetTestPlanAttachment500Response = zod
   .describe("The backend service returned a 5xx or could not be reached.");
 
 export const GetTestPlanAttachmentDefaultResponse = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+/**
+ * Deletes the attachment with the given ID from the test plan.
+ * @summary Delete attachment
+ */
+export const deleteTestPlanAttachmentMetadataPathTestPlanIdOrKeyRegExp =
+  /([0-9]+)|(.+-P[0-9]+)/;
+
+export const DeleteTestPlanAttachmentMetadataParams = zod
+  .object({
+    testPlanIdOrKey: zod
+      .string()
+      .regex(deleteTestPlanAttachmentMetadataPathTestPlanIdOrKeyRegExp)
+      .describe(
+        "The ID or key of the test plan. Test plan keys are of the format [A-Z]+-P[0-9]+",
+      ),
+    attachmentId: zod
+      .number()
+      .min(1)
+      .describe("The numeric ID of the attachment."),
+  })
+  .strict();
+
+export const DeleteTestPlanAttachmentMetadata400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A numeric path parameter was sent with a non-numeric value (for example a non-numeric test case version).",
+    ),
+]);
+
+export const DeleteTestPlanAttachmentMetadata401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const DeleteTestPlanAttachmentMetadata403Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const DeleteTestPlanAttachmentMetadata404Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const DeleteTestPlanAttachmentMetadata500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
+export const DeleteTestPlanAttachmentMetadataDefaultResponse = zod
   .object({
     errorCode: zod.number(),
     message: zod.string(),
@@ -12495,6 +12879,121 @@ export const GetTestExecutionStepAttachmentDefaultResponse = zod
   .strict();
 
 /**
+ * Deletes the attachment with the given ID from the test execution step. `testExecutionStepId` is the numeric ID of the step within the test execution. Retrieve it from `GET /testexecutions/{testExecutionIdOrKey}/teststeps`.
+ * @summary Delete step attachment
+ */
+export const deleteTestExecutionStepAttachmentMetadataPathTestExecutionIdOrKeyRegExp =
+  /([0-9]+)|(.+-E[0-9]+)/;
+
+export const DeleteTestExecutionStepAttachmentMetadataParams = zod
+  .object({
+    testExecutionIdOrKey: zod
+      .string()
+      .regex(
+        deleteTestExecutionStepAttachmentMetadataPathTestExecutionIdOrKeyRegExp,
+      )
+      .describe(
+        "The ID or key of the test execution. Test execution keys are of the format [A-Z]+-E[0-9]+",
+      ),
+    testExecutionStepId: zod
+      .number()
+      .min(1)
+      .describe("The ID of the step within the test execution."),
+    attachmentId: zod
+      .number()
+      .min(1)
+      .describe("The numeric ID of the attachment."),
+  })
+  .strict();
+
+export const DeleteTestExecutionStepAttachmentMetadata400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A query parameter failed validation at the API layer (projectKey pattern, or the numeric bounds maxResults >= 1, startAt 0..1000000, folderId >= 1, jiraProjectVersionId >= 1).",
+    ),
+]);
+
+export const DeleteTestExecutionStepAttachmentMetadata401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const DeleteTestExecutionStepAttachmentMetadata403Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const DeleteTestExecutionStepAttachmentMetadata404Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const DeleteTestExecutionStepAttachmentMetadata500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
+export const DeleteTestExecutionStepAttachmentMetadataDefaultResponse = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+/**
  * Returns the content of an attachment for the given test execution.
  * @summary Get test execution attachment
  */
@@ -12583,6 +13082,117 @@ export const GetTestExecutionAttachment500Response = zod
   .describe("The backend service returned a 5xx or could not be reached.");
 
 export const GetTestExecutionAttachmentDefaultResponse = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+/**
+ * Deletes the attachment with the given ID from the test execution.
+ * @summary Delete attachment
+ */
+export const deleteTestExecutionAttachmentMetadataPathTestExecutionIdOrKeyRegExp =
+  /([0-9]+)|(.+-E[0-9]+)/;
+
+export const DeleteTestExecutionAttachmentMetadataParams = zod
+  .object({
+    testExecutionIdOrKey: zod
+      .string()
+      .regex(
+        deleteTestExecutionAttachmentMetadataPathTestExecutionIdOrKeyRegExp,
+      )
+      .describe(
+        "The ID or key of the test execution. Test execution keys are of the format [A-Z]+-E[0-9]+",
+      ),
+    attachmentId: zod
+      .number()
+      .min(1)
+      .describe("The numeric ID of the attachment."),
+  })
+  .strict();
+
+export const DeleteTestExecutionAttachmentMetadata400Response = zod.union([
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+    ),
+  zod
+    .object({
+      errorCode: zod.number(),
+      message: zod.string(),
+    })
+    .strict()
+    .describe(
+      "A query parameter failed validation at the API layer (projectKey pattern, or the numeric bounds maxResults >= 1, startAt 0..1000000, folderId >= 1, jiraProjectVersionId >= 1).",
+    ),
+]);
+
+export const DeleteTestExecutionAttachmentMetadata401Response = zod.union([
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("The Authorization header is missing."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .object({
+      error: zod.string(),
+    })
+    .strict()
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const DeleteTestExecutionAttachmentMetadata403Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const DeleteTestExecutionAttachmentMetadata404Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict();
+
+export const DeleteTestExecutionAttachmentMetadata500Response = zod
+  .object({
+    errorCode: zod.number(),
+    message: zod.string(),
+  })
+  .strict()
+  .describe("The backend service returned a 5xx or could not be reached.");
+
+export const DeleteTestExecutionAttachmentMetadataDefaultResponse = zod
   .object({
     errorCode: zod.number(),
     message: zod.string(),
