@@ -66,7 +66,7 @@ export class FunctionalTestingAPI {
       const code = err.cause?.code;
       if (code) {
         throw new ToolError(
-          `Failed to reach Swagger Functional Testing API: ${code}. Please verify your settings and network connectivity`,
+          `Failed to reach Swagger Functional Testing API: ${code}. Please verify your settings and network connectivity.`,
         );
       }
 
