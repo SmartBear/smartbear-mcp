@@ -5,6 +5,7 @@ import type {
   FetchCascadeChildValuesPayload,
   FetchTestRunUdfMetadataPayload,
   FetchTestRunUdfValuesPayload,
+  FetchUdfLayoutPayload,
 } from "../types/udf";
 import { qmetryRequest } from "./api/client-api";
 import { resolveDefaults } from "./utils";
@@ -338,6 +339,94 @@ export async function fetchUdfFieldTypes() {
 
 export async function fetchUdfModules() {
   return [...UDF_MODULES];
+}
+
+/**
+ * Fetches UDF field definitions for TC, TS, or IS entities from the newlayout endpoint.
+ * pageName "ADD" → create operation field list (no fieldID needed).
+ * pageName "DETAIL" → update operation field list (includes fieldID/projectUserFieldID required by UDF update wrapper).
+ * Returns normalized fields array + step fields (TC only) + list options for lookup fields.
+ */
+export async function fetchUdfLayout(
+  token: string,
+  baseUrl: string,
+  project: string | undefined,
+  payload: FetchUdfLayoutPayload,
+) {
+  const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
+    baseUrl,
+    project,
+  );
+
+  if (!payload.entityType || !["TC", "TS", "IS"].includes(payload.entityType)) {
+    throw new Error(
+      "[fetchUdfLayout] Missing or invalid required parameter: 'entityType'. Must be 'TC', 'TS', or 'IS'.",
+    );
+  }
+
+  const pageName = payload.pageName ?? "ADD";
+
+  const raw = await qmetryRequest<{
+    qmUDF?: Record<string, Record<string, any>>;
+    qmTCSUDF?: { TCS?: Record<string, any> };
+    gis?: {
+      customList?: Record<
+        string,
+        Array<{ id: number; name: string; isArchived: boolean }>
+      >;
+    };
+  }>({
+    method: "POST",
+    path: QMETRY_PATHS.UDF.GET_LAYOUT,
+    token,
+    project: resolvedProject,
+    baseUrl: resolvedBaseUrl,
+    body: { entityType: payload.entityType, pageName },
+    scopeId: payload.scopeId,
+    orgCode: payload.orgCode,
+  });
+
+  const entityUdfMap = raw.qmUDF?.[payload.entityType] ?? {};
+  const fields = Object.values(entityUdfMap).map((def: any) => ({
+    name: def.name as string,
+    label: def.label ?? (def.fieldLabel as string) ?? def.name,
+    fieldTypeName: def.fieldTypeName as string,
+    fieldID: (def.projectUserFieldID ?? def.fieldID ?? null) as number | null,
+    isMandatory: (def.isMandatory ?? false) as boolean,
+    ...(def.qmListName ? { listName: def.qmListName as string } : {}),
+  }));
+
+  // TC-only: step UDF definitions live in qmTCSUDF.TCS
+  const stepUdfMap = raw.qmTCSUDF?.TCS ?? {};
+  const stepFields = Object.values(stepUdfMap).map((def: any) => ({
+    name: def.name as string,
+    label: def.label ?? (def.fieldLabel as string) ?? def.name,
+    fieldTypeName: def.fieldTypeName as string,
+    fieldID: (def.projectUserFieldID ?? def.fieldID ?? null) as number | null,
+    isMandatory: (def.isMandatory ?? false) as boolean,
+    ...(def.qmListName ? { listName: def.qmListName as string } : {}),
+  }));
+
+  const listOptions = raw.gis?.customList ?? {};
+
+  const updateNote =
+    pageName === "ADD"
+      ? "Use 'fieldID: null' fields for create — no fieldID needed on create. " +
+        "For LOOKUPLIST/MULTILOOKUPLIST/CASCADINGLIST: use IDs from 'listOptions[listName]' as values. " +
+        "Pass values flat via udfFields param on the create tool."
+      : "Use 'fieldID' from each field when building the 'UDF' wrapper for update: " +
+        "{ fieldName: { fieldID: <fieldID>, value: <value> } }. " +
+        "Also pass the same values flat via udfFields param. " +
+        "For LOOKUPLIST/MULTILOOKUPLIST/CASCADINGLIST: use IDs from 'listOptions[listName]'.";
+
+  return {
+    entityType: payload.entityType,
+    pageName,
+    fields,
+    ...(payload.entityType === "TC" ? { stepFields } : {}),
+    listOptions,
+    _note: updateNote,
+  };
 }
 
 /**

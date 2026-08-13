@@ -533,12 +533,27 @@ export const UpdateCycleArgsSchema = z.object({
   }),
 });
 
+const StepUdfValueSchema = z.union([
+  z.string(),
+  z.number(),
+  z.array(z.number()),
+  z.object({ parent: z.number(), child: z.number().optional() }),
+  z.object({ ADD: z.array(z.unknown()), REMOVE: z.array(z.unknown()) }),
+]);
+
 export const CreateTestCaseStepSchema = z.object({
   orderId: z.number(),
   description: z.string(),
   inputData: z.string().optional(),
   expectedOutcome: z.string().optional(),
-  UDF: z.record(z.string(), z.string()).optional(),
+  UDF: z
+    .record(z.string(), StepUdfValueSchema)
+    .optional()
+    .describe(
+      "Step-level UDF values. Keys = UDF field names. Values depend on field type: " +
+        "STRING/LARGETEXT: string, NUMBER: number, DATETIMEPICKER: date string (DD-MM-YYYY or MM-DD-YYYY), " +
+        "LOOKUPLIST: numeric ID, MULTILOOKUPLIST: array of IDs, CASCADINGLIST: { parent, child } object.",
+    ),
   tcStepID: z.number().optional(), // Required for updating existing steps, omit for new steps
 });
 
@@ -553,10 +568,56 @@ export const UpdateTestCaseRemoveStepSchema = z.object({
   description: z.string(),
   inputData: z.string().optional(),
   expectedOutcome: z.string().optional(),
-  UDF: z.record(z.string(), z.string()).optional(),
+  UDF: z.record(z.string(), StepUdfValueSchema).optional(),
   tcsIsShared: z.boolean(),
   tcsIsParameterized: z.boolean(),
 });
+
+const UdfWrapperFieldSchema = z.object({
+  fieldID: z
+    .number()
+    .int()
+    .positive()
+    .describe(
+      "Numeric field ID (projectUserFieldID) from 'Fetch UDF Layout' with pageName='DETAIL'. Required for update UDF wrapper.",
+    ),
+  value: z
+    .union([
+      z.string(),
+      z.number(),
+      z.array(z.number().int()),
+      z.object({
+        parent: z.number().int(),
+        child: z.number().int().optional(),
+      }),
+      z.null(),
+    ])
+    .describe(
+      "UDF value. Type depends on fieldTypeName: STRING/LARGETEXT: string, NUMBER: number, " +
+        "DATETIMEPICKER: 'MM-DD-YYYY' or 'DD-MM-YYYY', LOOKUPLIST: numeric ID, " +
+        "MULTILOOKUPLIST: array of IDs, CASCADINGLIST: { parent, child }.",
+    ),
+});
+
+const UdfFieldsSchema = z
+  .record(
+    z.string(),
+    z.union([
+      z.string(),
+      z.number(),
+      z.array(z.number()),
+      z.object({ parent: z.number(), child: z.number().optional() }),
+      z.null(),
+    ]),
+  )
+  .optional()
+  .describe(
+    "Flat UDF field values. Keys = UDF field names from 'Fetch UDF Layout'. " +
+      "Values depend on fieldTypeName: STRING/LARGETEXT: string, NUMBER: number, " +
+      "DATETIMEPICKER: date string ('14-08-2026'), LOOKUPLIST: numeric ID, " +
+      "MULTILOOKUPLIST: array of IDs [101, 102], CASCADINGLIST: { parent: 101, child: 102 }. " +
+      "Call 'Fetch UDF Layout' with entityType + pageName='ADD' to discover available fields and list option IDs.",
+  );
 
 export const CreateTestCaseArgsSchema = z.object({
   tcFolderID: z
@@ -588,6 +649,7 @@ export const CreateTestCaseArgsSchema = z.object({
       }),
     )
     .optional(),
+  udfFields: UdfFieldsSchema,
 });
 
 export const UpdateTestCaseArgsSchema = z.object({
@@ -662,6 +724,16 @@ export const UpdateTestCaseArgsSchema = z.object({
     .describe(
       "Set to true to update only metadata fields without touching test steps. " +
         "When true, steps and removeSteps are ignored.",
+    ),
+  udfFields: UdfFieldsSchema,
+  UDF: z
+    .record(z.string(), UdfWrapperFieldSchema)
+    .optional()
+    .describe(
+      "UDF wrapper required for update operations. Keys = UDF field names. " +
+        "Each value must include fieldID (from 'Fetch UDF Layout' with pageName='DETAIL') and value. " +
+        "Also set matching flat key in udfFields for the LOOKUPLIST Alias display. " +
+        "Example: { custom_text: { fieldID: 1001, value: 'new value' } }",
     ),
 });
 
@@ -879,6 +951,7 @@ export const CreateTestSuiteArgsSchema = z.object({
       }),
     )
     .optional(),
+  udfFields: UdfFieldsSchema,
 });
 
 export const UpdateTestSuiteArgsSchema = z.object({
@@ -899,6 +972,14 @@ export const UpdateTestSuiteArgsSchema = z.object({
   description: z.string().optional().describe("Description of the Test Suite"),
   testsuiteOwner: z.number().optional().describe("Owner ID of the Test Suite"),
   testSuiteState: z.number().optional().describe("State of the Test Suite"),
+  udfFields: UdfFieldsSchema,
+  UDF: z
+    .record(z.string(), UdfWrapperFieldSchema)
+    .optional()
+    .describe(
+      "UDF wrapper required for update. Keys = UDF field names. " +
+        "Each value must include fieldID (from 'Fetch UDF Layout' with pageName='DETAIL') and value.",
+    ),
 });
 
 export const TestSuiteListArgsSchema = z.object({
@@ -1069,6 +1150,7 @@ export const CreateIssueArgsSchema = z.object({
     .describe(
       "Test Case Run ID to link this defect/issue to a test execution (optional)",
     ),
+  udfFields: UdfFieldsSchema,
 });
 
 export const UpdateIssueArgsSchema = z.object({
@@ -1106,6 +1188,14 @@ export const UpdateIssueArgsSchema = z.object({
     .number()
     .optional()
     .describe("Cycle IDs affected by this issue"),
+  udfFields: UdfFieldsSchema,
+  UDF: z
+    .record(z.string(), UdfWrapperFieldSchema)
+    .optional()
+    .describe(
+      "UDF wrapper required for update. Keys = UDF field names. " +
+        "Each value must include fieldID (from 'Fetch UDF Layout' with pageName='DETAIL') and value.",
+    ),
 });
 
 export const IssuesListArgsSchema = z.object({

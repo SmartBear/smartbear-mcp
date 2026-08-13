@@ -51,6 +51,7 @@ export const QMETRY_PATHS = {
     BULK_UPDATE_TEST_RUN_UDFS: "/rest/execution/udf/bulkupdate",
     TEST_RUN_UDF_METADATA: "/rest/admin/udf/metadata",
     FETCH_CASCADE_CHILD_VALUES: "/rest/admin/udf/cascade/childValue",
+    GET_LAYOUT: "/rest/admin/newlayout",
   },
   AI_AGENT: {
     GET_GATE_CONFIG: "/rest/aiagent/project/:projectId/gate-config",

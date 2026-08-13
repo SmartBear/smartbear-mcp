@@ -112,4 +112,5 @@ export const QMetryToolsHandlers = {
   FETCH_GATE_CONFIGURATION: "getGateConfiguration",
   EXECUTE_GATE_REPORT: "executeGateReport",
   EXPORT_HTML_REPORT: "exportHtmlReport",
+  FETCH_UDF_LAYOUT: "fetchUdfLayout",
 };

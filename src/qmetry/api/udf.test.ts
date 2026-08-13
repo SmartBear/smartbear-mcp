@@ -3,6 +3,7 @@ import {
   bulkUpdateTestRunUdfs,
   fetchTestRunUdfMetadata,
   fetchTestRunUdfValues,
+  fetchUdfLayout,
 } from "../client/udf.js";
 
 const token = "fake-token";
@@ -282,6 +283,257 @@ describe("UDF API clients", () => {
       )) as any;
 
       expect(result._note).toContain("fieldID");
+    });
+  });
+
+  describe("fetchUdfLayout", () => {
+    const mockTcLayoutResponse = {
+      qmUDF: {
+        TC: {
+          "FLD.custom_text": {
+            name: "custom_text",
+            label: "Custom Text",
+            fieldTypeName: "STRING",
+            projectUserFieldID: 1001,
+            isMandatory: false,
+          },
+          "FLD.dropdown_field": {
+            name: "dropdown_field",
+            label: "Dropdown Field",
+            fieldTypeName: "LOOKUPLIST",
+            projectUserFieldID: 1002,
+            isMandatory: true,
+            qmListName: "myList",
+          },
+        },
+      },
+      qmTCSUDF: {
+        TCS: {
+          "FLD.step_text": {
+            name: "step_text",
+            label: "Step Text",
+            fieldTypeName: "STRING",
+            projectUserFieldID: null,
+            isMandatory: false,
+          },
+        },
+      },
+      gis: {
+        customList: {
+          myList: [
+            { id: 101, name: "Option A", isArchived: false },
+            { id: 102, name: "Option B", isArchived: false },
+          ],
+        },
+      },
+    };
+
+    const mockTsLayoutResponse = {
+      qmUDF: {
+        TS: {
+          "FLD.ts_str": {
+            name: "ts_str",
+            label: "TS String",
+            fieldTypeName: "STRING",
+            projectUserFieldID: 2001,
+            isMandatory: false,
+          },
+        },
+      },
+      gis: { customList: {} },
+    };
+
+    it("should POST to GET_LAYOUT endpoint with entityType and pageName", async () => {
+      global.fetch = vi.fn().mockResolvedValue(mockOk(mockTcLayoutResponse));
+
+      await fetchUdfLayout(token, baseUrl, projectKey, {
+        entityType: "TC",
+        pageName: "ADD",
+      });
+
+      expect(global.fetch).toHaveBeenCalledOnce();
+      const [url, opts] = (global.fetch as any).mock.calls[0];
+      expect(url).toContain("/rest/admin/newlayout");
+      expect(opts.method).toBe("POST");
+      const body = JSON.parse(opts.body);
+      expect(body.entityType).toBe("TC");
+      expect(body.pageName).toBe("ADD");
+    });
+
+    it("should normalize TC fields with name, label, fieldTypeName, fieldID, isMandatory", async () => {
+      global.fetch = vi.fn().mockResolvedValue(mockOk(mockTcLayoutResponse));
+
+      const result = (await fetchUdfLayout(token, baseUrl, projectKey, {
+        entityType: "TC",
+        pageName: "ADD",
+      })) as any;
+
+      expect(result.fields).toHaveLength(2);
+      const textField = result.fields.find(
+        (f: any) => f.name === "custom_text",
+      );
+      expect(textField).toBeDefined();
+      expect(textField.label).toBe("Custom Text");
+      expect(textField.fieldTypeName).toBe("STRING");
+      expect(textField.fieldID).toBe(1001);
+      expect(textField.isMandatory).toBe(false);
+    });
+
+    it("should include listName on LOOKUPLIST fields", async () => {
+      global.fetch = vi.fn().mockResolvedValue(mockOk(mockTcLayoutResponse));
+
+      const result = (await fetchUdfLayout(token, baseUrl, projectKey, {
+        entityType: "TC",
+        pageName: "ADD",
+      })) as any;
+
+      const dropdownField = result.fields.find(
+        (f: any) => f.name === "dropdown_field",
+      );
+      expect(dropdownField).toBeDefined();
+      expect(dropdownField.listName).toBe("myList");
+      expect(dropdownField.isMandatory).toBe(true);
+    });
+
+    it("should return stepFields for TC entity type", async () => {
+      global.fetch = vi.fn().mockResolvedValue(mockOk(mockTcLayoutResponse));
+
+      const result = (await fetchUdfLayout(token, baseUrl, projectKey, {
+        entityType: "TC",
+        pageName: "ADD",
+      })) as any;
+
+      expect(result.stepFields).toBeDefined();
+      expect(result.stepFields).toHaveLength(1);
+      expect(result.stepFields[0].name).toBe("step_text");
+      expect(result.stepFields[0].fieldTypeName).toBe("STRING");
+    });
+
+    it("should NOT include stepFields for TS entity type", async () => {
+      global.fetch = vi.fn().mockResolvedValue(mockOk(mockTsLayoutResponse));
+
+      const result = (await fetchUdfLayout(token, baseUrl, projectKey, {
+        entityType: "TS",
+        pageName: "ADD",
+      })) as any;
+
+      expect(result.stepFields).toBeUndefined();
+    });
+
+    it("should return listOptions from gis.customList", async () => {
+      global.fetch = vi.fn().mockResolvedValue(mockOk(mockTcLayoutResponse));
+
+      const result = (await fetchUdfLayout(token, baseUrl, projectKey, {
+        entityType: "TC",
+        pageName: "ADD",
+      })) as any;
+
+      expect(result.listOptions).toBeDefined();
+      expect(result.listOptions.myList).toHaveLength(2);
+      expect(result.listOptions.myList[0]).toEqual({
+        id: 101,
+        name: "Option A",
+        isArchived: false,
+      });
+    });
+
+    it("should include ADD-specific _note for pageName='ADD'", async () => {
+      global.fetch = vi.fn().mockResolvedValue(mockOk(mockTcLayoutResponse));
+
+      const result = (await fetchUdfLayout(token, baseUrl, projectKey, {
+        entityType: "TC",
+        pageName: "ADD",
+      })) as any;
+
+      expect(result._note).toContain("udfFields");
+      expect(result._note).not.toContain("UDF wrapper");
+    });
+
+    it("should include DETAIL-specific _note for pageName='DETAIL'", async () => {
+      global.fetch = vi.fn().mockResolvedValue(mockOk(mockTcLayoutResponse));
+
+      const result = (await fetchUdfLayout(token, baseUrl, projectKey, {
+        entityType: "TC",
+        pageName: "DETAIL",
+      })) as any;
+
+      expect(result._note).toContain("fieldID");
+      expect(result._note).toContain("UDF");
+    });
+
+    it("should default pageName to 'ADD' when not provided", async () => {
+      global.fetch = vi.fn().mockResolvedValue(mockOk(mockTcLayoutResponse));
+
+      const result = (await fetchUdfLayout(token, baseUrl, projectKey, {
+        entityType: "TC",
+      })) as any;
+
+      expect(result.pageName).toBe("ADD");
+      const [, opts] = (global.fetch as any).mock.calls[0];
+      const body = JSON.parse(opts.body);
+      expect(body.pageName).toBe("ADD");
+    });
+
+    it("should throw when entityType is missing", async () => {
+      await expect(
+        fetchUdfLayout(token, baseUrl, projectKey, {
+          entityType: undefined as any,
+        }),
+      ).rejects.toThrow("entityType");
+    });
+
+    it("should throw when entityType is invalid (e.g. TCR)", async () => {
+      await expect(
+        fetchUdfLayout(token, baseUrl, projectKey, {
+          entityType: "TCR" as any,
+        }),
+      ).rejects.toThrow("entityType");
+    });
+
+    it("should return empty fields and listOptions when API returns empty maps", async () => {
+      global.fetch = vi
+        .fn()
+        .mockResolvedValue(
+          mockOk({ qmUDF: { TC: {} }, gis: { customList: {} } }),
+        );
+
+      const result = (await fetchUdfLayout(token, baseUrl, projectKey, {
+        entityType: "TC",
+        pageName: "ADD",
+      })) as any;
+
+      expect(result.fields).toEqual([]);
+      expect(result.listOptions).toEqual({});
+      expect(result.stepFields).toEqual([]);
+    });
+
+    it("should handle IS entity type without stepFields", async () => {
+      global.fetch = vi.fn().mockResolvedValue(
+        mockOk({
+          qmUDF: {
+            IS: {
+              "FLD.is_text": {
+                name: "is_text",
+                label: "IS Text",
+                fieldTypeName: "STRING",
+                projectUserFieldID: 3001,
+                isMandatory: false,
+              },
+            },
+          },
+          gis: { customList: {} },
+        }),
+      );
+
+      const result = (await fetchUdfLayout(token, baseUrl, projectKey, {
+        entityType: "IS",
+        pageName: "ADD",
+      })) as any;
+
+      expect(result.entityType).toBe("IS");
+      expect(result.fields).toHaveLength(1);
+      expect(result.fields[0].name).toBe("is_text");
+      expect(result.stepFields).toBeUndefined();
     });
   });
 

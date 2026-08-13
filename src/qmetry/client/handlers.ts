@@ -59,6 +59,7 @@ import {
   fetchTestRunUdfMetadata,
   fetchTestRunUdfValues,
   fetchUdfFieldTypes,
+  fetchUdfLayout,
   fetchUdfModules,
 } from "./udf";
 
@@ -136,4 +137,5 @@ export const QMETRY_HANDLER_MAP: Record<string, QMetryHandler> = {
   [QMetryToolsHandlers.FETCH_GATE_CONFIGURATION]: getGateConfiguration,
   [QMetryToolsHandlers.EXECUTE_GATE_REPORT]: executeGateReport,
   [QMetryToolsHandlers.EXPORT_HTML_REPORT]: exportHtmlReport,
+  [QMetryToolsHandlers.FETCH_UDF_LAYOUT]: fetchUdfLayout,
 };

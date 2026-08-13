@@ -6,13 +6,21 @@ import {
   type FolderPayload,
   type PaginationPayload,
 } from "./common";
+import type { UdfFieldValue, UdfValue } from "./udf";
+
+type StepUdfValue =
+  | string
+  | number
+  | number[]
+  | { parent: number; child?: number }
+  | { ADD: unknown[]; REMOVE: unknown[] };
 
 export interface CreateTestCaseStep {
   orderId: number;
   description: string;
   inputData?: string;
   expectedOutcome?: string;
-  UDF?: Record<string, string>;
+  UDF?: Record<string, StepUdfValue>;
   tcStepID?: number; // Required for updating existing steps, omit for new steps
 }
 export interface removeTestCaseStep {
@@ -26,7 +34,7 @@ export interface removeTestCaseStep {
   description: string;
   inputData?: string;
   expectedOutcome?: string;
-  UDF?: Record<string, string>;
+  UDF?: Record<string, StepUdfValue>;
   tcsIsShared: boolean;
   tcsIsParameterized: boolean;
 }
@@ -65,6 +73,8 @@ export interface CreateTestCasesPayload {
   testingType?: number; // optional - Id of TestingType
   associateRelCyc?: boolean; // optional - associate release cycle
   releaseCycleMapping?: ReleaseCycleMapping[]; // optional - release cycle mapping
+  udfFields?: Record<string, UdfValue>; // UDF values — spread flat onto payload root before sending
+  [key: string]: unknown; // allows flat UDF passthrough
 }
 
 export interface UpdateTestCasesPayload {
@@ -85,6 +95,9 @@ export interface UpdateTestCasesPayload {
   description?: string; // optional - Description of Testcase
   testingType?: number; // optional - Id of TestingType
   updateOnlyMetadata?: boolean; // optional - whether to update only metadata
+  UDF?: Record<string, UdfFieldValue>; // UDF wrapper { fieldName: { fieldID, value } } for update
+  udfFields?: Record<string, UdfValue>; // flat UDF key→value pairs (also spread onto root)
+  [key: string]: unknown;
 }
 
 export interface FetchTestCaseDetailsPayload

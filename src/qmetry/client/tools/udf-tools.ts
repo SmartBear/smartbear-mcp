@@ -4,10 +4,91 @@ import {
   FetchCascadeChildValuesArgsSchema,
   FetchTestRunUdfMetadataArgsSchema,
   FetchTestRunUdfValuesArgsSchema,
+  FetchUdfLayoutArgsSchema,
 } from "../../types/udf";
 import type { QMetryToolParams } from "./types";
 
 export const UDF_TOOLS: QMetryToolParams[] = [
+  {
+    title: "Fetch UDF Layout",
+    toolset: "UDF",
+    summary:
+      "Fetch UDF (User Defined Field) definitions for Test Case, Test Suite, or Issue entities. " +
+      "Returns field names, types, fieldIDs, and lookup option IDs. " +
+      "Call this BEFORE creating or updating an entity with UDF values.",
+    handler: QMetryToolsHandlers.FETCH_UDF_LAYOUT,
+    inputSchema: FetchUdfLayoutArgsSchema,
+    purpose:
+      "Discovers the UDF fields configured for a given entity type (TC/TS/IS) in the current QMetry project. " +
+      "For 'ADD' (create): returns field names, types, and list option IDs — no fieldID needed. " +
+      "For 'DETAIL' (update): returns fieldID (projectUserFieldID) required in the UDF update wrapper. " +
+      "Also returns step UDF definitions for Test Cases (stepFields). " +
+      "The 'listOptions' map provides valid IDs for LOOKUPLIST, MULTILOOKUPLIST, and CASCADINGLIST fields. " +
+      "For CASCADINGLIST child options, also call 'Fetch Cascade Child Values' after selecting a parent.",
+    useCases: [
+      "Discover UDF fields before creating a Test Case with custom fields",
+      "Get fieldIDs before updating a Test Suite's UDF values",
+      "Find valid dropdown option IDs for a LOOKUPLIST UDF before setting a value",
+      "Identify mandatory UDF fields before creating an Issue",
+      "List all step-level UDF fields available for Test Case steps",
+      "Get CASCADINGLIST parent option IDs before fetching child values",
+    ],
+    examples: [
+      {
+        description: "Get UDF field definitions for creating a Test Case",
+        parameters: { entityType: "TC", pageName: "ADD" },
+        expectedOutput:
+          "{ fields: [{ name: 'custom_text', label: 'Custom Text', fieldTypeName: 'STRING', fieldID: null, isMandatory: false }, ...], " +
+          "stepFields: [{ name: 'step_field', label: 'Step Field', fieldTypeName: 'STRING', ... }], " +
+          "listOptions: { myListKey: [{ id: 101, name: 'Option A' }] } }",
+      },
+      {
+        description: "Get UDF fieldIDs for updating a Test Suite",
+        parameters: { entityType: "TS", pageName: "DETAIL" },
+        expectedOutput:
+          "{ fields: [{ name: 'dropdown_field', label: 'Dropdown', fieldTypeName: 'LOOKUPLIST', fieldID: 2002, isMandatory: false, listName: 'myListKey' }, ...], " +
+          "listOptions: { myListKey: [{ id: 101, name: 'Option A' }, { id: 102, name: 'Option B' }] } }",
+      },
+      {
+        description: "Get UDF field definitions for creating an Issue",
+        parameters: { entityType: "IS", pageName: "ADD" },
+        expectedOutput:
+          "{ fields: [{ name: 'TCR_STR', label: 'String Field', fieldTypeName: 'STRING', fieldID: null }, ...], listOptions: {} }",
+      },
+    ],
+    hints: [
+      "CALL THIS TOOL FIRST: Before creating or updating TC/TS/IS entities with UDF values, always call this tool to discover field names, types, and valid option IDs.",
+      "pageName='ADD': Use before CREATE operations — returns field names + types + list options. fieldID is null (not needed on create).",
+      "pageName='DETAIL': Use before UPDATE operations — returns fieldID (projectUserFieldID) required in the UDF wrapper.",
+      "WORKFLOW FOR CREATE with UDFs:",
+      "  1. Call Fetch UDF Layout with entityType + pageName='ADD'",
+      "  2. For LOOKUPLIST/MULTILOOKUPLIST: pick IDs from listOptions[field.listName]",
+      "  3. For CASCADINGLIST: pick parent ID from listOptions[field.listName], then call Fetch Cascade Child Values to get child IDs",
+      "  4. Pass UDF values via 'udfFields' param on the create tool: { fieldName: value }",
+      "  5. Example: { udfFields: { custom_text: 'value', lookup_field: 101, multi_field: [101, 102], cascade_field: { parent: 201, child: 202 } } }",
+      "WORKFLOW FOR UPDATE with UDFs:",
+      "  1. Call Fetch UDF Layout with entityType + pageName='DETAIL' to get fieldIDs",
+      "  2. For LOOKUPLIST/MULTILOOKUPLIST: pick IDs from listOptions[field.listName]",
+      "  3. For CASCADINGLIST: pick parent ID, then call Fetch Cascade Child Values for child IDs",
+      "  4. Pass both 'udfFields' (flat root keys) AND 'UDF' wrapper (with fieldID) on the update tool:",
+      "     udfFields: { custom_text: 'new value', lookup_field: 102 }",
+      "     UDF: { custom_text: { fieldID: 1001, value: 'new value' }, lookup_field: { fieldID: 1002, value: 102 } }",
+      "  5. For LOOKUPLIST/MULTILOOKUPLIST in update: also set flat alias key — e.g. lookup_fieldAlias: 'Option B'",
+      "stepFields (TC only): Step-level UDF definitions are separate from entity-level UDF fields. " +
+        "They appear in stepFields (not fields). Use them when setting UDF values on test case steps.",
+      "listOptions: A map of listName → [{id, name, isArchived}]. Use 'id' as the UDF value for LOOKUPLIST/MULTILOOKUPLIST. " +
+        "Only include non-archived options unless user explicitly wants archived items.",
+      "isMandatory: If true, this field MUST be included in create/update payloads.",
+      "This tool is scoped per project — list options and fieldIDs are project-specific.",
+    ],
+    outputDescription:
+      "JSON with 'entityType', 'pageName', 'fields' array (each item: name, label, fieldTypeName, fieldID, isMandatory, optional listName), " +
+      "'stepFields' array for TC only (same shape), 'listOptions' map (listName → [{id, name, isArchived}]), " +
+      "and '_note' with workflow instructions for the current pageName.",
+    readOnly: true,
+    destructive: false,
+    idempotent: true,
+  },
   {
     title: "Bulk Update Test Run UDFs",
     toolset: "UDF",

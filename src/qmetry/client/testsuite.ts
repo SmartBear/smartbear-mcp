@@ -43,9 +43,11 @@ export async function createTestSuites(
     project,
   );
 
+  const { udfFields, ...restPayload } = payload as any;
   const body: CreateTestSuitePayload = {
     ...DEFAULT_CREATE_TESTSUITE_PAYLOAD,
-    ...payload,
+    ...restPayload,
+    ...(udfFields ?? {}),
   };
 
   if (typeof body.parentFolderId !== "string") {
@@ -84,9 +86,11 @@ export async function updateTestSuite(
     project,
   );
 
+  const { udfFields, ...restPayload } = payload as any;
   const body: UpdateTestSuitePayload = {
     ...DEFAULT_UPDATE_TESTSUITE_PAYLOAD,
-    ...payload,
+    ...restPayload,
+    ...(udfFields ?? {}),
   };
 
   if (typeof body.id !== "number") {
