@@ -521,6 +521,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       "Returns execution details including test case name, run status, platform, release/cycle, and UDF fields. " +
       "The issue execution API (/rest/execution/getExecutionsForIssue) already returns Test Run UDF saved values in each row's udfjson field. " +
       "This tool parses that udfjson and enriches it with Test Run UDF metadata so all configured UDF fields are included, even when a value is empty. " +
+      "For single- and multi-select lookup fields, numeric IDs are resolved to display labels when list metadata is available, while rawValue retains the original ID or IDs. " +
       "Do NOT call 'Fetch Test Run UDF Values' after this tool for issue execution UDFs; that generic UDF tool uses the test-suite-run execution API, which is not the correct issue execution source. " +
       "To get linkedAssetId, call Fetch Defects or Issues tool and use data[<index>].id from the response. " +
       "IMPORTANT: Every execution record always contains key identification fields — " +
@@ -628,12 +629,14 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       "=== MANDATORY RESPONSE FORMAT — READ THIS BEFORE RENDERING ANY OUTPUT ===",
       "",
       "PIVOT RULE — CRITICAL:",
-      "The 'testRunUdfs' field on each execution is an array of { name, label, fieldID, fieldType, value }.",
+      "The 'testRunUdfs' field on each execution is an array of { name, label, fieldID, fieldType, value, rawValue? }.",
+      "For LOOKUPLIST and MULTILOOKUPLIST fields, use value for display and rawValue when the original numeric list item ID is needed.",
       "You MUST pivot this array into TABLE COLUMNS — do NOT render it as rows.",
       "  → Each testRunUdfs[i].label  = a column header in the unified table",
       "  → Each testRunUdfs[i].value  = the cell value for that execution's row",
       "  → testRunUdfs[i].fieldType   = INTERNAL METADATA — NEVER show this as a column",
       "  → testRunUdfs[i].fieldID     = INTERNAL METADATA — NEVER show this as a column",
+      "  → testRunUdfs[i].rawValue    = original lookup ID(s), when present — do not use this for display",
       "",
       "FORBIDDEN PATTERNS — NEVER do any of these:",
       "  ❌ Do NOT render a separate sub-table (UDF Label | Type | Value) per execution",
@@ -673,7 +676,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       "METADATA SOURCE: This tool also calls Test Run UDF metadata once to get all available labels, fieldIDs, field types, and empty fields. Merge metadata fields with udfjson values by UDF name.",
       "RESPONSE FIELDS: hasTcRunUdf=true means executions have UDF data; each execution includes a 'testRunUdfs' array with ALL project-defined UDF fields",
       "ALL UDF FIELDS: ALL project-defined Test Run UDF fields are returned for every execution — including fields not yet set (value: null)",
-      "Each element in testRunUdfs: { name, label, fieldID, fieldType, value } — use fieldID when calling 'Bulk Update Test Run UDFs'",
+      "Each element in testRunUdfs: { name, label, fieldID, fieldType, value, rawValue? }. Use value for display; use fieldID and rawValue when calling 'Bulk Update Test Run UDFs'.",
       'EXAMPLE testRunUdfs: [{ "name": "TRString", "label": "TR String", "fieldID": 229241, "fieldType": "STRING", "value": "test" }, { "name": "dateField", "label": "Date", "fieldID": 229255, "fieldType": "DATETIMEPICKER", "value": null }]',
       "FILTER FIELDS:",
       "  - tcName (string): filter by test case name substring",
@@ -697,7 +700,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       "'releaseName' (Release), 'cycleName' (Cycle), 'platformName' (Platform/environment), " +
       "'executedVersion' (Executed Version of the test case), 'runStatusName' (Execution Status label), " +
       "'tcRunID' (numeric Test Run ID), 'tcName' (Test Case Name), 'tcEntityKey' (Test Case Key), " +
-      "and 'testRunUdfs' (array of objects each with name, label, fieldID, fieldType, value — use 'label' for display headers, null if not set). " +
+      "and 'testRunUdfs' (array of objects each with name, label, fieldID, fieldType, value, and optional rawValue containing original lookup ID(s) — use 'label' for display headers and 'value' for display, null if not set). " +
       "ALL project-defined UDF fields are always included, even those with no value. " +
       "When hasTcRunUdf is false, a 'testRunUdfNote' field provides a professional explanation instead.",
     readOnly: true,

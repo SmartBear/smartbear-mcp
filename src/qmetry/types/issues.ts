@@ -104,6 +104,8 @@ export interface FetchIssueExecutionsPayload
     id: number;
   };
   platformID?: string;
+  scopeId?: number;
+  orgCode?: string;
 }
 
 export const DEFAULT_FETCH_ISSUE_EXECUTIONS_PAYLOAD: Omit<

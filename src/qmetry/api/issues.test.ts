@@ -237,8 +237,30 @@ describe("issues API clients", () => {
       total: 1,
     };
 
+    const mockMetadataResponse = {
+      qmUDF: {
+        TCR: {
+          "FLD.TRString": {
+            name: "TRString",
+            fieldLabel: "TR String",
+            projectUserFieldID: 229241,
+            fieldTypeName: "STRING",
+          },
+          "FLD.dateTimePicker1010": {
+            name: "dateTimePicker1010",
+            fieldLabel: "Execution Date",
+            projectUserFieldID: 229255,
+            fieldTypeName: "DATETIMEPICKER",
+          },
+        },
+      },
+    };
+
     it("should POST with correct URL when using linkedAssetId", async () => {
-      global.fetch = vi.fn().mockResolvedValue(mockOk(mockExecutionResponse));
+      global.fetch = vi
+        .fn()
+        .mockResolvedValueOnce(mockOk(mockExecutionResponse))
+        .mockResolvedValueOnce(mockOk(mockMetadataResponse));
 
       const result = await fetchIssueExecutions(token, baseUrl, projectKey, {
         linkedAssetId: 9598240,
@@ -263,6 +285,282 @@ describe("issues API clients", () => {
       expect(result).toHaveProperty("data");
       expect((result as any).hasTcRunUdf).toBe(true);
       expect((result as any).total).toBe(1);
+      expect((result as any).data[0].udfjson).toBeUndefined();
+      expect((result as any).data[0].testRunUdfs).toEqual([
+        expect.objectContaining({ name: "TRString", value: "tesr" }),
+        expect.objectContaining({
+          name: "dateTimePicker1010",
+          value: "05-22-2026",
+        }),
+      ]);
+    });
+
+    it("should preserve UDF values when udfjson is already an object", async () => {
+      const executionResponseWithObjectUdfs = {
+        ...mockExecutionResponse,
+        data: [
+          {
+            ...mockExecutionResponse.data[0],
+            tcRunID: 24201,
+            udfjson: {
+              TE_TE_String: "configured value",
+            },
+          },
+        ],
+      };
+      const metadataResponse = {
+        qmUDF: {
+          TCR: {
+            "FLD.TE_TE_String": {
+              name: "TE_TE_String",
+              fieldLabel: "TE_String",
+              projectUserFieldID: 9840,
+              fieldTypeName: "STRING",
+            },
+            "FLD.TE_TE_Radio": {
+              name: "TE_TE_Radio",
+              fieldLabel: "TE_Radio",
+              projectUserFieldID: 9841,
+              fieldTypeName: "LOOKUPLIST",
+              listMasterID: 701,
+              qmListName: "radio_list",
+            },
+          },
+        },
+      };
+
+      global.fetch = vi
+        .fn()
+        .mockResolvedValueOnce(mockOk(executionResponseWithObjectUdfs))
+        .mockResolvedValueOnce(mockOk(metadataResponse));
+
+      const result = (await fetchIssueExecutions(token, baseUrl, projectKey, {
+        linkedAssetId: 1528,
+      } as any)) as any;
+
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+      expect(result.data[0].udfjson).toBeUndefined();
+      expect(result.data[0].testRunUdfs).toEqual([
+        {
+          name: "TE_TE_String",
+          label: "TE_String",
+          fieldID: 9840,
+          fieldType: "STRING",
+          value: "configured value",
+        },
+        {
+          name: "TE_TE_Radio",
+          label: "TE_Radio",
+          fieldID: 9841,
+          fieldType: "LOOKUPLIST",
+          value: null,
+          rawValue: null,
+        },
+      ]);
+    });
+
+    it("should resolve lookup IDs to labels and paginate shared list values once", async () => {
+      const executionResponse = {
+        data: [
+          {
+            tcRunID: 24201,
+            udfjson: {
+              priority: 1001,
+              environments: [1002, 9999],
+              retryCount: 3,
+            },
+          },
+        ],
+        hasTcRunUdf: true,
+        total: 1,
+      };
+      const metadataResponse = {
+        qmUDF: {
+          TCR: {
+            "FLD.priority": {
+              name: "priority",
+              fieldLabel: "Priority",
+              projectUserFieldID: 9841,
+              fieldTypeName: "LOOKUPLIST",
+              listMasterID: 700,
+              qmListName: "shared_list",
+            },
+            "FLD.environments": {
+              name: "environments",
+              fieldLabel: "Environments",
+              projectUserFieldID: 9842,
+              fieldTypeName: "MULTILOOKUPLIST",
+              listMasterID: 700,
+              qmListName: "shared_list",
+            },
+            "FLD.retryCount": {
+              name: "retryCount",
+              fieldLabel: "Retry Count",
+              projectUserFieldID: 9843,
+              fieldTypeName: "NUMBER",
+            },
+          },
+        },
+        qmUDFList: {},
+      };
+
+      global.fetch = vi
+        .fn()
+        .mockResolvedValueOnce(mockOk(executionResponse))
+        .mockResolvedValueOnce(mockOk(metadataResponse))
+        .mockResolvedValueOnce(
+          mockOk({
+            data: [{ id: 1001, name: "High" }],
+            total: 2,
+          }),
+        )
+        .mockResolvedValueOnce(
+          mockOk({
+            data: [{ Id: 1002, Alias: "Chrome" }],
+            total: 2,
+          }),
+        );
+
+      const result = (await fetchIssueExecutions(token, baseUrl, projectKey, {
+        linkedAssetId: 1528,
+        scopeId: 347,
+        orgCode: "TEST_ORG",
+      } as any)) as any;
+
+      expect(global.fetch).toHaveBeenCalledTimes(4);
+      expect((global.fetch as any).mock.calls[0][1].body).not.toContain(
+        "scopeId",
+      );
+      expect(global.fetch).toHaveBeenNthCalledWith(
+        3,
+        `${baseUrl}/rest/admin/customlist/listval`,
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            scope: "347",
+            orgcode: "TEST_ORG",
+          }),
+        }),
+      );
+
+      const firstListRequest = JSON.parse(
+        (global.fetch as any).mock.calls[2][1].body as string,
+      );
+      const secondListRequest = JSON.parse(
+        (global.fetch as any).mock.calls[3][1].body as string,
+      );
+      expect(firstListRequest).toMatchObject({
+        qmMasterId: 700,
+        start: 0,
+        page: 1,
+        params: { showArchive: false },
+      });
+      expect(secondListRequest).toMatchObject({
+        qmMasterId: 700,
+        start: 1,
+        page: 2,
+      });
+
+      expect(result.data[0].testRunUdfs).toEqual([
+        expect.objectContaining({
+          name: "priority",
+          value: "High",
+          rawValue: 1001,
+        }),
+        expect.objectContaining({
+          name: "environments",
+          value: ["Chrome", 9999],
+          rawValue: [1002, 9999],
+        }),
+        expect.objectContaining({
+          name: "retryCount",
+          value: 3,
+        }),
+      ]);
+      expect(result.data[0].testRunUdfs[2]).not.toHaveProperty("rawValue");
+    });
+
+    it("should resolve lookup IDs from inline metadata without another request", async () => {
+      const executionResponse = {
+        data: [{ tcRunID: 24201, udfjson: { executionType: "42" } }],
+        hasTcRunUdf: true,
+        total: 1,
+      };
+      const metadataResponse = {
+        qmUDF: {
+          TCR: {
+            "FLD.executionType": {
+              name: "executionType",
+              fieldLabel: "Execution Type",
+              projectUserFieldID: 9841,
+              fieldTypeName: "LOOKUPLIST",
+              listMasterID: 701,
+              qmListName: "execution_type_list",
+            },
+          },
+        },
+        qmUDFList: {
+          execution_type_list: [
+            { id: 42, uniqueLabel: "Automated", name: "AUTOMATED" },
+          ],
+        },
+      };
+
+      global.fetch = vi
+        .fn()
+        .mockResolvedValueOnce(mockOk(executionResponse))
+        .mockResolvedValueOnce(mockOk(metadataResponse));
+
+      const result = (await fetchIssueExecutions(token, baseUrl, projectKey, {
+        linkedAssetId: 1528,
+      } as any)) as any;
+
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+      expect(result.data[0].testRunUdfs[0]).toEqual(
+        expect.objectContaining({
+          value: "Automated",
+          rawValue: "42",
+        }),
+      );
+    });
+
+    it("should retain raw lookup IDs when list-value enrichment fails", async () => {
+      const executionResponse = {
+        data: [{ tcRunID: 24201, udfjson: { priority: 1001 } }],
+        hasTcRunUdf: true,
+        total: 1,
+      };
+      const metadataResponse = {
+        qmUDF: {
+          TCR: {
+            "FLD.priority": {
+              name: "priority",
+              fieldLabel: "Priority",
+              projectUserFieldID: 9841,
+              fieldTypeName: "LOOKUPLIST",
+              listMasterID: 700,
+              qmListName: "priority_list",
+            },
+          },
+        },
+        qmUDFList: {},
+      };
+
+      global.fetch = vi
+        .fn()
+        .mockResolvedValueOnce(mockOk(executionResponse))
+        .mockResolvedValueOnce(mockOk(metadataResponse))
+        .mockRejectedValueOnce(new Error("List API unavailable"));
+
+      const result = (await fetchIssueExecutions(token, baseUrl, projectKey, {
+        linkedAssetId: 1528,
+      } as any)) as any;
+
+      expect(result.data[0].testRunUdfs[0]).toEqual(
+        expect.objectContaining({
+          value: 1001,
+          rawValue: 1001,
+        }),
+      );
     });
 
     it("should POST with correct URL when using linkedAsset directly", async () => {

@@ -50,6 +50,7 @@ export const QMETRY_PATHS = {
   UDF: {
     BULK_UPDATE_TEST_RUN_UDFS: "/rest/execution/udf/bulkupdate",
     TEST_RUN_UDF_METADATA: "/rest/admin/udf/metadata",
+    CUSTOM_LIST_VALUES: "/rest/admin/customlist/listval",
     FETCH_CASCADE_CHILD_VALUES: "/rest/admin/udf/cascade/childValue",
   },
   AI_AGENT: {
