@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+
+- [Zephyr] Update Zephyr Schemas [#664](https://github.com/SmartBear/smartbear-mcp/pull/664)
+
 ## [0.35.0] - 2026-08-11
 
 ### Added
