@@ -400,12 +400,12 @@ export async function fetchIssueExecutions(
     const fieldName = def.name;
     if (
       !fieldName ||
-      !parsedRows.some(
-        ({ rawUdfs }) =>
-          Object.hasOwn(rawUdfs, fieldName) &&
-          rawUdfs[fieldName] !== null &&
-          rawUdfs[fieldName] !== undefined,
-      )
+      !parsedRows.some(({ rawUdfs }) => {
+        if (!Object.hasOwn(rawUdfs, fieldName)) return false;
+        const rawValue = rawUdfs[fieldName];
+        if (rawValue === null || rawValue === undefined) return false;
+        return !Array.isArray(rawValue) || rawValue.length > 0;
+      })
     ) {
       continue;
     }
