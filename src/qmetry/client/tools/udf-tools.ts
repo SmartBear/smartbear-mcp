@@ -78,6 +78,10 @@ export const UDF_TOOLS: QMetryToolParams[] = [
         "They appear in stepFields (not fields). Use them when setting UDF values on test case steps.",
       "listOptions: A map of listName → [{id, name, isArchived}]. Use 'id' as the UDF value for LOOKUPLIST/MULTILOOKUPLIST. " +
         "Only include non-archived options unless user explicitly wants archived items.",
+      "EMPTY listOptions: If listOptions[field.listName] is missing or empty for a lookup field, the newlayout endpoint did not return those options. " +
+        "This tool automatically attempts a fallback to the UDF metadata endpoint to populate them. " +
+        "If listOptions is STILL empty after this tool returns, call 'Fetch Test Run UDF Metadata' with the same entityType — " +
+        "its 'lookupOptions' map uses the same listName keys and contains the full option list.",
       "isMandatory: If true, this field MUST be included in create/update payloads.",
       "This tool is scoped per project — list options and fieldIDs are project-specific.",
     ],
@@ -340,12 +344,17 @@ export const UDF_TOOLS: QMetryToolParams[] = [
       "ALWAYS call this tool before 'Bulk Update Test Run UDFs' when the user has not explicitly provided a numeric fieldID. " +
         "The 'fieldID' in the bulk update corresponds to 'projectUserFieldID' in this response.",
       "This tool is the authoritative source of fieldIDs for all Test Run UDF fields — do NOT guess or hard-code fieldIDs.",
-      "For LOOKUPLIST and MULTILOOKUPLIST fields, the response 'lookupOptions' contains the valid item IDs and labels to use as values in bulk updates.",
+      "For LOOKUPLIST and MULTILOOKUPLIST fields, the response 'lookupOptions' contains items with 'id', 'name' (display label), and 'uniqueLabel' (internal key stored in executions). " +
+        "When execution UDF values are returned by Fetch Issue Executions or Fetch Test Run UDF Values, LOOKUPLIST/MULTILOOKUPLIST values are already resolved from uniqueLabel → name. " +
+        "For bulk updates, use the item 'id' as the value.",
       "DATE fields use MM-DD-YYYY format (e.g. '06-23-2026') when setting values via Bulk Update Test Run UDFs.",
+      "EMPTY lookupOptions: If 'lookupOptions' is empty or missing a list key for a LOOKUPLIST/MULTILOOKUPLIST field, " +
+        "the API did not return options for that field. In this case the user must provide the option name manually " +
+        "or check the QMetry UI for available option IDs. Do NOT proceed with a guess — ask the user for the option ID or name.",
     ],
     outputDescription:
       "JSON object with 'fields' array (each item has fieldID, name, label, fieldType, allowBlank, and optional listName/listMasterID) " +
-      "and 'lookupOptions' map for list-based fields.",
+      "and 'lookupOptions' map for list-based fields. If lookupOptions is empty for a list field, options could not be fetched automatically.",
     readOnly: true,
     destructive: false,
     idempotent: true,
@@ -400,6 +409,10 @@ export const UDF_TOOLS: QMetryToolParams[] = [
       "'viewId' is auto-resolved from latestViews.TE.viewId — leave blank unless explicitly overriding. It is only needed when sourceRows is not supplied.",
       "If 'hasTcRunUdf' is false in the response, no Test Run UDFs are configured for this project.",
       "The 'testRunUdfs' array on each run contains enriched UDF values with label and fieldID — use fieldID from here when calling 'Bulk Update Test Run UDFs'.",
+      "VALUE RESOLUTION: For LOOKUPLIST and MULTILOOKUPLIST fields, 'value' is resolved from the internal uniqueLabel key to the human-readable display name using qmUDFList lookup options. Always display the resolved name, never the raw uniqueLabel.",
+      "LOOKUP RESOLUTION WARNING: If the response contains '_lookupWarning', lookup options were missing for some fields. " +
+        "Individual UDF entries may have '_rawValue: true' and '_note' indicating the value is an unresolved internal ID. " +
+        "In that case, call 'Fetch Test Run UDF Metadata' separately and use its 'lookupOptions' to resolve the display name before showing the user.",
       "This tool calls UDF metadata internally — no need to call 'Fetch Test Run UDF Metadata' separately when viewing values.",
       "When sourceRows is omitted, this tool also calls the test-suite-run execution list API internally. When sourceRows is provided, it reuses those rows and does not refetch the parent execution list.",
     ],
@@ -460,7 +473,9 @@ export const UDF_TOOLS: QMetryToolParams[] = [
         "  2. Call this tool ('Fetch Cascade Child Values') with a parent item 'id' from step 1 → get child item IDs.\n" +
         "  3. Call 'Bulk Update Test Run UDFs' with value: { parent: <parentId>, child: <childId> } and the 'fieldID' from step 1.",
       "The parent item IDs are in the 'lookupOptions' map returned by 'Fetch Test Run UDF Metadata'. " +
-        "Each entry under the field's listName contains items with 'id' — use that 'id' as the 'id' parameter here.",
+        "Each entry under the field's listName contains items with 'id' — use that 'id' as the 'id' parameter here. " +
+        "IMPORTANT: If 'lookupOptions' from Fetch Test Run UDF Metadata is empty for the CASCADINGLIST field, " +
+        "the API did not return parent options. In this case, ask the user to provide the parent item ID from the QMetry UI — do NOT guess.",
       "The response 'children' array contains objects with 'id', 'name', 'uniqueLabel', and 'isArchived'. " +
         "Use 'id' as the 'child' value in the bulk update payload.",
       "Set 'isArchReq: true' only if the user explicitly asks to include archived/inactive child options.",

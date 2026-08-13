@@ -133,6 +133,7 @@ function parseRawUdfs(row: Record<string, any>): Record<string, unknown> {
 function enrichUdfsForRow(
   row: Record<string, any>,
   fieldDefs: Record<string, UdfFieldDefinition>,
+  lookupOptions: Record<string, any[]> = {},
 ) {
   const rawUdfs = parseRawUdfs(row);
   const hasMetadata = Object.keys(fieldDefs).length > 0;
@@ -145,14 +146,48 @@ function enrichUdfsForRow(
       const rawValue = Object.hasOwn(rawUdfs, fieldName)
         ? rawUdfs[fieldName]
         : null;
-      const value =
+      let value: unknown =
         typeof rawValue === "string" ? stripHtml(rawValue) : rawValue;
+      // Resolve uniqueLabel → display name for lookup fields
+      const options: any[] = def.qmListName
+        ? (lookupOptions[def.qmListName] ?? [])
+        : [];
+      let valueResolved = false;
+      if (options.length > 0) {
+        if (typeof value === "string") {
+          const match = options.find((o) => o.uniqueLabel === value);
+          if (match) {
+            value = match.name;
+            valueResolved = true;
+          }
+        } else if (Array.isArray(value)) {
+          value = value.map((v) => {
+            const match = options.find((o) => o.uniqueLabel === v);
+            return match ? match.name : v;
+          });
+          valueResolved = true;
+        } else {
+          valueResolved = true;
+        }
+      }
+      const isLookupField = [
+        "LOOKUPLIST",
+        "MULTILOOKUPLIST",
+        "CASCADINGLIST",
+      ].includes(def.fieldTypeName ?? "");
       return {
         name: fieldName,
         label: def.fieldLabel ?? fieldName,
         fieldID: def.projectUserFieldID ?? null,
         fieldType: def.fieldTypeName ?? "UNKNOWN",
         value,
+        ...(isLookupField && !valueResolved && value !== null
+          ? {
+              _rawValue: true,
+              _note:
+                "Lookup options unavailable — value is raw internal ID. Call Fetch Test Run UDF Metadata to resolve.",
+            }
+          : {}),
       };
     });
   }
@@ -407,7 +442,48 @@ export async function fetchUdfLayout(
     ...(def.qmListName ? { listName: def.qmListName as string } : {}),
   }));
 
-  const listOptions = raw.gis?.customList ?? {};
+  let listOptions = raw.gis?.customList ?? {};
+
+  // Check if any lookup field is missing options from gis.customList
+  const lookupTypes = new Set([
+    "LOOKUPLIST",
+    "MULTILOOKUPLIST",
+    "CASCADINGLIST",
+  ]);
+  const allLookupFields = [...fields, ...stepFields].filter(
+    (f) => lookupTypes.has(f.fieldTypeName) && f.listName,
+  );
+  const missingOptions = allLookupFields.some(
+    (f) => !listOptions[f.listName!] || listOptions[f.listName!].length === 0,
+  );
+
+  if (missingOptions) {
+    // Fallback: fetch metadata endpoint which returns qmUDFList with full option IDs
+    const metaRaw = await qmetryRequest<{
+      qmUDFList?: Record<
+        string,
+        Array<{ id: number; name: string; isArchived: boolean }>
+      >;
+    }>({
+      method: "POST",
+      path: QMETRY_PATHS.UDF.TEST_RUN_UDF_METADATA,
+      token,
+      project: resolvedProject,
+      baseUrl: resolvedBaseUrl,
+      body: { entityType: payload.entityType },
+      scopeId: payload.scopeId,
+      orgCode: payload.orgCode,
+    });
+    const metaList = metaRaw.qmUDFList ?? {};
+    // Merge: prefer gis.customList but fill in gaps from metadata
+    listOptions = { ...metaList, ...listOptions };
+    // Re-fill any that were empty in gis but present in metadata
+    for (const key of Object.keys(metaList)) {
+      if (!listOptions[key] || listOptions[key].length === 0) {
+        listOptions[key] = metaList[key];
+      }
+    }
+  }
 
   const updateNote =
     pageName === "ADD"
@@ -595,13 +671,26 @@ export async function fetchTestRunUdfValues(
     // metadata call is best-effort — proceed without enrichment
   }
 
+  // If metadata returned but qmUDFList is empty, check if any field needs lookup options
+  // that we don't have — surface a warning in the output rather than silently failing
+  const lookupFieldsMissingOptions = Object.values(fieldDefs).filter(
+    (def: any) =>
+      ["LOOKUPLIST", "MULTILOOKUPLIST", "CASCADINGLIST"].includes(
+        def.fieldTypeName,
+      ) &&
+      def.qmListName &&
+      (!lookupOptions[def.qmListName] ||
+        lookupOptions[def.qmListName].length === 0),
+  );
+  const hasLookupWarning = lookupFieldsMissingOptions.length > 0;
+
   // Step 4: extract and enrich UDF values from each run
   // When metadata is available, ALL project-defined UDF fields are included (null for unset fields).
   // This ensures every run shows the full set of available UDF fields, not just those with values.
   const rows: any[] = runsResponse.data ?? [];
   const runs = rows.map((row: any) => {
     const { udfjson: _udfjson, ...rowWithoutRawUdfJson } = row;
-    const enrichedUdfs = enrichUdfsForRow(row, fieldDefs);
+    const enrichedUdfs = enrichUdfsForRow(row, fieldDefs, lookupOptions);
 
     return {
       ...rowWithoutRawUdfJson,
@@ -618,6 +707,14 @@ export async function fetchTestRunUdfValues(
     sourceContext,
     hasTcRunUdf: runsResponse.hasTcRunUdf ?? true,
     total: runsResponse.total ?? rows.length,
+    ...(hasLookupWarning
+      ? {
+          _lookupWarning:
+            `Lookup options missing for fields: ${lookupFieldsMissingOptions.map((d: any) => d.name).join(", ")}. ` +
+            "Values for these fields may show raw internal IDs instead of display names. " +
+            "Call 'Fetch Test Run UDF Metadata' separately and use its 'lookupOptions' to resolve display names.",
+        }
+      : {}),
     defaultColumns: TEST_RUN_UDF_DISPLAY_COLUMNS[sourceContext].map(
       (column) => column.header,
     ),

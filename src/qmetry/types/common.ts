@@ -784,6 +784,17 @@ export const TestCaseStepsArgsSchema = z.object({
   limit: CommonFields.limit,
 });
 
+export const TestCaseStepsWithUdfArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  tcID: CommonFields.tcID,
+  viewId: CommonFields.tcViewId,
+  version: CommonFields.versionOptional,
+  start: CommonFields.start,
+  page: CommonFields.page,
+  limit: CommonFields.limit,
+});
+
 export const TestCaseExecutionsArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
   baseUrl: CommonFields.baseUrl,
@@ -1001,6 +1012,25 @@ export const TestSuiteListArgsSchema = z.object({
       "Sort Records - refer json schema, Possible property - entityKey, name, testsuiteStatus, linkedPlatformCount, linkedTcCount, createdDate, createdByAlias, updatedDate, updatedByAlias, attachmentCount, owner, remExecutionTime, totalExecutionTime",
     )
     .default('[{"property":"name","direction":"ASC"}]'),
+});
+
+export const FetchTestSuiteDetailsArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  id: z.number().int().positive().describe("Test Suite ID (numeric ID)"),
+  scope: CommonFields.scope,
+});
+
+export const FetchIssueDetailsArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  defectId: z
+    .number()
+    .int()
+    .positive()
+    .describe(
+      "Issue DefectId (numeric ID) — use data[<index>].id from Fetch Issues/Defects response. The field in the list API response is named 'id', not 'DefectId'.",
+    ),
 });
 
 export const TestSuitesForTestCaseArgsSchema = z.object({

@@ -74,6 +74,7 @@ export const QMetryToolsHandlers = {
   FETCH_TEST_CASE_DETAILS: "getTestCaseDetails",
   FETCH_TEST_CASE_VERSION_DETAILS: "getTestCaseVersionDetails",
   FETCH_TEST_CASE_STEPS: "getTestCaseSteps",
+  FETCH_TEST_CASE_STEPS_WITH_UDF: "getTestCaseStepsWithUdf",
   FETCH_TEST_CASE_EXECUTIONS: "getTestCaseExecutions",
   LINK_REQUIREMENT_TO_TESTCASE: "linkRequirementToTestCase",
   FETCH_REQUIREMENTS: "getRequirements",
@@ -113,4 +114,6 @@ export const QMetryToolsHandlers = {
   EXECUTE_GATE_REPORT: "executeGateReport",
   EXPORT_HTML_REPORT: "exportHtmlReport",
   FETCH_UDF_LAYOUT: "fetchUdfLayout",
+  FETCH_TEST_SUITE_DETAILS: "fetchTestSuiteDetails",
+  FETCH_ISSUE_DETAILS: "fetchIssueDetails",
 };

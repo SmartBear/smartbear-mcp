@@ -3,6 +3,7 @@ import {
   BulkUpdateExecutionStatusArgsSchema,
   CreateTestSuiteArgsSchema,
   ExecutionsByTestSuiteArgsSchema,
+  FetchTestSuiteDetailsArgsSchema,
   LinkPlatformsToTestSuiteArgsSchema,
   LinkTestCasesToTestSuiteArgsSchema,
   RequirementsLinkedTestCasesToTestSuiteArgsSchema,
@@ -97,6 +98,8 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       "",
       "UDF (User Defined Fields) WORKFLOW FOR CREATE:",
       "1. Call 'Fetch UDF Layout' with entityType='TS', pageName='ADD' to discover field names, types, and list option IDs.",
+      "   IF listOptions[field.listName] is empty after Fetch UDF Layout, the tool already tried a metadata fallback. " +
+        "   If STILL empty, ask the user to provide the option ID from the QMetry UI — do NOT guess numeric IDs.",
       "2. For LOOKUPLIST fields: pick one ID from listOptions[field.listName][].id.",
       "3. For MULTILOOKUPLIST fields: pick an array of IDs.",
       "4. For CASCADINGLIST fields: pick parent ID, then call 'Fetch Cascade Child Values' for child ID. Pass { parent: parentId, child: childId }.",
@@ -175,6 +178,8 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       "",
       "UDF (User Defined Fields) WORKFLOW FOR UPDATE:",
       "1. Call 'Fetch UDF Layout' with entityType='TS', pageName='DETAIL' to get field names, fieldIDs (projectUserFieldID), and list option IDs.",
+      "   IF listOptions[field.listName] is empty after Fetch UDF Layout, the tool already tried a metadata fallback. " +
+        "   If STILL empty, ask the user to provide the option ID from the QMetry UI — do NOT guess numeric IDs.",
       "2. For LOOKUPLIST fields: pick one ID from listOptions[field.listName][].id.",
       "3. For MULTILOOKUPLIST fields: pick array of IDs; also pass alias flat key (e.g., fieldNameAlias: 'Option Label').",
       "4. For CASCADINGLIST fields: pick parent ID + fetch child with 'Fetch Cascade Child Values'. Pass { parent: parentId, child: childId }.",
@@ -1550,5 +1555,32 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       "JSON object with success status, updated execution details, and confirmation message",
     readOnly: false,
     idempotent: false,
+  },
+  {
+    title: "Fetch Test Suite Details",
+    toolset: "Test Suites",
+    summary:
+      "Fetch full detail data for a QMetry test suite including UDF field values",
+    handler: QMetryToolsHandlers.FETCH_TEST_SUITE_DETAILS,
+    inputSchema: FetchTestSuiteDetailsArgsSchema,
+    purpose:
+      "Get complete test suite details including UDF values. Use this when you need UDF field data for a test suite — the list API (Fetch Test Suites) omits UDF values.",
+    useCases: [
+      "Get UDF field values for a specific test suite",
+      "Retrieve full test suite metadata including custom fields",
+      "Inspect test suite details before updating UDF values",
+    ],
+    examples: [
+      {
+        description: "Fetch details for test suite with ID 142013",
+        parameters: { id: 142013 },
+        expectedOutput:
+          "Full test suite detail object with UDFTypeData, UDF field values, and metadata",
+      },
+    ],
+    outputDescription:
+      "JSON object with full test suite details including UDFTypeData map and all UDF field values",
+    readOnly: true,
+    idempotent: true,
   },
 ];

@@ -239,9 +239,11 @@ export async function fetchIssueExecutions(
 
   // Fetch UDF metadata once — field definitions are project-wide and identical across all executions
   let fieldDefs: Record<string, any> = {};
+  let lookupOptions: Record<string, any[]> = {};
   try {
     const meta = await qmetryRequest<{
       qmUDF?: { TCR?: Record<string, any> };
+      qmUDFList?: Record<string, any[]>;
     }>({
       method: "POST",
       path: QMETRY_PATHS.UDF.TEST_RUN_UDF_METADATA,
@@ -255,6 +257,7 @@ export async function fetchIssueExecutions(
       },
     });
     fieldDefs = meta.qmUDF?.TCR ?? {};
+    lookupOptions = meta.qmUDFList ?? {};
   } catch {
     // metadata call is best-effort — proceed without enrichment
   }
@@ -265,10 +268,14 @@ export async function fetchIssueExecutions(
   const enrichedData = rows.map((row: any) => {
     let rawUdfs: Record<string, unknown> = {};
     if (row.udfjson) {
-      try {
-        rawUdfs = JSON.parse(row.udfjson);
-      } catch {
-        rawUdfs = {};
+      if (typeof row.udfjson === "string") {
+        try {
+          rawUdfs = JSON.parse(row.udfjson);
+        } catch {
+          rawUdfs = {};
+        }
+      } else {
+        rawUdfs = row.udfjson as Record<string, unknown>;
       }
     }
 
@@ -293,6 +300,20 @@ export async function fetchIssueExecutions(
             })
             .replace(/\s+/g, " ")
             .trim();
+        }
+        // Resolve uniqueLabel → display name for lookup fields
+        const listName = def.qmListName as string | undefined;
+        const options: any[] = listName ? (lookupOptions[listName] ?? []) : [];
+        if (options.length > 0) {
+          if (typeof value === "string") {
+            const match = options.find((o) => o.uniqueLabel === value);
+            if (match) value = match.name;
+          } else if (Array.isArray(value)) {
+            value = value.map((v) => {
+              const match = options.find((o) => o.uniqueLabel === v);
+              return match ? match.name : v;
+            });
+          }
         }
         return {
           name: def.name as string,
@@ -375,5 +396,41 @@ export async function linkIssuesToTestcaseRun(
     project: resolvedProject,
     baseUrl: resolvedBaseUrl,
     body,
+  });
+}
+
+/**
+ * Fetches full issue detail data including UDF values.
+ * @throws If `defectId` is missing/invalid.
+ */
+export async function fetchIssueDetails(
+  token: string,
+  baseUrl: string,
+  project: string | undefined,
+  payload: { defectId: number; scopeId?: number; orgCode?: string },
+) {
+  const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
+    baseUrl,
+    project,
+  );
+
+  if (typeof payload.defectId !== "number" || payload.defectId <= 0) {
+    throw new Error(
+      "[fetchIssueDetails] Missing or invalid required parameter: 'defectId'.",
+    );
+  }
+
+  return qmetryRequest<unknown>({
+    method: "GET",
+    path: QMETRY_PATHS.ISSUES.GET_ISSUE_DETAIL.replace(
+      ":issueID",
+      String(payload.defectId),
+    ),
+    token,
+    project: resolvedProject,
+    baseUrl: resolvedBaseUrl,
+    scopeId: payload.scopeId,
+    orgCode: payload.orgCode,
+    extraHeaders: { action: "detail", screenname: "ISSUE" },
   });
 }

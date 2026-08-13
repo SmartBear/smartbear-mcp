@@ -13,6 +13,7 @@ import {
   type FetchTestCaseDetailsPayload,
   type FetchTestCaseExecutionsPayload,
   type FetchTestCaseStepsPayload,
+  type FetchTestCaseStepsWithUdfPayload,
   type FetchTestCasesLinkedToRequirementPayload,
   type FetchTestCasesPayload,
   type FetchTestCaseVersionDetailsPayload,
@@ -259,6 +260,48 @@ export async function fetchTestCaseSteps(
     project: resolvedProject,
     baseUrl: resolvedBaseUrl,
     body,
+  });
+}
+
+/**
+ * Fetches test case steps with UDF field values via viewColumns endpoint.
+ * @throws If `tcID` is missing/invalid.
+ */
+export async function fetchTestCaseStepsWithUdf(
+  token: string,
+  baseUrl: string,
+  project: string | undefined,
+  payload: FetchTestCaseStepsWithUdfPayload,
+) {
+  const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
+    baseUrl,
+    project,
+  );
+
+  if (typeof payload.tcID !== "number") {
+    throw new Error(
+      "[fetchTestCaseStepsWithUdf] Missing or invalid required parameter: 'tcID'.",
+    );
+  }
+
+  const body = {
+    tcID: String(payload.tcID),
+    limit: payload.limit ?? 30,
+    start: payload.start ?? 0,
+    page: payload.page ?? 1,
+    version: payload.version ?? 1,
+    gridName: "TCSTEPLIST",
+    ...(payload.viewId !== undefined ? { viewId: payload.viewId } : {}),
+  };
+
+  return qmetryRequest<unknown>({
+    method: "POST",
+    path: QMETRY_PATHS.TESTCASE.GET_TC_STEPS_WITH_UDF,
+    token,
+    project: resolvedProject,
+    baseUrl: resolvedBaseUrl,
+    body,
+    extraHeaders: { action: "fetch-steps", screenname: "EXECUTION RUN" },
   });
 }
 

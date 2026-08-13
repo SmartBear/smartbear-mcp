@@ -5,6 +5,7 @@ import {
   TestCaseExecutionsArgsSchema,
   TestCaseListArgsSchema,
   TestCaseStepsArgsSchema,
+  TestCaseStepsWithUdfArgsSchema,
   TestCaseVersionDetailsArgsSchema,
   UpdateTestCaseArgsSchema,
 } from "../../types/common";
@@ -120,6 +121,8 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       "",
       "UDF (User Defined Fields) WORKFLOW FOR CREATE:",
       "1. Call 'Fetch UDF Layout' with entityType='TC', pageName='ADD' to discover field names, types, and list option IDs.",
+      "   IF listOptions[field.listName] is empty after Fetch UDF Layout, the tool already tried a metadata fallback. " +
+        "   If STILL empty, ask the user to provide the option ID from the QMetry UI — do NOT guess numeric IDs.",
       "2. For LOOKUPLIST fields: pick one ID from listOptions[field.listName][].id.",
       "3. For MULTILOOKUPLIST fields: pick an array of IDs from listOptions[field.listName][].id.",
       "4. For CASCADINGLIST fields: pick a parent ID, then call 'Fetch Cascade Child Values' to get child IDs. Pass { parent: parentId, child: childId }.",
@@ -771,6 +774,8 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       "",
       "UDF (User Defined Fields) WORKFLOW FOR UPDATE:",
       "1. Call 'Fetch UDF Layout' with entityType='TC', pageName='DETAIL' to get field names, fieldIDs (projectUserFieldID), and list option IDs.",
+      "   IF listOptions[field.listName] is empty after Fetch UDF Layout, the tool already tried a metadata fallback. " +
+        "   If STILL empty, ask the user to provide the option ID from the QMetry UI — do NOT guess numeric IDs.",
       "2. For LOOKUPLIST fields: pick one ID from listOptions[field.listName][].id.",
       "3. For MULTILOOKUPLIST fields: pick an array of IDs; also pass the alias flat key (e.g., fieldNameAlias: 'Option Label').",
       "4. For CASCADINGLIST fields: pick parent ID + fetch child with 'Fetch Cascade Child Values'. Pass { parent: parentId, child: childId }.",
@@ -1257,6 +1262,42 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       "and 'testRunUdfs' (array of objects each with name, label, fieldID, fieldType, value — use 'label' for display headers, null if not set). " +
       "ALL project-defined UDF fields are always included, even those with no value. " +
       "Top-level 'hasTcRunUdf' flag indicates whether the project has Test Run UDFs configured. When false, a 'testRunUdfNote' field provides a professional explanation instead.",
+    readOnly: true,
+    idempotent: true,
+  },
+  {
+    title: "Fetch Test Case Steps With UDF",
+    toolset: "Test Cases",
+    summary:
+      "Fetch test case steps including UDF field values via viewColumns endpoint",
+    handler: QMetryToolsHandlers.FETCH_TEST_CASE_STEPS_WITH_UDF,
+    inputSchema: TestCaseStepsWithUdfArgsSchema,
+    purpose:
+      "Retrieve test case steps with full UDF data. Use this instead of 'Fetch Test Case Steps' when you need step-level UDF field values — the basic steps endpoint omits UDF data.",
+    useCases: [
+      "Get step UDF field values for a test case",
+      "Retrieve steps with custom fields before updating step UDFs",
+      "Inspect step-level UDF data for reporting",
+    ],
+    examples: [
+      {
+        description: "Fetch steps with UDF values for test case ID 112768054",
+        parameters: { tcID: 112768054 },
+        expectedOutput:
+          "Steps with UDF object containing field values, ID_<field> arrays for lookup IDs, UDF_<field> prefixed values, filterTemplate with UDF field definitions",
+      },
+    ],
+    hints: [
+      "Response includes 'filterTemplate' array listing all UDF fields with their fieldType and udfmID",
+      "UDF values in each step row: UDF_<fieldName> = display value, UDF_ID_<fieldName> = numeric IDs",
+      "Step UDF object also has ID_<fieldName> for lookup IDs",
+      "LOOKUPLIST: id = UDF_ID_<fieldName>, display = UDF_<fieldName>",
+      "MULTILOOKUPLIST: ids = UDF_ID_<fieldName> (array), display = UDF_<fieldName>",
+      "CASCADINGLIST: parent = UDF_ID_<fieldName>[0], child = UDF_ID_<fieldName>[1]",
+      "viewId auto-resolved from project info if not provided",
+    ],
+    outputDescription:
+      "JSON object with data array (steps with UDF values), filterTemplate (UDF field definitions), columns (visible/hidden column config), total count, and viewId",
     readOnly: true,
     idempotent: true,
   },

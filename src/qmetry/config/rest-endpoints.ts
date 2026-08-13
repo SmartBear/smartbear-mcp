@@ -14,6 +14,7 @@ export const QMETRY_PATHS = {
     GET_TC_DETAILS: "/rest/testcases/getVersionDetail",
     GET_TC_DETAILS_BY_VERSION: "/rest/testcases/list",
     GET_TC_STEPS: "/rest/testcases/steps/list",
+    GET_TC_STEPS_WITH_UDF: "/rest/testcases/tcStep/list/viewColumns",
     GET_TC_EXECUTIONS: "/rest/testcases/execution",
     GET_TC_LINKED_TO_RQ: "/rest/testcases/list/forRQ",
     CREATE_UPDATE_TC: "/rest/testcases",
@@ -35,6 +36,7 @@ export const QMETRY_PATHS = {
     GET_LINKED_ISSUES_BY_TESTCASE_RUN: "/rest/execution/issue/list/forTCRun",
     LINK_PLATFORMS_TO_TESTSUITE: "/rest/testsuites/link/platforms",
     BULK_UPDATE_EXECUTION_STATUS: "/rest/execution/runstatus/bulkupdate",
+    GET_TS_DETAIL: "/rest/testsuites/latest/detail/data",
   },
   ISSUES: {
     GET_ISSUES_LIST: "/rest/issues/list/viewColumns",
@@ -42,6 +44,7 @@ export const QMETRY_PATHS = {
     GET_ISSUES_LINKED_TO_TC: "/rest/issues/list/ForTC",
     LINK_ISSUES_TO_TESTCASE_RUN: "/rest/execution/link/issue",
     GET_ISSUE_EXECUTIONS: "/rest/execution/getExecutionsForIssue",
+    GET_ISSUE_DETAIL: "/rest/issues/:issueID",
   },
   AUTOMATION: {
     IMPORT_RESULTS: "/rest/import/createandscheduletestresults/1",

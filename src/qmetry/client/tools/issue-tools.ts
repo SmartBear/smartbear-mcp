@@ -1,6 +1,7 @@
 import { QMetryToolsHandlers } from "../../config/constants";
 import {
   CreateIssueArgsSchema,
+  FetchIssueDetailsArgsSchema,
   IssueExecutionsArgsSchema,
   IssuesLinkedToTestCaseArgsSchema,
   IssuesListArgsSchema,
@@ -144,6 +145,8 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       "",
       "UDF (User Defined Fields) WORKFLOW FOR CREATE:",
       "1. Call 'Fetch UDF Layout' with entityType='IS', pageName='ADD' to discover field names, types, and list option IDs.",
+      "   IF listOptions[field.listName] is empty after Fetch UDF Layout, the tool already tried a metadata fallback. " +
+        "   If STILL empty, ask the user to provide the option ID from the QMetry UI — do NOT guess numeric IDs.",
       "2. For LOOKUPLIST fields: pick one ID from listOptions[field.listName][].id.",
       "3. For MULTILOOKUPLIST fields: pick an array of IDs.",
       "4. For CASCADINGLIST fields: pick parent ID, then call 'Fetch Cascade Child Values' for child ID. Pass { parent: parentId, child: childId }.",
@@ -208,6 +211,8 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       "",
       "UDF (User Defined Fields) WORKFLOW FOR UPDATE:",
       "1. Call 'Fetch UDF Layout' with entityType='IS', pageName='DETAIL' to get field names, fieldIDs (projectUserFieldID), and list option IDs.",
+      "   IF listOptions[field.listName] is empty after Fetch UDF Layout, the tool already tried a metadata fallback. " +
+        "   If STILL empty, ask the user to provide the option ID from the QMetry UI — do NOT guess numeric IDs.",
       "2. For LOOKUPLIST fields: pick one ID from listOptions[field.listName][].id.",
       "3. For MULTILOOKUPLIST fields: pick array of IDs; also pass alias flat key (e.g., fieldNameAlias: 'Option Label').",
       "4. For CASCADINGLIST fields: pick parent ID + fetch child with 'Fetch Cascade Child Values'. Pass { parent: parentId, child: childId }.",
@@ -335,7 +340,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       "Helps maintain visibility into project defects and issues",
     ],
     outputDescription:
-      "JSON object with 'data' array containing issues and pagination info",
+      "JSON object with 'data' array containing issues. Each issue has 'id' (numeric defect ID — use this as defectId for Fetch Issue Details), 'entityKey', 'name'/'summary', and other fields. There is no 'DefectId' field in this response — 'id' is the defect identifier.",
     readOnly: true,
     idempotent: true,
     openWorld: false,
@@ -687,11 +692,12 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       'AUTO-RESOLVE FILTER EXAMPLE: to resolve VKT-IS-5 → use filter \'[{"type":"string","value":"VKT-IS-5","field":"entityKeyId"}]\' in Fetch Defects or Issues tool',
       "This tool supports QMetry-native issues only — do NOT use for Jira-integrated projects",
       "API SOURCE: Execution rows and saved UDF values come from /rest/execution/getExecutionsForIssue. The udfjson field contains saved Test Run UDF values, e.g. Tested_By, execution_type, Country_mcp_udf, environments_udf.",
-      "METADATA SOURCE: This tool also calls Test Run UDF metadata once to get all available labels, fieldIDs, field types, and empty fields. Merge metadata fields with udfjson values by UDF name.",
+      "METADATA SOURCE: This tool also calls Test Run UDF metadata once to get all available labels, fieldIDs, field types, list options (qmUDFList), and empty fields. Merge metadata fields with udfjson values by UDF name.",
       "RESPONSE FIELDS: hasTcRunUdf=true means executions have UDF data; each execution includes a 'testRunUdfs' array with ALL project-defined UDF fields",
       "ALL UDF FIELDS: ALL project-defined Test Run UDF fields are returned for every execution — including fields not yet set (value: null)",
       "Each element in testRunUdfs: { name, label, fieldID, fieldType, value } — use fieldID when calling 'Bulk Update Test Run UDFs'",
-      'EXAMPLE testRunUdfs: [{ "name": "TRString", "label": "TR String", "fieldID": 229241, "fieldType": "STRING", "value": "test" }, { "name": "dateField", "label": "Date", "fieldID": 229255, "fieldType": "DATETIMEPICKER", "value": null }]',
+      "VALUE RESOLUTION: For LOOKUPLIST and MULTILOOKUPLIST fields, values are resolved from their internal uniqueLabel key to the human-readable display name using qmUDFList lookup options. Always display the resolved name, not the raw uniqueLabel.",
+      'EXAMPLE testRunUdfs: [{ "name": "TRString", "label": "TR String", "fieldID": 229241, "fieldType": "STRING", "value": "test" }, { "name": "lookup_browser", "label": "Lookup Browser MCP", "fieldID": 229433, "fieldType": "LOOKUPLIST", "value": "Chrome" }, { "name": "dateField", "label": "Date", "fieldID": 229255, "fieldType": "DATETIMEPICKER", "value": null }]',
       "FILTER FIELDS:",
       "  - tcName (string): filter by test case name substring",
       "  - linkageLevel (string): 'Test Case' or 'Test Step'",
@@ -715,6 +721,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       "'executedVersion' (Executed Version of the test case), 'runStatusName' (Execution Status label), " +
       "'tcRunID' (numeric Test Run ID), 'tcName' (Test Case Name), 'tcEntityKey' (Test Case Key), " +
       "and 'testRunUdfs' (array of objects each with name, label, fieldID, fieldType, value — use 'label' for display headers, null if not set). " +
+      "For LOOKUPLIST and MULTILOOKUPLIST fields, 'value' contains the resolved human-readable display name (from qmUDFList), not the raw internal uniqueLabel key. " +
       "ALL project-defined UDF fields are always included, even those with no value. " +
       "When hasTcRunUdf is false, a 'testRunUdfNote' field provides a professional explanation instead.",
     readOnly: true,
@@ -825,6 +832,39 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
     ],
     outputDescription:
       "JSON object with issues array containing issue details, priorities, status, and linkage information",
+    readOnly: true,
+    idempotent: true,
+  },
+  {
+    title: "Fetch Issue Details",
+    toolset: "Issues",
+    summary:
+      "Fetch full detail data for a QMetry issue including UDF field values",
+    handler: QMetryToolsHandlers.FETCH_ISSUE_DETAILS,
+    inputSchema: FetchIssueDetailsArgsSchema,
+    purpose:
+      "Get complete issue details including UDF values. Use this when you need UDF field data for a specific issue — the list API (Fetch Issues) omits UDF values.",
+    useCases: [
+      "Get UDF field values for a specific issue",
+      "Retrieve full issue metadata including custom fields",
+      "Inspect issue details before updating UDF values",
+    ],
+    examples: [
+      {
+        description: "Fetch details for issue with DefectId 1430676",
+        parameters: { defectId: 1430676 },
+        expectedOutput:
+          "Full issue detail object with UDFTypeData map and all UDF field values including MUL1, TCR_STR, etc.",
+      },
+    ],
+    hints: [
+      "CRITICAL: Use 'data[<index>].id' from Fetch Issues/Defects response as 'defectId'. The list API response field is named 'id' — there is no 'DefectId' field in the list response. Do NOT guess or derive defectId from the entity key suffix.",
+      'AUTO-RESOLVE: If user provides an issue entity key (e.g. VKMCP2-IS-1, MAC-IS-10), first call Fetch Defects or Issues with filter \'[{"type":"string","value":"VKMCP2-IS-1","field":"entityKeyId"}]\', then use \'data[<index>].id\' as defectId.',
+      "UDF VALUES: Response includes a 'UDFTypeData' map with all UDF field values for the issue.",
+      "WORKFLOW: To fetch issue UDF values — (1) Fetch Issues with entityKey filter → get data[0].id, (2) in parallel Fetch UDF Layout entityType='IS' pageName='DETAIL' → get field labels/types, (3) call this tool with defectId=data[0].id → read UDFTypeData.",
+    ],
+    outputDescription:
+      "JSON object with data property containing full issue details including UDFTypeData map and all UDF field values",
     readOnly: true,
     idempotent: true,
   },

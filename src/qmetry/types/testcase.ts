@@ -116,6 +116,13 @@ export interface FetchTestCaseStepsPayload extends PaginationPayload {
   version?: number; // optional, defaults to 1
 }
 
+export interface FetchTestCaseStepsWithUdfPayload extends PaginationPayload {
+  tcID: number; // required - Test Case ID
+  viewId?: number; // auto-resolved from project info if not provided
+  version?: number; // TC version, defaults to 1
+  gridName?: string; // grid name, defaults to "TCSTEPLIST"
+}
+
 export interface FetchTestCasesLinkedToRequirementPayload
   extends PaginationPayload,
     FilterPayload {

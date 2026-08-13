@@ -7,6 +7,7 @@ import {
 import { getAutomationStatus, importAutomationResults } from "./automation";
 import {
   createIssue,
+  fetchIssueDetails,
   fetchIssueExecutions,
   fetchIssues,
   fetchIssuesLinkedToTestCase,
@@ -33,6 +34,7 @@ import {
   fetchTestCaseDetails,
   fetchTestCaseExecutions,
   fetchTestCaseSteps,
+  fetchTestCaseStepsWithUdf,
   fetchTestCases,
   fetchTestCasesLinkedToRequirement,
   fetchTestCaseVersionDetails,
@@ -46,6 +48,7 @@ import {
   fetchLinkedIssuesByTestCaseRun,
   fetchTestCaseRunsByTestSuiteRun,
   fetchTestCasesByTestSuite,
+  fetchTestSuiteDetails,
   fetchTestSuites,
   fetchTestSuitesForTestCase,
   linkPlatformsToTestSuite,
@@ -94,6 +97,8 @@ export const QMETRY_HANDLER_MAP: Record<string, QMetryHandler> = {
   [QMetryToolsHandlers.FETCH_TEST_CASE_VERSION_DETAILS]:
     fetchTestCaseVersionDetails,
   [QMetryToolsHandlers.FETCH_TEST_CASE_STEPS]: fetchTestCaseSteps,
+  [QMetryToolsHandlers.FETCH_TEST_CASE_STEPS_WITH_UDF]:
+    fetchTestCaseStepsWithUdf,
   [QMetryToolsHandlers.FETCH_TEST_CASE_EXECUTIONS]: fetchTestCaseExecutions,
   [QMetryToolsHandlers.LINK_REQUIREMENT_TO_TESTCASE]: linkRequirementToTestCase,
   [QMetryToolsHandlers.FETCH_REQUIREMENTS]: fetchRequirements,
@@ -105,6 +110,7 @@ export const QMETRY_HANDLER_MAP: Record<string, QMetryHandler> = {
   [QMetryToolsHandlers.CREATE_TEST_SUITE]: createTestSuites,
   [QMetryToolsHandlers.UPDATE_TEST_SUITE]: updateTestSuite,
   [QMetryToolsHandlers.FETCH_TEST_SUITES]: fetchTestSuites,
+  [QMetryToolsHandlers.FETCH_TEST_SUITE_DETAILS]: fetchTestSuiteDetails,
   [QMetryToolsHandlers.FETCH_TESTSUITES_FOR_TESTCASE]:
     fetchTestSuitesForTestCase,
   [QMetryToolsHandlers.LINK_TESTCASES_TO_TESTSUITE]: linkTestCasesToTestSuite,
@@ -123,6 +129,7 @@ export const QMETRY_HANDLER_MAP: Record<string, QMetryHandler> = {
   [QMetryToolsHandlers.CREATE_ISSUE]: createIssue,
   [QMetryToolsHandlers.UPDATE_ISSUE]: updateIssue,
   [QMetryToolsHandlers.FETCH_ISSUES]: fetchIssues,
+  [QMetryToolsHandlers.FETCH_ISSUE_DETAILS]: fetchIssueDetails,
   [QMetryToolsHandlers.LINK_ISSUES_TO_TESTCASE_RUN]: linkIssuesToTestcaseRun,
   [QMetryToolsHandlers.LINK_PLATFORMS_TO_TESTSUITE]: linkPlatformsToTestSuite,
   [QMetryToolsHandlers.IMPORT_AUTOMATION_RESULTS]: importAutomationResults,
