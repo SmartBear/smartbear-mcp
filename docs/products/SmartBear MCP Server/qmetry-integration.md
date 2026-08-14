@@ -101,7 +101,7 @@ The QMetry client provides the following test management capabilities as listed 
 -   Purpose: Update an existing QMetry test case by test case ID.
 -   Parameters: Test case ID (`tcID`), version ID (`tcVersionID`), optional fields to update including name, priority, owner, component, state, type, description, estimated time, testing type, steps array, remove steps array, and step update flag (`isStepUpdated`).
 -   Returns: JSON object containing the updated test case information and metadata.
--   Use case: Update test case metadata or steps, edit/add/remove test steps with step IDs, change priority/owner/state, update only metadata without affecting steps, modify description or estimated time.
+-   Use case: Update test case metadata or steps with custom fields (UDFs), edit/add/remove test steps with step IDs, change priority/owner/state, update only metadata without affecting steps, modify description or estimated time.
 
 ### `list_qmetry_testcases`
 
@@ -143,14 +143,14 @@ The QMetry client provides the following test management capabilities as listed 
 -   Purpose: Create a new test suite in QMetry with metadata and release/cycle mapping.
 -   Parameters: Test suite parent folder ID (`parentFolderId`), test suite name (`name`), optional automation flag (`isAutomatedFlag`), description, owner, state, and release/cycle mapping with build ID.
 -   Returns: JSON object containing the new test suite ID, summary, and creation metadata.
--   Use case: Create test suites with metadata, set owner/state using valid IDs from project info, associate with release/cycle/build for planning, create automated or manual test suites.
+-   Use case: Create test suites with metadata and custom fields (UDFs), set owner/state using valid IDs from project info, associate with release/cycle/build for planning, create automated or manual test suites.
 
 ### `update_test_suite`
 
 -   Purpose: Update an existing QMetry test suite by test suite ID.
 -   Parameters: Test suite ID (`id`), entity key (`entityKey`), folder ID (`TsFolderID`), optional fields to update including name, description, owner, and state.
 -   Returns: JSON object containing the updated test suite information and metadata.
--   Use case: Update test suite summary/name, change owner or state, modify description, bulk update using entity key auto-resolution.
+-   Use case: Update test suite summary/name with custom fields (UDFs), change owner or state, modify description, bulk update using entity key auto-resolution.
 
 ### `fetch_test_suites`
 
@@ -220,14 +220,14 @@ The QMetry client provides the following test management capabilities as listed 
 -   Purpose: Create a new issue in QMetry for linking to test executions.
 -   Parameters: Issue name (`name`), issue type ID (`issueType`), issue priority ID (`issuePriority`), optional issue owner (`issueOwner`), description, affected release array, affected cycles array, and component array.
 -   Returns: JSON object containing the new issue ID, defect ID, and creation metadata.
--   Use case: Create defects/issues with summary and metadata, set issueType/priority/owner using valid IDs from project info, associate with releases/cycles for planning, create issues for automation or manual testing types.
+-   Use case: Create defects/issues with summary, metadata, and custom fields (UDFs), set issueType/priority/owner using valid IDs from project info, associate with releases/cycles for planning, create issues for automation or manual testing types.
 
 ### `update_issue`
 
 -   Purpose: Update an existing QMetry issue by defect ID.
 -   Parameters: Defect ID (`DefectId`), optional entity key (`entityKey`), optional fields to update including summary, issue type, priority, owner, description, affected release, and affected cycles.
 -   Returns: JSON object with update status and details.
--   Use case: Update issue summary/title, change issue priority/type/owner, update affected release or cycles, modify description, bulk update using DefectId and entityKey.
+-   Use case: Update issue summary/title with custom fields (UDFs), change issue priority/type/owner, update affected release or cycles, modify description, bulk update using DefectId and entityKey.
 
 ### `fetch_issues`
 
@@ -281,8 +281,5 @@ The QMetry client provides the following test management capabilities as listed 
 
 ## Notes
 
--   UDF (User Defined Field) support is available from QMetry version 8.26.0 onwards for the following tools:
-    -   **Test Run UDFs** — readable via `qmetry_testcase_executions`, `get_testcase_runs_by_testsuite_run`, and `fetch_issue_executions`.
-    -   **Test Case UDFs** — configurable during creation and updates via `create_test_case` and `update_test_case`.
-    -   **Test Suite UDFs** — configurable during creation and updates via `create_test_suite` and `update_test_suite`.
-    -   **Issue UDFs** — configurable during creation and updates via `create_issue` and `update_issue`.
+-   Test Run UDFs support in `qmetry_testcase_executions`, `get_testcase_runs_by_testsuite_run`, and `fetch_issue_executions` is available from QMetry version 8.26.0
+onwards.
