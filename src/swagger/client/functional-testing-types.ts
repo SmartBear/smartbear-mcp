@@ -307,3 +307,210 @@ export const CreateFunctionalTestingTestResponseSchema = z.object({
 export type CreateFunctionalTestingTestResponse = z.infer<
   typeof CreateFunctionalTestingTestResponseSchema
 >;
+
+// Suite workflow node / update_suite types.
+//
+// `SuiteWorkflowAction` is a polymorphic tree covering every suite action kind, but the MCP tool
+// surface (`swagger_update_suite`) only accepts writes to `runApiTests` nodes. Every other node type
+// (e.g. the decision/sendEmail tail every suite is auto-created with) is still returned by
+// `swagger_get_suite` and addressable by `id` for `afterActionId`/`branch`/delete/move — it just can't
+// be constructed or edited through this tool.
+export const WORKFLOW_NODE_TYPES = [
+  "runApiTests",
+  "decision",
+  "sendEmail",
+  "runBrowserTests",
+  "runMobileTests",
+  "callApi",
+  "sendSlack",
+  "sleep",
+] as const;
+
+export interface WorkflowNode {
+  id: string;
+  type: (typeof WORKFLOW_NODE_TYPES)[number];
+  title?: string;
+  // Present only on `runApiTests` nodes.
+  testIds?: number[];
+  parallel?: boolean;
+  maxRetryAttempts?: number;
+  next?: WorkflowNode;
+  // Present only on `decision` nodes; `next` doubles as the decision's "success" branch.
+  failure?: WorkflowNode;
+}
+
+export const GetFunctionalTestingSuiteParamsSchema = z.object({
+  slug: z
+    .string()
+    .describe(
+      "Slug of the Functional Testing suite, as returned by swagger_create_suite or swagger_list_suites",
+    )
+    .trim()
+    .min(1),
+});
+
+export type GetFunctionalTestingSuiteParams = z.infer<
+  typeof GetFunctionalTestingSuiteParamsSchema
+>;
+
+export interface GetFunctionalTestingSuiteResponse {
+  slug: string;
+  root: WorkflowNode;
+}
+
+const WorkflowNodeSchema: z.ZodType<WorkflowNode> = z.lazy(() =>
+  z.object({
+    id: z.string(),
+    type: z.enum(WORKFLOW_NODE_TYPES),
+    title: z.string().optional(),
+    testIds: z.array(z.number()).optional(),
+    parallel: z.boolean().optional(),
+    maxRetryAttempts: z.number().optional(),
+    next: WorkflowNodeSchema.optional(),
+    failure: WorkflowNodeSchema.optional(),
+  }),
+);
+
+export const GetFunctionalTestingSuiteResponseSchema = z.object({
+  slug: z.string(),
+  root: WorkflowNodeSchema,
+});
+
+const UpdateSuiteBranchSchema = z
+  .enum(["next", "failure"])
+  .describe(
+    "Which of the anchor decision node's two branches to target. Required if and only if the " +
+      "action named by `afterActionId` (for `add`/`move`) is a decision node; omit it otherwise.",
+  );
+
+const UpdateSuiteSlugSchema = z
+  .string()
+  .describe(
+    "Slug of the Functional Testing suite to update, as returned by swagger_create_suite",
+  )
+  .trim()
+  .min(1);
+
+const UpdateSuiteActionIdSchema = z
+  .string()
+  .describe(
+    "ID of the action to target. Must come from the most recent swagger_get_suite call, or from a " +
+      "prior swagger_update_suite `add` response's `id` — there is no full-tree echo to fall back on.",
+  )
+  .trim()
+  .min(1);
+
+const UpdateSuiteAfterActionIdSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .nullable()
+  .describe(
+    "ID of the action to insert/move after, sourced the same way as `id` (most recent " +
+      "swagger_get_suite call, or a prior `add` response). Pass null to target the new root, " +
+      "before every existing action.",
+  );
+
+export const UpdateFunctionalTestingSuiteParamsSchema = z.discriminatedUnion(
+  "operation",
+  [
+    z.object({
+      slug: UpdateSuiteSlugSchema,
+      operation: z
+        .literal("add")
+        .describe("Insert a new runApiTests action into the suite."),
+      afterActionId: UpdateSuiteAfterActionIdSchema,
+      branch: UpdateSuiteBranchSchema.optional(),
+      action: z
+        .object({
+          testIds: z
+            .array(z.number())
+            .min(1)
+            .describe("IDs of existing tests to include in this action."),
+          parallel: z
+            .boolean()
+            .optional()
+            .describe(
+              "Whether to run this action's tests in parallel instead of sequentially. Defaults to false.",
+            ),
+          maxRetryAttempts: z
+            .number()
+            .int()
+            .min(0)
+            .max(3)
+            .optional()
+            .describe(
+              "Number of times to retry a failed test in this action before it counts as failed (0-3).",
+            ),
+          title: z
+            .string()
+            .trim()
+            .min(1)
+            .optional()
+            .describe(
+              "Label for this action, shown in the suite workflow. Must be unique among the suite's actions.",
+            ),
+        })
+        .describe("The new action to add. API-test actions only."),
+    }),
+    z.object({
+      slug: UpdateSuiteSlugSchema,
+      operation: z
+        .literal("edit")
+        .describe("Patch an existing runApiTests action in place."),
+      id: UpdateSuiteActionIdSchema,
+      action: z
+        .object({
+          testIds: z
+            .array(z.number())
+            .min(1)
+            .optional()
+            .describe("If present, replaces the action's test IDs."),
+          parallel: z.boolean().optional(),
+          maxRetryAttempts: z.number().int().min(0).max(3).optional(),
+          title: z.string().trim().min(1).optional(),
+        })
+        .describe(
+          "Partial patch — only fields present here are changed; omitted fields are left as-is.",
+        ),
+    }),
+    z.object({
+      slug: UpdateSuiteSlugSchema,
+      operation: z
+        .literal("delete")
+        .describe("Remove an existing action from the suite."),
+      id: UpdateSuiteActionIdSchema,
+    }),
+    z.object({
+      slug: UpdateSuiteSlugSchema,
+      operation: z
+        .literal("move")
+        .describe(
+          "Reposition an existing action elsewhere in the suite (single-node move, not a subtree move).",
+        ),
+      id: UpdateSuiteActionIdSchema.describe(
+        "ID of the action to move. Sourced the same way as other ids (see description above).",
+      ),
+      afterActionId: UpdateSuiteAfterActionIdSchema,
+      branch: UpdateSuiteBranchSchema.optional(),
+    }),
+  ],
+);
+
+export type UpdateFunctionalTestingSuiteParams = z.infer<
+  typeof UpdateFunctionalTestingSuiteParamsSchema
+>;
+
+export const UpdateFunctionalTestingSuiteResponseSchema = z.object({
+  success: z.boolean().describe("Whether the operation was applied."),
+  id: z
+    .string()
+    .optional()
+    .describe(
+      "ID assigned to the newly created action. Present only when `operation` was `add`.",
+    ),
+});
+
+export type UpdateFunctionalTestingSuiteResponse = z.infer<
+  typeof UpdateFunctionalTestingSuiteResponseSchema
+>;

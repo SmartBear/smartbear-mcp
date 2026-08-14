@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
 import { FunctionalTestingAPI } from "../client/functional-testing-api";
-import { CreateFunctionalTestingSuiteParamsSchema } from "../client/functional-testing-types";
+import {
+  CreateFunctionalTestingSuiteParamsSchema,
+  UpdateFunctionalTestingSuiteParamsSchema,
+} from "../client/functional-testing-types";
 
 const fetchMock = createFetchMock(vi);
 fetchMock.enableMocks();
@@ -686,6 +689,194 @@ describe("FunctionalTestingAPI", () => {
     });
   });
 
+  describe("getSuite", () => {
+    const workflowTreeMock = {
+      slug: "nightly-api-regression",
+      root: {
+        id: "action-1",
+        type: "runApiTests",
+        testIds: [101, 102],
+        next: {
+          id: "action-2",
+          type: "decision",
+          next: undefined,
+          failure: {
+            id: "action-3",
+            type: "sendEmail",
+          },
+        },
+      },
+    };
+
+    it("should call the correct endpoint with GET method and X-API-KEY header", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(workflowTreeMock));
+
+      await api.getSuite({ slug: "nightly-api-regression" });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://api.reflect.run/v1/suites/nightly-api-regression",
+        expect.objectContaining({
+          method: "GET",
+          headers: expect.objectContaining({ "X-API-KEY": "test-api-key" }),
+        }),
+      );
+    });
+
+    it("should return the parsed workflow tree", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(workflowTreeMock));
+
+      const result = await api.getSuite({ slug: "nightly-api-regression" });
+
+      expect(result).toEqual(workflowTreeMock);
+    });
+
+    it("should throw ToolError when slug is missing", async () => {
+      await expect(api.getSuite({ slug: "" })).rejects.toThrow(
+        "slug argument is required",
+      );
+    });
+
+    it("should throw a not-found message on 404", async () => {
+      fetchMock.mockResponseOnce("Not Found", { status: 404 });
+
+      await expect(api.getSuite({ slug: "missing-suite" })).rejects.toThrow(
+        "Suite not found",
+      );
+    });
+
+    it("should throw an authentication error on 401", async () => {
+      fetchMock.mockResponseOnce("Unauthorized", { status: 401 });
+
+      await expect(
+        api.getSuite({ slug: "nightly-api-regression" }),
+      ).rejects.toThrow(AUTH_FAILED_MESSAGE);
+    });
+
+    it("should map network errors to an unreachable message", async () => {
+      fetchMock.mockRejectOnce(new Error("Network error"));
+
+      await expect(
+        api.getSuite({ slug: "nightly-api-regression" }),
+      ).rejects.toThrow(UNREACHABLE_MESSAGE);
+    });
+  });
+
+  describe("updateSuite", () => {
+    const addResponseMock = { success: true, id: "action-4" };
+    const statusOnlyResponseMock = { success: true };
+
+    it("should PATCH the correct endpoint with X-API-KEY header", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(addResponseMock));
+
+      await api.updateSuite({
+        slug: "nightly-api-regression",
+        operation: "add",
+        afterActionId: null,
+        action: { testIds: [301] },
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://api.reflect.run/v1/suites/nightly-api-regression",
+        expect.objectContaining({
+          method: "PATCH",
+          headers: expect.objectContaining({ "X-API-KEY": "test-api-key" }),
+        }),
+      );
+    });
+
+    it("should send the operation body without the slug", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(addResponseMock));
+
+      await api.updateSuite({
+        slug: "nightly-api-regression",
+        operation: "add",
+        afterActionId: "action-1",
+        branch: "failure",
+        action: { testIds: [301], title: "Smoke" },
+      });
+
+      const [, init] = fetchMock.mock.calls[0];
+      const body = JSON.parse((init as RequestInit).body as string);
+      expect(body).toEqual({
+        operation: "add",
+        afterActionId: "action-1",
+        branch: "failure",
+        action: { testIds: [301], title: "Smoke" },
+      });
+    });
+
+    it("should return the new action's id on add", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(addResponseMock));
+
+      const result = await api.updateSuite({
+        slug: "nightly-api-regression",
+        operation: "add",
+        afterActionId: null,
+        action: { testIds: [301] },
+      });
+
+      expect(result).toEqual(addResponseMock);
+    });
+
+    it("should return a bare status for edit/delete/move", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(statusOnlyResponseMock));
+
+      const result = await api.updateSuite({
+        slug: "nightly-api-regression",
+        operation: "delete",
+        id: "action-2",
+      });
+
+      expect(result).toEqual(statusOnlyResponseMock);
+    });
+
+    it("should throw ToolError when slug is missing", async () => {
+      await expect(
+        api.updateSuite({
+          slug: "",
+          operation: "delete",
+          id: "action-2",
+        }),
+      ).rejects.toThrow("slug argument is required");
+    });
+
+    it("should throw a not-found message on 404", async () => {
+      fetchMock.mockResponseOnce("Not Found", { status: 404 });
+
+      await expect(
+        api.updateSuite({
+          slug: "nightly-api-regression",
+          operation: "delete",
+          id: "unknown-action",
+        }),
+      ).rejects.toThrow("Suite not found");
+    });
+
+    it("should throw ToolError with the server message on HTTP error", async () => {
+      fetchMock.mockResponseOnce("Bad Request", { status: 400 });
+
+      await expect(
+        api.updateSuite({
+          slug: "nightly-api-regression",
+          operation: "delete",
+          id: "action-2",
+        }),
+      ).rejects.toThrow("Failed to update Functional Testing suite");
+    });
+
+    it("should map network errors to an unreachable message", async () => {
+      fetchMock.mockRejectOnce(new Error("Network error"));
+
+      await expect(
+        api.updateSuite({
+          slug: "nightly-api-regression",
+          operation: "delete",
+          id: "action-2",
+        }),
+      ).rejects.toThrow(UNREACHABLE_MESSAGE);
+    });
+  });
+
   describe("CreateFunctionalTestingSuiteParamsSchema", () => {
     it("should accept blocks with distinct titles", () => {
       const result = CreateFunctionalTestingSuiteParamsSchema.safeParse({
@@ -1146,6 +1337,146 @@ describe("FunctionalTestingAPI", () => {
       ).rejects.toThrow(
         "Swagger Functional Testing service is currently unreachable. Retry after a moment.",
       );
+    });
+  });
+
+  describe("UpdateFunctionalTestingSuiteParamsSchema", () => {
+    it("should accept a valid add operation with null afterActionId (new root)", () => {
+      const result = UpdateFunctionalTestingSuiteParamsSchema.safeParse({
+        slug: "nightly-api-regression",
+        operation: "add",
+        afterActionId: null,
+        action: { testIds: [101] },
+      });
+
+      expect(result.success).toBe(true);
+    });
+
+    it("should accept a valid add operation targeting a decision branch", () => {
+      const result = UpdateFunctionalTestingSuiteParamsSchema.safeParse({
+        slug: "nightly-api-regression",
+        operation: "add",
+        afterActionId: "action-2",
+        branch: "failure",
+        action: { testIds: [101] },
+      });
+
+      expect(result.success).toBe(true);
+    });
+
+    it("should reject add without action", () => {
+      const result = UpdateFunctionalTestingSuiteParamsSchema.safeParse({
+        slug: "nightly-api-regression",
+        operation: "add",
+        afterActionId: null,
+      });
+
+      expect(result.success).toBe(false);
+    });
+
+    it("should reject add with an empty testIds array", () => {
+      const result = UpdateFunctionalTestingSuiteParamsSchema.safeParse({
+        slug: "nightly-api-regression",
+        operation: "add",
+        afterActionId: null,
+        action: { testIds: [] },
+      });
+
+      expect(result.success).toBe(false);
+    });
+
+    it("should accept a valid edit operation with a partial patch", () => {
+      const result = UpdateFunctionalTestingSuiteParamsSchema.safeParse({
+        slug: "nightly-api-regression",
+        operation: "edit",
+        id: "action-1",
+        action: { maxRetryAttempts: 2 },
+      });
+
+      expect(result.success).toBe(true);
+    });
+
+    it("should accept an edit operation with an empty action patch (no-op)", () => {
+      const result = UpdateFunctionalTestingSuiteParamsSchema.safeParse({
+        slug: "nightly-api-regression",
+        operation: "edit",
+        id: "action-1",
+        action: {},
+      });
+
+      expect(result.success).toBe(true);
+    });
+
+    it("should reject edit without id", () => {
+      const result = UpdateFunctionalTestingSuiteParamsSchema.safeParse({
+        slug: "nightly-api-regression",
+        operation: "edit",
+        action: { maxRetryAttempts: 2 },
+      });
+
+      expect(result.success).toBe(false);
+    });
+
+    it("should accept a valid delete operation", () => {
+      const result = UpdateFunctionalTestingSuiteParamsSchema.safeParse({
+        slug: "nightly-api-regression",
+        operation: "delete",
+        id: "action-1",
+      });
+
+      expect(result.success).toBe(true);
+    });
+
+    it("should reject delete without id", () => {
+      const result = UpdateFunctionalTestingSuiteParamsSchema.safeParse({
+        slug: "nightly-api-regression",
+        operation: "delete",
+      });
+
+      expect(result.success).toBe(false);
+    });
+
+    it("should accept a valid move operation", () => {
+      const result = UpdateFunctionalTestingSuiteParamsSchema.safeParse({
+        slug: "nightly-api-regression",
+        operation: "move",
+        id: "action-1",
+        afterActionId: "action-3",
+        branch: "next",
+      });
+
+      expect(result.success).toBe(true);
+    });
+
+    it("should reject move without afterActionId", () => {
+      const result = UpdateFunctionalTestingSuiteParamsSchema.safeParse({
+        slug: "nightly-api-regression",
+        operation: "move",
+        id: "action-1",
+      });
+
+      expect(result.success).toBe(false);
+    });
+
+    it("should reject an unknown operation", () => {
+      const result = UpdateFunctionalTestingSuiteParamsSchema.safeParse({
+        slug: "nightly-api-regression",
+        operation: "reorder",
+        id: "action-1",
+      });
+
+      expect(result.success).toBe(false);
+    });
+
+    it("should reject maxRetryAttempts above 3 on an edit patch", () => {
+      const result = UpdateFunctionalTestingSuiteParamsSchema.safeParse({
+        slug: "nightly-api-regression",
+        operation: "edit",
+        id: "action-1",
+        action: { maxRetryAttempts: 4 },
+      });
+
+      expect(result.success).toBe(false);
     });
   });
 

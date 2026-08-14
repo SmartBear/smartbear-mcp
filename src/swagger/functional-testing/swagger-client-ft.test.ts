@@ -497,6 +497,114 @@ describe("SwaggerClient — Functional Testing integration", () => {
     });
   });
 
+  describe("getFunctionalTestingSuite", () => {
+    const workflowTreeMock = {
+      slug: "nightly-api-regression",
+      root: { id: "action-1", type: "runApiTests", testIds: [101] },
+    };
+
+    it("should register the Get Suite tool when FT token is configured", async () => {
+      await client.configure({} as any, {
+        functional_testing_api_token: "ft-token",
+      });
+
+      const mockRegister = vi.fn();
+      await client.registerTools(mockRegister, vi.fn());
+
+      const registeredTitles = mockRegister.mock.calls.map(
+        (call) => call[0].title,
+      );
+      expect(registeredTitles).toContain("Get Suite");
+    });
+
+    it("should GET api.reflect.run and return the workflow tree", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(workflowTreeMock));
+
+      await client.configure({} as any, {
+        api_key: "swagger-key",
+        functional_testing_api_token: "ft-token",
+      });
+
+      const result = await requestContextStorage.run({ headers: {} }, () =>
+        client.getFunctionalTestingSuite({ slug: "nightly-api-regression" }),
+      );
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://api.reflect.run/v1/suites/nightly-api-regression",
+        expect.objectContaining({
+          method: "GET",
+          headers: expect.objectContaining({ "X-API-KEY": "ft-token" }),
+        }),
+      );
+      expect(result).toEqual(workflowTreeMock);
+    });
+
+    it("should throw when FT API is not configured", async () => {
+      await client.configure({} as any, { api_key: "swagger-key" });
+
+      await expect(
+        client.getFunctionalTestingSuite({ slug: "nightly-api-regression" }),
+      ).rejects.toThrow("Functional Testing API not configured");
+    });
+  });
+
+  describe("updateFunctionalTestingSuite", () => {
+    const addResponseMock = { success: true, id: "action-4" };
+
+    it("should register the Update Suite tool when FT token is configured", async () => {
+      await client.configure({} as any, {
+        functional_testing_api_token: "ft-token",
+      });
+
+      const mockRegister = vi.fn();
+      await client.registerTools(mockRegister, vi.fn());
+
+      const registeredTitles = mockRegister.mock.calls.map(
+        (call) => call[0].title,
+      );
+      expect(registeredTitles).toContain("Update Suite");
+    });
+
+    it("should PATCH api.reflect.run and return the status/new id", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(addResponseMock));
+
+      await client.configure({} as any, {
+        api_key: "swagger-key",
+        functional_testing_api_token: "ft-token",
+      });
+
+      const result = await requestContextStorage.run({ headers: {} }, () =>
+        client.updateFunctionalTestingSuite({
+          slug: "nightly-api-regression",
+          operation: "add",
+          afterActionId: null,
+          action: { testIds: [301] },
+        }),
+      );
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://api.reflect.run/v1/suites/nightly-api-regression",
+        expect.objectContaining({
+          method: "PATCH",
+          headers: expect.objectContaining({ "X-API-KEY": "ft-token" }),
+        }),
+      );
+      expect(result).toEqual(addResponseMock);
+    });
+
+    it("should throw when FT API is not configured", async () => {
+      await client.configure({} as any, { api_key: "swagger-key" });
+
+      await expect(
+        client.updateFunctionalTestingSuite({
+          slug: "nightly-api-regression",
+          operation: "delete",
+          id: "action-1",
+        }),
+      ).rejects.toThrow("Functional Testing API not configured");
+    });
+  });
+
   describe("getFunctionalTestingTestHistory", () => {
     const historyMock = {
       totalRuns: 5,

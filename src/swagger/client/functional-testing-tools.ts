@@ -7,9 +7,13 @@ import {
   GetFunctionalTestHistoryParamsSchema,
   GetFunctionalTestingExecutionTestSchema,
   GetFunctionalTestingSuiteExecutionSchema,
+  GetFunctionalTestingSuiteParamsSchema,
+  GetFunctionalTestingSuiteResponseSchema,
   ListFunctionalTestingSuiteExecutionsSchema,
   RunFunctionalTestingSuiteParamsSchema,
   RunFunctionalTestingTestParamsSchema,
+  UpdateFunctionalTestingSuiteParamsSchema,
+  UpdateFunctionalTestingSuiteResponseSchema,
 } from "./functional-testing-types";
 import type { SwaggerToolParams } from "./tools";
 
@@ -143,6 +147,50 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
     handler: "getFunctionalTestingSuiteExecution",
     idempotent: true,
     readOnly: true,
+  },
+  {
+    title: "Get Suite",
+    toolset: "Functional Testing",
+    summary:
+      "Returns the full workflow tree for an existing test suite in your Swagger Functional Testing workspace, " +
+      "with every action id'd and typed. " +
+      "This is the only way to discover an existing suite's action ids — there is no full-tree echo from " +
+      "`swagger_update_suite`. Call this tool before your first `swagger_update_suite` call against a suite you " +
+      "did not just create yourself (whose ids you already have from `swagger_create_suite`), and again any time " +
+      "you need to see an id you don't already have — most commonly a decision node's id to target its `branch` " +
+      "with a later `swagger_update_suite` call. You do not need to call this again just to get the id of an " +
+      "action you just added — `swagger_update_suite`'s `add` response already returns that directly.",
+    inputSchema: GetFunctionalTestingSuiteParamsSchema,
+    outputSchema: GetFunctionalTestingSuiteResponseSchema,
+    handler: "getFunctionalTestingSuite",
+    idempotent: true,
+    readOnly: true,
+  },
+  {
+    title: "Update Suite",
+    toolset: "Functional Testing",
+    summary:
+      "Applies a single add/edit/delete/move operation to an existing test suite's workflow in your Swagger " +
+      "Functional Testing workspace. Only `runApiTests` actions can be created or edited through this tool; " +
+      "other action types (e.g. the decision/email tail every suite ends with) can still be targeted, deleted, " +
+      "or moved by id, just not constructed or edited. " +
+      "IMPORTANT — exactly one logical edit per call: never try to batch multiple adds/edits/deletes/moves into " +
+      "a single call, even when making several related changes to the same suite; issue one `swagger_update_suite` " +
+      "call per operation instead. " +
+      "IMPORTANT — always source `id` and `afterActionId` from the most recent `swagger_get_suite` call for this " +
+      "suite, or from a previous `swagger_update_suite` `add` response's returned `id`; there is no full-tree echo " +
+      "from this tool to fall back on, so if you don't already have the id you need, call `swagger_get_suite` " +
+      "first. " +
+      'IMPORTANT — `branch` (`"next"` or `"failure"`) is required whenever `afterActionId` (for `add`/`move`) ' +
+      "names a decision node, and must be omitted otherwise; omit `afterActionId` (or pass null) to insert as the " +
+      "new root, before every existing action. " +
+      "Each call is independently atomic: a rejected operation never partially applies, but earlier successful " +
+      "calls in a multi-step sequence stay committed even if a later call fails.",
+    inputSchema: UpdateFunctionalTestingSuiteParamsSchema,
+    outputSchema: UpdateFunctionalTestingSuiteResponseSchema,
+    handler: "updateFunctionalTestingSuite",
+    idempotent: false,
+    readOnly: false,
   },
   {
     title: "Get Test Execution History",

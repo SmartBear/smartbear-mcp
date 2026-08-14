@@ -9,12 +9,16 @@ import type {
   GetFunctionalTestHistoryParams,
   GetFunctionalTestingExecutionTestParams,
   GetFunctionalTestingSuiteExecutionParams,
+  GetFunctionalTestingSuiteParams,
+  GetFunctionalTestingSuiteResponse,
   ListFunctionalTestingSuiteExecutionsParams,
   ListSuiteExecutionsResponse,
   ListSuitesResponse,
   RunFunctionalTestingSuiteParams,
   RunFunctionalTestingTestParams,
   TestRunHistoryResponse,
+  UpdateFunctionalTestingSuiteParams,
+  UpdateFunctionalTestingSuiteResponse,
 } from "./functional-testing-types";
 
 const API_HOSTNAME = "api.reflect.run";
@@ -326,6 +330,59 @@ export class FunctionalTestingAPI {
       }
     }
     return data;
+  }
+
+  async getSuite(
+    args: GetFunctionalTestingSuiteParams,
+  ): Promise<GetFunctionalTestingSuiteResponse> {
+    if (!args.slug) throw new ToolError("slug argument is required");
+
+    const response = await this.ftFetch(
+      `suites/${encodeURIComponent(args.slug)}`,
+      {
+        method: "GET",
+        headers: this.getFtHeaders(),
+      },
+      handleStatus(
+        new Map([
+          [
+            404,
+            "Suite not found. Verify the slug is correct and belongs to your workspace.",
+          ],
+        ]),
+        errorMessageFor("get Functional Testing suite"),
+      ),
+    );
+
+    return response.json();
+  }
+
+  async updateSuite(
+    args: UpdateFunctionalTestingSuiteParams,
+  ): Promise<UpdateFunctionalTestingSuiteResponse> {
+    if (!args.slug) throw new ToolError("slug argument is required");
+
+    const { slug, ...operation } = args;
+    const response = await this.ftFetch(
+      `suites/${encodeURIComponent(slug)}`,
+      {
+        method: "PATCH",
+        headers: this.getFtHeaders(),
+        body: JSON.stringify(operation),
+      },
+      handleStatus(
+        new Map([
+          [
+            404,
+            "Suite not found, or the `id`/`afterActionId` referenced does not exist in it. Call " +
+              "swagger_get_suite to refresh the suite's current ids.",
+          ],
+        ]),
+        errorMessageFor("update Functional Testing suite"),
+      ),
+    );
+
+    return response.json();
   }
 
   async getTestHistory(

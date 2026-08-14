@@ -23,10 +23,14 @@ import type {
   GetFunctionalTestHistoryParams,
   GetFunctionalTestingExecutionTestParams,
   GetFunctionalTestingSuiteExecutionParams,
+  GetFunctionalTestingSuiteParams,
+  GetFunctionalTestingSuiteResponse,
   ListFunctionalTestingSuiteExecutionsParams,
   RunFunctionalTestingSuiteParams,
   RunFunctionalTestingTestParams,
   TestRunHistoryResponse,
+  UpdateFunctionalTestingSuiteParams,
+  UpdateFunctionalTestingSuiteResponse,
 } from "./client/functional-testing-types";
 import {
   type ApiDefinitionParams,
@@ -438,6 +442,18 @@ export class SwaggerClient implements Client {
     args: CreateFunctionalTestingSuiteParams,
   ): Promise<CreateFunctionalTestingSuiteResponse> {
     return this.withFunctionalTesting((ftApi) => ftApi.createSuite(args));
+  }
+
+  async getFunctionalTestingSuite(
+    args: GetFunctionalTestingSuiteParams,
+  ): Promise<GetFunctionalTestingSuiteResponse> {
+    return this.withFunctionalTesting((ftApi) => ftApi.getSuite(args));
+  }
+
+  async updateFunctionalTestingSuite(
+    args: UpdateFunctionalTestingSuiteParams,
+  ): Promise<UpdateFunctionalTestingSuiteResponse> {
+    return this.withFunctionalTesting((ftApi) => ftApi.updateSuite(args));
   }
 
   async getFunctionalTestingTestHistory(

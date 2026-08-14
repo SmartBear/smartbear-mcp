@@ -7,8 +7,11 @@ import type {
   ToolAnnotations,
 } from "@modelcontextprotocol/sdk/types.js";
 import {
+  z,
+  ZodDiscriminatedUnion,
   ZodIntersection,
   ZodObject,
+  ZodUnion,
   type ZodRawShape,
   type ZodType,
 } from "zod";
@@ -332,6 +335,40 @@ export class SmartBearMcpServer extends McpServer {
           (schema as ZodIntersection<ZodType, ZodType>).def.right,
         );
         return { ...leftShape, ...rightShape };
+      }
+      // The MCP tool `inputSchema`/`outputSchema` config must reduce to a single flat
+      // object shape — a top-level `oneOf` isn't representable there. So for a union of
+      // object schemas (e.g. `z.discriminatedUnion`), flatten its branches into one shape:
+      // each key becomes the union of that key's type across branches, and is made
+      // optional if it isn't present in every branch. This is looser than the original
+      // per-branch validation, but far better than the schema silently becoming `{}`.
+      if (schema instanceof ZodUnion || schema instanceof ZodDiscriminatedUnion) {
+        const options = (schema as ZodUnion<ZodType[]>).options;
+        const shapes = options.map(
+          (option) => this.schemaToRawShape(option) ?? {},
+        );
+        const keys = new Set<string>();
+        for (const shape of shapes) {
+          for (const key of Object.keys(shape)) {
+            keys.add(key);
+          }
+        }
+        const merged: Record<string, ZodType> = {};
+        for (const key of keys) {
+          const variants = shapes
+            .map((shape) => shape[key])
+            .filter((variant): variant is ZodType => variant !== undefined);
+          const presentInEveryBranch = variants.length === shapes.length;
+          let fieldSchema =
+            variants.length === 1
+              ? variants[0]
+              : z.union(variants as [ZodType, ZodType, ...ZodType[]]);
+          if (!presentInEveryBranch && !fieldSchema.isOptional()) {
+            fieldSchema = fieldSchema.optional();
+          }
+          merged[key] = fieldSchema;
+        }
+        return merged;
       }
     }
     return undefined;
