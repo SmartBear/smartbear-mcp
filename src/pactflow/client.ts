@@ -877,10 +877,10 @@ export class PactflowClient implements Client {
   }
 
   /**
-   * Publishes a provider OpenAPI contract and its self-verification results to PactFlow
-   * for use in Bi-Directional Contract Testing.
+   * Publishes a provider OpenAPI or AsyncAPI contract and its self-verification results
+   * to PactFlow for use in Bi-Directional Contract Testing.
    *
-   * @param params - `providerName`, version number, base64-encoded OpenAPI spec,
+   * @param params - `providerName`, version number, base64-encoded OpenAPI/AsyncAPI spec,
    *   content type, and self-verification results.
    * @returns Publication result.
    * @throws ToolError if the request fails.
