@@ -161,11 +161,13 @@ function enrichUdfsForRow(
             valueResolved = true;
           }
         } else if (Array.isArray(value)) {
+          let allResolved = true;
           value = value.map((v) => {
             const match = options.find((o) => o.uniqueLabel === v);
+            if (!match) allResolved = false;
             return match ? match.name : v;
           });
-          valueResolved = true;
+          valueResolved = allResolved;
         } else {
           valueResolved = true;
         }

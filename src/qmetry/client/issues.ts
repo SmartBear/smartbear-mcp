@@ -304,23 +304,43 @@ export async function fetchIssueExecutions(
         // Resolve uniqueLabel → display name for lookup fields
         const listName = def.qmListName as string | undefined;
         const options: any[] = listName ? (lookupOptions[listName] ?? []) : [];
+        let valueResolved = false;
         if (options.length > 0) {
           if (typeof value === "string") {
             const match = options.find((o) => o.uniqueLabel === value);
-            if (match) value = match.name;
+            if (match) {
+              value = match.name;
+              valueResolved = true;
+            }
           } else if (Array.isArray(value)) {
+            let allResolved = true;
             value = value.map((v) => {
               const match = options.find((o) => o.uniqueLabel === v);
+              if (!match) allResolved = false;
               return match ? match.name : v;
             });
+            valueResolved = allResolved;
+          } else {
+            valueResolved = true;
           }
         }
+        const isLookupField = [
+          "LOOKUPLIST",
+          "MULTILOOKUPLIST",
+          "CASCADINGLIST",
+        ].includes(def.fieldTypeName ?? "");
         return {
           name: def.name as string,
           label: def.fieldLabel as string,
           fieldID: def.projectUserFieldID as number,
           fieldType: def.fieldTypeName as string,
           value,
+          ...(isLookupField && !valueResolved && value !== null
+            ? {
+                _rawValue: true,
+                _note: "Lookup options unavailable — value is raw internal ID.",
+              }
+            : {}),
         };
       });
     } else {
@@ -419,18 +439,23 @@ export async function fetchIssueDetails(
       "[fetchIssueDetails] Missing or invalid required parameter: 'defectId'.",
     );
   }
-
+  const url = QMETRY_PATHS.ISSUES.GET_ISSUE_DETAIL + payload.defectId;
+  const extraHeaders: Record<string, string> = {
+    action: "detail",
+    screenname: "ISSUE",
+  };
+  if (typeof payload.scopeId === "number") {
+    extraHeaders["scope"] = String(payload.scopeId);
+  }
+  if (typeof payload.orgCode === "string") {
+    extraHeaders["orgcode"] = payload.orgCode;
+  }
   return qmetryRequest<unknown>({
     method: "GET",
-    path: QMETRY_PATHS.ISSUES.GET_ISSUE_DETAIL.replace(
-      ":issueID",
-      String(payload.defectId),
-    ),
+    path: url,
     token,
     project: resolvedProject,
     baseUrl: resolvedBaseUrl,
-    scopeId: payload.scopeId,
-    orgCode: payload.orgCode,
-    extraHeaders: { action: "detail", screenname: "ISSUE" },
+    extraHeaders,
   });
 }

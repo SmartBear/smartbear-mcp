@@ -212,6 +212,7 @@ export class QmetryClient implements Client {
             QMetryToolsHandlers.FETCH_TEST_RUN_UDF_VALUES,
             QMetryToolsHandlers.FETCH_CASCADE_CHILD_VALUES,
             QMetryToolsHandlers.FETCH_ISSUE_DETAILS,
+            QMetryToolsHandlers.FETCH_UDF_LAYOUT,
           ]);
           const isScopeAware = SCOPE_AWARE_HANDLERS.has(tool.handler);
           const enrichedArgs = {

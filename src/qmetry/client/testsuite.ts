@@ -590,7 +590,7 @@ export async function fetchTestSuiteDetails(
     token,
     project: resolvedProject,
     baseUrl: resolvedBaseUrl,
-    body: { scope: payload.scope ?? "cycle", id: payload.id },
+    body: { scope: payload.scope ?? "project", id: payload.id },
     extraHeaders: { action: "detail-tab", screenname: "TESTSUITE" },
   });
 }

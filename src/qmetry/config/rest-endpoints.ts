@@ -44,7 +44,7 @@ export const QMETRY_PATHS = {
     GET_ISSUES_LINKED_TO_TC: "/rest/issues/list/ForTC",
     LINK_ISSUES_TO_TESTCASE_RUN: "/rest/execution/link/issue",
     GET_ISSUE_EXECUTIONS: "/rest/execution/getExecutionsForIssue",
-    GET_ISSUE_DETAIL: "/rest/issues/:issueID",
+    GET_ISSUE_DETAIL: "/rest/issues/",
   },
   AUTOMATION: {
     IMPORT_RESULTS: "/rest/import/createandscheduletestresults/1",

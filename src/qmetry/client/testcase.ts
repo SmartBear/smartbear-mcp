@@ -290,7 +290,7 @@ export async function fetchTestCaseStepsWithUdf(
     start: payload.start ?? 0,
     page: payload.page ?? 1,
     version: payload.version ?? 1,
-    gridName: "TCSTEPLIST",
+    gridName: payload.gridName ?? "TCSTEPLIST",
     ...(payload.viewId !== undefined ? { viewId: payload.viewId } : {}),
   };
 
