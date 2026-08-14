@@ -250,9 +250,7 @@ export const PublishProviderContractSchema = z.object({
     .object({
       content: z
         .string()
-        .describe(
-          "Base64-encoded OpenAPI or AsyncAPI specification content",
-        ),
+        .describe("Base64-encoded OpenAPI or AsyncAPI specification content"),
       contentType: z
         .enum(["application/json", "application/yaml", "application/yml"])
         .describe("Content type of the spec"),
