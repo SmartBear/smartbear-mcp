@@ -3533,14 +3533,14 @@ None",
       "readOnlyHint": false,
       "title": "Contract Testing: Publish Provider Contract",
     },
-    "description": "Publish a provider OpenAPI contract and self-verification results to PactFlow (Bi-Directional Contract Testing).
+    "description": "Publish a provider OpenAPI or AsyncAPI contract and self-verification results to PactFlow (Bi-Directional Contract Testing).
 
 **Toolset:** Contracts
 
 **Parameters:**
 - providerName (string) *required*: Name of the provider application
 - pacticipantVersionNumber (string) *required*: Version number of the provider
-- contract (object) *required*: Provider contract (OpenAPI spec) and verification details
+- contract (object) *required*: Provider contract (OpenAPI or AsyncAPI spec) and verification details
 - tags (array): Version tags
 - branch (string): Branch name of the provider
 - buildUrl (string): URL of the CI build",
