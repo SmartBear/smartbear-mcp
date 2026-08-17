@@ -34,7 +34,10 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
       "Use this when you need to programmatically create a test with a defined set of API request steps. " +
       "Each step requires a URL and may specify an HTTP method (defaults to GET), request body, headers, and redirect handling. " +
       "Returns the ID and the URL to definition of the newly created test; the ID can be used with `swagger_run_test` to run it, " +
-      "or grouped with other test IDs into a Suite via `swagger_create_suite`.",
+      "or grouped with other test IDs into a Suite via `swagger_create_suite`. " +
+      "When the test is being built against a Swagger Studio API, pass the same `apiRef` (owner/name/version) " +
+      "that was used with `swagger_get_api_definition` so the created test can be linked to the API definition. " +
+      "The tool verifies the coordinates resolve to a real spec and drops the reference otherwise.",
     inputSchema: CreateFunctionalTestingTestParamsSchema,
     outputSchema: CreateFunctionalTestingTestResponseSchema,
     handler: "createFunctionalTestingTest",

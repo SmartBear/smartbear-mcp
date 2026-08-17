@@ -278,6 +278,24 @@ export const CreateFunctionalTestingTestStepSchema = z.object({
     .optional(),
 });
 
+export const CreateFunctionalTestingTestApiRefSchema = z.object({
+  owner: z
+    .string()
+    .trim()
+    .min(1)
+    .describe("Swagger Studio API owner (case-sensitive)"),
+  name: z
+    .string()
+    .trim()
+    .min(1)
+    .describe("Swagger Studio API name (case-sensitive)"),
+  version: z.string().trim().min(1).describe("Swagger Studio API version"),
+});
+
+export type CreateFunctionalTestingTestApiRef = z.infer<
+  typeof CreateFunctionalTestingTestApiRefSchema
+>;
+
 export const CreateFunctionalTestingTestParamsSchema = z.object({
   name: z.string().describe("Name for the new test").trim().min(1),
   description: z
@@ -289,6 +307,12 @@ export const CreateFunctionalTestingTestParamsSchema = z.object({
     .array(CreateFunctionalTestingTestStepSchema)
     .describe("Test steps to include in the test")
     .optional(),
+  apiRef: CreateFunctionalTestingTestApiRefSchema.describe(
+    "Optional reference to a Swagger Studio API this test is built against. " +
+      "Provide the same owner/name/version that were used with `swagger_get_api_definition`. " +
+      "The tool checks the coordinates resolve to a real spec and drops the reference otherwise. " +
+      "Linkage itself is created server-side; the API must already be registered in the caller's Studio account.",
+  ).optional(),
 });
 
 export type CreateFunctionalTestingTestParams = z.infer<

@@ -369,7 +369,43 @@ export class SwaggerClient implements Client {
   async createFunctionalTestingTest(
     args: CreateFunctionalTestingTestParams,
   ): Promise<CreateFunctionalTestingTestResponse> {
-    return this.withFunctionalTesting((ftApi) => ftApi.createTest(args));
+    const forwarded = await this.validateApiRef(args);
+    return this.withFunctionalTesting((ftApi) => ftApi.createTest(forwarded));
+  }
+
+  // Lightweight validator of `apiRef` for create_test linkage generation.
+  // If the LLM passes an `apiRef`, confirm if data resolve to a real spec in Swagger Registry.
+  // If the fetch fails (404/network/etc.) or the Swagger side isn't configured, `apiRef` is stripped.
+  // Otherwise, `apiRef` is kept and passed to ft API.
+  private async validateApiRef(
+    args: CreateFunctionalTestingTestParams,
+  ): Promise<CreateFunctionalTestingTestParams> {
+    if (!args.apiRef) return args;
+
+    const { apiRef, ...rest } = args;
+
+    if (!this.api) {
+      console.warn(
+        "create_test: apiRef provided but Swagger API is not configured; dropping apiRef.",
+      );
+      return rest;
+    }
+
+    try {
+      await this.api.getApiDefinition({
+        owner: apiRef.owner,
+        api: apiRef.name,
+        version: apiRef.version,
+      });
+    } catch (error) {
+      console.warn(
+        `create_test: failed to fetch spec for owner=${apiRef.owner}, name=${apiRef.name}, version=${apiRef.version}; dropping apiRef.`,
+        error,
+      );
+      return rest;
+    }
+
+    return args;
   }
 
   async listFunctionalTestingTests(): Promise<unknown> {

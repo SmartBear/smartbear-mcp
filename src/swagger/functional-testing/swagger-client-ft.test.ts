@@ -190,6 +190,137 @@ describe("SwaggerClient — Functional Testing integration", () => {
     });
   });
 
+  describe("createFunctionalTestingTest — apiRef verification", () => {
+    const createResponseMock = {
+      id: 12345,
+      url: "https://app.reflect.run/tests/12345/definition",
+    };
+
+    const petstoreSpec = {
+      openapi: "3.0.0",
+      info: { title: "Petstore", version: "1.0.0" },
+      paths: { "/pets": { get: {} } },
+    };
+
+    it("forwards apiRef in the POST body when the spec fetch succeeds", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(petstoreSpec), {
+        headers: { "content-type": "application/json" },
+      });
+      fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
+
+      await client.configure({} as any, {
+        api_key: "swagger-key",
+        functional_testing_api_token: "ft-token",
+      });
+
+      await requestContextStorage.run({ headers: {} }, () =>
+        client.createFunctionalTestingTest({
+          name: "Get pet",
+          steps: [
+            { url: "https://petstore.example.com/pets", httpMethod: "GET" },
+          ],
+          apiRef: { owner: "acme", name: "petstore", version: "1.0.0" },
+        }),
+      );
+
+      expect(fetchMock.mock.calls[0][0]).toBe(
+        "https://api.swaggerhub.com/apis/acme/petstore/1.0.0",
+      );
+
+      const createRequest = fetchMock.mock.calls[1];
+      expect(createRequest[0]).toBe("https://api.reflect.run/v1/tests");
+      const body = JSON.parse(
+        (createRequest[1] as RequestInit).body as string,
+      );
+      expect(body.apiRef).toEqual({
+        owner: "acme",
+        name: "petstore",
+        version: "1.0.0",
+      });
+      expect(body.type).toBe("api");
+    });
+
+    it("drops apiRef when the spec download fails", async () => {
+      fetchMock.mockResponseOnce("Not Found", { status: 404 });
+      fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
+
+      await client.configure({} as any, {
+        api_key: "swagger-key",
+        functional_testing_api_token: "ft-token",
+      });
+
+      await requestContextStorage.run({ headers: {} }, () =>
+        client.createFunctionalTestingTest({
+          name: "Broken ref",
+          steps: [
+            {
+              url: "https://petstore.example.com/v1/pets",
+              httpMethod: "GET",
+            },
+          ],
+          apiRef: { owner: "acme", name: "missing", version: "1.0.0" },
+        }),
+      );
+
+      const createRequest = fetchMock.mock.calls[1];
+      const body = JSON.parse(
+        (createRequest[1] as RequestInit).body as string,
+      );
+      expect(body.apiRef).toBeUndefined();
+    });
+
+    it("skips spec fetch and drops apiRef when Swagger API is not configured", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
+
+      await client.configure({} as any, {
+        functional_testing_api_token: "ft-token",
+      });
+
+      await requestContextStorage.run({ headers: {} }, () =>
+        client.createFunctionalTestingTest({
+          name: "No swagger side",
+          steps: [
+            {
+              url: "https://petstore.example.com/v1/pets",
+              httpMethod: "GET",
+            },
+          ],
+          apiRef: { owner: "acme", name: "petstore", version: "1.0.0" },
+        }),
+      );
+
+      expect(fetchMock.mock.calls).toHaveLength(1);
+      expect(fetchMock.mock.calls[0][0]).toBe(
+        "https://api.reflect.run/v1/tests",
+      );
+      const body = JSON.parse(
+        (fetchMock.mock.calls[0][1] as RequestInit).body as string,
+      );
+      expect(body.apiRef).toBeUndefined();
+    });
+
+    it("passes the payload through unchanged when apiRef is not provided", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
+
+      await client.configure({} as any, {
+        api_key: "swagger-key",
+        functional_testing_api_token: "ft-token",
+      });
+
+      await requestContextStorage.run({ headers: {} }, () =>
+        client.createFunctionalTestingTest({
+          name: "No linkage",
+          steps: [{ url: "https://example.com/anything", httpMethod: "GET" }],
+        }),
+      );
+
+      expect(fetchMock.mock.calls).toHaveLength(1);
+      expect(fetchMock.mock.calls[0][0]).toBe(
+        "https://api.reflect.run/v1/tests",
+      );
+    });
+  });
+
   describe("listFunctionalTestingTests", () => {
     it("should call api.reflect.run and return results", async () => {
       const testsMock = [{ id: "test-1", name: "Login Test" }];
