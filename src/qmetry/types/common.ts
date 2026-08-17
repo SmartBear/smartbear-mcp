@@ -539,6 +539,10 @@ const StepUdfValueSchema = z.union([
   z.array(z.number()),
   z.object({ parent: z.number(), child: z.number().optional() }),
   z.object({ ADD: z.array(z.unknown()), REMOVE: z.array(z.unknown()) }),
+  // Step cascade _value array: [{ FieldID, FieldValue: [{id, value, child: {id, value}}], type }]
+  z.array(z.record(z.string(), z.unknown())),
+  // Step cascade _selectedList: { id: udfmID, name: fieldName, type: 'CASCADINGLIST' }
+  z.record(z.string(), z.unknown()),
 ]);
 
 export const CreateTestCaseStepSchema = z.object({
@@ -551,8 +555,13 @@ export const CreateTestCaseStepSchema = z.object({
     .optional()
     .describe(
       "Step-level UDF values. Keys = UDF field names. Values depend on field type: " +
-        "STRING/LARGETEXT: string, NUMBER: number, DATETIMEPICKER: date string (DD-MM-YYYY or MM-DD-YYYY), " +
-        "LOOKUPLIST: numeric ID, MULTILOOKUPLIST: array of IDs, CASCADINGLIST: { parent, child } object.",
+        "STRING/LARGETEXT: string, NUMBER: number, DATETIMEPICKER: date string (DD-MM-YYYY), " +
+        "LOOKUPLIST: numeric ID, MULTILOOKUPLIST: array of IDs. " +
+        "CASCADINGLIST requires THREE sibling keys in this UDF object — e.g. for field 'proj': " +
+        "proj: {parent: parentId, child: childId}, " +
+        "proj_value: [{FieldID:'proj', FieldValue:[{id:parentId, value:'parentLabel', child:{id:childId, value:'childLabel'}}], type:'CASCADINGLIST'}], " +
+        "proj_selectedList: {id: udfmID, name:'proj', type:'CASCADINGLIST'}. " +
+        "Get parentLabel/childLabel from Fetch Cascade Child Values. Get udfmID from Fetch UDF Layout stepFields[].projectUserFieldID.",
     ),
   tcStepID: z.number().optional(), // Required for updating existing steps, omit for new steps
 });
@@ -636,7 +645,12 @@ export const CreateTestCaseArgsSchema = z.object({
   testcaseOwner: z.number().optional(),
   testCaseState: z.number().optional(),
   testCaseType: z.number().optional(),
-  estimatedTime: z.number().optional(),
+  estimatedTime: z
+    .number()
+    .optional()
+    .describe(
+      "Estimated execution time in SECONDS (e.g. 3600 = 1 hour, 36000 = 10 hours). NOT minutes.",
+    ),
   testingType: z.number().optional(),
   description: z.string().optional(),
   associateRelCyc: z.boolean().optional(),
@@ -645,10 +659,14 @@ export const CreateTestCaseArgsSchema = z.object({
       z.object({
         release: z.number(),
         cycle: z.array(z.number()),
-        version: z.number().optional(),
+        version: z.number().optional().default(1),
       }),
     )
-    .optional(),
+    .optional()
+    .describe(
+      "Release/cycle mapping. Set associateRelCyc=true when providing this. " +
+        "version field defaults to 1 if not specified.",
+    ),
   udfFields: UdfFieldsSchema,
 });
 

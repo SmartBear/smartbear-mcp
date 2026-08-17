@@ -92,7 +92,19 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
     hints: [
       "If tcFolderID is not provided, it will be auto-resolved to the root test case folder using project info (rootFolders.TC.id).",
       "To get valid values for priority, owner, component, etc., call the project info tool and use the returned customListObjs IDs.",
-      "If the user provides a priority name (e.g. 'Blocker'), fetch project info, find the matching priority in customListObjs.priority[index].name, and use its ID in the payload. If the name is not found, skip the priority field (it is not required) and show a user-friendly message: 'Test case created without priority, as given priority is not available in the current project.'",
+      "STALE / NOT-FOUND ID RECOVERY (applies to ALL system fields — priority, component/label, owner, status, testCaseType, testingType, release, cycle): " +
+        "If the user references a value by name and it is NOT found in your current cached project info data, DO NOT give up or skip the field immediately. " +
+        "Instead: call 'Fetch QMetry Project Info' fresh (no arguments needed) to get the latest snapshot, then re-scan the relevant customListObjs list. " +
+        "This is mandatory when: (a) the user just added a new label/priority/status/user in QMetry UI, or (b) the cached info is from an earlier turn. " +
+        "Only skip + show a friendly message if the value is still missing AFTER the fresh fetch.",
+      "FOLDER ID RESOLUTION (tcFolderID): " +
+        "Project info only exposes the ROOT folder ID (rootFolders.TC.id). Sub-folder IDs are NOT returned by project info. " +
+        "If the user specifies a sub-folder (e.g. 'Folder 1'), use this resolution order: " +
+        "1. Check if the user already provided the numeric folder ID — use it directly. " +
+        "2. Try fetching test cases with folderPath='<folder name>' and scope='folder' — if a TC exists there, its folder context confirms the path, but the ID is still needed from the UI. " +
+        "3. If still unresolved, ask the user: 'Please provide the numeric folder ID for \"<folder name>\". You can find it in the QMetry URL when browsing that folder (look for folderId=XXXXX).' " +
+        "NEVER silently fall back to root folder when the user explicitly named a sub-folder — always ask first.",
+      "If the user provides a priority name (e.g. 'Blocker'), fetch project info, find the matching priority in customListObjs.priority[index].name, and use its ID in the payload. If the name is not found after a fresh fetch, skip the priority field (it is not required) and show a user-friendly message: 'Test case created without priority, as given priority is not available in the current project.'",
       "If the user provides a component name, fetch project info, find the matching component in customListObjs.component[index].name, and use its ID in the payload. If the name is not found, skip the component field (it is not required) and show a user-friendly message: 'Test case created without component, as given component is not available in the current project.'",
       "If the user provides an owner name, fetch project info, find the matching owner in customListObjs.owner[index].name, and use its ID in the payload as testcaseOwner. If the name is not found, skip the testcaseOwner field (it is not required) and show a user-friendly message: 'Test case created without owner, as given owner is not available in the current project.'",
       "If the user provides a test case state name, fetch project info, find the matching state in customListObjs.testCaseState[index].name, and use its ID in the payload as testCaseState. If the name is not found, skip the testCaseState field (it is not required) and show a user-friendly message: 'Test case created without test case state, as given state is not available in the current project.'",
@@ -116,21 +128,39 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       "LLM should ensure that provided release/cycle names or IDs exist in the current project before using them in the payload. If not found, skip and show a user-friendly message: 'Test case created without release/cycle association, as given release/cycle is not available in the current project.'",
       "All IDs (priority, owner, etc.) must be valid for your QMetry instance.",
       "If a custom field is mandatory, include it in the UDF object.",
-      "Estimated time is in minutes.",
+      "estimatedTime is in SECONDS (e.g. 3600 = 1 hour, 36000 = 10 hours). NOT minutes.",
       "Description and testingType are optional but recommended for clarity.",
       "",
       "UDF (User Defined Fields) WORKFLOW FOR CREATE:",
-      "1. Call 'Fetch UDF Layout' with entityType='TC', pageName='ADD' to discover field names, types, and list option IDs.",
+      "1. Call 'Fetch UDF Layout' with entityType='TC', pageName='ADD' to discover field names, types, list option IDs, and udfmID (projectUserFieldID).",
       "   IF listOptions[field.listName] is empty after Fetch UDF Layout, the tool already tried a metadata fallback. " +
         "   If STILL empty, ask the user to provide the option ID from the QMetry UI — do NOT guess numeric IDs.",
       "2. For LOOKUPLIST fields: pick one ID from listOptions[field.listName][].id.",
       "3. For MULTILOOKUPLIST fields: pick an array of IDs from listOptions[field.listName][].id.",
-      "4. For CASCADINGLIST fields: pick a parent ID, then call 'Fetch Cascade Child Values' to get child IDs. Pass { parent: parentId, child: childId }.",
+      "4. For CASCADINGLIST fields (ROOT-LEVEL UDF — MANDATORY STEPS):",
+      "   a. MUST call 'Fetch Cascade Child Values' with parentId to get available child options (do NOT skip this step).",
+      "   b. Pass the cascade value as: { parent: parentId, child: childId } in udfFields.",
+      "   Example: udfFields: { project19: { parent: 5232623, child: 5232625 } }",
       "5. For STRING/LARGETEXT/NUMBER/DATETIMEPICKER: pass value directly.",
       "6. Pass all UDF values via 'udfFields' param: { fieldName: value }.",
       "7. Mandatory UDF fields (isMandatory=true) MUST be included or create will fail.",
-      "STEP UDFs: Pass step UDF values in each step's 'UDF' object: { fieldName: value }.",
-      "Call 'Fetch UDF Layout' for stepFields to discover valid step UDF field names and types.",
+      "",
+      "STEP UDFs: Pass step UDF values in each step's 'UDF' object.",
+      "Call 'Fetch UDF Layout' for stepFields to discover field names, types, and udfmID (projectUserFieldID).",
+      "Step UDF field types follow same rules as root UDF EXCEPT for CASCADINGLIST — step cascade requires a DIFFERENT format:",
+      "",
+      "STEP CASCADINGLIST UDF FORMAT (critical — different from root cascade):",
+      "For a cascade field named 'project19' with udfmID=2637584, parent={id:5232626, value:'React'}, child={id:5232628, value:'Redux'}:",
+      "You MUST include THREE keys inside the step's UDF object:",
+      "  1. fieldName: { parent: parentId, child: childId }",
+      "     e.g. project19: { parent: 5232626, child: 5232628 }",
+      "  2. fieldName_value: [{ FieldID: 'fieldName', FieldValue: [{ id: parentId, value: 'parentLabel', child: { id: childId, value: 'childLabel' } }], type: 'CASCADINGLIST' }]",
+      "     e.g. project19_value: [{ FieldID: 'project19', FieldValue: [{ id: 5232626, value: 'React', child: { id: 5232628, value: 'Redux' } }], type: 'CASCADINGLIST' }]",
+      "  3. fieldName_selectedList: { id: udfmID, name: 'fieldName', type: 'CASCADINGLIST' }",
+      "     e.g. project19_selectedList: { id: 2637584, name: 'project19', type: 'CASCADINGLIST' }",
+      "To get parentLabel and childLabel: call 'Fetch Cascade Child Values' — it returns option labels alongside IDs.",
+      "udfmID comes from Fetch UDF Layout stepFields[].projectUserFieldID.",
+      "NEVER omit _value or _selectedList for step cascade fields — the API silently ignores cascade data without them.",
     ],
     outputDescription:
       "JSON object containing the new test case ID, summary, and creation metadata.",

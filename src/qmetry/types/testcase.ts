@@ -68,7 +68,7 @@ export interface CreateTestCasesPayload {
   testcaseOwner?: number; // optional - OwnerId of Testcase
   testCaseState?: number; // optional - StatusId of Testcase
   testCaseType?: number; // optional - Id of Test Category
-  estimatedTime?: number; // optional - Estimated Time (minutes)
+  estimatedTime?: number; // optional - Estimated Time in SECONDS (e.g. 3600 = 1 hour)
   description?: string; // optional - Description of Testcase
   testingType?: number; // optional - Id of TestingType
   associateRelCyc?: boolean; // optional - associate release cycle
