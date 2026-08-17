@@ -1,8 +1,8 @@
-import type { RequestOptions } from "@modelcontextprotocol/sdk/shared/protocol.js";
 import type {
   ElicitRequest,
   ElicitResult,
-} from "@modelcontextprotocol/sdk/types.js";
+  RequestOptions,
+} from "@modelcontextprotocol/server";
 import type { SmartBearMcpServer } from "./server";
 import { ToolError } from "./tools";
 

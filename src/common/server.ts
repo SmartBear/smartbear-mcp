@@ -1,17 +1,9 @@
-import {
-  McpServer,
-  ResourceTemplate,
-} from "@modelcontextprotocol/sdk/server/mcp.js";
 import type {
   CallToolResult,
   ToolAnnotations,
-} from "@modelcontextprotocol/sdk/types.js";
-import {
-  ZodIntersection,
-  ZodObject,
-  type ZodRawShape,
-  type ZodType,
-} from "zod";
+} from "@modelcontextprotocol/server";
+import { McpServer, ResourceTemplate } from "@modelcontextprotocol/server";
+import { ZodObject, z } from "zod";
 import Bugsnag, { type BugsnagEvent } from "../common/bugsnag";
 import { CacheService } from "./cache";
 import { type McpClientIdentity, toClientIdentity } from "./client-identity";
@@ -144,32 +136,28 @@ export class SmartBearMcpServer extends McpServer {
             `The tool name "${toolName}" is too long. Tool names must be 64 characters or fewer for client compatibility. https://github.com/anthropics/claude-code/issues/34960`,
           );
         }
+        // In SDK v2, registerTool accepts Standard Schema objects directly.
+        // Passing the Zod schemas through as-is (rather than extracting a raw
+        // `.shape`) preserves z.looseObject()'s additionalProperties:true in the
+        // JSON schema sent to clients — otherwise real API responses would fail
+        // "additional properties" validation.
         return super.registerTool(
           toolName,
           {
             title: toolTitle,
             description: this.getDescription(params),
-            inputSchema: params.inputSchema
-              ? this.schemaToRawShape(params.inputSchema)
-              : {},
-            // Pass ZodObject-based schemas through as-is (rather than via schemaToRawShape)
-            // so that z.looseObject()'s additionalProperties:true is preserved in the JSON
-            // schema sent to clients — extracting `.shape` would rebuild a strict object and
-            // cause "additional properties" validation errors on real API responses.
-            outputSchema:
-              params.outputSchema instanceof ZodObject
-                ? params.outputSchema
-                : this.schemaToRawShape(params.outputSchema),
+            inputSchema: params.inputSchema ?? z.object({}),
+            outputSchema: params.outputSchema,
             annotations: this.getAnnotations(toolTitle, params),
           },
-          async (args: any, extra: any) => {
+          async (args: any, ctx: any) => {
             try {
               if (!client.isConfigured()) {
                 throw new ToolError(
                   `The tool is not configured - configuration options for ${client.name} are missing or invalid.`,
                 );
               }
-              const result = await cb(args, extra);
+              const result = await cb(args, ctx);
               if (result) {
                 this.validateCallbackResult(result, params);
                 this.addStructuredContentAsText(result);
@@ -234,9 +222,9 @@ export class SmartBearMcpServer extends McpServer {
             title: this.getCapabilityTitle(client, params.title),
             description: params.description,
           },
-          async (url: any, variables: any, extra: any) => {
+          async (url: any, variables: any, ctx: any) => {
             try {
-              return await cb(url, variables, extra);
+              return await cb(url, variables, ctx);
             } catch (e) {
               Bugsnag.notify(e as unknown as Error, (event: BugsnagEvent) => {
                 event.addMetadata("app", {
@@ -260,11 +248,11 @@ export class SmartBearMcpServer extends McpServer {
           {
             title: this.getCapabilityTitle(client, params.title),
             description: params.description,
-            argsSchema: this.schemaToRawShape(params.argsSchema) || {},
+            argsSchema: params.argsSchema,
           },
-          async (args: any, extra: any) => {
+          async (args: any, ctx: any) => {
             try {
-              return await cb(args, extra);
+              return await cb(args, ctx);
             } catch (e) {
               Bugsnag.notify(e as unknown as Error, (event: BugsnagEvent) => {
                 event.addMetadata("app", {
@@ -315,26 +303,6 @@ export class SmartBearMcpServer extends McpServer {
       openWorldHint: params.openWorld ?? false,
     };
     return annotations;
-  }
-
-  private schemaToRawShape(
-    schema: ZodType | undefined,
-  ): ZodRawShape | undefined {
-    if (schema) {
-      if (schema instanceof ZodObject) {
-        return schema.shape;
-      }
-      if (schema instanceof ZodIntersection) {
-        const leftShape = this.schemaToRawShape(
-          (schema as ZodIntersection<ZodType, ZodType>).def.left,
-        );
-        const rightShape = this.schemaToRawShape(
-          (schema as ZodIntersection<ZodType, ZodType>).def.right,
-        );
-        return { ...leftShape, ...rightShape };
-      }
-    }
-    return undefined;
   }
 
   private getCapabilityTitle(client: Client, title: string): string {

@@ -1,6 +1,5 @@
 import { enableCompileCache } from "node:module";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-
+import { StdioServerTransport } from "@modelcontextprotocol/server/stdio";
 import { clientRegistry } from "./client-registry";
 import { USER_AGENT } from "./info";
 import { handleInitializeMessage } from "./initialize";

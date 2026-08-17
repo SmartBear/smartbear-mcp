@@ -12648,6 +12648,10 @@ Expected Output: The newly created Test Case with its details and key",
 
 **Toolset:** Test Cases
 
+**Parameters:**
+- testCaseKey (string) *required*: The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+
+- issueId (number): The Jira issue ID
+
 **Examples:**
 1. Create a link between the test case SA-T1 and the Jira Issue ID 10100
 \`\`\`json
@@ -12678,6 +12682,12 @@ Expected Output: The newly created Issue Link with its ID and self link",
     "description": "Create steps for a Test Case in Zephyr. Supports inline step definitions or delegating execution to another test case (also known as 'call to test' via UI). Requires a mode: \`APPEND\` adds steps to the end of the existing list, \`OVERWRITE\` deletes all existing steps and replaces them with the provided ones. Always ask the user to choose between OVERWRITE or APPEND before calling this tool.
 
 **Toolset:** Test Cases
+
+**Parameters:**
+- testCaseKey (string) *required*: The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+
+- mode (string) *required*: Valid values: \`"APPEND"\`, \`"OVERWRITE"\`. <br> \`OVERWRITE\` deletes and recreates the test steps and associated custom field values using the provided input. Attachments for existing steps are kept, but those for missing steps are deleted permanently <br> \`APPEND\` only adds extra steps to your test steps.
+
+- items (array) *required*: The list of test steps. Each step should be an object containing \`inline\` or \`testCase\`. **They should only include one of these fields at a time**.
 
 **Examples:**
 1. To the Test Case SA-T1, add steps that will test a login page.
@@ -12909,6 +12919,10 @@ Expected Output: The newly created Test Cycle with its details and key",
 
 **Toolset:** Test Cycles
 
+**Parameters:**
+- testCycleIdOrKey (string) *required*: The ID or key of the test cycle.
+- issueId (number) *required*: The Jira issue ID
+
 **Examples:**
 1. Create a link between the test cycle with key SA-R1 and the Jira Issue ID 10100
 \`\`\`json
@@ -12945,6 +12959,11 @@ Expected Output: The link between Test Cycle and Jira issue should be created, b
     "description": "Create a new Web Link for a Test Cycle in Zephyr
 
 **Toolset:** Test Cycles
+
+**Parameters:**
+- testCycleIdOrKey (string) *required*: The ID or key of the test cycle.
+- description (string): The web link description
+- url (string): The web link URL
 
 **Examples:**
 1. Create a link between the specified test cycle by Id '100001' and generic URL 'https://www.atlassian.com' with description 'Atlassian homepage'
@@ -13089,6 +13108,10 @@ Expected Output: The newly created Test Execution including custom field values"
 
 **Toolset:** Test Executions
 
+**Parameters:**
+- testExecutionIdOrKey (string) *required*: The ID or key of the test execution. Test execution keys are of the format [A-Z]+-E[0-9]+
+- issueId (number) *required*: The Jira issue ID
+
 **Examples:**
 1. Create a link between the test execution with key SA-E40 and the Jira Issue ID 10100
 \`\`\`json
@@ -13125,6 +13148,22 @@ Expected Output: The link between Test Execution and Jira issue should be create
     "description": "Create a new Test Script of the types Plain Text or BDD in a Zephyr Test Case.
 
 **Toolset:** Test Cases
+
+**Parameters:**
+- testCaseKey (string) *required*: The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+
+- type (enum): Test scripts can be written in plain text or BDD format. The BDD type supports
+remote execution on a build system via API plugin.
+
+Supported Keywords for BDD:
+Given, When, Then, And, But.
+
+For more information about BDD and Gherkin syntax, see:
+https://support.smartbear.com/zephyr/docs/en/test-cases/gherkin-behavior-driven-development--bdd-.html
+
+For Plain Text scripts, we support HTML fragments.
+To create a step-by-step test script, you should use the POST /testcases/{testCaseKey}/teststeps endpoint.
+
+- text (string)
 
 **Examples:**
 1. Create a plain text test script for test case SA-T1 to verify that the axial pump can be enabled
@@ -13276,7 +13315,11 @@ Expected Output: The List of test cases linked to Jira issue PROJ-123 with their
     "inputSchema": [
       "issueKey",
     ],
-    "outputSchema": undefined,
+    "outputSchema": [
+      "key",
+      "self",
+      "version",
+    ],
     "title": "Zephyr: Get Issue Link Test Cases",
   },
   "zephyr_get_priorities": {
@@ -13601,6 +13644,14 @@ Expected Output: The links (issue links and web links) associated with the test 
     "description": "Get details of test case steps in Zephyr
 
 **Toolset:** Test Cases
+
+**Parameters:**
+- testCaseKey (string) *required*: The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+
+- maxResults (number): Specifies the maximum number of results to return in a single call. The default value is 10, and the maximum value that can be requested is 1000.
+
+Note that the server may enforce a lower limit than requested, depending on resource availability or other internal constraints. If this happens, the result set may be truncated. Always check the maxResults value in the response to confirm how many results were actually returned.
+ (default: 10)
+- startAt (number): Zero-indexed starting position. Should be a multiple of maxResults. (default: 0)
 
 **Examples:**
 1. Get the first 10 test case steps for test case with key 'SA-T1'
@@ -13938,7 +13989,10 @@ Expected Output: The List of test cycles linked to Jira issue PROJ-123 with thei
     "inputSchema": [
       "issueKey",
     ],
-    "outputSchema": undefined,
+    "outputSchema": [
+      "id",
+      "self",
+    ],
     "title": "Zephyr: Get Test Cycles linked to a Jira issue",
   },
   "zephyr_get_test_execution": {
@@ -14047,6 +14101,15 @@ Expected Output: The test execution links with its details",
     "description": "Get details of test execution steps in Zephyr
 
 **Toolset:** Test Executions
+
+**Parameters:**
+- testExecutionIdOrKey (string) *required*: The ID or key of the test execution. Test execution keys are of the format [A-Z]+-E[0-9]+
+- maxResults (number): Specifies the maximum number of results to return in a single call. The default value is 10, and the maximum value that can be requested is 1000.
+
+Note that the server may enforce a lower limit than requested, depending on resource availability or other internal constraints. If this happens, the result set may be truncated. Always check the maxResults value in the response to confirm how many results were actually returned.
+ (default: 10)
+- startAt (number): Zero-indexed starting position. Should be a multiple of maxResults. (default: 0)
+- testDataRowNumber (number): The id of the test data row to retrieve.
 
 **Examples:**
 1. Get the first 10 test execution steps for test execution with ID 1
@@ -14223,7 +14286,10 @@ Expected Output: The List of test executions linked to Jira issue PROJ-123 with 
     "inputSchema": [
       "issueKey",
     ],
-    "outputSchema": undefined,
+    "outputSchema": [
+      "id",
+      "self",
+    ],
     "title": "Zephyr: Get test executions linked to a Jira issue",
   },
   "zephyr_get_test_plans": {
@@ -14366,6 +14432,26 @@ Expected Output: The test script with its type (plain or bdd), text content, and
 
 **Toolset:** Test Cases
 
+**Parameters:**
+- testCaseKey (string) *required*: The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+
+- id (number): The ID of the entity
+- key (string): The test case key
+- name (string)
+- project (object): ID and link relative to Zephyr project.
+- objective (string): A description of the objective.
+- precondition (string): Any conditions that need to be met.
+- estimatedTime (number): Estimated duration in milliseconds.
+- labels (array): Array of labels associated to this entity.
+- component (number): The ID of the Jira component to associate.
+- priority (object): ID and link to the priority resource.
+- status (object): ID and link to the status resource.
+- folder (number): The ID of the folder to move the test case into.
+- owner (string): Atlassian Account ID of the Jira user to set as owner.
+- customFields (record<string, any>): Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.
+Dates should be in the format 'yyyy-MM-dd'.
+Users should have values of Jira User Account IDs.
+
+
 **Examples:**
 1. Update the name of the test case 'SA-T10' to 'Check axial pump' and objective to 'To ensure the axial pump can be enabled'
 \`\`\`json
@@ -14467,6 +14553,24 @@ Expected Output: The test case should be updated, but no output is expected.",
 
 **Toolset:** Test Cycles
 
+**Parameters:**
+- testCycleIdOrKey (string) *required*: The ID or key of the test cycle.
+- id (number): The ID of the entity
+- key (string): Unique key of the test cycle
+- name (string)
+- project (object): ID and link relative to Zephyr project.
+- jiraProjectVersion (number): The ID of the Jira project version (release) to associate.
+- status (object): ID and link to the status resource.
+- folder (number): The ID of the folder to move the test cycle into.
+- description (string): Description outlining the scope.
+- plannedStartDate (string): Planned start date of the test cycle. This field cannot be blank. Setting it as null or excluding it from the request will leave the field values unchanged. ISO 8601 Format (i.e., yyyy-MM-dd'T'HH:mm:ss'Z')
+- plannedEndDate (string): The planned end date of the test cycle. This field cannot be blank. Setting it as null or excluding it from the request will leave the field values unchanged. ISO 8601 Format (i.e., yyyy-MM-dd'T'HH:mm:ss'Z')
+- owner (string): Atlassian Account ID of the Jira user to set as owner.
+- customFields (record<string, any>): Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.
+Dates should be in the format 'yyyy-MM-dd'.
+Users should have values of Jira User Account IDs.
+
+
 **Examples:**
 1. Update the name of the test cycle 'SA-R40' to 'Sprint 1 Regression - Updated' and set description.
 \`\`\`json
@@ -14562,6 +14666,16 @@ Expected Output: The test cycle should be updated, but no output is expected.",
 
 **Toolset:** Test Executions
 
+**Parameters:**
+- testExecutionIdOrKey (string) *required*: The ID or key of the test execution. Test execution keys are of the format [A-Z]+-E[0-9]+
+- statusName (string): The status name.
+- environmentName (string): Environment assigned to the test case.
+- actualEndDate (string): The actual end date of the test cycle. Format: yyyy-MM-dd'T'HH:mm:ss'Z'
+- executionTime (number): Actual test execution time in milliseconds.
+- executedById (string): Atlassian Account ID of the Jira user.
+- assignedToId (string): Atlassian Account ID of the Jira user.
+- comment (string): Comment added against overall test case execution.
+
 **Examples:**
 1. Update the status name to 'PASS' and the environment name to 'ENV-1' in the test execution 'SA-E40'.
 \`\`\`json
@@ -14634,6 +14748,10 @@ Expected Output: The test execution should be updated, but no output is expected
     "description": "Update test steps for a given Test Execution in Zephyr. This operation updates the provided steps with their execution status and actual results. Only the fields included in the request will be modified.
 
 **Toolset:** Test Executions
+
+**Parameters:**
+- testExecutionIdOrKey (string) *required*: The ID or key of the test execution. Test execution keys are of the format [A-Z]+-E[0-9]+
+- steps (array)
 
 **Examples:**
 1. Mark the status of all steps in the test execution 'SA-E1' as 'Pass'. Set the actual result of step 1 to 'Dashboard widgets loaded correctly' and step 2 to 'Navigation menu responded correctly to user interactions'.

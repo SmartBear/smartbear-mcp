@@ -1,4 +1,4 @@
-import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { ResourceTemplate } from "@modelcontextprotocol/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import z from "zod";
 import Bugsnag from "./bugsnag";
@@ -115,7 +115,7 @@ describe("SmartBearMcpServer", () => {
           "**Parameters:**\n" +
           "- p1 (string) *required*: The input for the tool",
       );
-      expect(registerToolParams[1].inputSchema.p1.toString()).toBe(
+      expect(registerToolParams[1].inputSchema.shape.p1.toString()).toBe(
         z.string().describe("The input for the tool").toString(),
       );
       expect(registerToolParams[1].annotations).toEqual({
@@ -252,7 +252,7 @@ describe("SmartBearMcpServer", () => {
           "```\n\n" +
           "**Hints:** 1. First hint 2. Second hint",
       );
-      expect(registerToolParams[1].inputSchema.p1.toString()).toBe(
+      expect(registerToolParams[1].inputSchema.shape.p1.toString()).toBe(
         z.string().describe("The input for the tool").toString(),
       );
       expect(registerToolParams[1].annotations).toEqual({
@@ -524,7 +524,9 @@ describe("SmartBearMcpServer", () => {
           "- p4 (boolean): param-defaulted-bool-described-after (default: false)",
       );
 
-      expect(Object.keys(registerToolParams[1].inputSchema).length).toBe(4);
+      expect(Object.keys(registerToolParams[1].inputSchema.shape).length).toBe(
+        4,
+      );
 
       // Output schema should be passed through as the full Zod schema (not a raw
       // shape) so that additionalProperties handling (e.g. looseObject) is preserved
@@ -858,30 +860,6 @@ describe("SmartBearMcpServer", () => {
       );
 
       expect(result).not.toBeNull();
-    });
-  });
-
-  describe("schemaToRawShape", () => {
-    it("should convert Zod schema to raw shape", () => {
-      const schema = z.object({
-        name: z.string().describe("The name of the person"),
-        age: z.number().min(0).describe("The age of the person"),
-        isActive: z.boolean().describe("Is the person active?"),
-      });
-      // biome-ignore lint/complexity/useLiteralKeys: accessing internal method for test
-      const result = server["schemaToRawShape"](schema);
-      expect(result).toEqual(schema.shape);
-    });
-    it("returns an empty object if it's not a ZodObject", () => {
-      const schema = z.array(z.string());
-      // biome-ignore lint/complexity/useLiteralKeys: accessing internal method for test
-      const rawShape = server["schemaToRawShape"](schema);
-      expect(rawShape).toBeUndefined();
-    });
-    it("returns an empty object if the schema is undefined", () => {
-      // biome-ignore lint/complexity/useLiteralKeys: accessing internal method for test
-      const rawShape = server["schemaToRawShape"](undefined);
-      expect(rawShape).toBeUndefined();
     });
   });
 
