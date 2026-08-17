@@ -319,6 +319,12 @@ export type CreateFunctionalTestingTestParams = z.infer<
   typeof CreateFunctionalTestingTestParamsSchema
 >;
 
+export const ApiRefStatus = z.enum([
+  "linked",
+  "stripped:not_configured",
+  "stripped:not_found",
+]);
+
 export const CreateFunctionalTestingTestResponseSchema = z.object({
   id: z.number().describe("ID of the newly created test"),
   url: z
@@ -326,6 +332,13 @@ export const CreateFunctionalTestingTestResponseSchema = z.object({
     .describe(
       "Link to the created test definition in Swagger Functional Testing UI",
     ),
+  apiRefStatus: ApiRefStatus.nullable().describe(
+    "Outcome of the apiRef validation. " +
+      '"linked" — apiRef was valid and the test is linked to the API definition. ' +
+      '"stripped:not_configured" — apiRef was provided but Swagger API is not configured; linkage skipped. ' +
+      '"stripped:not_found" — apiRef coordinates did not resolve to a real spec; linkage skipped. ' +
+      "null — no apiRef was provided.",
+  ),
 });
 
 export type CreateFunctionalTestingTestResponse = z.infer<

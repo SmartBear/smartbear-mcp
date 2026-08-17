@@ -2,6 +2,7 @@ import {
   McpServer,
   ResourceTemplate,
 } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import type {
   CallToolResult,
   ToolAnnotations,

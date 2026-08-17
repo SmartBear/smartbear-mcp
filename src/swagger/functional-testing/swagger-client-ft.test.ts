@@ -202,7 +202,7 @@ describe("SwaggerClient — Functional Testing integration", () => {
       paths: { "/pets": { get: {} } },
     };
 
-    it("forwards apiRef in the POST body when the spec fetch succeeds", async () => {
+    it("forwards apiRef in the POST body when the spec fetch succeeds and returns apiRefStatus=linked", async () => {
       fetchMock.mockResponseOnce(JSON.stringify(petstoreSpec), {
         headers: { "content-type": "application/json" },
       });
@@ -213,7 +213,7 @@ describe("SwaggerClient — Functional Testing integration", () => {
         functional_testing_api_token: "ft-token",
       });
 
-      await requestContextStorage.run({ headers: {} }, () =>
+      const result = await requestContextStorage.run({ headers: {} }, () =>
         client.createFunctionalTestingTest({
           name: "Get pet",
           steps: [
@@ -238,9 +238,10 @@ describe("SwaggerClient — Functional Testing integration", () => {
         version: "1.0.0",
       });
       expect(body.type).toBe("api");
+      expect(result.apiRefStatus).toBe("linked");
     });
 
-    it("drops apiRef when the spec download fails", async () => {
+    it("drops apiRef when the spec download fails and returns apiRefStatus=stripped:not_found", async () => {
       fetchMock.mockResponseOnce("Not Found", { status: 404 });
       fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
 
@@ -249,7 +250,7 @@ describe("SwaggerClient — Functional Testing integration", () => {
         functional_testing_api_token: "ft-token",
       });
 
-      await requestContextStorage.run({ headers: {} }, () =>
+      const result = await requestContextStorage.run({ headers: {} }, () =>
         client.createFunctionalTestingTest({
           name: "Broken ref",
           steps: [
@@ -267,16 +268,17 @@ describe("SwaggerClient — Functional Testing integration", () => {
         (createRequest[1] as RequestInit).body as string,
       );
       expect(body.apiRef).toBeUndefined();
+      expect(result.apiRefStatus).toBe("stripped:not_found");
     });
 
-    it("skips spec fetch and drops apiRef when Swagger API is not configured", async () => {
+    it("skips spec fetch and drops apiRef when Swagger API is not configured, returns apiRefStatus=stripped:not_configured", async () => {
       fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
 
       await client.configure({} as any, {
         functional_testing_api_token: "ft-token",
       });
 
-      await requestContextStorage.run({ headers: {} }, () =>
+      const result = await requestContextStorage.run({ headers: {} }, () =>
         client.createFunctionalTestingTest({
           name: "No swagger side",
           steps: [
@@ -297,9 +299,10 @@ describe("SwaggerClient — Functional Testing integration", () => {
         (fetchMock.mock.calls[0][1] as RequestInit).body as string,
       );
       expect(body.apiRef).toBeUndefined();
+      expect(result.apiRefStatus).toBe("stripped:not_configured");
     });
 
-    it("passes the payload through unchanged when apiRef is not provided", async () => {
+    it("passes the payload through unchanged when apiRef is not provided and returns apiRefStatus=null", async () => {
       fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
 
       await client.configure({} as any, {
@@ -307,7 +310,7 @@ describe("SwaggerClient — Functional Testing integration", () => {
         functional_testing_api_token: "ft-token",
       });
 
-      await requestContextStorage.run({ headers: {} }, () =>
+      const result = await requestContextStorage.run({ headers: {} }, () =>
         client.createFunctionalTestingTest({
           name: "No linkage",
           steps: [{ url: "https://example.com/anything", httpMethod: "GET" }],
@@ -318,6 +321,7 @@ describe("SwaggerClient — Functional Testing integration", () => {
       expect(fetchMock.mock.calls[0][0]).toBe(
         "https://api.reflect.run/v1/tests",
       );
+      expect(result.apiRefStatus).toBeNull();
     });
   });
 
@@ -559,7 +563,7 @@ describe("SwaggerClient — Functional Testing integration", () => {
           headers: expect.objectContaining({ "X-API-KEY": "ft-token" }),
         }),
       );
-      expect(result).toEqual(createResponseMock);
+      expect(result).toEqual({ ...createResponseMock, apiRefStatus: null });
     });
 
     it("should throw when FT API is not configured", async () => {
