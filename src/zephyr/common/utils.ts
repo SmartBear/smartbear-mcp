@@ -78,7 +78,6 @@ export function deepStrip<T extends z.ZodTypeAny>(schema: T): T {
 }
 
 function stripNode(schema: z.ZodTypeAny): z.ZodTypeAny {
-  // biome-ignore lint/suspicious/noExplicitAny: traversing zod's internal defs
   const def = schema.def as any;
 
   switch (def.type) {

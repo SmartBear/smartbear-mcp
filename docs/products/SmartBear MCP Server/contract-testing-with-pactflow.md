@@ -489,21 +489,21 @@ Read more on PactFlow [Docs](https://docs.pactflow.io/).
 
 #### Publish Provider Contract
 
-- Purpose: Publish a provider OpenAPI contract and self-verification results to PactFlow for Bi-Directional Contract Testing.
+- Purpose: Publish a provider OpenAPI or AsyncAPI contract and self-verification results to PactFlow for Bi-Directional Contract Testing.
 - Parameters:
   - **`providerName`** (required): Name of the provider application
   - **`pacticipantVersionNumber`** (required): Version number of the provider
   - **`contract`** (required): Object containing:
-    - **`content`**: Base64-encoded OpenAPI specification
+    - **`content`**: Base64-encoded OpenAPI or AsyncAPI specification
     - **`contentType`**: `application/json`, `application/yaml`, or `application/yml`
-    - **`specification`**: Must be `oas`
+    - **`specification`**: `oas` for OpenAPI or `asyncapi` for AsyncAPI
     - **`selfVerificationResults`**: Results of verifying the provider against its own spec, including `success` (boolean), `verifier` (tool name, e.g. `dredd`), and optional content/format fields
   - **`branch`** (optional): Branch name of the provider
   - **`tags`** (optional): Version tags
   - **`buildUrl`** (optional): URL of the CI build
 - Availability: Cloud
 - **Use Cases:**
-  - Upload an OpenAPI spec as the provider contract along with tool-based verification results.
+  - Upload an OpenAPI or AsyncAPI spec as the provider contract along with tool-based verification results.
   - Enable PactFlow to perform automated cross-contract verification without running consumer pact tests directly on the provider.
 
 #### Get Pacts for Verification

@@ -1,7 +1,5 @@
-import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ZodRawShape } from "zod";
 import { z } from "zod";
-import { Tool } from "../../../common/tools";
+import { Tool, type ToolHandler } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { BearQClient } from "../../client";
 
@@ -23,7 +21,7 @@ export class DeleteTestCases extends Tool<BearQClient> {
     destructive: true,
   };
 
-  handle: ToolCallback<ZodRawShape> = async (args) => {
+  handle: ToolHandler = async (args) => {
     const { testCaseIds } = inputSchema.parse(args);
     const deleted: number[] = [];
     const failed: { testCaseId: number; error: string }[] = [];

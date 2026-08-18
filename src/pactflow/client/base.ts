@@ -250,13 +250,15 @@ export const PublishProviderContractSchema = z.object({
     .object({
       content: z
         .string()
-        .describe("Base64-encoded OpenAPI specification content"),
+        .describe("Base64-encoded OpenAPI or AsyncAPI specification content"),
       contentType: z
         .enum(["application/json", "application/yaml", "application/yml"])
-        .describe("Content type of the OpenAPI spec"),
+        .describe("Content type of the spec"),
       specification: z
-        .literal("oas")
-        .describe("Specification type (must be 'oas')"),
+        .enum(["oas", "asyncapi"])
+        .describe(
+          "Specification type: 'oas' for OpenAPI or 'asyncapi' for AsyncAPI",
+        ),
       selfVerificationResults: z
         .object({
           success: z.boolean().describe("Whether self-verification passed"),
@@ -286,7 +288,9 @@ export const PublishProviderContractSchema = z.object({
           "Results of self-verifying the provider against its own contract",
         ),
     })
-    .describe("Provider contract (OpenAPI spec) and verification details"),
+    .describe(
+      "Provider contract (OpenAPI or AsyncAPI spec) and verification details",
+    ),
   tags: z.array(z.string()).optional().describe("Version tags"),
   branch: z.string().optional().describe("Branch name of the provider"),
   buildUrl: z.string().optional().describe("URL of the CI build"),

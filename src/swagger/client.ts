@@ -470,7 +470,7 @@ export class SwaggerClient implements Client {
       }
 
       const { handler, formatResponse, ...toolParams } = tool;
-      register(toolParams, async (args, _extra) => {
+      register(toolParams, async (args, _ctx) => {
         try {
           // Dynamic method invocation
           const handlerFn = (this as any)[handler];

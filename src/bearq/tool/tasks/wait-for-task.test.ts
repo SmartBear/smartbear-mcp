@@ -59,7 +59,7 @@ describe("WaitForTask", () => {
       ),
     );
 
-    const result = await instance.handle({ taskId: 1 }, {} as any);
+    const result = await instance.handle({ taskId: 1 }, { mcpReq: {} } as any);
     const parsed = JSON.parse((result.content[0] as any).text);
 
     expect(parsed.events).toEqual([
@@ -83,7 +83,7 @@ describe("WaitForTask", () => {
       new Response(makeStream(allAtOnce), { status: 200 }),
     );
 
-    const result = await instance.handle({ taskId: 5 }, {} as any);
+    const result = await instance.handle({ taskId: 5 }, { mcpReq: {} } as any);
     const parsed = JSON.parse((result.content[0] as any).text);
 
     expect(parsed.events).toEqual([
@@ -111,7 +111,7 @@ describe("WaitForTask", () => {
         ),
       );
 
-    const result = await instance.handle({ taskId: 2 }, {} as any);
+    const result = await instance.handle({ taskId: 2 }, { mcpReq: {} } as any);
     const parsed = JSON.parse((result.content[0] as any).text);
 
     expect(parsed.events).toEqual([
@@ -132,9 +132,9 @@ describe("WaitForTask", () => {
       ),
     );
 
-    await expect(instance.handle({ taskId: 4 }, {} as any)).rejects.toThrow(
-      "closed without a done or timeout event",
-    );
+    await expect(
+      instance.handle({ taskId: 4 }, { mcpReq: {} } as any),
+    ).rejects.toThrow("closed without a done or timeout event");
   });
 
   it("should throw ToolError on non-2xx response", async () => {
@@ -142,9 +142,9 @@ describe("WaitForTask", () => {
       new Response("Unauthorized", { status: 401, statusText: "Unauthorized" }),
     );
 
-    await expect(instance.handle({ taskId: 3 }, {} as any)).rejects.toThrow(
-      "GET /tasks/3/stream failed: 401",
-    );
+    await expect(
+      instance.handle({ taskId: 3 }, { mcpReq: {} } as any),
+    ).rejects.toThrow("GET /tasks/3/stream failed: 401");
   });
 
   it("should ignore ping comment lines", async () => {
@@ -159,7 +159,7 @@ describe("WaitForTask", () => {
       ),
     );
 
-    const result = await instance.handle({ taskId: 6 }, {} as any);
+    const result = await instance.handle({ taskId: 6 }, { mcpReq: {} } as any);
     const parsed = JSON.parse((result.content[0] as any).text);
     expect(parsed.events.at(-1)).toEqual({
       event: "done",
@@ -184,14 +184,16 @@ describe("WaitForTask", () => {
     );
 
     const notifications: any[] = [];
-    const extra = {
-      _meta: { progressToken: "tok-1" },
-      sendNotification: vi.fn(async (n) => {
-        notifications.push(n);
-      }),
+    const ctx = {
+      mcpReq: {
+        _meta: { progressToken: "tok-1" },
+        notify: vi.fn(async (n) => {
+          notifications.push(n);
+        }),
+      },
     };
 
-    await instance.handle({ taskId: 9 }, extra as any);
+    await instance.handle({ taskId: 9 }, ctx as any);
 
     expect(notifications.map((n) => n.params.progress)).toEqual([1, 2, 3, 4]);
     expect(notifications.map((n) => JSON.parse(n.params.message))).toEqual([
@@ -217,12 +219,14 @@ describe("WaitForTask", () => {
       ),
     );
 
-    const sendNotification = vi.fn();
+    const notify = vi.fn();
     await instance.handle({ taskId: 10 }, {
-      _meta: {},
-      sendNotification,
+      mcpReq: {
+        _meta: {},
+        notify,
+      },
     } as any);
 
-    expect(sendNotification).not.toHaveBeenCalled();
+    expect(notify).not.toHaveBeenCalled();
   });
 });

@@ -1,6 +1,18 @@
-import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ZodRawShape } from "zod";
+import type {
+  CallToolResult,
+  ServerContext,
+} from "@modelcontextprotocol/server";
 import type { Client, ToolParams } from "./types";
+
+/**
+ * Handler signature for a tool's action. In SDK v2 the request context is a
+ * single {@link ServerContext} argument (replacing the v1 `extra`); `args` is
+ * loosely typed because each tool validates against its own `inputSchema`.
+ */
+export type ToolHandler = (
+  args: any,
+  ctx: ServerContext,
+) => CallToolResult | Promise<CallToolResult>;
 
 /**
  * Error class for tool-specific errors – these result in a response to the LLM with `isError: true`
@@ -30,5 +42,5 @@ export abstract class Tool<T extends Client> {
     this.client = client;
   }
   abstract specification: ToolParams;
-  abstract handle: ToolCallback<ZodRawShape>;
+  abstract handle: ToolHandler;
 }

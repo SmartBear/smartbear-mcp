@@ -1841,6 +1841,29 @@ describe("PactFlowClient", () => {
           expect.objectContaining({ method: "POST" }),
         );
       });
+
+      it("should publish an AsyncAPI provider contract", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({ success: true }));
+
+        const asyncApiInput = {
+          ...mockInput,
+          contract: {
+            ...mockInput.contract,
+            specification: "asyncapi" as const,
+          },
+        };
+        const { providerName, ...bodyWithoutProvider } = asyncApiInput;
+        await client.publishProviderContract(asyncApiInput);
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/provider-contracts/provider/ProviderAPI/publish",
+          {
+            method: "POST",
+            headers: client.requestHeaders,
+            body: JSON.stringify(bodyWithoutProvider),
+          },
+        );
+      });
     });
 
     describe("getPactsForVerification", () => {
