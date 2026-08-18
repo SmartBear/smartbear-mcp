@@ -369,7 +369,7 @@ export const SearchApisOutputSchema = z.object({
   ),
 });
 
-const PatchApiFailedEditSchema = z.object({
+export const PatchApiFailedEditSchema = z.object({
   index: z
     .number()
     .describe("Position of the failed edit in the request's edits array"),
@@ -392,12 +392,7 @@ export const PatchApiOutputSchema = z.looseObject({
 });
 
 // Response type
-export interface PatchApiFailedEdit {
-  index: number;
-  oldString: string;
-  error: "no_match" | "ambiguous";
-  matchCount: number;
-}
+export type PatchApiFailedEdit = z.infer<typeof PatchApiFailedEditSchema>;
 
 export interface PatchApiResponse {
   failed?: PatchApiFailedEdit[];

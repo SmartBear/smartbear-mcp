@@ -1535,7 +1535,7 @@ export class SwaggerAPI {
     return updated;
   }
 
-  async apiVersionExists({
+  private async apiVersionExists({
     owner,
     apiName,
     version,
