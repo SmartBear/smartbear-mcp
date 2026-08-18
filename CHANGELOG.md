@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Zephyr] Update Zephyr Schemas [#664](https://github.com/SmartBear/smartbear-mcp/pull/664)
 - [Common] Migrated the MCP server implementation from `@modelcontextprotocol/sdk` v1 to the `@modelcontextprotocol/{server,node,server-legacy}` v2 packages. This is an internal implementation change; tool, prompt, and resource behavior is unchanged. As part of this, `[Zephyr]` tools that combine a params and body schema (e.g. `create_test_case_issue_link`, `update_test_case`) now advertise a flat JSON Schema instead of `allOf`, for compatibility with MCP clients that don't support `allOf`. [#654](https://github.com/SmartBear/smartbear-mcp/pull/654)
 - [Common] Corrected the Node.js version requirement in the README to 22+.
+- [Swagger] Improved error handling on Swagger Functional Testing, providing more information when requests to the upstream API fail
 
 ### Fixed
 
@@ -29,9 +30,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [QMetry] Added OAuth authentication support and 3 new Release Readiness tools (`fetch_quality_gate_configuration`, `execute_quality_gate_report`, `export_html_report`). [#637](https://github.com/SmartBear/smartbear-mcp/pull/637)
 
-### Changed
-
-- [Swagger] Improved error handling on Swagger Functional Testing, providing more information when requests to the upstream API fail
 
 ## [0.34.0] - 2026-08-06
 
