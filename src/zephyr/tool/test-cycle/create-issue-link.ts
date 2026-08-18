@@ -1,6 +1,4 @@
-import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ZodRawShape } from "zod";
-import { Tool } from "../../../common/tools";
+import { Tool, type ToolHandler } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { ZephyrClient } from "../../client";
 import {
@@ -16,8 +14,10 @@ export class CreateTestCycleIssueLink extends Tool<ZephyrClient> {
       "Create a new link between an issue in Jira and a Test Cycle in Zephyr",
     readOnly: false,
     idempotent: false,
-    inputSchema: CreateTestCycleIssueLinkParams.and(
-      CreateTestCycleIssueLinkBody,
+    // Flattened via .extend() (not .and()) so the advertised JSON Schema stays
+    // a plain object instead of `allOf`, which older MCP clients don't understand.
+    inputSchema: CreateTestCycleIssueLinkParams.extend(
+      CreateTestCycleIssueLinkBody.shape,
     ),
     examples: [
       {
@@ -42,7 +42,7 @@ export class CreateTestCycleIssueLink extends Tool<ZephyrClient> {
       },
     ],
   };
-  handle: ToolCallback<ZodRawShape> = async (args) => {
+  handle: ToolHandler = async (args) => {
     const parsed = CreateTestCycleIssueLinkParams.and(
       CreateTestCycleIssueLinkBody,
     ).parse(args);

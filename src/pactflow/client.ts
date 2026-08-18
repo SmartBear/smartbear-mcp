@@ -877,10 +877,10 @@ export class PactflowClient implements Client {
   }
 
   /**
-   * Publishes a provider OpenAPI contract and its self-verification results to PactFlow
-   * for use in Bi-Directional Contract Testing.
+   * Publishes a provider OpenAPI or AsyncAPI contract and its self-verification results
+   * to PactFlow for use in Bi-Directional Contract Testing.
    *
-   * @param params - `providerName`, version number, base64-encoded OpenAPI spec,
+   * @param params - `providerName`, version number, base64-encoded OpenAPI/AsyncAPI spec,
    *   content type, and self-verification results.
    * @returns Publication result.
    * @throws ToolError if the request fails.
@@ -2393,7 +2393,7 @@ export class PactflowClient implements Client {
       }
 
       const { handler, clients: _, formatResponse, ...toolParams } = tool;
-      register(toolParams, async (args, _extra) => {
+      register(toolParams, async (args, _ctx) => {
         const handler_fn = (this as any)[handler];
         if (typeof handler_fn !== "function") {
           throw new Error(`Handler '${handler}' not found on PactClient`);

@@ -434,9 +434,9 @@ export const TOOLS: PactflowToolParams[] = [
     title: "Publish Provider Contract",
     toolset: "Contracts",
     summary:
-      "Publish a provider OpenAPI contract and self-verification results to PactFlow (Bi-Directional Contract Testing).",
+      "Publish a provider OpenAPI or AsyncAPI contract and self-verification results to PactFlow (Bi-Directional Contract Testing).",
     purpose:
-      "Upload an OpenAPI specification as a provider contract along with the results of running a tool (e.g. Dredd, Schemathesis) that verifies the provider implementation against the spec. This enables PactFlow to perform automated cross-contract verification without requiring the provider to run the consumer Pact tests.",
+      "Upload an OpenAPI or AsyncAPI specification as a provider contract along with the results of running a tool (e.g. Dredd, Schemathesis) that verifies the provider implementation against the spec. This enables PactFlow to perform automated cross-contract verification without requiring the provider to run the consumer Pact tests.",
     inputSchema: PublishProviderContractSchema,
     handler: "publishProviderContract",
     readOnly: false,
