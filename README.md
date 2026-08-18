@@ -57,7 +57,7 @@ See the [Remote MCP Servers guide](https://developer.smartbear.com/smartbear-mcp
 
 ## Prerequisites
 
-- Node.js 20+ and npm
+- Node.js 22+ and npm
 - Access to SmartBear products (BugSnag, Reflect, Swagger, QMetry, QTM4J or Zephyr)
 - Valid API tokens for the products you want to integrate
 
