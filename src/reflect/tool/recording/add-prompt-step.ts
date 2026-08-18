@@ -1,8 +1,6 @@
 import { randomUUID } from "node:crypto";
-import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ZodRawShape } from "zod";
 import { z } from "zod";
-import { Tool, ToolError } from "../../../common/tools";
+import { Tool, ToolError, type ToolHandler } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { ReflectClient } from "../../client";
 import type { MCPAddPromptStepSuccessResponse } from "../../types/mcp";
@@ -25,7 +23,7 @@ export class AddPromptStep extends Tool<ReflectClient> {
     }),
   };
 
-  handle: ToolCallback<ZodRawShape> = async (args) => {
+  handle: ToolHandler = async (args) => {
     const { sessionId, prompt } = args as {
       sessionId: string;
       prompt: string;

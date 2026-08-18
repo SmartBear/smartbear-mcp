@@ -1,7 +1,5 @@
-import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ZodRawShape } from "zod";
 import { z } from "zod";
-import { Tool, ToolError } from "../../../common/tools";
+import { Tool, ToolError, type ToolHandler } from "../../../common/tools";
 import type { GetInputFunction, ToolParams } from "../../../common/types";
 import type { BugsnagClient } from "../../client";
 import { ErrorUpdateRequest } from "../../client/api/index";
@@ -193,7 +191,7 @@ export class UpdateError extends Tool<BugsnagClient> {
     this.getInput = getInput;
   }
 
-  handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
+  handle: ToolHandler = async (args, _ctx) => {
     const params = inputSchema.parse(args);
     const project = await this.client.getInputProject(params.projectId);
 

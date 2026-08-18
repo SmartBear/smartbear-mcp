@@ -2,16 +2,26 @@ import { describe, expect, it, vi } from "vitest";
 import { SmartBearMcpServer } from "./server";
 
 import "./register-clients";
-import type { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { ResourceTemplate } from "@modelcontextprotocol/server";
 import { clientRegistry } from "./client-registry";
 
-// outputSchema/inputSchema may be a raw shape (plain object of Zod fields) or a
-// full Zod object schema (e.g. z.looseObject) — normalize to a sorted list of
-// field names either way so the snapshot reflects the schema's shape, not its
-// runtime representation.
+// outputSchema/inputSchema may be a raw shape (plain object of Zod fields), a
+// full Zod object schema (e.g. z.looseObject), a ZodIntersection (from
+// `.and(...)`), or a ZodArray (from `z.array(...)`) — normalize to a sorted
+// list of field names in every case so the snapshot reflects the schema's
+// shape, not its runtime representation.
 function schemaFieldNames(schema: any): string[] | undefined {
   if (!schema) {
     return undefined;
+  }
+  if (schema.def?.left && schema.def?.right) {
+    return [
+      ...(schemaFieldNames(schema.def.left) ?? []),
+      ...(schemaFieldNames(schema.def.right) ?? []),
+    ].sort();
+  }
+  if (schema.def?.element) {
+    return schemaFieldNames(schema.def.element);
   }
   const shape = schema.shape ?? schema;
   return Object.keys(shape).sort();
@@ -59,9 +69,7 @@ describe("server definitions are not changed unexpectedly", () => {
     ).mockImplementation(((promptName: string, config: any) => {
       registeredPrompts[promptName] = {
         ...config,
-        argsSchema: config.argsSchema
-          ? Object.keys(config.argsSchema).sort()
-          : undefined,
+        argsSchema: schemaFieldNames(config.argsSchema),
       };
     }) as any);
 

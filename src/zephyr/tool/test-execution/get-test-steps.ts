@@ -1,6 +1,4 @@
-import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ZodRawShape } from "zod";
-import { Tool } from "../../../common/tools";
+import { Tool, type ToolHandler } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { ZephyrClient } from "../../client";
 import {
@@ -16,8 +14,10 @@ export class GetTestExecutionSteps extends Tool<ZephyrClient> {
     summary: "Get details of test execution steps in Zephyr",
     readOnly: true,
     idempotent: true,
-    inputSchema: GetTestExecutionTestStepsParams.and(
-      GetTestExecutionTestStepsQueryParams.partial(),
+    // Flattened via .extend() (not .and()) so the advertised JSON Schema stays
+    // a plain object instead of `allOf`, which older MCP clients don't understand.
+    inputSchema: GetTestExecutionTestStepsParams.extend(
+      GetTestExecutionTestStepsQueryParams.partial().shape,
     ),
     outputSchema: getTestExecutionStepsResponse,
     examples: [
@@ -75,7 +75,7 @@ export class GetTestExecutionSteps extends Tool<ZephyrClient> {
     ],
   };
 
-  handle: ToolCallback<ZodRawShape> = async (args) => {
+  handle: ToolHandler = async (args) => {
     const parsed = GetTestExecutionTestStepsParams.and(
       GetTestExecutionTestStepsQueryParams,
     ).parse(args);
