@@ -465,7 +465,7 @@ export class BugsnagClient implements Client {
         path: "{id}",
         description: "Retrieve a specific event by its ID.",
       },
-      async (uri, variables, _extra) => {
+      async (uri, variables, _ctx) => {
         return {
           contents: [
             {

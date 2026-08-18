@@ -1,7 +1,5 @@
-import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ZodRawShape } from "zod";
 import { z as zod } from "zod";
-import { Tool } from "../../../common/tools";
+import { Tool, type ToolHandler } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { ZephyrClient } from "../../client";
 import {
@@ -43,7 +41,11 @@ export class UpdateTestCycle extends Tool<ZephyrClient> {
       "Update an existing Test Cycle in Zephyr. This operation fetches the current test cycle and merges your updates with it to prevent accidental property deletion. To remove a property, set it to null explicitly. The plannedStartDate and plannedEndDate fields cannot be cleared",
     readOnly: false,
     idempotent: true,
-    inputSchema: UpdateTestCycleParams.and(UpdateTestCycleBodyToolInput),
+    // Flattened via .extend() (not .and()) so the advertised JSON Schema stays
+    // a plain object instead of `allOf`, which older MCP clients don't understand.
+    inputSchema: UpdateTestCycleParams.extend(
+      UpdateTestCycleBodyToolInput.shape,
+    ),
     examples: [
       {
         description:
@@ -116,7 +118,7 @@ export class UpdateTestCycle extends Tool<ZephyrClient> {
     ],
   };
 
-  handle: ToolCallback<ZodRawShape> = async (args) => {
+  handle: ToolHandler = async (args) => {
     const parsed = UpdateTestCycleParams.and(
       UpdateTestCycleBodyToolInput,
     ).parse(args);

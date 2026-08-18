@@ -1,6 +1,4 @@
-import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ZodRawShape } from "zod";
-import { Tool } from "../../../common/tools";
+import { Tool, type ToolHandler } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { Qtm4jClient } from "../../client";
 import {
@@ -115,7 +113,7 @@ export class GetProjects extends Tool<Qtm4jClient> {
       "JSON object containing paginated list of projects with IDs, keys, names, and QMetry status, along with pagination metadata",
   };
 
-  handle: ToolCallback<ZodRawShape> = async (args) => {
+  handle: ToolHandler = async (args) => {
     const input = GetProjectsBody.parse(args);
 
     // Build request body with pagination and optional filters

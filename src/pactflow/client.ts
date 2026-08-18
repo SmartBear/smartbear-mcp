@@ -2393,7 +2393,7 @@ export class PactflowClient implements Client {
       }
 
       const { handler, clients: _, formatResponse, ...toolParams } = tool;
-      register(toolParams, async (args, _extra) => {
+      register(toolParams, async (args, _ctx) => {
         const handler_fn = (this as any)[handler];
         if (typeof handler_fn !== "function") {
           throw new Error(`Handler '${handler}' not found on PactClient`);
