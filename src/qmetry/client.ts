@@ -211,19 +211,28 @@ export class QmetryClient implements Client {
           // This removes the requirement for the LLM to pre-call Fetch UDF Layout.
           if (tool.handler === QMetryToolsHandlers.CREATE_TEST_CASE) {
             try {
-              const [layout, projectInfoForDate] = await Promise.all([
-                fetchUdfLayout(this.getToken(), baseUrl, projectKey, {
+              const projectInfoForDate = await getProjectInfo(
+                this.getToken(),
+                baseUrl,
+                projectKey,
+              );
+              const { scopeId: freshScopeId, orgCode: freshOrgCode } =
+                extractProjectContext(projectInfoForDate);
+              const layout = await fetchUdfLayout(
+                this.getToken(),
+                baseUrl,
+                projectKey,
+                {
                   entityType: "TC",
                   pageName: "ADD",
-                  ...(this.projectNumericId !== undefined
-                    ? { scopeId: this.projectNumericId }
+                  ...(freshScopeId !== undefined
+                    ? { scopeId: freshScopeId }
                     : {}),
-                  ...(this.orgCode !== undefined
-                    ? { orgCode: this.orgCode }
+                  ...(freshOrgCode !== undefined
+                    ? { orgCode: freshOrgCode }
                     : {}),
-                }),
-                getProjectInfo(this.getToken(), baseUrl, projectKey),
-              ]);
+                },
+              );
 
               const defaults = layout.defaultValues ?? {};
               if (!a.udfFields) a.udfFields = {};
@@ -302,19 +311,28 @@ export class QmetryClient implements Client {
           // auto-set testSuiteState, surface missing mandatory UDF fields, normalize dates.
           if (tool.handler === QMetryToolsHandlers.CREATE_TEST_SUITE) {
             try {
-              const [layout, projectInfoForDate] = await Promise.all([
-                fetchUdfLayout(this.getToken(), baseUrl, projectKey, {
+              const projectInfoForDate = await getProjectInfo(
+                this.getToken(),
+                baseUrl,
+                projectKey,
+              );
+              const { scopeId: freshScopeId, orgCode: freshOrgCode } =
+                extractProjectContext(projectInfoForDate);
+              const layout = await fetchUdfLayout(
+                this.getToken(),
+                baseUrl,
+                projectKey,
+                {
                   entityType: "TS",
                   pageName: "ADD",
-                  ...(this.projectNumericId !== undefined
-                    ? { scopeId: this.projectNumericId }
+                  ...(freshScopeId !== undefined
+                    ? { scopeId: freshScopeId }
                     : {}),
-                  ...(this.orgCode !== undefined
-                    ? { orgCode: this.orgCode }
+                  ...(freshOrgCode !== undefined
+                    ? { orgCode: freshOrgCode }
                     : {}),
-                }),
-                getProjectInfo(this.getToken(), baseUrl, projectKey),
-              ]);
+                },
+              );
 
               const defaults = layout.defaultValues ?? {};
               if (!a.udfFields) a.udfFields = {};
@@ -434,19 +452,28 @@ export class QmetryClient implements Client {
           const entityTypeForDate = UDF_DATE_PREFLIGHT_ENTITY_MAP[tool.handler];
           if (entityTypeForDate) {
             try {
-              const [dateLayout, dateProjectInfo] = await Promise.all([
-                fetchUdfLayout(this.getToken(), baseUrl, projectKey, {
+              const dateProjectInfo = await getProjectInfo(
+                this.getToken(),
+                baseUrl,
+                projectKey,
+              );
+              const { scopeId: freshScopeId, orgCode: freshOrgCode } =
+                extractProjectContext(dateProjectInfo);
+              const dateLayout = await fetchUdfLayout(
+                this.getToken(),
+                baseUrl,
+                projectKey,
+                {
                   entityType: entityTypeForDate,
                   pageName: "ADD",
-                  ...(this.projectNumericId !== undefined
-                    ? { scopeId: this.projectNumericId }
+                  ...(freshScopeId !== undefined
+                    ? { scopeId: freshScopeId }
                     : {}),
-                  ...(this.orgCode !== undefined
-                    ? { orgCode: this.orgCode }
+                  ...(freshOrgCode !== undefined
+                    ? { orgCode: freshOrgCode }
                     : {}),
-                }),
-                getProjectInfo(this.getToken(), baseUrl, projectKey),
-              ]);
+                },
+              );
               const targetDateFormat =
                 resolveProjectDateFormat(dateProjectInfo);
               const datetimePickers =

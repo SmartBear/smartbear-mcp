@@ -22,9 +22,13 @@ interface ParsedDate {
 /**
  * Parses a date string in any common format into year/month/day components.
  * Handles: YYYY-MM-DD, DD-MM-YYYY, MM-DD-YYYY, DD/MM/YYYY, MM/DD/YYYY, DD-MMM-YYYY.
- * When day/month order is ambiguous (both ≤ 12), assumes DD/MM (international default).
+ * When day/month order is ambiguous (both ≤ 12), uses projectFormat to disambiguate
+ * (formats starting with "MM" treat the first part as month); falls back to DD/MM.
  */
-export function parseDateFlexible(dateStr: string): ParsedDate | null {
+export function parseDateFlexible(
+  dateStr: string,
+  projectFormat?: string,
+): ParsedDate | null {
   if (!dateStr || typeof dateStr !== "string") return null;
   const s = dateStr.trim();
 
@@ -50,9 +54,11 @@ export function parseDateFlexible(dateStr: string): ParsedDate | null {
     // Unambiguous: one part > 12 means it must be a day
     if (a > 12 && b <= 12) return { year, month: b, day: a };
     if (b > 12 && a <= 12) return { year, month: a, day: b };
-    // Ambiguous: assume DD/MM (international default)
-    if (a >= 1 && a <= 31 && b >= 1 && b <= 12)
+    // Ambiguous: use project format to disambiguate, fall back to DD/MM (international default)
+    if (a >= 1 && a <= 31 && b >= 1 && b <= 12) {
+      if (projectFormat?.startsWith("MM")) return { year, month: a, day: b };
       return { year, month: b, day: a };
+    }
     if (b >= 1 && b <= 31 && a >= 1 && a <= 12)
       return { year, month: a, day: b };
   }
@@ -110,7 +116,7 @@ export function normalizeDateFieldsInArgs(
   if (a.udfFields && typeof a.udfFields === "object") {
     for (const [key, val] of Object.entries(a.udfFields)) {
       if (datetimePickerFieldNames.has(key) && typeof val === "string") {
-        const parsed = parseDateFlexible(val);
+        const parsed = parseDateFlexible(val, targetFormat);
         if (parsed)
           a.udfFields[key] = formatDateToProjectFormat(parsed, targetFormat);
       }
@@ -121,7 +127,7 @@ export function normalizeDateFieldsInArgs(
       if (step?.UDF && typeof step.UDF === "object") {
         for (const [key, val] of Object.entries(step.UDF)) {
           if (datetimePickerFieldNames.has(key) && typeof val === "string") {
-            const parsed = parseDateFlexible(val);
+            const parsed = parseDateFlexible(val, targetFormat);
             if (parsed)
               step.UDF[key] = formatDateToProjectFormat(parsed, targetFormat);
           }
