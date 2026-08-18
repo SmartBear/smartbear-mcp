@@ -57,7 +57,7 @@ export const UDF_TOOLS: QMetryToolParams[] = [
       },
     ],
     hints: [
-      "CALL THIS TOOL FIRST: Before creating or updating TC/TS/IS entities with UDF values, always call this tool to discover field names, types, and valid option IDs.",
+      "CALL THIS TOOL FIRST: Before creating or updating TC/TS/IS entities, always call this tool with pageName='ADD' to discover mandatory fields, defaults, field names, types, and valid option IDs.",
       "pageName='ADD': Use before CREATE operations — returns field names + types + list options. fieldID is null (not needed on create).",
       "pageName='DETAIL': Use before UPDATE operations — returns fieldID (projectUserFieldID) required in the UDF wrapper.",
       "WORKFLOW FOR CREATE with UDFs:",
@@ -82,13 +82,31 @@ export const UDF_TOOLS: QMetryToolParams[] = [
         "This tool automatically attempts a fallback to the UDF metadata endpoint to populate them. " +
         "If listOptions is STILL empty after this tool returns, call 'Fetch Test Run UDF Metadata' with the same entityType — " +
         "its 'lookupOptions' map uses the same listName keys and contains the full option list.",
-      "isMandatory: If true, this field MUST be included in create/update payloads.",
-      "This tool is scoped per project — list options and fieldIDs are project-specific.",
+      "isMandatory: If true, this field MUST be included. Source: allowBlank=false in QMetry API (for UDF/system fields) or mandatory=true (for step system fields).",
+      "DATETIMEPICKER fields: date value MUST match the project's active date format.",
+      "  Get format: project info → dateTimeFormatID → find in dateTimeFormatNew where id matches → read unique_value.",
+      "  unique_value pattern: yyyy=4-digit year, MM=2-digit month (01-12), dd=2-digit day, MMM=3-letter month (Jan/Feb/...).",
+      "  Re-format user date to match before sending. NEVER guess the format — always check project info first.",
+      "defaultValues: Pre-configured defaults from QMetry. If a mandatory field has a defaultValues entry, use that value automatically without asking the user. Only ask user for mandatory fields with NO default.",
+      "stepDefaultValues: Same as defaultValues but for test case step fields.",
+      "PRE-CREATE MANDATORY CHECK WORKFLOW (CRITICAL — do this before every create):",
+      "  1. Call Fetch UDF Layout with pageName='ADD' for the entity type",
+      "  2. Check systemFields: for each field where isMandatory=true, check if defaultValues[field.name] exists",
+      "     - Has default → use defaultValues[field.name] as the value, no need to ask user",
+      "     - No default → MUST ask user to provide value before creating",
+      "  3. Check fields (UDF): same logic — isMandatory=true + no defaultValues entry → ask user",
+      "  4. For TC steps: check stepSystemFields and stepFields isMandatory, use stepDefaultValues for auto-fill",
+      "  5. Only after all mandatory fields are resolved (via default or user input) → proceed with create",
+      "This tool is scoped per project — list options, fieldIDs, and defaults are all project-specific.",
     ],
     outputDescription:
-      "JSON with 'entityType', 'pageName', 'fields' array (each item: name, label, fieldTypeName, fieldID, isMandatory, optional listName), " +
-      "'stepFields' array for TC only (same shape), 'listOptions' map (listName → [{id, name, isArchived}]), " +
-      "and '_note' with workflow instructions for the current pageName.",
+      "JSON with 'entityType', 'pageName'. " +
+      "All data is scoped by entityType key in the QMetry newlayout response: TC uses qmUDF.TC / qmSDF.TC / qmDefaultValue.TC; TS uses qmUDF.TS / qmSDF.TS / qmDefaultValue.TS; IS uses qmUDF.IS / qmSDF.IS / qmDefaultValue.IS. " +
+      "'fields' array — UDF fields (name, label, fieldTypeName, fieldID, isMandatory, optional listName); isMandatory=true when allowBlank=false in QMetry. " +
+      "'systemFields' array — system fields like Summary/Priority/Status (name, label, fieldTypeName, isMandatory); isMandatory=true when allowBlank=false. " +
+      "'defaultValues' object — { fieldName: defaultValueId } pre-configured defaults (auto-fill when user omits the field; no need to ask user). " +
+      "TC-only: 'stepFields' — step UDF fields; 'stepSystemFields' — step system fields (mandatory via tcSteps[].mandatory=true); 'stepDefaultValues' — { fieldName: defaultValueId } from qmTCSDefaultValue.TCS. " +
+      "'listOptions' map (listName → [{id, name, isArchived}]). '_note' with workflow instructions.",
     readOnly: true,
     destructive: false,
     idempotent: true,

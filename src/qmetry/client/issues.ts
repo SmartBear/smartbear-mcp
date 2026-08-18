@@ -14,6 +14,7 @@ import {
   type UpdateIssuePayload,
 } from "../types/issues";
 import { qmetryRequest } from "./api/client-api";
+import { fetchUdfLayout } from "./udf";
 import { resolveDefaults } from "./utils";
 
 /**
@@ -52,6 +53,68 @@ export async function createIssue(
     throw new Error(
       "[createIssue] Missing or invalid required parameter: 'summary'.",
     );
+  }
+
+  // Pre-flight: fetch UDF layout to (1) auto-apply defaults and (2) validate mandatory fields.
+  try {
+    const layout = await fetchUdfLayout(
+      token,
+      resolvedBaseUrl,
+      resolvedProject,
+      {
+        entityType: "IS",
+        pageName: "ADD",
+      },
+    );
+
+    const systemFieldTypeMap: Record<string, string> = Object.fromEntries(
+      layout.systemFields.map((f: any) => [f.name, f.fieldTypeName]),
+    );
+    const systemFieldNames = new Set(Object.keys(systemFieldTypeMap));
+
+    // Step 1: auto-apply defaults for any field not already set in the payload.
+    // System MULTILOOKUPLIST defaults come as a single ID — wrap in array.
+    for (const [fieldName, defaultValue] of Object.entries(
+      layout.defaultValues,
+    )) {
+      if (body[fieldName] !== undefined && body[fieldName] !== null) continue;
+      if (
+        systemFieldNames.has(fieldName) &&
+        systemFieldTypeMap[fieldName] === "MULTILOOKUPLIST" &&
+        typeof defaultValue === "number"
+      ) {
+        body[fieldName] = [defaultValue];
+      } else {
+        body[fieldName] = defaultValue;
+      }
+    }
+
+    // Step 2: validate all mandatory fields (system + UDF) are present after defaults applied.
+    const missing: string[] = [];
+    const allMandatory = [
+      ...layout.systemFields.filter((f: any) => f.isMandatory),
+      ...layout.fields.filter((f: any) => f.isMandatory),
+    ];
+    for (const field of allMandatory) {
+      const val = body[field.name];
+      const absent =
+        val === undefined ||
+        val === null ||
+        val === "" ||
+        (Array.isArray(val) && val.length === 0);
+      if (absent) {
+        missing.push(field.label ?? field.name);
+      }
+    }
+    if (missing.length > 0) {
+      throw new Error(
+        `[createIssue] Missing mandatory fields: ${missing.join(", ")}. ` +
+          "Provide values for these fields before creating the issue.",
+      );
+    }
+  } catch (err: any) {
+    // Re-throw our own mandatory-field errors; swallow layout-fetch failures.
+    if (err?.message?.startsWith("[createIssue]")) throw err;
   }
 
   return qmetryRequest<unknown>({

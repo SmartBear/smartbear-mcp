@@ -1771,6 +1771,61 @@ describe("QmetryClient tools", () => {
 
       expect(result.content[0].text).toContain("TS-002");
     });
+
+    it("should create test suite with login failure summary, system fields, and UDF data", async () => {
+      (testsuite.createTestSuites as any).mockResolvedValue({
+        id: 1505900,
+        entityKey: "TS-003",
+        name: "login failure",
+      });
+
+      const handler = getHandler("Create Test Suite");
+      const result = await handler({
+        parentFolderId: "113557",
+        name: "login failure",
+        description: "Test suite covering login failure scenarios",
+        testsuiteOwner: 6963,
+        testSuiteState: 1,
+        isAutomatedFlag: false,
+        associateRelCyc: true,
+        releaseCycleMapping: [{ buildID: 18411, releaseId: 10286 }],
+        udfFields: {
+          "Affected Module": "Authentication",
+          "Priority Score": 8,
+          Environment: 201,
+          Tags: [301, 302],
+          Region: { parent: 401, child: 402 },
+          "Reviewed By": null,
+        },
+      });
+
+      expect(testsuite.createTestSuites).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          parentFolderId: "113557",
+          name: "login failure",
+          description: "Test suite covering login failure scenarios",
+          testsuiteOwner: 6963,
+          testSuiteState: 1,
+          isAutomatedFlag: false,
+          associateRelCyc: true,
+          releaseCycleMapping: [{ buildID: 18411, releaseId: 10286 }],
+          udfFields: expect.objectContaining({
+            "Affected Module": "Authentication",
+            "Priority Score": 8,
+            Environment: 201,
+            Tags: [301, 302],
+            Region: { parent: 401, child: 402 },
+            "Reviewed By": null,
+          }),
+        }),
+      );
+
+      expect(result.content[0].text).toContain("TS-003");
+      expect(result.content[0].text).toContain("login failure");
+    });
   });
 
   describe("Update Test Suite", () => {

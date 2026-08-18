@@ -10,9 +10,15 @@ import {
   extractProjectContext,
   findAutoResolveConfig,
 } from "./client/auto-resolve";
+import {
+  extractDatetimePickerFieldNames,
+  normalizeDateFieldsInArgs,
+  resolveProjectDateFormat,
+} from "./client/date-utils";
 import { QMETRY_HANDLER_MAP } from "./client/handlers";
 import { getProjectInfo } from "./client/project";
 import { TOOLS } from "./client/tools/index";
+import { fetchUdfLayout } from "./client/udf";
 import { QMETRY_DEFAULTS, QMetryToolsHandlers } from "./config/constants";
 
 const ConfigurationSchema = z.object({
@@ -196,6 +202,258 @@ export class QmetryClient implements Client {
 
               // Also persist numeric project context from this project info response
               this.persistProjectContext(projectInfo);
+            }
+          }
+
+          // UDF preflight for CREATE_TEST_CASE:
+          // Auto-apply defaultValues, auto-set testCaseState, surface missing mandatory UDF fields,
+          // and normalize DATETIMEPICKER values to the project's configured date format.
+          // This removes the requirement for the LLM to pre-call Fetch UDF Layout.
+          if (tool.handler === QMetryToolsHandlers.CREATE_TEST_CASE) {
+            try {
+              const [layout, projectInfoForDate] = await Promise.all([
+                fetchUdfLayout(this.getToken(), baseUrl, projectKey, {
+                  entityType: "TC",
+                  pageName: "ADD",
+                  ...(this.projectNumericId !== undefined
+                    ? { scopeId: this.projectNumericId }
+                    : {}),
+                  ...(this.orgCode !== undefined
+                    ? { orgCode: this.orgCode }
+                    : {}),
+                }),
+                getProjectInfo(this.getToken(), baseUrl, projectKey),
+              ]);
+
+              const defaults = layout.defaultValues ?? {};
+              if (!a.udfFields) a.udfFields = {};
+
+              // Apply UDF defaults for any field the LLM did not provide
+              for (const [fieldName, defVal] of Object.entries(defaults)) {
+                if (!(fieldName in a.udfFields) && !(fieldName in a)) {
+                  a.udfFields[fieldName] = defVal;
+                }
+              }
+
+              // Normalize DATETIMEPICKER fields to project's configured date format
+              const targetDateFormat =
+                resolveProjectDateFormat(projectInfoForDate);
+              const datetimePickers = extractDatetimePickerFieldNames(layout);
+              normalizeDateFieldsInArgs(a, datetimePickers, targetDateFormat);
+
+              // Auto-apply testCaseState default (first non-archived state)
+              if (!a.testCaseState) {
+                const stateOptions =
+                  (layout.listOptions as Record<string, any[]>)
+                    ?.testCaseState ?? [];
+                const firstActive = stateOptions.find(
+                  (s: any) => !s.isArchived,
+                );
+                if (firstActive) a.testCaseState = firstActive.id;
+              }
+
+              // Identify mandatory UDF fields still missing (no value, no default)
+              const missingMandatory: Array<{
+                name: string;
+                label: string;
+                fieldType: string;
+              }> = [];
+              for (const field of layout.fields ?? []) {
+                if (field.isMandatory) {
+                  const inUdfFields = field.name in a.udfFields;
+                  const inArgs = field.name in a;
+                  const hasDefault = field.name in defaults;
+                  if (!inUdfFields && !inArgs && !hasDefault) {
+                    missingMandatory.push({
+                      name: field.name,
+                      label: field.label,
+                      fieldType: field.fieldTypeName,
+                    });
+                  }
+                }
+              }
+
+              if (missingMandatory.length > 0) {
+                return {
+                  content: [
+                    {
+                      success: false,
+                      type: "text",
+                      text: JSON.stringify(
+                        {
+                          success: false,
+                          code: "PREFLIGHT.MANDATORY_UDF_MISSING",
+                          message: `Cannot create test case. The following mandatory UDF fields have no value and no configured default: ${missingMandatory.map((f) => `${f.label} (${f.fieldType})`).join(", ")}. Ask the user to provide values for these fields, then retry.`,
+                          missingFields: missingMandatory,
+                        },
+                        null,
+                        2,
+                      ),
+                    },
+                  ],
+                };
+              }
+            } catch {
+              // Preflight is best-effort — proceed without it if layout fetch fails
+            }
+          }
+
+          // UDF preflight for CREATE_TEST_SUITE: mirrors TC logic — auto-apply defaultValues,
+          // auto-set testSuiteState, surface missing mandatory UDF fields, normalize dates.
+          if (tool.handler === QMetryToolsHandlers.CREATE_TEST_SUITE) {
+            try {
+              const [layout, projectInfoForDate] = await Promise.all([
+                fetchUdfLayout(this.getToken(), baseUrl, projectKey, {
+                  entityType: "TS",
+                  pageName: "ADD",
+                  ...(this.projectNumericId !== undefined
+                    ? { scopeId: this.projectNumericId }
+                    : {}),
+                  ...(this.orgCode !== undefined
+                    ? { orgCode: this.orgCode }
+                    : {}),
+                }),
+                getProjectInfo(this.getToken(), baseUrl, projectKey),
+              ]);
+
+              const defaults = layout.defaultValues ?? {};
+              if (!a.udfFields) a.udfFields = {};
+
+              // Apply UDF defaults for any field the LLM did not provide
+              for (const [fieldName, defVal] of Object.entries(defaults)) {
+                if (!(fieldName in a.udfFields) && !(fieldName in a)) {
+                  a.udfFields[fieldName] = defVal;
+                }
+              }
+
+              // Normalize DATETIMEPICKER fields to project's configured date format
+              const targetDateFormat =
+                resolveProjectDateFormat(projectInfoForDate);
+              const datetimePickers = extractDatetimePickerFieldNames(layout);
+              normalizeDateFieldsInArgs(a, datetimePickers, targetDateFormat);
+
+              // Auto-apply testSuiteState default (first non-archived state)
+              if (!a.testSuiteState) {
+                const stateOptions =
+                  (layout.listOptions as Record<string, any[]>)
+                    ?.testSuiteState ?? [];
+                const firstActive = stateOptions.find(
+                  (s: any) => !s.isArchived,
+                );
+                if (firstActive) a.testSuiteState = firstActive.id;
+              }
+
+              // Surface mandatory UDF fields that have no value and no configured default
+              const missingMandatory: Array<{
+                name: string;
+                label: string;
+                fieldType: string;
+              }> = [];
+              for (const field of layout.fields ?? []) {
+                if (field.isMandatory) {
+                  const inUdfFields = field.name in a.udfFields;
+                  const inArgs = field.name in a;
+                  const hasDefault = field.name in defaults;
+                  if (!inUdfFields && !inArgs && !hasDefault) {
+                    missingMandatory.push({
+                      name: field.name,
+                      label: field.label,
+                      fieldType: field.fieldTypeName,
+                    });
+                  }
+                }
+              }
+
+              // Surface mandatory system fields that have no value
+              const TS_SYSTEM_FIELD_TO_ARG: Record<string, string> = {
+                name: "name",
+                associatedReleasesCycles: "releaseCycleMapping",
+                testsuiteOwner: "testsuiteOwner",
+                testSuiteState: "testSuiteState",
+                description: "description",
+              };
+              for (const sysField of layout.systemFields ?? []) {
+                if (!sysField.isMandatory) continue;
+                // 'name' is required by the tool schema — always present
+                if (sysField.name === "name") continue;
+                // 'testSuiteState' is auto-applied from stateOptions above
+                if (sysField.name === "testSuiteState" && a.testSuiteState)
+                  continue;
+                const argKey =
+                  TS_SYSTEM_FIELD_TO_ARG[sysField.name] ?? sysField.name;
+                const val = (a as any)[argKey];
+                const hasVal = Array.isArray(val)
+                  ? val.length > 0
+                  : val != null && val !== "";
+                if (!hasVal) {
+                  missingMandatory.push({
+                    name: sysField.name,
+                    label: sysField.label,
+                    fieldType: sysField.fieldTypeName,
+                  });
+                }
+              }
+
+              if (missingMandatory.length > 0) {
+                return {
+                  content: [
+                    {
+                      success: false,
+                      type: "text",
+                      text: JSON.stringify(
+                        {
+                          success: false,
+                          code: "PREFLIGHT.MANDATORY_FIELDS_MISSING",
+                          message: `Cannot create test suite. The following mandatory fields have no value and no configured default: ${missingMandatory.map((f) => `${f.label} (${f.fieldType})`).join(", ")}. Ask the user to provide values for these fields, then retry.`,
+                          missingFields: missingMandatory,
+                        },
+                        null,
+                        2,
+                      ),
+                    },
+                  ],
+                };
+              }
+            } catch {
+              // Preflight is best-effort — proceed without it if layout fetch fails
+            }
+          }
+
+          // Date normalization preflight for all other UDF-enabled create/update handlers.
+          // Fetches project date format config + UDF layout to normalize DATETIMEPICKER fields
+          // regardless of what format the user or LLM supplied.
+          // Note: CREATE_TEST_SUITE is excluded — its full preflight above already handles dates.
+          const UDF_DATE_PREFLIGHT_ENTITY_MAP: Partial<
+            Record<string, "TC" | "TS" | "IS">
+          > = {
+            [QMetryToolsHandlers.UPDATE_TEST_CASE]: "TC",
+            [QMetryToolsHandlers.UPDATE_TEST_SUITE]: "TS",
+            [QMetryToolsHandlers.CREATE_ISSUE]: "IS",
+            [QMetryToolsHandlers.UPDATE_ISSUE]: "IS",
+          };
+          const entityTypeForDate = UDF_DATE_PREFLIGHT_ENTITY_MAP[tool.handler];
+          if (entityTypeForDate) {
+            try {
+              const [dateLayout, dateProjectInfo] = await Promise.all([
+                fetchUdfLayout(this.getToken(), baseUrl, projectKey, {
+                  entityType: entityTypeForDate,
+                  pageName: "ADD",
+                  ...(this.projectNumericId !== undefined
+                    ? { scopeId: this.projectNumericId }
+                    : {}),
+                  ...(this.orgCode !== undefined
+                    ? { orgCode: this.orgCode }
+                    : {}),
+                }),
+                getProjectInfo(this.getToken(), baseUrl, projectKey),
+              ]);
+              const targetDateFormat =
+                resolveProjectDateFormat(dateProjectInfo);
+              const datetimePickers =
+                extractDatetimePickerFieldNames(dateLayout);
+              normalizeDateFieldsInArgs(a, datetimePickers, targetDateFormat);
+            } catch {
+              // Best-effort — proceed without normalization if preflight fails
             }
           }
 

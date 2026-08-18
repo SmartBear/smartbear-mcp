@@ -403,9 +403,24 @@ export async function fetchUdfLayout(
 
   const pageName = payload.pageName ?? "ADD";
 
+  // screenname per entity type, confirmed from browser network calls
+  const ENTITY_SCREEN: Record<string, string> = {
+    TC: "TESTCASE",
+    IS: "ISSUE",
+    // TS: no screenname header sent by browser
+  };
+  const extraHeaders: Record<string, string> = { action: "udf-view" };
+  if (ENTITY_SCREEN[payload.entityType]) {
+    extraHeaders.screenname = ENTITY_SCREEN[payload.entityType];
+  }
+
   const raw = await qmetryRequest<{
     qmUDF?: Record<string, Record<string, any>>;
     qmTCSUDF?: { TCS?: Record<string, any> };
+    qmSDF?: Record<string, Record<string, any>>;
+    qmDefaultValue?: Record<string, Record<string, any>>;
+    qmTCSDefaultValue?: { TCS?: Record<string, any> };
+    tcSteps?: Array<any>;
     gis?: {
       customList?: Record<
         string,
@@ -421,28 +436,58 @@ export async function fetchUdfLayout(
     body: { entityType: payload.entityType, pageName },
     scopeId: payload.scopeId,
     orgCode: payload.orgCode,
+    extraHeaders,
   });
 
+  // UDF fields — allowBlank=false means the field is mandatory
   const entityUdfMap = raw.qmUDF?.[payload.entityType] ?? {};
   const fields = Object.values(entityUdfMap).map((def: any) => ({
     name: def.name as string,
     label: def.label ?? (def.fieldLabel as string) ?? def.name,
     fieldTypeName: def.fieldTypeName as string,
     fieldID: (def.projectUserFieldID ?? def.fieldID ?? null) as number | null,
-    isMandatory: (def.isMandatory ?? false) as boolean,
+    isMandatory: (def.allowBlank === false) as boolean,
     ...(def.qmListName ? { listName: def.qmListName as string } : {}),
   }));
 
-  // TC-only: step UDF definitions live in qmTCSUDF.TCS
+  // TC-only: step UDF definitions live in qmTCSUDF.TCS — allowBlank=false means mandatory
   const stepUdfMap = raw.qmTCSUDF?.TCS ?? {};
   const stepFields = Object.values(stepUdfMap).map((def: any) => ({
     name: def.name as string,
     label: def.label ?? (def.fieldLabel as string) ?? def.name,
     fieldTypeName: def.fieldTypeName as string,
     fieldID: (def.projectUserFieldID ?? def.fieldID ?? null) as number | null,
-    isMandatory: (def.isMandatory ?? false) as boolean,
+    isMandatory: (def.allowBlank === false) as boolean,
     ...(def.qmListName ? { listName: def.qmListName as string } : {}),
   }));
+
+  // System fields (SDF) — allowBlank=false means the field is mandatory
+  const sdfMap = raw.qmSDF?.[payload.entityType] ?? {};
+  const systemFields = Object.values(sdfMap).map((def: any) => ({
+    name: def.name as string,
+    label: (def.fieldLabel as string) ?? def.name,
+    fieldTypeName: def.fieldTypeName as string,
+    isMandatory: (def.allowBlank === false) as boolean,
+  }));
+
+  // Default values that QMetry pre-fills: { fieldName: defaultValueId }
+  const defaultValues: Record<string, any> =
+    raw.qmDefaultValue?.[payload.entityType] ?? {};
+
+  // TC-only: step system fields from tcSteps — mandatory=true means the field is required
+  const stepSystemFields =
+    payload.entityType === "TC"
+      ? (raw.tcSteps ?? []).map((f: any) => ({
+          name: f.name as string,
+          label: f.label as string,
+          fieldTypeName: f.fieldType as string,
+          isMandatory: (f.mandatory === true) as boolean,
+        }))
+      : [];
+
+  // TC-only: step UDF default values
+  const stepDefaultValues: Record<string, any> =
+    payload.entityType === "TC" ? (raw.qmTCSDefaultValue?.TCS ?? {}) : {};
 
   let listOptions = raw.gis?.customList ?? {};
 
@@ -497,12 +542,31 @@ export async function fetchUdfLayout(
         "Also pass the same values flat via udfFields param. " +
         "For LOOKUPLIST/MULTILOOKUPLIST/CASCADINGLIST: use IDs from 'listOptions[listName]'.";
 
+  // Surface diagnostic info when expected data is missing — helps detect QMetry API gaps
+  const diagnostics: Record<string, string> = {};
+  if (systemFields.length === 0) {
+    diagnostics._systemFields_note =
+      "QMetry API returned no system field definitions (qmSDF missing or empty). " +
+      "Treat 'name' (Summary) and 'testCaseState' (Status) as always mandatory. " +
+      "Use customListObjs.testCaseState from project info for Status options.";
+  }
+  if (Object.keys(defaultValues).length === 0) {
+    diagnostics._defaultValues_note =
+      "QMetry API returned no default values (qmDefaultValue missing or empty). " +
+      "Cannot auto-apply defaults — ask user for mandatory fields that have no value.";
+  }
+
   return {
     entityType: payload.entityType,
     pageName,
     fields,
-    ...(payload.entityType === "TC" ? { stepFields } : {}),
+    systemFields,
+    defaultValues,
+    ...(payload.entityType === "TC"
+      ? { stepFields, stepSystemFields, stepDefaultValues }
+      : {}),
     listOptions,
+    ...diagnostics,
     _note: updateNote,
   };
 }

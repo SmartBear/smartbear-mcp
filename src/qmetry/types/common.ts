@@ -975,11 +975,33 @@ export const CreateTestSuiteArgsSchema = z.object({
   releaseCycleMapping: z
     .array(
       z.object({
-        buildID: z.number(),
-        releaseId: z.number(),
+        releaseId: z
+          .number()
+          .describe(
+            "Release numeric ID. " +
+              "CRITICAL: key is 'releaseId' (lowercase d) — do NOT use 'releaseID', 'release', or 'releaseKey'. " +
+              "Get from project info → projects[<index>].releases[<index>].releaseID. " +
+              "NEVER use the TC mapping key 'release' here — test suite mapping uses 'releaseId'.",
+          ),
+        buildID: z
+          .number()
+          .describe(
+            "Cycle/Build numeric ID. " +
+              "CRITICAL: key is 'buildID' (capital D) — do NOT use 'cycleId', 'cycle', 'buildId', or 'cycleID'. " +
+              "Get from project info → projects[<index>].releases[<index>].builds[<index>].buildID. " +
+              "NEVER use the TC mapping key 'cycle' here — test suite mapping uses 'buildID'.",
+          ),
       }),
     )
-    .optional(),
+    .optional()
+    .describe(
+      "Release/cycle association for the test suite. " +
+        "CRITICAL SHAPE DIFFERENCE vs Test Case mapping: " +
+        "  Test Suite uses: { releaseId: number, buildID: number } " +
+        "  Test Case uses:  { release: number, cycle: number[], version: number } — DO NOT use TC shape here. " +
+        "Set associateRelCyc=true when providing this array. " +
+        "Example: [{ releaseId: 92112, buildID: 130831 }]",
+    ),
   udfFields: UdfFieldsSchema,
 });
 
@@ -1197,6 +1219,20 @@ export const CreateIssueArgsSchema = z.object({
     .optional()
     .describe(
       "Test Case Run ID to link this defect/issue to a test execution (optional)",
+    ),
+  environment: z
+    .string()
+    .optional()
+    .describe(
+      "Environment where the issue was found (e.g. 'Chrome', 'Firefox', 'Production'). Free-text string — no ID lookup needed.",
+    ),
+  issueState: z
+    .number()
+    .optional()
+    .describe(
+      "Issue status ID. Optional by default — QMetry allows admins to make this mandatory at the project level. " +
+        "Get valid IDs from project info → customListObjs.issueState[index].id. " +
+        "Common values: Open, Reopened, Resolved, Closed.",
     ),
   udfFields: UdfFieldsSchema,
 });

@@ -302,7 +302,7 @@ describe("UDF API clients", () => {
             label: "Dropdown Field",
             fieldTypeName: "LOOKUPLIST",
             projectUserFieldID: 1002,
-            isMandatory: true,
+            allowBlank: false,
             qmListName: "myList",
           },
         },
