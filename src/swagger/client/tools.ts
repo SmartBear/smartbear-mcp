@@ -336,7 +336,7 @@ export const TOOLS: SwaggerToolParams[] = [
     title: "Patch API",
     toolset: "Registry API",
     summary:
-      "Apply targeted search/replace edits to a YAML API definition in SwaggerHub Registry. Each edit's 'oldString' must be copied exactly from swagger_get_api_definition with format:'text'. JSON definitions are not supported. Nothing is saved unless every edit applies — failed edits are returned with 'no_match' or 'ambiguous' status. Use this tool to fix specific issues in an existing API without regenerating the whole definition.",
+      "Apply targeted search/replace edits to a YAML API definition in SwaggerHub Registry. Only OpenAPI and AsyncAPI definitions are supported. Each edit's 'oldString' must be copied exactly from swagger_get_api_definition with format:'text'. JSON definitions are not supported. Nothing is saved unless every edit applies — failed edits are returned with 'no_match' or 'ambiguous' status. When 'newVersion' is given the patched definition is saved as a new private version; patching in place keeps the visibility of the existing version. Use this tool to fix specific issues in an existing API without regenerating the whole definition.",
     inputSchema: PatchApiParamsSchema,
     outputSchema: PatchApiOutputSchema,
     handler: "patchApi",

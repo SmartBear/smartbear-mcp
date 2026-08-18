@@ -173,7 +173,7 @@ export const PatchApiParamsSchema = z.object({
     .string()
     .optional()
     .describe(
-      "Version to save the patched definition as (e.g. '1.0.1'). Must not already exist. Omit to overwrite the base version. The definition's info.version is updated automatically — do not add an edit for it.",
+      "Version to save the patched definition as (e.g. '1.0.1'). Must not already exist and is always created as private. Omit to overwrite the base version, which keeps its current visibility. The definition's info.version is updated automatically — do not add an edit for it.",
     ),
   edits: z
     .array(PatchApiEditSchema)

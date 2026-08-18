@@ -1538,7 +1538,7 @@ describe("SwaggerAPI", () => {
       );
       expect(fetchMock).toHaveBeenNthCalledWith(
         3,
-        `${DUMMY_REGISTRY_BASE_PATH}/apis/orgname/petstore?isPrivate=true`,
+        `${DUMMY_REGISTRY_BASE_PATH}/apis/orgname/petstore?version=1.0.1&isPrivate=true`,
         expect.objectContaining({ method: "POST" }),
       );
 
@@ -1588,6 +1588,13 @@ describe("SwaggerAPI", () => {
         `${DUMMY_REGISTRY_BASE_PATH}/apis/orgname/petstore/1.0.0`,
         expect.objectContaining({ method: "GET" }),
       );
+      // Visibility must not be sent for an in-place patch, otherwise the
+      // existing version could silently change visibility.
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        2,
+        `${DUMMY_REGISTRY_BASE_PATH}/apis/orgname/petstore?version=1.0.0`,
+        expect.objectContaining({ method: "POST" }),
+      );
       expect(result.saved).toBe(true);
       expect(result.version).toBe("1.0.0");
     });
@@ -1625,6 +1632,48 @@ describe("SwaggerAPI", () => {
         },
       ]);
       expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+
+    it("patches an AsyncAPI definition", async () => {
+      const asyncapiDefinition = [
+        "asyncapi: 3.0.0",
+        "info:",
+        "  title: Events",
+        "  version: 1.0.0",
+        "channels:",
+        "  pets:",
+        "    address: pets",
+      ].join("\n");
+
+      fetchMock
+        .mockResponseOnce(asyncapiDefinition)
+        .mockResponseOnce("", { headers: { "X-Version": "1.0.0" } });
+
+      const result = await api.patchApi({
+        owner,
+        apiName,
+        version: "1.0.0",
+        edits: [
+          { oldString: "title: Events", replaceString: "title: Pet Events" },
+        ],
+      });
+
+      expect(result.saved).toBe(true);
+    });
+
+    it("rejects a definition that is neither OpenAPI nor AsyncAPI", async () => {
+      fetchMock.mockResponseOnce("foo: bar\nbaz: 1");
+
+      await expect(
+        api.patchApi({
+          owner,
+          apiName,
+          version: "1.0.0",
+          edits: [{ oldString: "foo: bar", replaceString: "foo: baz" }],
+        }),
+      ).rejects.toThrow(/invalid format/i);
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
     });
   });
 });
