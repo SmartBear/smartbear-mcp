@@ -35,8 +35,8 @@ export async function createIssue(
   const { udfFields, ...restPayload } = payload as any;
   const body: CreateIssuePayload = {
     ...DEFAULT_CREATE_ISSUE_PAYLOAD,
-    ...restPayload,
     ...(udfFields ?? {}),
+    ...restPayload,
   };
 
   if (typeof body.issueType !== "number") {
@@ -145,8 +145,8 @@ export async function updateIssue(
   const { udfFields, ...restPayload } = payload as any;
   const body: UpdateIssuePayload = {
     ...DEFAULT_UPDATE_ISSUE_PAYLOAD,
-    ...restPayload,
     ...(udfFields ?? {}),
+    ...restPayload,
   };
 
   if (typeof body.DefectId !== "number") {

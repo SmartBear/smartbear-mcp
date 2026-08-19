@@ -41,8 +41,8 @@ export async function createTestCases(
   const { udfFields, ...restPayload } = payload as any;
   const body: CreateTestCasesPayload = {
     ...DEFAULT_CREATE_TESTCASES_PAYLOAD,
-    ...restPayload,
     ...(udfFields ?? {}),
+    ...restPayload,
   };
 
   if (typeof body.tcFolderID !== "string") {
@@ -84,8 +84,8 @@ export async function updateTestCase(
   const { udfFields, ...restPayload } = payload as any;
   const body: UpdateTestCasesPayload = {
     ...DEFAULT_UPDATE_TESTCASES_PAYLOAD,
-    ...restPayload,
     ...(udfFields ?? {}),
+    ...restPayload,
   };
 
   if (typeof body.tcID !== "number") {
