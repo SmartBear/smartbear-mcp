@@ -46,6 +46,8 @@ import {
   CreateApiFromPromptParamsSchema,
   CreateApiOutputSchema,
   CreateApiParamsSchema,
+  PatchApiOutputSchema,
+  PatchApiParamsSchema,
   ScanApiStandardizationFromRegistryParamsSchema,
   ScanFromRegistryOutputSchema,
   ScanOutputSchema,
@@ -257,7 +259,7 @@ export const TOOLS: SwaggerToolParams[] = [
     title: "Get API Definition",
     toolset: "Registry API",
     summary:
-      "Fetch resolved API definition from SwaggerHub Registry based on owner, API name, and version.",
+      "Fetch resolved API definition from SwaggerHub Registry based on owner, API name, and version. By default returns the definition as JSON (converting YAML-stored definitions to JSON). Set format:'text' to get the YAML definition — required as the source for swagger_patch_api edits.",
     inputSchema: ApiDefinitionParamsSchema,
     outputSchema: ApiDefinitionOutputSchema,
     formatResponse: (result: unknown) => ({
@@ -329,6 +331,16 @@ export const TOOLS: SwaggerToolParams[] = [
     handler: "standardizeApi",
     ...WRITE_DESTRUCTIVE,
     openWorld: true,
+  },
+  {
+    title: "Patch API",
+    toolset: "Registry API",
+    summary:
+      "Apply targeted search/replace edits to a YAML API definition in SwaggerHub Registry. Only OpenAPI and AsyncAPI definitions are supported. Each edit's 'oldString' must be copied exactly from swagger_get_api_definition with format:'text' and without 'resolved' or 'flatten' — those options transform the definition, so edits based on them will not match the stored source. JSON definitions are not supported. Nothing is saved unless every edit applies — failed edits are returned with 'no_match' or 'ambiguous' status. When 'newVersion' is given the patched definition is saved as a new private version; patching in place keeps the visibility of the existing version. Use this tool to fix specific issues in an existing API without regenerating the whole definition.",
+    inputSchema: PatchApiParamsSchema,
+    outputSchema: PatchApiOutputSchema,
+    handler: "patchApi",
+    ...WRITE_DESTRUCTIVE,
   },
 
   ...FUNCTIONAL_TESTING_TOOLS,

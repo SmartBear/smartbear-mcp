@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
 import { FunctionalTestingAPI } from "../client/functional-testing-api";
-import { CreateFunctionalTestingSuiteParamsSchema } from "../client/functional-testing-types";
+import {
+  CreateFunctionalTestingSuiteParamsSchema,
+  CreateFunctionalTestingTestParamsSchema,
+} from "../client/functional-testing-types";
 
 const fetchMock = createFetchMock(vi);
 fetchMock.enableMocks();
@@ -193,6 +196,146 @@ describe("FunctionalTestingAPI", () => {
       await expect(api.createTest({ name: "My New Test" })).rejects.toThrow(
         UNREACHABLE_MESSAGE,
       );
+    });
+
+    it("should forward assertions.statusCodes on a step", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
+
+      await api.createTest({
+        name: "Status Code Test",
+        steps: [
+          {
+            url: "https://example.com/api",
+            httpMethod: "GET",
+            assertions: { statusCodes: [{ start: 200, end: 299 }] },
+          },
+        ],
+      });
+
+      const [, init] = fetchMock.mock.calls[0];
+      const body = JSON.parse((init as RequestInit).body as string);
+      expect(body.steps[0].assertions.statusCodes).toEqual([
+        { start: 200, end: 299 },
+      ]);
+    });
+
+    it("forwards assertions.bodyRules paths in bracket notation", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
+
+      const args = CreateFunctionalTestingTestParamsSchema.parse({
+        name: "Body Rule Test",
+        steps: [
+          {
+            url: "https://example.com/api",
+            httpMethod: "POST",
+            assertions: {
+              bodyRules: [
+                {
+                  path: '["data"]["name"]',
+                  assertionType: "string",
+                  operator: "eq",
+                  target: "Alice",
+                },
+                {
+                  path: '["data"]["token"]',
+                  assertionType: "regex",
+                  pattern: "nonempty",
+                },
+              ],
+            },
+          },
+        ],
+      });
+
+      await api.createTest(args);
+
+      const [, init] = fetchMock.mock.calls[0];
+      const body = JSON.parse((init as RequestInit).body as string);
+      expect(body.steps[0].assertions.bodyRules).toEqual([
+        {
+          path: '["data"]["name"]',
+          assertionType: "string",
+          operator: "eq",
+          target: "Alice",
+        },
+        {
+          path: '["data"]["token"]',
+          assertionType: "regex",
+          pattern: "nonempty",
+        },
+      ]);
+    });
+
+    it("should forward assertions.bodyType on a step", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
+
+      await api.createTest({
+        name: "Body Type Test",
+        steps: [
+          {
+            url: "https://example.com/api",
+            httpMethod: "GET",
+            assertions: {
+              bodyType: "xml",
+              bodyRules: [
+                {
+                  path: '["root"]["item"]',
+                  assertionType: "string",
+                  operator: "contains",
+                  target: "foo",
+                },
+              ],
+            },
+          },
+        ],
+      });
+
+      const [, init] = fetchMock.mock.calls[0];
+      const body = JSON.parse((init as RequestInit).body as string);
+      expect(body.steps[0].assertions.bodyType).toBe("xml");
+    });
+
+    it("should forward status codes, body, bodyType and bodyRules under assertions", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
+
+      await api.createTest({
+        name: "Nested Assertion Test",
+        steps: [
+          {
+            url: "https://example.com/api",
+            httpMethod: "POST",
+            assertions: {
+              statusCodes: [{ start: 200, end: 299 }],
+              body: '{"name":"doggie"}',
+              bodyType: "json",
+              bodyRules: [
+                {
+                  path: '["category"]["name"]',
+                  assertionType: "string",
+                  operator: "eq",
+                  target: "Dogs",
+                },
+              ],
+            },
+          },
+        ],
+      });
+
+      const [, init] = fetchMock.mock.calls[0];
+      const body = JSON.parse((init as RequestInit).body as string);
+      expect(body.steps[0].assertions).toEqual({
+        statusCodes: [{ start: 200, end: 299 }],
+        body: '{"name":"doggie"}',
+        bodyType: "json",
+        bodyRules: [
+          {
+            path: '["category"]["name"]',
+            assertionType: "string",
+            operator: "eq",
+            target: "Dogs",
+          },
+        ],
+      });
     });
   });
 

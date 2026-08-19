@@ -48,6 +48,8 @@ import {
   type GetDocumentArgs,
   type GetProductSectionsArgs,
   type GetTableOfContentsArgs,
+  type PatchApiParams,
+  type PatchApiResponse,
   type Portal,
   type PortalsListResponse,
   type Product,
@@ -324,7 +326,8 @@ export class SwaggerClient implements Client {
   async getApiDefinition(
     args: ApiDefinitionParams,
   ): Promise<unknown | FallbackResponse> {
-    return this.getApi().getApiDefinition(args);
+    const accept = args.format === "text" ? "text/plain" : "application/json";
+    return this.getApi().getApiDefinition(args, { accept });
   }
 
   async createOrUpdateApi(
@@ -362,6 +365,10 @@ export class SwaggerClient implements Client {
     args: StandardizeApiParams,
   ): Promise<StandardizeApiResponse | FallbackResponse> {
     return this.getApi().standardizeApi(args);
+  }
+
+  async patchApi(args: PatchApiParams): Promise<PatchApiResponse> {
+    return this.getApi().patchApi(args);
   }
 
   // Functional Testing methods
