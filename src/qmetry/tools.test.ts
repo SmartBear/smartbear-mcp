@@ -12,6 +12,7 @@ vi.mock("./client/testcase");
 vi.mock("./client/requirement");
 vi.mock("./client/issues");
 vi.mock("./client/testsuite");
+vi.mock("./client/udf");
 
 // Helper to create and configure a client
 async function createConfiguredClient(
