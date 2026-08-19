@@ -10,12 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - [Swagger] Added `patch_api` Registry tool that applies targeted search/replace edits to a YAML API definition and saves the result as a new version or in place. Edits are atomic - nothing is saved unless every edit applies - and failed edits are reported with `no_match`/`ambiguous` details so the caller can correct them.
+- [Swagger] Extended the `create_test` Functional Testing tool's steps with assertion support via a step-level `assertions` object: `statusCodes` for HTTP status code ranges, and `body`/`bodyType`/`bodyRules` for asserting on response body fields.
 
 ### Changed
 
 - [Swagger] `get_api_definition` tool: added a `format` parameter - `json` (default) may convert YAML to JSON, `text` returns the definition as YAML, which is the required source for `patch_api` edits.
 - [Swagger] Improved error handling on Swagger Functional Testing, providing more information when requests to the upstream API fail
-- [Swagger] Extended the `create_test` Functional Testing tool's steps with assertion support via a step-level `assertions` object: `statusCodes` for HTTP status code ranges, and `body`/`bodyType`/`bodyRules` for asserting on response body fields.
 
 ## [0.36.0] - 2026-08-18
 
