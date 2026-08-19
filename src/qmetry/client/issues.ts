@@ -14,6 +14,7 @@ import {
   type UpdateIssuePayload,
 } from "../types/issues";
 import { qmetryRequest } from "./api/client-api";
+import { fetchUdfLayout } from "./udf";
 import { resolveDefaults } from "./utils";
 
 /**
@@ -31,9 +32,11 @@ export async function createIssue(
     project,
   );
 
+  const { udfFields, ...restPayload } = payload as any;
   const body: CreateIssuePayload = {
     ...DEFAULT_CREATE_ISSUE_PAYLOAD,
-    ...payload,
+    ...(udfFields ?? {}),
+    ...restPayload,
   };
 
   if (typeof body.issueType !== "number") {
@@ -50,6 +53,68 @@ export async function createIssue(
     throw new Error(
       "[createIssue] Missing or invalid required parameter: 'summary'.",
     );
+  }
+
+  // Pre-flight: fetch UDF layout to (1) auto-apply defaults and (2) validate mandatory fields.
+  try {
+    const layout = await fetchUdfLayout(
+      token,
+      resolvedBaseUrl,
+      resolvedProject,
+      {
+        entityType: "IS",
+        pageName: "ADD",
+      },
+    );
+
+    const systemFieldTypeMap: Record<string, string> = Object.fromEntries(
+      layout.systemFields.map((f: any) => [f.name, f.fieldTypeName]),
+    );
+    const systemFieldNames = new Set(Object.keys(systemFieldTypeMap));
+
+    // Step 1: auto-apply defaults for any field not already set in the payload.
+    // System MULTILOOKUPLIST defaults come as a single ID — wrap in array.
+    for (const [fieldName, defaultValue] of Object.entries(
+      layout.defaultValues,
+    )) {
+      if (body[fieldName] !== undefined && body[fieldName] !== null) continue;
+      if (
+        systemFieldNames.has(fieldName) &&
+        systemFieldTypeMap[fieldName] === "MULTILOOKUPLIST" &&
+        typeof defaultValue === "number"
+      ) {
+        body[fieldName] = [defaultValue];
+      } else {
+        body[fieldName] = defaultValue;
+      }
+    }
+
+    // Step 2: validate all mandatory fields (system + UDF) are present after defaults applied.
+    const missing: string[] = [];
+    const allMandatory = [
+      ...layout.systemFields.filter((f: any) => f.isMandatory),
+      ...layout.fields.filter((f: any) => f.isMandatory),
+    ];
+    for (const field of allMandatory) {
+      const val = body[field.name];
+      const absent =
+        val === undefined ||
+        val === null ||
+        val === "" ||
+        (Array.isArray(val) && val.length === 0);
+      if (absent) {
+        missing.push(field.label ?? field.name);
+      }
+    }
+    if (missing.length > 0) {
+      throw new Error(
+        `[createIssue] Missing mandatory fields: ${missing.join(", ")}. ` +
+          "Provide values for these fields before creating the issue.",
+      );
+    }
+  } catch (err: any) {
+    // Re-throw our own mandatory-field errors; swallow layout-fetch failures.
+    if (err?.message?.startsWith("[createIssue]")) throw err;
   }
 
   return qmetryRequest<unknown>({
@@ -77,9 +142,11 @@ export async function updateIssue(
     project,
   );
 
+  const { udfFields, ...restPayload } = payload as any;
   const body: UpdateIssuePayload = {
     ...DEFAULT_UPDATE_ISSUE_PAYLOAD,
-    ...payload,
+    ...(udfFields ?? {}),
+    ...restPayload,
   };
 
   if (typeof body.DefectId !== "number") {
@@ -235,9 +302,11 @@ export async function fetchIssueExecutions(
 
   // Fetch UDF metadata once — field definitions are project-wide and identical across all executions
   let fieldDefs: Record<string, any> = {};
+  let lookupOptions: Record<string, any[]> = {};
   try {
     const meta = await qmetryRequest<{
       qmUDF?: { TCR?: Record<string, any> };
+      qmUDFList?: Record<string, any[]>;
     }>({
       method: "POST",
       path: QMETRY_PATHS.UDF.TEST_RUN_UDF_METADATA,
@@ -251,6 +320,7 @@ export async function fetchIssueExecutions(
       },
     });
     fieldDefs = meta.qmUDF?.TCR ?? {};
+    lookupOptions = meta.qmUDFList ?? {};
   } catch {
     // metadata call is best-effort — proceed without enrichment
   }
@@ -261,10 +331,14 @@ export async function fetchIssueExecutions(
   const enrichedData = rows.map((row: any) => {
     let rawUdfs: Record<string, unknown> = {};
     if (row.udfjson) {
-      try {
-        rawUdfs = JSON.parse(row.udfjson);
-      } catch {
-        rawUdfs = {};
+      if (typeof row.udfjson === "string") {
+        try {
+          rawUdfs = JSON.parse(row.udfjson);
+        } catch {
+          rawUdfs = {};
+        }
+      } else {
+        rawUdfs = row.udfjson as Record<string, unknown>;
       }
     }
 
@@ -290,12 +364,46 @@ export async function fetchIssueExecutions(
             .replace(/\s+/g, " ")
             .trim();
         }
+        // Resolve uniqueLabel → display name for lookup fields
+        const listName = def.qmListName as string | undefined;
+        const options: any[] = listName ? (lookupOptions[listName] ?? []) : [];
+        let valueResolved = false;
+        if (options.length > 0) {
+          if (typeof value === "string") {
+            const match = options.find((o) => o.uniqueLabel === value);
+            if (match) {
+              value = match.name;
+              valueResolved = true;
+            }
+          } else if (Array.isArray(value)) {
+            let allResolved = true;
+            value = value.map((v) => {
+              const match = options.find((o) => o.uniqueLabel === v);
+              if (!match) allResolved = false;
+              return match ? match.name : v;
+            });
+            valueResolved = allResolved;
+          } else {
+            valueResolved = true;
+          }
+        }
+        const isLookupField = [
+          "LOOKUPLIST",
+          "MULTILOOKUPLIST",
+          "CASCADINGLIST",
+        ].includes(def.fieldTypeName ?? "");
         return {
           name: def.name as string,
           label: def.fieldLabel as string,
           fieldID: def.projectUserFieldID as number,
           fieldType: def.fieldTypeName as string,
           value,
+          ...(isLookupField && !valueResolved && value !== null
+            ? {
+                _rawValue: true,
+                _note: "Lookup options unavailable — value is raw internal ID.",
+              }
+            : {}),
         };
       });
     } else {
@@ -371,5 +479,46 @@ export async function linkIssuesToTestcaseRun(
     project: resolvedProject,
     baseUrl: resolvedBaseUrl,
     body,
+  });
+}
+
+/**
+ * Fetches full issue detail data including UDF values.
+ * @throws If `defectId` is missing/invalid.
+ */
+export async function fetchIssueDetails(
+  token: string,
+  baseUrl: string,
+  project: string | undefined,
+  payload: { defectId: number; scopeId?: number; orgCode?: string },
+) {
+  const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
+    baseUrl,
+    project,
+  );
+
+  if (typeof payload.defectId !== "number" || payload.defectId <= 0) {
+    throw new Error(
+      "[fetchIssueDetails] Missing or invalid required parameter: 'defectId'.",
+    );
+  }
+  const url = QMETRY_PATHS.ISSUES.GET_ISSUE_DETAIL + payload.defectId;
+  const extraHeaders: Record<string, string> = {
+    action: "detail",
+    screenname: "ISSUE",
+  };
+  if (typeof payload.scopeId === "number") {
+    extraHeaders["scope"] = String(payload.scopeId);
+  }
+  if (typeof payload.orgCode === "string") {
+    extraHeaders["orgcode"] = payload.orgCode;
+  }
+  return qmetryRequest<unknown>({
+    method: "GET",
+    path: url,
+    token,
+    project: resolvedProject,
+    baseUrl: resolvedBaseUrl,
+    extraHeaders,
   });
 }

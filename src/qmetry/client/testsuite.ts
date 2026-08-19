@@ -43,9 +43,11 @@ export async function createTestSuites(
     project,
   );
 
+  const { udfFields, ...restPayload } = payload as any;
   const body: CreateTestSuitePayload = {
     ...DEFAULT_CREATE_TESTSUITE_PAYLOAD,
-    ...payload,
+    ...(udfFields ?? {}),
+    ...restPayload,
   };
 
   if (typeof body.parentFolderId !== "string") {
@@ -84,9 +86,11 @@ export async function updateTestSuite(
     project,
   );
 
+  const { udfFields, ...restPayload } = payload as any;
   const body: UpdateTestSuitePayload = {
     ...DEFAULT_UPDATE_TESTSUITE_PAYLOAD,
-    ...payload,
+    ...(udfFields ?? {}),
+    ...restPayload,
   };
 
   if (typeof body.id !== "number") {
@@ -556,5 +560,37 @@ export async function bulkUpdateExecutionStatus(
     project: resolvedProject,
     baseUrl: resolvedBaseUrl,
     body,
+  });
+}
+
+/**
+ * Fetches test suite detail data including UDF values.
+ * @throws If `id` is missing/invalid.
+ */
+export async function fetchTestSuiteDetails(
+  token: string,
+  baseUrl: string,
+  project: string | undefined,
+  payload: { id: number; scope?: string },
+) {
+  const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
+    baseUrl,
+    project,
+  );
+
+  if (typeof payload.id !== "number" || payload.id <= 0) {
+    throw new Error(
+      "[fetchTestSuiteDetails] Missing or invalid required parameter: 'id'.",
+    );
+  }
+
+  return qmetryRequest<unknown>({
+    method: "POST",
+    path: QMETRY_PATHS.TESTSUITE.GET_TS_DETAIL,
+    token,
+    project: resolvedProject,
+    baseUrl: resolvedBaseUrl,
+    body: { scope: payload.scope ?? "project", id: payload.id },
+    extraHeaders: { action: "detail-tab", screenname: "TESTSUITE" },
   });
 }
