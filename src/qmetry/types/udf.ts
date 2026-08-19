@@ -28,12 +28,10 @@ export interface FetchUdfFieldTypesPayload {
 
 export const FetchUdfFieldTypesArgsSchema = z.object({
   projectKey: CommonFields.projectKey,
-  baseUrl: CommonFields.baseUrl,
 });
 
 export const FetchUdfModulesArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
 });
 
 export interface UdfFieldValue {
@@ -91,7 +89,7 @@ const UdfFieldValueSchema = z.object({
 
 export const BulkUpdateTestRunUdfsArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   tcRunIDs: z
     .array(z.number().int().positive())
     .min(1)
@@ -122,7 +120,6 @@ export interface FetchTestRunUdfMetadataPayload {
 
 export const FetchTestRunUdfMetadataArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
 });
 
 // ---------------------------------------------------------------------------
@@ -153,7 +150,7 @@ export interface FetchCascadeChildValuesPayload {
 
 export const FetchCascadeChildValuesArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   id: z
     .number()
     .int()
@@ -174,7 +171,7 @@ export const FetchCascadeChildValuesArgsSchema = z.object({
 
 export const FetchTestRunUdfValuesArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   tsrunID: z.coerce
     .string()
     .optional()

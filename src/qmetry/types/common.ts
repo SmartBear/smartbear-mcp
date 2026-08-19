@@ -5,7 +5,8 @@ import { QMETRY_DEFAULTS } from "../config/constants";
  * QMetry API Request Configuration
  *
  * IMPORTANT ARCHITECTURE NOTE:
- * - projectKey and baseUrl are TOOL-LEVEL parameters that get extracted before API calls
+ * - baseUrl is resolved from client configuration (env var / HTTP header), NOT from tool parameters
+ * - projectKey is a TOOL-LEVEL parameter that gets extracted before API calls
  * - They are sent as HTTP headers for authentication/routing, NOT in request bodies
  * - API payload types (like FetchTestCasesPayload) should exclude these parameters
  * - This separation prevents "Body is unusable" errors and follows proper API design
@@ -104,11 +105,6 @@ export const CommonFields = {
     .optional()
     .describe("Project key - unique identifier for the project")
     .default(QMETRY_DEFAULTS.PROJECT_KEY),
-  baseUrl: z
-    .string()
-    .url()
-    .optional()
-    .describe("The base URL for the QMetry instance (must be a valid URL)"),
   start: z
     .number()
     .optional()
@@ -377,7 +373,7 @@ export const CommonFields = {
 
 export const ProjectListArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   params: z.object({
     showArchive: z
       .boolean()
@@ -406,7 +402,7 @@ export const ReleasesCyclesArgsSchema = z.object({
 
 export const BuildArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   start: CommonFields.start,
   page: CommonFields.page,
   limit: CommonFields.limit,
@@ -415,7 +411,7 @@ export const BuildArgsSchema = z.object({
 
 export const PlatformArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   start: CommonFields.start,
   page: CommonFields.page,
   limit: CommonFields.limit,
@@ -431,7 +427,7 @@ export const PlatformArgsSchema = z.object({
 
 export const CreateReleaseArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   release: z.object({
     name: z.string().describe("Release name (required)"),
     description: z.string().optional().describe("Release description"),
@@ -472,7 +468,7 @@ export const CreateReleaseArgsSchema = z.object({
 
 export const CreateCycleArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   cycle: z.object({
     name: z.string().describe("Cycle name (required)"),
     startDate: z
@@ -501,7 +497,7 @@ export const CreateCycleArgsSchema = z.object({
 
 export const UpdateCycleArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   cycle: z.object({
     name: z.string().optional().describe("Cycle name (optional for update)"),
     startDate: z
@@ -592,7 +588,7 @@ export const CreateTestCaseArgsSchema = z.object({
 
 export const UpdateTestCaseArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   tcID: CommonFields.tcID,
   tcVersionID: CommonFields.tcVersionID,
   tcVersion: z
@@ -667,7 +663,7 @@ export const UpdateTestCaseArgsSchema = z.object({
 
 export const TestCaseListArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   viewId: CommonFields.tcViewId,
   folderPath: CommonFields.tcFolderPath,
   folderID: CommonFields.folderID,
@@ -687,7 +683,7 @@ export const TestCaseListArgsSchema = z.object({
 
 export const TestCaseDetailsArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   tcID: CommonFields.tcID,
   start: CommonFields.start,
   page: CommonFields.page,
@@ -696,7 +692,7 @@ export const TestCaseDetailsArgsSchema = z.object({
 
 export const TestCaseVersionDetailsArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   id: CommonFields.id,
   version: CommonFields.version,
   scope: CommonFields.scope,
@@ -704,7 +700,7 @@ export const TestCaseVersionDetailsArgsSchema = z.object({
 
 export const TestCaseStepsArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   id: CommonFields.id,
   version: CommonFields.versionOptional,
   start: CommonFields.start,
@@ -714,7 +710,7 @@ export const TestCaseStepsArgsSchema = z.object({
 
 export const TestCaseExecutionsArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   tcid: CommonFields.tcID,
   tcversion: CommonFields.versionOptional,
   start: CommonFields.start,
@@ -726,7 +722,7 @@ export const TestCaseExecutionsArgsSchema = z.object({
 
 export const RequirementListArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   viewId: CommonFields.rqViewId,
   folderPath: CommonFields.rqFolderPath,
   start: CommonFields.start,
@@ -760,14 +756,14 @@ export const RequirementListArgsSchema = z.object({
 
 export const RequirementDetailsArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   id: CommonFields.rqID,
   version: CommonFields.rqVersion,
 });
 
 export const RequirementsLinkedToTestCaseArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   tcID: CommonFields.tcID,
   getLinked: z
     .boolean()
@@ -797,7 +793,7 @@ export const LinkRequirementToTestCaseArgsSchema = z.object({
 
 export const TestCasesLinkedToRequirementArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   rqID: CommonFields.rqID,
   getLinked: z
     .boolean()
@@ -903,7 +899,7 @@ export const UpdateTestSuiteArgsSchema = z.object({
 
 export const TestSuiteListArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   viewId: CommonFields.tsViewId,
   folderPath: CommonFields.tsFolderPath,
   start: CommonFields.start,
@@ -924,7 +920,7 @@ export const TestSuiteListArgsSchema = z.object({
 
 export const TestSuitesForTestCaseArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   tsFolderID: CommonFields.tsFolderID.optional(),
   viewId: CommonFields.tsfeViewId,
   start: CommonFields.start,
@@ -974,7 +970,7 @@ export const RequirementsLinkedTestCasesToTestSuiteArgsSchema = z
 
 export const IssuesLinkedToTestCaseArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   tcID: CommonFields.tcID,
   getLinked: CommonFields.getLinked.optional().default(true),
   start: CommonFields.start,
@@ -985,7 +981,7 @@ export const IssuesLinkedToTestCaseArgsSchema = z.object({
 
 export const TestCasesByTestSuiteArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   tsID: CommonFields.tsID,
   getLinked: CommonFields.getLinked.optional().default(true),
   start: CommonFields.start,
@@ -996,7 +992,7 @@ export const TestCasesByTestSuiteArgsSchema = z.object({
 
 export const ExecutionsByTestSuiteArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   tsID: CommonFields.tsID, // API payload param - sent in request body (REQUIRED)
   tsFolderID: CommonFields.tsFolderID.optional(),
   gridName: CommonFields.gridName,
@@ -1009,7 +1005,7 @@ export const ExecutionsByTestSuiteArgsSchema = z.object({
 
 export const TestCaseRunsByTestSuiteRunArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   tsrunID: CommonFields.tsrunID, // API payload param - sent in request body (REQUIRED)
   viewId: CommonFields.teViewId, // auto-resolved via SYSTEM if not provided
   start: CommonFields.start,
@@ -1023,7 +1019,7 @@ export const TestCaseRunsByTestSuiteRunArgsSchema = z.object({
 
 export const LinkedIssuesByTestCaseRunArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   entityId: CommonFields.entityId, // API payload param - sent in request body (REQUIRED)
   getLinked: CommonFields.getLinked,
   getColumns: CommonFields.getColumns,
@@ -1036,7 +1032,7 @@ export const LinkedIssuesByTestCaseRunArgsSchema = z.object({
 
 export const CreateIssueArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   issueType: z.number().describe("Issue type ID (e.g. Bug, Enhancement, etc.)"),
   issuePriority: z
     .number()
@@ -1110,7 +1106,7 @@ export const UpdateIssueArgsSchema = z.object({
 
 export const IssuesListArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   viewId: z
     .number()
     .optional()
@@ -1141,7 +1137,7 @@ export const IssuesListArgsSchema = z.object({
 // Export for Link Issues to Testcase Run tool
 export const LinkIssuesToTestcaseRunArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   issueIds: z
     .array(z.union([z.string(), z.number()]))
     .describe("ID of issues to be linked to Testcase Run"),
@@ -1154,7 +1150,7 @@ export const LinkIssuesToTestcaseRunArgsSchema = z.object({
 
 export const IssueExecutionsArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   linkedAssetId: z.coerce
     .number()
     .describe(
@@ -1184,7 +1180,7 @@ export const IssueExecutionsArgsSchema = z.object({
 // Export for Link Platforms to Test Suite tool
 export const LinkPlatformsToTestSuiteArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   qmTsId: z.coerce
     .number()
     .describe(
@@ -1204,7 +1200,7 @@ export const LinkPlatformsToTestSuiteArgsSchema = z.object({
 // Export for Bulk Update Test Case Execution Status tool
 export const BulkUpdateExecutionStatusArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   entityIDs: z.coerce
     .string()
     .describe(
@@ -1418,7 +1414,7 @@ export const ImportAutomationResultsPayloadSchema = z.object({
 
 export const FetchAutomationStatusPayloadSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   requestID: z.coerce
     .number()
     .describe(
@@ -1428,7 +1424,7 @@ export const FetchAutomationStatusPayloadSchema = z.object({
 
 export const AnalyticsQueryArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   query: z
     .string()
     .describe(

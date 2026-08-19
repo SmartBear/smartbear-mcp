@@ -110,7 +110,7 @@ export class QmetryClient implements Client {
     _getInput: GetInputFunction,
   ): Promise<void> {
     const resolveContext = (args: Record<string, any>) => ({
-      baseUrl: args.baseUrl ?? this.endpoint,
+      baseUrl: this.endpoint,
       projectKey: args.projectKey ?? this.projectApiKey,
     });
 
@@ -199,8 +199,8 @@ export class QmetryClient implements Client {
             }
           }
 
-          // Extract projectKey and baseUrl from arguments to prevent them from being sent in request body
-          const { projectKey: _, baseUrl: __, ...cleanArgs } = a;
+          // Extract projectKey from arguments to prevent it from being sent in request body
+          const { projectKey: _, ...cleanArgs } = a;
 
           // Inject persisted numeric project context only for handlers that explicitly support
           // scope/orgcode headers and strip them from the request body before forwarding.

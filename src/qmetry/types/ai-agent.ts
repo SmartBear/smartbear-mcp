@@ -3,7 +3,7 @@ import { CommonFields } from "./common";
 
 export const GetGateConfigurationArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   projectId: z.coerce
     .number()
     .describe(
@@ -24,7 +24,7 @@ export interface GetGateConfigurationPayload {
 
 export const ExecuteGateReportArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   reportName: z
     .string()
     .describe("Report name identifier (e.g. 'RR' for Release Readiness)."),
@@ -69,7 +69,7 @@ export interface ExecuteGateReportPayload {
 
 export const ExportHtmlReportArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   htmlContent: z.string().describe("HTML content to be exported as a report."),
   fileName: z
     .string()
