@@ -618,6 +618,64 @@ describe("FunctionalTestingAPI", () => {
         'Step url "https://other.example.com/pet/1" must start with its baseUrl "https://petstore.swagger.io/v2"',
       );
     });
+
+    it("templates the url as the base-URL variable alone when url equals baseUrl exactly", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
+
+      await api.createTest({
+        name: "Root Path Test",
+        steps: [
+          {
+            url: "https://petstore.swagger.io/v2",
+            baseUrl: "https://petstore.swagger.io/v2",
+          },
+        ],
+      });
+
+      const [, init] = fetchMock.mock.calls[0];
+      const body = JSON.parse((init as RequestInit).body as string);
+      expect(body.steps[0].url).toBe("${var(baseURLpetstoreswaggerio)}/");
+      expect(body.parameters).toEqual([
+        {
+          name: "baseURLpetstoreswaggerio",
+          value: "https://petstore.swagger.io/v2",
+        },
+      ]);
+    });
+
+    it("maps the same path-param name across different resource paths to the same variable", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
+
+      await api.createTest({
+        name: "Shared Path Param Test",
+        steps: [
+          {
+            url: "https://petstore.swagger.io/v2/pet/{id}",
+            baseUrl: "https://petstore.swagger.io/v2",
+          },
+          {
+            url: "https://petstore.swagger.io/v2/order/{id}",
+            baseUrl: "https://petstore.swagger.io/v2",
+          },
+        ],
+      });
+
+      const [, init] = fetchMock.mock.calls[0];
+      const body = JSON.parse((init as RequestInit).body as string);
+      expect(body.steps[0].url).toBe(
+        "${var(baseURLpetstoreswaggerio)}/pet/${var(id)}",
+      );
+      expect(body.steps[1].url).toBe(
+        "${var(baseURLpetstoreswaggerio)}/order/${var(id)}",
+      );
+      expect(body.parameters).toEqual([
+        {
+          name: "baseURLpetstoreswaggerio",
+          value: "https://petstore.swagger.io/v2",
+        },
+        { name: "id", value: "" },
+      ]);
+    });
   });
 
   describe("listTests", () => {
