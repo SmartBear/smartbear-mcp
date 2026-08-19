@@ -237,10 +237,33 @@ export class QmetryClient implements Client {
               const defaults = layout.defaultValues ?? {};
               if (!a.udfFields) a.udfFields = {};
 
-              // Apply UDF defaults for any field the LLM did not provide
+              // Build a set of system field names so defaults for them go to top-level args,
+              // not udfFields — avoids type mismatches (e.g. component expects number[], not number)
+              const systemFieldMap = new Map(
+                (layout.systemFields ?? []).map((f: any) => [
+                  f.name,
+                  f.fieldTypeName,
+                ]),
+              );
+
+              // Apply defaults for fields the LLM did not provide
               for (const [fieldName, defVal] of Object.entries(defaults)) {
-                if (!(fieldName in a.udfFields) && !(fieldName in a)) {
-                  a.udfFields[fieldName] = defVal;
+                const isSystemField = systemFieldMap.has(fieldName);
+                if (isSystemField) {
+                  // Apply to top-level args with correct type
+                  if (!(fieldName in a)) {
+                    const fieldType = systemFieldMap.get(fieldName);
+                    // MULTILOOKUPLIST system fields (e.g. component) require array
+                    a[fieldName] =
+                      fieldType === "MULTILOOKUPLIST" && !Array.isArray(defVal)
+                        ? [defVal]
+                        : defVal;
+                  }
+                } else {
+                  // UDF field — apply to udfFields
+                  if (!(fieldName in a.udfFields) && !(fieldName in a)) {
+                    a.udfFields[fieldName] = defVal;
+                  }
                 }
               }
 
@@ -337,10 +360,27 @@ export class QmetryClient implements Client {
               const defaults = layout.defaultValues ?? {};
               if (!a.udfFields) a.udfFields = {};
 
-              // Apply UDF defaults for any field the LLM did not provide
+              const systemFieldMapTS = new Map(
+                (layout.systemFields ?? []).map((f: any) => [
+                  f.name,
+                  f.fieldTypeName,
+                ]),
+              );
+
               for (const [fieldName, defVal] of Object.entries(defaults)) {
-                if (!(fieldName in a.udfFields) && !(fieldName in a)) {
-                  a.udfFields[fieldName] = defVal;
+                const isSystemField = systemFieldMapTS.has(fieldName);
+                if (isSystemField) {
+                  if (!(fieldName in a)) {
+                    const fieldType = systemFieldMapTS.get(fieldName);
+                    a[fieldName] =
+                      fieldType === "MULTILOOKUPLIST" && !Array.isArray(defVal)
+                        ? [defVal]
+                        : defVal;
+                  }
+                } else {
+                  if (!(fieldName in a.udfFields) && !(fieldName in a)) {
+                    a.udfFields[fieldName] = defVal;
+                  }
                 }
               }
 

@@ -638,7 +638,40 @@ export const CreateTestCaseArgsSchema = z.object({
         "System will fetch project info using the projectKey and extract rootFolders.TC.id automatically. " +
         "Manual folder ID only needed if you want to target a specific sub-folder.",
     ),
-  steps: z.array(CreateTestCaseStepSchema).optional(),
+  steps: z
+    .array(CreateTestCaseStepSchema)
+    .optional()
+    .describe(
+      "STEPS INCLUSION RULE — read before deciding whether to include this field:\n" +
+        "\n" +
+        "DEFAULT BEHAVIOR: OMIT 'steps' entirely from the payload. Do NOT include steps: [] (empty array).\n" +
+        "A test case without steps is valid and is the normal case when the user did not mention steps.\n" +
+        "\n" +
+        "INCLUDE 'steps' ONLY in these two scenarios:\n" +
+        "  SCENARIO 1 — User explicitly mentions steps in their prompt.\n" +
+        "    Examples: 'create test case with steps', 'step 1: open browser, step 2: click login',\n" +
+        "    'add these steps: ...', 'include steps', 'create with following steps'.\n" +
+        "    When user provides step text, parse each step into { orderId, description, inputData?, expectedOutcome? }.\n" +
+        "\n" +
+        "  SCENARIO 2 — Any field in 'stepSystemFields' OR 'stepFields' from Fetch UDF Layout has isMandatory=true.\n" +
+        "    stepSystemFields = built-in step fields (description, expectedOutcome, etc.).\n" +
+        "    stepFields = step-level UDF fields (custom fields configured per project).\n" +
+        "    If EITHER array has isMandatory=true on any entry, the backend REQUIRES at least 1 step.\n" +
+        "    In this case you MUST include at least 1 step even if the user did not mention steps.\n" +
+        "    Also fill mandatory step UDF fields from stepFields in step.UDF — use stepDefaultValues if defaults exist, else placeholder.\n" +
+        "    Ask the user for step content OR create a placeholder step with description='Step 1'.\n" +
+        "\n" +
+        "NEVER include 'steps' in any other scenario — omitting it keeps the payload clean and avoids BE errors.\n" +
+        "NEVER send steps: [] (empty array) — either omit the field or send at least 1 valid step object.\n" +
+        "\n" +
+        "Step object fields:\n" +
+        "  orderId (required): sequential integer starting at 1\n" +
+        "  description (required): step action text\n" +
+        "  inputData (optional): test data for this step\n" +
+        "  expectedOutcome (optional): what should happen after this step\n" +
+        "  UDF (optional): step-level custom fields\n" +
+        "  tcStepID (omit on create — only used when updating existing steps)",
+    ),
   name: z.string(),
   priority: z.number().optional(),
   component: z.array(z.number()).optional(),
