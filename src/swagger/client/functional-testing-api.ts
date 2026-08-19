@@ -4,6 +4,7 @@ import type {
   CancelFunctionalTestingSuiteExecutionParams,
   CreateFunctionalTestingSuiteParams,
   CreateFunctionalTestingSuiteResponse,
+  CreateFunctionalTestingTestParameter,
   CreateFunctionalTestingTestParams,
   CreateFunctionalTestingTestResponse,
   GetFunctionalTestHistoryParams,
