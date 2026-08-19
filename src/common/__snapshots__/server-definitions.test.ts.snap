@@ -11934,7 +11934,7 @@ None",
       "readOnlyHint": true,
       "title": "Swagger: Get API Definition",
     },
-    "description": "Fetch resolved API definition from SwaggerHub Registry based on owner, API name, and version.
+    "description": "Fetch resolved API definition from SwaggerHub Registry based on owner, API name, and version. By default returns the definition as JSON (converting YAML-stored definitions to JSON). Set format:'text' to get the YAML definition — required as the source for swagger_patch_api edits.
 
 **Toolset:** Registry API
 
@@ -11943,10 +11943,12 @@ None",
 - api (string) *required*: API name (case-sensitive)
 - version (string) *required*: Version identifier
 - resolved (boolean): Set to true to get the resolved version with all external $refs included (default false)
-- flatten (boolean): Set to true to create models from inline schemas in OpenAPI definition (default false)",
+- flatten (boolean): Set to true to create models from inline schemas in OpenAPI definition (default false)
+- format (enum): Response format: 'json' (default) may convert YAML to JSON; 'text' returns the definition as YAML — required for swagger_patch_api edits.",
     "inputSchema": [
       "api",
       "flatten",
+      "format",
       "owner",
       "resolved",
       "version",
@@ -12171,6 +12173,40 @@ None",
       "items",
     ],
     "title": "Swagger: List Table Of Contents",
+  },
+  "swagger_patch_api": {
+    "annotations": {
+      "destructiveHint": true,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+      "title": "Swagger: Patch API",
+    },
+    "description": "Apply targeted search/replace edits to a YAML API definition in SwaggerHub Registry. Only OpenAPI and AsyncAPI definitions are supported. Each edit's 'oldString' must be copied exactly from swagger_get_api_definition with format:'text' and without 'resolved' or 'flatten' — those options transform the definition, so edits based on them will not match the stored source. JSON definitions are not supported. Nothing is saved unless every edit applies — failed edits are returned with 'no_match' or 'ambiguous' status. When 'newVersion' is given the patched definition is saved as a new private version; patching in place keeps the visibility of the existing version. Use this tool to fix specific issues in an existing API without regenerating the whole definition.
+
+**Toolset:** Registry API
+
+**Parameters:**
+- owner (string) *required*: API owner (organization or user, case-sensitive)
+- apiName (string) *required*: API name (case-sensitive)
+- version (string) *required*: Version of the definition to patch (base version, e.g. '1.0.0')
+- newVersion (string): Version to save the patched definition as (e.g. '1.0.1'). Must not already exist and is always created as private. Omit to overwrite the base version, which keeps its current visibility. The definition's info.version is updated automatically — do not add an edit for it.
+- edits (array) *required*: Search/replace edits applied sequentially to the YAML definition. Nothing is saved unless every edit applies (atomic).",
+    "inputSchema": [
+      "apiName",
+      "edits",
+      "newVersion",
+      "owner",
+      "version",
+    ],
+    "outputSchema": [
+      "failed",
+      "operation",
+      "saved",
+      "url",
+      "version",
+    ],
+    "title": "Swagger: Patch API",
   },
   "swagger_publish_portal_product": {
     "annotations": {

@@ -4,6 +4,7 @@ import { SwaggerAPI } from "./client/api";
 import { SwaggerConfiguration } from "./client/configuration";
 
 const fetchMock = createFetchMock(vi);
+const DUMMY_REGISTRY_BASE_PATH = "https://registry.example.test";
 
 describe("SwaggerAPI", () => {
   let api: SwaggerAPI;
@@ -14,7 +15,10 @@ describe("SwaggerAPI", () => {
     fetchMock.enableMocks();
     fetchMock.resetMocks();
 
-    config = new SwaggerConfiguration({ token: "test-token" });
+    config = new SwaggerConfiguration({
+      token: "test-token",
+      registryBasePath: DUMMY_REGISTRY_BASE_PATH,
+    });
     api = new SwaggerAPI(config, "SmartBear-MCP/1.0.0");
   });
 
@@ -319,7 +323,7 @@ describe("SwaggerAPI", () => {
       });
 
       expect(fetchMock).toHaveBeenCalledWith(
-        "https://api.swaggerhub.com/apis/orgname/petstore/1.0.0",
+        `${config.registryBasePath}/apis/orgname/petstore/1.0.0`,
         {
           method: "GET",
           headers: {
@@ -332,7 +336,7 @@ describe("SwaggerAPI", () => {
       );
 
       expect(fetchMock).toHaveBeenCalledWith(
-        "https://api.swaggerhub.com/standardization/orgname/scan",
+        `${config.registryBasePath}/standardization/orgname/scan`,
         expect.objectContaining({
           method: "POST",
           body: JSON.stringify(definition),
@@ -1474,6 +1478,202 @@ describe("SwaggerAPI", () => {
       // The org-level conflict must short-circuit instead of retrying other
       // subdomain candidates.
       expect(createCalls).toHaveLength(1);
+    });
+  });
+
+  describe("patchApi", () => {
+    const owner = "orgname";
+    const apiName = "petstore";
+
+    const baseDefinition = [
+      "openapi: 3.0.0",
+      "info:",
+      "  title: Pets",
+      "  version: 1.0.0",
+      "paths:",
+      "  /pets:",
+      "    get:",
+      "      summary: List all pets",
+      "      responses:",
+      "        '200':",
+      "          description: OK",
+      "  /pets/{id}:",
+      "    get:",
+      "      summary: Get a pet",
+      "      responses:",
+      "        '200':",
+      "          description: OK",
+      "",
+    ].join("\n");
+
+    it("applies edits, sets info.version, and saves api", async () => {
+      fetchMock
+        .mockResponseOnce("", { status: 404 })
+        .mockResponseOnce(baseDefinition)
+        .mockResponseOnce("", { headers: { "X-Version": "1.0.1" } });
+
+      const result = await api.patchApi({
+        owner,
+        apiName,
+        version: "1.0.0",
+        newVersion: "1.0.1",
+        edits: [
+          {
+            oldString: "      summary: List all pets",
+            replaceString:
+              "      operationId: listPets\n      summary: List all pets",
+          },
+        ],
+      });
+
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        1,
+        `${DUMMY_REGISTRY_BASE_PATH}/apis/orgname/petstore/1.0.1`,
+        expect.objectContaining({ method: "GET" }),
+      );
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        2,
+        `${DUMMY_REGISTRY_BASE_PATH}/apis/orgname/petstore/1.0.0`,
+        expect.objectContaining({ method: "GET" }),
+      );
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        3,
+        `${DUMMY_REGISTRY_BASE_PATH}/apis/orgname/petstore?version=1.0.1&isPrivate=true`,
+        expect.objectContaining({ method: "POST" }),
+      );
+
+      expect(result.saved).toBe(true);
+      expect(result.failed).toBeUndefined();
+      expect(result.operation).toBe("update");
+      expect(result.version).toBe("1.0.1");
+      expect(result.url).toBe(
+        "https://app.swaggerhub.com/apis/orgname/petstore/1.0.1",
+      );
+    });
+
+    it("rejects a newVersion that already exists without saving", async () => {
+      fetchMock.mockResponseOnce(baseDefinition);
+
+      await expect(
+        api.patchApi({
+          owner,
+          apiName,
+          version: "1.0.0",
+          newVersion: "1.0.1",
+          edits: [
+            { oldString: "title: Pets", replaceString: "title: Pet Store" },
+          ],
+        }),
+      ).rejects.toThrow(/already exists/i);
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("overwrites the base version when newVersion is not provided", async () => {
+      fetchMock
+        .mockResponseOnce(baseDefinition)
+        .mockResponseOnce("", { headers: { "X-Version": "1.0.0" } });
+
+      const result = await api.patchApi({
+        owner,
+        apiName,
+        version: "1.0.0",
+        edits: [
+          { oldString: "title: Pets", replaceString: "title: Pet Store" },
+        ],
+      });
+
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        1,
+        `${DUMMY_REGISTRY_BASE_PATH}/apis/orgname/petstore/1.0.0`,
+        expect.objectContaining({ method: "GET" }),
+      );
+      // Visibility must not be sent for an in-place patch, otherwise the
+      // existing version could silently change visibility.
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        2,
+        `${DUMMY_REGISTRY_BASE_PATH}/apis/orgname/petstore?version=1.0.0`,
+        expect.objectContaining({ method: "POST" }),
+      );
+      expect(result.saved).toBe(true);
+      expect(result.version).toBe("1.0.0");
+    });
+
+    it("reports no_match and ambiguous failures without saving", async () => {
+      fetchMock
+        .mockResponseOnce("", { status: 404 })
+        .mockResponseOnce(baseDefinition);
+
+      const result = await api.patchApi({
+        owner,
+        apiName,
+        version: "1.0.0",
+        newVersion: "1.0.1",
+        edits: [
+          { oldString: "does not exist anywhere", replaceString: "x" },
+          { oldString: "  version: 1.0.0\npaths:", replaceString: "y" },
+          { oldString: "description: OK", replaceString: "description: OK!" },
+        ],
+      });
+
+      expect(result.saved).toBe(false);
+      expect(result.failed).toEqual([
+        {
+          index: 0,
+          oldString: "does not exist anywhere",
+          error: "no_match",
+          matchCount: 0,
+        },
+        {
+          index: 2,
+          oldString: "description: OK",
+          error: "ambiguous",
+          matchCount: 2,
+        },
+      ]);
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+
+    it("patches an AsyncAPI definition", async () => {
+      const asyncapiDefinition = [
+        "asyncapi: 3.0.0",
+        "info:",
+        "  title: Events",
+        "  version: 1.0.0",
+        "channels:",
+        "  pets:",
+        "    address: pets",
+      ].join("\n");
+
+      fetchMock
+        .mockResponseOnce(asyncapiDefinition)
+        .mockResponseOnce("", { headers: { "X-Version": "1.0.0" } });
+
+      const result = await api.patchApi({
+        owner,
+        apiName,
+        version: "1.0.0",
+        edits: [
+          { oldString: "title: Events", replaceString: "title: Pet Events" },
+        ],
+      });
+
+      expect(result.saved).toBe(true);
+    });
+
+    it("rejects a definition that is neither OpenAPI nor AsyncAPI", async () => {
+      fetchMock.mockResponseOnce("foo: bar\nbaz: 1");
+
+      await expect(
+        api.patchApi({
+          owner,
+          apiName,
+          version: "1.0.0",
+          edits: [{ oldString: "foo: bar", replaceString: "foo: baz" }],
+        }),
+      ).rejects.toThrow(/invalid format/i);
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
     });
   });
 });

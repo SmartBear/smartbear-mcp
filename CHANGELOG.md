@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- [Swagger] Added `patch_api` Registry tool that applies targeted search/replace edits to a YAML API definition and saves the result as a new version or in place. Edits are atomic - nothing is saved unless every edit applies - and failed edits are reported with `no_match`/`ambiguous` details so the caller can correct them.
+
+### Changed
+
+- [Swagger] `get_api_definition` tool: added a `format` parameter - `json` (default) may convert YAML to JSON, `text` returns the definition as YAML, which is the required source for `patch_api` edits.
+
 ## [0.36.0] - 2026-08-18
 
 ### Added
