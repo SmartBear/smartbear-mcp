@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [QMetry]: Added Test Case, Test Suite, Issue module, Create/Update UDF capability Added. [#666](https://github.com/SmartBear/smartbear-mcp/pull/666)
 
 
+## [0.37.0] - 2026-08-20
+- [QMetry]: Added Test Case, Test Suite, Issue module, Create/Update UDF capability Added. [#666](https://github.com/SmartBear/smartbear-mcp/pull/666)
+
+
 ### Added
 
 - [Swagger] Added `patch_api` Registry tool that applies targeted search/replace edits to a YAML API definition and saves the result as a new version or in place. Edits are atomic - nothing is saved unless every edit applies - and failed edits are reported with `no_match`/`ambiguous` details so the caller can correct them.
@@ -35,6 +39,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - [Swagger] Fixed `swagger_get_document` and `swagger_update_document` tools returning `MCP error -32602` schema mismatch when the API response contained additional properties not defined in the output schema.
+
+### Fixed
+
+- [Swagger] Corrected tool annotation hints for the Functional Testing tools so they no longer fall back to registration defaults: `run_test` and `run_suite` are now declared open-world (`openWorldHint: true`), `cancel_suite_execution` is declared destructive (`destructiveHint: true`), and all tools use the shared `READ_ONLY`/`WRITE`/`WRITE_DESTRUCTIVE` presets to set `readOnlyHint`/`destructiveHint`/`openWorldHint` explicitly.
 
 ## [0.35.0] - 2026-08-11
 
