@@ -3,6 +3,7 @@ import type {
   ProjectApiView,
   ReleaseApiView,
   ReleaseGroup,
+  CollaboratorApiView,
 } from "./api";
 
 // Exporting all the types required outside of the api module - all imports from the tool should come from here
@@ -40,5 +41,9 @@ export interface Build extends ReleaseApiView {
 }
 
 export interface Release extends ReleaseGroup {
+  id: string; // ID is always present
+}
+
+export interface Collaborator extends CollaboratorApiView {
   id: string; // ID is always present
 }
