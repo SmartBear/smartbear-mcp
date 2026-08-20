@@ -15,7 +15,7 @@ export function convertPathVarsToReflectVars(
   );
 }
 
-/** Strips non-alphanumeric characters and truncates so generated param names. */
+/** Converts a hostname into a safe parameter name suffix by stripping non-alphanumeric characters and truncating. */
 export function sanitizeForParamName(value: string): string {
   return value
     .replace(/[^a-zA-Z0-9]/g, "")
@@ -69,7 +69,7 @@ export type TemplatedFunctionalTestingTestStep = Omit<
   "baseUrl"
 >;
 
-export interface BaseUrlTemplatingResult {
+interface BaseUrlTemplatingResult {
   steps: TemplatedFunctionalTestingTestStep[] | undefined;
   parameters: CreateFunctionalTestingTestParameter[];
 }
