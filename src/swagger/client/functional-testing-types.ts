@@ -509,8 +509,28 @@ export const CreateFunctionalTestingAssertionsSchema = z.object({
     .describe("Assertion rules evaluated against the response body"),
 });
 
+export const CreateFunctionalTestingTestParameterSchema = z.object({
+  name: z.string().trim().min(1).describe("Parameter name"),
+  value: z.string().optional().describe("Parameter default value"),
+});
+
 export const CreateFunctionalTestingTestStepSchema = z.object({
-  url: z.url().describe("URL for the API call"),
+  url: z
+    .string()
+    .trim()
+    .min(1)
+    .describe(
+      "Full URL for the API call. May include OAS-style {pathParam} placeholders, " +
+        "but these are only converted into reusable parameters when this step's baseUrl is " +
+        "also set. When baseUrl is set, url must start with it.",
+    ),
+  baseUrl: z
+    .url()
+    .optional()
+    .describe(
+      "Server/common URL for this step's endpoint (e.g. https://petstore.swagger.io/v2). " +
+        "When set, it is extracted into a definition-level parameter and templated into the step url.",
+    ),
   httpMethod: z
     .enum(HTTP_METHODS)
     .describe("HTTP method for the API call (defaults to GET server-side)")
@@ -545,10 +565,23 @@ export const CreateFunctionalTestingTestParamsSchema = z.object({
     .array(CreateFunctionalTestingTestStepSchema)
     .describe("Test steps to include in the test")
     .optional(),
+  parameters: z
+    .array(CreateFunctionalTestingTestParameterSchema)
+    .describe(
+      "Definition-level parameters for the test (e.g. base URLs, path params). " +
+        "Merged with parameters generated from steps' baseUrl/{pathParam} placeholders.",
+    )
+    .optional(),
 });
 
 export type CreateFunctionalTestingTestParams = z.infer<
   typeof CreateFunctionalTestingTestParamsSchema
+>;
+export type CreateFunctionalTestingTestParameter = z.infer<
+  typeof CreateFunctionalTestingTestParameterSchema
+>;
+export type CreateFunctionalTestingTestStep = z.infer<
+  typeof CreateFunctionalTestingTestStepSchema
 >;
 export type CreateFunctionalTestingStatusRange = z.infer<
   typeof CreateFunctionalTestingStatusRangeSchema

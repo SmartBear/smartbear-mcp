@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- [Swagger] Extended the `create_test` Functional Testing tool with a step-level `baseUrl` and a definition-level `parameters` array. A step's `baseUrl` is extracted into a generated `baseURL<Host>` parameter and templated into its `url`, and any remaining OAS-style `{pathParam}` placeholders are converted to `${var(pathParam)}` references with matching generated parameters.
+
 ## [0.37.0] - 2026-08-20
 - [QMetry]: Added Test Case, Test Suite, Issue module, Create/Update UDF capability Added. [#666](https://github.com/SmartBear/smartbear-mcp/pull/666)
 
