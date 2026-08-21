@@ -1248,8 +1248,38 @@ export class SwaggerAPI {
    * @returns Created or updated API metadata with URL. HTTP 201 indicates creation, HTTP 200 indicates update
    */
   async createOrUpdateApi(params: CreateApiParams): Promise<CreateApiResponse> {
-    // Fixed values: visibility=private, automock=false, version=1.0.0
-    return this.saveApiDefinition(params, { isPrivate: true });
+    // New API: fixed values - visibility=private, automock=false, version=1.0.0
+    // Existing API: isPrivate is omitted so the registry preserves current visibility
+    const exists = await this.apiExists({
+      owner: params.owner,
+      apiName: params.apiName,
+    });
+    return this.saveApiDefinition(params, exists ? {} : { isPrivate: true });
+  }
+
+  /**
+   * Check whether an API (any version) already exists for the given owner/name.
+   */
+  private async apiExists({
+    owner,
+    apiName,
+  }: {
+    owner: string;
+    apiName: string;
+  }): Promise<boolean> {
+    const url = `${this.config.registryBasePath}/apis/${encodeURIComponent(owner)}/${encodeURIComponent(apiName)}`;
+    const response = await fetch(url, {
+      method: "GET",
+      headers: this.headers,
+    });
+    if (response.status === 404) return false;
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "");
+      throw new ToolError(
+        `SwaggerHub Registry API apiExists failed - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}. owner=${owner}, apiName=${apiName}`,
+      );
+    }
+    return true;
   }
 
   /**
