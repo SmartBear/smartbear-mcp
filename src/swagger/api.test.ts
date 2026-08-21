@@ -220,11 +220,25 @@ describe("SwaggerAPI", () => {
   });
 
   describe("updatePortalProduct", () => {
-    it("should update product with patch data", async () => {
-      const mockResponse = { id: "prod-123", name: "Updated Product" };
+    it("should update product with patch data and return URL", async () => {
+      const mockProductResponse = {
+        id: "prod-123",
+        name: "Updated Product",
+        slug: "my-product",
+        portalId: "portal-456",
+      };
+      const mockPortalResponse = {
+        id: "portal-456",
+        subdomain: "my-portal",
+        name: "My Portal",
+      };
       const updateData = { name: "Updated Product", public: true };
 
-      fetchMock.mockResponseOnce(JSON.stringify(mockResponse), {
+      fetchMock.mockResponseOnce(JSON.stringify(mockProductResponse), {
+        headers: { "content-type": "application/json" },
+      });
+
+      fetchMock.mockResponseOnce(JSON.stringify(mockPortalResponse), {
         headers: { "content-type": "application/json" },
       });
 
@@ -242,7 +256,43 @@ describe("SwaggerAPI", () => {
           body: JSON.stringify(updateData),
         },
       );
-      expect(result).toEqual(mockResponse);
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://api.portal.swaggerhub.com/v1/portals/portal-456",
+        {
+          method: "GET",
+          headers: {
+            Authorization: "Bearer test-token",
+            "Content-Type": "application/json",
+            "User-Agent": "SmartBear-MCP/1.0.0",
+          },
+        },
+      );
+
+      expect(result).toEqual({
+        ...mockProductResponse,
+        url: "https://my-portal.portal.swaggerhub.com/my-product",
+      });
+    });
+
+    it("should return product without URL when URL generation fails", async () => {
+      const mockProductResponse = {
+        id: "prod-123",
+        name: "Updated Product",
+        slug: "my-product",
+        portalId: "portal-456",
+      };
+      const updateData = { name: "Updated Product", public: true };
+
+      fetchMock.mockResponseOnce(JSON.stringify(mockProductResponse), {
+        headers: { "content-type": "application/json" },
+      });
+
+      fetchMock.mockResponseOnce("Portal not found", { status: 404 });
+
+      const result = await api.updatePortalProduct("prod-123", updateData);
+
+      expect(result).toEqual(mockProductResponse);
     });
   });
 
