@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- [Swagger] `create_or_update_api` tool: no longer forces private visibility when updating an existing API. Visibility is now set to private only on creation; updates preserve the API's current visibility.
+
 ## [0.37.0] - 2026-08-20
 - [QMetry]: Added Test Case, Test Suite, Issue module, Create/Update UDF capability Added. [#666](https://github.com/SmartBear/smartbear-mcp/pull/666)
 

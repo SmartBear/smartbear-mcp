@@ -52,7 +52,7 @@ The Swagger Studio client provides comprehensive API and Domain management capab
 | --- | --- | --- | --- |
 | `owner` | Organization name (owner of the API) | string | Yes |
 | `apiName` | API name. If an API with this name already exists under the specified owner, it will be updated. | string | Yes |
-| `definition` | API definition content (OpenAPI/AsyncAPI specification in JSON or YAML format). Format is automatically detected. API is created with fixed values: version 1.0.0, private visibility, automock disabled, and no project assignment. | string | Yes |
+| `definition` | API definition content (OpenAPI/AsyncAPI specification in JSON or YAML format). Format is automatically detected. On create, fixed values are used: version 1.0.0, private visibility, automock disabled, and no project assignment. On update, the API's existing visibility is preserved. | string | Yes |
 
 #### `scan_api_standardization`
 
