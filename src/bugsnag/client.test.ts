@@ -1,5 +1,7 @@
+import { createHash } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { USER_AGENT } from "../common/info.js";
+import { withRequestContext } from "../common/request-context";
 import { ToolError } from "../common/tools.js";
 import type {
   ErrorApiView,
@@ -64,6 +66,28 @@ const mockCache = {
   get: vi.fn(),
   del: vi.fn(),
 };
+
+// BugsnagClient now holds a single module-level shared CacheService (see
+// client.ts) instead of one per session, so this mock stands in for that one
+// shared instance across every test.
+vi.mock("../common/cache", () => ({
+  CacheService: vi.fn().mockImplementation(() => mockCache),
+}));
+
+const cacheKeyNames = {
+  ORG: "bugsnag_org",
+  PROJECTS: "bugsnag_projects",
+  PROJECT_EVENT_FIELDS: "bugsnag_project_event_fields",
+  PROJECT_TRACE_FIELDS: "bugsnag_project_trace_fields",
+  CURRENT_PROJECT: "bugsnag_current_project",
+};
+
+// Resolves a logical cache key to the namespaced key the client actually uses.
+// Note this delegates to the implementation, so it cannot prove the namespace
+// is credential-scoped — see the "cache isolation" tests below for that.
+function nsKey(client: BugsnagClient, key: string): string {
+  return (client as any).cacheKey(key);
+}
 
 vi.mock("./client/api/CurrentUser.ts", () => ({
   CurrentUserAPI: vi.fn().mockImplementation(() => mockCurrentUserAPI),
@@ -705,13 +729,10 @@ describe("BugsnagClient", () => {
       expect(MockedProjectAPI).toHaveBeenCalledOnce();
     });
 
-    it("should use cache from server.getCache()", async () => {
+    it("uses the shared cache, namespaced by the caller's identity", async () => {
       const client = new BugsnagClient();
-      const mockServer = {
-        getCache: vi.fn().mockReturnValue(mockCache),
-      } as any;
 
-      await client.configure(mockServer, {
+      await client.configure({} as any, {
         auth_token: "test-token",
       });
 
@@ -730,11 +751,104 @@ describe("BugsnagClient", () => {
 
       await client.getProjects();
 
-      expect(mockServer.getCache).toHaveBeenCalled();
-      expect(mockCache.set).toHaveBeenCalledWith("bugsnag_org", mockOrg);
       expect(mockCache.set).toHaveBeenCalledWith(
-        "bugsnag_projects",
+        nsKey(client, "bugsnag_org"),
+        mockOrg,
+      );
+      expect(mockCache.set).toHaveBeenCalledWith(
+        nsKey(client, "bugsnag_projects"),
         mockProjects,
+      );
+    });
+
+    // Namespacing is the ONLY thing separating accounts in the shared cache
+    // (see the comment above getSharedCache in client.ts), so these cover the
+    // ways two accounts could end up on one key.
+    it("gives two accounts different cache keys even when they share a project API key", async () => {
+      // A BugSnag project API key arrives in a caller-supplied request header
+      // and ships inside customer apps, so it identifies nothing. If it were
+      // the namespace, anyone who knows a project key could read that
+      // project's org and full project list — every project's api_key with it.
+      const accountA = new BugsnagClient();
+      await accountA.configure({} as any, {
+        auth_token: "token-a",
+        project_api_key: "shared-project-key",
+      });
+      const accountB = new BugsnagClient();
+      await accountB.configure({} as any, {
+        auth_token: "token-b",
+        project_api_key: "shared-project-key",
+      });
+
+      for (const key of Object.values(cacheKeyNames)) {
+        expect(nsKey(accountA, key)).not.toEqual(nsKey(accountB, key));
+      }
+      expect(nsKey(accountA, "bugsnag_org")).not.toContain(
+        "shared-project-key",
+      );
+    });
+
+    it("does not let a caller-supplied project key reach another account's entry", async () => {
+      // Attacker holds their own valid token but sends the victim's project
+      // key as a header, hoping to land on the victim's cached entries.
+      const victim = new BugsnagClient();
+      await victim.configure({} as any, {
+        auth_token: "victim-token",
+        project_api_key: "victim-project-key",
+      });
+      const attacker = new BugsnagClient();
+      await attacker.configure({} as any, { auth_token: "attacker-token" });
+
+      const attackerKey = withRequestContext(
+        { headers: { "bugsnag-project-api-key": "victim-project-key" } } as any,
+        () => nsKey(attacker, "bugsnag_projects"),
+      );
+
+      expect(attackerKey).not.toEqual(nsKey(victim, "bugsnag_projects"));
+    });
+
+    it("bypasses the cache entirely when there is no credential to namespace by", async () => {
+      // Without a credential there is no identity, so an unauthenticated
+      // caller must not read from — or populate — a shared bucket.
+      const client = new BugsnagClient();
+      await client.configure({} as any, {} as any);
+
+      expect(nsKey(client, "bugsnag_org")).toBeNull();
+
+      mockCache.get.mockClear();
+      mockCache.set.mockClear();
+      mockCurrentUserAPI.listUserOrganizations.mockResolvedValueOnce({
+        body: [getMockOrganization("org-a", "Account A Org")],
+      });
+      await client.getOrganization();
+
+      expect(mockCache.get).not.toHaveBeenCalled();
+      expect(mockCache.set).not.toHaveBeenCalled();
+    });
+
+    it("resolves each request to its own namespace from that request's auth header", async () => {
+      // Every session gets its own client (ClientRegistry.cloneClient), but in
+      // HTTP mode the auth header is resent per request and wins over the
+      // configured token — so the namespace must follow the header, not the
+      // instance field.
+      const client = new BugsnagClient();
+      await client.configure({} as any, { auth_token: "token-b" });
+
+      const orgA = getMockOrganization("org-a", "Account A Org");
+      const namespaceForA = createHash("sha256")
+        .update("token token-a")
+        .digest("hex")
+        .slice(0, 32);
+
+      mockCache.get.mockReturnValueOnce(orgA);
+      const resultForAccountA = await withRequestContext(
+        { headers: { "bugsnag-auth-token": "token-a" } } as any,
+        () => client.getOrganization(),
+      );
+
+      expect(resultForAccountA).toEqual(orgA);
+      expect(mockCache.get).toHaveBeenCalledWith(
+        `tok:${namespaceForA}:bugsnag_org`,
       );
     });
   });
@@ -775,7 +889,9 @@ describe("BugsnagClient", () => {
 
         const result = await client.getProjects();
 
-        expect(mockCache.get).toHaveBeenCalledWith("bugsnag_projects");
+        expect(mockCache.get).toHaveBeenCalledWith(
+          nsKey(client, "bugsnag_projects"),
+        );
         expect(result).toEqual(mockProjects);
       });
 
@@ -793,7 +909,7 @@ describe("BugsnagClient", () => {
           "org-1",
         );
         expect(mockCache.set).toHaveBeenCalledWith(
-          "bugsnag_projects",
+          nsKey(client, "bugsnag_projects"),
           mockProjects,
         );
         expect(result).toEqual(mockProjects);
@@ -959,7 +1075,7 @@ describe("BugsnagClient", () => {
         });
 
         expect(mockCache.set).toHaveBeenCalledWith(
-          "bugsnag_current_project",
+          nsKey(clientWithNoApiKey, "bugsnag_current_project"),
           mockProject,
         );
 
@@ -2722,7 +2838,7 @@ describe("BugsnagClient", () => {
         ];
 
         mockCache.get.mockImplementation((key: string) => {
-          if (key === "bugsnag_current_project") {
+          if (key === nsKey(client, "bugsnag_current_project")) {
             return mockProject;
           }
           return undefined;
@@ -2743,7 +2859,7 @@ describe("BugsnagClient", () => {
           "proj-1",
         );
         expect(mockCache.set).toHaveBeenCalledWith(
-          "bugsnag_project_trace_fields",
+          nsKey(client, "bugsnag_project_trace_fields"),
           { "proj-1": mockTraceFields },
         );
         expect(result).toEqual({
@@ -2765,10 +2881,10 @@ describe("BugsnagClient", () => {
         const mockCachedFilters = { "proj-1": mockPerformanceFilters };
 
         mockCache.get.mockImplementation((key: string) => {
-          if (key === "bugsnag_project_trace_fields") {
+          if (key === nsKey(client, "bugsnag_project_trace_fields")) {
             return mockCachedFilters;
           }
-          if (key === "bugsnag_current_project") {
+          if (key === nsKey(client, "bugsnag_current_project")) {
             return mockProject;
           }
           return undefined;
@@ -2804,7 +2920,7 @@ describe("BugsnagClient", () => {
         ];
 
         mockCache.get.mockImplementation((key: string) => {
-          if (key === "bugsnag_projects") {
+          if (key === nsKey(clientWithNoApiKey, "bugsnag_projects")) {
             return mockProjects;
           }
           return undefined;
@@ -2827,7 +2943,7 @@ describe("BugsnagClient", () => {
           "proj-2",
         );
         expect(mockCache.set).toHaveBeenCalledWith(
-          "bugsnag_project_trace_fields",
+          nsKey(clientWithNoApiKey, "bugsnag_project_trace_fields"),
           {
             "proj-2": mockTraceFields,
           },
