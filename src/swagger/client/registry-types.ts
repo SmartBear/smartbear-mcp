@@ -76,7 +76,7 @@ export const CreateApiParamsSchema = z.object({
   definition: z
     .string()
     .describe(
-      "API definition content (OpenAPI/AsyncAPI specification in JSON or YAML format). Format is automatically detected. API is created with fixed values: version 1.0.0, private visibility, automock disabled, and no project assignment.",
+      "API definition content (OpenAPI/AsyncAPI specification in JSON or YAML format). Format is automatically detected. On create, fixed values are used: version 1.0.0, private visibility, automock disabled, and no project assignment. On update, the API's existing visibility is preserved.",
     ),
 });
 

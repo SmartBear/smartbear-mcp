@@ -1600,6 +1600,71 @@ describe("SwaggerAPI", () => {
     });
   });
 
+  describe("createOrUpdateApi", () => {
+    const owner = "orgname";
+    const apiName = "petstore";
+    const definition = [
+      "openapi: 3.0.0",
+      "info:",
+      "  title: Pets",
+      "  version: 1.0.0",
+      "paths: {}",
+      "",
+    ].join("\n");
+
+    it("sends isPrivate=true when creating a new API", async () => {
+      fetchMock.mockResponseOnce("", { status: 404 }).mockResponseOnce("", {
+        status: 201,
+        headers: { "X-Version": "1.0.0" },
+      });
+
+      const result = await api.createOrUpdateApi({
+        owner,
+        apiName,
+        definition,
+      });
+
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        1,
+        `${DUMMY_REGISTRY_BASE_PATH}/apis/orgname/petstore`,
+        expect.objectContaining({ method: "GET" }),
+      );
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        2,
+        `${DUMMY_REGISTRY_BASE_PATH}/apis/orgname/petstore?isPrivate=true`,
+        expect.objectContaining({ method: "POST" }),
+      );
+      expect(result.operation).toBe("create");
+    });
+
+    it("omits isPrivate when updating an existing API, preserving visibility", async () => {
+      fetchMock.mockResponseOnce("", { status: 200 }).mockResponseOnce("", {
+        status: 200,
+        headers: { "X-Version": "1.0.0" },
+      });
+
+      const result = await api.createOrUpdateApi({
+        owner,
+        apiName,
+        definition,
+      });
+
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        1,
+        `${DUMMY_REGISTRY_BASE_PATH}/apis/orgname/petstore`,
+        expect.objectContaining({ method: "GET" }),
+      );
+      // Visibility must not be sent on update, otherwise an existing public
+      // API would silently be flipped to private.
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        2,
+        `${DUMMY_REGISTRY_BASE_PATH}/apis/orgname/petstore`,
+        expect.objectContaining({ method: "POST" }),
+      );
+      expect(result.operation).toBe("update");
+    });
+  });
+
   describe("patchApi", () => {
     const owner = "orgname";
     const apiName = "petstore";

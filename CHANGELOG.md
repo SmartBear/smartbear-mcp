@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- [Swagger] `create_or_update_api` tool: no longer forces private visibility when updating an existing API. Visibility is now set to private only on creation; updates preserve the API's current visibility.
+
 ### Changed
 
 - [Swagger] `create_api_from_prompt` tool: now create-only - fails with a conflict error instead of overwriting when the generated API version already exists. Marked as non-destructive.
