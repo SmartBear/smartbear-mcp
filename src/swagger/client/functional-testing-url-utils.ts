@@ -38,13 +38,16 @@ export function normalizeBaseUrl(baseUrl: string): string {
  * Splits `url` into the portion following `baseUrl`, normalizing `/` boundaries.
  * Returns `null` when `url` does not start with `baseUrl`.
  */
-export function splitUrlByBaseUrl(url: string, baseUrl: string): string | null {
+export function splitUrlByBaseUrl(
+  url: string,
+  baseUrl: string,
+): { normalizedBase: string; remainder: string } | null {
   const normalizedBase = normalizeBaseUrl(baseUrl);
   if (url === normalizedBase) {
-    return "/";
+    return { normalizedBase, remainder: "/" };
   }
   if (url.startsWith(`${normalizedBase}/`)) {
-    return url.slice(normalizedBase.length);
+    return { normalizedBase, remainder: url.slice(normalizedBase.length) };
   }
   return null;
 }
@@ -111,14 +114,13 @@ export function applyBaseUrlTemplating(
       return { ...rest, url };
     }
 
-    const remainder = splitUrlByBaseUrl(url, baseUrl);
-    if (remainder === null) {
+    const split = splitUrlByBaseUrl(url, baseUrl);
+    if (split === null) {
       throw new Error(
         `Step url "${url}" must start with its baseUrl "${baseUrl}"`,
       );
     }
-
-    const normalizedBase = normalizeBaseUrl(baseUrl);
+    const { normalizedBase, remainder } = split;
     const paramName = getOrCreateParamName(
       `baseUrl:${normalizedBase}`,
       `baseURL${sanitizeForParamName(hostnameFor(baseUrl))}`,
