@@ -9,10 +9,26 @@ import {
 const fetchMock = createFetchMock(vi);
 fetchMock.enableMocks();
 
-const testsMock = [
-  { id: "test-1", name: "Login Test" },
-  { id: "test-2", name: "Checkout Test" },
-];
+const testsMock = {
+  tests: [
+    {
+      id: 1,
+      name: "Login Test",
+      created: 1719400000000,
+      tags: [],
+      folders: [],
+      url: "https://app.reflect.run/tests/1/definition?accountId=42",
+    },
+    {
+      id: 2,
+      name: "Checkout Test",
+      created: 1719500000000,
+      tags: [],
+      folders: [],
+      url: "https://app.reflect.run/tests/2/definition?accountId=42",
+    },
+  ],
+};
 
 const UNREACHABLE_MESSAGE =
   "Swagger Functional Testing service is currently unreachable. Retry after a moment.";
@@ -29,6 +45,7 @@ const suitesResponseMock = {
       slug: "smoke-suite",
       created: 1719400000000,
       numTestInstances: 3,
+      url: "https://app.reflect.run/suites/smoke-suite?accountId=42",
     },
     {
       id: "suite-2",
@@ -37,6 +54,7 @@ const suitesResponseMock = {
       slug: "regression-suite",
       created: 1719500000000,
       numTestInstances: 12,
+      url: "https://app.reflect.run/suites/regression-suite?accountId=42",
     },
   ],
   stats: {
@@ -362,12 +380,12 @@ describe("FunctionalTestingAPI", () => {
       expect(result).toEqual(testsMock);
     });
 
-    it("should return empty array when no tests exist", async () => {
-      fetchMock.mockResponseOnce(JSON.stringify([]));
+    it("should return empty tests list when no tests exist", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify({ tests: [] }));
 
       const result = await api.listTests();
 
-      expect(result).toEqual([]);
+      expect(result).toEqual({ tests: [] });
     });
 
     it("should throw ToolError on HTTP error", async () => {

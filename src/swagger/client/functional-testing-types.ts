@@ -183,6 +183,19 @@ export interface ListSuiteExecutionsResponse {
   };
 }
 
+export interface FunctionalTestingTestSummary {
+  id: number;
+  name: string;
+  created: number;
+  tags: string[];
+  folders: string[];
+  url: string;
+}
+
+export interface ListTestsResponse {
+  tests: FunctionalTestingTestSummary[];
+}
+
 export interface Suite {
   id: string;
   accountId: number;
@@ -190,6 +203,7 @@ export interface Suite {
   slug: string;
   created: number;
   numTestInstances: number;
+  url: string;
 }
 
 export interface ListSuitesResponse {
