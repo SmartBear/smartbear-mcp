@@ -78,7 +78,10 @@ describe("splitUrlByBaseUrl", () => {
         "https://petstore.swagger.io/v2/pet/1",
         "https://petstore.swagger.io/v2",
       ),
-    ).toBe("/pet/1");
+    ).toEqual({
+      normalizedBase: "https://petstore.swagger.io/v2",
+      remainder: "/pet/1",
+    });
   });
 
   it("returns '/' when the url equals the base url exactly", () => {
@@ -87,7 +90,10 @@ describe("splitUrlByBaseUrl", () => {
         "https://petstore.swagger.io/v2",
         "https://petstore.swagger.io/v2",
       ),
-    ).toBe("/");
+    ).toEqual({
+      normalizedBase: "https://petstore.swagger.io/v2",
+      remainder: "/",
+    });
   });
 
   it("tolerates a trailing slash on the base url", () => {
@@ -96,7 +102,10 @@ describe("splitUrlByBaseUrl", () => {
         "https://petstore.swagger.io/v2/pet/1",
         "https://petstore.swagger.io/v2/",
       ),
-    ).toBe("/pet/1");
+    ).toEqual({
+      normalizedBase: "https://petstore.swagger.io/v2",
+      remainder: "/pet/1",
+    });
   });
 
   it("returns null when the url does not start with the base url", () => {
