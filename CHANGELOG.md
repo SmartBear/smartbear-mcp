@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- [Bugsnag]: Prevent cross-account data leakage in Bugsnag caching by namespacing cache keys with the caller's credential hash. [#677]
+
+### Changed
+
+- [Bugsnag] Use a single process-wide `CacheService` and namespace every cache key with a SHA-256 hash of the authenticated caller's token.
+- [Bugsnag] Prefer the request auth header when resolving cache namespace via `getProjectApiKey()` so per-request auth is honored.
+- [Bugsnag] Ensure unauthenticated callers bypass the shared cache to avoid exposing cached data.
+- [Bugsnag] Updated cache usage in `getOrganization()`, `getProjects()`, `getCurrentProject()`, `getProjectEventFields()`, and `getProjectTraceFields()`.
+
 ## [0.37.0] - 2026-08-20
 - [QMetry]: Added Test Case, Test Suite, Issue module, Create/Update UDF capability Added. [#666](https://github.com/SmartBear/smartbear-mcp/pull/666)
 
