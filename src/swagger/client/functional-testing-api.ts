@@ -12,6 +12,7 @@ import type {
   ListFunctionalTestingSuiteExecutionsParams,
   ListSuiteExecutionsResponse,
   ListSuitesResponse,
+  ListTestsResponse,
   RunFunctionalTestingSuiteParams,
   RunFunctionalTestingTestParams,
   TestRunHistoryResponse,
@@ -119,7 +120,7 @@ export class FunctionalTestingAPI {
     return response.json();
   }
 
-  async listTests(): Promise<unknown> {
+  async listTests(): Promise<ListTestsResponse> {
     const response = await this.ftFetch(
       `tests`,
       {
