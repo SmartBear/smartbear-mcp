@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
-import  { CacheService } from "../common/cache";
+import { CacheService } from "../common/cache";
 import { getUserAgent } from "../common/info";
 import { getRequestHeader } from "../common/request-context";
 import type { SmartBearMcpServer } from "../common/server";
@@ -378,9 +378,7 @@ export class BugsnagClient implements Client {
 
   async getCurrentProject(): Promise<Project | null> {
     const projectApiKey = this.getProjectApiKey();
-    let project =
-      this.cacheGet<Project>(cacheKeys.CURRENT_PROJECT) ??
-      null;
+    let project = this.cacheGet<Project>(cacheKeys.CURRENT_PROJECT) ?? null;
     if (!project && projectApiKey) {
       const projects = await this.getProjects();
       project =
@@ -404,10 +402,7 @@ export class BugsnagClient implements Client {
           field.display_id && !EXCLUDED_EVENT_FIELDS.has(field.display_id),
       );
       projectFiltersCache[project.id] = filtersResponse;
-      this.cacheSet(
-        cacheKeys.PROJECT_EVENT_FIELDS,
-        projectFiltersCache,
-      );
+      this.cacheSet(cacheKeys.PROJECT_EVENT_FIELDS, projectFiltersCache);
     }
     return projectFiltersCache[project.id];
   }
@@ -422,10 +417,7 @@ export class BugsnagClient implements Client {
         await this.projectApi.listProjectTraceFields(project.id)
       ).body;
       projectFiltersCache[project.id] = filtersResponse;
-      this.cacheSet(
-        cacheKeys.PROJECT_TRACE_FIELDS,
-        projectFiltersCache,
-      );
+      this.cacheSet(cacheKeys.PROJECT_TRACE_FIELDS, projectFiltersCache);
     }
     return projectFiltersCache[project.id];
   }
@@ -462,10 +454,7 @@ export class BugsnagClient implements Client {
       }
       // If this hasn't been configured at startup, set this to the current project for future tool calls
       if (!this.getProjectApiKey()) {
-        this.cacheSet(
-          cacheKeys.CURRENT_PROJECT,
-          maybeProject,
-        );
+        this.cacheSet(cacheKeys.CURRENT_PROJECT, maybeProject);
       }
       return maybeProject;
     } else {
