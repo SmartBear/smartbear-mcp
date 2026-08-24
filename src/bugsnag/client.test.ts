@@ -1,4 +1,4 @@
-​import { createHmac } from "node:crypto";
+import { createHmac } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { USER_AGENT } from "../common/info.js";
 import { withRequestContext } from "../common/request-context";
