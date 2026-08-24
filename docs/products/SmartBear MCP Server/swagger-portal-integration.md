@@ -104,7 +104,7 @@ The Swagger Portal client provides comprehensive portal and product management c
 #### `update_portal_product`
 
 - Purpose: Update an product within a specific portal.
-- Returns: Information about the updated product, including all product properties and an optional `url` field with the live portal URL for the product (null if URL generation fails).
+- Returns: Information about the updated product, including all product properties and an optional `url` field with the portal URL for the product (null if URL generation fails).
 - Use case: Change information on an existing product.
 - Parameters:
 
