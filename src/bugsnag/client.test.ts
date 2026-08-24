@@ -84,7 +84,7 @@ const cacheKeyNames = {
 // Resolves a logical cache key to the namespaced key the client actually uses.
 // Note this delegates to the implementation, so it cannot prove the namespace
 // is credential-scoped — see the "cache isolation" tests below for that.
-function nsKey(client: BugsnagClient, key: string): string | null {
+function nsKey(client: BugsnagClient, key: string): string | null{
   return (client as any).cacheKey(key);
 }
 
