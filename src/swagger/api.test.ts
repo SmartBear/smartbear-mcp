@@ -5,6 +5,7 @@ import { SwaggerConfiguration } from "./client/configuration";
 
 const fetchMock = createFetchMock(vi);
 const DUMMY_REGISTRY_BASE_PATH = "https://registry.example.test";
+const DUMMY_PORTAL_BASE_PATH = "https://api.portal.swaggerhub.com/v1";
 
 describe("SwaggerAPI", () => {
   let api: SwaggerAPI;
@@ -18,6 +19,7 @@ describe("SwaggerAPI", () => {
     config = new SwaggerConfiguration({
       token: "test-token",
       registryBasePath: DUMMY_REGISTRY_BASE_PATH,
+      portalBasePath: DUMMY_PORTAL_BASE_PATH,
     });
     api = new SwaggerAPI(config, "SmartBear-MCP/1.0.0");
   });
@@ -34,7 +36,7 @@ describe("SwaggerAPI", () => {
       const result = await api.getPortals();
 
       expect(fetchMock).toHaveBeenCalledWith(
-        "https://api.portal.swaggerhub.com/v1/portals",
+        `${config.portalBasePath}/portals`,
         {
           method: "GET",
           headers: {
@@ -62,7 +64,7 @@ describe("SwaggerAPI", () => {
       const result = await api.createPortal(createData);
 
       expect(fetchMock).toHaveBeenCalledWith(
-        "https://api.portal.swaggerhub.com/v1/portals",
+        `${config.portalBasePath}/portals`,
         {
           method: "POST",
           headers: {
@@ -85,7 +87,7 @@ describe("SwaggerAPI", () => {
       const result = await api.getPortal("portal-123");
 
       expect(fetchMock).toHaveBeenCalledWith(
-        "https://api.portal.swaggerhub.com/v1/portals/portal-123",
+        `${config.portalBasePath}/portals/portal-123`,
         {
           method: "GET",
           headers: {
@@ -111,7 +113,7 @@ describe("SwaggerAPI", () => {
       const result = await api.updatePortal("portal-123", updateData);
 
       expect(fetchMock).toHaveBeenCalledWith(
-        "https://api.portal.swaggerhub.com/v1/portals/portal-123",
+        `${config.portalBasePath}/portals/portal-123`,
         {
           method: "PATCH",
           headers: {
@@ -134,7 +136,7 @@ describe("SwaggerAPI", () => {
       const result = await api.getPortalProducts("portal-123");
 
       expect(fetchMock).toHaveBeenCalledWith(
-        "https://api.portal.swaggerhub.com/v1/portals/portal-123/products",
+        `${config.portalBasePath}/portals/portal-123/products`,
         {
           method: "GET",
           headers: {
@@ -162,7 +164,7 @@ describe("SwaggerAPI", () => {
       const result = await api.createPortalProduct("portal-123", createData);
 
       expect(fetchMock).toHaveBeenCalledWith(
-        "https://api.portal.swaggerhub.com/v1/portals/portal-123/products",
+        `${config.portalBasePath}/portals/portal-123/products`,
         {
           method: "POST",
           headers: {
@@ -185,7 +187,7 @@ describe("SwaggerAPI", () => {
       const result = await api.getPortalProduct("prod-123");
 
       expect(fetchMock).toHaveBeenCalledWith(
-        "https://api.portal.swaggerhub.com/v1/products/prod-123",
+        `${config.portalBasePath}/products/prod-123`,
         {
           method: "GET",
           headers: {
@@ -206,7 +208,7 @@ describe("SwaggerAPI", () => {
       await api.deletePortalProduct("prod-123");
 
       expect(fetchMock).toHaveBeenCalledWith(
-        "https://api.portal.swaggerhub.com/v1/products/prod-123",
+        `${config.portalBasePath}/products/prod-123`,
         {
           method: "DELETE",
           headers: {
@@ -245,7 +247,7 @@ describe("SwaggerAPI", () => {
       const result = await api.updatePortalProduct("prod-123", updateData);
 
       expect(fetchMock).toHaveBeenCalledWith(
-        "https://api.portal.swaggerhub.com/v1/products/prod-123",
+        `${config.portalBasePath}/products/prod-123`,
         {
           method: "PATCH",
           headers: {
@@ -258,7 +260,7 @@ describe("SwaggerAPI", () => {
       );
 
       expect(fetchMock).toHaveBeenCalledWith(
-        "https://api.portal.swaggerhub.com/v1/portals/portal-456",
+        `${config.portalBasePath}/portals/portal-456`,
         {
           method: "GET",
           headers: {
@@ -503,7 +505,7 @@ describe("SwaggerAPI", () => {
       // Verify publish was called first
       expect(fetchMock).toHaveBeenNthCalledWith(
         1,
-        `https://api.portal.swaggerhub.com/v1/products/${productId}/published-content?preview=false`,
+        `${config.portalBasePath}/products/${productId}/published-content?preview=false`,
         {
           method: "PUT",
           headers,
@@ -513,7 +515,7 @@ describe("SwaggerAPI", () => {
       // Verify metadata was fetched after publish
       expect(fetchMock).toHaveBeenNthCalledWith(
         2,
-        `https://api.portal.swaggerhub.com/v1/products/${productId}`,
+        `${config.portalBasePath}/products/${productId}`,
         {
           method: "GET",
           headers,
@@ -556,7 +558,7 @@ describe("SwaggerAPI", () => {
 
       expect(fetchMock).toHaveBeenNthCalledWith(
         1,
-        `https://api.portal.swaggerhub.com/v1/products/${productId}/published-content?preview=true`,
+        `${config.portalBasePath}/products/${productId}/published-content?preview=true`,
         {
           method: "PUT",
           headers,
@@ -752,7 +754,6 @@ describe("SwaggerAPI", () => {
   });
 
   describe("createDocumentationPage", () => {
-    const BASE = "https://api.portal.swaggerhub.com/v1";
     const headers = {
       Authorization: "Bearer test-token",
       "Content-Type": "application/json",
@@ -804,22 +805,34 @@ describe("SwaggerAPI", () => {
       fetchMock.mockResponse((req) => {
         const { url, method } = req;
 
-        if (url === `${BASE}/portals/${portalId}`) {
+        if (url === `${DUMMY_PORTAL_BASE_PATH}/portals/${portalId}`) {
           return Promise.resolve(JSON.stringify(portalResponse));
         }
-        if (url === `${BASE}/products/${productId}` && method === "GET") {
+        if (
+          url === `${DUMMY_PORTAL_BASE_PATH}/products/${productId}` &&
+          method === "GET"
+        ) {
           return Promise.resolve(JSON.stringify(productResponse));
         }
-        if (url === `${BASE}/products/${productId}/sections`) {
+        if (
+          url === `${DUMMY_PORTAL_BASE_PATH}/products/${productId}/sections`
+        ) {
           return Promise.resolve(JSON.stringify(sectionsResponse));
         }
-        if (url.startsWith(`${BASE}/products/${productId}/sections?`)) {
+        if (
+          url.startsWith(
+            `${DUMMY_PORTAL_BASE_PATH}/products/${productId}/sections?`,
+          )
+        ) {
           return Promise.resolve(JSON.stringify(sectionsWithEmbedResponse));
         }
-        if (url === `${BASE}/sections/${sectionId}/table-of-contents`) {
+        if (
+          url ===
+          `${DUMMY_PORTAL_BASE_PATH}/sections/${sectionId}/table-of-contents`
+        ) {
           return Promise.resolve(JSON.stringify(tocItemResponse));
         }
-        if (url === `${BASE}/documents/${documentId}`) {
+        if (url === `${DUMMY_PORTAL_BASE_PATH}/documents/${documentId}`) {
           return Promise.resolve(JSON.stringify(updateDocumentResponse));
         }
 
@@ -837,20 +850,26 @@ describe("SwaggerAPI", () => {
         pageContent: "# Hello",
       });
 
-      expect(fetchMock).toHaveBeenCalledWith(`${BASE}/portals/${portalId}`, {
-        method: "GET",
-        headers,
-      });
-      expect(fetchMock).toHaveBeenCalledWith(`${BASE}/products/${productId}`, {
-        method: "GET",
-        headers,
-      });
       expect(fetchMock).toHaveBeenCalledWith(
-        `${BASE}/products/${productId}/sections`,
+        `${DUMMY_PORTAL_BASE_PATH}/portals/${portalId}`,
+        {
+          method: "GET",
+          headers,
+        },
+      );
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${DUMMY_PORTAL_BASE_PATH}/products/${productId}`,
+        {
+          method: "GET",
+          headers,
+        },
+      );
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${DUMMY_PORTAL_BASE_PATH}/products/${productId}/sections`,
         { method: "GET", headers },
       );
       expect(fetchMock).toHaveBeenCalledWith(
-        `${BASE}/sections/${sectionId}/table-of-contents`,
+        `${DUMMY_PORTAL_BASE_PATH}/sections/${sectionId}/table-of-contents`,
         {
           method: "POST",
           headers,
@@ -865,7 +884,7 @@ describe("SwaggerAPI", () => {
         },
       );
       expect(fetchMock).toHaveBeenCalledWith(
-        `${BASE}/documents/${documentId}`,
+        `${DUMMY_PORTAL_BASE_PATH}/documents/${documentId}`,
         {
           method: "PATCH",
           headers,
@@ -901,7 +920,7 @@ describe("SwaggerAPI", () => {
       });
 
       expect(fetchMock).toHaveBeenCalledWith(
-        `${BASE}/sections/${sectionId}/table-of-contents`,
+        `${DUMMY_PORTAL_BASE_PATH}/sections/${sectionId}/table-of-contents`,
         {
           method: "POST",
           headers,
@@ -940,13 +959,15 @@ describe("SwaggerAPI", () => {
 
       fetchMock.mockResponse((req) => {
         const { url } = req;
-        if (url === `${BASE}/portals/${portalId}`) {
+        if (url === `${DUMMY_PORTAL_BASE_PATH}/portals/${portalId}`) {
           return Promise.resolve(JSON.stringify(portalResponse));
         }
-        if (url === `${BASE}/products/${productId}`) {
+        if (url === `${DUMMY_PORTAL_BASE_PATH}/products/${productId}`) {
           return Promise.resolve(JSON.stringify(productResponse));
         }
-        if (url === `${BASE}/products/${productId}/sections`) {
+        if (
+          url === `${DUMMY_PORTAL_BASE_PATH}/products/${productId}/sections`
+        ) {
           return Promise.resolve(JSON.stringify(emptySections));
         }
         return Promise.reject(new Error(`Unexpected fetch: ${url}`));
@@ -975,7 +996,7 @@ describe("SwaggerAPI", () => {
       });
 
       expect(fetchMock).toHaveBeenCalledWith(
-        `${BASE}/sections/${sectionId}/table-of-contents`,
+        `${DUMMY_PORTAL_BASE_PATH}/sections/${sectionId}/table-of-contents`,
         {
           method: "POST",
           headers,
@@ -990,7 +1011,7 @@ describe("SwaggerAPI", () => {
         },
       );
       expect(fetchMock).toHaveBeenCalledWith(
-        `${BASE}/documents/${documentId}`,
+        `${DUMMY_PORTAL_BASE_PATH}/documents/${documentId}`,
         {
           method: "PATCH",
           headers,
@@ -1034,7 +1055,7 @@ describe("SwaggerAPI", () => {
 
       expect(result.pageDetails.slug).toBe("my-custom-slug");
       expect(fetchMock).toHaveBeenCalledWith(
-        `${BASE}/sections/${sectionId}/table-of-contents`,
+        `${DUMMY_PORTAL_BASE_PATH}/sections/${sectionId}/table-of-contents`,
         expect.objectContaining({
           body: expect.stringContaining('"slug":"my-custom-slug"'),
         }),
