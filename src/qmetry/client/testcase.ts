@@ -55,6 +55,11 @@ export async function createTestCases(
       "[createTestCases] Missing or invalid required parameter: 'name'.",
     );
   }
+  if (!Array.isArray(body.steps) || body.steps.length === 0) {
+    throw new Error(
+      "[createTestCases] Missing or invalid required parameter: 'steps' — must be a non-empty array. Generate steps from context if the user did not provide them.",
+    );
+  }
 
   return qmetryRequest<unknown>({
     method: "POST",

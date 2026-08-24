@@ -77,6 +77,8 @@ export const QMetryToolsHandlers = {
   FETCH_TEST_CASE_STEPS_WITH_UDF: "getTestCaseStepsWithUdf",
   FETCH_TEST_CASE_EXECUTIONS: "getTestCaseExecutions",
   LINK_REQUIREMENT_TO_TESTCASE: "linkRequirementToTestCase",
+  CREATE_REQUIREMENT: "createRequirement",
+  UPDATE_REQUIREMENT: "updateRequirement",
   FETCH_REQUIREMENTS: "getRequirements",
   FETCH_REQUIREMENT_DETAILS: "getRequirementDetails",
   FETCH_TESTCASES_LINKED_TO_REQUIREMENT: "getTestCasesLinkedToRequirement",

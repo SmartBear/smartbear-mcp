@@ -1,14 +1,166 @@
 import { QMetryToolsHandlers } from "../../config/constants";
 import {
+  CreateRequirementArgsSchema,
   LinkRequirementToTestCaseArgsSchema,
   RequirementDetailsArgsSchema,
   RequirementListArgsSchema,
   RequirementsLinkedToTestCaseArgsSchema,
   TestCasesLinkedToRequirementArgsSchema,
+  UpdateRequirementArgsSchema,
 } from "../../types/common";
 import type { QMetryToolParams } from "./types";
 
 export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
+  {
+    title: "Create Requirement",
+    toolset: "Requirements",
+    summary:
+      "Create a new requirement in QMetry with metadata and release/cycle mapping.",
+    handler: QMetryToolsHandlers.CREATE_REQUIREMENT,
+    inputSchema: CreateRequirementArgsSchema,
+    purpose:
+      "Allows users to create a new requirement in QMetry, including custom fields (UDFs), and release/cycle mapping. " +
+      "For fields like requirementOwner, requirementState, etc., fetch their valid values using the project info tool. " +
+      "If rqFolderId is not provided, it will be auto-resolved to the root requirement folder using project info. " +
+      "HARD GATE: if the project is Jira-integrated and the Requirement module is configured to sync with Jira " +
+      "issue types, this tool refuses to create the requirement in QMetry",
+    useCases: [
+      "Create a basic requirement with just a name",
+      "Add detailed metadata like priority, component, and description to a requirement",
+      "Associate a requirement with a specific release/cycle for planning",
+      "Set requirementOwner and requirementState using valid IDs from project info",
+      "Create a requirement in a specific folder using rqFolderId",
+      "Set custom fields (UDFs) values on the new requirement",
+    ],
+    examples: [
+      {
+        description: "Create a requirement in the root folder (auto-resolved)",
+        parameters: {
+          name: "New login requirement",
+        },
+        expectedOutput:
+          "Requirement created in the root requirement folder with ID and summary details",
+      },
+      {
+        description: "Create a requirement with metadata",
+        parameters: {
+          name: "New login requirement",
+          priority: 688864,
+          component: [689030],
+          requirementOwner: 8,
+          requirementState: 688912,
+          description: "Users must be able to log in with SSO.",
+          associateRelCyc: true,
+          releaseCycleMapping: [
+            { release: 1628, cycle: [1839, 1840], version: 1 },
+          ],
+        },
+        expectedOutput:
+          "Requirement created with metadata. Example uses: priority=688864, component=[689030], " +
+          "requirementOwner=8, requirementState=688912 — resolve these IDs from project info's " +
+          "customListObjs before use.",
+      },
+    ],
+    hints: [
+      "'name' is the only mandatory field — sets the requirement's title/summary. Every other field is optional.",
+      "'description' is a free-text field (supports HTML) for detailed requirement information.",
+      "'component' is an array of Component (Label) IDs — resolve names to IDs from project info before use.",
+      "If rqFolderId is not provided, it will be auto-resolved to the root requirement folder using project info (rootFolders.RQ.id).",
+      "To get valid values for priority, component, requirementOwner (owner), requirementState (state), call the 'Admin/Get info Service' API (FETCH_PROJECT_INFO tool) and use the returned customListObjs IDs.",
+      "If the user provides a name instead of an ID for owner/state/priority/component, fetch project info, find the matching entry by name in the relevant customListObjs list, and use its ID. If not found, skip that field and tell the user it was omitted because the value wasn't available in the current project.",
+      "Release/cycle mapping is optional. If the user wants to associate a release and cycle, set associateRelCyc: true and provide releaseCycleMapping.",
+      "HARD GATE (not configurable): before creating, this tool checks project info for isExtTrackerConfigured, extTrackerType, and isRQConfigured. " +
+        "If the project has an external tracker configured, that tracker is Jira (extTrackerType=1), and the Requirement module is synced with it " +
+        "(isRQConfigured=true), the create is refused with an error — do NOT retry or work around this. Tell the user requirements for this project " +
+        "must be created directly in Jira, then synced into QMetry.",
+      "",
+      "UDF (User Defined Fields) WORKFLOW FOR CREATE:",
+      "1. Call 'Fetch UDF Layout' with entityType='RQ', pageName='ADD' to discover field names, types, and list option IDs.",
+      "   IF listOptions[field.listName] is empty after Fetch UDF Layout, the tool already tried a metadata fallback. " +
+        "   If STILL empty, ask the user to provide the option ID from the QMetry UI — do NOT guess numeric IDs.",
+      "2. For LOOKUPLIST fields: pick one ID from listOptions[field.listName][].id.",
+      "3. For MULTILOOKUPLIST fields: pick an array of IDs.",
+      "4. For CASCADINGLIST fields: pick parent ID, then call 'Fetch Cascade Child Values' for child ID. Pass { parent: parentId, child: childId }.",
+      "5. Pass all UDF values via 'udfFields' param: { fieldName: value }.",
+      "6. Mandatory UDF fields (isMandatory=true) MUST be included or create will fail.",
+    ],
+    outputDescription:
+      "JSON object containing the new requirement ID, summary, and creation metadata.",
+    readOnly: false,
+    idempotent: false,
+  },
+  {
+    title: "Update Requirement",
+    toolset: "Requirements",
+    summary: "Update an existing QMetry requirement by rqId and rqVersionId.",
+    handler: QMetryToolsHandlers.UPDATE_REQUIREMENT,
+    inputSchema: UpdateRequirementArgsSchema,
+    purpose:
+      "Update a QMetry requirement's priority, or custom field (UDF) values. Can also create new versions." +
+      "Requires rqId and rqVersionId, which can be auto-resolved from the requirement entityKey using the requirement list and version detail tools." +
+      "Only fields provided will be updated." +
+      "HARD GATE: if the project is Jira-integrated and the Requirement module is configured to sync with Jira " +
+      "issue types, this tool refuses to update the requirement in QMetry — it must be updated in Jira instead.",
+    useCases: [
+      "Update the name, description, priority, owner, state, or component of a requirement",
+      "Add or remove attachments on a requirement",
+      "Update custom field (UDF) values on a requirement",
+      "Create a new version of a requirement while updating it (updateWithVersion)",
+    ],
+    examples: [
+      {
+        description: "Update the priority of a requirement",
+        parameters: {
+          rqId: 2073,
+          rqVersionId: 2087,
+          updateWithVersion: false,
+          priority: 688865,
+        },
+        expectedOutput: "Requirement priority updated successfully.",
+      },
+      {
+        description: "Update name, description, owner, and state",
+        parameters: {
+          rqId: 2073,
+          rqVersionId: 2087,
+          name: "Updated login requirement",
+          description: "Users must be able to log in with SSO.",
+          requirementOwner: 8,
+          requirementState: 688912,
+          component: [689030],
+        },
+        expectedOutput:
+          "Requirement updated with new name, description, owner, state, and component.",
+      },
+    ],
+    hints: [
+      "If the user provides an entityKey (e.g., MAC-RQ-730), first call 'Fetch Requirements' with a filter on entityKeyId to resolve rqId and rqVersionId.",
+      "updateWithVersion: pass 'true' to create a new version of the requirement instead of updating the current version in place.",
+      "To get valid values for priority, requirementOwner, requirementState, and component, call the 'Admin/Get info Service' API (FETCH_PROJECT_INFO tool) and use the returned customListObjs IDs.",
+      "If the user provides a name instead of an ID for owner/state/priority, fetch project info, find the matching entry by name in the relevant customListObjs list, and use its ID. If not found, skip that field and tell the user it was omitted because the value wasn't available in the current project.",
+      "attachments (if used) requires both ADD and REMOVE arrays — pass empty arrays when there is nothing to add or remove.",
+      "Only fields explicitly listed in this tool's parameters are supported — releaseCycleMapping and associateRelCyc are create-only and not supported here.",
+      "HARD GATE: before updating, this tool checks project info for isExtTrackerConfigured, extTrackerType, and isRQConfigured. " +
+        "If the project has an external tracker configured, that tracker is Jira (extTrackerType=1), and the Requirement module is synced with it " +
+        "(isRQConfigured=true), the update is refused with an error — do NOT retry or work around this. Tell the user requirements for this project " +
+        "must be updated directly in Jira, then synced into QMetry.",
+      "",
+      "UDF (User Defined Fields) WORKFLOW FOR UPDATE:",
+      "1. Call 'Fetch UDF Layout' with entityType='RQ', pageName='DETAIL' to get field names, fieldIDs (projectUserFieldID), and list option IDs.",
+      "   IF listOptions[field.listName] is empty after Fetch UDF Layout, the tool already tried a metadata fallback. " +
+        "   If STILL empty, ask the user to provide the option ID from the QMetry UI — do NOT guess numeric IDs.",
+      "2. For LOOKUPLIST fields: pick one ID from listOptions[field.listName][].id.",
+      "3. For MULTILOOKUPLIST fields: pick array of IDs; also pass alias flat key (e.g., fieldNameAlias: 'Option Label').",
+      "4. For CASCADINGLIST fields: pick parent ID + fetch child with 'Fetch Cascade Child Values'. Pass { parent: parentId, child: childId }.",
+      "5. Pass BOTH 'udfFields' (flat root values) AND 'UDF' wrapper (with fieldID) — both required for update. " +
+        "Example: udfFields: { rq_field: 'value' }, UDF: { rq_field: { fieldID: 2001, value: 'value' } }",
+      "6. Mandatory UDF fields (isMandatory=true) MUST be included.",
+    ],
+    outputDescription:
+      "JSON object containing the updated requirement ID, summary, and update metadata.",
+    readOnly: false,
+    idempotent: false,
+  },
   {
     title: "Fetch Requirements",
     toolset: "Requirements",
@@ -40,16 +192,6 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
         parameters: { projectKey: "UT" },
         expectedOutput:
           "List of requirements from UT project using UT's specific RQ viewId",
-      },
-      {
-        description:
-          "Get requirements with manual viewId (skip auto-resolution)",
-        parameters: {
-          projectKey: "MAC",
-          viewId: 7397, // This is an example viewId, must be resolved per project RQ viewId
-          folderPath: "/APIARY 88",
-        },
-        expectedOutput: "Requirements using manually specified viewId 7397",
       },
       {
         description: "Search for specific requirements by entity key",

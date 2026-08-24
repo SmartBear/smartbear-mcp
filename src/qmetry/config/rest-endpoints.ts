@@ -24,6 +24,7 @@ export const QMETRY_PATHS = {
     GET_RQ_LIST: "/rest/requirements/list/viewColumns",
     GET_RQ_DETAILS: "/rest/requirements/detail/data",
     GET_RQ_LINKED_TO_TC: "/rest/requirements/list/forTC",
+    CREATE_UPDATE_RQ: "/rest/requirements",
   },
   TESTSUITE: {
     CREATE_UPDATE_TS: "/rest/testsuites",

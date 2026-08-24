@@ -16,6 +16,82 @@ import {
 import { qmetryRequest } from "./api/client-api";
 import { resolveDefaults } from "./utils";
 
+// Fields returned by GET_INFO/SEt_INFO that we don't want to expose to LLM.
+const PROJECT_FIELDS_TO_OMIT = new Set([
+  "clientData",
+  "disabledRoleRights",
+  "automationFrameworks",
+  "currentUserRoleRights",
+  "userRoleRights",
+  "licenseDetail",
+  "bddRepos",
+  "atgTCFields",
+  "allowEditRecordData",
+  "allowEditPublicView",
+  "logiServerUrl",
+  "buildNumber",
+  "dynamicWebhookEnabled",
+  "isLocked",
+  "isBuildLOcked",
+  "isReleaseLocked",
+  "isProjectLocked",
+  "cicdRequestTimeoutInSeconds",
+  "thumbnailCreated",
+  "qisearchBearerToken",
+  "openAISecretKey",
+  "openAISalt",
+  "qmetrySamlUrl",
+  "qmetrySAMLContext",
+  "BDD_MQ_NAME",
+  "riskBasedAnalysisEnabled",
+  "riskBasedAtRQLevel",
+  "riskBasedAtTCLevel",
+  "isDropMandatory",
+  "isPlatformScopeFeatureEnabled",
+  "isSyncAcrossDomainEnabled",
+  "isTestDataEnabled",
+  "isTestCaseApprover",
+  "isTestSuiteApprover",
+  "isTestSuiteCloser",
+  "isRequirementReviewer",
+  "isApprovalWorkflowEnabled",
+  "isPartLevelComplianceEnabled",
+  "isAutoApproveTestRunEnabled",
+  "isDeriveTCRStatusFromTCSRStatus",
+  "isDefineTestCaseDependency",
+  "isAutoSyncNewTcVersionEnabled",
+  "isBddConfigured",
+  "isMFAMandatory",
+  "part11ComplianceAuthType",
+  "userPreferredAutoActivatePrediction",
+  "isQIEnabled",
+  "isReflectEnabled",
+  "isAskMeAnythingEnabledAI",
+  "isDocLinkConfigForProjectAI",
+  "isNetSearchConfigForProjectAI",
+  "isAutoGenerateTcTcStepsAI",
+  "isGenerateNewTcInExistingTcAI",
+  "isEditTcStepsInExistingTcAI",
+  "isGenerateNewTcForStoryAI",
+  "isFlakyScoreEnabled",
+  "isSuccessRateEnabled",
+  "isQueryAssistanceEnabledClient",
+  "isQueryAssistanceEnabledUser",
+  "isDocSearchEnabled",
+  "isTestingTypeVisible",
+  "isMatrixViewEnabled",
+  "isTCSRPartLevelComplianceDisabled",
+  "isProjectLogoCustomization",
+  "alEvents",
+  "alModules",
+  "isScimEnabled",
+  "atgJiraFields",
+  "nomenclature",
+  "nomenclatureInfo",
+  "refreshContent",
+  "packages"
+]);
+
 /**
  * Retrieves project information from QMetry
  *
@@ -36,13 +112,17 @@ export async function getProjectInfo(
   baseUrl: string,
   project?: string,
 ) {
-  return qmetryRequest({
+  const result = await qmetryRequest<Record<string, unknown>>({
     method: "GET",
     path: QMETRY_PATHS.PROJECT.GET_INFO,
     token,
     baseUrl: baseUrl || QMETRY_DEFAULTS.BASE_URL,
     project: project || QMETRY_DEFAULTS.PROJECT_KEY,
   });
+
+  return Object.fromEntries(
+    Object.entries(result).filter(([key]) => !PROJECT_FIELDS_TO_OMIT.has(key)),
+  );
 }
 
 /**

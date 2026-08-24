@@ -379,7 +379,7 @@ export async function fetchUdfModules() {
 }
 
 /**
- * Fetches UDF field definitions for TC, TS, or IS entities from the newlayout endpoint.
+ * Fetches UDF field definitions for TC, TS, IS, or RQ entities from the newlayout endpoint.
  * pageName "ADD" → create operation field list (no fieldID needed).
  * pageName "DETAIL" → update operation field list (includes fieldID/projectUserFieldID required by UDF update wrapper).
  * Returns normalized fields array + step fields (TC only) + list options for lookup fields.
@@ -395,9 +395,12 @@ export async function fetchUdfLayout(
     project,
   );
 
-  if (!payload.entityType || !["TC", "TS", "IS"].includes(payload.entityType)) {
+  if (
+    !payload.entityType ||
+    !["TC", "TS", "IS", "RQ"].includes(payload.entityType)
+  ) {
     throw new Error(
-      "[fetchUdfLayout] Missing or invalid required parameter: 'entityType'. Must be 'TC', 'TS', or 'IS'.",
+      "[fetchUdfLayout] Missing or invalid required parameter: 'entityType'. Must be 'TC', 'TS', 'IS', or 'RQ'.",
     );
   }
 

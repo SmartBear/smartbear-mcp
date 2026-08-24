@@ -178,8 +178,7 @@ export const CommonFields = {
     .describe(
       "ViewId for test cases - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
         "Leave empty unless you have a specific viewId. " +
-        "System will fetch project info using the projectKey and extract latestViews.TC.viewId automatically. " +
-        "Manual viewId only needed if you want to override the automatic resolution.",
+        "System will fetch project info using the projectKey and extract latestViews.TC.viewId automatically."
     ),
   rqViewId: z
     .number()
@@ -187,8 +186,7 @@ export const CommonFields = {
     .describe(
       "ViewId for requirements - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
         "Leave empty unless you have a specific viewId. " +
-        "System will fetch project info using the projectKey and extract latestViews.RQ.viewId automatically. " +
-        "Manual viewId only needed if you want to override the automatic resolution.",
+        "System will fetch project info using the projectKey and extract latestViews.RQ.viewId automatically."
     ),
   rqFolderPath: z
     .string()
@@ -251,8 +249,7 @@ export const CommonFields = {
     .describe(
       "ViewId for test execution - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
         "Leave empty unless you have a specific viewId. " +
-        "System will fetch project info using the projectKey and extract latestViews.TE.viewId automatically. " +
-        "Manual viewId only needed if you want to override the automatic resolution.",
+        "System will fetch project info using the projectKey and extract latestViews.TE.viewId automatically."
     ),
   tsfeViewId: z
     .number()
@@ -260,8 +257,7 @@ export const CommonFields = {
     .describe(
       "ViewId for test suite folders - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
         "Leave empty unless you have a specific viewId. " +
-        "System will fetch project info using the projectKey and extract latestViews.TSFS.viewId automatically. " +
-        "Manual viewId only needed if you want to override the automatic resolution.",
+        "System will fetch project info using the projectKey and extract latestViews.TSFS.viewId automatically."
     ),
   tsViewId: z
     .number()
@@ -269,8 +265,7 @@ export const CommonFields = {
     .describe(
       "ViewId for test suites - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
         "Leave empty unless you have a specific viewId. " +
-        "System will fetch project info using the projectKey and extract latestViews.TS.viewId automatically. " +
-        "Manual viewId only needed if you want to override the automatic resolution.",
+        "System will fetch project info using the projectKey and extract latestViews.TS.viewId automatically. "
     ),
   tsrunID: z.coerce
     .string()
@@ -640,36 +635,30 @@ export const CreateTestCaseArgsSchema = z.object({
     ),
   steps: z
     .array(CreateTestCaseStepSchema)
-    .optional()
+    .min(1)
     .describe(
-      "STEPS INCLUSION RULE — read before deciding whether to include this field:\n" +
+      "STEPS RULE — ALWAYS include this field. Steps must NEVER be omitted.\n" +
         "\n" +
-        "DEFAULT BEHAVIOR: OMIT 'steps' entirely from the payload. Do NOT include steps: [] (empty array).\n" +
-        "A test case without steps is valid and is the normal case when the user did not mention steps.\n" +
+        "NEVER send steps: [] (empty array) — always send at least 1 valid step object.\n" +
         "\n" +
-        "INCLUDE 'steps' ONLY in these two scenarios:\n" +
-        "  SCENARIO 1 — User explicitly mentions steps in their prompt.\n" +
-        "    Examples: 'create test case with steps', 'step 1: open browser, step 2: click login',\n" +
-        "    'add these steps: ...', 'include steps', 'create with following steps'.\n" +
-        "    When user provides step text, parse each step into { orderId, description, inputData?, expectedOutcome? }.\n" +
+        "HOW TO POPULATE:\n" +
+        "  - If user explicitly provides steps: parse each step into { orderId, description, inputData?, expectedOutcome? }.\n" +
+        "  - If user does NOT provide steps: auto-generate meaningful steps based on the test case name, description, and context.\n" +
+        "    Use your knowledge to infer 2-5 logical, realistic steps for the feature or flow being tested.\n" +
+        "    Example: name='Login Test Case' → [{orderId:1, description:'Navigate to login page'}, {orderId:2, description:'Enter credentials'}, {orderId:3, description:'Submit and verify success'}]\n" +
         "\n" +
-        "  SCENARIO 2 — Any field in 'stepSystemFields' OR 'stepFields' from Fetch UDF Layout has isMandatory=true.\n" +
-        "    stepSystemFields = built-in step fields (description, expectedOutcome, etc.).\n" +
-        "    stepFields = step-level UDF fields (custom fields configured per project).\n" +
-        "    If EITHER array has isMandatory=true on any entry, the backend REQUIRES at least 1 step.\n" +
-        "    In this case you MUST include at least 1 step even if the user did not mention steps.\n" +
-        "    Also fill mandatory step UDF fields from stepFields in step.UDF — use stepDefaultValues if defaults exist, else placeholder.\n" +
-        "    Ask the user for step content OR create a placeholder step with description='Step 1'.\n" +
-        "\n" +
-        "NEVER include 'steps' in any other scenario — omitting it keeps the payload clean and avoids BE errors.\n" +
-        "NEVER send steps: [] (empty array) — either omit the field or send at least 1 valid step object.\n" +
+        "STEP DEFAULT VALUES:\n" +
+        "  After building the steps array, check 'stepDefaultValues' from Fetch UDF Layout.\n" +
+        "  stepDefaultValues shape: { fieldName: defaultValue }\n" +
+        "  For each step: for each key in stepDefaultValues, if the user did NOT explicitly provide a value for that field → add it to step.UDF with the default value.\n" +
+        "  Auto-apply silently — do NOT ask the user.\n" +
         "\n" +
         "Step object fields:\n" +
         "  orderId (required): sequential integer starting at 1\n" +
         "  description (required): step action text\n" +
         "  inputData (optional): test data for this step\n" +
         "  expectedOutcome (optional): what should happen after this step\n" +
-        "  UDF (optional): step-level custom fields\n" +
+        "  UDF (optional): step-level custom fields — auto-fill defaults from stepDefaultValues\n" +
         "  tcStepID (omit on create — only used when updating existing steps)",
     ),
   name: z.string(),
@@ -897,6 +886,115 @@ export const RequirementDetailsArgsSchema = z.object({
   baseUrl: CommonFields.baseUrl,
   id: CommonFields.rqID,
   version: CommonFields.rqVersion,
+});
+
+const RequirementAttachmentsSchema = z
+  .object({
+    ADD: z.array(z.unknown()).describe("Attachments to add."),
+    REMOVE: z.array(z.unknown()).describe("Attachments to remove."),
+  })
+  .optional()
+  .describe(
+    "Attachment changes. ADD and REMOVE are both required arrays (use empty arrays for no change).",
+  );
+
+export const CreateRequirementArgsSchema = z.object({
+  name: z.string().describe("Requirement name (required)."),
+  priority: z
+    .number()
+    .optional()
+    .describe("Priority ID of the requirement."),
+  component: z
+    .array(z.number())
+    .optional()
+    .describe("Component (Label) IDs associated with the requirement."),
+  requirementOwner: z
+    .number()
+    .optional()
+    .describe("Owner ID of the requirement."),
+  requirementState: z
+    .number()
+    .optional()
+    .describe("State ID of the requirement."),
+  releaseCycleMapping: z
+    .array(
+      z.object({
+        release: z.number(),
+        cycle: z.array(z.number()),
+        version: z.number(),
+      }),
+    )
+    .optional()
+    .describe("Release/cycle mapping for the requirement."),
+  description: z.string().optional().describe("Description of the requirement."),
+  associateRelCyc: z
+    .boolean()
+    .optional()
+    .describe("Whether to associate the release/cycle mapping."),
+  rqFolderId: z
+    .string()
+    .optional()
+    .describe(
+      "Requirement folder ID - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
+        "Leave empty unless you have a specific folder ID. " +
+        "System will fetch project info using the projectKey and extract rootFolders.RQ.id automatically. " +
+        "Manual folder ID only needed if you want to target a specific sub-folder.",
+    ),
+  scope: z
+    .string()
+    .optional()
+    .describe("Scope of the requirement, usually 'project'.")
+    .default("project"),
+  udfFields: UdfFieldsSchema,
+});
+
+export const UpdateRequirementArgsSchema = z.object({
+  rqId: z
+    .number()
+    .describe(
+      "Requirement numeric ID (required). This is the internal numeric identifier, not the entity key like 'MAC-RQ-730'.",
+    ),
+  rqVersionId: z
+    .number()
+    .describe("Requirement version ID (required for update)."),
+  updateWithVersion: z
+    .boolean()
+    .optional()
+    .describe(
+      "Pass 'true' to create a new version of the requirement instead of updating the existing version in place.",
+    ),
+  name: z.string().optional().describe("Name of the requirement."),
+  description: z
+    .string()
+    .optional()
+    .describe("Description of the requirement."),
+  component: z
+    .array(z.number())
+    .optional()
+    .describe("Component (Label) IDs associated with the requirement."),
+  requirementOwner: z
+    .number()
+    .optional()
+    .describe("Owner ID of the requirement."),
+  requirementState: z
+    .number()
+    .optional()
+    .describe("State ID of the requirement."),
+  priority: z
+    .number()
+    .optional()
+    .describe("Priority ID of the requirement."),
+  attachments: RequirementAttachmentsSchema,
+  udfFields: UdfFieldsSchema,
+  UDF: z
+    .record(z.string(), UdfWrapperFieldSchema)
+    .optional()
+    .describe(
+      "UDF wrapper required for update operations. Keys = UDF field names. " +
+        "Each value must include fieldID and value. " +
+        "Also set matching flat key in udfFields for the LOOKUPLIST Alias display. " +
+        "Example: { custom_text: { fieldID: 1001, value: 'new value' } }",
+    ),
 });
 
 export const RequirementsLinkedToTestCaseArgsSchema = z.object({
@@ -1324,8 +1422,7 @@ export const IssuesListArgsSchema = z.object({
     .describe(
       "ViewId for issues - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
         "Leave empty unless you have a specific viewId. " +
-        "System will fetch project info using the projectKey and extract latestViews.IS.viewId automatically. " +
-        "Manual viewId only needed if you want to override the automatic resolution.",
+        "System will fetch project info using the projectKey and extract latestViews.IS.viewId automatically." 
     ),
   start: CommonFields.start,
   page: CommonFields.page,

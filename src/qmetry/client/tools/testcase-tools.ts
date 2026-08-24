@@ -23,17 +23,18 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       "REQUIRED WORKFLOW: Before calling this tool, ALWAYS call 'Fetch UDF Layout' (entityType='TC', pageName='ADD') first. " +
       "That call reveals mandatory UDF fields, system field requirements, and default values to auto-apply. " +
       "Skipping it causes CO.MANDATORY_FIELDS_MISSING errors. " +
-      "Allows users to create a new test case in QMetry, optionally with steps, custom fields, and release/cycle mapping. " +
+      "Allows users to create a new test case in QMetry, including steps, custom fields, and release/cycle mapping. " +
       "Supports all major test case fields and step-level UDFs. " +
       "For fields like priority, owner, component, etc., fetch their valid values using the project info tool. " +
       "If tcFolderID is not provided, it will be auto-resolved to the root test case folder using project info.\n\n" +
-      "STEPS DECISION RULE (CRITICAL — apply before every create call):\n" +
-      "DEFAULT: Do NOT include 'steps' in the payload. Omit the field entirely.\n" +
-      "A test case without steps is fully valid. Most users only want steps when they say so.\n" +
-      "Include 'steps' ONLY in these two scenarios:\n" +
-      "  1. User explicitly mentions steps in their prompt (e.g., 'create with steps', 'step 1 - ...', 'add these steps').\n" +
-      "  2. Fetch UDF Layout returns stepSystemFields[] OR stepFields[] with isMandatory=true on any field — backend requires at least 1 step. Fill mandatory step UDF fields in step.UDF.\n" +
-      "In all other cases: omit 'steps' field. NEVER send steps: [] (empty array).",
+      "STEPS RULE (CRITICAL — apply before every create call):\n" +
+      "ALWAYS include 'steps' in the payload. Steps must NEVER be omitted.\n" +
+      "  - If the user explicitly provides steps, use them as given.\n" +
+      "  - If the user has NOT provided steps, generate meaningful steps based on the test case name, description, and any other context provided. Use your knowledge to infer logical test steps.\n" +
+      "  - NEVER send steps: [] (empty array) — always send at least 1 valid step object.\n" +
+      "STEP DEFAULT VALUES: After generating or parsing steps, check 'stepDefaultValues' from Fetch UDF Layout.\n" +
+      "  For each step field that has a default value in stepDefaultValues AND the user has not explicitly provided a value for that field in the step: send the default value.\n" +
+      "  Do NOT ask the user — auto-apply defaults silently.",
 
     useCases: [
       "Create a basic test case with just a name and folder",
@@ -48,16 +49,22 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
     examples: [
       {
         description:
-          "MOST COMMON: Create test case with name only — NO steps (user did not mention steps). Steps field is OMITTED from payload.",
+          "MOST COMMON: User provides only a name — steps are auto-generated from context.",
         parameters: {
           name: "Login Test Case",
+          steps: [
+            { orderId: 1, description: "Navigate to the login page" },
+            { orderId: 2, description: "Enter valid username and password" },
+            { orderId: 3, description: "Click the Login button" },
+            { orderId: 4, description: "Verify successful login and dashboard is shown" },
+          ],
         },
         expectedOutput:
-          "Test case created without steps. Steps field omitted entirely from payload — do NOT add steps: [].",
+          "Test case created with auto-generated steps inferred from the test case name 'Login Test Case'.",
       },
       {
         description:
-          "Create test case with metadata only — no steps (user did not mention steps)",
+          "Create test case with metadata only — steps auto-generated from context",
         parameters: {
           tcFolderID: "102653",
           name: "Login Test Case",
@@ -65,9 +72,15 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
           testCaseState: 2025271,
           estimatedTime: 3600,
           description: "Verifies login flow",
+          steps: [
+            { orderId: 1, description: "Navigate to the login page" },
+            { orderId: 2, description: "Enter valid credentials" },
+            { orderId: 3, description: "Submit the login form" },
+            { orderId: 4, description: "Verify redirection to the home page" },
+          ],
         },
         expectedOutput:
-          "Test case created with metadata, no steps. Steps omitted from payload.",
+          "Test case created with metadata and auto-generated steps based on description 'Verifies login flow'.",
       },
       {
         description:
@@ -129,52 +142,59 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       },
       {
         description:
-          "SCENARIO 2: stepSystemFields has isMandatory=true — backend requires at least 1 step even though user did not ask for steps",
+          "User provides name only — steps auto-generated from test case name context",
         parameters: {
-          name: "Mandatory Step Test Case",
+          name: "Password Reset Test Case",
           steps: [
-            {
-              orderId: 1,
-              description: "Step 1",
-            },
+            { orderId: 1, description: "Navigate to the login page" },
+            { orderId: 2, description: "Click on 'Forgot Password' link" },
+            { orderId: 3, description: "Enter registered email address" },
+            { orderId: 4, description: "Submit the password reset form" },
+            { orderId: 5, description: "Check email for reset link and verify it arrives" },
+            { orderId: 6, description: "Click reset link and set a new password" },
+            { orderId: 7, description: "Verify login succeeds with the new password" },
           ],
         },
         expectedOutput:
-          "Test case created with 1 mandatory step because stepSystemFields from Fetch UDF Layout had isMandatory=true. User was not prompted for step details — a minimal step was included to satisfy backend requirement.",
+          "Test case created with 7 auto-generated steps inferred from the name 'Password Reset Test Case'. No user-provided steps — LLM generated them from context.",
       },
     ],
     hints: [
       "╔══════════════════════════════════════════════════════════════════════════════╗",
-      "║  STEPS DECISION RULE — APPLY BEFORE EVERY CREATE CALL (NO EXCEPTIONS)       ║",
+      "║  STEPS RULE — ALWAYS INCLUDE STEPS ON EVERY CREATE CALL (NO EXCEPTIONS)      ║",
       "╚══════════════════════════════════════════════════════════════════════════════╝",
       "",
-      "DEFAULT: OMIT 'steps' from payload. Do NOT include steps: [] (empty array).",
-      "Test cases without steps are fully valid. The backend does NOT require steps unless noted below.",
+      "MANDATORY: ALWAYS include 'steps' in the payload. Steps must NEVER be omitted.",
+      "NEVER send steps: [] (empty array) — always send at least 1 valid step object.",
       "",
-      "INCLUDE 'steps' ONLY in exactly 2 scenarios:",
+      "HOW TO POPULATE STEPS:",
       "",
-      "  SCENARIO 1 — User explicitly mentions steps in their prompt.",
+      "  SCENARIO 1 — User explicitly provides steps in their prompt.",
       "    Trigger phrases: 'with steps', 'step 1 -', 'add steps', 'include steps', 'following steps', 'these steps'.",
       "    Action: Parse the user's step text into { orderId, description, inputData?, expectedOutcome? } objects.",
       "    Example: 'create test case, step 1 - open browser, step 2 - click login'",
       "      → steps: [{ orderId: 1, description: 'open browser' }, { orderId: 2, description: 'click login' }]",
       "",
-      "  SCENARIO 2 — Fetch UDF Layout returns stepSystemFields[] OR stepFields[] with isMandatory=true on any entry.",
-      "    Trigger: stepSystemFields (built-in step fields) OR stepFields (step-level UDFs) has at least 1 field where isMandatory=true.",
-      "    Action: MUST include at least 1 step. If user gave no step text, use description='Step 1' as placeholder.",
-      "    Also fill mandatory step UDF fields (from stepFields) in step.UDF — use stepDefaultValues if defaults exist, else a placeholder value.",
-      "    IMPORTANT: Inform the user that a step was required by the backend configuration.",
+      "  SCENARIO 2 — User does NOT provide steps.",
+      "    Action: Generate meaningful steps based on the test case name, description, and all other context provided.",
+      "    Use your knowledge of the feature/flow being tested to infer logical, realistic test steps.",
+      "    Always include at least 2-4 steps that make sense for the test case.",
+      "    Example: name='Login Test Case' → steps: [{orderId:1, description:'Navigate to login page'}, {orderId:2, description:'Enter credentials'}, {orderId:3, description:'Submit form'}, {orderId:4, description:'Verify login success'}]",
       "",
-      "NEVER include steps in any other case — including when the user only says 'create test case named X'.",
-      "NEVER send steps: [] — either omit the key entirely OR send array with at least 1 valid step.",
+      "STEP DEFAULT VALUES — apply after step generation:",
+      "  After building the steps array (from user input OR auto-generated), check 'stepDefaultValues' from Fetch UDF Layout.",
+      "  stepDefaultValues shape: { fieldName: defaultValue } — e.g. { 'lookup19': 5232630 }",
+      "  For EACH step, for EACH key in stepDefaultValues:",
+      "    IF the user has NOT explicitly specified a value for that field in the step → set it to the default value.",
+      "  This applies to step UDF fields (step.UDF) that have defaults configured.",
+      "  Auto-apply silently — do NOT ask the user.",
+      "  Example: stepDefaultValues = { status: 5232630 } → every step's UDF.status = 5232630 unless user gave a different value.",
       "",
-      "QUICK DECISION TABLE:",
-      "  | User mentioned steps? | stepSystemFields OR stepFields mandatory? | Action                                                        |",
-      "  |-----------------------|------------------------------------------|---------------------------------------------------------------|",
-      "  | NO                    | NO                                       | OMIT steps entirely (most common case)                        |",
-      "  | YES                   | NO                                       | Include steps from user's prompt                              |",
-      "  | NO                    | YES                                      | Include 1 placeholder step + fill mandatory step UDFs, inform user |",
-      "  | YES                   | YES                                      | Include steps from user's prompt + fill mandatory step UDFs   |",
+      "DECISION TABLE:",
+      "  | User provided steps? | Action                                                                      |",
+      "  |----------------------|-----------------------------------------------------------------------------|",
+      "  | YES                  | Use steps from user's prompt; fill step UDF defaults from stepDefaultValues |",
+      "  | NO                   | Auto-generate steps from context; fill step UDF defaults from stepDefaultValues |",
       "",
       "╚══════════════════════════════════════════════════════════════════════════════╝",
       "",
@@ -224,13 +244,13 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       "  Skipping this sweep = missing fields in the created record = user-visible data loss.",
       "╚══════════════════════════════════════════════════════════════════════════╝",
       "",
-      "TEST CASE STEPS mandatory check — use BOTH 'stepSystemFields' AND 'stepFields' arrays from Fetch UDF Layout:",
+      "TEST CASE STEPS — always required (see STEPS RULE above):",
       "  stepSystemFields: built-in step fields { name, label, fieldTypeName, isMandatory }",
       "  stepFields: step-level UDF fields { name, label, fieldTypeName, isMandatory, listName? }",
-      "  If ANY field in EITHER array has isMandatory=true → SCENARIO 2 triggered → MUST include at least 1 step.",
-      "  Mandatory stepFields UDFs must be filled in step.UDF — use stepDefaultValues for defaults, else placeholder.",
-      "  If NO field in EITHER array has isMandatory=true AND user did not mention steps → OMIT steps from payload.",
-      "  Step defaults: use 'stepDefaultValues' object — same auto-fill logic as defaultValues.",
+      "  Mandatory stepFields UDFs (isMandatory=true) must be filled in step.UDF — use stepDefaultValues for defaults, else a placeholder value.",
+      "  STEP DEFAULT VALUES: use 'stepDefaultValues' object from Fetch UDF Layout — same auto-fill logic as defaultValues.",
+      "    For EACH key in stepDefaultValues: if user has NOT explicitly provided a value for that step field → auto-apply the default silently.",
+      "    This applies to all steps (both user-provided and auto-generated).",
       "",
       "DECISION MATRIX:",
       "  | isMandatory | Has default | Action                              |",
@@ -298,7 +318,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       "If the user provides a testing type name, fetch project info, find the matching type in customListObjs.testingType[index].name, and use its ID in the payload as testingType. If the name is not found, skip the testingType field (it is not required) and show a user-friendly message: 'Test case created without testing type, as given testing type is not available in the current project.'",
       "Example: If user says 'Create test case with title \"High priority test case\" and set priority to \"Blocker\"', first call project info, map 'Blocker' to its ID, and use that ID for the priority field in the create payload. If user says 'set priority to \"Urgent\"' and 'Urgent' is not found, skip the priority field and show: 'Test case created without priority, as given priority is not available in the current project.'",
       "tcFolderID is required; use the root folder ID from project info or a specific folder.",
-      "STEPS: Omit steps from payload by default. Only include steps when user explicitly mentions them (SCENARIO 1) or stepSystemFields/stepFields has isMandatory=true (SCENARIO 2). See STEPS DECISION RULE at top of hints.",
+      "STEPS: ALWAYS include steps in the payload. If user did not provide steps, auto-generate them from the test case name and context. See STEPS RULE at top of hints.",
       "If the user provides a prompt like 'create test case with steps as step 1 - Go to login page, step 2 - give credential, step 3 - go to test case page, step 4 - create test case', LLM should parse each step and convert it into the steps payload array, mapping each step to an object with orderId, description, and optionally inputData and expectedOutcome.",
       "Example mapping: 'step 1 - Go to login page' → { orderId: 1, description: 'Go to login page' }.",
       "LLM should increment orderId for each step, use the step text as description, and optionally infer inputData/expectedOutcome if provided in the prompt.",
@@ -1059,22 +1079,6 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
         parameters: { projectKey: "UT" },
         expectedOutput:
           "List of test cases from UT project using UT's specific TC viewId",
-      },
-      {
-        description: "Get test cases with manual viewId (skip auto-resolution)",
-        parameters: { projectKey: "MAC", viewId: 167136, folderPath: "" }, // This is an example viewId, must be resolved per project Test Case ViewId
-        expectedOutput: "Test cases using manually specified viewId 167136",
-      },
-      {
-        description:
-          "List test cases from specific project (ex: project key can be anything (VT, UT, PROJ1, TEST9)",
-        parameters: {
-          projectKey: "use specific given project key",
-          viewId: "fetch specific project given projectKey Test Case ViewId", // This is an example viewId, must be resolved per project Test Case ViewId
-          folderPath: "",
-        },
-        expectedOutput:
-          "Test cases using manually specified viewId 167136 or projectKey",
       },
       {
         description: "Get test cases by release/cycle filter",

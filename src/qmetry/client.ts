@@ -24,7 +24,6 @@ import { QMETRY_DEFAULTS, QMetryToolsHandlers } from "./config/constants";
 const ConfigurationSchema = z.object({
   api_key: z
     .string()
-    .optional()
     .describe(
       "QMetry API key for authentication (not required when using OAuth)",
     ),
@@ -324,6 +323,24 @@ export class QmetryClient implements Client {
                     },
                   ],
                 };
+              }
+
+              // Auto-apply stepDefaultValues to each step's UDF for fields not explicitly set
+              const stepDefaults = layout.stepDefaultValues ?? {};
+              if (
+                Array.isArray(a.steps) &&
+                Object.keys(stepDefaults).length > 0
+              ) {
+                for (const step of a.steps) {
+                  if (!step.UDF) step.UDF = {};
+                  for (const [fieldName, defVal] of Object.entries(
+                    stepDefaults,
+                  )) {
+                    if (!(fieldName in step.UDF)) {
+                      step.UDF[fieldName] = defVal;
+                    }
+                  }
+                }
               }
             } catch {
               // Preflight is best-effort — proceed without it if layout fetch fails

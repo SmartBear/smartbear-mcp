@@ -170,6 +170,7 @@ export const DEFAULT_CREATE_TESTCASES_PAYLOAD: Omit<
   "tcFolderID" | "name"
 > = {
   scope: "project",
+  steps: [],
 };
 
 export const DEFAULT_UPDATE_TESTCASES_PAYLOAD: Omit<
