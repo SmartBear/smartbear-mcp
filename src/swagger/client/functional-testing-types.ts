@@ -71,7 +71,15 @@ export const RunApiTestsBlockSchema = z.object({
 
 export const CreateFunctionalTestingSuiteParamsSchema = z
   .object({
-    name: z.string().describe("Name for the new suite").trim().min(1),
+    name: z
+      .string()
+      .describe(
+        "Name for the new suite. Use the name explicitly provided by the user, or if none was given, " +
+          "a descriptive name derived from the purpose or context of the tests being grouped into this suite. " +
+          "This must be a human-readable name, not a numeric ID or test ID.",
+      )
+      .trim()
+      .min(1),
     agentName: z
       .string()
       .trim()
