@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-- [Bugsnag]: Prevent cross-account data leakage in Bugsnag caching by namespacing cache keys with the caller's credential hash. [#677](https://github.com/SmartBear/smartbear-mcp/pull/677)
+- [Bugsnag]: Prevent cross-account data leakage in Bugsnag caching by namespacing cache keys with the caller's credential hash. [#679](https://github.com/SmartBear/smartbear-mcp/pull/679)
 
 ### Changed
 
