@@ -103,6 +103,7 @@ export class BugsnagClient implements Client {
   private _projectApi: ProjectAPI | undefined;
   private _appEndpoint: string | undefined;
   private _cacheAuthority: string | undefined;
+  private _endpoint: string | undefined;
   private _authToken?: string;
   private _selectedProjects = new Map<string, Project>();
 
@@ -133,11 +134,12 @@ export class BugsnagClient implements Client {
   // cache rather than sharing a single anonymous bucket.
   private cacheNamespace(): string | null {
     const authToken = this.getAuthToken();
-    if (!authToken || !this._cacheAuthority) {
+    if (!authToken) {
       return null;
     }
+    const cacheAuthority = this.getRequestApiAuthority();
     const namespace = createHmac("sha256", "bugsnag-cache-ns")
-      .update(this._cacheAuthority)
+      .update(cacheAuthority)
       .update("\0")
       .update(authToken)
       .digest("hex")
@@ -183,6 +185,7 @@ export class BugsnagClient implements Client {
     _server: SmartBearMcpServer,
     config: z.infer<typeof ConfigurationSchema>,
   ): Promise<void> {
+    this._endpoint = config.endpoint;
     this._appEndpoint = this.getEndpoint(
       "app",
       config.project_api_key,
@@ -198,6 +201,29 @@ export class BugsnagClient implements Client {
 
     // Initialize APIs even if auth_token is missing, to allow request-level auth
     await this.initializeApis(config);
+  }
+
+  getProjectApiKey(): string | undefined {
+    const contextHeader = getRequestHeader("Bugsnag-Project-Api-Key");
+    const requestProjectApiKey = Array.isArray(contextHeader)
+      ? contextHeader[0]
+      : contextHeader;
+
+    return requestProjectApiKey || this._projectApiKey;
+  }
+
+  private getRequestApiAuthority(): string {
+    const authority = this.getEndpoint(
+      "api",
+      this.getProjectApiKey(),
+      this._endpoint,
+    );
+    if (this._cacheAuthority && authority !== this._cacheAuthority) {
+      throw new ToolError(
+        `Bugsnag-Project-Api-Key cannot switch the API authority from ${this._cacheAuthority} to ${authority} within an active MCP session. Reconnect with the project key during session initialization.`,
+      );
+    }
+    return authority;
   }
 
   getAuthToken(): string | null {
@@ -363,7 +389,7 @@ export class BugsnagClient implements Client {
   }
 
   async getCurrentProject(): Promise<Project | null> {
-    const projectApiKey = this._projectApiKey;
+    const projectApiKey = this.getProjectApiKey();
     if (!projectApiKey) {
       const namespace = this.cacheNamespace();
       return namespace ? (this._selectedProjects.get(namespace) ?? null) : null;
@@ -439,8 +465,8 @@ export class BugsnagClient implements Client {
       if (!maybeProject) {
         throw new ToolError(`Project with ID ${projectId} not found.`);
       }
-      // If this hasn't been configured at startup, set this to the current project for future tool calls
-      if (!this._projectApiKey) {
+      // Without an effective project key, remember this selection for future calls.
+      if (!this.getProjectApiKey()) {
         const namespace = this.cacheNamespace();
         if (namespace) {
           this._selectedProjects.set(namespace, maybeProject);

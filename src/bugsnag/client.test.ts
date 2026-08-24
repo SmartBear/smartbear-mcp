@@ -808,7 +808,39 @@ describe("BugsnagClient", () => {
       }
     });
 
-    it("does not accept a project key that changes after configuration", async () => {
+    it("uses the request project key before the configured project key", async () => {
+      const client = new BugsnagClient();
+      await client.configure({} as any, {
+        auth_token: "test-token",
+        project_api_key: "configured-project-key",
+      });
+      const configuredProject = getMockProject(
+        "project-1",
+        "Configured project",
+        "configured-project-key",
+      );
+      const requestProject = getMockProject(
+        "project-2",
+        "Request project",
+        "request-project-key",
+      );
+      mockCache.get.mockReturnValueOnce([configuredProject, requestProject]);
+
+      const result = await withRequestContext(
+        {
+          headers: { "bugsnag-project-api-key": "request-project-key" },
+        } as any,
+        () => client.getCurrentProject(),
+      );
+
+      expect(result).toEqual(requestProject);
+      expect(mockCache.get).toHaveBeenCalledWith(
+        nsKey(client, "bugsnag_projects"),
+      );
+      expect(mockCache.set).not.toHaveBeenCalled();
+    });
+
+    it("falls back to the configured project key when the request has no project key", async () => {
       const client = new BugsnagClient();
       await client.configure({} as any, {
         auth_token: "test-token",
@@ -821,16 +853,29 @@ describe("BugsnagClient", () => {
       );
       mockCache.get.mockReturnValueOnce([configuredProject]);
 
-      const result = await withRequestContext(
-        { headers: { "bugsnag-project-api-key": "00000-later-key" } } as any,
-        () => client.getCurrentProject(),
+      const result = await withRequestContext({ headers: {} } as any, () =>
+        client.getCurrentProject(),
       );
 
       expect(result).toEqual(configuredProject);
-      expect(mockCache.get).toHaveBeenCalledWith(
-        nsKey(client, "bugsnag_projects"),
+    });
+
+    it("rejects a request project key that switches API authority", async () => {
+      const client = new BugsnagClient();
+      await client.configure({} as any, {
+        auth_token: "test-token",
+        project_api_key: "configured-project-key",
+      });
+
+      await expect(
+        withRequestContext(
+          { headers: { "bugsnag-project-api-key": "00000-hub-key" } } as any,
+          () => client.getCurrentProject(),
+        ),
+      ).rejects.toThrow(
+        "Bugsnag-Project-Api-Key cannot switch the API authority",
       );
-      expect(mockCache.set).not.toHaveBeenCalled();
+      expect(mockCache.get).not.toHaveBeenCalled();
     });
 
     it("keeps explicitly selected projects isolated between sessions", async () => {
