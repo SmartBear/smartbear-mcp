@@ -20,7 +20,7 @@ export class HttpClient {
       const response = await fetch(url, {
         method,
         headers: this.getHeaders(),
-        ...(body && { body: JSON.stringify(body) }),
+        ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
       });
 
       if (!response.ok) {
