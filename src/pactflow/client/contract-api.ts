@@ -1,4 +1,3 @@
-import type { HttpClient } from "./http-client";
 import type {
   BiDirectionalConsumerContractByConsumerResponse,
   BiDirectionalConsumerContractResponse,
@@ -30,6 +29,7 @@ import type {
   PublishProviderContractInput,
   PublishProviderContractResponse,
 } from "./base";
+import type { HttpClient } from "./http-client";
 
 export class ContractApi {
   constructor(private readonly http: HttpClient) {}

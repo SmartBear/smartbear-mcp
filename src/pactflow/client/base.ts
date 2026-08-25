@@ -1061,17 +1061,27 @@ export type PactsForVerificationResponse = Record<string, unknown>;
 
 // Bi-Directional Contract Testing
 export type BiDirectionalProviderContractResponse = Record<string, unknown>;
-export type BiDirectionalProviderContractVerificationResultsResponse =
-  Record<string, unknown>;
+export type BiDirectionalProviderContractVerificationResultsResponse = Record<
+  string,
+  unknown
+>;
 export type BiDirectionalConsumerContractResponse = Record<string, unknown>;
-export type BiDirectionalConsumerContractVerificationResultsResponse =
-  Record<string, unknown>;
-export type BiDirectionalCrossContractVerificationResultsResponse =
-  Record<string, unknown>;
-export type BiDirectionalConsumerContractByConsumerResponse =
-  Record<string, unknown>;
-export type BiDirectionalProviderContractByConsumerResponse =
-  Record<string, unknown>;
+export type BiDirectionalConsumerContractVerificationResultsResponse = Record<
+  string,
+  unknown
+>;
+export type BiDirectionalCrossContractVerificationResultsResponse = Record<
+  string,
+  unknown
+>;
+export type BiDirectionalConsumerContractByConsumerResponse = Record<
+  string,
+  unknown
+>;
+export type BiDirectionalProviderContractByConsumerResponse = Record<
+  string,
+  unknown
+>;
 export type BiDirectionalProviderContractVerificationResultsByConsumerResponse =
   Record<string, unknown>;
 export type BiDirectionalConsumerContractVerificationResultsByConsumerResponse =

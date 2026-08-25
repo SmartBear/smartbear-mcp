@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+import { ToolError } from "../../common/tools";
 import { PacticipantApi } from "./pacticipant-api";
 import { createMockHttpClient } from "./test-helpers";
-import { ToolError } from "../../common/tools";
 
 describe("PacticipantApi", () => {
   let api: PacticipantApi;
@@ -38,7 +38,9 @@ describe("PacticipantApi", () => {
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("List Pacticipants Failed - status: 401 Unauthorized"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError("List Pacticipants Failed - status: 401 Unauthorized"),
+      );
 
       await expect(api.listPacticipants()).rejects.toThrow(
         "List Pacticipants Failed - status: 401 Unauthorized",
@@ -72,7 +74,9 @@ describe("PacticipantApi", () => {
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("Get Pacticipant Failed - status: 404 Not Found"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError("Get Pacticipant Failed - status: 404 Not Found"),
+      );
 
       await expect(
         api.getPacticipant({ pacticipantName: "Unknown" }),
@@ -122,7 +126,9 @@ describe("PacticipantApi", () => {
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("List Branches Failed"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError("List Branches Failed"),
+      );
 
       await expect(
         api.listBranches({ pacticipantName: "ServiceA" }),
@@ -160,7 +166,9 @@ describe("PacticipantApi", () => {
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("List Versions Failed"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError("List Versions Failed"),
+      );
 
       await expect(
         api.listVersions({ pacticipantName: "ServiceA" }),
@@ -213,7 +221,9 @@ describe("PacticipantApi", () => {
       const mockResponse = { number: "2.0.0" };
       mockHttp.fetch.mockResolvedValueOnce(mockResponse);
 
-      const result = await api.getLatestVersion({ pacticipantName: "ServiceA" });
+      const result = await api.getLatestVersion({
+        pacticipantName: "ServiceA",
+      });
 
       expect(mockHttp.fetch).toHaveBeenCalledWith(
         "https://test.example.com/pacticipants/ServiceA/latest-version",
@@ -234,7 +244,9 @@ describe("PacticipantApi", () => {
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("Get Latest Version Failed"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError("Get Latest Version Failed"),
+      );
 
       await expect(
         api.getLatestVersion({ pacticipantName: "ServiceA" }),
@@ -265,7 +277,9 @@ describe("PacticipantApi", () => {
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("Update Pacticipant Failed"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError("Update Pacticipant Failed"),
+      );
 
       await expect(
         api.updatePacticipant({ pacticipantName: "ServiceA" }),
@@ -295,7 +309,9 @@ describe("PacticipantApi", () => {
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("Patch Pacticipant Failed"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError("Patch Pacticipant Failed"),
+      );
 
       await expect(
         api.patchPacticipant({ pacticipantName: "ServiceA" }),
@@ -326,10 +342,15 @@ describe("PacticipantApi", () => {
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("Update Version Failed"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError("Update Version Failed"),
+      );
 
       await expect(
-        api.updateVersion({ pacticipantName: "ServiceA", versionNumber: "1.0.0" }),
+        api.updateVersion({
+          pacticipantName: "ServiceA",
+          versionNumber: "1.0.0",
+        }),
       ).rejects.toThrow("Update Version Failed");
     });
   });
@@ -368,10 +389,15 @@ describe("PacticipantApi", () => {
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("Get Branch Versions Failed"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError("Get Branch Versions Failed"),
+      );
 
       await expect(
-        api.getBranchVersions({ pacticipantName: "ServiceA", branchName: "main" }),
+        api.getBranchVersions({
+          pacticipantName: "ServiceA",
+          branchName: "main",
+        }),
       ).rejects.toThrow("Get Branch Versions Failed");
     });
   });
@@ -391,7 +417,11 @@ describe("PacticipantApi", () => {
         "https://test.example.com/pacticipants",
         {
           method: "POST",
-          body: { name: "NewService", displayName: "New Service", mainBranch: "main" },
+          body: {
+            name: "NewService",
+            displayName: "New Service",
+            mainBranch: "main",
+          },
           errorContext: "Create Pacticipant",
         },
       );
@@ -399,7 +429,9 @@ describe("PacticipantApi", () => {
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("Create Pacticipant Failed"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError("Create Pacticipant Failed"),
+      );
 
       await expect(
         api.createPacticipant({ name: "NewService" }),
@@ -431,7 +463,9 @@ describe("PacticipantApi", () => {
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("Delete Pacticipant Failed"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError("Delete Pacticipant Failed"),
+      );
 
       await expect(
         api.deletePacticipant({ pacticipantName: "OldService" }),
@@ -471,7 +505,9 @@ describe("PacticipantApi", () => {
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("Get Branch Failed - status: 404 Not Found"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError("Get Branch Failed - status: 404 Not Found"),
+      );
 
       await expect(
         api.getBranch({ pacticipantName: "ServiceA", branchName: "missing" }),
@@ -509,17 +545,25 @@ describe("PacticipantApi", () => {
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("Delete Branch Failed"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError("Delete Branch Failed"),
+      );
 
       await expect(
-        api.deleteBranch({ pacticipantName: "ServiceA", branchName: "old-feature" }),
+        api.deleteBranch({
+          pacticipantName: "ServiceA",
+          branchName: "old-feature",
+        }),
       ).rejects.toThrow("Delete Branch Failed");
     });
   });
 
   describe("addLabel", () => {
     it("should apply a label to a pacticipant", async () => {
-      const mockResponse = { name: "mobile", pacticipant: { name: "ConsumerApp" } };
+      const mockResponse = {
+        name: "mobile",
+        pacticipant: { name: "ConsumerApp" },
+      };
       mockHttp.fetch.mockResolvedValueOnce(mockResponse);
 
       const result = await api.addLabel({
@@ -587,7 +631,9 @@ describe("PacticipantApi", () => {
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("Remove Label Failed"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError("Remove Label Failed"),
+      );
 
       await expect(
         api.removeLabel({ pacticipantName: "ServiceA", labelName: "mobile" }),
@@ -659,10 +705,15 @@ describe("PacticipantApi", () => {
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("Get Pacticipant Label Failed - status: 404 Not Found"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError("Get Pacticipant Label Failed - status: 404 Not Found"),
+      );
 
       await expect(
-        api.getPacticipantLabel({ pacticipantName: "ServiceA", labelName: "missing-label" }),
+        api.getPacticipantLabel({
+          pacticipantName: "ServiceA",
+          labelName: "missing-label",
+        }),
       ).rejects.toThrow("Get Pacticipant Label Failed - status: 404 Not Found");
     });
   });
@@ -695,7 +746,9 @@ describe("PacticipantApi", () => {
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("List Pacticipants by Label Failed"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError("List Pacticipants by Label Failed"),
+      );
 
       await expect(
         api.listPacticipantsByLabel({ labelName: "team-a" }),

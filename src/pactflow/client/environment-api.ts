@@ -1,4 +1,3 @@
-import type { HttpClient } from "./http-client";
 import type {
   CreateEnvironmentInput,
   CurrentlyDeployedResponse,
@@ -13,10 +12,11 @@ import type {
   GetVersionDeployedInput,
   RecordDeploymentInput,
   RecordReleaseInput,
-  ReleaseResponse,
   ReleasedVersionsResponse,
+  ReleaseResponse,
   UpdateEnvironmentInput,
 } from "./base";
+import type { HttpClient } from "./http-client";
 
 export class EnvironmentApi {
   constructor(private readonly http: HttpClient) {}

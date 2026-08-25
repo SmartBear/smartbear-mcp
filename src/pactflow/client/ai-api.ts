@@ -1,14 +1,17 @@
 import type { GetInputFunction } from "../../common/types";
-import { getOADMatcherRecommendations, type PromptExecutionResult } from "./prompt-utils";
 import type {
+  Entitlement,
   GenerationInput,
   GenerationResponse,
   RefineInput,
   RefineResponse,
   StatusResponse,
-  Entitlement,
 } from "./ai";
 import type { HttpClient } from "./http-client";
+import {
+  getOADMatcherRecommendations,
+  type PromptExecutionResult,
+} from "./prompt-utils";
 
 export class AIApi {
   constructor(
@@ -84,10 +87,13 @@ export class AIApi {
    */
   async checkAIEntitlements(): Promise<Entitlement | null> {
     if (this.aiBaseUrl) {
-      return await this.http.fetch<Entitlement>(`${this.aiBaseUrl}/entitlement`, {
-        method: "GET",
-        errorContext: "PactFlow AI Entitlements Request",
-      });
+      return await this.http.fetch<Entitlement>(
+        `${this.aiBaseUrl}/entitlement`,
+        {
+          method: "GET",
+          errorContext: "PactFlow AI Entitlements Request",
+        },
+      );
     } else {
       return null;
     }
@@ -160,12 +166,18 @@ export class AIApi {
    * @param body The request body specific to the AI operation.
    * @returns StatusResponse with status_url for polling and result_url for fetching results.
    */
-  private async submitHttpCallback(endpoint: string, body: unknown): Promise<StatusResponse> {
-    return await this.http.fetch<StatusResponse>(`${this.aiBaseUrl}${endpoint}`, {
-      method: "POST",
-      body,
-      errorContext: `HTTP callback submission to ${endpoint}`,
-    });
+  private async submitHttpCallback(
+    endpoint: string,
+    body: unknown,
+  ): Promise<StatusResponse> {
+    return await this.http.fetch<StatusResponse>(
+      `${this.aiBaseUrl}${endpoint}`,
+      {
+        method: "POST",
+        body,
+        errorContext: `HTTP callback submission to ${endpoint}`,
+      },
+    );
   }
 
   get handlers(): Record<string, (...args: any[]) => Promise<any>> {

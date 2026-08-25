@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+import { ToolError } from "../../common/tools";
 import { AdminApi } from "./admin-api";
 import { createMockHttpClient } from "./test-helpers";
-import { ToolError } from "../../common/tools";
 
 describe("AdminApi", () => {
   let api: AdminApi;
@@ -64,7 +64,9 @@ describe("AdminApi", () => {
 
   describe("listSecrets", () => {
     it("should retrieve all secrets", async () => {
-      const mockResponse = { secrets: [{ uuid: "abc-123", name: "my-secret" }] };
+      const mockResponse = {
+        secrets: [{ uuid: "abc-123", name: "my-secret" }],
+      };
       mockHttp.fetch.mockResolvedValueOnce(mockResponse);
 
       const result = await api.listSecrets();
@@ -138,7 +140,11 @@ describe("AdminApi", () => {
         "https://test.example.com/secrets",
         {
           method: "POST",
-          body: { name: "new-secret", description: "A test secret", value: "secret-value" },
+          body: {
+            name: "new-secret",
+            description: "A test secret",
+            value: "secret-value",
+          },
           errorContext: "Create Secret",
         },
       );
@@ -147,12 +153,16 @@ describe("AdminApi", () => {
 
     it("should propagate HTTP errors", async () => {
       mockHttp.fetch.mockRejectedValueOnce(
-        new ToolError("Create Secret Failed - status: 422 Unprocessable Entity"),
+        new ToolError(
+          "Create Secret Failed - status: 422 Unprocessable Entity",
+        ),
       );
 
       await expect(
         api.createSecret({ name: "bad", value: "v" }),
-      ).rejects.toThrow("Create Secret Failed - status: 422 Unprocessable Entity");
+      ).rejects.toThrow(
+        "Create Secret Failed - status: 422 Unprocessable Entity",
+      );
     });
   });
 
@@ -181,7 +191,11 @@ describe("AdminApi", () => {
     it("should URL-encode secret ID with special characters", async () => {
       mockHttp.fetch.mockResolvedValueOnce({});
 
-      await api.updateSecret({ secretId: "my secret/v2", name: "x", value: "y" });
+      await api.updateSecret({
+        secretId: "my secret/v2",
+        name: "x",
+        value: "y",
+      });
 
       expect(mockHttp.fetch).toHaveBeenCalledWith(
         "https://test.example.com/secrets/my%20secret%2Fv2",
@@ -236,7 +250,11 @@ describe("AdminApi", () => {
 
   describe("getCurrentUser", () => {
     it("should retrieve the current user profile", async () => {
-      const mockResponse = { name: "Alice", email: "alice@example.com", active: true };
+      const mockResponse = {
+        name: "Alice",
+        email: "alice@example.com",
+        active: true,
+      };
       mockHttp.fetch.mockResolvedValueOnce(mockResponse);
 
       const result = await api.getCurrentUser();
@@ -261,7 +279,9 @@ describe("AdminApi", () => {
 
   describe("listTokens", () => {
     it("should list all API tokens", async () => {
-      const mockResponse = { tokens: [{ uuid: "tok-1", description: "CI token" }] };
+      const mockResponse = {
+        tokens: [{ uuid: "tok-1", description: "CI token" }],
+      };
       mockHttp.fetch.mockResolvedValueOnce(mockResponse);
 
       const result = await api.listTokens();
@@ -431,7 +451,13 @@ describe("AdminApi", () => {
     it("should append all filter query params", async () => {
       mockHttp.fetch.mockResolvedValueOnce({ users: [] });
 
-      await api.listAdminUsers({ active: true, q: "alice", userType: 0, page: 2, size: 10 });
+      await api.listAdminUsers({
+        active: true,
+        q: "alice",
+        userType: 0,
+        page: 2,
+        size: 10,
+      });
 
       expect(mockHttp.fetch).toHaveBeenCalledWith(
         "https://test.example.com/admin/users?active=true&q=alice&userType=0&page=2&size=10",
@@ -452,7 +478,11 @@ describe("AdminApi", () => {
 
   describe("getAdminUser", () => {
     it("should retrieve an admin user by ID", async () => {
-      const mockResponse = { uuid: "u1", name: "Alice", email: "alice@example.com" };
+      const mockResponse = {
+        uuid: "u1",
+        name: "Alice",
+        email: "alice@example.com",
+      };
       mockHttp.fetch.mockResolvedValueOnce(mockResponse);
 
       const result = await api.getAdminUser({ userId: "u1" });
@@ -488,7 +518,11 @@ describe("AdminApi", () => {
 
   describe("createAdminUser", () => {
     it("should create a new admin user", async () => {
-      const mockResponse = { uuid: "new-u", name: "Bob", email: "bob@example.com" };
+      const mockResponse = {
+        uuid: "new-u",
+        name: "Bob",
+        email: "bob@example.com",
+      };
       mockHttp.fetch.mockResolvedValueOnce(mockResponse);
 
       const result = await api.createAdminUser({
@@ -509,12 +543,16 @@ describe("AdminApi", () => {
 
     it("should propagate HTTP errors", async () => {
       mockHttp.fetch.mockRejectedValueOnce(
-        new ToolError("Create Admin User Failed - status: 422 Unprocessable Entity"),
+        new ToolError(
+          "Create Admin User Failed - status: 422 Unprocessable Entity",
+        ),
       );
 
       await expect(
         api.createAdminUser({ name: "Bob", email: "bob@example.com" }),
-      ).rejects.toThrow("Create Admin User Failed - status: 422 Unprocessable Entity");
+      ).rejects.toThrow(
+        "Create Admin User Failed - status: 422 Unprocessable Entity",
+      );
     });
   });
 
@@ -523,7 +561,10 @@ describe("AdminApi", () => {
       const mockResponse = { uuid: "u1", name: "Alice Updated" };
       mockHttp.fetch.mockResolvedValueOnce(mockResponse);
 
-      const result = await api.updateAdminUser({ userId: "u1", name: "Alice Updated" });
+      const result = await api.updateAdminUser({
+        userId: "u1",
+        name: "Alice Updated",
+      });
 
       expect(mockHttp.fetch).toHaveBeenCalledWith(
         "https://test.example.com/admin/users/u1",
@@ -552,9 +593,9 @@ describe("AdminApi", () => {
         new ToolError("Update Admin User Failed - status: 404 Not Found"),
       );
 
-      await expect(api.updateAdminUser({ userId: "missing", name: "X" })).rejects.toThrow(
-        "Update Admin User Failed - status: 404 Not Found",
-      );
+      await expect(
+        api.updateAdminUser({ userId: "missing", name: "X" }),
+      ).rejects.toThrow("Update Admin User Failed - status: 404 Not Found");
     });
   });
 
@@ -627,7 +668,9 @@ describe("AdminApi", () => {
 
       await expect(
         api.inviteUsers({ users: [{ email: "bad@example.com", name: "Bad" }] }),
-      ).rejects.toThrow("Invite Users Failed - status: 422 Unprocessable Entity");
+      ).rejects.toThrow(
+        "Invite Users Failed - status: 422 Unprocessable Entity",
+      );
     });
   });
 
@@ -833,7 +876,9 @@ describe("AdminApi", () => {
 
     it("should propagate HTTP errors", async () => {
       mockHttp.fetch.mockRejectedValueOnce(
-        new ToolError("Create Admin Team Failed - status: 422 Unprocessable Entity"),
+        new ToolError(
+          "Create Admin Team Failed - status: 422 Unprocessable Entity",
+        ),
       );
 
       await expect(api.createAdminTeam({ name: "Bad" })).rejects.toThrow(
@@ -847,7 +892,10 @@ describe("AdminApi", () => {
       const mockResponse = { uuid: "t1", name: "Updated Team" };
       mockHttp.fetch.mockResolvedValueOnce(mockResponse);
 
-      const result = await api.updateAdminTeam({ teamId: "t1", name: "Updated Team" });
+      const result = await api.updateAdminTeam({
+        teamId: "t1",
+        name: "Updated Team",
+      });
 
       expect(mockHttp.fetch).toHaveBeenCalledWith(
         "https://test.example.com/admin/teams/t1",
@@ -876,9 +924,9 @@ describe("AdminApi", () => {
         new ToolError("Update Admin Team Failed - status: 404 Not Found"),
       );
 
-      await expect(api.updateAdminTeam({ teamId: "missing", name: "X" })).rejects.toThrow(
-        "Update Admin Team Failed - status: 404 Not Found",
-      );
+      await expect(
+        api.updateAdminTeam({ teamId: "missing", name: "X" }),
+      ).rejects.toThrow("Update Admin Team Failed - status: 404 Not Found");
     });
   });
 
@@ -982,9 +1030,9 @@ describe("AdminApi", () => {
         new ToolError("Get Team User Failed - status: 404 Not Found"),
       );
 
-      await expect(api.getTeamUser({ teamId: "t1", userId: "missing" })).rejects.toThrow(
-        "Get Team User Failed - status: 404 Not Found",
-      );
+      await expect(
+        api.getTeamUser({ teamId: "t1", userId: "missing" }),
+      ).rejects.toThrow("Get Team User Failed - status: 404 Not Found");
     });
   });
 
@@ -1186,7 +1234,10 @@ describe("AdminApi", () => {
         "https://test.example.com/admin/roles",
         {
           method: "POST",
-          body: { name: "Custom Role", permissions: [{ scope: "webhook:read" }] },
+          body: {
+            name: "Custom Role",
+            permissions: [{ scope: "webhook:read" }],
+          },
           errorContext: "Create Admin Role",
         },
       );
@@ -1195,12 +1246,16 @@ describe("AdminApi", () => {
 
     it("should propagate HTTP errors", async () => {
       mockHttp.fetch.mockRejectedValueOnce(
-        new ToolError("Create Admin Role Failed - status: 422 Unprocessable Entity"),
+        new ToolError(
+          "Create Admin Role Failed - status: 422 Unprocessable Entity",
+        ),
       );
 
       await expect(
         api.createAdminRole({ name: "Bad", permissions: [] }),
-      ).rejects.toThrow("Create Admin Role Failed - status: 422 Unprocessable Entity");
+      ).rejects.toThrow(
+        "Create Admin Role Failed - status: 422 Unprocessable Entity",
+      );
     });
   });
 
@@ -1219,7 +1274,10 @@ describe("AdminApi", () => {
         "https://test.example.com/admin/roles/r1",
         {
           method: "PUT",
-          body: { name: "Updated Role", permissions: [{ scope: "user:manage" }] },
+          body: {
+            name: "Updated Role",
+            permissions: [{ scope: "user:manage" }],
+          },
           errorContext: "Update Admin Role",
         },
       );
@@ -1229,7 +1287,11 @@ describe("AdminApi", () => {
     it("should URL-encode role ID with special characters", async () => {
       mockHttp.fetch.mockResolvedValueOnce({});
 
-      await api.updateAdminRole({ roleId: "role/v2", name: "X", permissions: [] });
+      await api.updateAdminRole({
+        roleId: "role/v2",
+        name: "X",
+        permissions: [],
+      });
 
       expect(mockHttp.fetch).toHaveBeenCalledWith(
         "https://test.example.com/admin/roles/role%2Fv2",
@@ -1352,7 +1414,9 @@ describe("AdminApi", () => {
 
     it("should propagate HTTP errors", async () => {
       mockHttp.fetch.mockRejectedValueOnce(
-        new ToolError("Create System Account Failed - status: 422 Unprocessable Entity"),
+        new ToolError(
+          "Create System Account Failed - status: 422 Unprocessable Entity",
+        ),
       );
 
       await expect(api.createSystemAccount({ name: "Bad" })).rejects.toThrow(
@@ -1388,12 +1452,16 @@ describe("AdminApi", () => {
 
     it("should propagate HTTP errors", async () => {
       mockHttp.fetch.mockRejectedValueOnce(
-        new ToolError("Get System Account Tokens Failed - status: 404 Not Found"),
+        new ToolError(
+          "Get System Account Tokens Failed - status: 404 Not Found",
+        ),
       );
 
       await expect(
         api.getSystemAccountTokens({ accountId: "missing" }),
-      ).rejects.toThrow("Get System Account Tokens Failed - status: 404 Not Found");
+      ).rejects.toThrow(
+        "Get System Account Tokens Failed - status: 404 Not Found",
+      );
     });
   });
 

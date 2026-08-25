@@ -1,4 +1,3 @@
-import type { HttpClient } from "./http-client";
 import type {
   CreateWebhookInput,
   UpdateWebhookInput,
@@ -7,6 +6,7 @@ import type {
   WebhookResponse,
   WebhooksListResponse,
 } from "./base";
+import type { HttpClient } from "./http-client";
 
 export class WebhookApi {
   constructor(private readonly http: HttpClient) {}
@@ -46,7 +46,9 @@ export class WebhookApi {
    * @returns The created webhook resource.
    * @throws ToolError if the request fails.
    */
-  async createWebhook({ ...body }: CreateWebhookInput): Promise<WebhookResponse> {
+  async createWebhook({
+    ...body
+  }: CreateWebhookInput): Promise<WebhookResponse> {
     return await this.http.fetch<WebhookResponse>(
       `${this.http.baseUrl}/webhooks`,
       { method: "POST", body, errorContext: "Create Webhook" },

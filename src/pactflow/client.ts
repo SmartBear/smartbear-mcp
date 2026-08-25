@@ -33,6 +33,7 @@ const ConfigurationSchema = z.object({
   password: z.string().optional().describe("Password for Pact Broker"),
 });
 
+// biome-ignore lint/suspicious/noUnsafeDeclarationMerging: needed for dynamic handler dispatch via Object.assign in configure()
 export class PactflowClient implements Client {
   name = "Contract Testing";
   capabilityPrefix = "contract-testing";
@@ -77,10 +78,7 @@ export class PactflowClient implements Client {
     this._server = server;
     this.cache = server.getCache();
 
-    this.http = new HttpClient(
-      config.base_url,
-      () => this.requestHeaders,
-    );
+    this.http = new HttpClient(config.base_url, () => this.requestHeaders);
 
     const aiBaseUrl = `${config.base_url}/api/ai`;
 
@@ -92,6 +90,7 @@ export class PactflowClient implements Client {
       ...new AdminApi(this.http).handlers,
       ...new AIApi(this.http, aiBaseUrl).handlers,
     };
+    Object.assign(this as any, this.handlerMap);
   }
 
   isConfigured(): boolean {
@@ -123,7 +122,10 @@ export class PactflowClient implements Client {
 
     if (this.token) {
       let authHeader = this.token;
-      if (!authHeader.startsWith("Basic ") && !authHeader.startsWith("Bearer ")) {
+      if (
+        !authHeader.startsWith("Basic ") &&
+        !authHeader.startsWith("Bearer ")
+      ) {
         authHeader = `Bearer ${authHeader}`;
       }
       return {
@@ -165,7 +167,11 @@ export class PactflowClient implements Client {
     for (const tool of TOOLS.filter(
       (t) => !this._clientType || t.clients.includes(this._clientType),
     )) {
-      if (tool.tags && disablePactflowAItools && tool.tags.includes("pactflow-ai")) {
+      if (
+        tool.tags &&
+        disablePactflowAItools &&
+        tool.tags.includes("pactflow-ai")
+      ) {
         continue;
       }
 
@@ -217,4 +223,12 @@ export class PactflowClient implements Client {
       );
     }
   }
+}
+
+// Declaration merge — allows pact tests to call handler methods directly on the
+// instance (e.g. client.canIDeploy(...)) after Object.assign populates them at
+// runtime inside configure(). TypeScript needs the index signature to accept
+// arbitrary string-keyed property access on the class instance.
+export interface PactflowClient {
+  [key: string]: any;
 }

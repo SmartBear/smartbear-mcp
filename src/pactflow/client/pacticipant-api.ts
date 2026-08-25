@@ -1,4 +1,3 @@
-import type { HttpClient } from "./http-client";
 import type {
   BranchesListResponse,
   BranchResponse,
@@ -26,6 +25,7 @@ import type {
   VersionResponse,
   VersionsListResponse,
 } from "./base";
+import type { HttpClient } from "./http-client";
 
 export class PacticipantApi {
   constructor(private readonly http: HttpClient) {}
@@ -121,10 +121,13 @@ export class PacticipantApi {
     const path = tag
       ? `/pacticipants/${encodeURIComponent(pacticipantName)}/latest-version/${encodeURIComponent(tag)}`
       : `/pacticipants/${encodeURIComponent(pacticipantName)}/latest-version`;
-    return await this.http.fetch<VersionResponse>(`${this.http.baseUrl}${path}`, {
-      method: "GET",
-      errorContext: "Get Latest Version",
-    });
+    return await this.http.fetch<VersionResponse>(
+      `${this.http.baseUrl}${path}`,
+      {
+        method: "GET",
+        errorContext: "Get Latest Version",
+      },
+    );
   }
 
   /**

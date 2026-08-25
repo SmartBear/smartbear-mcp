@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { WebhookApi } from "./webhook-api";
-import { createMockHttpClient } from "./test-helpers";
+import { beforeEach, describe, expect, it } from "vitest";
 import { ToolError } from "../../common/tools";
+import { createMockHttpClient } from "./test-helpers";
+import { WebhookApi } from "./webhook-api";
 
 const WEBHOOK_UUID = "550e8400-e29b-41d4-a716-446655440000";
 const WEBHOOK_WITH_SPECIAL_CHARS = "hook/name with spaces";
@@ -79,6 +79,7 @@ describe("WebhookApi", () => {
   describe("createWebhook", () => {
     const webhookBody = {
       description: "Test webhook",
+      enabled: true,
       events: [{ name: "contract_content_changed" }],
       request: {
         method: "POST" as const,
@@ -101,7 +102,9 @@ describe("WebhookApi", () => {
 
     it("should propagate HTTP errors", async () => {
       mockHttp.fetch.mockRejectedValueOnce(
-        new ToolError("Create Webhook Failed - status: 422 Unprocessable Entity"),
+        new ToolError(
+          "Create Webhook Failed - status: 422 Unprocessable Entity",
+        ),
       );
 
       await expect(api.createWebhook(webhookBody)).rejects.toThrow(
@@ -210,7 +213,9 @@ describe("WebhookApi", () => {
 
     it("should propagate HTTP errors", async () => {
       mockHttp.fetch.mockRejectedValueOnce(
-        new ToolError("Execute Webhooks Failed - status: 500 Internal Server Error"),
+        new ToolError(
+          "Execute Webhooks Failed - status: 500 Internal Server Error",
+        ),
       );
 
       await expect(api.executeWebhooks()).rejects.toThrow(

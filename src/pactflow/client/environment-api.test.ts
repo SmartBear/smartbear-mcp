@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+import { ToolError } from "../../common/tools";
 import { EnvironmentApi } from "./environment-api";
 import { createMockHttpClient } from "./test-helpers";
-import { ToolError } from "../../common/tools";
 
 describe("EnvironmentApi", () => {
   let api: EnvironmentApi;
@@ -14,7 +14,9 @@ describe("EnvironmentApi", () => {
 
   describe("listEnvironments", () => {
     it("should retrieve all environments", async () => {
-      const mockResponse = { environments: [{ uuid: "abc", name: "production" }] };
+      const mockResponse = {
+        environments: [{ uuid: "abc", name: "production" }],
+      };
       mockHttp.fetch.mockResolvedValueOnce(mockResponse);
 
       const result = await api.listEnvironments();
@@ -27,7 +29,9 @@ describe("EnvironmentApi", () => {
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("List Environments Failed - status: 401 Unauthorized"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError("List Environments Failed - status: 401 Unauthorized"),
+      );
 
       await expect(api.listEnvironments()).rejects.toThrow(
         "List Environments Failed - status: 401 Unauthorized",
@@ -61,11 +65,13 @@ describe("EnvironmentApi", () => {
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("Get Environment Failed - status: 404 Not Found"));
-
-      await expect(api.getEnvironment({ environmentId: "missing" })).rejects.toThrow(
-        "Get Environment Failed - status: 404 Not Found",
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError("Get Environment Failed - status: 404 Not Found"),
       );
+
+      await expect(
+        api.getEnvironment({ environmentId: "missing" }),
+      ).rejects.toThrow("Get Environment Failed - status: 404 Not Found");
     });
   });
 
@@ -99,7 +105,11 @@ describe("EnvironmentApi", () => {
 
       expect(mockHttp.fetch).toHaveBeenCalledWith(
         "https://test.example.com/pacticipants/ServiceA/versions/1.0.0/deployed-versions/environment/env-uuid",
-        { method: "POST", body: { applicationInstance: "blue" }, errorContext: "Record Deployment" },
+        {
+          method: "POST",
+          body: { applicationInstance: "blue" },
+          errorContext: "Record Deployment",
+        },
       );
     });
 
@@ -119,10 +129,16 @@ describe("EnvironmentApi", () => {
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("Record Deployment Failed - status: 422"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError("Record Deployment Failed - status: 422"),
+      );
 
       await expect(
-        api.recordDeployment({ pacticipantName: "S", versionNumber: "1", environmentId: "e" }),
+        api.recordDeployment({
+          pacticipantName: "S",
+          versionNumber: "1",
+          environmentId: "e",
+        }),
       ).rejects.toThrow("Record Deployment Failed - status: 422");
     });
   });
@@ -132,7 +148,9 @@ describe("EnvironmentApi", () => {
       const mockResponse = { deployedVersions: [] };
       mockHttp.fetch.mockResolvedValueOnce(mockResponse);
 
-      const result = await api.getCurrentlyDeployed({ environmentId: "env-uuid" });
+      const result = await api.getCurrentlyDeployed({
+        environmentId: "env-uuid",
+      });
 
       expect(mockHttp.fetch).toHaveBeenCalledWith(
         "https://test.example.com/environments/env-uuid/deployed-versions/currently-deployed",
@@ -153,9 +171,13 @@ describe("EnvironmentApi", () => {
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("Get Currently Deployed Failed - status: 404 Not Found"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError("Get Currently Deployed Failed - status: 404 Not Found"),
+      );
 
-      await expect(api.getCurrentlyDeployed({ environmentId: "bad" })).rejects.toThrow(
+      await expect(
+        api.getCurrentlyDeployed({ environmentId: "bad" }),
+      ).rejects.toThrow(
         "Get Currently Deployed Failed - status: 404 Not Found",
       );
     });
@@ -195,10 +217,16 @@ describe("EnvironmentApi", () => {
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("Record Release Failed - status: 422"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError("Record Release Failed - status: 422"),
+      );
 
       await expect(
-        api.recordRelease({ pacticipantName: "S", versionNumber: "1", environmentId: "e" }),
+        api.recordRelease({
+          pacticipantName: "S",
+          versionNumber: "1",
+          environmentId: "e",
+        }),
       ).rejects.toThrow("Record Release Failed - status: 422");
     });
   });
@@ -208,7 +236,9 @@ describe("EnvironmentApi", () => {
       const mockResponse = { releasedVersions: [] };
       mockHttp.fetch.mockResolvedValueOnce(mockResponse);
 
-      const result = await api.getCurrentlySupported({ environmentId: "prod-uuid" });
+      const result = await api.getCurrentlySupported({
+        environmentId: "prod-uuid",
+      });
 
       expect(mockHttp.fetch).toHaveBeenCalledWith(
         "https://test.example.com/environments/prod-uuid/released-versions/currently-supported",
@@ -229,9 +259,13 @@ describe("EnvironmentApi", () => {
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("Get Currently Supported Failed - status: 404 Not Found"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError("Get Currently Supported Failed - status: 404 Not Found"),
+      );
 
-      await expect(api.getCurrentlySupported({ environmentId: "bad" })).rejects.toThrow(
+      await expect(
+        api.getCurrentlySupported({ environmentId: "bad" }),
+      ).rejects.toThrow(
         "Get Currently Supported Failed - status: 404 Not Found",
       );
     });
@@ -260,7 +294,9 @@ describe("EnvironmentApi", () => {
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("Create Environment Failed - status: 409 Conflict"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError("Create Environment Failed - status: 409 Conflict"),
+      );
 
       await expect(
         api.createEnvironment({ name: "staging", production: false }),
@@ -306,10 +342,16 @@ describe("EnvironmentApi", () => {
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("Update Environment Failed - status: 404 Not Found"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError("Update Environment Failed - status: 404 Not Found"),
+      );
 
       await expect(
-        api.updateEnvironment({ environmentId: "bad", name: "x", production: false }),
+        api.updateEnvironment({
+          environmentId: "bad",
+          name: "x",
+          production: false,
+        }),
       ).rejects.toThrow("Update Environment Failed - status: 404 Not Found");
     });
   });
@@ -338,11 +380,13 @@ describe("EnvironmentApi", () => {
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("Delete Environment Failed - status: 404 Not Found"));
-
-      await expect(api.deleteEnvironment({ environmentId: "missing" })).rejects.toThrow(
-        "Delete Environment Failed - status: 404 Not Found",
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError("Delete Environment Failed - status: 404 Not Found"),
       );
+
+      await expect(
+        api.deleteEnvironment({ environmentId: "missing" }),
+      ).rejects.toThrow("Delete Environment Failed - status: 404 Not Found");
     });
   });
 
@@ -380,10 +424,16 @@ describe("EnvironmentApi", () => {
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("Get Deployed Versions Failed - status: 404"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError("Get Deployed Versions Failed - status: 404"),
+      );
 
       await expect(
-        api.getDeployedVersions({ pacticipantName: "S", versionNumber: "1", environmentId: "e" }),
+        api.getDeployedVersions({
+          pacticipantName: "S",
+          versionNumber: "1",
+          environmentId: "e",
+        }),
       ).rejects.toThrow("Get Deployed Versions Failed - status: 404");
     });
   });
@@ -422,10 +472,16 @@ describe("EnvironmentApi", () => {
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("Get Released Versions Failed - status: 404"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError("Get Released Versions Failed - status: 404"),
+      );
 
       await expect(
-        api.getReleasedVersions({ pacticipantName: "S", versionNumber: "1", environmentId: "e" }),
+        api.getReleasedVersions({
+          pacticipantName: "S",
+          versionNumber: "1",
+          environmentId: "e",
+        }),
       ).rejects.toThrow("Get Released Versions Failed - status: 404");
     });
   });

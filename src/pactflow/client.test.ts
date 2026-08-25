@@ -5,6 +5,7 @@ import { setProcessClientIdentity } from "../common/client-identity";
 import { USER_AGENT } from "../common/info";
 import { PactflowClient } from "./client";
 import * as toolsModule from "./client/tools";
+import { TOOLS } from "./client/tools";
 
 const fetchMock = createFetchMock(vi);
 
@@ -202,6 +203,16 @@ describe("PactFlowClient", () => {
     it("should register all prompts from PROMPTS array", async () => {
       client.registerPrompts(mockRegisterPrompt);
       expect(mockRegisterPrompt).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("handlerMap completeness", () => {
+    it("every TOOLS handler resolves in the merged handlerMap", async () => {
+      const client = await createConfiguredClient({ token: "token" });
+      const missing = TOOLS.map((t) => t.handler).filter(
+        (h) => typeof (client as any)[h] !== "function",
+      );
+      expect(missing).toEqual([]);
     });
   });
 

@@ -50,10 +50,7 @@ describe("HttpClient", () => {
     it("sends no Authorization header when getHeaders returns undefined", async () => {
       fetchMock.mockResponseOnce(JSON.stringify({ ok: true }));
 
-      const client = new HttpClient(
-        "https://example.com",
-        () => undefined,
-      );
+      const client = new HttpClient("https://example.com", () => undefined);
 
       await client.fetch("https://example.com/api");
 
@@ -83,12 +80,17 @@ describe("HttpClient", () => {
     });
 
     it("throws ToolError with responseStatus metadata for a non-OK response", async () => {
-      fetchMock.mockResponseOnce("Not Found", { status: 404, statusText: "Not Found" });
+      fetchMock.mockResponseOnce("Not Found", {
+        status: 404,
+        statusText: "Not Found",
+      });
 
       const client = new HttpClient("https://example.com", () => undefined);
 
       await expect(
-        client.fetch("https://example.com/api", { errorContext: "Get Resource" }),
+        client.fetch("https://example.com/api", {
+          errorContext: "Get Resource",
+        }),
       ).rejects.toSatisfy((err: unknown) => {
         expect(err).toBeInstanceOf(ToolError);
         const toolErr = err as ToolError;

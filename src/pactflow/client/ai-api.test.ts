@@ -1,7 +1,12 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+import type {
+  Entitlement,
+  GenerationResponse,
+  RefineResponse,
+  StatusResponse,
+} from "./ai";
 import { AIApi } from "./ai-api";
 import { createMockHttpClient } from "./test-helpers";
-import type { StatusResponse, GenerationResponse, RefineResponse, Entitlement } from "./ai";
 
 describe("AIApi", () => {
   let api: AIApi;
@@ -27,17 +32,16 @@ describe("AIApi", () => {
         },
         aiEnabled: true,
       };
-      (mockHttp.fetch as ReturnType<typeof import("vitest").vi.fn>).mockResolvedValueOnce(mockEntitlement);
+      (
+        mockHttp.fetch as ReturnType<typeof import("vitest").vi.fn>
+      ).mockResolvedValueOnce(mockEntitlement);
 
       const result = await api.checkAIEntitlements();
 
-      expect(mockHttp.fetch).toHaveBeenCalledWith(
-        `${aiBaseUrl}/entitlement`,
-        {
-          method: "GET",
-          errorContext: "PactFlow AI Entitlements Request",
-        },
-      );
+      expect(mockHttp.fetch).toHaveBeenCalledWith(`${aiBaseUrl}/entitlement`, {
+        method: "GET",
+        errorContext: "PactFlow AI Entitlements Request",
+      });
       expect(result).toEqual(mockEntitlement);
     });
 
@@ -70,10 +74,14 @@ describe("AIApi", () => {
         .mockResolvedValueOnce(mockGenerationResult);
 
       // getStatus HEAD returns 200 (complete)
-      (mockHttp.fetchRaw as ReturnType<typeof import("vitest").vi.fn>)
-        .mockResolvedValueOnce(new Response(null, { status: 200 }));
+      (
+        mockHttp.fetchRaw as ReturnType<typeof import("vitest").vi.fn>
+      ).mockResolvedValueOnce(new Response(null, { status: 200 }));
 
-      const result = await api.generate({ language: "typescript" }, async () => ({}));
+      const result = await api.generate(
+        { language: "typescript" },
+        async () => ({ action: "cancel" as const }),
+      );
 
       expect(mockHttp.fetch).toHaveBeenCalledWith(
         `${aiBaseUrl}/generate`,
@@ -83,16 +91,21 @@ describe("AIApi", () => {
         mockStatusResponse.status_url,
         { method: "HEAD" },
       );
-      expect(mockHttp.fetch).toHaveBeenCalledWith(mockStatusResponse.result_url);
+      expect(mockHttp.fetch).toHaveBeenCalledWith(
+        mockStatusResponse.result_url,
+      );
       expect(result).toEqual(mockGenerationResult);
     });
 
     it("propagates error when http.fetch rejects on submission", async () => {
-      (mockHttp.fetch as ReturnType<typeof import("vitest").vi.fn>)
-        .mockRejectedValueOnce(new Error("Network error"));
+      (
+        mockHttp.fetch as ReturnType<typeof import("vitest").vi.fn>
+      ).mockRejectedValueOnce(new Error("Network error"));
 
       await expect(
-        api.generate({ language: "typescript" }, async () => ({})),
+        api.generate({ language: "typescript" }, async () => ({
+          action: "cancel" as const,
+        })),
       ).rejects.toThrow("Network error");
     });
   });
@@ -114,12 +127,13 @@ describe("AIApi", () => {
         .mockResolvedValueOnce(mockStatusResponse)
         .mockResolvedValueOnce(mockRefineResult);
 
-      (mockHttp.fetchRaw as ReturnType<typeof import("vitest").vi.fn>)
-        .mockResolvedValueOnce(new Response(null, { status: 200 }));
+      (
+        mockHttp.fetchRaw as ReturnType<typeof import("vitest").vi.fn>
+      ).mockResolvedValueOnce(new Response(null, { status: 200 }));
 
       const result = await api.review(
         { pactTests: { body: "test content" } },
-        async () => ({}),
+        async () => ({ action: "cancel" as const }),
       );
 
       expect(mockHttp.fetch).toHaveBeenCalledWith(

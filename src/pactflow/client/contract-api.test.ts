@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+import { ToolError } from "../../common/tools";
 import { ContractApi } from "./contract-api";
 import { createMockHttpClient } from "./test-helpers";
-import { ToolError } from "../../common/tools";
 
 describe("ContractApi", () => {
   let api: ContractApi;
@@ -14,7 +14,9 @@ describe("ContractApi", () => {
 
   describe("getProviderStates", () => {
     it("should retrieve provider states for a provider", async () => {
-      const mockResponse = { providerStates: [{ name: "user exists", consumers: ["ConsumerA"] }] };
+      const mockResponse = {
+        providerStates: [{ name: "user exists", consumers: ["ConsumerA"] }],
+      };
       mockHttp.fetch.mockResolvedValueOnce(mockResponse);
 
       const result = await api.getProviderStates({ provider: "ProviderA" });
@@ -38,20 +40,36 @@ describe("ContractApi", () => {
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("Get Provider States Failed - status: 404 Not Found"));
-
-      await expect(api.getProviderStates({ provider: "Unknown" })).rejects.toThrow(
-        "Get Provider States Failed - status: 404 Not Found",
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError("Get Provider States Failed - status: 404 Not Found"),
       );
+
+      await expect(
+        api.getProviderStates({ provider: "Unknown" }),
+      ).rejects.toThrow("Get Provider States Failed - status: 404 Not Found");
     });
   });
 
   describe("canIDeploy", () => {
     it("should check deployment with query params", async () => {
-      const mockResponse = { summary: { deployable: true, reason: "OK", failed: 0, success: 1, unknown: 0 }, matrix: [], notices: [] };
+      const mockResponse = {
+        summary: {
+          deployable: true,
+          reason: "OK",
+          failed: 0,
+          success: 1,
+          unknown: 0,
+        },
+        matrix: [],
+        notices: [],
+      };
       mockHttp.fetch.mockResolvedValueOnce(mockResponse);
 
-      const result = await api.canIDeploy({ pacticipant: "ServiceA", version: "1.0.0", environment: "production" });
+      const result = await api.canIDeploy({
+        pacticipant: "ServiceA",
+        version: "1.0.0",
+        environment: "production",
+      });
 
       expect(mockHttp.fetch).toHaveBeenCalledWith(
         "https://test.example.com/can-i-deploy?pacticipant=ServiceA&version=1.0.0&environment=production",
@@ -61,9 +79,23 @@ describe("ContractApi", () => {
     });
 
     it("should URL-encode query param values", async () => {
-      mockHttp.fetch.mockResolvedValueOnce({ summary: { deployable: false, reason: "", failed: 0, success: 0, unknown: 0 }, matrix: [], notices: [] });
+      mockHttp.fetch.mockResolvedValueOnce({
+        summary: {
+          deployable: false,
+          reason: "",
+          failed: 0,
+          success: 0,
+          unknown: 0,
+        },
+        matrix: [],
+        notices: [],
+      });
 
-      await api.canIDeploy({ pacticipant: "Service A", version: "1.0+beta", environment: "staging" });
+      await api.canIDeploy({
+        pacticipant: "Service A",
+        version: "1.0+beta",
+        environment: "staging",
+      });
 
       const callUrl = mockHttp.fetch.mock.calls[0][0] as string;
       expect(callUrl).toContain("pacticipant=Service+A");
@@ -71,17 +103,37 @@ describe("ContractApi", () => {
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("Can-I-Deploy Request Failed - status: 500 Internal Server Error"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError(
+          "Can-I-Deploy Request Failed - status: 500 Internal Server Error",
+        ),
+      );
 
       await expect(
-        api.canIDeploy({ pacticipant: "ServiceA", version: "1.0.0", environment: "production" }),
-      ).rejects.toThrow("Can-I-Deploy Request Failed - status: 500 Internal Server Error");
+        api.canIDeploy({
+          pacticipant: "ServiceA",
+          version: "1.0.0",
+          environment: "production",
+        }),
+      ).rejects.toThrow(
+        "Can-I-Deploy Request Failed - status: 500 Internal Server Error",
+      );
     });
   });
 
   describe("getMatrix", () => {
     it("should build matrix URL with required params", async () => {
-      const mockResponse = { matrix: [], notices: [], summary: { deployable: true, failed: 0, reason: "", success: 0, unknown: 0 } };
+      const mockResponse = {
+        matrix: [],
+        notices: [],
+        summary: {
+          deployable: true,
+          failed: 0,
+          reason: "",
+          success: 0,
+          unknown: 0,
+        },
+      };
       mockHttp.fetch.mockResolvedValueOnce(mockResponse);
 
       const result = await api.getMatrix({
@@ -110,7 +162,9 @@ describe("ContractApi", () => {
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("Matrix Request Failed - status: 400 Bad Request"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError("Matrix Request Failed - status: 400 Bad Request"),
+      );
 
       await expect(
         api.getMatrix({ q: [{ pacticipant: "ServiceA" }] }),
@@ -127,28 +181,53 @@ describe("ContractApi", () => {
         pacticipantName: "ConsumerA",
         pacticipantVersionNumber: "1.2.3",
         branch: "main",
-        contracts: [{ consumerName: "ConsumerA", providerName: "ProviderA", specification: "pact", contentType: "application/json", content: "base64content" }],
+        contracts: [
+          {
+            consumerName: "ConsumerA",
+            providerName: "ProviderA",
+            specification: "pact" as const,
+            contentType: "application/json" as const,
+            content: "base64content",
+          },
+        ],
       };
 
       const result = await api.publishContracts(body);
 
       expect(mockHttp.fetch).toHaveBeenCalledWith(
         "https://test.example.com/contracts/publish",
-        expect.objectContaining({ method: "POST", errorContext: "Publish Consumer Contracts" }),
+        expect.objectContaining({
+          method: "POST",
+          errorContext: "Publish Consumer Contracts",
+        }),
       );
       expect(result).toEqual(mockResponse);
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("Publish Consumer Contracts Failed - status: 422 Unprocessable Entity"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError(
+          "Publish Consumer Contracts Failed - status: 422 Unprocessable Entity",
+        ),
+      );
 
       await expect(
         api.publishContracts({
           pacticipantName: "ConsumerA",
           pacticipantVersionNumber: "1.0.0",
-          contracts: [{ consumerName: "ConsumerA", providerName: "ProviderA", specification: "pact", contentType: "application/json", content: "base64" }],
+          contracts: [
+            {
+              consumerName: "ConsumerA",
+              providerName: "ProviderA",
+              specification: "pact" as const,
+              contentType: "application/json" as const,
+              content: "base64",
+            },
+          ],
         }),
-      ).rejects.toThrow("Publish Consumer Contracts Failed - status: 422 Unprocessable Entity");
+      ).rejects.toThrow(
+        "Publish Consumer Contracts Failed - status: 422 Unprocessable Entity",
+      );
     });
   });
 
@@ -172,11 +251,16 @@ describe("ContractApi", () => {
       const mockResponse = { success: true };
       mockHttp.fetch.mockResolvedValueOnce(mockResponse);
 
-      const result = await api.publishProviderContract(validProviderContractInput);
+      const result = await api.publishProviderContract(
+        validProviderContractInput,
+      );
 
       expect(mockHttp.fetch).toHaveBeenCalledWith(
         "https://test.example.com/provider-contracts/provider/ProviderA/publish",
-        expect.objectContaining({ method: "POST", errorContext: "Publish Provider Contract" }),
+        expect.objectContaining({
+          method: "POST",
+          errorContext: "Publish Provider Contract",
+        }),
       );
       expect(result).toEqual(mockResponse);
     });
@@ -196,11 +280,17 @@ describe("ContractApi", () => {
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("Publish Provider Contract Failed - status: 400 Bad Request"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError(
+          "Publish Provider Contract Failed - status: 400 Bad Request",
+        ),
+      );
 
       await expect(
         api.publishProviderContract(validProviderContractInput),
-      ).rejects.toThrow("Publish Provider Contract Failed - status: 400 Bad Request");
+      ).rejects.toThrow(
+        "Publish Provider Contract Failed - status: 400 Bad Request",
+      );
     });
   });
 
@@ -216,7 +306,10 @@ describe("ContractApi", () => {
 
       expect(mockHttp.fetch).toHaveBeenCalledWith(
         "https://test.example.com/pacts/provider/ProviderA/for-verification",
-        expect.objectContaining({ method: "POST", errorContext: "Get Pacts for Verification" }),
+        expect.objectContaining({
+          method: "POST",
+          errorContext: "Get Pacts for Verification",
+        }),
       );
       expect(result).toEqual(mockResponse);
     });
@@ -236,11 +329,20 @@ describe("ContractApi", () => {
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("Get Pacts for Verification Failed - status: 404 Not Found"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError(
+          "Get Pacts for Verification Failed - status: 404 Not Found",
+        ),
+      );
 
       await expect(
-        api.getPactsForVerification({ providerName: "Unknown", consumerVersionSelectors: [] }),
-      ).rejects.toThrow("Get Pacts for Verification Failed - status: 404 Not Found");
+        api.getPactsForVerification({
+          providerName: "Unknown",
+          consumerVersionSelectors: [],
+        }),
+      ).rejects.toThrow(
+        "Get Pacts for Verification Failed - status: 404 Not Found",
+      );
     });
   });
 
@@ -276,11 +378,20 @@ describe("ContractApi", () => {
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("Get BDCT Provider Contract Failed - status: 404 Not Found"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError(
+          "Get BDCT Provider Contract Failed - status: 404 Not Found",
+        ),
+      );
 
       await expect(
-        api.getBiDirectionalProviderContract({ providerName: "Unknown", providerVersionNumber: "1.0.0" }),
-      ).rejects.toThrow("Get BDCT Provider Contract Failed - status: 404 Not Found");
+        api.getBiDirectionalProviderContract({
+          providerName: "Unknown",
+          providerVersionNumber: "1.0.0",
+        }),
+      ).rejects.toThrow(
+        "Get BDCT Provider Contract Failed - status: 404 Not Found",
+      );
     });
   });
 
@@ -289,14 +400,18 @@ describe("ContractApi", () => {
       const mockResponse = { success: true };
       mockHttp.fetch.mockResolvedValueOnce(mockResponse);
 
-      const result = await api.getBiDirectionalProviderContractVerificationResults({
-        providerName: "ProviderA",
-        providerVersionNumber: "1.0.0",
-      });
+      const result =
+        await api.getBiDirectionalProviderContractVerificationResults({
+          providerName: "ProviderA",
+          providerVersionNumber: "1.0.0",
+        });
 
       expect(mockHttp.fetch).toHaveBeenCalledWith(
         "https://test.example.com/contracts/bi-directional/provider/ProviderA/version/1.0.0/provider-contract-verification-results",
-        { method: "GET", errorContext: "Get BDCT Provider Contract Verification Results" },
+        {
+          method: "GET",
+          errorContext: "Get BDCT Provider Contract Verification Results",
+        },
       );
       expect(result).toEqual(mockResponse);
     });
@@ -311,16 +426,28 @@ describe("ContractApi", () => {
 
       expect(mockHttp.fetch).toHaveBeenCalledWith(
         "https://test.example.com/contracts/bi-directional/provider/Provider%20A%2FB/version/1.0%2Bbeta/provider-contract-verification-results",
-        { method: "GET", errorContext: "Get BDCT Provider Contract Verification Results" },
+        {
+          method: "GET",
+          errorContext: "Get BDCT Provider Contract Verification Results",
+        },
       );
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("Get BDCT Provider Contract Verification Results Failed - status: 404 Not Found"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError(
+          "Get BDCT Provider Contract Verification Results Failed - status: 404 Not Found",
+        ),
+      );
 
       await expect(
-        api.getBiDirectionalProviderContractVerificationResults({ providerName: "Unknown", providerVersionNumber: "1.0.0" }),
-      ).rejects.toThrow("Get BDCT Provider Contract Verification Results Failed - status: 404 Not Found");
+        api.getBiDirectionalProviderContractVerificationResults({
+          providerName: "Unknown",
+          providerVersionNumber: "1.0.0",
+        }),
+      ).rejects.toThrow(
+        "Get BDCT Provider Contract Verification Results Failed - status: 404 Not Found",
+      );
     });
   });
 
@@ -356,11 +483,20 @@ describe("ContractApi", () => {
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("Get BDCT Consumer Contract Failed - status: 404 Not Found"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError(
+          "Get BDCT Consumer Contract Failed - status: 404 Not Found",
+        ),
+      );
 
       await expect(
-        api.getBiDirectionalConsumerContract({ providerName: "Unknown", providerVersionNumber: "1.0.0" }),
-      ).rejects.toThrow("Get BDCT Consumer Contract Failed - status: 404 Not Found");
+        api.getBiDirectionalConsumerContract({
+          providerName: "Unknown",
+          providerVersionNumber: "1.0.0",
+        }),
+      ).rejects.toThrow(
+        "Get BDCT Consumer Contract Failed - status: 404 Not Found",
+      );
     });
   });
 
@@ -369,14 +505,18 @@ describe("ContractApi", () => {
       const mockResponse = { results: [] };
       mockHttp.fetch.mockResolvedValueOnce(mockResponse);
 
-      const result = await api.getBiDirectionalConsumerContractVerificationResults({
-        providerName: "ProviderA",
-        providerVersionNumber: "1.0.0",
-      });
+      const result =
+        await api.getBiDirectionalConsumerContractVerificationResults({
+          providerName: "ProviderA",
+          providerVersionNumber: "1.0.0",
+        });
 
       expect(mockHttp.fetch).toHaveBeenCalledWith(
         "https://test.example.com/contracts/bi-directional/provider/ProviderA/version/1.0.0/consumer-contract-verification-results",
-        { method: "GET", errorContext: "Get BDCT Consumer Contract Verification Results" },
+        {
+          method: "GET",
+          errorContext: "Get BDCT Consumer Contract Verification Results",
+        },
       );
       expect(result).toEqual(mockResponse);
     });
@@ -391,16 +531,26 @@ describe("ContractApi", () => {
 
       expect(mockHttp.fetch).toHaveBeenCalledWith(
         "https://test.example.com/contracts/bi-directional/provider/Provider%20A%2FB/version/1.0%2Bbeta/consumer-contract-verification-results",
-        { method: "GET", errorContext: "Get BDCT Consumer Contract Verification Results" },
+        {
+          method: "GET",
+          errorContext: "Get BDCT Consumer Contract Verification Results",
+        },
       );
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("Get BDCT Consumer Contract Verification Results Failed"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError("Get BDCT Consumer Contract Verification Results Failed"),
+      );
 
       await expect(
-        api.getBiDirectionalConsumerContractVerificationResults({ providerName: "Unknown", providerVersionNumber: "1.0.0" }),
-      ).rejects.toThrow("Get BDCT Consumer Contract Verification Results Failed");
+        api.getBiDirectionalConsumerContractVerificationResults({
+          providerName: "Unknown",
+          providerVersionNumber: "1.0.0",
+        }),
+      ).rejects.toThrow(
+        "Get BDCT Consumer Contract Verification Results Failed",
+      );
     });
   });
 
@@ -409,14 +559,19 @@ describe("ContractApi", () => {
       const mockResponse = { outcome: "passed" };
       mockHttp.fetch.mockResolvedValueOnce(mockResponse);
 
-      const result = await api.getBiDirectionalCrossContractVerificationResults({
-        providerName: "ProviderA",
-        providerVersionNumber: "1.0.0",
-      });
+      const result = await api.getBiDirectionalCrossContractVerificationResults(
+        {
+          providerName: "ProviderA",
+          providerVersionNumber: "1.0.0",
+        },
+      );
 
       expect(mockHttp.fetch).toHaveBeenCalledWith(
         "https://test.example.com/contracts/bi-directional/provider/ProviderA/version/1.0.0/cross-contract-verification-results",
-        { method: "GET", errorContext: "Get BDCT Cross-Contract Verification Results" },
+        {
+          method: "GET",
+          errorContext: "Get BDCT Cross-Contract Verification Results",
+        },
       );
       expect(result).toEqual(mockResponse);
     });
@@ -431,15 +586,23 @@ describe("ContractApi", () => {
 
       expect(mockHttp.fetch).toHaveBeenCalledWith(
         "https://test.example.com/contracts/bi-directional/provider/Provider%20A%2FB/version/1.0%2Bbeta/cross-contract-verification-results",
-        { method: "GET", errorContext: "Get BDCT Cross-Contract Verification Results" },
+        {
+          method: "GET",
+          errorContext: "Get BDCT Cross-Contract Verification Results",
+        },
       );
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("Get BDCT Cross-Contract Verification Results Failed"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError("Get BDCT Cross-Contract Verification Results Failed"),
+      );
 
       await expect(
-        api.getBiDirectionalCrossContractVerificationResults({ providerName: "Unknown", providerVersionNumber: "1.0.0" }),
+        api.getBiDirectionalCrossContractVerificationResults({
+          providerName: "Unknown",
+          providerVersionNumber: "1.0.0",
+        }),
       ).rejects.toThrow("Get BDCT Cross-Contract Verification Results Failed");
     });
   });
@@ -458,7 +621,10 @@ describe("ContractApi", () => {
 
       expect(mockHttp.fetch).toHaveBeenCalledWith(
         "https://test.example.com/contracts/bi-directional/provider/ProviderA/version/1.0.0/consumer/ConsumerA/version/2.0.0/consumer-contract",
-        { method: "GET", errorContext: "Get BDCT Consumer Contract (by consumer version)" },
+        {
+          method: "GET",
+          errorContext: "Get BDCT Consumer Contract (by consumer version)",
+        },
       );
       expect(result).toEqual(mockResponse);
     });
@@ -475,18 +641,30 @@ describe("ContractApi", () => {
 
       expect(mockHttp.fetch).toHaveBeenCalledWith(
         "https://test.example.com/contracts/bi-directional/provider/Provider%20A%2FB/version/1.0%2Bbeta/consumer/Consumer%20X%2FY/version/2.0%2Brc/consumer-contract",
-        { method: "GET", errorContext: "Get BDCT Consumer Contract (by consumer version)" },
+        {
+          method: "GET",
+          errorContext: "Get BDCT Consumer Contract (by consumer version)",
+        },
       );
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("Get BDCT Consumer Contract (by consumer version) Failed"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError(
+          "Get BDCT Consumer Contract (by consumer version) Failed",
+        ),
+      );
 
       await expect(
         api.getBiDirectionalConsumerContractByConsumer({
-          providerName: "P", providerVersionNumber: "1", consumerName: "C", consumerVersionNumber: "1",
+          providerName: "P",
+          providerVersionNumber: "1",
+          consumerName: "C",
+          consumerVersionNumber: "1",
         }),
-      ).rejects.toThrow("Get BDCT Consumer Contract (by consumer version) Failed");
+      ).rejects.toThrow(
+        "Get BDCT Consumer Contract (by consumer version) Failed",
+      );
     });
   });
 
@@ -504,7 +682,10 @@ describe("ContractApi", () => {
 
       expect(mockHttp.fetch).toHaveBeenCalledWith(
         "https://test.example.com/contracts/bi-directional/provider/ProviderA/version/1.0.0/consumer/ConsumerA/version/2.0.0/provider-contract",
-        { method: "GET", errorContext: "Get BDCT Provider Contract (by consumer version)" },
+        {
+          method: "GET",
+          errorContext: "Get BDCT Provider Contract (by consumer version)",
+        },
       );
       expect(result).toEqual(mockResponse);
     });
@@ -521,18 +702,30 @@ describe("ContractApi", () => {
 
       expect(mockHttp.fetch).toHaveBeenCalledWith(
         "https://test.example.com/contracts/bi-directional/provider/Provider%20A%2FB/version/1.0%2Bbeta/consumer/Consumer%20X%2FY/version/2.0%2Brc/provider-contract",
-        { method: "GET", errorContext: "Get BDCT Provider Contract (by consumer version)" },
+        {
+          method: "GET",
+          errorContext: "Get BDCT Provider Contract (by consumer version)",
+        },
       );
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("Get BDCT Provider Contract (by consumer version) Failed"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError(
+          "Get BDCT Provider Contract (by consumer version) Failed",
+        ),
+      );
 
       await expect(
         api.getBiDirectionalProviderContractByConsumer({
-          providerName: "P", providerVersionNumber: "1", consumerName: "C", consumerVersionNumber: "1",
+          providerName: "P",
+          providerVersionNumber: "1",
+          consumerName: "C",
+          consumerVersionNumber: "1",
         }),
-      ).rejects.toThrow("Get BDCT Provider Contract (by consumer version) Failed");
+      ).rejects.toThrow(
+        "Get BDCT Provider Contract (by consumer version) Failed",
+      );
     });
   });
 
@@ -541,16 +734,23 @@ describe("ContractApi", () => {
       const mockResponse = { results: {} };
       mockHttp.fetch.mockResolvedValueOnce(mockResponse);
 
-      const result = await api.getBiDirectionalProviderContractVerificationResultsByConsumer({
-        providerName: "ProviderA",
-        providerVersionNumber: "1.0.0",
-        consumerName: "ConsumerA",
-        consumerVersionNumber: "2.0.0",
-      });
+      const result =
+        await api.getBiDirectionalProviderContractVerificationResultsByConsumer(
+          {
+            providerName: "ProviderA",
+            providerVersionNumber: "1.0.0",
+            consumerName: "ConsumerA",
+            consumerVersionNumber: "2.0.0",
+          },
+        );
 
       expect(mockHttp.fetch).toHaveBeenCalledWith(
         "https://test.example.com/contracts/bi-directional/provider/ProviderA/version/1.0.0/consumer/ConsumerA/version/2.0.0/provider-contract-verification-results",
-        { method: "GET", errorContext: "Get BDCT Provider Contract Verification Results (by consumer version)" },
+        {
+          method: "GET",
+          errorContext:
+            "Get BDCT Provider Contract Verification Results (by consumer version)",
+        },
       );
       expect(result).toEqual(mockResponse);
     });
@@ -567,18 +767,31 @@ describe("ContractApi", () => {
 
       expect(mockHttp.fetch).toHaveBeenCalledWith(
         "https://test.example.com/contracts/bi-directional/provider/Provider%20A%2FB/version/1.0%2Bbeta/consumer/Consumer%20X%2FY/version/2.0%2Brc/provider-contract-verification-results",
-        { method: "GET", errorContext: "Get BDCT Provider Contract Verification Results (by consumer version)" },
+        {
+          method: "GET",
+          errorContext:
+            "Get BDCT Provider Contract Verification Results (by consumer version)",
+        },
       );
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("Get BDCT Provider Contract Verification Results (by consumer version) Failed"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError(
+          "Get BDCT Provider Contract Verification Results (by consumer version) Failed",
+        ),
+      );
 
       await expect(
         api.getBiDirectionalProviderContractVerificationResultsByConsumer({
-          providerName: "P", providerVersionNumber: "1", consumerName: "C", consumerVersionNumber: "1",
+          providerName: "P",
+          providerVersionNumber: "1",
+          consumerName: "C",
+          consumerVersionNumber: "1",
         }),
-      ).rejects.toThrow("Get BDCT Provider Contract Verification Results (by consumer version) Failed");
+      ).rejects.toThrow(
+        "Get BDCT Provider Contract Verification Results (by consumer version) Failed",
+      );
     });
   });
 
@@ -587,16 +800,23 @@ describe("ContractApi", () => {
       const mockResponse = { results: {} };
       mockHttp.fetch.mockResolvedValueOnce(mockResponse);
 
-      const result = await api.getBiDirectionalConsumerContractVerificationResultsByConsumer({
-        providerName: "ProviderA",
-        providerVersionNumber: "1.0.0",
-        consumerName: "ConsumerA",
-        consumerVersionNumber: "2.0.0",
-      });
+      const result =
+        await api.getBiDirectionalConsumerContractVerificationResultsByConsumer(
+          {
+            providerName: "ProviderA",
+            providerVersionNumber: "1.0.0",
+            consumerName: "ConsumerA",
+            consumerVersionNumber: "2.0.0",
+          },
+        );
 
       expect(mockHttp.fetch).toHaveBeenCalledWith(
         "https://test.example.com/contracts/bi-directional/provider/ProviderA/version/1.0.0/consumer/ConsumerA/version/2.0.0/consumer-contract-verification-results",
-        { method: "GET", errorContext: "Get BDCT Consumer Contract Verification Results (by consumer version)" },
+        {
+          method: "GET",
+          errorContext:
+            "Get BDCT Consumer Contract Verification Results (by consumer version)",
+        },
       );
       expect(result).toEqual(mockResponse);
     });
@@ -613,18 +833,31 @@ describe("ContractApi", () => {
 
       expect(mockHttp.fetch).toHaveBeenCalledWith(
         "https://test.example.com/contracts/bi-directional/provider/Provider%20A%2FB/version/1.0%2Bbeta/consumer/Consumer%20X%2FY/version/2.0%2Brc/consumer-contract-verification-results",
-        { method: "GET", errorContext: "Get BDCT Consumer Contract Verification Results (by consumer version)" },
+        {
+          method: "GET",
+          errorContext:
+            "Get BDCT Consumer Contract Verification Results (by consumer version)",
+        },
       );
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("Get BDCT Consumer Contract Verification Results (by consumer version) Failed"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError(
+          "Get BDCT Consumer Contract Verification Results (by consumer version) Failed",
+        ),
+      );
 
       await expect(
         api.getBiDirectionalConsumerContractVerificationResultsByConsumer({
-          providerName: "P", providerVersionNumber: "1", consumerName: "C", consumerVersionNumber: "1",
+          providerName: "P",
+          providerVersionNumber: "1",
+          consumerName: "C",
+          consumerVersionNumber: "1",
         }),
-      ).rejects.toThrow("Get BDCT Consumer Contract Verification Results (by consumer version) Failed");
+      ).rejects.toThrow(
+        "Get BDCT Consumer Contract Verification Results (by consumer version) Failed",
+      );
     });
   });
 
@@ -633,16 +866,21 @@ describe("ContractApi", () => {
       const mockResponse = { outcome: "passed" };
       mockHttp.fetch.mockResolvedValueOnce(mockResponse);
 
-      const result = await api.getBiDirectionalCrossContractVerificationResultsByConsumer({
-        providerName: "ProviderA",
-        providerVersionNumber: "1.0.0",
-        consumerName: "ConsumerA",
-        consumerVersionNumber: "2.0.0",
-      });
+      const result =
+        await api.getBiDirectionalCrossContractVerificationResultsByConsumer({
+          providerName: "ProviderA",
+          providerVersionNumber: "1.0.0",
+          consumerName: "ConsumerA",
+          consumerVersionNumber: "2.0.0",
+        });
 
       expect(mockHttp.fetch).toHaveBeenCalledWith(
         "https://test.example.com/contracts/bi-directional/provider/ProviderA/version/1.0.0/consumer/ConsumerA/version/2.0.0/cross-contract-verification-results",
-        { method: "GET", errorContext: "Get BDCT Cross-Contract Verification Results (by consumer version)" },
+        {
+          method: "GET",
+          errorContext:
+            "Get BDCT Cross-Contract Verification Results (by consumer version)",
+        },
       );
       expect(result).toEqual(mockResponse);
     });
@@ -659,18 +897,31 @@ describe("ContractApi", () => {
 
       expect(mockHttp.fetch).toHaveBeenCalledWith(
         "https://test.example.com/contracts/bi-directional/provider/Provider%20A%2FB/version/1.0%2Bbeta/consumer/Consumer%20X%2FY/version/2.0%2Brc/cross-contract-verification-results",
-        { method: "GET", errorContext: "Get BDCT Cross-Contract Verification Results (by consumer version)" },
+        {
+          method: "GET",
+          errorContext:
+            "Get BDCT Cross-Contract Verification Results (by consumer version)",
+        },
       );
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("Get BDCT Cross-Contract Verification Results (by consumer version) Failed"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError(
+          "Get BDCT Cross-Contract Verification Results (by consumer version) Failed",
+        ),
+      );
 
       await expect(
         api.getBiDirectionalCrossContractVerificationResultsByConsumer({
-          providerName: "P", providerVersionNumber: "1", consumerName: "C", consumerVersionNumber: "1",
+          providerName: "P",
+          providerVersionNumber: "1",
+          consumerName: "C",
+          consumerVersionNumber: "1",
         }),
-      ).rejects.toThrow("Get BDCT Cross-Contract Verification Results (by consumer version) Failed");
+      ).rejects.toThrow(
+        "Get BDCT Cross-Contract Verification Results (by consumer version) Failed",
+      );
     });
   });
 
@@ -689,7 +940,11 @@ describe("ContractApi", () => {
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("List Integrations Failed - status: 500 Internal Server Error"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError(
+          "List Integrations Failed - status: 500 Internal Server Error",
+        ),
+      );
 
       await expect(api.listIntegrations()).rejects.toThrow(
         "List Integrations Failed - status: 500 Internal Server Error",
@@ -702,7 +957,9 @@ describe("ContractApi", () => {
       const mockResponse = { nodes: [], links: [] };
       mockHttp.fetch.mockResolvedValueOnce(mockResponse);
 
-      const result = await api.getPacticipantNetwork({ pacticipantName: "ServiceA" });
+      const result = await api.getPacticipantNetwork({
+        pacticipantName: "ServiceA",
+      });
 
       expect(mockHttp.fetch).toHaveBeenCalledWith(
         "https://test.example.com/pacticipant/ServiceA/network",
@@ -723,11 +980,15 @@ describe("ContractApi", () => {
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("Get Pacticipant Network Failed - status: 404 Not Found"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError("Get Pacticipant Network Failed - status: 404 Not Found"),
+      );
 
       await expect(
         api.getPacticipantNetwork({ pacticipantName: "Unknown" }),
-      ).rejects.toThrow("Get Pacticipant Network Failed - status: 404 Not Found");
+      ).rejects.toThrow(
+        "Get Pacticipant Network Failed - status: 404 Not Found",
+      );
     });
   });
 
@@ -736,7 +997,9 @@ describe("ContractApi", () => {
       const mockResponse = { integrations: [] };
       mockHttp.fetch.mockResolvedValueOnce(mockResponse);
 
-      const result = await api.getIntegrationsByTeam({ teamId: "team-uuid-123" });
+      const result = await api.getIntegrationsByTeam({
+        teamId: "team-uuid-123",
+      });
 
       expect(mockHttp.fetch).toHaveBeenCalledWith(
         "https://test.example.com/integrations/team/team-uuid-123",
@@ -757,11 +1020,17 @@ describe("ContractApi", () => {
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("Get Integrations by Team Failed - status: 404 Not Found"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError(
+          "Get Integrations by Team Failed - status: 404 Not Found",
+        ),
+      );
 
       await expect(
         api.getIntegrationsByTeam({ teamId: "nonexistent" }),
-      ).rejects.toThrow("Get Integrations by Team Failed - status: 404 Not Found");
+      ).rejects.toThrow(
+        "Get Integrations by Team Failed - status: 404 Not Found",
+      );
     });
   });
 
@@ -769,7 +1038,10 @@ describe("ContractApi", () => {
     it("should delete a specific integration", async () => {
       mockHttp.fetch.mockResolvedValueOnce(undefined);
 
-      await api.deleteIntegration({ providerName: "ProviderA", consumerName: "ConsumerA" });
+      await api.deleteIntegration({
+        providerName: "ProviderA",
+        consumerName: "ConsumerA",
+      });
 
       expect(mockHttp.fetch).toHaveBeenCalledWith(
         "https://test.example.com/integrations/provider/ProviderA/consumer/ConsumerA",
@@ -780,7 +1052,10 @@ describe("ContractApi", () => {
     it("should URL-encode provider and consumer names", async () => {
       mockHttp.fetch.mockResolvedValueOnce(undefined);
 
-      await api.deleteIntegration({ providerName: "Provider A/B", consumerName: "Consumer X/Y" });
+      await api.deleteIntegration({
+        providerName: "Provider A/B",
+        consumerName: "Consumer X/Y",
+      });
 
       expect(mockHttp.fetch).toHaveBeenCalledWith(
         "https://test.example.com/integrations/provider/Provider%20A%2FB/consumer/Consumer%20X%2FY",
@@ -789,10 +1064,15 @@ describe("ContractApi", () => {
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("Delete Integration Failed - status: 404 Not Found"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError("Delete Integration Failed - status: 404 Not Found"),
+      );
 
       await expect(
-        api.deleteIntegration({ providerName: "Unknown", consumerName: "Unknown" }),
+        api.deleteIntegration({
+          providerName: "Unknown",
+          consumerName: "Unknown",
+        }),
       ).rejects.toThrow("Delete Integration Failed - status: 404 Not Found");
     });
   });
@@ -810,7 +1090,9 @@ describe("ContractApi", () => {
     });
 
     it("should propagate HTTP errors", async () => {
-      mockHttp.fetch.mockRejectedValueOnce(new ToolError("Delete All Integrations Failed - status: 403 Forbidden"));
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError("Delete All Integrations Failed - status: 403 Forbidden"),
+      );
 
       await expect(api.deleteAllIntegrations()).rejects.toThrow(
         "Delete All Integrations Failed - status: 403 Forbidden",
@@ -845,7 +1127,9 @@ describe("ContractApi", () => {
         "deleteAllIntegrations",
       ];
 
-      expect(Object.keys(handlers)).toEqual(expect.arrayContaining(expectedKeys));
+      expect(Object.keys(handlers)).toEqual(
+        expect.arrayContaining(expectedKeys),
+      );
       expect(Object.keys(handlers).length).toBe(21);
     });
 
