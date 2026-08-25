@@ -1,10 +1,6 @@
 import z from "zod";
 import type { CacheService } from "../common/cache";
 import { getUserAgent } from "../common/info";
-import {
-  isSamplingPolyfillResult,
-  type SamplingPolyfillResult,
-} from "../common/pollyfills";
 import { getRequestHeader } from "../common/request-context";
 import type { SmartBearMcpServer } from "../common/server";
 import { ToolError } from "../common/tools";
@@ -56,7 +52,7 @@ import type {
 import { withPagination } from "./client/pagination";
 import {
   getOADMatcherRecommendations,
-  getUserMatcherSelection,
+  type PromptExecutionResult,
 } from "./client/prompt-utils";
 import { PROMPTS } from "./client/prompts";
 import { type ClientType, TOOLS } from "./client/tools";
@@ -141,40 +137,19 @@ export class PactflowClient implements Client {
    * Generate new Pact tests based on the provided input.
    *
    * @param toolInput The input data for the generation process.
-   * @param getInput Function to get additional input from the user if needed.
-   * @returns The result of the generation process or a polyfill result requiring prompt execution.
+   * @returns The result of the generation process or a result requiring prompt execution.
    * @throws Error if the HTTP request fails or the operation times out.
    */
   async generate(
     toolInput: GenerationInput,
-    getInput: GetInputFunction,
-  ): Promise<GenerationResponse | SamplingPolyfillResult> {
+    _getInput: GetInputFunction,
+  ): Promise<GenerationResponse | PromptExecutionResult> {
     if (
       toolInput.openapi?.document &&
       (!toolInput.openapi?.matcher ||
         Object.keys(toolInput.openapi.matcher).length === 0)
     ) {
-      const matcherResponse = await getOADMatcherRecommendations(
-        toolInput.openapi.document,
-        this.server,
-      );
-
-      // Check if we got a polyfill result
-      if (isSamplingPolyfillResult(matcherResponse)) {
-        return matcherResponse;
-      }
-
-      const userSelection = await getUserMatcherSelection(
-        matcherResponse,
-        getInput,
-      );
-
-      // Check if user selection is a polyfill result
-      if (isSamplingPolyfillResult(userSelection)) {
-        return userSelection;
-      }
-
-      toolInput.openapi.matcher = userSelection;
+      return getOADMatcherRecommendations(toolInput.openapi.document);
     }
 
     // Submit the generation request
@@ -192,40 +167,19 @@ export class PactflowClient implements Client {
    * Review the provided Pact tests and suggest improvements.
    *
    * @param toolInput The input data for the review process.
-   * @param getInput Function to get additional input from the user if needed.
-   * @returns The result of the review process or a polyfill result requiring prompt execution.
+   * @returns The result of the review process or a result requiring prompt execution.
    * @throws Error if the HTTP request fails or the operation times out.
    */
   async review(
     toolInput: RefineInput,
-    getInput: GetInputFunction,
-  ): Promise<RefineResponse | SamplingPolyfillResult> {
+    _getInput: GetInputFunction,
+  ): Promise<RefineResponse | PromptExecutionResult> {
     if (
       toolInput.openapi?.document &&
       (!toolInput.openapi?.matcher ||
         Object.keys(toolInput.openapi.matcher).length === 0)
     ) {
-      const matcherResponse = await getOADMatcherRecommendations(
-        toolInput.openapi.document,
-        this.server,
-      );
-
-      // Check if we got a polyfill result
-      if (isSamplingPolyfillResult(matcherResponse)) {
-        return matcherResponse;
-      }
-
-      const userSelection = await getUserMatcherSelection(
-        matcherResponse,
-        getInput,
-      );
-
-      // Check if user selection is a polyfill result
-      if (isSamplingPolyfillResult(userSelection)) {
-        return userSelection;
-      }
-
-      toolInput.openapi.matcher = userSelection;
+      return getOADMatcherRecommendations(toolInput.openapi.document);
     }
 
     // Submit review request

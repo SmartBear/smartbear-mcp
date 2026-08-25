@@ -349,18 +349,7 @@ describe("PactFlowClient", () => {
         expect(result).toEqual(mockReviewResponse);
       });
 
-      it("should handle OpenAPI document without matcher by prompting user", async () => {
-        const mockGetInput = vi.fn().mockResolvedValue({});
-        vi.mock("./client/prompt-utils", () => ({
-          getOADMatcherRecommendations: vi.fn().mockResolvedValue({
-            recommendations: [{ path: "/users", methods: ["GET"] }],
-          }),
-          getUserMatcherSelection: vi.fn().mockResolvedValue({
-            path: "/users",
-            methods: ["GET"],
-          }),
-        }));
-
+      it("returns a prompt execution result when OpenAPI document is provided without a matcher", async () => {
         const inputWithoutMatcher = {
           ...mockReviewInput,
           openapi: {
@@ -378,11 +367,18 @@ describe("PactFlowClient", () => {
           },
         };
 
-        fetchMock.mockResponseOnce(JSON.stringify(mockStatusResponse));
+        const result = await client.review(inputWithoutMatcher, vi.fn());
 
-        const result = await client.review(inputWithoutMatcher, mockGetInput);
-
-        expect(result).toEqual(mockReviewResponse);
+        expect(fetchMock).not.toHaveBeenCalled();
+        expect(result).toEqual(
+          expect.objectContaining({
+            requiresPromptExecution: true,
+            prompt: expect.stringContaining("/users"),
+            instructions: expect.stringContaining(
+              "Please execute the above prompt using your AI capabilities",
+            ),
+          }),
+        );
       });
 
       it("should handle review with code files", async () => {
@@ -796,18 +792,7 @@ describe("PactFlowClient", () => {
         expect(result).toEqual(mockGenerationResponse);
       });
 
-      it("should handle OpenAPI document without matcher by prompting user", async () => {
-        const mockGetInput = vi.fn().mockResolvedValue({});
-        vi.mock("./client/prompt-utils", () => ({
-          getOADMatcherRecommendations: vi.fn().mockResolvedValue({
-            recommendations: [{ path: "/users", methods: ["GET"] }],
-          }),
-          getUserMatcherSelection: vi.fn().mockResolvedValue({
-            path: "/users",
-            methods: ["GET"],
-          }),
-        }));
-
+      it("returns a prompt execution result when OpenAPI document is provided without a matcher", async () => {
         const inputWithoutMatcher = {
           ...mockGenerationInput,
           openapi: {
@@ -825,14 +810,21 @@ describe("PactFlowClient", () => {
           },
         };
 
-        fetchMock.mockResponseOnce(JSON.stringify(mockStatusResponse));
-
         const result = await client.generate(
           await GenerationInputSchema.parseAsync(inputWithoutMatcher),
-          mockGetInput,
+          vi.fn(),
         );
 
-        expect(result).toEqual(mockGenerationResponse);
+        expect(fetchMock).not.toHaveBeenCalled();
+        expect(result).toEqual(
+          expect.objectContaining({
+            requiresPromptExecution: true,
+            prompt: expect.stringContaining("/users"),
+            instructions: expect.stringContaining(
+              "Please execute the above prompt using your AI capabilities",
+            ),
+          }),
+        );
       });
 
       it("should handle generation with code files", async () => {

@@ -23,7 +23,6 @@ import {
 
 export class SmartBearMcpServer extends McpServer {
   private cache: CacheService;
-  private samplingSupported = false;
   private elicitationSupported = false;
   private clientInfo?: ClientInfo;
   private clients: Client[] = [];
@@ -54,14 +53,6 @@ export class SmartBearMcpServer extends McpServer {
 
   getCache(): CacheService {
     return this.cache;
-  }
-
-  setSamplingSupported(supported: boolean): void {
-    this.samplingSupported = supported;
-  }
-
-  isSamplingSupported(): boolean {
-    return this.samplingSupported;
   }
 
   setElicitationSupported(supported: boolean): void {
