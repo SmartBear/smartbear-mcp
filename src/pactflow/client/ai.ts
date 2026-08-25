@@ -230,8 +230,6 @@ export const GenerationInputSchema = z.object({
   ),
 });
 
-export const MatcherRecommendationInputSchema = z.array(EndpointMatcherSchema);
-
 export const AiCreditsSchema = z
   .object({
     total: z.number().describe("The total number of AI credits available."),
@@ -279,7 +277,4 @@ export type OpenApiWithMatcher = z.infer<typeof OpenAPIWithMatcherSchema>;
 export type GenerationInput = z.infer<typeof GenerationInputSchema>;
 export type RequestResponsePair = z.infer<typeof RequestResponsePairSchema>;
 export type RemoteOpenAPIDocument = z.infer<typeof RemoteOpenAPIDocumentSchema>;
-export type MatcherRecommendations = z.infer<
-  typeof MatcherRecommendationInputSchema
->;
 export type Entitlement = z.infer<typeof EntitlementsSchema>;

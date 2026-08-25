@@ -6,7 +6,7 @@ exports[`server definitions are not changed unexpectedly > registered prompts 1`
     "argsSchema": [
       "openAPI",
     ],
-    "description": "Get OpenAPI matcher recommendations using sampling",
+    "description": "Get an OpenAPI matcher recommendation",
     "title": "Contract Testing: OpenAPI Matcher recommendations",
   },
   "reflect_sap_test": {

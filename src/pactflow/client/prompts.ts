@@ -55,37 +55,17 @@ const OADMatcherPromptOpenAPIDocExample = {
   },
 };
 
-const OADMatcherPromptRecommendationExample = [
-  {
-    path: "/users",
-    methods: ["GET"],
-    statusCodes: [200, "2XX"],
-    operationId: "get*",
-  },
-  {
-    path: "/users/*",
-    methods: ["GET"],
-    statusCodes: ["2XX"],
-    operationId: "*User*",
-  },
-  {
-    path: "/users",
-    methods: ["GET"],
-    statusCodes: [200],
-    operationId: "getAllUsers",
-  },
-  {
-    path: "/users/**",
-    methods: ["GET"],
-    statusCodes: ["2XX", 404],
-    operationId: "get*",
-  },
-];
+const OADMatcherPromptRecommendationExample = {
+  path: "/users",
+  methods: ["GET"],
+  statusCodes: [200],
+  operationId: "getAllUsers",
+};
 
 export const OADMatcherPrompt = `
 
-Generate a list of recommendations(maximum of 5) in JSON to use with an OpenAPI matcher.
-Zod Schema for the matcher to be generated is provided below in the markdown block of javascript use this to generate the recommendations for the matcher. Recommendations should contain all the fields from the schema and only output the JSON in a markdown formatted block.
+Generate a single recommendation in JSON to use with an OpenAPI matcher.
+Zod Schema for the matcher to be generated is provided below in the markdown block of javascript use this to generate the recommendation for the matcher. The recommendation should contain all the fields from the schema and only output the JSON in a markdown formatted block.
 
 \`\`\`javascript
 const EndpointMatcherSchema = ${JSON.stringify(EndpointMatcherSchema.toJSONSchema())};
@@ -99,7 +79,7 @@ if OpenAPI document provided is:-
 ${JSON.stringify(OADMatcherPromptOpenAPIDocExample, null, 2)}
 \`\`\`
 
-Generated recommendations are:-
+Generated recommendation is:-
 
 \`\`\`json
 ${JSON.stringify(OADMatcherPromptRecommendationExample, null, 2)}
@@ -113,7 +93,7 @@ Now provided the below OpenAPI document:-
 {0}
 \`\`\`
 
-Give JSON recommendations only provide the JSON block in markdown don't include any additional text.
+Give the JSON recommendation only provide the JSON block in markdown don't include any additional text.
 `;
 
 const argsSchema = z.object({
@@ -125,7 +105,7 @@ const argsSchema = z.object({
 export const PROMPTS: PactflowPromptParams[] = [
   {
     title: "OpenAPI Matcher recommendations",
-    description: "Get OpenAPI matcher recommendations using sampling",
+    description: "Get an OpenAPI matcher recommendation",
     argsSchema,
     callback: (args): GetPromptResult => {
       const params = argsSchema.parse(args);
