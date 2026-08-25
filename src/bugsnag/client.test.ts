@@ -80,11 +80,12 @@ const cacheKeyNames = {
   PROJECT_EVENT_FIELDS: "bugsnag_project_event_fields",
   PROJECT_TRACE_FIELDS: "bugsnag_project_trace_fields",
 };
+const BUGSNAG_CACHE_TTL_SECONDS = 60;
 
 // Resolves a logical cache key to the namespaced key the client actually uses.
 // Note this delegates to the implementation, so it cannot prove the namespace
 // is credential-scoped — see the "cache isolation" tests below for that.
-function nsKey(client: BugsnagClient, key: string): string | null {
+function nsKey(client: BugsnagClient, key: string): string | undefined {
   return (client as any).cacheKey(key);
 }
 
@@ -757,10 +758,12 @@ describe("BugsnagClient", () => {
       expect(mockCache.set).toHaveBeenCalledWith(
         nsKey(client, "bugsnag_org"),
         mockOrg,
+        BUGSNAG_CACHE_TTL_SECONDS,
       );
       expect(mockCache.set).toHaveBeenCalledWith(
         nsKey(client, "bugsnag_projects"),
         mockProjects,
+        BUGSNAG_CACHE_TTL_SECONDS,
       );
     });
 
@@ -902,7 +905,7 @@ describe("BugsnagClient", () => {
       const client = new BugsnagClient();
       await client.configure({} as any, {} as any);
 
-      expect(nsKey(client, "bugsnag_org")).toBeNull();
+      expect(nsKey(client, "bugsnag_org")).toBeUndefined();
 
       mockCache.get.mockClear();
       mockCache.set.mockClear();
@@ -1002,6 +1005,7 @@ describe("BugsnagClient", () => {
         expect(mockCache.set).toHaveBeenCalledWith(
           nsKey(client, "bugsnag_projects"),
           mockProjects,
+          BUGSNAG_CACHE_TTL_SECONDS,
         );
         expect(result).toEqual(mockProjects);
       });
@@ -2947,6 +2951,7 @@ describe("BugsnagClient", () => {
         expect(mockCache.set).toHaveBeenCalledWith(
           nsKey(client, "bugsnag_project_trace_fields"),
           { "proj-1": mockTraceFields },
+          BUGSNAG_CACHE_TTL_SECONDS,
         );
         expect(result).toEqual({
           content: [
@@ -3033,6 +3038,7 @@ describe("BugsnagClient", () => {
           {
             "proj-2": mockTraceFields,
           },
+          BUGSNAG_CACHE_TTL_SECONDS,
         );
         expect(result).toEqual({
           content: [

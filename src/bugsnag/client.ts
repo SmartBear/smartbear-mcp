@@ -47,6 +47,7 @@ import { ListReleases } from "./tool/release/list-releases";
 const HUB_PREFIX = "00000";
 const DEFAULT_DOMAIN = "bugsnag.com";
 const HUB_DOMAIN = "bugsnag.smartbear.com";
+const BUGSNAG_CACHE_TTL_SECONDS = 60;
 
 const cacheKeys = {
   ORG: "bugsnag_org",
@@ -130,12 +131,12 @@ export class BugsnagClient implements Client {
   // Namespaces the shared cache by API authority and caller credential, hashed
   // so neither value is exposed in a cache key. Tokens are meaningful only
   // within their issuing authority, so both values are required for isolation.
-  // Returns null when there is no credential at all — callers then bypass the
+  // Returns undefined when there is no credential at all — callers then bypass the
   // cache rather than sharing a single anonymous bucket.
-  private cacheNamespace(): string | null {
+  private cacheNamespace(): string | undefined {
     const authToken = this.getAuthToken();
     if (!authToken) {
-      return null;
+      return undefined;
     }
     const cacheAuthority = this.getRequestApiAuthority();
     const namespace = createHmac("sha256", "bugsnag-cache-ns")
@@ -147,10 +148,10 @@ export class BugsnagClient implements Client {
     return `tok:${namespace}`;
   }
 
-  private cacheKey(key: string): string | null {
+  private cacheKey(key: string): string | undefined {
     const namespace = this.cacheNamespace();
     if (!namespace) {
-      return null;
+      return undefined;
     }
     return `${namespace}:${key}`;
   }
@@ -172,7 +173,7 @@ export class BugsnagClient implements Client {
     if (!namespacedKey) {
       return;
     }
-    getSharedCache().set(namespacedKey, value);
+    getSharedCache().set(namespacedKey, value, BUGSNAG_CACHE_TTL_SECONDS);
   }
 
   name = "BugSnag";
