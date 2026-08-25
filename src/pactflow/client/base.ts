@@ -1024,3 +1024,108 @@ export interface MetricsResponse {
     countsByTeam: number[];
   };
 }
+
+// ─── Response types for domain API methods ─────────────────────────────────
+// Methods returning HTTP 204 (DELETE operations) use Promise<void> in domain
+// classes and have no interface here.
+
+// Pacticipants
+export type PacticipantsListResponse = Record<string, unknown>;
+export type PacticipantResponse = Record<string, unknown>;
+
+// Branches
+export type BranchesListResponse = Record<string, unknown>;
+export type BranchResponse = Record<string, unknown>;
+export type BranchVersionsResponse = Record<string, unknown>;
+
+// Versions
+export type VersionsListResponse = Record<string, unknown>;
+export type VersionResponse = Record<string, unknown>;
+
+// Environments
+export type EnvironmentsListResponse = Record<string, unknown>;
+export type EnvironmentResponse = Record<string, unknown>;
+
+// Deployments & Releases
+export type DeploymentResponse = Record<string, unknown>;
+export type CurrentlyDeployedResponse = Record<string, unknown>;
+export type DeployedVersionsResponse = Record<string, unknown>;
+export type ReleaseResponse = Record<string, unknown>;
+export type CurrentlySupportedResponse = Record<string, unknown>;
+export type ReleasedVersionsResponse = Record<string, unknown>;
+
+// Contract publishing
+export type PublishContractsResponse = Record<string, unknown>;
+export type PublishProviderContractResponse = Record<string, unknown>;
+export type PactsForVerificationResponse = Record<string, unknown>;
+
+// Bi-Directional Contract Testing
+export type BiDirectionalProviderContractResponse = Record<string, unknown>;
+export type BiDirectionalProviderContractVerificationResultsResponse =
+  Record<string, unknown>;
+export type BiDirectionalConsumerContractResponse = Record<string, unknown>;
+export type BiDirectionalConsumerContractVerificationResultsResponse =
+  Record<string, unknown>;
+export type BiDirectionalCrossContractVerificationResultsResponse =
+  Record<string, unknown>;
+export type BiDirectionalConsumerContractByConsumerResponse =
+  Record<string, unknown>;
+export type BiDirectionalProviderContractByConsumerResponse =
+  Record<string, unknown>;
+export type BiDirectionalProviderContractVerificationResultsByConsumerResponse =
+  Record<string, unknown>;
+export type BiDirectionalConsumerContractVerificationResultsByConsumerResponse =
+  Record<string, unknown>;
+export type BiDirectionalCrossContractVerificationResultsByConsumerResponse =
+  Record<string, unknown>;
+
+// Integrations
+export type IntegrationsListResponse = Record<string, unknown>;
+export type IntegrationsByTeamResponse = Record<string, unknown>;
+export type PacticipantNetworkResponse = Record<string, unknown>;
+
+// Labels
+export type LabelsListResponse = Record<string, unknown>;
+export type LabelResponse = Record<string, unknown>;
+export type PacticipantsByLabelResponse = Record<string, unknown>;
+
+// Webhooks
+export type WebhooksListResponse = Record<string, unknown>;
+export type WebhookResponse = Record<string, unknown>;
+export type WebhookExecutionResponse = Record<string, unknown>;
+
+// Secrets
+export type SecretsListResponse = Record<string, unknown>;
+export type SecretResponse = Record<string, unknown>;
+
+// User / tokens / preferences
+export type CurrentUserResponse = Record<string, unknown>;
+export type TokensListResponse = Record<string, unknown>;
+export type TokenResponse = Record<string, unknown>;
+export type PreferencesResponse = Record<string, unknown>;
+
+// Audit
+export type AuditLogResponse = Record<string, unknown>;
+
+// Admin – users
+export type AdminUsersListResponse = Record<string, unknown>;
+export type AdminUserResponse = Record<string, unknown>;
+export type InviteUsersResponse = Record<string, unknown>;
+export type UserRolesResponse = Record<string, unknown>;
+
+// Admin – teams
+export type AdminTeamsListResponse = Record<string, unknown>;
+export type AdminTeamResponse = Record<string, unknown>;
+export type TeamUsersListResponse = Record<string, unknown>;
+export type TeamUserResponse = Record<string, unknown>;
+export type TeamUsersResponse = Record<string, unknown>;
+
+// Admin – roles & permissions
+export type AdminRolesListResponse = Record<string, unknown>;
+export type AdminRoleResponse = Record<string, unknown>;
+export type ResetAdminRolesResponse = Record<string, unknown>;
+export type AdminPermissionsListResponse = Record<string, unknown>;
+
+// Admin – system accounts
+export type SystemAccountResponse = Record<string, unknown>;
+export type SystemAccountTokensResponse = Record<string, unknown>;
