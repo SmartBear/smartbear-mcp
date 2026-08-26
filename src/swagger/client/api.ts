@@ -607,9 +607,32 @@ export class SwaggerAPI {
         body: JSON.stringify(body),
       },
     );
-    return this.handleResponse<Product | SuccessResponse>(response, {
-      success: true,
-    } as SuccessResponse);
+    const result = await this.handleResponse<Product | SuccessResponse>(
+      response,
+      {
+        success: true,
+      } as SuccessResponse,
+    );
+
+    if (hasId(result) && "slug" in result && "portalId" in result) {
+      try {
+        const product = result as Product;
+        const portalDetails = await this.getPortal(String(product.portalId));
+        const url = buildPortalLiveUrl(
+          this.config,
+          portalDetails,
+          product.slug,
+          null,
+          null,
+          false,
+        );
+        return { ...product, url } as Product & { url: string };
+      } catch (error) {
+        console.warn("Failed to build URL for updated product:", error);
+      }
+    }
+
+    return result;
   }
 
   /**
