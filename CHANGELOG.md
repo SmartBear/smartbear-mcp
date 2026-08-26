@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- [Bugsnag]: Prevent cross-account data leakage in Bugsnag caching by namespacing cache keys with the caller's credential hash. [#679](https://github.com/SmartBear/smartbear-mcp/pull/679)
+
+### Changed
+
+- [Bugsnag] Use a single process-wide `CacheService` and namespace every cache key with a SHA-256 hash of the authenticated caller's token.
+- [Bugsnag] Prefer the request auth header when resolving the cache namespace via `getAuthToken()` so per-request auth is honored.
+- [Bugsnag] Ensure unauthenticated callers bypass the shared cache to avoid exposing cached data.
+- [Bugsnag] Updated cache usage in `getOrganization()`, `getProjects()`, `getCurrentProject()`, `getProjectEventFields()`, and `getProjectTraceFields()`.
+
 ### Changed
 
 - [Common] Removed support for the MCP `sampling` capability, which was deprecated in the 2026-07-28 MCP specification revision ([SEP-2577](https://github.com/modelcontextprotocol/modelcontextprotocol/pull/2577)). The server no longer negotiates the `sampling` client capability or sends `sampling/createMessage` requests. [#685](https://github.com/SmartBear/smartbear-mcp/pull/685)
