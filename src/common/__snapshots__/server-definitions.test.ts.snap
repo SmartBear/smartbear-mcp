@@ -10306,17 +10306,14 @@ Expected Output: Test cases with all available fields explicitly requested
 \`\`\`json
 {
   "filter": {
-    "folders": [
-      123,
-      456
-    ],
+    "folderId": 123,
     "fixVersions": [
       789
     ]
   }
 }
 \`\`\`
-Expected Output: Test cases in the specified folders and fix versions
+Expected Output: Test cases in the specified folder and fix versions
 
 11. Complex filter: multiple criteria combined with multi-field sort
 \`\`\`json
