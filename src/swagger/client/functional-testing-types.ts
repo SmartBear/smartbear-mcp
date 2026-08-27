@@ -17,17 +17,21 @@ export const GetFunctionalTestingExecutionTestSchema = z.object({
 });
 
 export const ListFunctionalTestingSuiteExecutionsSchema = z.object({
-  suiteId: z
+  slug: z
     .string()
-    .describe("ID of the Functional Testing suite to list executions for")
+    .describe(
+      "Slug of the Functional Testing suite to list executions for.",
+    )
     .trim()
     .min(1),
 });
 
 export const CancelFunctionalTestingSuiteExecutionSchema = z.object({
-  suiteId: z
+  slug: z
     .string()
-    .describe("ID of the Functional Testing suite the execution belongs to")
+    .describe(
+      "Slug of the Functional Testing suite the execution belongs to.",
+    )
     .trim()
     .min(1),
   executionId: z
@@ -118,8 +122,11 @@ export type CreateFunctionalTestingSuiteParams = z.infer<
 >;
 
 export const CreateFunctionalTestingSuiteResponseSchema = z.object({
-  id: z.number().describe("ID of the newly created suite"),
-  slug: z.string().describe("Slug of the newly created suite"),
+  slug: z
+    .string()
+    .describe(
+      "Slug of the newly created suite. Use this value as the `slug` argument for other Functional Testing suite tools (e.g. `swagger_run_suite`).",
+    ),
   url: z
     .string()
     .describe("Link to the created suite in Swagger Functional Testing UI"),
@@ -130,9 +137,9 @@ export type CreateFunctionalTestingSuiteResponse = z.infer<
 >;
 
 export const RunFunctionalTestingSuiteParamsSchema = z.object({
-  suiteId: z
+  slug: z
     .string()
-    .describe("ID of the Functional Testing suite to run")
+    .describe("Slug of the Functional Testing suite to run.")
     .trim()
     .min(1),
   tunnelAgentName: z
@@ -146,9 +153,9 @@ export const RunFunctionalTestingSuiteParamsSchema = z.object({
 });
 
 export const GetFunctionalTestingSuiteExecutionSchema = z.object({
-  suiteId: z
+  slug: z
     .string()
-    .describe("ID of the Functional Testing suite")
+    .describe("Slug of the Functional Testing suite.")
     .trim()
     .min(1),
   executionId: z
@@ -185,7 +192,7 @@ export interface SuiteExecution {
 }
 
 export interface ListSuiteExecutionsResponse {
-  suiteId: string;
+  slug: string;
   executions: {
     data: SuiteExecution[];
   };
@@ -205,7 +212,6 @@ export interface ListTestsResponse {
 }
 
 export interface Suite {
-  id: string;
   accountId: number;
   name: string;
   slug: string;

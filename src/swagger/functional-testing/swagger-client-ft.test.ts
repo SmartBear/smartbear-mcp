@@ -232,7 +232,7 @@ describe("SwaggerClient — Functional Testing integration", () => {
 
     it("should call the suite executions endpoint and return results", async () => {
       const suiteExecutionsMock = {
-        suiteId: "regression-tests",
+        slug: "regression-tests",
         executions: {
           data: [
             { executionId: 12, status: "pending" },
@@ -249,7 +249,7 @@ describe("SwaggerClient — Functional Testing integration", () => {
 
       const result = (await requestContextStorage.run({ headers: {} }, () =>
         client.listFunctionalTestingSuiteExecutions({
-          suiteId: "regression-tests",
+          slug: "regression-tests",
         }),
       )) as typeof suiteExecutionsMock;
 
@@ -296,7 +296,7 @@ describe("SwaggerClient — Functional Testing integration", () => {
 
       const result = await requestContextStorage.run({ headers: {} }, () =>
         client.cancelFunctionalTestingSuiteExecution({
-          suiteId: "regression-tests",
+          slug: "regression-tests",
           executionId: "47",
         }),
       );
@@ -314,7 +314,9 @@ describe("SwaggerClient — Functional Testing integration", () => {
 
   describe("listFunctionalTestingSuites", () => {
     it("should call api.reflect.run and return results", async () => {
-      const suitesMock = [{ id: "suite-1", name: "Smoke Suite" }];
+      const suitesMock = {
+        suites: [{ slug: "smoke-suite", name: "Smoke Suite" }],
+      };
       fetchMock.mockResponseOnce(JSON.stringify(suitesMock));
 
       await client.configure({} as any, {
@@ -356,7 +358,7 @@ describe("SwaggerClient — Functional Testing integration", () => {
       });
 
       const result = await requestContextStorage.run({ headers: {} }, () =>
-        client.runFunctionalTestingSuite({ suiteId: "checkout-suite" }),
+        client.runFunctionalTestingSuite({ slug: "checkout-suite" }),
       );
 
       expect(fetchMock).toHaveBeenCalledWith(
@@ -373,7 +375,7 @@ describe("SwaggerClient — Functional Testing integration", () => {
   describe("getFunctionalTestingSuiteExecution", () => {
     it("should GET suite execution endpoint and return result", async () => {
       const suiteExecutionMock = {
-        suiteId: "checkout-suite",
+        slug: "checkout-suite",
         executionId: "42",
         isFinished: true,
         status: "passed",
@@ -388,7 +390,7 @@ describe("SwaggerClient — Functional Testing integration", () => {
 
       const result = await requestContextStorage.run({ headers: {} }, () =>
         client.getFunctionalTestingSuiteExecution({
-          suiteId: "checkout-suite",
+          slug: "checkout-suite",
           executionId: "42",
         }),
       );
@@ -457,7 +459,6 @@ describe("SwaggerClient — Functional Testing integration", () => {
 
     it("should POST to api.reflect.run and return the created suite", async () => {
       const createSuiteResponseMock = {
-        id: 4821,
         slug: "nightly-api-regression",
         url: "https://app.reflect.run/suites/nightly-api-regression?accountId=1",
       };
