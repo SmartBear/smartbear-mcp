@@ -289,11 +289,20 @@ describe("CreateFunctionalTestingTestStepSchema", () => {
 });
 
 describe("CreateFunctionalTestingTestParamsSchema", () => {
-  it("accepts top-level parameters", () => {
+  it("accepts top-level parameters that match a step's baseUrl and path placeholders", () => {
     const result = CreateFunctionalTestingTestParamsSchema.safeParse({
       name: "My Test",
+      steps: [
+        {
+          baseUrl: "https://petstore.swagger.io/v2",
+          url: "https://petstore.swagger.io/v2/pet/{petId}",
+        },
+      ],
       parameters: [
-        { name: "baseURLPetstore", value: "https://petstore.swagger.io/v2" },
+        {
+          name: "baseURLpetstoreswaggerio",
+          value: "https://petstore.swagger.io/v2",
+        },
         { name: "petId" },
       ],
     });
@@ -306,5 +315,17 @@ describe("CreateFunctionalTestingTestParamsSchema", () => {
       parameters: [{ name: "" }],
     });
     expect(result.success).toBe(false);
+  });
+
+  it("rejects a top-level parameter that is not referenced as a path parameter by any step", () => {
+    const result = CreateFunctionalTestingTestParamsSchema.safeParse({
+      name: "My Test",
+      steps: [{ url: "https://petstore.swagger.io/v2/pet/1" }],
+      parameters: [{ name: "petName", value: "Rex" }],
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toContain("not a path parameter");
+    }
   });
 });

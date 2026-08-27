@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  baseUrlParamName,
+  extractPathParamNames,
+} from "./functional-testing-url-utils";
 
 export const RunFunctionalTestingTestParamsSchema = z.object({
   testId: z
@@ -535,7 +539,7 @@ export const CreateFunctionalTestingAssertionsSchema = z.object({
 });
 
 export const CreateFunctionalTestingTestParameterSchema = z.object({
-  name: z.string().trim().min(1).describe("Parameter name"),
+  name: z.string().trim().min(1).describe("Path parameter name"),
   value: z.string().optional().describe("Parameter default value"),
 });
 
@@ -545,9 +549,8 @@ export const CreateFunctionalTestingTestStepSchema = z.object({
     .trim()
     .min(1)
     .describe(
-      "Full URL for the API call. May include OAS-style {pathParam} placeholders, " +
-        "but these are only converted into reusable parameters when this step's baseUrl is " +
-        "also set. When baseUrl is set, url must start with it.",
+      "Full URL for the API call. May include OAS-style {pathParam} placeholders, which are " +
+        "always converted into reusable parameters. When baseUrl is set, url must start with it.",
     ),
   baseUrl: z
     .url()
@@ -579,25 +582,48 @@ export const CreateFunctionalTestingTestStepSchema = z.object({
   ),
 });
 
-export const CreateFunctionalTestingTestParamsSchema = z.object({
-  name: z.string().describe("Name for the new test").trim().min(1),
-  description: z
-    .string()
-    .trim()
-    .describe("Optional description for the test")
-    .optional(),
-  steps: z
-    .array(CreateFunctionalTestingTestStepSchema)
-    .describe("Test steps to include in the test")
-    .optional(),
-  parameters: z
-    .array(CreateFunctionalTestingTestParameterSchema)
-    .describe(
-      "Definition-level parameters for the test (e.g. base URLs, path params). " +
-        "Merged with parameters generated from steps' baseUrl/{pathParam} placeholders.",
-    )
-    .optional(),
-});
+export const CreateFunctionalTestingTestParamsSchema = z
+  .object({
+    name: z.string().describe("Name for the new test").trim().min(1),
+    description: z
+      .string()
+      .trim()
+      .describe("Optional description for the test")
+      .optional(),
+    steps: z
+      .array(CreateFunctionalTestingTestStepSchema)
+      .describe("Test steps to include in the test")
+      .optional(),
+    parameters: z
+      .array(CreateFunctionalTestingTestParameterSchema)
+      .describe(
+        "Definition-level path parameters for the test (e.g. base URLs, path params), not request body parameters.",
+      )
+      .optional(),
+  })
+  .superRefine((data, ctx) => {
+    const allowedNames = new Set<string>();
+    for (const step of data.steps ?? []) {
+      for (const name of extractPathParamNames(step.url)) {
+        allowedNames.add(name);
+      }
+      if (step.baseUrl) {
+        allowedNames.add(baseUrlParamName(step.baseUrl));
+      }
+    }
+    data.parameters?.forEach((param, index) => {
+      if (!allowedNames.has(param.name)) {
+        ctx.addIssue({
+          code: "custom",
+          message:
+            `Parameter "${param.name}" is not a path parameter: it must match a {${param.name}} placeholder ` +
+            "in a step's url, or the generated base-URL parameter name for a step's baseUrl. " +
+            "The parameters field only accepts path parameters, not request body parameters.",
+          path: ["parameters", index, "name"],
+        });
+      }
+    });
+  });
 
 export type CreateFunctionalTestingTestParams = z.infer<
   typeof CreateFunctionalTestingTestParamsSchema

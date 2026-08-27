@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  applyBaseUrlTemplating,
   convertPathVarsToReflectVars,
   generateUniqueParamName,
   hostnameFor,
@@ -124,6 +125,76 @@ describe("splitUrlByBaseUrl", () => {
         "https://petstore.swagger.io/v2",
       ),
     ).toBeNull();
+  });
+});
+
+describe("applyBaseUrlTemplating", () => {
+  it("binds path placeholders to caller-supplied parameters of the same name instead of duplicating them", () => {
+    const result = applyBaseUrlTemplating(
+      [
+        {
+          baseUrl: "https://petstore31.swagger.io/api/v3",
+          url: "https://petstore31.swagger.io/api/v3/pet/{petId}?name={name}&status={status}",
+          httpMethod: "POST",
+        },
+      ],
+      [
+        { name: "petId", value: "10" },
+        { name: "name", value: "doggie-updated" },
+        { name: "status", value: "sold" },
+      ],
+    );
+
+    expect(result.steps?.[0].url).toBe(
+      "${var(baseURLpetstore31swaggerio)}/pet/${var(petId)}?name=${var(name)}&status=${var(status)}",
+    );
+
+    const paramNames = result.parameters.map((p) => p.name);
+    expect(paramNames).not.toContain("petId2");
+    expect(paramNames).not.toContain("name2");
+    expect(paramNames).not.toContain("status2");
+    expect(result.parameters.find((p) => p.name === "petId")?.value).toBe("10");
+    expect(result.parameters.find((p) => p.name === "name")?.value).toBe(
+      "doggie-updated",
+    );
+    expect(result.parameters.find((p) => p.name === "status")?.value).toBe(
+      "sold",
+    );
+  });
+
+  it("binds to a caller parameter of the same generated base-url name even when unrelated", () => {
+    const result = applyBaseUrlTemplating(
+      [
+        {
+          baseUrl: "https://petstore.swagger.io/v2",
+          url: "https://petstore.swagger.io/v2/pet/{petId}",
+          httpMethod: "GET",
+        },
+      ],
+      [{ name: "baseURLpetstoreswaggerio", value: "unrelated" }],
+    );
+
+    const generatedBaseUrlParam = result.parameters.find((p) =>
+      p.name.startsWith("baseURLpetstoreswaggerio"),
+    );
+    expect(generatedBaseUrlParam?.name).toBe("baseURLpetstoreswaggerio");
+  });
+
+  it("converts {pathParam} placeholders to ${var(name)} when the step has no baseUrl", () => {
+    const result = applyBaseUrlTemplating(
+      [
+        {
+          url: "https://petstore.swagger.io/v2/pet/{petId}",
+          httpMethod: "GET",
+        },
+      ],
+      undefined,
+    );
+
+    expect(result.steps?.[0].url).toBe(
+      "https://petstore.swagger.io/v2/pet/${var(petId)}",
+    );
+    expect(result.parameters).toEqual([{ name: "petId", value: "" }]);
   });
 });
 
