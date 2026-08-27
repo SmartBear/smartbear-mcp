@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   baseUrlParamName,
   extractPathParamNames,
+  splitUrlByBaseUrl,
 } from "./functional-testing-url-utils";
 
 export const RunFunctionalTestingTestParamsSchema = z.object({
@@ -603,14 +604,21 @@ export const CreateFunctionalTestingTestParamsSchema = z
   })
   .superRefine((data, ctx) => {
     const allowedNames = new Set<string>();
-    for (const step of data.steps ?? []) {
+    data.steps?.forEach((step, index) => {
       for (const name of extractPathParamNames(step.url)) {
         allowedNames.add(name);
       }
       if (step.baseUrl) {
         allowedNames.add(baseUrlParamName(step.baseUrl));
+        if (splitUrlByBaseUrl(step.url, step.baseUrl) === null) {
+          ctx.addIssue({
+            code: "custom",
+            message: `Step url "${step.url}" must start with its baseUrl "${step.baseUrl}".`,
+            path: ["steps", index, "url"],
+          });
+        }
       }
-    }
+    });
     data.parameters?.forEach((param, index) => {
       if (!allowedNames.has(param.name)) {
         ctx.addIssue({

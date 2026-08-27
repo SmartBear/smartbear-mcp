@@ -328,4 +328,21 @@ describe("CreateFunctionalTestingTestParamsSchema", () => {
       expect(result.error.issues[0].message).toContain("not a path parameter");
     }
   });
+
+  it("rejects a step whose url does not start with its baseUrl", () => {
+    const result = CreateFunctionalTestingTestParamsSchema.safeParse({
+      name: "My Test",
+      steps: [
+        {
+          baseUrl: "https://petstore.swagger.io/v2",
+          url: "https://other.example.com/pet/1",
+        },
+      ],
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].path).toEqual(["steps", 0, "url"]);
+      expect(result.error.issues[0].message).toContain("must start with its baseUrl");
+    }
+  });
 });
