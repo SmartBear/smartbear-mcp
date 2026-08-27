@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.38.0] - 2026-08-27
+
 - [Bugsnag] Use a single process-wide `CacheService` and namespace every cache key with a SHA-256 hash of the authenticated caller's token. [#679](https://github.com/SmartBear/smartbear-mcp/pull/679)
 - [Bugsnag] Prefer the request auth header when resolving the cache namespace via `getAuthToken()` so per-request auth is honored.
 - [Bugsnag] Ensure unauthenticated callers bypass the shared cache to avoid exposing cached data.
