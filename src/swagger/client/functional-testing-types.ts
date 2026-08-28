@@ -17,17 +17,17 @@ export const GetFunctionalTestingExecutionTestSchema = z.object({
 });
 
 export const ListFunctionalTestingSuiteExecutionsSchema = z.object({
-  suiteId: z
+  slug: z
     .string()
-    .describe("ID of the Functional Testing suite to list executions for")
+    .describe("Slug of the Functional Testing suite to list executions for.")
     .trim()
     .min(1),
 });
 
 export const CancelFunctionalTestingSuiteExecutionSchema = z.object({
-  suiteId: z
+  slug: z
     .string()
-    .describe("ID of the Functional Testing suite the execution belongs to")
+    .describe("Slug of the Functional Testing suite the execution belongs to.")
     .trim()
     .min(1),
   executionId: z
@@ -71,7 +71,15 @@ export const RunApiTestsBlockSchema = z.object({
 
 export const CreateFunctionalTestingSuiteParamsSchema = z
   .object({
-    name: z.string().describe("Name for the new suite").trim().min(1),
+    name: z
+      .string()
+      .describe(
+        "Name for the new suite. Use the name explicitly provided by the user, or if none was given, " +
+          "a descriptive name derived from the purpose or context of the tests being grouped into this suite. " +
+          "This must be a human-readable name, not a numeric ID or test ID.",
+      )
+      .trim()
+      .min(1),
     agentName: z
       .string()
       .trim()
@@ -110,8 +118,11 @@ export type CreateFunctionalTestingSuiteParams = z.infer<
 >;
 
 export const CreateFunctionalTestingSuiteResponseSchema = z.object({
-  id: z.number().describe("ID of the newly created suite"),
-  slug: z.string().describe("Slug of the newly created suite"),
+  slug: z
+    .string()
+    .describe(
+      "Slug of the newly created suite. Use this value as the `slug` argument for other Functional Testing suite tools (e.g. `swagger_run_suite`).",
+    ),
   url: z
     .string()
     .describe("Link to the created suite in Swagger Functional Testing UI"),
@@ -122,9 +133,9 @@ export type CreateFunctionalTestingSuiteResponse = z.infer<
 >;
 
 export const RunFunctionalTestingSuiteParamsSchema = z.object({
-  suiteId: z
+  slug: z
     .string()
-    .describe("ID of the Functional Testing suite to run")
+    .describe("Slug of the Functional Testing suite to run.")
     .trim()
     .min(1),
   tunnelAgentName: z
@@ -138,9 +149,9 @@ export const RunFunctionalTestingSuiteParamsSchema = z.object({
 });
 
 export const GetFunctionalTestingSuiteExecutionSchema = z.object({
-  suiteId: z
+  slug: z
     .string()
-    .describe("ID of the Functional Testing suite")
+    .describe("Slug of the Functional Testing suite.")
     .trim()
     .min(1),
   executionId: z
@@ -177,7 +188,7 @@ export interface SuiteExecution {
 }
 
 export interface ListSuiteExecutionsResponse {
-  suiteId: string;
+  slug: string;
   executions: {
     data: SuiteExecution[];
   };
@@ -197,22 +208,22 @@ export interface ListTestsResponse {
 }
 
 export interface Suite {
-  id: string;
-  accountId: number;
   name: string;
   slug: string;
   created: number;
-  numTestInstances: number;
-  url: string;
 }
 
 export interface ListSuitesResponse {
   suites: Suite[];
-  stats?: {
-    executions: number;
-    passRate: number;
-    avgRuntimeSecs: number;
-    cumExecTimeSecs: number;
+}
+
+export interface ListSuitesApiResponse {
+  suites: {
+    data: {
+      name: string;
+      suiteId: string;
+      created: number;
+    }[];
   };
 }
 

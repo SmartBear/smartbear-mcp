@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - [PactFlow] Refactored the internal PactFlow client from a monolithic 2,400-line class into six domain API classes (`PacticipantApi`, `EnvironmentApi`, `ContractApi`, `WebhookApi`, `AdminApi`, `AIApi`) backed by a shared `HttpClient`. This is an internal implementation change; all tool behaviour and the external `PactflowClient` interface are unchanged. [#686](https://github.com/SmartBear/smartbear-mcp/pull/686)
+- [Swagger] Functional Testing improvements: clarified the `create_suite` `name` parameter to require a human-readable suite name; renamed the `suiteId` parameter to `slug` on `run_suite`, `get_suite_status`, `list_suite_executions`, and `cancel_suite_execution` and their responses; and dropped the redundant numeric `id` from `Suite` objects returned by `create_suite` and `list_suites`.
 
 ## [0.38.0] - 2026-08-27
 
