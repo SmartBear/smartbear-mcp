@@ -419,6 +419,113 @@ describe("SwaggerAPI", () => {
     });
   });
 
+  describe("validateApi", () => {
+    const mockValidationResult = {
+      valid: false,
+      recognized: true,
+      spec: {
+        namespace: "openapi",
+        version: "3.0.0",
+      },
+      findings: [
+        {
+          line: 1,
+          column: 1,
+          severity: "error",
+          message: "should always have a 'info' section",
+          code: 5010101,
+        },
+      ],
+      summary: {
+        errors: 1,
+        warnings: 0,
+        total: 1,
+        durationMs: 42,
+      },
+    };
+
+    it("should validate a raw definition and return apidom findings", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(mockValidationResult), {
+        headers: { "content-type": "application/json" },
+      });
+
+      const definition = "openapi: 3.0.0";
+      const result = await api.validateApi({
+        definition,
+        maxProblems: 10,
+        uri: "inmemory://spec.yaml",
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${config.registryBasePath}/standardization/apidom-validate?maxProblems=10&uri=inmemory%3A%2F%2Fspec.yaml`,
+        expect.objectContaining({
+          method: "POST",
+          headers: expect.objectContaining({
+            Authorization: "Bearer test-token",
+            "Content-Type": "application/json",
+          }),
+          body: JSON.stringify({ definition }),
+        }),
+      );
+
+      expect(result).toEqual(mockValidationResult);
+    });
+
+    it("should fetch a registry API and validate it", async () => {
+      const definition = "openapi: 3.0.0";
+      fetchMock.mockResponseOnce(definition, {
+        headers: { "content-type": "text/plain" },
+      });
+      fetchMock.mockResponseOnce(JSON.stringify(mockValidationResult), {
+        headers: { "content-type": "application/json" },
+      });
+
+      const result = await api.validateApi({
+        owner: "orgname",
+        apiName: "petstore",
+        version: "1.0.0",
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${config.registryBasePath}/apis/orgname/petstore/1.0.0`,
+        expect.objectContaining({
+          method: "GET",
+          headers: expect.objectContaining({
+            Accept: "text/plain",
+          }),
+        }),
+      );
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${config.registryBasePath}/standardization/apidom-validate`,
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({ definition }),
+        }),
+      );
+
+      expect(result).toEqual(mockValidationResult);
+    });
+
+    it("should throw when neither definition nor registry coordinates are provided", async () => {
+      await expect(api.validateApi({})).rejects.toThrow(
+        /Either 'definition' or 'owner' \+ 'apiName' \+ 'version' must be provided/,
+      );
+    });
+
+    it("should throw when the apidom-validate endpoint returns an error", async () => {
+      fetchMock.mockResponseOnce("Bad Request", {
+        status: 400,
+        statusText: "Bad Request",
+      });
+
+      await expect(
+        api.validateApi({
+          definition: "openapi: 3.0.0",
+        }),
+      ).rejects.toThrow(/apidom-validate failed - status: 400 Bad Request/);
+    });
+  });
+
   describe("publishPortalProduct", () => {
     const headers = {
       Authorization: "Bearer test-token",

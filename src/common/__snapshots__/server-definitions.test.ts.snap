@@ -12785,6 +12785,43 @@ None",
     ],
     "title": "Swagger: Update Portal Product",
   },
+  "swagger_validate_api": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "Swagger: Validate API",
+    },
+    "description": "Validate an OpenAPI or AsyncAPI definition using server-side apidom-ls. Returns structured diagnostics with line number, severity, and message for each finding. Supports OpenAPI 2.0, 3.0, 3.1, and AsyncAPI. Provide either the raw definition (JSON or YAML) OR an existing API by owner, apiName, and version. The tool is stateless and does not require a database. Use this tool when the user asks to validate, lint, or check an API spec for structural errors matching the Studio Validation tab.
+
+**Toolset:** Registry API
+
+**Parameters:**
+- definition (string): API definition content (OpenAPI/AsyncAPI in JSON or YAML). Provide this or owner/apiName/version, not both.
+- owner (string): API owner (organization or user). Use with apiName and version to fetch an existing API from the registry.
+- apiName (string): API name
+- version (string): Version identifier
+- maxProblems (number): Cap on the number of findings returned (default 100, max 1000)
+- uri (string): Optional pseudo-URI hint for the parser (e.g. inmemory://spec.yaml)",
+    "inputSchema": [
+      "apiName",
+      "definition",
+      "maxProblems",
+      "owner",
+      "uri",
+      "version",
+    ],
+    "outputSchema": [
+      "findings",
+      "namespace",
+      "recognized",
+      "summary",
+      "valid",
+      "version",
+    ],
+    "title": "Swagger: Validate API",
+  },
   "zephyr_create_folder": {
     "annotations": {
       "destructiveHint": false,

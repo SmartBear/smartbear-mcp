@@ -42,6 +42,7 @@ import {
   ApiDefinitionOutputSchema,
   ApiDefinitionParamsSchema,
   ApiSearchParamsSchema,
+  ApidomValidationOutputSchema,
   CreateApiFromPromptOutputSchema,
   CreateApiFromPromptParamsSchema,
   CreateApiOutputSchema,
@@ -55,6 +56,7 @@ import {
   SearchApisOutputSchema,
   StandardizeApiParamsSchema,
   StandardizeOutputSchema,
+  ValidateApiParamsSchema,
 } from "./registry-types";
 import { READ_ONLY, WRITE, WRITE_DESTRUCTIVE } from "./tool-constants";
 import {
@@ -308,6 +310,16 @@ export const TOOLS: SwaggerToolParams[] = [
     inputSchema: ScanApiStandardizationFromRegistryParamsSchema,
     outputSchema: ScanFromRegistryOutputSchema,
     handler: "scanApiStandardizationFromRegistry",
+    ...READ_ONLY,
+  },
+  {
+    title: "Validate API",
+    toolset: "Registry API",
+    summary:
+      "Validate an OpenAPI or AsyncAPI definition using server-side apidom-ls. Returns structured diagnostics with line number, severity, and message for each finding. Supports OpenAPI 2.0, 3.0, 3.1, and AsyncAPI. Provide either the raw definition (JSON or YAML) OR an existing API by owner, apiName, and version. The tool is stateless and does not require a database. Use this tool when the user asks to validate, lint, or check an API spec for structural errors matching the Studio Validation tab.",
+    inputSchema: ValidateApiParamsSchema,
+    outputSchema: ApidomValidationOutputSchema,
+    handler: "validateApi",
     ...READ_ONLY,
   },
   {

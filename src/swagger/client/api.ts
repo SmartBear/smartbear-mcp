@@ -43,6 +43,7 @@ import type {
   ApiSearchParams,
   ApiSearchResponse,
   ApiSpecification,
+  ApidomValidationResult,
   ApisJsonResponse,
   CreateApiFromPromptParams,
   CreateApiFromPromptResponse,
@@ -57,6 +58,7 @@ import type {
   StandardizationScanApiResponse,
   StandardizeApiParams,
   StandardizeApiResponse,
+  ValidateApiParams,
 } from "./registry-types";
 import type {
   Organization,
@@ -1525,6 +1527,69 @@ export class SwaggerAPI {
       };
     }
     return results;
+  }
+
+  /**
+   * Validate an API definition using server-side apidom-ls.
+   * Accepts either a raw definition or an existing API identified by owner/apiName/version.
+   * @param params Parameters including definition or registry coordinates
+   * @returns Apidom validation result with findings (line, severity, message)
+   */
+  async validateApi(
+    params: ValidateApiParams,
+  ): Promise<ApidomValidationResult | FallbackResponse> {
+    let definition = params.definition;
+
+    if (!definition && params.owner && params.apiName && params.version) {
+      const fetched = await this.getApiDefinition(
+        {
+          owner: params.owner,
+          api: params.apiName,
+          version: params.version,
+        },
+        { accept: "text/plain" },
+      );
+      if (typeof fetched !== "string") {
+        throw new ToolError(
+          `Failed to fetch API definition for ${params.owner}/${params.apiName}/${params.version}`,
+        );
+      }
+      definition = fetched;
+    }
+
+    if (!definition) {
+      throw new ToolError(
+        "Either 'definition' or 'owner' + 'apiName' + 'version' must be provided",
+      );
+    }
+
+    const searchParams = new URLSearchParams();
+    if (params.maxProblems !== undefined) {
+      searchParams.set("maxProblems", String(params.maxProblems));
+    }
+    if (params.uri) {
+      searchParams.set("uri", params.uri);
+    }
+    const queryString = searchParams.toString();
+    const url = `${this.config.registryBasePath}/standardization/apidom-validate${queryString ? `?${queryString}` : ""}`;
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        ...this.headers,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ definition }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "");
+      throw new ToolError(
+        `SwaggerHub Registry API apidom-validate failed - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}. URL: ${url}`,
+      );
+    }
+
+    return this.handleResponse<ApidomValidationResult>(response);
   }
 
   /**

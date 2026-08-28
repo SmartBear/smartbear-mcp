@@ -101,6 +101,48 @@ export const ScanApiStandardizationFromRegistryParamsSchema = z.object({
   version: z.string().describe("Version identifier"),
 });
 
+export const ValidateApiParamsSchema = z
+  .object({
+    definition: z
+      .string()
+      .optional()
+      .describe(
+        "API definition content (OpenAPI/AsyncAPI in JSON or YAML). Provide this or owner/apiName/version, not both.",
+      ),
+    owner: z
+      .string()
+      .optional()
+      .describe(
+        "API owner (organization or user). Use with apiName and version to fetch an existing API from the registry.",
+      ),
+    apiName: z.string().optional().describe("API name"),
+    version: z.string().optional().describe("Version identifier"),
+    maxProblems: z
+      .number()
+      .min(1)
+      .max(1000)
+      .optional()
+      .describe(
+        "Cap on the number of findings returned (default 100, max 1000)",
+      ),
+    uri: z
+      .string()
+      .optional()
+      .describe(
+        "Optional pseudo-URI hint for the parser (e.g. inmemory://spec.yaml)",
+      ),
+  })
+  .refine(
+    (data) =>
+      Boolean(data.definition) !==
+      Boolean(data.owner && data.apiName && data.version),
+    {
+      message:
+        "Provide either 'definition' OR 'owner' + 'apiName' + 'version', not both and not neither.",
+      path: ["definition"],
+    },
+  );
+
 export const CreateApiFromPromptParamsSchema = z.object({
   owner: z
     .string()
@@ -201,6 +243,7 @@ export type CreateApiFromPromptParams = z.infer<
   typeof CreateApiFromPromptParamsSchema
 >;
 export type StandardizeApiParams = z.infer<typeof StandardizeApiParamsSchema>;
+export type ValidateApiParams = z.infer<typeof ValidateApiParamsSchema>;
 
 // APIs.json format response types
 export interface ApiProperty {
@@ -281,6 +324,37 @@ export interface StandardizationScanApiResponse {
   validation?: StandardizationError[];
 }
 
+export interface ApidomValidationFinding {
+  line: number;
+  column?: number;
+  severity: "error" | "warning" | "info";
+  message: string;
+  code?: number;
+}
+
+export interface ApidomValidationSpecInfo {
+  namespace?: string;
+  version?: string;
+  format?: string;
+  mediaType?: string;
+}
+
+export interface ApidomValidationSummary {
+  errors?: number;
+  warnings?: number;
+  info?: number;
+  total?: number;
+  durationMs?: number;
+}
+
+export interface ApidomValidationResult {
+  valid?: boolean;
+  recognized?: boolean;
+  spec?: ApidomValidationSpecInfo;
+  findings?: ApidomValidationFinding[];
+  summary?: ApidomValidationSummary;
+}
+
 // Response type for standardization scan tool
 export interface StandardizationResult extends StandardizationScanApiResponse {
   count: number;
@@ -329,6 +403,45 @@ const StandardizationErrorSchema = z.object({
   line: z.number().optional(),
   description: z.string().optional(),
   severity: z.string().optional(),
+});
+
+export const ApidomValidationFindingSchema = z.looseObject({
+  line: z.number().describe("Line number where the issue was found (1-based)"),
+  column: z
+    .number()
+    .optional()
+    .describe("Column number where the issue starts (0-based)"),
+  severity: z
+    .enum(["error", "warning", "info"])
+    .describe("Severity of the finding"),
+  message: z.string().describe("Human-readable validation message"),
+  code: z.number().optional().describe("Rule or lint code"),
+  source: z.string().optional().describe("Source of the rule"),
+});
+
+export const ApidomValidationOutputSchema = z.looseObject({
+  valid: z
+    .boolean()
+    .optional()
+    .describe("True if the spec has no error findings"),
+  recognized: z
+    .boolean()
+    .optional()
+    .describe("True if the spec was recognized as OpenAPI/AsyncAPI"),
+  namespace: z.string().optional().describe("Detected spec namespace"),
+  version: z.string().optional().describe("Detected spec version"),
+  findings: z
+    .array(ApidomValidationFindingSchema)
+    .optional()
+    .describe("List of validation findings"),
+  summary: z
+    .looseObject({
+      errors: z.number().optional(),
+      warnings: z.number().optional(),
+      total: z.number().optional(),
+      durationMs: z.number().optional(),
+    })
+    .optional(),
 });
 
 export const ScanOutputSchema = z.looseObject({
