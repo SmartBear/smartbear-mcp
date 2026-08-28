@@ -19,9 +19,7 @@ export const GetFunctionalTestingExecutionTestSchema = z.object({
 export const ListFunctionalTestingSuiteExecutionsSchema = z.object({
   slug: z
     .string()
-    .describe(
-      "Slug of the Functional Testing suite to list executions for.",
-    )
+    .describe("Slug of the Functional Testing suite to list executions for.")
     .trim()
     .min(1),
 });
@@ -29,9 +27,7 @@ export const ListFunctionalTestingSuiteExecutionsSchema = z.object({
 export const CancelFunctionalTestingSuiteExecutionSchema = z.object({
   slug: z
     .string()
-    .describe(
-      "Slug of the Functional Testing suite the execution belongs to.",
-    )
+    .describe("Slug of the Functional Testing suite the execution belongs to.")
     .trim()
     .min(1),
   executionId: z
