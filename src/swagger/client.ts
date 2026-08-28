@@ -32,6 +32,7 @@ import {
   type ApiDefinitionParams,
   type ApiSearchParams,
   type ApiSearchResponse,
+  type ApidomValidationResult,
   type CreateApiFromPromptParams,
   type CreateApiFromPromptResponse,
   type CreateApiParams,
@@ -73,6 +74,7 @@ import {
   type UpdateDocumentArgs,
   type UpdatePortalArgs,
   type UpdateProductArgs,
+  type ValidateApiParams,
 } from "./client/index";
 import type {
   OrganizationsListResponse,
@@ -359,6 +361,12 @@ export class SwaggerClient implements Client {
     args: ScanApiStandardizationFromRegistryParams,
   ): Promise<ScanApiStandardizationFromRegistryResult | FallbackResponse> {
     return this.getApi().scanApiStandardizationFromRegistry(args);
+  }
+
+  async validateApi(
+    args: ValidateApiParams,
+  ): Promise<ApidomValidationResult | FallbackResponse> {
+    return this.getApi().validateApi(args);
   }
 
   async standardizeApi(
