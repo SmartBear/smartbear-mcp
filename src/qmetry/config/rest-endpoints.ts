@@ -19,6 +19,7 @@ export const QMETRY_PATHS = {
     GET_TC_LINKED_TO_RQ: "/rest/testcases/list/forRQ",
     CREATE_UPDATE_TC: "/rest/testcases",
     LINKED_RQ_TO_TC: "/rest/testcases/link/requirements",
+    LINK_ISSUES_TO_TC: "/rest/testcases/link/issues",
   },
   REQUIREMENT: {
     GET_RQ_LIST: "/rest/requirements/list/viewColumns",

@@ -6,6 +6,7 @@ import {
   fetchTestCases,
   fetchTestCasesLinkedToRequirement,
   fetchTestCaseVersionDetails,
+  linkTestcaseToIssues,
 } from "../client/testcase.js";
 import { DEFAULT_FETCH_TESTCASES_PAYLOAD } from "../types/testcase.js";
 
@@ -460,6 +461,50 @@ describe("testcase API clients", () => {
       await expect(
         fetchTestCaseExecutions(token, baseUrl, projectKey, payload),
       ).rejects.toThrow(/Missing or invalid required parameter: 'tcid'/);
+    });
+  });
+
+  describe("linkTestcaseToIssues", () => {
+    it("should POST to the correct endpoint with required fields", async () => {
+      const mockResponse = { success: true };
+      global.fetch = vi.fn().mockResolvedValue(mockOk(mockResponse));
+
+      const payload = { tcID: "8d7b-TC-63", dfIDs: [2039, 2038, 2037, 1528] };
+      const result = await linkTestcaseToIssues(
+        token,
+        baseUrl,
+        projectKey,
+        payload,
+      );
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        `${baseUrl}/rest/testcases/link/issues`,
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining('"tcID":"8d7b-TC-63"'),
+        }),
+      );
+      expect(global.fetch).toHaveBeenCalledWith(
+        `${baseUrl}/rest/testcases/link/issues`,
+        expect.objectContaining({
+          body: expect.stringContaining('"dfIDs":[2039,2038,2037,1528]'),
+        }),
+      );
+      expect(result).toEqual(mockResponse);
+    });
+
+    it("should throw when tcID is missing", async () => {
+      const payload = { dfIDs: [2039] } as any;
+      await expect(
+        linkTestcaseToIssues(token, baseUrl, projectKey, payload),
+      ).rejects.toThrow(/Missing or invalid required parameter: 'tcID'/);
+    });
+
+    it("should throw when dfIDs is empty", async () => {
+      const payload = { tcID: "8d7b-TC-63", dfIDs: [] };
+      await expect(
+        linkTestcaseToIssues(token, baseUrl, projectKey, payload),
+      ).rejects.toThrow(/Missing or invalid required parameter: 'dfIDs'/);
     });
   });
 });

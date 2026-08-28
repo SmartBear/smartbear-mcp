@@ -18,6 +18,7 @@ import {
   type FetchTestCasesPayload,
   type FetchTestCaseVersionDetailsPayload,
   type linkRequirementToTestCasePayload,
+  type LinkTestcaseToIssuesPayload,
   type UpdateTestCasesPayload,
 } from "../types/testcase.js";
 import { qmetryRequest } from "./api/client-api";
@@ -384,8 +385,13 @@ export async function fetchTestCaseExecutions(
   });
 
   if (result.hasTcRunUdf === false) {
+    const rows: any[] = result.data ?? [];
     return {
       ...result,
+      data: rows.map((row: any) => {
+        const { testCaseStatus: _tcs, testSuiteStatus: _tss, ...rest } = row;
+        return rest;
+      }),
       testRunUdfNote:
         "No Test Run UDFs are configured for this project. " +
         "The 'testRunUdfs' field will not be present in execution records. " +
@@ -482,7 +488,7 @@ export async function fetchTestCaseExecutions(
       );
     }
 
-    const { udfjson: _udfjson, ...rest } = row;
+    const { udfjson: _udfjson, testCaseStatus: _tcs, testSuiteStatus: _tss, ...rest } = row;
     return { ...rest, testRunUdfs };
   });
 
@@ -531,6 +537,40 @@ export async function linkRequirementToTestCase(
   return qmetryRequest<unknown>({
     method: "PUT",
     path: QMETRY_PATHS.TESTCASE.LINKED_RQ_TO_TC,
+    token,
+    project: resolvedProject,
+    baseUrl: resolvedBaseUrl,
+    body,
+  });
+}
+
+export async function linkTestcaseToIssues(
+  token: string,
+  baseUrl: string,
+  project: string | undefined,
+  payload: LinkTestcaseToIssuesPayload,
+) {
+  const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
+    baseUrl,
+    project,
+  );
+
+  const body: LinkTestcaseToIssuesPayload = { ...payload };
+
+  if (typeof body.tcID !== "string" || body.tcID.trim() === "") {
+    throw new Error(
+      "[linkTestcaseToIssues] Missing or invalid required parameter: 'tcID'.",
+    );
+  }
+  if (!Array.isArray(body.dfIDs) || body.dfIDs.length === 0) {
+    throw new Error(
+      "[linkTestcaseToIssues] Missing or invalid required parameter: 'dfIDs'.",
+    );
+  }
+
+  return qmetryRequest<unknown>({
+    method: "POST",
+    path: QMETRY_PATHS.TESTCASE.LINK_ISSUES_TO_TC,
     token,
     project: resolvedProject,
     baseUrl: resolvedBaseUrl,

@@ -1027,6 +1027,19 @@ export const LinkRequirementToTestCaseArgsSchema = z.object({
     ),
 });
 
+export const LinkTestcaseToIssuesArgsSchema = z.object({
+  tcID: z
+    .string()
+    .describe(
+      "EntityKey of the Test Case to link issues to (e.g. '8d7b-TC-63'). CRITICAL: the parameter name is 'tcID' — do NOT use 'testCaseId' or 'tcId'.",
+    ),
+  dfIDs: z
+    .array(z.coerce.number())
+    .describe(
+      "Array of numeric defect/issue IDs to link to the test case (e.g. [2039, 2038, 2037]).",
+    ),
+});
+
 export const TestCasesLinkedToRequirementArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
   baseUrl: CommonFields.baseUrl,

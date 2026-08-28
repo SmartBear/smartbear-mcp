@@ -16,6 +16,19 @@ import {
 import { qmetryRequest } from "./api/client-api";
 import { resolveDefaults } from "./utils";
 
+const PROJECT_LIST_FIELDS_TO_OMIT = new Set([
+  "userDefault",
+  "isRichText",
+  "isAutoAddValue",
+  "isSyncTCMailSend",
+  "isPartLevelComplianceEnabled",
+  "isBuildSelectionMandatory",
+  "isDeriveTCRStatusFromTCSRStatus",
+  "isDefineTestCaseDependency",
+  "isAutoSyncNewTcVersionEnabled",
+  "isTCSRPartLevelComplianceDisabled",
+]);
+
 // Fields returned by GET_INFO/SEt_INFO that we don't want to expose to LLM.
 const PROJECT_FIELDS_TO_OMIT = new Set([
   "clientData",
@@ -139,7 +152,7 @@ export async function getProjects(
     ...payload,
   };
 
-  return qmetryRequest<unknown>({
+  const result = await qmetryRequest<{ data: Record<string, unknown>[]; total: number }>({
     method: "POST",
     path: QMETRY_PATHS.PROJECT.GET_PROJECTS,
     token,
@@ -147,6 +160,19 @@ export async function getProjects(
     project: project || QMETRY_DEFAULTS.PROJECT_KEY,
     body,
   });
+
+  if (result && Array.isArray(result.data)) {
+    return {
+      ...result,
+      data: result.data.map((item) =>
+        Object.fromEntries(
+          Object.entries(item).filter(([key]) => !PROJECT_LIST_FIELDS_TO_OMIT.has(key)),
+        ),
+      ),
+    };
+  }
+
+  return result;
 }
 
 export async function getReleasesCycles(

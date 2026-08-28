@@ -8123,6 +8123,49 @@ Expected Output: Requirements linked to test case VT-TC-26 successfully.
     "outputSchema": undefined,
     "title": "QMetry: Link Requirements to Testcase",
   },
+  "qmetry_link_test_case_to_issues": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+      "title": "QMetry: Link Test Case to Issues",
+    },
+    "description": "Link one or more defects/issues to a test case by entityKey and issue IDs.
+
+**Toolset:** Test Cases
+
+**Parameters:**
+- tcID (string) *required*: EntityKey of the Test Case to link issues to (e.g. '8d7b-TC-63'). CRITICAL: the parameter name is 'tcID' — do NOT use 'testCaseId' or 'tcId'.
+- dfIDs (array) *required*: Array of numeric defect/issue IDs to link to the test case (e.g. [2039, 2038, 2037]).
+
+**Output Description:** JSON object with success status and linkage details.
+
+**Use Cases:** 1. Link defects/issues to a test case for traceability 2. Bulk link multiple issues to a single test case 3. Automate defect coverage mapping
+
+**Examples:**
+1. Link issues to test case 8d7b-TC-63
+\`\`\`json
+{
+  "tcID": "8d7b-TC-63",
+  "dfIDs": [
+    2039,
+    2038,
+    2037,
+    1528
+  ]
+}
+\`\`\`
+Expected Output: Issues linked to test case 8d7b-TC-63 successfully.
+
+**Hints:** 1. To get the tcID, call the 'Fetch Test Cases' tool and use data[<index>].entityKey. 2. dfIDs must be an array of numeric issue/defect IDs — resolve them using the 'Fetch Defects or Issues' tool. 3. If the user provides a test case entityKey (e.g., 8d7b-TC-63), use it directly as tcID. 4. CRITICAL: the parameter name is 'tcID' — do NOT use 'testCaseId' or 'tcId'. 5. CRITICAL: the parameter name is 'dfIDs' — do NOT use 'issueIds' or 'defectIds'.",
+    "inputSchema": [
+      "dfIDs",
+      "tcID",
+    ],
+    "outputSchema": undefined,
+    "title": "QMetry: Link Test Case to Issues",
+  },
   "qmetry_link_test_cases_to_test_suite": {
     "annotations": {
       "destructiveHint": false,

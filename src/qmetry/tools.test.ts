@@ -2693,4 +2693,52 @@ describe("QmetryClient tools", () => {
       expect(result.content[0].text).toContain("linked");
     });
   });
+
+  describe("Link Test Case to Issues", () => {
+    it("should link issues to test case", async () => {
+      (testcase.linkTestcaseToIssues as any).mockResolvedValue({
+        success: true,
+        message: "Issues linked successfully",
+      });
+
+      const handler = getHandler("Link Test Case to Issues");
+      const result = await handler({
+        tcID: "8d7b-TC-63",
+        dfIDs: [2039, 2038, 2037, 1528],
+      });
+
+      expect(testcase.linkTestcaseToIssues).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          tcID: "8d7b-TC-63",
+          dfIDs: [2039, 2038, 2037, 1528],
+        }),
+      );
+
+      expect(result.content[0].text).toContain("linked");
+    });
+
+    it("should handle API errors gracefully", async () => {
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+
+      (testcase.linkTestcaseToIssues as any).mockRejectedValue(
+        new Error("Test case not found"),
+      );
+
+      const handler = getHandler("Link Test Case to Issues");
+      const result = await handler({
+        tcID: "8d7b-TC-99",
+        dfIDs: [111],
+      });
+
+      expect(result.content[0].success).toBe(false);
+      expect(result.content[0].text).toContain("Test case not found");
+
+      consoleSpy.mockRestore();
+    });
+  });
 });

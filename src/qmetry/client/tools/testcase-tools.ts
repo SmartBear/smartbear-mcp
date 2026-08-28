@@ -1,6 +1,7 @@
 import { QMetryToolsHandlers } from "../../config/constants";
 import {
   CreateTestCaseArgsSchema,
+  LinkTestcaseToIssuesArgsSchema,
   TestCaseDetailsArgsSchema,
   TestCaseExecutionsArgsSchema,
   TestCaseListArgsSchema,
@@ -1538,5 +1539,42 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       "JSON object with data array (steps with UDF values), filterTemplate (UDF field definitions), columns (visible/hidden column config), total count, and viewId",
     readOnly: true,
     idempotent: true,
+  },
+  {
+    title: "Link Test Case to Issues",
+    toolset: "Test Cases",
+    summary:
+      "Link one or more defects/issues to a test case by entityKey and issue IDs.",
+    handler: QMetryToolsHandlers.LINK_TESTCASE_TO_ISSUES,
+    inputSchema: LinkTestcaseToIssuesArgsSchema,
+    purpose:
+      "Link defects or issues to a test case using the test case entityKey and an array of numeric issue IDs. " +
+      "This tool enables traceability and defect coverage mapping between issues and test cases.",
+    useCases: [
+      "Link defects/issues to a test case for traceability",
+      "Bulk link multiple issues to a single test case",
+      "Automate defect coverage mapping",
+    ],
+    examples: [
+      {
+        description: "Link issues to test case 8d7b-TC-63",
+        parameters: {
+          tcID: "8d7b-TC-63",
+          dfIDs: [2039, 2038, 2037, 1528],
+        },
+        expectedOutput:
+          "Issues linked to test case 8d7b-TC-63 successfully.",
+      },
+    ],
+    hints: [
+      "To get the tcID, call the 'Fetch Test Cases' tool and use data[<index>].entityKey.",
+      "dfIDs must be an array of numeric issue/defect IDs — resolve them using the 'Fetch Defects or Issues' tool.",
+      "If the user provides a test case entityKey (e.g., 8d7b-TC-63), use it directly as tcID.",
+      "CRITICAL: the parameter name is 'tcID' — do NOT use 'testCaseId' or 'tcId'.",
+      "CRITICAL: the parameter name is 'dfIDs' — do NOT use 'issueIds' or 'defectIds'.",
+    ],
+    outputDescription: "JSON object with success status and linkage details.",
+    readOnly: false,
+    idempotent: false,
   },
 ];
