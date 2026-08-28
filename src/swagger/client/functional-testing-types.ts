@@ -604,9 +604,12 @@ export const CreateFunctionalTestingTestParamsSchema = z
   })
   .superRefine((data, ctx) => {
     const allowedNames = new Set<string>();
+    const pathParamCounts = new Map<string, number>();
+
     data.steps?.forEach((step, index) => {
       for (const name of extractPathParamNames(step.url)) {
         allowedNames.add(name);
+        pathParamCounts.set(name, (pathParamCounts.get(name) ?? 0) + 1);
       }
       if (step.baseUrl) {
         allowedNames.add(baseUrlParamName(step.baseUrl));
@@ -619,6 +622,22 @@ export const CreateFunctionalTestingTestParamsSchema = z
         }
       }
     });
+
+    const definedParamNames = new Set(
+      (data.parameters ?? []).map((p) => p.name),
+    );
+    for (const [name, count] of pathParamCounts) {
+      if (count >= 2 && !definedParamNames.has(name)) {
+        ctx.addIssue({
+          code: "custom",
+          message:
+            `Path parameter "{${name}}" appears in ${count} steps and must be defined in "parameters" ` +
+            "so its value is shared across all steps.",
+          path: ["parameters"],
+        });
+      }
+    }
+
     data.parameters?.forEach((param, index) => {
       if (!allowedNames.has(param.name)) {
         ctx.addIssue({

@@ -329,6 +329,42 @@ describe("CreateFunctionalTestingTestParamsSchema", () => {
     }
   });
 
+  it("rejects a path param used in multiple steps without a matching parameter definition", () => {
+    const result = CreateFunctionalTestingTestParamsSchema.safeParse({
+      name: "My Test",
+      steps: [
+        { url: "https://petstore.swagger.io/v2/pet/{petId}" },
+        { url: "https://petstore.swagger.io/v2/pet/{petId}/uploadImage" },
+      ],
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toContain(
+        'Path parameter "{petId}" appears in 2 steps',
+      );
+    }
+  });
+
+  it("accepts a path param used in multiple steps when a matching parameter is defined", () => {
+    const result = CreateFunctionalTestingTestParamsSchema.safeParse({
+      name: "My Test",
+      steps: [
+        { url: "https://petstore.swagger.io/v2/pet/{petId}" },
+        { url: "https://petstore.swagger.io/v2/pet/{petId}/uploadImage" },
+      ],
+      parameters: [{ name: "petId", value: "123" }],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts a path param used in only one step without a parameter definition", () => {
+    const result = CreateFunctionalTestingTestParamsSchema.safeParse({
+      name: "My Test",
+      steps: [{ url: "https://petstore.swagger.io/v2/pet/{petId}" }],
+    });
+    expect(result.success).toBe(true);
+  });
+
   it("rejects a step whose url does not start with its baseUrl", () => {
     const result = CreateFunctionalTestingTestParamsSchema.safeParse({
       name: "My Test",
