@@ -21,7 +21,7 @@ All tools listed below are only available through the Local MCP Server. They are
 #### `list_suites`
 
 - Purpose: Lists all test Suites available in your Swagger Functional Testing workspace. Use this tool when you need to discover available Suites before running them or checking their execution history. Do not use this tool to retrieve individual tests or test Suite execution results.
-- Returns: An object with a `suites` array of the test Suites in the workspace, alongside aggregate `stats`. When no Suites exist, the `suites` array is empty (`{ "suites": [] }`).
+- Returns: An object with a `suites` array of the test Suites in the workspace. Each Suite includes its `slug`, which identifies it for other suite tools (e.g. `run_suite`). When no Suites exist, the `suites` array is empty (`{ "suites": [] }`).
 - Use case: Discover available test Suites.
 
 ---

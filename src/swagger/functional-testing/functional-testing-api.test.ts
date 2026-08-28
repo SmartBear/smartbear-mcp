@@ -37,30 +37,28 @@ const AUTH_FAILED_MESSAGE =
   "Authentication failed. Verify your API token is valid and has not expired.";
 
 const suitesResponseMock = {
-  suites: [
-    {
-      accountId: 42,
-      name: "Smoke Suite",
-      slug: "smoke-suite",
-      created: 1719400000000,
-      numTestInstances: 3,
-      url: "https://app.reflect.run/suites/smoke-suite?accountId=42",
-    },
-    {
-      accountId: 42,
-      name: "Regression Suite",
-      slug: "regression-suite",
-      created: 1719500000000,
-      numTestInstances: 12,
-      url: "https://app.reflect.run/suites/regression-suite?accountId=42",
-    },
-  ],
-  stats: {
-    executions: 15,
-    passRate: 0.93,
-    avgRuntimeSecs: 42,
-    cumExecTimeSecs: 630,
+  suites: {
+    data: [
+      {
+        name: "Smoke Suite",
+        suiteId: "smoke-suite",
+        created: 1719400000000,
+      },
+      {
+        name: "Regression Suite",
+        suiteId: "regression-suite",
+        created: 1719500000000,
+      },
+    ],
   },
+};
+
+const suitesResponseExpected = {
+  suites: suitesResponseMock.suites.data.map(({ name, suiteId, created }) => ({
+    name,
+    slug: suiteId,
+    created,
+  })),
 };
 
 describe("FunctionalTestingAPI", () => {
@@ -610,6 +608,7 @@ describe("FunctionalTestingAPI", () => {
 
   describe("cancelSuiteExecution", () => {
     const cancelledMock = {
+      suiteId: "regression-tests",
       executionId: 47,
       status: "cancelled",
       isFinished: true,
@@ -632,7 +631,7 @@ describe("FunctionalTestingAPI", () => {
       );
     });
 
-    it("should return parsed JSON response", async () => {
+    it("should return parsed JSON response with suiteId renamed to slug", async () => {
       fetchMock.mockResponseOnce(JSON.stringify(cancelledMock));
 
       const result = await api.cancelSuiteExecution({
@@ -640,7 +639,13 @@ describe("FunctionalTestingAPI", () => {
         executionId: "47",
       });
 
-      expect(result).toEqual(cancelledMock);
+      expect(result).toEqual({
+        executionId: 47,
+        status: "cancelled",
+        isFinished: true,
+        slug: "regression-tests",
+      });
+      expect(result).not.toHaveProperty("suiteId");
     });
 
     it("should throw ToolError when slug is missing", async () => {
@@ -1008,16 +1013,19 @@ describe("FunctionalTestingAPI", () => {
       );
     });
 
-    it("should return parsed JSON response", async () => {
+    it("should return parsed JSON response with suiteId renamed to slug", async () => {
       fetchMock.mockResponseOnce(JSON.stringify(suitesResponseMock));
 
       const result = await api.listSuites();
 
-      expect(result).toEqual(suitesResponseMock);
+      expect(result).toEqual(suitesResponseExpected);
+      for (const suite of result.suites) {
+        expect(suite).not.toHaveProperty("suiteId");
+      }
     });
 
     it("should return an empty suites list when no suites exist", async () => {
-      fetchMock.mockResponseOnce(JSON.stringify({ suites: [] }));
+      fetchMock.mockResponseOnce(JSON.stringify({ suites: { data: [] } }));
 
       const result = await api.listSuites();
 
@@ -1058,7 +1066,11 @@ describe("FunctionalTestingAPI", () => {
   });
 
   describe("runSuite", () => {
-    const executionMock = { executionId: "7", status: "pending" };
+    const executionMock = {
+      suiteId: "checkout-suite",
+      executionId: "7",
+      status: "pending",
+    };
 
     it("should call the correct endpoint with POST method and X-API-KEY header", async () => {
       fetchMock.mockResponseOnce(JSON.stringify(executionMock));
@@ -1099,12 +1111,17 @@ describe("FunctionalTestingAPI", () => {
       );
     });
 
-    it("should return parsed JSON response", async () => {
+    it("should return parsed JSON response with suiteId renamed to slug", async () => {
       fetchMock.mockResponseOnce(JSON.stringify(executionMock));
 
       const result = await api.runSuite({ slug: "checkout-suite" });
 
-      expect(result).toEqual(executionMock);
+      expect(result).toEqual({
+        executionId: "7",
+        status: "pending",
+        slug: "checkout-suite",
+      });
+      expect(result).not.toHaveProperty("suiteId");
     });
 
     it("should include url field in response", async () => {
@@ -1163,7 +1180,7 @@ describe("FunctionalTestingAPI", () => {
 
   describe("getSuiteExecution", () => {
     const suiteExecutionMock = {
-      slug: "checkout-suite",
+      suiteId: "checkout-suite",
       executionId: "7",
       isFinished: true,
       status: "passed",
@@ -1187,7 +1204,7 @@ describe("FunctionalTestingAPI", () => {
       );
     });
 
-    it("should return parsed JSON response", async () => {
+    it("should return parsed JSON response with suiteId renamed to slug", async () => {
       fetchMock.mockResponseOnce(JSON.stringify(suiteExecutionMock));
 
       const result = await api.getSuiteExecution({
@@ -1195,7 +1212,14 @@ describe("FunctionalTestingAPI", () => {
         executionId: "7",
       });
 
-      expect(result).toEqual(suiteExecutionMock);
+      expect(result).toEqual({
+        executionId: "7",
+        isFinished: true,
+        status: "passed",
+        tests: [],
+        slug: "checkout-suite",
+      });
+      expect(result).not.toHaveProperty("suiteId");
     });
 
     it("should include url field in response", async () => {

@@ -315,7 +315,9 @@ describe("SwaggerClient — Functional Testing integration", () => {
   describe("listFunctionalTestingSuites", () => {
     it("should call api.reflect.run and return results", async () => {
       const suitesMock = {
-        suites: [{ slug: "smoke-suite", name: "Smoke Suite" }],
+        suites: {
+          data: [{ suiteId: "smoke-suite", name: "Smoke Suite", created: 0 }],
+        },
       };
       fetchMock.mockResponseOnce(JSON.stringify(suitesMock));
 
@@ -335,7 +337,9 @@ describe("SwaggerClient — Functional Testing integration", () => {
           headers: expect.objectContaining({ "X-API-KEY": "ft-token" }),
         }),
       );
-      expect(result).toEqual(suitesMock);
+      expect(result).toEqual({
+        suites: [{ slug: "smoke-suite", name: "Smoke Suite", created: 0 }],
+      });
     });
 
     it("should throw when FT API is not configured", async () => {

@@ -11,6 +11,7 @@ import type {
   GetFunctionalTestingSuiteExecutionParams,
   ListFunctionalTestingSuiteExecutionsParams,
   ListSuiteExecutionsResponse,
+  ListSuitesApiResponse,
   ListSuitesResponse,
   ListTestsResponse,
   RunFunctionalTestingSuiteParams,
@@ -21,6 +22,18 @@ import type {
 const API_HOSTNAME = "api.reflect.run";
 
 export const FUNCTIONAL_TESTING_API_KEY_HEADER = "X-API-KEY";
+
+// SFT API responses identify the suite by `suiteId`,
+// renaming the field to avoid suiteId / slug confusion.
+function renameSuiteIdToSlug(
+  data: Record<string, unknown>,
+): Record<string, unknown> {
+  if ("suiteId" in data) {
+    const { suiteId, ...rest } = data;
+    return { ...rest, slug: suiteId };
+  }
+  return data;
+}
 
 export class FunctionalTestingAPI {
   private readonly baseUrl: string;
@@ -253,7 +266,14 @@ export class FunctionalTestingAPI {
       errorMessageFor("list Functional Testing suites"),
     );
 
-    return response.json();
+    const data: ListSuitesApiResponse = await response.json();
+    return {
+      suites: data.suites.data.map(({ name, suiteId, created }) => ({
+        name,
+        slug: suiteId,
+        created,
+      })),
+    };
   }
 
   async cancelSuiteExecution(
@@ -285,7 +305,9 @@ export class FunctionalTestingAPI {
       ),
     );
 
-    return response.json();
+    return renameSuiteIdToSlug(
+      (await response.json()) as Record<string, unknown>,
+    );
   }
 
   async runSuite(args: RunFunctionalTestingSuiteParams): Promise<unknown> {
@@ -307,7 +329,9 @@ export class FunctionalTestingAPI {
       errorMessageFor("run suite"),
     );
 
-    return response.json();
+    return renameSuiteIdToSlug(
+      (await response.json()) as Record<string, unknown>,
+    );
   }
 
   async getSuiteExecution(
@@ -339,7 +363,7 @@ export class FunctionalTestingAPI {
         }
       }
     }
-    return data;
+    return renameSuiteIdToSlug(data);
   }
 
   async getTestHistory(

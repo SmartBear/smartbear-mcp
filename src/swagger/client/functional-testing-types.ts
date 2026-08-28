@@ -212,21 +212,22 @@ export interface ListTestsResponse {
 }
 
 export interface Suite {
-  accountId: number;
   name: string;
   slug: string;
   created: number;
-  numTestInstances: number;
-  url: string;
 }
 
 export interface ListSuitesResponse {
   suites: Suite[];
-  stats?: {
-    executions: number;
-    passRate: number;
-    avgRuntimeSecs: number;
-    cumExecTimeSecs: number;
+}
+
+export interface ListSuitesApiResponse {
+  suites: {
+    data: {
+      name: string;
+      suiteId: string;
+      created: number;
+    }[];
   };
 }
 
