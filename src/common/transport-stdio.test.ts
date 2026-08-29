@@ -1,5 +1,9 @@
 import type { JSONRPCMessage } from "@modelcontextprotocol/server";
 import { describe, expect, it, vi } from "vitest";
+import {
+  getCurrentClientIdentity,
+  setProcessClientIdentity,
+} from "./client-identity";
 import type { SmartBearMcpServer } from "./server";
 import { createInitializeCaptureTap, getEnvVarName } from "./transport-stdio";
 
@@ -88,6 +92,35 @@ describe("createInitializeCaptureTap", () => {
     tap.observe(initialized);
 
     expect(server.setClientInfo).toHaveBeenCalledTimes(1);
+  });
+
+  it("records modern-era identity without needing a server instance", () => {
+    setProcessClientIdentity(undefined);
+    const tap = createInitializeCaptureTap();
+
+    // No handshake and no server yet: a modern request still attributes.
+    tap.observe({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "tools/list",
+      params: {
+        _meta: {
+          "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+          "io.modelcontextprotocol/clientInfo": {
+            name: "Modern Client",
+            version: "2.0.0",
+          },
+          "io.modelcontextprotocol/clientCapabilities": {},
+        },
+      },
+    } as unknown as JSONRPCMessage);
+
+    expect(getCurrentClientIdentity()).toEqual({
+      name: "Modern Client",
+      version: "2.0.0",
+      protocolVersion: "2026-07-28",
+    });
+    setProcessClientIdentity(undefined);
   });
 
   it("ignores non-initialize traffic", () => {
