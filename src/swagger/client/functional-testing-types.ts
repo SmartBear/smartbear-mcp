@@ -551,14 +551,15 @@ export const CreateFunctionalTestingTestStepSchema = z.object({
     .min(1)
     .describe(
       "Full URL for the API call. May include OAS-style {pathParam} placeholders, which are " +
-        "always converted into reusable parameters. When baseUrl is set, url must start with it.",
+        "always converted into reusable parameters. baseUrl MUST also be set and url must start with it.",
     ),
   baseUrl: z
     .url()
     .optional()
     .describe(
-      "Server/common URL for this step's endpoint (e.g. https://petstore.swagger.io/v2). " +
-        "When set, it is extracted into a definition-level parameter and templated into the step url.",
+      "Server/common URL for this step's endpoint (e.g. https://petstore.swagger.io/v2). REQUIRED " +
+        "on every step it is extracted into a definition-level " +
+        "parameter and templated into the step url",
     ),
   httpMethod: z
     .enum(HTTP_METHODS)
@@ -620,6 +621,16 @@ export const CreateFunctionalTestingTestParamsSchema = z
             path: ["steps", index, "url"],
           });
         }
+      } else {
+        ctx.addIssue({
+          code: "custom",
+          message:
+            `Step url "${step.url}" does not set "baseUrl". ` +
+            "Every step must set baseUrl to its server/common URL " +
+            "(e.g. https://petstore.swagger.io/v2) so it is extracted into a shared parameter, " +
+            "even when only one step uses that URL.",
+          path: ["steps", index, "baseUrl"],
+        });
       }
     });
 

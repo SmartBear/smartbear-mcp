@@ -241,6 +241,7 @@ describe("FunctionalTestingAPI", () => {
         steps: [
           {
             url: "https://example.com/api",
+            baseUrl: "https://example.com",
             httpMethod: "POST",
             assertions: {
               bodyRules: [

@@ -320,7 +320,12 @@ describe("CreateFunctionalTestingTestParamsSchema", () => {
   it("rejects a top-level parameter that is not referenced as a path parameter by any step", () => {
     const result = CreateFunctionalTestingTestParamsSchema.safeParse({
       name: "My Test",
-      steps: [{ url: "https://petstore.swagger.io/v2/pet/1" }],
+      steps: [
+        {
+          baseUrl: "https://petstore.swagger.io/v2",
+          url: "https://petstore.swagger.io/v2/pet/1",
+        },
+      ],
       parameters: [{ name: "petName", value: "Rex" }],
     });
     expect(result.success).toBe(false);
@@ -329,12 +334,32 @@ describe("CreateFunctionalTestingTestParamsSchema", () => {
     }
   });
 
+  it("rejects a step that does not set baseUrl", () => {
+    const result = CreateFunctionalTestingTestParamsSchema.safeParse({
+      name: "My Test",
+      steps: [{ url: "https://petstore.swagger.io/v2/pet/1" }],
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].path).toEqual(["steps", 0, "baseUrl"]);
+      expect(result.error.issues[0].message).toContain(
+        'Step url "https://petstore.swagger.io/v2/pet/1" does not set "baseUrl"',
+      );
+    }
+  });
+
   it("rejects a path param used in multiple steps without a matching parameter definition", () => {
     const result = CreateFunctionalTestingTestParamsSchema.safeParse({
       name: "My Test",
       steps: [
-        { url: "https://petstore.swagger.io/v2/pet/{petId}" },
-        { url: "https://petstore.swagger.io/v2/pet/{petId}/uploadImage" },
+        {
+          baseUrl: "https://petstore.swagger.io/v2",
+          url: "https://petstore.swagger.io/v2/pet/{petId}",
+        },
+        {
+          baseUrl: "https://petstore.swagger.io/v2",
+          url: "https://petstore.swagger.io/v2/pet/{petId}/uploadImage",
+        },
       ],
     });
     expect(result.success).toBe(false);
@@ -349,8 +374,14 @@ describe("CreateFunctionalTestingTestParamsSchema", () => {
     const result = CreateFunctionalTestingTestParamsSchema.safeParse({
       name: "My Test",
       steps: [
-        { url: "https://petstore.swagger.io/v2/pet/{petId}" },
-        { url: "https://petstore.swagger.io/v2/pet/{petId}/uploadImage" },
+        {
+          baseUrl: "https://petstore.swagger.io/v2",
+          url: "https://petstore.swagger.io/v2/pet/{petId}",
+        },
+        {
+          baseUrl: "https://petstore.swagger.io/v2",
+          url: "https://petstore.swagger.io/v2/pet/{petId}/uploadImage",
+        },
       ],
       parameters: [{ name: "petId", value: "123" }],
     });
@@ -360,7 +391,12 @@ describe("CreateFunctionalTestingTestParamsSchema", () => {
   it("accepts a path param used in only one step without a parameter definition", () => {
     const result = CreateFunctionalTestingTestParamsSchema.safeParse({
       name: "My Test",
-      steps: [{ url: "https://petstore.swagger.io/v2/pet/{petId}" }],
+      steps: [
+        {
+          baseUrl: "https://petstore.swagger.io/v2",
+          url: "https://petstore.swagger.io/v2/pet/{petId}",
+        },
+      ],
     });
     expect(result.success).toBe(true);
   });
@@ -378,7 +414,9 @@ describe("CreateFunctionalTestingTestParamsSchema", () => {
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.error.issues[0].path).toEqual(["steps", 0, "url"]);
-      expect(result.error.issues[0].message).toContain("must start with its baseUrl");
+      expect(result.error.issues[0].message).toContain(
+        "must start with its baseUrl",
+      );
     }
   });
 });
