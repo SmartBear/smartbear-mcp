@@ -1,5 +1,5 @@
 export const QMETRY_DEFAULTS = {
-  BASE_URL: "https://testmanagement.qmetry.com",
+  BASE_URL: process.env.QMETRY_BASE_URL || "https://testmanagement.qmetry.com",
   PROJECT_KEY: "default",
 };
 
@@ -74,6 +74,7 @@ export const QMetryToolsHandlers = {
   FETCH_TEST_CASE_DETAILS: "getTestCaseDetails",
   FETCH_TEST_CASE_VERSION_DETAILS: "getTestCaseVersionDetails",
   FETCH_TEST_CASE_STEPS: "getTestCaseSteps",
+  FETCH_TEST_CASE_STEPS_WITH_UDF: "getTestCaseStepsWithUdf",
   FETCH_TEST_CASE_EXECUTIONS: "getTestCaseExecutions",
   LINK_REQUIREMENT_TO_TESTCASE: "linkRequirementToTestCase",
   FETCH_REQUIREMENTS: "getRequirements",
@@ -109,4 +110,10 @@ export const QMetryToolsHandlers = {
   FETCH_TEST_RUN_UDF_VALUES: "fetchTestRunUdfValues",
   FETCH_ISSUE_EXECUTIONS: "getIssueExecutions",
   FETCH_CASCADE_CHILD_VALUES: "fetchCascadeChildValues",
+  FETCH_GATE_CONFIGURATION: "getGateConfiguration",
+  EXECUTE_GATE_REPORT: "executeGateReport",
+  EXPORT_HTML_REPORT: "exportHtmlReport",
+  FETCH_UDF_LAYOUT: "fetchUdfLayout",
+  FETCH_TEST_SUITE_DETAILS: "fetchTestSuiteDetails",
+  FETCH_ISSUE_DETAILS: "fetchIssueDetails",
 };

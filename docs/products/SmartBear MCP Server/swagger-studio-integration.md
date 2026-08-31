@@ -27,16 +27,19 @@ The Swagger Studio client provides comprehensive API and Domain management capab
 
 #### `get_api_definition`
 
--   Purpose: Fetch a resolved API definition from Swagger Studio based on its owner, API name, and version.
--   Returns: Complete OpenAPI specification for the requested API.
--   Use case: Retrieve the specified API definitions for integration, testing, or documentation purposes.
+-   Purpose: Fetch an API definition from Swagger Studio based on its owner, API name, and version. By default the definition is returned as JSON (YAML-stored definitions are converted); set `format: 'text'` to get the YAML source.
+-   Returns: Complete OpenAPI specification for the requested API, as JSON or as YAML text depending on `format`.
+-   Use case: Retrieve the specified API definitions for integration, testing, or documentation purposes, or fetch the YAML source with `format: 'text'` to use as the base for `patch_api` edits.
 -   Parameters:
 
 | Parameter | Description | Type | Required |
 | --- | --- | --- | --- |
-| `owner` | API owner (username or organization name) | string | Yes |
-| `api` | API name | string | Yes |
-| `version` | API version | string | Yes |
+| `owner` | API owner (organization or user, case-sensitive) | string | Yes |
+| `api` | API name (case-sensitive) | string | Yes |
+| `version` | Version identifier | string | Yes |
+| `resolved` | Set to true to get the resolved version with all external `$ref`s included.<br />Default: `false` | boolean | No |
+| `flatten` | Set to true to create models from inline schemas in an OpenAPI definition.<br />Default: `false` | boolean | No |
+| `format` | Response format.<br />Options: `json` (may convert YAML to JSON), `text` (returns the definition as YAML - required for `patch_api` edits)<br />Default: `json` | string | No |
 
 #### `create_or_update_api`
 
@@ -93,7 +96,7 @@ The Swagger Studio client provides comprehensive API and Domain management capab
 #### `standardize_api`
 
 -   Purpose: Standardize and fix an API definition using AI to ensure compliance with governance policies. Scans the API definition for standardization errors and automatically fixes them using SmartBear AI. If errors are found, they will be sent to SmartBear AI to generate a corrected definition, which is then saved back to the registry.
--   Returns: Standardization result including a message, the number of errors found, and the fixed definition if successful. Also includes details about each error (description, line number, severity).
+ -   Returns: Standardization result including a message, the number of errors found, and the fixed definition if successful. Also includes details about each error (description, line number, severity). If the fixed definition was saved, the response includes a `url` to view the API in SwaggerHub (server returns `savedVersion`); otherwise `url` is omitted.
 -   Use case: Automatically fix API definitions that fail standardization scans, ensure governance compliance in existing APIs, or clean up imported/legacy API definitions to meet current organization standards.
 -   Parameters:
 
@@ -103,6 +106,29 @@ The Swagger Studio client provides comprehensive API and Domain management capab
 | `api` | API name (case-sensitive) | string | Yes |
 | `version` | Version identifier | string | Yes |
 | `newVersion` | The version to save the fixed definition as (e.g. `1.0.1`). Omitting this will overwrite the current version - prefer providing a patch bump (e.g. `1.0.0` -> `1.0.1`) unless the user specifies otherwise. | string | No |
+
+#### `patch_api`
+
+-   Purpose: Apply targeted search/replace edits to an existing API definition in the SwaggerHub Registry, without regenerating the whole specification. Only OpenAPI and AsyncAPI definitions are supported - any other specification type is rejected. Edits are applied to the YAML source, so fetch it first with `get_api_definition` using `format: 'text'` and without `resolved` or `flatten`, since those options transform the definition and edits based on them will not match the stored source. All edits are atomic: nothing is saved unless every edit applies.
+-   Returns: On success, `saved: true` together with the operation type (`create` or `update`), the saved version, and the SwaggerHub URL. If any edit fails, nothing is saved and the response contains `saved: false` plus a `failed` list, where each entry holds the edit `index`, its `oldString`, the `error` (`no_match` when the text was not found, `ambiguous` when it matched more than once without `replaceAll`), and `matchCount`.
+-   Use case: Fix individual findings from a standardization scan or a review (e.g. add a missing `operationId`, correct a description, add a response) while leaving the rest of the definition byte-for-byte unchanged. Prefer this over `create_or_update_api` when only small parts of a large definition need to change.
+-   Parameters:
+
+| Parameter | Description | Type | Required |
+| --- | --- | --- | --- |
+| `owner` | API owner (organization or user, case-sensitive) | string | Yes |
+| `apiName` | API name (case-sensitive) | string | Yes |
+| `version` | Version of the definition to patch (base version, e.g. `1.0.0`) | string | Yes |
+| `newVersion` | Version to save the patched definition as (e.g. `1.0.1`). Must not already exist and is always created as private. Omit to overwrite the base version, which keeps its current visibility. The definition's `info.version` is updated automatically - do not add an edit for it. | string | No |
+| `edits` | Search/replace edits applied sequentially to the YAML definition.<br />Min: `1`, Max: `50` | array | Yes |
+
+Each entry in `edits` accepts:
+
+| Parameter | Description | Type | Required |
+| --- | --- | --- | --- |
+| `oldString` | Exact text to find in the YAML definition, including indentation and newlines, copied from `get_api_definition` with `format: 'text'`. Must match exactly one location unless `replaceAll` is true. For repeated text (e.g. `responses:`, `description: OK`), start from the nearest unique parent key such as a path name, schema name, or `operationId`. | string | Yes |
+| `replaceString` | Replacement text. Repeat the quoted context unchanged and change only the minimal part. An empty string deletes the matched text. | string | Yes |
+| `replaceAll` | Replace every occurrence of `oldString` instead of requiring a unique match.<br />Default: `false` | boolean | No |
 
 #### `list_organizations`
 

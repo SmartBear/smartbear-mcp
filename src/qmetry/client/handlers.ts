@@ -1,7 +1,13 @@
 import { QMetryToolsHandlers } from "../config/constants";
+import {
+  executeGateReport,
+  exportHtmlReport,
+  getGateConfiguration,
+} from "./ai-agent";
 import { getAutomationStatus, importAutomationResults } from "./automation";
 import {
   createIssue,
+  fetchIssueDetails,
   fetchIssueExecutions,
   fetchIssues,
   fetchIssuesLinkedToTestCase,
@@ -28,6 +34,7 @@ import {
   fetchTestCaseDetails,
   fetchTestCaseExecutions,
   fetchTestCaseSteps,
+  fetchTestCaseStepsWithUdf,
   fetchTestCases,
   fetchTestCasesLinkedToRequirement,
   fetchTestCaseVersionDetails,
@@ -41,6 +48,7 @@ import {
   fetchLinkedIssuesByTestCaseRun,
   fetchTestCaseRunsByTestSuiteRun,
   fetchTestCasesByTestSuite,
+  fetchTestSuiteDetails,
   fetchTestSuites,
   fetchTestSuitesForTestCase,
   linkPlatformsToTestSuite,
@@ -54,6 +62,7 @@ import {
   fetchTestRunUdfMetadata,
   fetchTestRunUdfValues,
   fetchUdfFieldTypes,
+  fetchUdfLayout,
   fetchUdfModules,
 } from "./udf";
 
@@ -88,6 +97,8 @@ export const QMETRY_HANDLER_MAP: Record<string, QMetryHandler> = {
   [QMetryToolsHandlers.FETCH_TEST_CASE_VERSION_DETAILS]:
     fetchTestCaseVersionDetails,
   [QMetryToolsHandlers.FETCH_TEST_CASE_STEPS]: fetchTestCaseSteps,
+  [QMetryToolsHandlers.FETCH_TEST_CASE_STEPS_WITH_UDF]:
+    fetchTestCaseStepsWithUdf,
   [QMetryToolsHandlers.FETCH_TEST_CASE_EXECUTIONS]: fetchTestCaseExecutions,
   [QMetryToolsHandlers.LINK_REQUIREMENT_TO_TESTCASE]: linkRequirementToTestCase,
   [QMetryToolsHandlers.FETCH_REQUIREMENTS]: fetchRequirements,
@@ -99,6 +110,7 @@ export const QMETRY_HANDLER_MAP: Record<string, QMetryHandler> = {
   [QMetryToolsHandlers.CREATE_TEST_SUITE]: createTestSuites,
   [QMetryToolsHandlers.UPDATE_TEST_SUITE]: updateTestSuite,
   [QMetryToolsHandlers.FETCH_TEST_SUITES]: fetchTestSuites,
+  [QMetryToolsHandlers.FETCH_TEST_SUITE_DETAILS]: fetchTestSuiteDetails,
   [QMetryToolsHandlers.FETCH_TESTSUITES_FOR_TESTCASE]:
     fetchTestSuitesForTestCase,
   [QMetryToolsHandlers.LINK_TESTCASES_TO_TESTSUITE]: linkTestCasesToTestSuite,
@@ -117,6 +129,7 @@ export const QMETRY_HANDLER_MAP: Record<string, QMetryHandler> = {
   [QMetryToolsHandlers.CREATE_ISSUE]: createIssue,
   [QMetryToolsHandlers.UPDATE_ISSUE]: updateIssue,
   [QMetryToolsHandlers.FETCH_ISSUES]: fetchIssues,
+  [QMetryToolsHandlers.FETCH_ISSUE_DETAILS]: fetchIssueDetails,
   [QMetryToolsHandlers.LINK_ISSUES_TO_TESTCASE_RUN]: linkIssuesToTestcaseRun,
   [QMetryToolsHandlers.LINK_PLATFORMS_TO_TESTSUITE]: linkPlatformsToTestSuite,
   [QMetryToolsHandlers.IMPORT_AUTOMATION_RESULTS]: importAutomationResults,
@@ -128,4 +141,8 @@ export const QMETRY_HANDLER_MAP: Record<string, QMetryHandler> = {
   [QMetryToolsHandlers.FETCH_TEST_RUN_UDF_VALUES]: fetchTestRunUdfValues,
   [QMetryToolsHandlers.FETCH_ISSUE_EXECUTIONS]: fetchIssueExecutions,
   [QMetryToolsHandlers.FETCH_CASCADE_CHILD_VALUES]: fetchCascadeChildValues,
+  [QMetryToolsHandlers.FETCH_GATE_CONFIGURATION]: getGateConfiguration,
+  [QMetryToolsHandlers.EXECUTE_GATE_REPORT]: executeGateReport,
+  [QMetryToolsHandlers.EXPORT_HTML_REPORT]: exportHtmlReport,
+  [QMetryToolsHandlers.FETCH_UDF_LAYOUT]: fetchUdfLayout,
 };

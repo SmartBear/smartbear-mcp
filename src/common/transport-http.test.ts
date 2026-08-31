@@ -108,7 +108,6 @@ vi.mock("./server.js", () => ({
     addClient: vi.fn(),
     getClients: vi.fn().mockReturnValue([]),
     connect: vi.fn(),
-    setSamplingSupported: vi.fn(),
     setElicitationSupported: vi.fn(),
     cleanupSession: vi.fn(),
     server: { elicitInput: vi.fn() },
@@ -277,7 +276,6 @@ describe("newServer (OAuth flow)", () => {
           addClient: vi.fn(),
           getClients: () => [testClient],
           connect: vi.fn(),
-          setSamplingSupported: vi.fn(),
           setElicitationSupported: vi.fn(),
           cleanupSession: vi.fn(),
           server: { elicitInput: vi.fn() },
@@ -317,7 +315,6 @@ describe("newServer (OAuth flow)", () => {
           addClient: vi.fn(),
           getClients: () => [testClient],
           connect: vi.fn(),
-          setSamplingSupported: vi.fn(),
           setElicitationSupported: vi.fn(),
           cleanupSession: vi.fn(),
           server: { elicitInput: vi.fn() },
@@ -354,7 +351,6 @@ describe("newServer (OAuth flow)", () => {
           addClient: vi.fn(),
           getClients: () => [testClient],
           connect: vi.fn(),
-          setSamplingSupported: vi.fn(),
           setElicitationSupported: vi.fn(),
           cleanupSession: vi.fn(),
           server: { elicitInput: vi.fn() },
@@ -386,7 +382,6 @@ describe("newServer (OAuth flow)", () => {
           addClient: vi.fn(),
           getClients: () => [testClient],
           connect: vi.fn(),
-          setSamplingSupported: vi.fn(),
           setElicitationSupported: vi.fn(),
           cleanupSession: vi.fn(),
           server: { elicitInput: vi.fn() },
@@ -428,7 +423,6 @@ describe("newServer (OAuth flow)", () => {
           addClient: vi.fn(),
           getClients: () => [testClient],
           connect: vi.fn(),
-          setSamplingSupported: vi.fn(),
           setElicitationSupported: vi.fn(),
           cleanupSession: vi.fn(),
           server: { elicitInput: vi.fn() },
@@ -686,7 +680,6 @@ describe("handleStreamableHttpRequest (session routing)", () => {
         addClient: vi.fn(),
         getClients: () => [testClient],
         connect: capturedConnect,
-        setSamplingSupported: vi.fn(),
         setElicitationSupported: vi.fn(),
         cleanupSession: vi.fn(),
         server: { elicitInput: vi.fn() },
@@ -698,9 +691,8 @@ describe("handleStreamableHttpRequest (session routing)", () => {
     // initialize flow against an incomplete fakeResponse stub. The point of
     // this test is to verify dispatch *into* createNewTransport, not to
     // exercise the SDK internals.
-    const { StreamableHTTPServerTransport } = await import(
-      "@modelcontextprotocol/sdk/server/streamableHttp.js"
-    );
+    const { NodeStreamableHTTPServerTransport: StreamableHTTPServerTransport } =
+      await import("@modelcontextprotocol/node");
     const handleRequestSpy = vi
       .spyOn(StreamableHTTPServerTransport.prototype, "handleRequest")
       .mockResolvedValue(undefined);
@@ -725,9 +717,8 @@ describe("handleStreamableHttpRequest (session routing)", () => {
     const handleRequest = vi.fn().mockResolvedValue(undefined);
     // Construct a stand-in for StreamableHTTPServerTransport that satisfies the
     // instanceof check inside getExistingTransport without spinning up a real one.
-    const { StreamableHTTPServerTransport } = await import(
-      "@modelcontextprotocol/sdk/server/streamableHttp.js"
-    );
+    const { NodeStreamableHTTPServerTransport: StreamableHTTPServerTransport } =
+      await import("@modelcontextprotocol/node");
     const fakeTransport = Object.create(
       StreamableHTTPServerTransport.prototype,
     );

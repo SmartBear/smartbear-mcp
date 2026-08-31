@@ -1,7 +1,5 @@
-import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ZodRawShape } from "zod";
 import { z } from "zod";
-import { Tool, ToolError } from "../../../common/tools";
+import { Tool, ToolError, type ToolHandler } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { BearQClient } from "../../client";
 
@@ -17,7 +15,7 @@ export class ListEnvironments extends Tool<BearQClient> {
     readOnly: true,
   };
 
-  handle: ToolCallback<ZodRawShape> = async (_args) => {
+  handle: ToolHandler = async (_args) => {
     const res = await fetch(`${this.client.getBaseUrl()}/environments`, {
       method: "GET",
       headers: this.client.getHeaders(),

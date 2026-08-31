@@ -186,7 +186,7 @@ export const CreatePortalArgsSchema = z.object({
   subdomain: z
     .string()
     .describe(
-      "The portal subdomain - used in the portal URL (e.g., 'myportal' for myportal.example.com). Must be unique, lowercase, 3-20 characters, alphanumeric with hyphens",
+      "The portal subdomain - used in the portal URL (e.g., 'myportal' for myportal.example.com). Must be unique, lowercase, 3-20 characters, alphanumeric with hyphens. Recommended: slugified organization name plus a random 3-character suffix (e.g., 'acmecorp-k7p') to avoid collisions",
     ),
   offline: z
     .boolean()
@@ -717,6 +717,7 @@ export const ProductOutputSchema = z.looseObject({
   description: z.string().optional(),
   public: z.boolean().optional(),
   hidden: z.boolean().optional(),
+  url: z.string().optional(),
 });
 
 export const ProductsListOutputSchema = z.object({
@@ -742,7 +743,7 @@ export const CreateTocOutputSchema = z.object({
   documentId: z.string().optional(),
 });
 
-export const DocumentOutputSchema = z.object({
+export const DocumentOutputSchema = z.looseObject({
   id: z.string().optional(),
   type: z.enum(["html", "markdown"]).optional(),
   source: z.enum(["internal", "external"]).optional(),

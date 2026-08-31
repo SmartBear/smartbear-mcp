@@ -1,14 +1,34 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
 import { FunctionalTestingAPI } from "../client/functional-testing-api";
+import {
+  CreateFunctionalTestingSuiteParamsSchema,
+  CreateFunctionalTestingTestParamsSchema,
+} from "../client/functional-testing-types";
 
 const fetchMock = createFetchMock(vi);
 fetchMock.enableMocks();
 
-const testsMock = [
-  { id: "test-1", name: "Login Test" },
-  { id: "test-2", name: "Checkout Test" },
-];
+const testsMock = {
+  tests: [
+    {
+      id: 1,
+      name: "Login Test",
+      created: 1719400000000,
+      tags: [],
+      folders: [],
+      url: "https://app.reflect.run/tests/1/definition?accountId=42",
+    },
+    {
+      id: 2,
+      name: "Checkout Test",
+      created: 1719500000000,
+      tags: [],
+      folders: [],
+      url: "https://app.reflect.run/tests/2/definition?accountId=42",
+    },
+  ],
+};
 
 const UNREACHABLE_MESSAGE =
   "Swagger Functional Testing service is currently unreachable. Retry after a moment.";
@@ -17,30 +37,28 @@ const AUTH_FAILED_MESSAGE =
   "Authentication failed. Verify your API token is valid and has not expired.";
 
 const suitesResponseMock = {
-  suites: [
-    {
-      id: "suite-1",
-      accountId: 42,
-      name: "Smoke Suite",
-      slug: "smoke-suite",
-      created: 1719400000000,
-      numTestInstances: 3,
-    },
-    {
-      id: "suite-2",
-      accountId: 42,
-      name: "Regression Suite",
-      slug: "regression-suite",
-      created: 1719500000000,
-      numTestInstances: 12,
-    },
-  ],
-  stats: {
-    executions: 15,
-    passRate: 0.93,
-    avgRuntimeSecs: 42,
-    cumExecTimeSecs: 630,
+  suites: {
+    data: [
+      {
+        name: "Smoke Suite",
+        suiteId: "smoke-suite",
+        created: 1719400000000,
+      },
+      {
+        name: "Regression Suite",
+        suiteId: "regression-suite",
+        created: 1719500000000,
+      },
+    ],
   },
+};
+
+const suitesResponseExpected = {
+  suites: suitesResponseMock.suites.data.map(({ name, suiteId, created }) => ({
+    name,
+    slug: suiteId,
+    created,
+  })),
 };
 
 describe("FunctionalTestingAPI", () => {
@@ -52,6 +70,287 @@ describe("FunctionalTestingAPI", () => {
       () => "test-api-key",
       "SmartBear MCP Server/test",
     );
+  });
+
+  describe("createTest", () => {
+    const createResponseMock = {
+      id: 12345,
+      url: "https://app.reflect.run/tests/12345/definition?accountId=54321",
+    };
+
+    it("should POST to the correct endpoint with X-API-KEY header", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
+
+      await api.createTest({ name: "My New Test" });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://api.reflect.run/v1/tests",
+        expect.objectContaining({
+          method: "POST",
+          headers: expect.objectContaining({ "X-API-KEY": "test-api-key" }),
+        }),
+      );
+    });
+
+    it("should inject type: api at top level of request body", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
+
+      await api.createTest({ name: "My New Test" });
+
+      const [, init] = fetchMock.mock.calls[0];
+      const body = JSON.parse((init as RequestInit).body as string);
+      expect(body.type).toBe("api");
+      expect(body.name).toBe("My New Test");
+    });
+
+    it("should inject type: api into each step", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
+
+      await api.createTest({
+        name: "My New Test",
+        steps: [
+          { url: "https://example.com/api", httpMethod: "GET" },
+          { url: "https://example.com/api/users", httpMethod: "POST" },
+        ],
+      });
+
+      const [, init] = fetchMock.mock.calls[0];
+      const body = JSON.parse((init as RequestInit).body as string);
+      expect(body.steps[0].type).toBe("api");
+      expect(body.steps[1].type).toBe("api");
+      expect(body.steps[0].url).toBe("https://example.com/api");
+      expect(body.steps[0].httpMethod).toBe("GET");
+      expect(body.steps[1].url).toBe("https://example.com/api/users");
+      expect(body.steps[1].httpMethod).toBe("POST");
+    });
+
+    it("should forward all step fields to the request body", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
+
+      await api.createTest({
+        name: "Full Test",
+        description: "Test description",
+        steps: [
+          {
+            url: "https://example.com/api",
+            httpMethod: "POST",
+            requestBody: '{"key":"value"}',
+            requestHeaders: [{ name: "X-Custom", value: "abc" }],
+            followRedirects: true,
+            description: "Step 1",
+          },
+        ],
+      });
+
+      const [, init] = fetchMock.mock.calls[0];
+      const body = JSON.parse((init as RequestInit).body as string);
+      expect(body).toMatchObject({
+        name: "Full Test",
+        description: "Test description",
+        type: "api",
+        steps: [
+          {
+            type: "api",
+            url: "https://example.com/api",
+            httpMethod: "POST",
+            requestBody: '{"key":"value"}',
+            requestHeaders: [{ name: "X-Custom", value: "abc" }],
+            followRedirects: true,
+            description: "Step 1",
+          },
+        ],
+      });
+    });
+
+    it("should not allow caller to override the injected type", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
+
+      const rogueArgs: any = {
+        name: "Override Test",
+        type: "browser",
+        steps: [{ url: "https://example.com", type: "click" }],
+      };
+      await api.createTest(rogueArgs);
+
+      const [, init] = fetchMock.mock.calls[0];
+      const body = JSON.parse((init as RequestInit).body as string);
+      expect(body.type).toBe("api");
+      expect(body.steps[0].type).toBe("api");
+    });
+
+    it("should handle test with no steps", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
+
+      await api.createTest({ name: "Empty Test" });
+
+      const [, init] = fetchMock.mock.calls[0];
+      const body = JSON.parse((init as RequestInit).body as string);
+      expect(body.steps).toBeUndefined();
+    });
+
+    it("should return the new test id and url", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
+
+      const result = await api.createTest({ name: "My New Test" });
+
+      expect(result).toEqual(createResponseMock);
+    });
+
+    it("should throw ToolError on HTTP error", async () => {
+      fetchMock.mockResponseOnce("Internal Server Error", { status: 500 });
+
+      await expect(api.createTest({ name: "My New Test" })).rejects.toThrow(
+        "Failed to create Functional Testing test",
+      );
+    });
+
+    it("should map network errors to an unreachable message", async () => {
+      fetchMock.mockRejectOnce(new Error("Network error"));
+
+      await expect(api.createTest({ name: "My New Test" })).rejects.toThrow(
+        UNREACHABLE_MESSAGE,
+      );
+    });
+
+    it("should forward assertions.statusCodes on a step", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
+
+      await api.createTest({
+        name: "Status Code Test",
+        steps: [
+          {
+            url: "https://example.com/api",
+            httpMethod: "GET",
+            assertions: { statusCodes: [{ start: 200, end: 299 }] },
+          },
+        ],
+      });
+
+      const [, init] = fetchMock.mock.calls[0];
+      const body = JSON.parse((init as RequestInit).body as string);
+      expect(body.steps[0].assertions.statusCodes).toEqual([
+        { start: 200, end: 299 },
+      ]);
+    });
+
+    it("forwards assertions.bodyRules paths in bracket notation", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
+
+      const args = CreateFunctionalTestingTestParamsSchema.parse({
+        name: "Body Rule Test",
+        steps: [
+          {
+            url: "https://example.com/api",
+            httpMethod: "POST",
+            assertions: {
+              bodyRules: [
+                {
+                  path: '["data"]["name"]',
+                  assertionType: "string",
+                  operator: "eq",
+                  target: "Alice",
+                },
+                {
+                  path: '["data"]["token"]',
+                  assertionType: "regex",
+                  pattern: "nonempty",
+                },
+              ],
+            },
+          },
+        ],
+      });
+
+      await api.createTest(args);
+
+      const [, init] = fetchMock.mock.calls[0];
+      const body = JSON.parse((init as RequestInit).body as string);
+      expect(body.steps[0].assertions.bodyRules).toEqual([
+        {
+          path: '["data"]["name"]',
+          assertionType: "string",
+          operator: "eq",
+          target: "Alice",
+        },
+        {
+          path: '["data"]["token"]',
+          assertionType: "regex",
+          pattern: "nonempty",
+        },
+      ]);
+    });
+
+    it("should forward assertions.bodyType on a step", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
+
+      await api.createTest({
+        name: "Body Type Test",
+        steps: [
+          {
+            url: "https://example.com/api",
+            httpMethod: "GET",
+            assertions: {
+              bodyType: "xml",
+              bodyRules: [
+                {
+                  path: '["root"]["item"]',
+                  assertionType: "string",
+                  operator: "contains",
+                  target: "foo",
+                },
+              ],
+            },
+          },
+        ],
+      });
+
+      const [, init] = fetchMock.mock.calls[0];
+      const body = JSON.parse((init as RequestInit).body as string);
+      expect(body.steps[0].assertions.bodyType).toBe("xml");
+    });
+
+    it("should forward status codes, body, bodyType and bodyRules under assertions", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
+
+      await api.createTest({
+        name: "Nested Assertion Test",
+        steps: [
+          {
+            url: "https://example.com/api",
+            httpMethod: "POST",
+            assertions: {
+              statusCodes: [{ start: 200, end: 299 }],
+              body: '{"name":"doggie"}',
+              bodyType: "json",
+              bodyRules: [
+                {
+                  path: '["category"]["name"]',
+                  assertionType: "string",
+                  operator: "eq",
+                  target: "Dogs",
+                },
+              ],
+            },
+          },
+        ],
+      });
+
+      const [, init] = fetchMock.mock.calls[0];
+      const body = JSON.parse((init as RequestInit).body as string);
+      expect(body.steps[0].assertions).toEqual({
+        statusCodes: [{ start: 200, end: 299 }],
+        body: '{"name":"doggie"}',
+        bodyType: "json",
+        bodyRules: [
+          {
+            path: '["category"]["name"]',
+            assertionType: "string",
+            operator: "eq",
+            target: "Dogs",
+          },
+        ],
+      });
+    });
   });
 
   describe("listTests", () => {
@@ -77,12 +376,12 @@ describe("FunctionalTestingAPI", () => {
       expect(result).toEqual(testsMock);
     });
 
-    it("should return empty array when no tests exist", async () => {
-      fetchMock.mockResponseOnce(JSON.stringify([]));
+    it("should return empty tests list when no tests exist", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify({ tests: [] }));
 
       const result = await api.listTests();
 
-      expect(result).toEqual([]);
+      expect(result).toEqual({ tests: [] });
     });
 
     it("should throw ToolError on HTTP error", async () => {
@@ -227,7 +526,7 @@ describe("FunctionalTestingAPI", () => {
 
   describe("listSuiteExecutions", () => {
     const suiteExecutionsMock = {
-      suiteId: "regression-tests",
+      slug: "regression-tests",
       executions: {
         data: [
           { executionId: 12, status: "pending", isFinished: false },
@@ -240,7 +539,7 @@ describe("FunctionalTestingAPI", () => {
     it("should call the correct endpoint with GET method and X-API-KEY header", async () => {
       fetchMock.mockResponseOnce(JSON.stringify(suiteExecutionsMock));
 
-      await api.listSuiteExecutions({ suiteId: "regression-tests" });
+      await api.listSuiteExecutions({ slug: "regression-tests" });
 
       expect(fetchMock).toHaveBeenCalledWith(
         "https://api.reflect.run/v1/suites/regression-tests/executions",
@@ -255,7 +554,7 @@ describe("FunctionalTestingAPI", () => {
       fetchMock.mockResponseOnce(JSON.stringify(suiteExecutionsMock));
 
       const result = (await api.listSuiteExecutions({
-        suiteId: "regression-tests",
+        slug: "regression-tests",
       })) as typeof suiteExecutionsMock;
 
       expect(result.executions.data.map((e) => e.executionId)).toEqual([
@@ -264,19 +563,19 @@ describe("FunctionalTestingAPI", () => {
     });
 
     it("should return empty list as-is when no executions exist", async () => {
-      const empty = { suiteId: "regression-tests", executions: { data: [] } };
+      const empty = { slug: "regression-tests", executions: { data: [] } };
       fetchMock.mockResponseOnce(JSON.stringify(empty));
 
       const result = await api.listSuiteExecutions({
-        suiteId: "regression-tests",
+        slug: "regression-tests",
       });
 
       expect(result).toEqual(empty);
     });
 
-    it("should throw ToolError when suiteId is missing", async () => {
-      await expect(api.listSuiteExecutions({ suiteId: "" })).rejects.toThrow(
-        "suiteId argument is required",
+    it("should throw ToolError when slug is missing", async () => {
+      await expect(api.listSuiteExecutions({ slug: "" })).rejects.toThrow(
+        "slug argument is required",
       );
     });
 
@@ -284,9 +583,9 @@ describe("FunctionalTestingAPI", () => {
       fetchMock.mockResponseOnce("Not Found", { status: 404 });
 
       await expect(
-        api.listSuiteExecutions({ suiteId: "missing" }),
+        api.listSuiteExecutions({ slug: "missing" }),
       ).rejects.toThrow(
-        "Test suite not found. Verify the suiteId is correct and belongs to your workspace.",
+        "Test suite not found. Verify the slug is correct and belongs to your workspace.",
       );
     });
 
@@ -294,7 +593,7 @@ describe("FunctionalTestingAPI", () => {
       fetchMock.mockResponseOnce("Boom", { status: 500 });
 
       await expect(
-        api.listSuiteExecutions({ suiteId: "regression-tests" }),
+        api.listSuiteExecutions({ slug: "regression-tests" }),
       ).rejects.toThrow("Failed to list suite executions: 500");
     });
 
@@ -302,13 +601,14 @@ describe("FunctionalTestingAPI", () => {
       fetchMock.mockRejectOnce(new Error("Network error"));
 
       await expect(
-        api.listSuiteExecutions({ suiteId: "regression-tests" }),
+        api.listSuiteExecutions({ slug: "regression-tests" }),
       ).rejects.toThrow(UNREACHABLE_MESSAGE);
     });
   });
 
   describe("cancelSuiteExecution", () => {
     const cancelledMock = {
+      suiteId: "regression-tests",
       executionId: 47,
       status: "cancelled",
       isFinished: true,
@@ -318,7 +618,7 @@ describe("FunctionalTestingAPI", () => {
       fetchMock.mockResponseOnce(JSON.stringify(cancelledMock));
 
       await api.cancelSuiteExecution({
-        suiteId: "regression-tests",
+        slug: "regression-tests",
         executionId: "47",
       });
 
@@ -331,27 +631,33 @@ describe("FunctionalTestingAPI", () => {
       );
     });
 
-    it("should return parsed JSON response", async () => {
+    it("should return parsed JSON response with suiteId renamed to slug", async () => {
       fetchMock.mockResponseOnce(JSON.stringify(cancelledMock));
 
       const result = await api.cancelSuiteExecution({
-        suiteId: "regression-tests",
+        slug: "regression-tests",
         executionId: "47",
       });
 
-      expect(result).toEqual(cancelledMock);
+      expect(result).toEqual({
+        executionId: 47,
+        status: "cancelled",
+        isFinished: true,
+        slug: "regression-tests",
+      });
+      expect(result).not.toHaveProperty("suiteId");
     });
 
-    it("should throw ToolError when suiteId is missing", async () => {
+    it("should throw ToolError when slug is missing", async () => {
       await expect(
-        api.cancelSuiteExecution({ suiteId: "", executionId: "47" }),
-      ).rejects.toThrow("suiteId argument is required");
+        api.cancelSuiteExecution({ slug: "", executionId: "47" }),
+      ).rejects.toThrow("slug argument is required");
     });
 
     it("should throw ToolError when executionId is missing", async () => {
       await expect(
         api.cancelSuiteExecution({
-          suiteId: "regression-tests",
+          slug: "regression-tests",
           executionId: "",
         }),
       ).rejects.toThrow("executionId argument is required");
@@ -361,9 +667,9 @@ describe("FunctionalTestingAPI", () => {
       fetchMock.mockResponseOnce("Not Found", { status: 404 });
 
       await expect(
-        api.cancelSuiteExecution({ suiteId: "missing", executionId: "47" }),
+        api.cancelSuiteExecution({ slug: "missing", executionId: "47" }),
       ).rejects.toThrow(
-        "Suite execution not found. Verify the suiteId and executionId are correct and belong to your workspace.",
+        "Suite execution not found. Verify the slug and executionId are correct and belong to your workspace.",
       );
     });
 
@@ -372,7 +678,7 @@ describe("FunctionalTestingAPI", () => {
 
       await expect(
         api.cancelSuiteExecution({
-          suiteId: "regression-tests",
+          slug: "regression-tests",
           executionId: "47",
         }),
       ).rejects.toThrow(
@@ -385,7 +691,7 @@ describe("FunctionalTestingAPI", () => {
 
       await expect(
         api.cancelSuiteExecution({
-          suiteId: "regression-tests",
+          slug: "regression-tests",
           executionId: "47",
         }),
       ).rejects.toThrow("Failed to cancel suite execution: 500");
@@ -396,10 +702,22 @@ describe("FunctionalTestingAPI", () => {
 
       await expect(
         api.cancelSuiteExecution({
-          suiteId: "regression-tests",
+          slug: "regression-tests",
           executionId: "47",
         }),
       ).rejects.toThrow(UNREACHABLE_MESSAGE);
+    });
+  });
+
+  describe("ftFetch network error with cause code", () => {
+    it("should include the cause code in the error message when fetch throws with err.cause.code", async () => {
+      const err = new Error("connect ECONNREFUSED 127.0.0.1:443");
+      (err as any).cause = { code: "ECONNREFUSED" };
+      fetchMock.mockRejectOnce(err);
+
+      await expect(api.listTests()).rejects.toThrow(
+        "Failed to reach Swagger Functional Testing API: ECONNREFUSED. Please verify your settings and network connectivity",
+      );
     });
   });
 
@@ -414,6 +732,269 @@ describe("FunctionalTestingAPI", () => {
       fetchMock.mockResponseOnce("Forbidden", { status: 403 });
 
       await expect(api.listTests()).rejects.toThrow(AUTH_FAILED_MESSAGE);
+    });
+  });
+
+  describe("createSuite", () => {
+    const createSuiteResponseMock = {
+      slug: "nightly-api-regression",
+      url: "https://app.reflect.run/suites/nightly-api-regression?accountId=1",
+    };
+
+    it("should POST to the correct endpoint with X-API-KEY header", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createSuiteResponseMock));
+
+      await api.createSuite({
+        name: "Nightly API Regression",
+        runApiTests: [{ testIds: [101, 102] }],
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://api.reflect.run/v1/suites",
+        expect.objectContaining({
+          method: "POST",
+          headers: expect.objectContaining({ "X-API-KEY": "test-api-key" }),
+          body: JSON.stringify({
+            name: "Nightly API Regression",
+            runApiTests: [{ testIds: [101, 102] }],
+          }),
+        }),
+      );
+    });
+
+    it("should forward agentName and per-block parallel/maxRetryAttempts/title", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createSuiteResponseMock));
+
+      await api.createSuite({
+        name: "Nightly API Regression",
+        agentName: "my-tunnel-agent",
+        runApiTests: [
+          {
+            testIds: [101, 102],
+            parallel: true,
+            maxRetryAttempts: 2,
+            title: "Smoke",
+          },
+          { testIds: [201] },
+        ],
+      });
+
+      const [, init] = fetchMock.mock.calls[0];
+      const body = JSON.parse((init as RequestInit).body as string);
+      expect(body).toEqual({
+        name: "Nightly API Regression",
+        agentName: "my-tunnel-agent",
+        runApiTests: [
+          {
+            testIds: [101, 102],
+            parallel: true,
+            maxRetryAttempts: 2,
+            title: "Smoke",
+          },
+          { testIds: [201] },
+        ],
+      });
+    });
+
+    it("should return the created suite", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createSuiteResponseMock));
+
+      const result = await api.createSuite({
+        name: "Nightly API Regression",
+        runApiTests: [{ testIds: [101, 102] }],
+      });
+
+      expect(result).toEqual(createSuiteResponseMock);
+    });
+
+    it("should send a minimal body for a single test in a single block with no optional fields", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createSuiteResponseMock));
+
+      await api.createSuite({
+        name: "Nightly API Regression",
+        runApiTests: [{ testIds: [101] }],
+      });
+
+      const [, init] = fetchMock.mock.calls[0];
+      const body = JSON.parse((init as RequestInit).body as string);
+      expect(body).toEqual({
+        name: "Nightly API Regression",
+        runApiTests: [{ testIds: [101] }],
+      });
+      expect(body.agentName).toBeUndefined();
+      expect(body.runApiTests[0].parallel).toBeUndefined();
+      expect(body.runApiTests[0].maxRetryAttempts).toBeUndefined();
+      expect(body.runApiTests[0].title).toBeUndefined();
+    });
+
+    it("should throw ToolError with the server message on HTTP error", async () => {
+      fetchMock.mockResponseOnce("Internal Server Error", { status: 500 });
+
+      await expect(
+        api.createSuite({
+          name: "Nightly API Regression",
+          runApiTests: [{ testIds: [1] }],
+        }),
+      ).rejects.toThrow("Failed to create Functional Testing suite");
+    });
+
+    it("should map network errors to an unreachable message", async () => {
+      fetchMock.mockRejectOnce(new Error("Network error"));
+
+      await expect(
+        api.createSuite({
+          name: "Nightly API Regression",
+          runApiTests: [{ testIds: [1] }],
+        }),
+      ).rejects.toThrow(UNREACHABLE_MESSAGE);
+    });
+
+    it("should throw an authentication error on 401", async () => {
+      fetchMock.mockResponseOnce("Unauthorized", { status: 401 });
+
+      await expect(
+        api.createSuite({
+          name: "Nightly API Regression",
+          runApiTests: [{ testIds: [1] }],
+        }),
+      ).rejects.toThrow(AUTH_FAILED_MESSAGE);
+    });
+  });
+
+  describe("CreateFunctionalTestingSuiteParamsSchema", () => {
+    it("should accept blocks with distinct titles", () => {
+      const result = CreateFunctionalTestingSuiteParamsSchema.safeParse({
+        name: "Nightly API Regression",
+        runApiTests: [
+          { testIds: [101], title: "Smoke" },
+          { testIds: [201], title: "Regression" },
+        ],
+      });
+
+      expect(result.success).toBe(true);
+    });
+
+    it("should accept multiple blocks without a title", () => {
+      const result = CreateFunctionalTestingSuiteParamsSchema.safeParse({
+        name: "Nightly API Regression",
+        runApiTests: [{ testIds: [101] }, { testIds: [201] }],
+      });
+
+      expect(result.success).toBe(true);
+    });
+
+    it("should reject duplicate block titles", () => {
+      const result = CreateFunctionalTestingSuiteParamsSchema.safeParse({
+        name: "Nightly API Regression",
+        runApiTests: [
+          { testIds: [101], title: "Smoke" },
+          { testIds: [201], title: "Smoke" },
+        ],
+      });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0].message).toContain(
+          'Duplicate block title "Smoke"',
+        );
+        expect(result.error.issues[0].path).toEqual([
+          "runApiTests",
+          1,
+          "title",
+        ]);
+      }
+    });
+
+    it("should reject a duplicate title anywhere in the suite, not just between adjacent blocks", () => {
+      const result = CreateFunctionalTestingSuiteParamsSchema.safeParse({
+        name: "Nightly API Regression",
+        runApiTests: [
+          { testIds: [101], title: "Smoke" },
+          { testIds: [201] },
+          { testIds: [301], title: "Smoke" },
+        ],
+      });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0].path).toEqual([
+          "runApiTests",
+          2,
+          "title",
+        ]);
+      }
+    });
+
+    it("should reject an empty name", () => {
+      const result = CreateFunctionalTestingSuiteParamsSchema.safeParse({
+        name: "",
+        runApiTests: [{ testIds: [101] }],
+      });
+
+      expect(result.success).toBe(false);
+    });
+
+    it("should reject a missing runApiTests", () => {
+      const result = CreateFunctionalTestingSuiteParamsSchema.safeParse({
+        name: "Nightly API Regression",
+      });
+
+      expect(result.success).toBe(false);
+    });
+
+    it("should reject an empty runApiTests array", () => {
+      const result = CreateFunctionalTestingSuiteParamsSchema.safeParse({
+        name: "Nightly API Regression",
+        runApiTests: [],
+      });
+
+      expect(result.success).toBe(false);
+    });
+
+    it("should reject a block with an empty testIds array", () => {
+      const result = CreateFunctionalTestingSuiteParamsSchema.safeParse({
+        name: "Nightly API Regression",
+        runApiTests: [{ testIds: [] }],
+      });
+
+      expect(result.success).toBe(false);
+    });
+
+    it("should reject maxRetryAttempts below 0", () => {
+      const result = CreateFunctionalTestingSuiteParamsSchema.safeParse({
+        name: "Nightly API Regression",
+        runApiTests: [{ testIds: [101], maxRetryAttempts: -1 }],
+      });
+
+      expect(result.success).toBe(false);
+    });
+
+    it("should reject maxRetryAttempts above 3", () => {
+      const result = CreateFunctionalTestingSuiteParamsSchema.safeParse({
+        name: "Nightly API Regression",
+        runApiTests: [{ testIds: [101], maxRetryAttempts: 4 }],
+      });
+
+      expect(result.success).toBe(false);
+    });
+
+    it("should accept maxRetryAttempts within the 0-3 range", () => {
+      const result = CreateFunctionalTestingSuiteParamsSchema.safeParse({
+        name: "Nightly API Regression",
+        runApiTests: [{ testIds: [101], maxRetryAttempts: 3 }],
+      });
+
+      expect(result.success).toBe(true);
+    });
+
+    it("should reject an empty agentName", () => {
+      const result = CreateFunctionalTestingSuiteParamsSchema.safeParse({
+        name: "Nightly API Regression",
+        agentName: "",
+        runApiTests: [{ testIds: [101] }],
+      });
+
+      expect(result.success).toBe(false);
     });
   });
 
@@ -432,16 +1013,19 @@ describe("FunctionalTestingAPI", () => {
       );
     });
 
-    it("should return parsed JSON response", async () => {
+    it("should return parsed JSON response with suiteId renamed to slug", async () => {
       fetchMock.mockResponseOnce(JSON.stringify(suitesResponseMock));
 
       const result = await api.listSuites();
 
-      expect(result).toEqual(suitesResponseMock);
+      expect(result).toEqual(suitesResponseExpected);
+      for (const suite of result.suites) {
+        expect(suite).not.toHaveProperty("suiteId");
+      }
     });
 
     it("should return an empty suites list when no suites exist", async () => {
-      fetchMock.mockResponseOnce(JSON.stringify({ suites: [] }));
+      fetchMock.mockResponseOnce(JSON.stringify({ suites: { data: [] } }));
 
       const result = await api.listSuites();
 
@@ -482,12 +1066,16 @@ describe("FunctionalTestingAPI", () => {
   });
 
   describe("runSuite", () => {
-    const executionMock = { executionId: "7", status: "pending" };
+    const executionMock = {
+      suiteId: "checkout-suite",
+      executionId: "7",
+      status: "pending",
+    };
 
     it("should call the correct endpoint with POST method and X-API-KEY header", async () => {
       fetchMock.mockResponseOnce(JSON.stringify(executionMock));
 
-      await api.runSuite({ suiteId: "checkout-suite" });
+      await api.runSuite({ slug: "checkout-suite" });
 
       expect(fetchMock).toHaveBeenCalledWith(
         "https://api.reflect.run/v1/suites/checkout-suite/executions",
@@ -501,7 +1089,7 @@ describe("FunctionalTestingAPI", () => {
     it("should not send a request body when no tunnelAgentName is provided", async () => {
       fetchMock.mockResponseOnce(JSON.stringify(executionMock));
 
-      await api.runSuite({ suiteId: "checkout-suite" });
+      await api.runSuite({ slug: "checkout-suite" });
 
       const [, init] = fetchMock.mock.calls[0];
       expect((init as RequestInit | undefined)?.body).toBeUndefined();
@@ -511,7 +1099,7 @@ describe("FunctionalTestingAPI", () => {
       fetchMock.mockResponseOnce(JSON.stringify(executionMock));
 
       await api.runSuite({
-        suiteId: "checkout-suite",
+        slug: "checkout-suite",
         tunnelAgentName: "my-tunnel",
       });
 
@@ -523,12 +1111,17 @@ describe("FunctionalTestingAPI", () => {
       );
     });
 
-    it("should return parsed JSON response", async () => {
+    it("should return parsed JSON response with suiteId renamed to slug", async () => {
       fetchMock.mockResponseOnce(JSON.stringify(executionMock));
 
-      const result = await api.runSuite({ suiteId: "checkout-suite" });
+      const result = await api.runSuite({ slug: "checkout-suite" });
 
-      expect(result).toEqual(executionMock);
+      expect(result).toEqual({
+        executionId: "7",
+        status: "pending",
+        slug: "checkout-suite",
+      });
+      expect(result).not.toHaveProperty("suiteId");
     });
 
     it("should include url field in response", async () => {
@@ -539,23 +1132,23 @@ describe("FunctionalTestingAPI", () => {
         }),
       );
 
-      const result = await api.runSuite({ suiteId: "checkout-suite" });
+      const result = await api.runSuite({ slug: "checkout-suite" });
 
       expect((result as Record<string, unknown>).url).toBe(
         "https://app.reflect.run/suites/checkout-suite/executions/7",
       );
     });
 
-    it("should throw ToolError when suiteId is missing", async () => {
-      await expect(api.runSuite({ suiteId: "" })).rejects.toThrow(
-        "suiteId argument is required",
+    it("should throw ToolError when slug is missing", async () => {
+      await expect(api.runSuite({ slug: "" })).rejects.toThrow(
+        "slug argument is required",
       );
     });
 
     it("should throw an authentication error on 401", async () => {
       fetchMock.mockResponseOnce("Unauthorized", { status: 401 });
 
-      await expect(api.runSuite({ suiteId: "checkout-suite" })).rejects.toThrow(
+      await expect(api.runSuite({ slug: "checkout-suite" })).rejects.toThrow(
         "Authentication failed. Verify your API token is valid and has not expired.",
       );
     });
@@ -563,7 +1156,7 @@ describe("FunctionalTestingAPI", () => {
     it("should throw an authentication error on 403", async () => {
       fetchMock.mockResponseOnce("Forbidden", { status: 403 });
 
-      await expect(api.runSuite({ suiteId: "checkout-suite" })).rejects.toThrow(
+      await expect(api.runSuite({ slug: "checkout-suite" })).rejects.toThrow(
         "Authentication failed. Verify your API token is valid and has not expired.",
       );
     });
@@ -571,7 +1164,7 @@ describe("FunctionalTestingAPI", () => {
     it("should throw ToolError on HTTP error", async () => {
       fetchMock.mockResponseOnce("Not Found", { status: 404 });
 
-      await expect(api.runSuite({ suiteId: "checkout-suite" })).rejects.toThrow(
+      await expect(api.runSuite({ slug: "checkout-suite" })).rejects.toThrow(
         "Failed to run suite",
       );
     });
@@ -579,7 +1172,7 @@ describe("FunctionalTestingAPI", () => {
     it("should throw a service-unavailable error on network failure", async () => {
       fetchMock.mockRejectOnce(new Error("Network error"));
 
-      await expect(api.runSuite({ suiteId: "checkout-suite" })).rejects.toThrow(
+      await expect(api.runSuite({ slug: "checkout-suite" })).rejects.toThrow(
         "Swagger Functional Testing service is currently unreachable. Retry after a moment.",
       );
     });
@@ -598,7 +1191,7 @@ describe("FunctionalTestingAPI", () => {
       fetchMock.mockResponseOnce(JSON.stringify(suiteExecutionMock));
 
       await api.getSuiteExecution({
-        suiteId: "checkout-suite",
+        slug: "checkout-suite",
         executionId: "7",
       });
 
@@ -611,15 +1204,22 @@ describe("FunctionalTestingAPI", () => {
       );
     });
 
-    it("should return parsed JSON response", async () => {
+    it("should return parsed JSON response with suiteId renamed to slug", async () => {
       fetchMock.mockResponseOnce(JSON.stringify(suiteExecutionMock));
 
       const result = await api.getSuiteExecution({
-        suiteId: "checkout-suite",
+        slug: "checkout-suite",
         executionId: "7",
       });
 
-      expect(result).toEqual(suiteExecutionMock);
+      expect(result).toEqual({
+        executionId: "7",
+        isFinished: true,
+        status: "passed",
+        tests: [],
+        slug: "checkout-suite",
+      });
+      expect(result).not.toHaveProperty("suiteId");
     });
 
     it("should include url field in response", async () => {
@@ -631,7 +1231,7 @@ describe("FunctionalTestingAPI", () => {
       );
 
       const result = await api.getSuiteExecution({
-        suiteId: "checkout-suite",
+        slug: "checkout-suite",
         executionId: "7",
       });
 
@@ -665,7 +1265,7 @@ describe("FunctionalTestingAPI", () => {
       fetchMock.mockResponseOnce(JSON.stringify(mockWithTests));
 
       const result = await api.getSuiteExecution({
-        suiteId: "checkout-suite",
+        slug: "checkout-suite",
         executionId: "7",
       });
 
@@ -680,15 +1280,15 @@ describe("FunctionalTestingAPI", () => {
       expect(testsData[1].id).toBe("test-2");
     });
 
-    it("should throw ToolError when suiteId is missing", async () => {
+    it("should throw ToolError when slug is missing", async () => {
       await expect(
-        api.getSuiteExecution({ suiteId: "", executionId: "7" }),
-      ).rejects.toThrow("suiteId argument is required");
+        api.getSuiteExecution({ slug: "", executionId: "7" }),
+      ).rejects.toThrow("slug argument is required");
     });
 
     it("should throw ToolError when executionId is missing", async () => {
       await expect(
-        api.getSuiteExecution({ suiteId: "checkout-suite", executionId: "" }),
+        api.getSuiteExecution({ slug: "checkout-suite", executionId: "" }),
       ).rejects.toThrow("executionId argument is required");
     });
 
@@ -697,7 +1297,7 @@ describe("FunctionalTestingAPI", () => {
 
       await expect(
         api.getSuiteExecution({
-          suiteId: "checkout-suite",
+          slug: "checkout-suite",
           executionId: "7",
         }),
       ).rejects.toThrow(
@@ -710,7 +1310,7 @@ describe("FunctionalTestingAPI", () => {
 
       await expect(
         api.getSuiteExecution({
-          suiteId: "checkout-suite",
+          slug: "checkout-suite",
           executionId: "7",
         }),
       ).rejects.toThrow(
@@ -723,7 +1323,7 @@ describe("FunctionalTestingAPI", () => {
 
       await expect(
         api.getSuiteExecution({
-          suiteId: "checkout-suite",
+          slug: "checkout-suite",
           executionId: "7",
         }),
       ).rejects.toThrow("Failed to get suite execution status");
@@ -734,7 +1334,7 @@ describe("FunctionalTestingAPI", () => {
 
       await expect(
         api.getSuiteExecution({
-          suiteId: "checkout-suite",
+          slug: "checkout-suite",
           executionId: "7",
         }),
       ).rejects.toThrow(

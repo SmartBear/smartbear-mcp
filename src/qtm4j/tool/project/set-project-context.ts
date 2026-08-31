@@ -1,6 +1,4 @@
-import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ZodRawShape } from "zod";
-import { Tool, ToolError } from "../../../common/tools";
+import { Tool, ToolError, type ToolHandler } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { Qtm4jClient } from "../../client";
 import {
@@ -89,7 +87,7 @@ export class SetProjectContext extends Tool<Qtm4jClient> {
       "availableFields contains priority and status options for NLP mapping in subsequent tool calls.",
   };
 
-  handle: ToolCallback<ZodRawShape> = async (rawArgs) => {
+  handle: ToolHandler = async (rawArgs) => {
     const { projectKey } = SetProjectContextBody.parse(rawArgs);
     const apiClient = this.client.getApiClient();
 

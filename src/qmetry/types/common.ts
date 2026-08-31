@@ -533,12 +533,36 @@ export const UpdateCycleArgsSchema = z.object({
   }),
 });
 
+const StepUdfValueSchema = z.union([
+  z.string(),
+  z.number(),
+  z.array(z.number()),
+  z.object({ parent: z.number(), child: z.number().optional() }),
+  z.object({ ADD: z.array(z.unknown()), REMOVE: z.array(z.unknown()) }),
+  // Step cascade _value array: [{ FieldID, FieldValue: [{id, value, child: {id, value}}], type }]
+  z.array(z.record(z.string(), z.unknown())),
+  // Step cascade _selectedList: { id: udfmID, name: fieldName, type: 'CASCADINGLIST' }
+  z.record(z.string(), z.unknown()),
+]);
+
 export const CreateTestCaseStepSchema = z.object({
   orderId: z.number(),
   description: z.string(),
   inputData: z.string().optional(),
   expectedOutcome: z.string().optional(),
-  UDF: z.record(z.string(), z.string()).optional(),
+  UDF: z
+    .record(z.string(), StepUdfValueSchema)
+    .optional()
+    .describe(
+      "Step-level UDF values. Keys = UDF field names. Values depend on field type: " +
+        "STRING/LARGETEXT: string, NUMBER: number, DATETIMEPICKER: date string (DD-MM-YYYY), " +
+        "LOOKUPLIST: numeric ID, MULTILOOKUPLIST: array of IDs. " +
+        "CASCADINGLIST requires THREE sibling keys in this UDF object — e.g. for field 'proj': " +
+        "proj: {parent: parentId, child: childId}, " +
+        "proj_value: [{FieldID:'proj', FieldValue:[{id:parentId, value:'parentLabel', child:{id:childId, value:'childLabel'}}], type:'CASCADINGLIST'}], " +
+        "proj_selectedList: {id: udfmID, name:'proj', type:'CASCADINGLIST'}. " +
+        "Get parentLabel/childLabel from Fetch Cascade Child Values. Get udfmID from Fetch UDF Layout stepFields[].projectUserFieldID.",
+    ),
   tcStepID: z.number().optional(), // Required for updating existing steps, omit for new steps
 });
 
@@ -553,10 +577,56 @@ export const UpdateTestCaseRemoveStepSchema = z.object({
   description: z.string(),
   inputData: z.string().optional(),
   expectedOutcome: z.string().optional(),
-  UDF: z.record(z.string(), z.string()).optional(),
+  UDF: z.record(z.string(), StepUdfValueSchema).optional(),
   tcsIsShared: z.boolean(),
   tcsIsParameterized: z.boolean(),
 });
+
+const UdfWrapperFieldSchema = z.object({
+  fieldID: z
+    .number()
+    .int()
+    .positive()
+    .describe(
+      "Numeric field ID (projectUserFieldID) from 'Fetch UDF Layout' with pageName='DETAIL'. Required for update UDF wrapper.",
+    ),
+  value: z
+    .union([
+      z.string(),
+      z.number(),
+      z.array(z.number().int()),
+      z.object({
+        parent: z.number().int(),
+        child: z.number().int().optional(),
+      }),
+      z.null(),
+    ])
+    .describe(
+      "UDF value. Type depends on fieldTypeName: STRING/LARGETEXT: string, NUMBER: number, " +
+        "DATETIMEPICKER: 'MM-DD-YYYY' or 'DD-MM-YYYY', LOOKUPLIST: numeric ID, " +
+        "MULTILOOKUPLIST: array of IDs, CASCADINGLIST: { parent, child }.",
+    ),
+});
+
+const UdfFieldsSchema = z
+  .record(
+    z.string(),
+    z.union([
+      z.string(),
+      z.number(),
+      z.array(z.number()),
+      z.object({ parent: z.number(), child: z.number().optional() }),
+      z.null(),
+    ]),
+  )
+  .optional()
+  .describe(
+    "Flat UDF field values. Keys = UDF field names from 'Fetch UDF Layout'. " +
+      "Values depend on fieldTypeName: STRING/LARGETEXT: string, NUMBER: number, " +
+      "DATETIMEPICKER: date string ('14-08-2026'), LOOKUPLIST: numeric ID, " +
+      "MULTILOOKUPLIST: array of IDs [101, 102], CASCADINGLIST: { parent: 101, child: 102 }. " +
+      "Call 'Fetch UDF Layout' with entityType + pageName='ADD' to discover available fields and list option IDs.",
+  );
 
 export const CreateTestCaseArgsSchema = z.object({
   tcFolderID: z
@@ -568,14 +638,52 @@ export const CreateTestCaseArgsSchema = z.object({
         "System will fetch project info using the projectKey and extract rootFolders.TC.id automatically. " +
         "Manual folder ID only needed if you want to target a specific sub-folder.",
     ),
-  steps: z.array(CreateTestCaseStepSchema).optional(),
+  steps: z
+    .array(CreateTestCaseStepSchema)
+    .optional()
+    .describe(
+      "STEPS INCLUSION RULE — read before deciding whether to include this field:\n" +
+        "\n" +
+        "DEFAULT BEHAVIOR: OMIT 'steps' entirely from the payload. Do NOT include steps: [] (empty array).\n" +
+        "A test case without steps is valid and is the normal case when the user did not mention steps.\n" +
+        "\n" +
+        "INCLUDE 'steps' ONLY in these two scenarios:\n" +
+        "  SCENARIO 1 — User explicitly mentions steps in their prompt.\n" +
+        "    Examples: 'create test case with steps', 'step 1: open browser, step 2: click login',\n" +
+        "    'add these steps: ...', 'include steps', 'create with following steps'.\n" +
+        "    When user provides step text, parse each step into { orderId, description, inputData?, expectedOutcome? }.\n" +
+        "\n" +
+        "  SCENARIO 2 — Any field in 'stepSystemFields' OR 'stepFields' from Fetch UDF Layout has isMandatory=true.\n" +
+        "    stepSystemFields = built-in step fields (description, expectedOutcome, etc.).\n" +
+        "    stepFields = step-level UDF fields (custom fields configured per project).\n" +
+        "    If EITHER array has isMandatory=true on any entry, the backend REQUIRES at least 1 step.\n" +
+        "    In this case you MUST include at least 1 step even if the user did not mention steps.\n" +
+        "    Also fill mandatory step UDF fields from stepFields in step.UDF — use stepDefaultValues if defaults exist, else placeholder.\n" +
+        "    Ask the user for step content OR create a placeholder step with description='Step 1'.\n" +
+        "\n" +
+        "NEVER include 'steps' in any other scenario — omitting it keeps the payload clean and avoids BE errors.\n" +
+        "NEVER send steps: [] (empty array) — either omit the field or send at least 1 valid step object.\n" +
+        "\n" +
+        "Step object fields:\n" +
+        "  orderId (required): sequential integer starting at 1\n" +
+        "  description (required): step action text\n" +
+        "  inputData (optional): test data for this step\n" +
+        "  expectedOutcome (optional): what should happen after this step\n" +
+        "  UDF (optional): step-level custom fields\n" +
+        "  tcStepID (omit on create — only used when updating existing steps)",
+    ),
   name: z.string(),
   priority: z.number().optional(),
   component: z.array(z.number()).optional(),
   testcaseOwner: z.number().optional(),
   testCaseState: z.number().optional(),
   testCaseType: z.number().optional(),
-  estimatedTime: z.number().optional(),
+  estimatedTime: z
+    .number()
+    .optional()
+    .describe(
+      "Estimated execution time in SECONDS (e.g. 3600 = 1 hour, 36000 = 10 hours). NOT minutes.",
+    ),
   testingType: z.number().optional(),
   description: z.string().optional(),
   associateRelCyc: z.boolean().optional(),
@@ -584,10 +692,15 @@ export const CreateTestCaseArgsSchema = z.object({
       z.object({
         release: z.number(),
         cycle: z.array(z.number()),
-        version: z.number().optional(),
+        version: z.number().optional().default(1),
       }),
     )
-    .optional(),
+    .optional()
+    .describe(
+      "Release/cycle mapping. Set associateRelCyc=true when providing this. " +
+        "version field defaults to 1 if not specified.",
+    ),
+  udfFields: UdfFieldsSchema,
 });
 
 export const UpdateTestCaseArgsSchema = z.object({
@@ -663,6 +776,16 @@ export const UpdateTestCaseArgsSchema = z.object({
       "Set to true to update only metadata fields without touching test steps. " +
         "When true, steps and removeSteps are ignored.",
     ),
+  udfFields: UdfFieldsSchema,
+  UDF: z
+    .record(z.string(), UdfWrapperFieldSchema)
+    .optional()
+    .describe(
+      "UDF wrapper required for update operations. Keys = UDF field names. " +
+        "Each value must include fieldID (from 'Fetch UDF Layout' with pageName='DETAIL') and value. " +
+        "Also set matching flat key in udfFields for the LOOKUPLIST Alias display. " +
+        "Example: { custom_text: { fieldID: 1001, value: 'new value' } }",
+    ),
 });
 
 export const TestCaseListArgsSchema = z.object({
@@ -706,6 +829,17 @@ export const TestCaseStepsArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
   baseUrl: CommonFields.baseUrl,
   id: CommonFields.id,
+  version: CommonFields.versionOptional,
+  start: CommonFields.start,
+  page: CommonFields.page,
+  limit: CommonFields.limit,
+});
+
+export const TestCaseStepsWithUdfArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  tcID: CommonFields.tcID,
+  viewId: CommonFields.tcViewId,
   version: CommonFields.versionOptional,
   start: CommonFields.start,
   page: CommonFields.page,
@@ -874,11 +1008,34 @@ export const CreateTestSuiteArgsSchema = z.object({
   releaseCycleMapping: z
     .array(
       z.object({
-        buildID: z.number(),
-        releaseId: z.number(),
+        releaseId: z
+          .number()
+          .describe(
+            "Release numeric ID. " +
+              "CRITICAL: key is 'releaseId' (lowercase d) — do NOT use 'releaseID', 'release', or 'releaseKey'. " +
+              "Get from project info → projects[<index>].releases[<index>].releaseID. " +
+              "NEVER use the TC mapping key 'release' here — test suite mapping uses 'releaseId'.",
+          ),
+        buildID: z
+          .number()
+          .describe(
+            "Cycle/Build numeric ID. " +
+              "CRITICAL: key is 'buildID' (capital D) — do NOT use 'cycleId', 'cycle', 'buildId', or 'cycleID'. " +
+              "Get from project info → projects[<index>].releases[<index>].builds[<index>].buildID. " +
+              "NEVER use the TC mapping key 'cycle' here — test suite mapping uses 'buildID'.",
+          ),
       }),
     )
-    .optional(),
+    .optional()
+    .describe(
+      "Release/cycle association for the test suite. " +
+        "CRITICAL SHAPE DIFFERENCE vs Test Case mapping: " +
+        "  Test Suite uses: { releaseId: number, buildID: number } " +
+        "  Test Case uses:  { release: number, cycle: number[], version: number } — DO NOT use TC shape here. " +
+        "Set associateRelCyc=true when providing this array. " +
+        "Example: [{ releaseId: 92112, buildID: 130831 }]",
+    ),
+  udfFields: UdfFieldsSchema,
 });
 
 export const UpdateTestSuiteArgsSchema = z.object({
@@ -899,6 +1056,14 @@ export const UpdateTestSuiteArgsSchema = z.object({
   description: z.string().optional().describe("Description of the Test Suite"),
   testsuiteOwner: z.number().optional().describe("Owner ID of the Test Suite"),
   testSuiteState: z.number().optional().describe("State of the Test Suite"),
+  udfFields: UdfFieldsSchema,
+  UDF: z
+    .record(z.string(), UdfWrapperFieldSchema)
+    .optional()
+    .describe(
+      "UDF wrapper required for update. Keys = UDF field names. " +
+        "Each value must include fieldID (from 'Fetch UDF Layout' with pageName='DETAIL') and value.",
+    ),
 });
 
 export const TestSuiteListArgsSchema = z.object({
@@ -920,6 +1085,25 @@ export const TestSuiteListArgsSchema = z.object({
       "Sort Records - refer json schema, Possible property - entityKey, name, testsuiteStatus, linkedPlatformCount, linkedTcCount, createdDate, createdByAlias, updatedDate, updatedByAlias, attachmentCount, owner, remExecutionTime, totalExecutionTime",
     )
     .default('[{"property":"name","direction":"ASC"}]'),
+});
+
+export const FetchTestSuiteDetailsArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  id: z.number().int().positive().describe("Test Suite ID (numeric ID)"),
+  scope: CommonFields.scope,
+});
+
+export const FetchIssueDetailsArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  defectId: z
+    .number()
+    .int()
+    .positive()
+    .describe(
+      "Issue DefectId (numeric ID) — use data[<index>].id from Fetch Issues/Defects response. The field in the list API response is named 'id', not 'DefectId'.",
+    ),
 });
 
 export const TestSuitesForTestCaseArgsSchema = z.object({
@@ -1069,6 +1253,21 @@ export const CreateIssueArgsSchema = z.object({
     .describe(
       "Test Case Run ID to link this defect/issue to a test execution (optional)",
     ),
+  environment: z
+    .string()
+    .optional()
+    .describe(
+      "Environment where the issue was found (e.g. 'Chrome', 'Firefox', 'Production'). Free-text string — no ID lookup needed.",
+    ),
+  issueState: z
+    .number()
+    .optional()
+    .describe(
+      "Issue status ID. Optional by default — QMetry allows admins to make this mandatory at the project level. " +
+        "Get valid IDs from project info → customListObjs.issueState[index].id. " +
+        "Common values: Open, Reopened, Resolved, Closed.",
+    ),
+  udfFields: UdfFieldsSchema,
 });
 
 export const UpdateIssueArgsSchema = z.object({
@@ -1106,6 +1305,14 @@ export const UpdateIssueArgsSchema = z.object({
     .number()
     .optional()
     .describe("Cycle IDs affected by this issue"),
+  udfFields: UdfFieldsSchema,
+  UDF: z
+    .record(z.string(), UdfWrapperFieldSchema)
+    .optional()
+    .describe(
+      "UDF wrapper required for update. Keys = UDF field names. " +
+        "Each value must include fieldID (from 'Fetch UDF Layout' with pageName='DETAIL') and value.",
+    ),
 });
 
 export const IssuesListArgsSchema = z.object({
@@ -1424,4 +1631,27 @@ export const FetchAutomationStatusPayloadSchema = z.object({
     .describe(
       "Numeric request ID from import automation response. CRITICAL: parameter name is 'requestID' — do NOT use 'requestId', 'jobId', or other variants. Accepts a string or number.",
     ),
+});
+
+export const AnalyticsQueryArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  query: z
+    .string()
+    .describe(
+      "SQL query to execute against QMetry analytics. " +
+        "Supports tables like requirements, testcases, testexecutions, testsuites, issues, " +
+        "and their relationship tables (requirementtestcase, testexecutionissue, etc.). " +
+        "Use JOINs to combine data across entities for custom reporting.",
+    ),
+  page: z
+    .number()
+    .optional()
+    .describe("Page number for pagination (starts from 0)")
+    .default(0),
+  filterValue: z
+    .array(z.any())
+    .optional()
+    .describe("Filter values for parameterized queries")
+    .default([]),
 });

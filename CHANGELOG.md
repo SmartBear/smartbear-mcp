@@ -7,15 +7,111 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+- [PactFlow] Refactored the internal PactFlow client from a monolithic 2,400-line class into six domain API classes (`PacticipantApi`, `EnvironmentApi`, `ContractApi`, `WebhookApi`, `AdminApi`, `AIApi`) backed by a shared `HttpClient`. This is an internal implementation change; all tool behaviour and the external `PactflowClient` interface are unchanged. [#686](https://github.com/SmartBear/smartbear-mcp/pull/686)
+- [Swagger] Functional Testing improvements: clarified the `create_suite` `name` parameter to require a human-readable suite name; renamed the `suiteId` parameter to `slug` on `run_suite`, `get_suite_status`, `list_suite_executions`, and `cancel_suite_execution` and their responses; and dropped the redundant numeric `id` from `Suite` objects returned by `create_suite` and `list_suites`.
+
+## [0.38.0] - 2026-08-27
+
+- [Bugsnag] Use a single process-wide `CacheService` and namespace every cache key with a SHA-256 hash of the authenticated caller's token. [#679](https://github.com/SmartBear/smartbear-mcp/pull/679)
+- [Bugsnag] Prefer the request auth header when resolving the cache namespace via `getAuthToken()` so per-request auth is honored.
+- [Bugsnag] Ensure unauthenticated callers bypass the shared cache to avoid exposing cached data.
+- [Bugsnag] Updated cache usage in `getOrganization()`, `getProjects()`, `getCurrentProject()`, `getProjectEventFields()`, and `getProjectTraceFields()`.
+
+### Changed
+- [Swagger] Updated `update_portal_product` to returns a `url` field in the response, providing the portal URL for the updated product. [#684](https://github.com/SmartBear/smartbear-mcp/pull/684)
+
+- [Common] Removed support for the MCP `sampling` capability, which was deprecated in the 2026-07-28 MCP specification revision ([SEP-2577](https://github.com/modelcontextprotocol/modelcontextprotocol/pull/2577)). The server no longer negotiates the `sampling` client capability or sends `sampling/createMessage` requests. [#685](https://github.com/SmartBear/smartbear-mcp/pull/685)
+- [PactFlow] The `generate`/`review` tools' OpenAPI matcher recommendation flow no longer relies on MCP sampling: when an OpenAPI document is provided without a `matcher`, the tool now always returns a prompt for the host AI to execute directly and resubmit with a single recommended matcher, rather than a list of up to 5 recommendations to choose from via elicitation. [#685](https://github.com/SmartBear/smartbear-mcp/pull/685)
+- [Swagger] Updated the `list_tests` tool to return test definition `url` for each found test. Updated the `list_suites` tool to return the Suite definition `url` for each found Suite.
+
+## [0.37.0] - 2026-08-20
+- [QMetry]: Added Test Case, Test Suite, Issue module, Create/Update UDF capability Added. [#666](https://github.com/SmartBear/smartbear-mcp/pull/666)
+
+
 ### Added
 
-- [Swagger] Adjusted some of the Swagger Functional Testing tools responses to return `url` of test or test Suite execution.
-- [QTM4J] Added test execution tools to start executions, update test case and step executions.
-- [QTM4J] Added API request tracking.
+- [Swagger] Added `patch_api` Registry tool that applies targeted search/replace edits to a YAML API definition and saves the result as a new version or in place. Edits are atomic - nothing is saved unless every edit applies - and failed edits are reported with `no_match`/`ambiguous` details so the caller can correct them.
+- [Swagger] Extended the `create_test` Functional Testing tool's steps with assertion support via a step-level `assertions` object: `statusCodes` for HTTP status code ranges, and `body`/`bodyType`/`bodyRules` for asserting on response body fields.
+
+### Changed
+
+- [Swagger] `get_api_definition` tool: added a `format` parameter - `json` (default) may convert YAML to JSON, `text` returns the definition as YAML, which is the required source for `patch_api` edits.
+- [Swagger] Improved error handling on Swagger Functional Testing, providing more information when requests to the upstream API fail
+
+## [0.36.0] - 2026-08-18
+
+### Added
+
+- [PactFlow] `publish_provider_contract` tool: added support for AsyncAPI provider contracts (`specification: "asyncapi"`), alongside the existing OpenAPI (`"oas"`) support.
+
+
+### Changed
+
+- [Zephyr] Update Zephyr Schemas [#664](https://github.com/SmartBear/smartbear-mcp/pull/664)
+- [Common] Migrated the MCP server implementation from `@modelcontextprotocol/sdk` v1 to the `@modelcontextprotocol/{server,node,server-legacy}` v2 packages. This is an internal implementation change; tool, prompt, and resource behavior is unchanged. As part of this, `[Zephyr]` tools that combine a params and body schema (e.g. `create_test_case_issue_link`, `update_test_case`) now advertise a flat JSON Schema instead of `allOf`, for compatibility with MCP clients that don't support `allOf`. [#654](https://github.com/SmartBear/smartbear-mcp/pull/654)
+- [Common] Corrected the Node.js version requirement in the README to 22+.
 
 ### Fixed
 
-- [QTM4J] Fixed `search_test_cases` response validation errors when test case fields are missing.
+- [Swagger] Fixed `swagger_get_document` and `swagger_update_document` tools returning `MCP error -32602` schema mismatch when the API response contained additional properties not defined in the output schema.
+
+### Fixed
+
+- [Swagger] Corrected tool annotation hints for the Functional Testing tools so they no longer fall back to registration defaults: `run_test` and `run_suite` are now declared open-world (`openWorldHint: true`), `cancel_suite_execution` is declared destructive (`destructiveHint: true`), and all tools use the shared `READ_ONLY`/`WRITE`/`WRITE_DESTRUCTIVE` presets to set `readOnlyHint`/`destructiveHint`/`openWorldHint` explicitly.
+
+## [0.35.0] - 2026-08-11
+
+### Added
+
+- [QMetry] Added OAuth authentication support and 3 new Release Readiness tools (`fetch_quality_gate_configuration`, `execute_quality_gate_report`, `export_html_report`). [#637](https://github.com/SmartBear/smartbear-mcp/pull/637)
+
+## [0.34.0] - 2026-08-06
+
+### Changed
+
+- [Swagger] `standardize_api` tool: returns a `url` only when the server confirms the fix was saved (`savedVersion`).
+- [Swagger] `resolve_organization_portal` tool: the generated subdomain now follows the Portal UI convention - slugified organization name plus a random 3-character suffix (e.g. `acmecorp-k7p`), appended even without a collision.
+- [Swagger] `create_portal` tool: the `subdomain` parameter description now recommends the same convention, while the client still picks the value.
+- [PactFlow] Added `pageNumber`/`pageSize` pagination (default page size 5) across list and Bi-Directional Contract Testing tools, with tool-layer caching for PactFlow endpoints that don't paginate natively. [#623](https://github.com/SmartBear/smartbear-mcp/pull/623)
+- [QTM4J] Added API quota information to the QTM4J integration documentation. [#638](https://github.com/SmartBear/smartbear-mcp/pull/638)
+
+### Added
+
+- [Swagger] Added `create_suite` Functional Testing tool that creates a new test Suite from one or more ordered blocks of tests, with optional parallel execution, retry attempts, and tunnel agent override.
+
+### Fixed
+
+- [Swagger] Fixed Swagger Functional Testing Integration documentation to include all available tools and their descriptions, as well as adjusts wrong tool sections.
+- [Swagger] Corrected `openWorldHint` tool annotations: portal, product, table-of-contents, document, and registry write tools are now declared as closed-world (`openWorldHint: false`); only the AI-backed `create_api_from_prompt` and `standardize_api` tools remain open-world.
+
+## [0.33.0] - 2026-07-28
+
+### Added
+
+- [Swagger] Added `create_test` Functional Testing tool that creates a new API test with set of steps.
+- [Zephyr] Added `Get Test Plans` tool that retrieves Test Plans using the cursor-paginated NextGen endpoint.
+
+### Changed
+
+- [Zephyr] Refactor to keep REST API schemas unmodified and ensure correct payload for update operations [#609](https://github.com/SmartBear/smartbear-mcp/pull/609)
+
+### Security
+
+- Fixed session isolation vulnerability (Base Path Injection / SSRF): `ClientRegistry.configure()` now calls `cloneClient()` to produce a fresh client instance per session, preventing per-session state (base-path URLs, auth tokens) stored on one session's client from leaking into concurrent sessions.
+- Fixed credential leakage vulnerability: because each session receives its own client clone, an unauthenticated session no longer inherits a previously authenticated session's `SwaggerClient` API instance or API key. An unauthenticated session has no Swagger tools available.
+- [Swagger] Changed `portal_base_path`, `registry_base_path`, `ui_base_path`, and `functional_testing_base_path` config fields from `z.string()` to `z.url()`, enabling allowlist enforcement via `MCP_ALLOWED_ENDPOINTS` and rejecting non-URL values at parse time.
+
+## [0.32.0] - 2026-07-23
+
+### Added
+
+- [QTM4J] Added test execution tools to start executions, update test case and step executions. [#604](https://github.com/SmartBear/smartbear-mcp/pull/604)
+- [QTM4J] Added API request tracking. [#604](https://github.com/SmartBear/smartbear-mcp/pull/604)
+
+### Fixed
+
+- [QTM4J] Fixed `search_test_cases` response validation errors when test case fields are missing. [#604](https://github.com/SmartBear/smartbear-mcp/pull/604)
 
 ## [0.31.0] - 2026-07-16
 
@@ -23,11 +119,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [BearQ] Remove draft-test refinement tools and add `bearq_delete_test_cases` [#593](https://github.com/SmartBear/smartbear-mcp/pull/593)
 
+### Fixed
+
+- [Swagger] Adjusted some of the Swagger Functional Testing tools responses to return `url` of test or test Suite execution.
+
 ## [0.30.0] - 2026-07-16
 
 ### Added
 
-- [Swagger] Added `get_test_history` Functional Testing tool that retrieves the execution history for a given test, returning past runs with pass/fail status, run time, creation timestamp, and per-step failure details for failed runs.
 - [Swagger] Added output schemas to Swagger Portal and Registry tools, enabling structured, validated responses for all portal, product, section, document, table-of-contents, and registry operations.
 - [Swagger] Introduced tool constants (`READ_ONLY`, `WRITE`, `WRITE_DESTRUCTIVE`) to annotate each Swagger tool with semantic flags (`readOnly`, `openWorld`, `destructive`) for better client-side tool classification.
 - [Swagger] Added `get_test_history` Functional Testing tool that retrieves the execution history for a given test, returning past runs with pass/fail status, run time, creation timestamp, and per-step failure details for failed runs.
@@ -98,17 +197,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Zephyr] Update Zephyr schemas [#562](https://github.com/SmartBear/smartbear-mcp/pull/562)
 
 ## [0.27.2] - 2026-07-01
+
 - [CI] Extracted publishing of the standalone `com.smartbear/swagger-mcp` registry entry (`server.swagger.json`) into a dedicated, manually triggered `publish-swagger-mcp.yaml` workflow (`workflow_dispatch`), removing those steps from the main `publish.yaml`. [#554](https://github.com/SmartBear/smartbear-mcp/pull/554)
 
 ## [0.27.1] - 2026-06-29
+
 - [Swagger]: Removed the https://swagger.mcp.smartbear.com/mcp streamable-http remote from the remotes array in server.json.[#550](https://github.com/SmartBear/smartbear-mcp/pull/550)
+
 ## [0.27.0] - 2026-06-29
+
 - [Qmetry]: add Test Run UDF workflow support and customer fixes [#538](https://github.com/SmartBear/smartbear-mcp/pull/538)
 
 ### Added
 
 - [Swagger] Extended `publish_portal_product` to build published URLs dynamically from `SWAGGER_PORTAL_BASE_PATH`, support preview and section/table-of-contents paths, and return the resolved `liveUrl` or `previewUrl` plus product, portal, and table-of-contents metadata in the publish response. If `portal.customDomain` is present, the client now uses it as the full host without appending the portal UI suffix. For url generation product and portal details ar required and section and toc details are optional.
-[#525](https://github.com/SmartBear/smartbear-mcp/pull/525)
+  [#525](https://github.com/SmartBear/smartbear-mcp/pull/525)
 
 - [Swagger] Add `create_documentation_page` tool to create a documentation page in a portal product in a single call. Supports `markdown` and `html` content types with `internal` or `external` source. Returns page details and a `draftUrl` to edit the page in the portal admin.
 
@@ -140,6 +243,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.25.0] - 2026-06-03
 
 ### Added
+
 - [Common] Add `MCP_TOOLSETS` environment variable to allow tools to be grouped into sets for better organization and client control [#474](https://github.com/SmartBear/smartbear-mcp/pull/474)
 - [Common] Split authorization and configuration options to better suit OAuth flow [#487](https://github.com/SmartBear/smartbear-mcp/pull/487)
 - [QTM4J] Added support for linking and unlinking requirements, test cases, and test cycles through new tools. [#505](https://github.com/SmartBear/smartbear-mcp/pull/505)
@@ -156,7 +260,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [PactFlow] Remove `.email()` Zod validator from PactFlow admin user tool schemas — the generated JSON Schema pattern used regex lookahead which is rejected by strict JSON Schema validators (e.g. OpenAI gpt-5.5) [#491](https://github.com/SmartBear/smartbear-mcp/issues/491)
 - [BearQ] Fix BearQ integration page not appearing in live docs [#496](https://github.com/SmartBear/smartbear-mcp/pull/496)
-- [Swagger]  Add constraint in the create_portal tool schema description, that allows only one Portal per organization.
+- [Swagger] Add constraint in the create_portal tool schema description, that allows only one Portal per organization.
 
 ## [0.23.0] - 2026-05-22
 
@@ -179,6 +283,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.20.0] - 2026-05-15
 
 ### Added
+
 - [Common] Add graceful shutdown on SIGTERM/SIGINT in HTTP mode: drains active sessions (closes Streamable HTTP and SSE transports, runs per-client `cleanupSession` hooks including Reflect WebSocket teardown), with a configurable deadline via `MCP_SHUTDOWN_TIMEOUT_MS` (default 25s) [#455](https://github.com/SmartBear/smartbear-mcp/pull/455)
 - [Common] Split health/readiness probes: `GET /health` is now liveness-only and always returns 200 when the process is responsive; `GET /ready` is the readiness probe and returns 503 during drain so load balancers stop routing new sessions to draining pods. Both probes set `Cache-Control: no-store`. [#455](https://github.com/SmartBear/smartbear-mcp/pull/455)
 - [Common] Add product prefix to registered resources and prompts [#458](https://github.com/SmartBear/smartbear-mcp/pull/458)
@@ -242,7 +347,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - [Pactflow] Added tools for CRUD over BDCT, Pacticipants, Environments, Permissions management [#414](https://github.com/SmartBear/smartbear-mcp/pull/414)
-
 
 ## [0.17.0] - 2026-04-07
 

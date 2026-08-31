@@ -62,6 +62,12 @@ export const ApiDefinitionParamsSchema = z.object({
     .describe(
       "Set to true to create models from inline schemas in OpenAPI definition (default false)",
     ),
+  format: z
+    .enum(["json", "text"])
+    .optional()
+    .describe(
+      "Response format: 'json' (default) may convert YAML to JSON; 'text' returns the definition as YAML — required for swagger_patch_api edits.",
+    ),
 });
 
 export const CreateApiParamsSchema = z.object({
@@ -132,6 +138,54 @@ export const StandardizeApiParamsSchema = z.object({
       "The version to save the fixed definition as (e.g. '1.0.1'). Omitting this will overwrite the current version — prefer providing a patch bump (e.g. '1.0.0' → '1.0.1') unless the user specifies otherwise.",
     ),
 });
+
+export const PatchApiEditSchema = z.object({
+  oldString: z
+    .string()
+    .min(1)
+    .describe(
+      "Exact text to find in the YAML definition (including indentation and newlines), copied from swagger_get_api_definition with format:'text'. Must match exactly one location unless replaceAll is true. For repeated text (e.g. 'responses:', 'description: OK'), start from the nearest unique parent key (path name, schema name, operationId).",
+    ),
+  replaceString: z
+    .string()
+    .describe(
+      "Replacement text. Repeat the quoted context unchanged and change only the minimal part. An empty string deletes the matched text.",
+    ),
+  replaceAll: z
+    .boolean()
+    .optional()
+    .describe(
+      "Replace every occurrence of oldString instead of requiring a unique match (default false). Use for identical fixes at many flagged locations.",
+    ),
+});
+
+export const PatchApiParamsSchema = z.object({
+  owner: z
+    .string()
+    .describe("API owner (organization or user, case-sensitive)"),
+  apiName: z.string().describe("API name (case-sensitive)"),
+  version: z
+    .string()
+    .describe(
+      "Version of the definition to patch (base version, e.g. '1.0.0')",
+    ),
+  newVersion: z
+    .string()
+    .optional()
+    .describe(
+      "Version to save the patched definition as (e.g. '1.0.1'). Must not already exist and is always created as private. Omit to overwrite the base version, which keeps its current visibility. The definition's info.version is updated automatically — do not add an edit for it.",
+    ),
+  edits: z
+    .array(PatchApiEditSchema)
+    .min(1)
+    .max(50)
+    .describe(
+      "Search/replace edits applied sequentially to the YAML definition. Nothing is saved unless every edit applies (atomic).",
+    ),
+});
+
+export type PatchApiEdit = z.infer<typeof PatchApiEditSchema>;
+export type PatchApiParams = z.infer<typeof PatchApiParamsSchema>;
 
 // Registry API types for SwaggerHub Design functionality - generated from Zod schemas
 export type ApiSearchParams = z.infer<typeof ApiSearchParamsSchema>;
@@ -245,6 +299,7 @@ export interface StandardizeApiResponse {
   errorsFound: number;
   fixedDefinition?: string;
   savedVersion?: string;
+  url?: string;
   errors?: Array<{
     description: string;
     line?: number;
@@ -294,6 +349,7 @@ export const StandardizeOutputSchema = z.looseObject({
   errorsFound: z.number().optional(),
   fixedDefinition: z.string().optional(),
   savedVersion: z.string().optional(),
+  url: z.string().optional(),
 });
 
 export const ApiDefinitionOutputSchema = z.object({
@@ -312,3 +368,36 @@ export const SearchApisOutputSchema = z.object({
     }),
   ),
 });
+
+export const PatchApiFailedEditSchema = z.object({
+  index: z
+    .number()
+    .describe("Position of the failed edit in the request's edits array"),
+  oldString: z.string().describe("The failed edit's oldString"),
+  error: z.enum(["no_match", "ambiguous"]),
+  matchCount: z
+    .number()
+    .describe("How many times search matched (0 for no_match)"),
+});
+
+export const PatchApiOutputSchema = z.looseObject({
+  failed: z
+    .array(PatchApiFailedEditSchema)
+    .optional()
+    .describe("Only present when at least one edit failed"),
+  saved: z.boolean().optional(),
+  operation: z.enum(["create", "update"]).optional(),
+  version: z.string().optional(),
+  url: z.string().optional(),
+});
+
+// Response type
+export type PatchApiFailedEdit = z.infer<typeof PatchApiFailedEditSchema>;
+
+export interface PatchApiResponse {
+  failed?: PatchApiFailedEdit[];
+  saved: boolean;
+  operation?: "create" | "update";
+  version?: string;
+  url?: string;
+}

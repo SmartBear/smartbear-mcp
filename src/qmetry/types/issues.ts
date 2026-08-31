@@ -6,6 +6,7 @@ import {
   type PaginationPayload,
   type SortPayload,
 } from "./common";
+import type { UdfFieldValue, UdfValue } from "./udf";
 
 /**
  * Payload for fetching issues linked to a test case.
@@ -46,6 +47,8 @@ export interface CreateIssuePayload {
   affectedCycles?: number[]; // optional - Array of Cycle IDs affected by this issue
   environment?: string; // optional - Environment details
   tcRunID?: number; // optional - Test Case Run numeric ID to link the issue to
+  udfFields?: Record<string, UdfValue>; // UDF values — spread flat onto payload root before sending
+  [key: string]: unknown;
 }
 
 export const DEFAULT_CREATE_ISSUE_PAYLOAD: Omit<
@@ -64,6 +67,9 @@ export interface UpdateIssuePayload {
   affectedCycles?: number;
   description?: string;
   issueOwner?: number;
+  UDF?: Record<string, UdfFieldValue>; // UDF wrapper { fieldName: { fieldID, value } } for update
+  udfFields?: Record<string, UdfValue>; // flat UDF key→value pairs (also spread onto root)
+  [key: string]: unknown;
 }
 
 export const DEFAULT_UPDATE_ISSUE_PAYLOAD: Omit<

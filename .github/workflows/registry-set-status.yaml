@@ -1,0 +1,106 @@
+name: Registry — Set Version Status
+
+# Changes the lifecycle status of one or more versions of a server published
+# to the official MCP registry. Primary use: freeing a remotes[].url that is
+# still claimed by old versions of a server, so it can be re-published under a
+# new server in the same namespace (the registry's validateNoDuplicateRemoteURLs
+# rejects a URL used by any non-deleted version of another server).
+#
+# Works by setting the `status` of the affected versions (default: deleted) —
+# NOT by editing their remotes. The full edit-server endpoint requires `edit`
+# permission, which DNS/GitHub publisher auth never grants; the status-only
+# endpoint accepts `publish` OR `edit`, so this works with the same
+# credentials used to publish. See scripts/registry-set-status.js for the
+# full rationale and the safety rail against ever touching the current
+# 'latest' version.
+#
+# Runs a dry run by default. Tick "apply" to actually write the change.
+
+permissions:
+  contents: read
+  id-token: write
+
+on:
+  workflow_dispatch:
+    inputs:
+      server:
+        description: "Server name whose versions should be updated"
+        required: true
+        type: string
+        default: "com.smartbear/smartbear-mcp"
+      remote_url:
+        description: "Target every version that still has this remote (leave empty if using 'versions' instead)"
+        required: false
+        type: string
+        default: "https://swagger.mcp.smartbear.com/mcp"
+      versions:
+        description: "Comma-separated versions to target explicitly (alternative to remote_url)"
+        required: false
+        type: string
+      status:
+        description: "New status for the targeted versions"
+        required: false
+        type: choice
+        options:
+          - deleted
+          - deprecated
+          - active
+        default: deleted
+      message:
+        description: "Status message (e.g. reason for deletion)"
+        required: false
+        type: string
+      apply:
+        description: "Apply the change (unchecked = dry run only)"
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  set-status:
+    name: Update registry version status
+    runs-on: ubuntu-24.04
+    environment: Production
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version-file: ".tool-versions"
+
+      - name: prepare mcp-publisher
+        run: |
+          curl -L "https://github.com/modelcontextprotocol/registry/releases/download/v1.7.9/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
+
+      # Login only needs to yield a publish-scoped token — that's sufficient
+      # for the status-change endpoint this script uses. Skip it for a dry
+      # run so read-only previews don't require secrets.
+      - name: Login
+        if: ${{ inputs.apply }}
+        env:
+          DNS_PRIVATE_KEY: ${{ secrets.GH_MCP_REGISTRY_KEY }}
+        run: |
+          ./mcp-publisher login github-oidc
+          ./mcp-publisher login dns --domain smartbear.com --private-key "$DNS_PRIVATE_KEY"
+
+      # Inputs are passed via env and never interpolated into the script body, to
+      # avoid shell injection. APPLY is a boolean rendered as the string
+      # "true"/"false", so it must be compared explicitly — `${APPLY:+…}` would
+      # wrongly trigger on "false" since that is a non-empty string.
+      - name: Update version status
+        env:
+          SERVER: ${{ inputs.server }}
+          REMOTE_URL: ${{ inputs.remote_url }}
+          VERSIONS: ${{ inputs.versions }}
+          STATUS: ${{ inputs.status }}
+          MESSAGE: ${{ inputs.message }}
+          APPLY: ${{ inputs.apply }}
+        run: |
+          args=(--server "$SERVER" --status "$STATUS")
+          [ -n "$REMOTE_URL" ] && args+=(--remote-url "$REMOTE_URL")
+          [ -n "$VERSIONS" ] && args+=(--versions "$VERSIONS")
+          [ -n "$MESSAGE" ] && args+=(--message "$MESSAGE")
+          [ "$APPLY" = "true" ] && args+=(--apply --yes)
+          node scripts/registry-set-status.js "${args[@]}"
