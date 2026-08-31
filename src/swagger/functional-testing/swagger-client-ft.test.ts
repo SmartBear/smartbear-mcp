@@ -499,9 +499,24 @@ describe("SwaggerClient — Functional Testing integration", () => {
   });
 
   describe("getFunctionalTestingSuite", () => {
+    // Raw wire format actually returned by the Functional Testing API (slug keyed `suiteId`, node
+    // discriminator keyed `action` with a kebab-case value).
+    const rawWorkflowTreeMock = {
+      suiteId: "nightly-api-regression",
+      root: { id: "action-1", action: "run-api-tests", testIds: [101] },
+    };
     const workflowTreeMock = {
       slug: "nightly-api-regression",
-      root: { id: "action-1", type: "runApiTests", testIds: [101] },
+      root: {
+        id: "action-1",
+        type: "runApiTests",
+        testIds: [101],
+        parallel: undefined,
+        maxRetryAttempts: undefined,
+        title: undefined,
+        next: undefined,
+        failure: undefined,
+      },
     };
 
     it("should register the Get Suite tool when FT token is configured", async () => {
@@ -518,8 +533,8 @@ describe("SwaggerClient — Functional Testing integration", () => {
       expect(registeredTitles).toContain("Get Suite");
     });
 
-    it("should GET api.reflect.run and return the workflow tree", async () => {
-      fetchMock.mockResponseOnce(JSON.stringify(workflowTreeMock));
+    it("should GET api.reflect.run and return the translated workflow tree", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(rawWorkflowTreeMock));
 
       await client.configure({} as any, {
         api_key: "swagger-key",

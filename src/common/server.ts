@@ -2,18 +2,19 @@ import {
   McpServer,
   ResourceTemplate,
 } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type {
-  CallToolResult,
-  ToolAnnotations,
+import {
+  type CallToolResult,
+  ListToolsRequestSchema,
+  type ToolAnnotations,
 } from "@modelcontextprotocol/sdk/types.js";
 import {
-  z,
   ZodDiscriminatedUnion,
   ZodIntersection,
   ZodObject,
-  ZodUnion,
   type ZodRawShape,
   type ZodType,
+  ZodUnion,
+  z,
 } from "zod";
 import Bugsnag, { type BugsnagEvent } from "../common/bugsnag";
 import { CacheService } from "./cache";
@@ -40,6 +41,7 @@ export class SmartBearMcpServer extends McpServer {
   private clients: Client[] = [];
   private enabledToolsets?: string[];
   private mcpClientIdentity?: McpClientIdentity;
+  private listToolsDialectPatched = false;
 
   constructor(enabledToolsets?: string) {
     super(
@@ -133,6 +135,40 @@ export class SmartBearMcpServer extends McpServer {
     }
   }
 
+  // The SDK's tools/list handler always declares "$schema": draft-07 for tool input/output schemas
+  // built from Zod (see `toJsonSchemaCompat` in @modelcontextprotocol/sdk/server/zod-json-schema-compat.js,
+  // which hardcodes `target: 'draft-7'` whenever no override is supplied — and McpServer's built-in
+  // tools/list handler never supplies one). Claude Desktop's client-side schema validator only accepts
+  // the 2020-12 dialect and rejects any tool whose schema declares a different one, so we rewrite the
+  // dialect on the way out rather than upstream in the SDK. Reaches into `Server`'s internal request
+  // handler map (not part of its public API) since there's no supported hook for this.
+  private patchListToolsDialect(): void {
+    if (this.listToolsDialectPatched) return;
+    const internalServer = this.server as any;
+    const originalHandler = internalServer._requestHandlers?.get("tools/list");
+    if (!originalHandler) return;
+
+    this.listToolsDialectPatched = true;
+    const DIALECT_2020_12 = "https://json-schema.org/draft/2020-12/schema";
+    const fixDialect = (schema: unknown) => {
+      if (schema && typeof schema === "object" && "$schema" in schema) {
+        (schema as Record<string, unknown>).$schema = DIALECT_2020_12;
+      }
+    };
+
+    this.server.setRequestHandler(
+      ListToolsRequestSchema,
+      async (request, extra) => {
+        const result = await originalHandler(request, extra);
+        for (const tool of result.tools ?? []) {
+          fixDialect(tool.inputSchema);
+          fixDialect(tool.outputSchema);
+        }
+        return result;
+      },
+    );
+  }
+
   async addClient(client: Client): Promise<void> {
     this.clients.push(client);
     await client.registerTools(
@@ -222,6 +258,7 @@ export class SmartBearMcpServer extends McpServer {
         return result;
       },
     );
+    this.patchListToolsDialect();
 
     if (client.registerResources) {
       await client.registerResources((params, cb) => {
@@ -342,7 +379,10 @@ export class SmartBearMcpServer extends McpServer {
       // each key becomes the union of that key's type across branches, and is made
       // optional if it isn't present in every branch. This is looser than the original
       // per-branch validation, but far better than the schema silently becoming `{}`.
-      if (schema instanceof ZodUnion || schema instanceof ZodDiscriminatedUnion) {
+      if (
+        schema instanceof ZodUnion ||
+        schema instanceof ZodDiscriminatedUnion
+      ) {
         const options = (schema as ZodUnion<ZodType[]>).options;
         const shapes = options.map(
           (option) => this.schemaToRawShape(option) ?? {},

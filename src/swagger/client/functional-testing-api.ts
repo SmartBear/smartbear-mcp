@@ -1,24 +1,26 @@
 import { appendClientIdentity } from "../../common/info";
 import { ToolError } from "../../common/tools";
-import type {
-  CancelFunctionalTestingSuiteExecutionParams,
-  CreateFunctionalTestingSuiteParams,
-  CreateFunctionalTestingSuiteResponse,
-  CreateFunctionalTestingTestParams,
-  CreateFunctionalTestingTestResponse,
-  GetFunctionalTestHistoryParams,
-  GetFunctionalTestingExecutionTestParams,
-  GetFunctionalTestingSuiteExecutionParams,
-  GetFunctionalTestingSuiteParams,
-  GetFunctionalTestingSuiteResponse,
-  ListFunctionalTestingSuiteExecutionsParams,
-  ListSuiteExecutionsResponse,
-  ListSuitesResponse,
-  RunFunctionalTestingSuiteParams,
-  RunFunctionalTestingTestParams,
-  TestRunHistoryResponse,
-  UpdateFunctionalTestingSuiteParams,
-  UpdateFunctionalTestingSuiteResponse,
+import {
+  type CancelFunctionalTestingSuiteExecutionParams,
+  type CreateFunctionalTestingSuiteParams,
+  type CreateFunctionalTestingSuiteResponse,
+  type CreateFunctionalTestingTestParams,
+  type CreateFunctionalTestingTestResponse,
+  type GetFunctionalTestHistoryParams,
+  type GetFunctionalTestingExecutionTestParams,
+  type GetFunctionalTestingSuiteExecutionParams,
+  type GetFunctionalTestingSuiteParams,
+  type GetFunctionalTestingSuiteResponse,
+  type ListFunctionalTestingSuiteExecutionsParams,
+  type ListSuiteExecutionsResponse,
+  type ListSuitesResponse,
+  type RawGetFunctionalTestingSuiteResponse,
+  type RunFunctionalTestingSuiteParams,
+  type RunFunctionalTestingTestParams,
+  type TestRunHistoryResponse,
+  toWorkflowNode,
+  type UpdateFunctionalTestingSuiteParams,
+  type UpdateFunctionalTestingSuiteResponse,
 } from "./functional-testing-types";
 
 const API_HOSTNAME = "api.reflect.run";
@@ -354,7 +356,11 @@ export class FunctionalTestingAPI {
       ),
     );
 
-    return response.json();
+    const data: RawGetFunctionalTestingSuiteResponse = await response.json();
+    return {
+      slug: data.suiteId,
+      root: toWorkflowNode(data.root),
+    };
   }
 
   async updateSuite(

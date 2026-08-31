@@ -154,6 +154,9 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
     summary:
       "Returns the full workflow tree for an existing test suite in your Swagger Functional Testing workspace, " +
       "with every action id'd and typed. " +
+      "Execution order is NOT given by an index or array position — it's defined by following each node's " +
+      "`next` pointer starting from `root`; a `decision` node's `next` is its success branch and `failure` " +
+      "is the separate branch taken on failure. " +
       "This is the only way to discover an existing suite's action ids — there is no full-tree echo from " +
       "`swagger_update_suite`. Call this tool before your first `swagger_update_suite` call against a suite you " +
       "did not just create yourself (whose ids you already have from `swagger_create_suite`), and again any time " +

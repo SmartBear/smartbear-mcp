@@ -345,6 +345,66 @@ export interface WorkflowNode {
   failure?: WorkflowNode;
 }
 
+// The Functional Testing API's actual wire format for a workflow tree node: the discriminator key is
+// `action` (not `type`), and its values are kebab-case (not the camelCase `WORKFLOW_NODE_TYPES` this
+// tool surface exposes to callers). `run-tests` on the wire specifically means a browser-test action
+// (`runBrowserTests` here) — API-test and mobile-test actions each have their own distinct wire value.
+export const WIRE_WORKFLOW_ACTION_TYPES = [
+  "run-api-tests",
+  "decision",
+  "send-email",
+  "run-tests",
+  "run-mobile-tests",
+  "call-api",
+  "send-slack",
+  "sleep",
+] as const;
+
+export type WireWorkflowActionType =
+  (typeof WIRE_WORKFLOW_ACTION_TYPES)[number];
+
+export const WIRE_TO_WORKFLOW_NODE_TYPE: Record<
+  WireWorkflowActionType,
+  (typeof WORKFLOW_NODE_TYPES)[number]
+> = {
+  "run-api-tests": "runApiTests",
+  decision: "decision",
+  "send-email": "sendEmail",
+  "run-tests": "runBrowserTests",
+  "run-mobile-tests": "runMobileTests",
+  "call-api": "callApi",
+  "send-slack": "sendSlack",
+  sleep: "sleep",
+};
+
+export interface RawWorkflowNode {
+  id: string;
+  action: WireWorkflowActionType;
+  title?: string;
+  testIds?: number[];
+  parallel?: boolean;
+  maxRetryAttempts?: number;
+  next?: RawWorkflowNode;
+  failure?: RawWorkflowNode;
+}
+
+/**
+ * Translates a workflow tree node from the Functional Testing API's wire format (`action`,
+ * kebab-case) into this tool surface's public shape (`type`, camelCase).
+ */
+export function toWorkflowNode(raw: RawWorkflowNode): WorkflowNode {
+  return {
+    id: raw.id,
+    type: WIRE_TO_WORKFLOW_NODE_TYPE[raw.action],
+    title: raw.title,
+    testIds: raw.testIds,
+    parallel: raw.parallel,
+    maxRetryAttempts: raw.maxRetryAttempts,
+    next: raw.next ? toWorkflowNode(raw.next) : undefined,
+    failure: raw.failure ? toWorkflowNode(raw.failure) : undefined,
+  };
+}
+
 export const GetFunctionalTestingSuiteParamsSchema = z.object({
   slug: z
     .string()
@@ -364,16 +424,41 @@ export interface GetFunctionalTestingSuiteResponse {
   root: WorkflowNode;
 }
 
+// Raw shape of `GET /suites/{slug}`'s response, as actually returned by the Functional Testing API
+// (the slug is keyed `suiteId` on the wire, and `root` uses `RawWorkflowNode`'s `action`/kebab-case
+// format — see `toWorkflowNode`).
+export interface RawGetFunctionalTestingSuiteResponse {
+  suiteId: string;
+  root: RawWorkflowNode;
+}
+
 const WorkflowNodeSchema: z.ZodType<WorkflowNode> = z.lazy(() =>
   z.object({
-    id: z.string(),
-    type: z.enum(WORKFLOW_NODE_TYPES),
-    title: z.string().optional(),
-    testIds: z.array(z.number()).optional(),
+    id: z.string().describe("Unique id of this action within the suite."),
+    type: z
+      .enum(WORKFLOW_NODE_TYPES)
+      .describe("The kind of action this node performs."),
+    title: z
+      .string()
+      .optional()
+      .describe("Human-readable label for this action."),
+    testIds: z
+      .array(z.number())
+      .optional()
+      .describe(
+        "Present only on `runApiTests` nodes: the tests this action runs.",
+      ),
     parallel: z.boolean().optional(),
     maxRetryAttempts: z.number().optional(),
-    next: WorkflowNodeSchema.optional(),
-    failure: WorkflowNodeSchema.optional(),
+    next: WorkflowNodeSchema.optional().describe(
+      "The action that runs after this one — this is what defines execution order in the suite; " +
+        "the tree has no separate ordering field or index, so order must be read by following `next` " +
+        "chains from `root`. On a `decision` node, `next` is specifically the success branch.",
+    ),
+    failure: WorkflowNodeSchema.optional().describe(
+      "Present only on `decision` nodes: the action to run next if the decision fails, as opposed to " +
+        "`next`, which is the success branch.",
+    ),
   }),
 );
 
@@ -507,7 +592,11 @@ export type UpdateFunctionalTestingSuiteParams = z.infer<
   typeof UpdateFunctionalTestingSuiteParamsSchema
 >;
 
-export const UpdateFunctionalTestingSuiteResponseSchema = z.object({
+// `looseObject` (not `object`): the Functional Testing API's PATCH response includes further
+// fields beyond `success`/`id` (e.g. echoing back the applied action) that this tool surface
+// doesn't model — a strict object would reject those as "additional properties" on every real
+// API response.
+export const UpdateFunctionalTestingSuiteResponseSchema = z.looseObject({
   success: z.boolean().describe("Whether the operation was applied."),
   id: z
     .string()

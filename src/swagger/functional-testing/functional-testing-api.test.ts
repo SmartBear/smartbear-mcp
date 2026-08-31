@@ -690,26 +690,60 @@ describe("FunctionalTestingAPI", () => {
   });
 
   describe("getSuite", () => {
+    // Raw wire format actually returned by the Functional Testing API: slug keyed as `suiteId`,
+    // node discriminator keyed `action` with kebab-case values.
+    const rawWorkflowTreeMock = {
+      suiteId: "nightly-api-regression",
+      root: {
+        id: "action-1",
+        action: "run-api-tests",
+        testIds: [101, 102],
+        next: {
+          id: "action-2",
+          action: "decision",
+          next: undefined,
+          failure: {
+            id: "action-3",
+            action: "send-email",
+          },
+        },
+      },
+    };
+
     const workflowTreeMock = {
       slug: "nightly-api-regression",
       root: {
         id: "action-1",
         type: "runApiTests",
         testIds: [101, 102],
+        parallel: undefined,
+        maxRetryAttempts: undefined,
+        title: undefined,
         next: {
           id: "action-2",
           type: "decision",
+          testIds: undefined,
+          parallel: undefined,
+          maxRetryAttempts: undefined,
+          title: undefined,
           next: undefined,
           failure: {
             id: "action-3",
             type: "sendEmail",
+            testIds: undefined,
+            parallel: undefined,
+            maxRetryAttempts: undefined,
+            title: undefined,
+            next: undefined,
+            failure: undefined,
           },
         },
+        failure: undefined,
       },
     };
 
     it("should call the correct endpoint with GET method and X-API-KEY header", async () => {
-      fetchMock.mockResponseOnce(JSON.stringify(workflowTreeMock));
+      fetchMock.mockResponseOnce(JSON.stringify(rawWorkflowTreeMock));
 
       await api.getSuite({ slug: "nightly-api-regression" });
 
@@ -722,8 +756,8 @@ describe("FunctionalTestingAPI", () => {
       );
     });
 
-    it("should return the parsed workflow tree", async () => {
-      fetchMock.mockResponseOnce(JSON.stringify(workflowTreeMock));
+    it("should translate the wire format into the public workflow tree shape", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(rawWorkflowTreeMock));
 
       const result = await api.getSuite({ slug: "nightly-api-regression" });
 
