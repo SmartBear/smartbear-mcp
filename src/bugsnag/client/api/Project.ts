@@ -509,7 +509,7 @@ export class ProjectAPI extends BaseAPI {
    */
   async listProjectCollaborators(
     projectId: string,
-    collaboratorNameOrId?: string
+    collaboratorNameOrId?: string,
   ): Promise<ApiResponse<Collaborator[]>> {
     const localVarFetchArgs = ProjectsApiFetchParamCreator(
       this.configuration,

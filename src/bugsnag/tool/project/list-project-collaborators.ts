@@ -34,7 +34,7 @@ export class ListProjectCollaborators extends Tool<BugsnagClient> {
   };
 
   handle: ToolHandler = async (args, _extra) => {
-    const params = inputSchema.parse(args); 
+    const params = inputSchema.parse(args);
     try {
       const collaborators = (
         await this.client.projectApi.listProjectCollaborators(
