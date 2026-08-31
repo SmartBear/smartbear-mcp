@@ -7,8 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-## [0.39.0] - 2026-08-31
 
+### Added
+- [Zephyr] Added `Get Folders` tool that lists folders via `GET /folders`, filterable by `projectKey` and `folderType` with pagination, and `Get Folder` tool that retrieves a single folder via `GET /folders/{folderId}`. Previously only `Create Folder` existed, so folders and sub-folders could not be discovered through MCP and folder IDs had to be supplied by hand. Each returned folder includes `parentId`, so the sub-folders of a folder are the entries whose `parentId` matches its ID, allowing nested folder trees to be walked.
+
+### Fixed
+- [Zephyr] Fixed `parentId` being declared as a required positive integer in the `Get Folder` and `Get Folders` response schemas. Root folders return `parentId: null`, which failed output schema validation and caused the whole tool call to error; `parentId` is now nullable in both schemas.
+
+## [0.39.0] - 2026-08-31
 ### Changed
 - [PactFlow] Refactored the internal PactFlow client from a monolithic 2,400-line class into six domain API classes (`PacticipantApi`, `EnvironmentApi`, `ContractApi`, `WebhookApi`, `AdminApi`, `AIApi`) backed by a shared `HttpClient`. This is an internal implementation change; all tool behaviour and the external `PactflowClient` interface are unchanged. [#686](https://github.com/SmartBear/smartbear-mcp/pull/686)
 - [Swagger] Functional Testing improvements: clarified the `create_suite` `name` parameter to require a human-readable suite name; renamed the `suiteId` parameter to `slug` on `run_suite`, `get_suite_status`, `list_suite_executions`, and `cancel_suite_execution` and their responses; and dropped the redundant numeric `id` from `Suite` objects returned by `create_suite` and `list_suites`.
