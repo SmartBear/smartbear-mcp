@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx biome *)",
+      "Bash(npm run *)",
+      "Bash(npm ci *)",
+      "Bash(npx @biomejs/biome check --write src/zephyr/tool/folder src/zephyr/client.ts)",
+      "Bash(npx vitest *)",
+      "Bash(npx tsc *)",
+      "Bash(echo \"=== tsc done \\(exit $?\\) ===\")",
+      "Bash(ldd --version)",
+      "Bash(git add *)",
+      "Bash(cd *)"
+    ]
+  }
+}
