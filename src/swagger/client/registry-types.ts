@@ -119,6 +119,7 @@ export const ValidateApiParamsSchema = z
     version: z.string().optional().describe("Version identifier"),
     maxProblems: z
       .number()
+      .int()
       .min(1)
       .max(1000)
       .optional()
@@ -330,6 +331,11 @@ export interface ApidomValidationFinding {
   severity: "error" | "warning" | "info";
   message: string;
   code?: number;
+  source?: string;
+  range?: {
+    start: { line: number; character: number };
+    end: { line: number; character: number };
+  };
 }
 
 export interface ApidomValidationSpecInfo {
@@ -428,8 +434,15 @@ export const ApidomValidationOutputSchema = z.looseObject({
     .boolean()
     .optional()
     .describe("True if the spec was recognized as OpenAPI/AsyncAPI"),
-  namespace: z.string().optional().describe("Detected spec namespace"),
-  version: z.string().optional().describe("Detected spec version"),
+  spec: z
+    .looseObject({
+      namespace: z.string().optional().describe("Detected spec namespace"),
+      version: z.string().optional().describe("Detected spec version"),
+      format: z.string().optional().describe("Detected format (JSON or YAML)"),
+      mediaType: z.string().optional().describe("Detected media type"),
+    })
+    .optional()
+    .describe("Detected specification info"),
   findings: z
     .array(ApidomValidationFindingSchema)
     .optional()
@@ -438,6 +451,7 @@ export const ApidomValidationOutputSchema = z.looseObject({
     .looseObject({
       errors: z.number().optional(),
       warnings: z.number().optional(),
+      info: z.number().optional(),
       total: z.number().optional(),
       durationMs: z.number().optional(),
     })
