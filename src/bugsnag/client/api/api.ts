@@ -657,7 +657,7 @@ export interface ProjectRoles {
  * @expot
  * @interface CollaboratorApiView
  */
-export interface CollaboratorApiView{
+export interface CollaboratorApiView {
   /**
    *
    * @type {string}
@@ -761,7 +761,6 @@ export interface CollaboratorApiView{
    */
   managed_by_smartbear_id: boolean;
 }
-
 
 /**
  * @export
@@ -9907,62 +9906,66 @@ export const ProjectsApiFetchParamCreator = (
     };
   },
   /**
-    * List all collaborators that have access to a project.
-     * @summary List Collaborators on a Project
-     * @param {string} project_id the ID of the project
-     * @param {number} [per_page] Number of results per page
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
+   * List all collaborators that have access to a project.
+   * @summary List Collaborators on a Project
+   * @param {string} project_id the ID of the project
+   * @param {number} [per_page] Number of results per page
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
    */
-  listProjectCollaborators(project_id: string, per_page?: number, options: any = {},): FetchArgs{
+  listProjectCollaborators(
+    project_id: string,
+    per_page?: number,
+    options: any = {},
+  ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-      if (project_id === null || project_id === undefined) {
-        throw new RequiredError(
-          "project_id",
-          "Required parameter project_id was null or undefined when calling listProjectCollaborators.",
-        );
-      }
-      const localVarPath = `/projects/{project_id}/collaborators`.replace(
-        `{${"project_id"}}`,
-        encodeURIComponent(String(project_id)),
+    if (project_id === null || project_id === undefined) {
+      throw new RequiredError(
+        "project_id",
+        "Required parameter project_id was null or undefined when calling listProjectCollaborators.",
       );
+    }
+    const localVarPath = `/projects/{project_id}/collaborators`.replace(
+      `{${"project_id"}}`,
+      encodeURIComponent(String(project_id)),
+    );
 
-      const localVarUrlObj = url.parse(localVarPath, true);
-      const localVarRequestOptions = Object.assign({ method: "GET" }, options);
-      const localVarHeaderParameter = {} as any;
-      const localVarQueryParameter = {} as any;
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
 
-      // authentication tokenAuth required
-      if (configuration && configuration.apiKey) {
-        const localVarApiKeyValue =
-          typeof configuration.apiKey === "function"
-            ? configuration.apiKey("Authorization")
-            : configuration.apiKey;
-        localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-      }
+    // authentication tokenAuth required
+    if (configuration && configuration.apiKey) {
+      const localVarApiKeyValue =
+        typeof configuration.apiKey === "function"
+          ? configuration.apiKey("Authorization")
+          : configuration.apiKey;
+      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+    }
 
-      if (per_page !== undefined) {
-        localVarQueryParameter["per_page"] = per_page;
-      }
+    if (per_page !== undefined) {
+      localVarQueryParameter["per_page"] = per_page;
+    }
 
-      localVarUrlObj.query = Object.assign(
-        {},
-        localVarUrlObj.query,
-        localVarQueryParameter,
-        options.query,
-      );
-      // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-      localVarUrlObj.search = null;
-      localVarRequestOptions.headers = Object.assign(
-        {},
-        localVarHeaderParameter,
-        options.headers,
-      );
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
 
-      return {
-        url: url.format(localVarUrlObj),
-        options: localVarRequestOptions,
-      };
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
   },
   /**
    * Generate a new notifier API key for a project. This API key is used to configure the [notifier library](https://docs.bugsnag.com/platforms/) being used to report errors in the project. After regenerating a Project's notifier API key, your platform-specific notifier will need its configuration updated to use the new key. The previous key will not be supported. Note that a Project's notifier API key is different from both the Organization-level and User-level Data Access API auth tokens.

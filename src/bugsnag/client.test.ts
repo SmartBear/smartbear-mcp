@@ -3488,7 +3488,7 @@ describe("BugsnagClient", () => {
           "No collaborators found for project proj-1",
         );
       });
-      
+
       it("should validate required projectId parameter", async () => {
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(

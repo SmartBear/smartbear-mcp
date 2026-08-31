@@ -1,7 +1,5 @@
-import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ZodRawShape } from "zod";
 import { z } from "zod";
-import { Tool, ToolError } from "../../../common/tools";
+import { Tool, ToolError, type ToolHandler } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { BugsnagClient } from "../../client";
 
@@ -10,7 +8,9 @@ const inputSchema = z.object({
   collaboratorNameOrId: z
     .string()
     .optional()
-    .describe("Optional: filter by collaborator name or ID (partial match on name)"),
+    .describe(
+      "Optional: filter by collaborator name or ID (partial match on name)",
+    ),
 });
 
 export class ListProjectCollaborators extends Tool<BugsnagClient> {
@@ -33,23 +33,28 @@ export class ListProjectCollaborators extends Tool<BugsnagClient> {
     ],
   };
 
-  handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const params = inputSchema.parse(args);
-    
+  handle: ToolHandler = async (args, _extra) => {
+    const params = inputSchema.parse(args); 
     try {
-      const collaborators = (await this.client.projectApi.listProjectCollaborators(
-        params.projectId,
-        params.collaboratorNameOrId,
-      )).body;
+      const collaborators = (
+        await this.client.projectApi.listProjectCollaborators(
+          params.projectId,
+          params.collaboratorNameOrId,
+        )
+      ).body;
 
       if (!collaborators || collaborators.length === 0) {
         return {
-          content: [{ 
-            type: "text", 
-            text: `No collaborators found for project ${params.projectId}${
-              params.collaboratorNameOrId ? ` matching "${params.collaboratorNameOrId}"` : ""
-            }` 
-          }],
+          content: [
+            {
+              type: "text",
+              text: `No collaborators found for project ${params.projectId}${
+                params.collaboratorNameOrId
+                  ? ` matching "${params.collaboratorNameOrId}"`
+                  : ""
+              }`,
+            },
+          ],
         };
       }
 
@@ -63,11 +68,11 @@ export class ListProjectCollaborators extends Tool<BugsnagClient> {
         content: [{ type: "text", text: JSON.stringify(content) }],
       };
     } catch (error) {
-        console.warn("Failed to fetch project collaborators:", error);
+      console.warn("Failed to fetch project collaborators:", error);
       throw new ToolError(
         `Failed to list collaborators for project ${params.projectId}: ${
           error instanceof Error ? error.message : String(error)
-        }`
+        }`,
       );
     }
   };

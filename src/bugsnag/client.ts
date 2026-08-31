@@ -45,7 +45,6 @@ import { GetRelease } from "./tool/release/get-release";
 import { ListReleases } from "./tool/release/list-releases";
 import { ListProjectCollaborators } from "./tool/project/list-project-collaborators";
 
-
 const HUB_PREFIX = "00000";
 const DEFAULT_DOMAIN = "bugsnag.com";
 const HUB_DOMAIN = "bugsnag.smartbear.com";
