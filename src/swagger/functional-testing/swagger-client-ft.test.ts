@@ -460,6 +460,7 @@ describe("SwaggerClient — Functional Testing integration", () => {
         id: 4821,
         slug: "nightly-api-regression",
         url: "https://app.reflect.run/suites/nightly-api-regression?accountId=1",
+        actionIds: ["action-1"],
       };
       fetchMock.mockResponseOnce(JSON.stringify(createSuiteResponseMock));
 

@@ -115,6 +115,12 @@ export const CreateFunctionalTestingSuiteResponseSchema = z.object({
   url: z
     .string()
     .describe("Link to the created suite in Swagger Functional Testing UI"),
+  actionIds: z
+    .array(z.string())
+    .describe(
+      "IDs assigned to the suite's initial runApiTests actions, in order. Use these to target " +
+        "the suite's actions in a later swagger_update_suite call without an extra swagger_get_suite call.",
+    ),
 });
 
 export type CreateFunctionalTestingSuiteResponse = z.infer<
