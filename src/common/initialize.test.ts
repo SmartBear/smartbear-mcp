@@ -6,7 +6,6 @@ function fakeServer() {
   return {
     setClientInfo: vi.fn(),
     setMcpClientIdentity: vi.fn(),
-    setSamplingSupported: vi.fn(),
     setElicitationSupported: vi.fn(),
   } as unknown as SmartBearMcpServer;
 }
@@ -50,7 +49,6 @@ describe("handleInitializeMessage", () => {
       version: "1.2.3",
     });
     // Capability detection stays gated behind 2025-11-25.
-    expect(server.setSamplingSupported).not.toHaveBeenCalled();
     expect(server.setElicitationSupported).not.toHaveBeenCalled();
   });
 
@@ -65,14 +63,14 @@ describe("handleInitializeMessage", () => {
     expect(server.setClientInfo).not.toHaveBeenCalled();
   });
 
-  it("detects sampling and elicitation capabilities on protocolVersion 2025-11-25", () => {
+  it("detects elicitation capability on protocolVersion 2025-11-25", () => {
     const server = fakeServer();
 
     handleInitializeMessage(server, {
       method: "initialize",
       params: {
         protocolVersion: "2025-11-25",
-        capabilities: { sampling: {}, elicitation: {} },
+        capabilities: { elicitation: {} },
         clientInfo: { name: "Claude Code", version: "1.2.3" },
       },
     });
@@ -81,11 +79,10 @@ describe("handleInitializeMessage", () => {
       name: "Claude Code",
       version: "1.2.3",
     });
-    expect(server.setSamplingSupported).toHaveBeenCalledWith(true);
     expect(server.setElicitationSupported).toHaveBeenCalledWith(true);
   });
 
-  it("does not set sampling/elicitation flags when absent from capabilities", () => {
+  it("does not set the elicitation flag when absent from capabilities", () => {
     const server = fakeServer();
 
     handleInitializeMessage(server, {
@@ -97,7 +94,6 @@ describe("handleInitializeMessage", () => {
       },
     });
 
-    expect(server.setSamplingSupported).not.toHaveBeenCalled();
     expect(server.setElicitationSupported).not.toHaveBeenCalled();
   });
 
@@ -118,7 +114,6 @@ describe("handleInitializeMessage", () => {
       name: "Claude Code",
       version: "1.2.3",
     });
-    expect(server.setSamplingSupported).not.toHaveBeenCalled();
     expect(server.setElicitationSupported).not.toHaveBeenCalled();
   });
 });
