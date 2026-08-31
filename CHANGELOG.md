@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+- Stripped the empty `"additionalProperties": {}` that Zod emits for `looseObject` from the JSON schemas advertised to MCP clients. The construct is valid JSON Schema, but Gemini CLI expects a boolean there and drops the affected tools at discovery, and the Gemini Developer API rejects the keyword outright. Validation of `structuredContent` is unchanged. Affects Zephyr, Swagger and QTM4J tools. [#694](https://github.com/SmartBear/smartbear-mcp/pull/694)
+
 ## [0.39.0] - 2026-08-31
 
 ### Changed
