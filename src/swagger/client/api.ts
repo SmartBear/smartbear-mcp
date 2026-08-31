@@ -1585,7 +1585,7 @@ export class SwaggerAPI {
     if (!response.ok) {
       const errorText = await response.text().catch(() => "");
       throw new ToolError(
-        `SwaggerHub Registry API apidom-validate failed - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}. URL: ${url}`,
+        `SwaggerHub Registry API apidom-validate failed - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}`,
       );
     }
 
