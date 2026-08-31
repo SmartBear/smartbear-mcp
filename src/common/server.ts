@@ -12,6 +12,7 @@ import {
   executeElicitationOrPolyfill,
   isElicitationPolyfillResult,
 } from "./pollyfills";
+import { withPortableJsonSchema } from "./schema-portability";
 import { ToolError } from "./tools";
 import type { Client, ClientInfo, ToolParams } from "./types";
 import {
@@ -129,16 +130,23 @@ export class SmartBearMcpServer extends McpServer {
         }
         // In SDK v2, registerTool accepts Standard Schema objects directly.
         // Passing the Zod schemas through as-is (rather than extracting a raw
-        // `.shape`) preserves z.looseObject()'s additionalProperties:true in the
-        // JSON schema sent to clients — otherwise real API responses would fail
-        // "additional properties" validation.
+        // `.shape`) keeps z.looseObject()'s permissive additionalProperties in
+        // the JSON schema sent to clients — otherwise real API responses would
+        // fail "additional properties" validation.
+        //
+        // withPortableJsonSchema() then drops the empty-object spelling Zod
+        // emits for that keyword, which some clients refuse; see
+        // ./schema-portability.ts. It changes only the advertised schema, not
+        // validation.
         return super.registerTool(
           toolName,
           {
             title: toolTitle,
             description: this.getDescription(params),
-            inputSchema: params.inputSchema ?? z.object({}),
-            outputSchema: params.outputSchema,
+            inputSchema: withPortableJsonSchema(
+              params.inputSchema ?? z.object({}),
+            ),
+            outputSchema: withPortableJsonSchema(params.outputSchema),
             annotations: this.getAnnotations(toolTitle, params),
           },
           async (args: any, ctx: any) => {

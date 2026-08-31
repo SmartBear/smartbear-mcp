@@ -124,7 +124,7 @@ export const listTestCases200ResponseTwoValuesItemLabelsMax = 50;
 export const listTestCases200ResponseTwoValuesItemOwnerAccountIdRegExp =
   /^[-:a-zA-Z0-9]{1,128}$/;
 
-export const ListTestCases200Response = zod.strictObject({
+export const ListTestCases200Response = zod.looseObject({
   next: zod
     .url()
     .nullish()
@@ -156,7 +156,7 @@ export const ListTestCases200Response = zod.strictObject({
     .describe("Indicates if this is the last page of results."),
   values: zod
     .array(
-      zod.strictObject({
+      zod.looseObject({
         id: zod.int().min(1).describe("The ID of the entity"),
         key: zod
           .string()
@@ -168,7 +168,7 @@ export const ListTestCases200Response = zod.strictObject({
           .max(listTestCases200ResponseTwoValuesItemNameMax)
           .regex(listTestCases200ResponseTwoValuesItemNameRegExp),
         project: zod
-          .strictObject({
+          .looseObject({
             id: zod.int().min(1).describe("The ID of the entity"),
             self: zod
               .url()
@@ -202,7 +202,7 @@ export const ListTestCases200Response = zod.strictObject({
           .describe("Array of labels associated to this entity."),
         component: zod
           .union([
-            zod.strictObject({
+            zod.looseObject({
               id: zod.int().min(1).describe("The ID of the entity"),
               self: zod
                 .url()
@@ -216,7 +216,7 @@ export const ListTestCases200Response = zod.strictObject({
           .optional()
           .describe("ID and link to the Jira component resource."),
         priority: zod
-          .strictObject({
+          .looseObject({
             id: zod.int().min(1).describe("The ID of the entity"),
             self: zod
               .url()
@@ -225,7 +225,7 @@ export const ListTestCases200Response = zod.strictObject({
           })
           .describe("ID and link to the priority resource."),
         status: zod
-          .strictObject({
+          .looseObject({
             id: zod.int().min(1).describe("The ID of the entity"),
             self: zod
               .url()
@@ -235,7 +235,7 @@ export const ListTestCases200Response = zod.strictObject({
           .describe("ID and link to the status resource."),
         folder: zod
           .union([
-            zod.strictObject({
+            zod.looseObject({
               id: zod.int().min(1).describe("The ID of the entity"),
               self: zod
                 .url()
@@ -249,7 +249,7 @@ export const ListTestCases200Response = zod.strictObject({
           .optional()
           .describe("ID and link to the folder resource."),
         owner: zod
-          .strictObject({
+          .looseObject({
             accountId: zod
               .string()
               .regex(listTestCases200ResponseTwoValuesItemOwnerAccountIdRegExp)
@@ -264,7 +264,7 @@ export const ListTestCases200Response = zod.strictObject({
           })
           .nullish(),
         testScript: zod
-          .strictObject({
+          .looseObject({
             self: zod
               .url()
               .optional()
@@ -278,14 +278,14 @@ export const ListTestCases200Response = zod.strictObject({
             "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
           ),
         links: zod
-          .strictObject({
+          .looseObject({
             self: zod
               .url()
               .optional()
               .describe("The REST API endpoint to get more resource details."),
             issues: zod
               .array(
-                zod.strictObject({
+                zod.looseObject({
                   issueId: zod.int().min(1).describe("The Jira issue ID"),
                   self: zod
                     .url()
@@ -316,7 +316,7 @@ export const ListTestCases200Response = zod.strictObject({
               .describe("A list of Jira issues linked to this entity"),
             webLinks: zod
               .array(
-                zod.strictObject({
+                zod.looseObject({
                   description: zod
                     .string()
                     .optional()
@@ -351,7 +351,7 @@ export const ListTestCases200Response = zod.strictObject({
 
 export const ListTestCases400Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -359,7 +359,7 @@ export const ListTestCases400Response = zod.union([
       "A query parameter failed validation at the API layer (projectKey pattern, or the numeric bounds maxResults >= 1, startAt 0..1000000, folderId >= 1, jiraProjectVersionId >= 1).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -368,29 +368,29 @@ export const ListTestCases400Response = zod.union([
 
 export const ListTestCases401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -400,7 +400,7 @@ export const ListTestCases401Response = zod.union([
 
 export const ListTestCases404Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -408,7 +408,7 @@ export const ListTestCases404Response = zod.union([
       "The projectKey filter refers to a project that does not exist or is deactivated.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -416,7 +416,7 @@ export const ListTestCases404Response = zod.union([
       "The referenced resource does not exist, or the caller does not have access to its project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -426,13 +426,13 @@ export const ListTestCases404Response = zod.union([
 ]);
 
 export const ListTestCases500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const ListTestCasesDefaultResponse = zod.strictObject({
+export const ListTestCasesDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -514,7 +514,7 @@ export const CreateTestCaseBody = zod.strictObject({
     ),
 });
 
-export const CreateTestCase201Response = zod.strictObject({
+export const CreateTestCase201Response = zod.looseObject({
   id: zod.int().min(1).optional().describe("The ID of the entity"),
   self: zod.string().optional(),
   key: zod.string().optional(),
@@ -522,7 +522,7 @@ export const CreateTestCase201Response = zod.strictObject({
 
 export const CreateTestCase400Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -530,7 +530,7 @@ export const CreateTestCase400Response = zod.union([
       "A request body field failed validation at the API layer (required field missing, pattern mismatch, size, or numeric bound).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -538,13 +538,13 @@ export const CreateTestCase400Response = zod.union([
       "A request body field has the wrong type or format (for example a non-ISO-8601 date).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("The request body is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -552,7 +552,7 @@ export const CreateTestCase400Response = zod.union([
       "The folderId in the body refers to a folder that does not exist.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -560,7 +560,7 @@ export const CreateTestCase400Response = zod.union([
       "The folderId refers to a folder that is not a TEST_CYCLE folder.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -568,19 +568,19 @@ export const CreateTestCase400Response = zod.union([
       "The folderId refers to a folder that belongs to a different project than the one being targeted.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("The labels array contains more than the maximum of 50 items."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("The labels array contains an empty or blank label."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -588,7 +588,7 @@ export const CreateTestCase400Response = zod.union([
       "A label in the labels array contains spaces, which is not allowed.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -596,7 +596,7 @@ export const CreateTestCase400Response = zod.union([
       "A custom field name in the body does not exist for the project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -604,7 +604,7 @@ export const CreateTestCase400Response = zod.union([
       'A custom field value has the wrong type for the field definition. The message names the field and the expected type, e.g. "requires a number value", "requires a string value", "requires a boolean value", "requires a string which is in the format yyyy-MM-dd", or "requires a list".\n',
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -612,7 +612,7 @@ export const CreateTestCase400Response = zod.union([
       "A choice custom field value references an option name that does not exist.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -620,7 +620,7 @@ export const CreateTestCase400Response = zod.union([
       "The project has required custom fields but the request omitted them.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -628,7 +628,7 @@ export const CreateTestCase400Response = zod.union([
       "Custom fields were provided but not all required ones are present.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -636,7 +636,7 @@ export const CreateTestCase400Response = zod.union([
       "A required custom field was provided with a null or empty value.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -647,29 +647,29 @@ export const CreateTestCase400Response = zod.union([
 
 export const CreateTestCase401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -679,7 +679,7 @@ export const CreateTestCase401Response = zod.union([
 
 export const CreateTestCase403Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -687,7 +687,7 @@ export const CreateTestCase403Response = zod.union([
       "The caller lacks a required Zephyr permission (when the project's permission system is enabled).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -696,7 +696,7 @@ export const CreateTestCase403Response = zod.union([
 
 export const CreateTestCase404Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -704,19 +704,19 @@ export const CreateTestCase404Response = zod.union([
       "The projectKey filter refers to a project that does not exist or is deactivated.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("The statusName does not exist for the project."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("The priorityName does not exist for the project."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -724,7 +724,7 @@ export const CreateTestCase404Response = zod.union([
       "The referenced resource does not exist, or the caller does not have access to its project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -734,13 +734,13 @@ export const CreateTestCase404Response = zod.union([
 ]);
 
 export const CreateTestCase500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const CreateTestCaseDefaultResponse = zod.strictObject({
+export const CreateTestCaseDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -812,7 +812,7 @@ export const listTestCasesCursorPaginated200ResponseTwoValuesItemLabelsMax = 50;
 export const listTestCasesCursorPaginated200ResponseTwoValuesItemOwnerAccountIdRegExp =
   /^[-:a-zA-Z0-9]{1,128}$/;
 
-export const ListTestCasesCursorPaginated200Response = zod.strictObject({
+export const ListTestCasesCursorPaginated200Response = zod.looseObject({
   next: zod.url().nullish(),
   nextStartAtId: zod
     .int()
@@ -821,7 +821,7 @@ export const ListTestCasesCursorPaginated200Response = zod.strictObject({
   limit: zod.int().min(listTestCasesCursorPaginated200ResponseOneLimitMin),
   values: zod
     .array(
-      zod.strictObject({
+      zod.looseObject({
         id: zod.int().min(1).describe("The ID of the entity"),
         key: zod
           .string()
@@ -835,7 +835,7 @@ export const ListTestCasesCursorPaginated200Response = zod.strictObject({
             listTestCasesCursorPaginated200ResponseTwoValuesItemNameRegExp,
           ),
         project: zod
-          .strictObject({
+          .looseObject({
             id: zod.int().min(1).describe("The ID of the entity"),
             self: zod
               .url()
@@ -871,7 +871,7 @@ export const ListTestCasesCursorPaginated200Response = zod.strictObject({
           .describe("Array of labels associated to this entity."),
         component: zod
           .union([
-            zod.strictObject({
+            zod.looseObject({
               id: zod.int().min(1).describe("The ID of the entity"),
               self: zod
                 .url()
@@ -885,7 +885,7 @@ export const ListTestCasesCursorPaginated200Response = zod.strictObject({
           .optional()
           .describe("ID and link to the Jira component resource."),
         priority: zod
-          .strictObject({
+          .looseObject({
             id: zod.int().min(1).describe("The ID of the entity"),
             self: zod
               .url()
@@ -894,7 +894,7 @@ export const ListTestCasesCursorPaginated200Response = zod.strictObject({
           })
           .describe("ID and link to the priority resource."),
         status: zod
-          .strictObject({
+          .looseObject({
             id: zod.int().min(1).describe("The ID of the entity"),
             self: zod
               .url()
@@ -904,7 +904,7 @@ export const ListTestCasesCursorPaginated200Response = zod.strictObject({
           .describe("ID and link to the status resource."),
         folder: zod
           .union([
-            zod.strictObject({
+            zod.looseObject({
               id: zod.int().min(1).describe("The ID of the entity"),
               self: zod
                 .url()
@@ -918,7 +918,7 @@ export const ListTestCasesCursorPaginated200Response = zod.strictObject({
           .optional()
           .describe("ID and link to the folder resource."),
         owner: zod
-          .strictObject({
+          .looseObject({
             accountId: zod
               .string()
               .regex(
@@ -935,7 +935,7 @@ export const ListTestCasesCursorPaginated200Response = zod.strictObject({
           })
           .nullish(),
         testScript: zod
-          .strictObject({
+          .looseObject({
             self: zod
               .url()
               .optional()
@@ -949,14 +949,14 @@ export const ListTestCasesCursorPaginated200Response = zod.strictObject({
             "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
           ),
         links: zod
-          .strictObject({
+          .looseObject({
             self: zod
               .url()
               .optional()
               .describe("The REST API endpoint to get more resource details."),
             issues: zod
               .array(
-                zod.strictObject({
+                zod.looseObject({
                   issueId: zod.int().min(1).describe("The Jira issue ID"),
                   self: zod
                     .url()
@@ -987,7 +987,7 @@ export const ListTestCasesCursorPaginated200Response = zod.strictObject({
               .describe("A list of Jira issues linked to this entity"),
             webLinks: zod
               .array(
-                zod.strictObject({
+                zod.looseObject({
                   description: zod
                     .string()
                     .optional()
@@ -1022,7 +1022,7 @@ export const ListTestCasesCursorPaginated200Response = zod.strictObject({
 
 export const ListTestCasesCursorPaginated400Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -1030,7 +1030,7 @@ export const ListTestCasesCursorPaginated400Response = zod.union([
       "A query parameter failed validation at the API layer (projectKey pattern, or the numeric bounds maxResults >= 1, startAt 0..1000000, folderId >= 1, jiraProjectVersionId >= 1).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -1039,29 +1039,29 @@ export const ListTestCasesCursorPaginated400Response = zod.union([
 
 export const ListTestCasesCursorPaginated401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -1071,7 +1071,7 @@ export const ListTestCasesCursorPaginated401Response = zod.union([
 
 export const ListTestCasesCursorPaginated404Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -1079,7 +1079,7 @@ export const ListTestCasesCursorPaginated404Response = zod.union([
       "The projectKey filter refers to a project that does not exist or is deactivated.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -1087,7 +1087,7 @@ export const ListTestCasesCursorPaginated404Response = zod.union([
       "The referenced resource does not exist, or the caller does not have access to its project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -1097,13 +1097,13 @@ export const ListTestCasesCursorPaginated404Response = zod.union([
 ]);
 
 export const ListTestCasesCursorPaginated500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const ListTestCasesCursorPaginatedDefaultResponse = zod.strictObject({
+export const ListTestCasesCursorPaginatedDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -1135,7 +1135,7 @@ export const getTestCase200ResponseLabelsMax = 50;
 export const getTestCase200ResponseOwnerAccountIdRegExp =
   /^[-:a-zA-Z0-9]{1,128}$/;
 
-export const GetTestCase200Response = zod.strictObject({
+export const GetTestCase200Response = zod.looseObject({
   id: zod.int().min(1).describe("The ID of the entity"),
   key: zod
     .string()
@@ -1147,7 +1147,7 @@ export const GetTestCase200Response = zod.strictObject({
     .max(getTestCase200ResponseNameMax)
     .regex(getTestCase200ResponseNameRegExp),
   project: zod
-    .strictObject({
+    .looseObject({
       id: zod.int().min(1).describe("The ID of the entity"),
       self: zod
         .url()
@@ -1178,7 +1178,7 @@ export const GetTestCase200Response = zod.strictObject({
     .describe("Array of labels associated to this entity."),
   component: zod
     .union([
-      zod.strictObject({
+      zod.looseObject({
         id: zod.int().min(1).describe("The ID of the entity"),
         self: zod
           .url()
@@ -1190,7 +1190,7 @@ export const GetTestCase200Response = zod.strictObject({
     .optional()
     .describe("ID and link to the Jira component resource."),
   priority: zod
-    .strictObject({
+    .looseObject({
       id: zod.int().min(1).describe("The ID of the entity"),
       self: zod
         .url()
@@ -1199,7 +1199,7 @@ export const GetTestCase200Response = zod.strictObject({
     })
     .describe("ID and link to the priority resource."),
   status: zod
-    .strictObject({
+    .looseObject({
       id: zod.int().min(1).describe("The ID of the entity"),
       self: zod
         .url()
@@ -1209,7 +1209,7 @@ export const GetTestCase200Response = zod.strictObject({
     .describe("ID and link to the status resource."),
   folder: zod
     .union([
-      zod.strictObject({
+      zod.looseObject({
         id: zod.int().min(1).describe("The ID of the entity"),
         self: zod
           .url()
@@ -1221,7 +1221,7 @@ export const GetTestCase200Response = zod.strictObject({
     .optional()
     .describe("ID and link to the folder resource."),
   owner: zod
-    .strictObject({
+    .looseObject({
       accountId: zod
         .string()
         .regex(getTestCase200ResponseOwnerAccountIdRegExp)
@@ -1236,7 +1236,7 @@ export const GetTestCase200Response = zod.strictObject({
     })
     .nullish(),
   testScript: zod
-    .strictObject({
+    .looseObject({
       self: zod
         .url()
         .optional()
@@ -1250,14 +1250,14 @@ export const GetTestCase200Response = zod.strictObject({
       "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
     ),
   links: zod
-    .strictObject({
+    .looseObject({
       self: zod
         .url()
         .optional()
         .describe("The REST API endpoint to get more resource details."),
       issues: zod
         .array(
-          zod.strictObject({
+          zod.looseObject({
             issueId: zod.int().min(1).describe("The Jira issue ID"),
             self: zod
               .url()
@@ -1288,7 +1288,7 @@ export const GetTestCase200Response = zod.strictObject({
         .describe("A list of Jira issues linked to this entity"),
       webLinks: zod
         .array(
-          zod.strictObject({
+          zod.looseObject({
             description: zod
               .string()
               .optional()
@@ -1315,7 +1315,7 @@ export const GetTestCase200Response = zod.strictObject({
 });
 
 export const GetTestCase400Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
@@ -1325,29 +1325,29 @@ export const GetTestCase400Response = zod
 
 export const GetTestCase401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -1357,13 +1357,13 @@ export const GetTestCase401Response = zod.union([
 
 export const GetTestCase404Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("No test case exists for the given testCaseKey."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -1371,7 +1371,7 @@ export const GetTestCase404Response = zod.union([
       "The referenced resource does not exist, or the caller does not have access to its project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -1381,13 +1381,13 @@ export const GetTestCase404Response = zod.union([
 ]);
 
 export const GetTestCase500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const GetTestCaseDefaultResponse = zod.strictObject({
+export const GetTestCaseDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -1524,7 +1524,7 @@ export const UpdateTestCase200Response = zod.unknown();
 
 export const UpdateTestCase400Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -1532,7 +1532,7 @@ export const UpdateTestCase400Response = zod.union([
       "A request body field failed validation at the API layer (required field missing, pattern mismatch, size, or numeric bound).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -1540,13 +1540,13 @@ export const UpdateTestCase400Response = zod.union([
       "A request body field has the wrong type or format (for example a non-ISO-8601 date).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("The request body is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -1554,7 +1554,7 @@ export const UpdateTestCase400Response = zod.union([
       "The key in the request body does not match the testCaseKey in the path.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -1562,7 +1562,7 @@ export const UpdateTestCase400Response = zod.union([
       "The project id in the request body does not match the test case's actual project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -1570,7 +1570,7 @@ export const UpdateTestCase400Response = zod.union([
       "The folderId in the body refers to a folder that does not exist.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -1578,7 +1578,7 @@ export const UpdateTestCase400Response = zod.union([
       "The folderId refers to a folder that is not a TEST_CYCLE folder.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -1586,31 +1586,31 @@ export const UpdateTestCase400Response = zod.union([
       "The folderId refers to a folder that belongs to a different project than the one being targeted.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("The status id does not exist for the project."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("The priority id does not exist for the project."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("The labels array contains more than the maximum of 50 items."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("The labels array contains an empty or blank label."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -1618,7 +1618,7 @@ export const UpdateTestCase400Response = zod.union([
       "A label in the labels array contains spaces, which is not allowed.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -1626,7 +1626,7 @@ export const UpdateTestCase400Response = zod.union([
       "A custom field name in the body does not exist for the project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -1634,7 +1634,7 @@ export const UpdateTestCase400Response = zod.union([
       'A custom field value has the wrong type for the field definition. The message names the field and the expected type, e.g. "requires a number value", "requires a string value", "requires a boolean value", "requires a string which is in the format yyyy-MM-dd", or "requires a list".\n',
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -1642,7 +1642,7 @@ export const UpdateTestCase400Response = zod.union([
       "A choice custom field value references an option name that does not exist.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -1650,7 +1650,7 @@ export const UpdateTestCase400Response = zod.union([
       "The project has required custom fields but the request omitted them.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -1658,7 +1658,7 @@ export const UpdateTestCase400Response = zod.union([
       "Custom fields were provided but not all required ones are present.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -1666,7 +1666,7 @@ export const UpdateTestCase400Response = zod.union([
       "A required custom field was provided with a null or empty value.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -1677,29 +1677,29 @@ export const UpdateTestCase400Response = zod.union([
 
 export const UpdateTestCase401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -1709,7 +1709,7 @@ export const UpdateTestCase401Response = zod.union([
 
 export const UpdateTestCase403Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -1717,7 +1717,7 @@ export const UpdateTestCase403Response = zod.union([
       "The caller lacks a required Zephyr permission (when the project's permission system is enabled).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -1726,7 +1726,7 @@ export const UpdateTestCase403Response = zod.union([
 
 export const UpdateTestCase404Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -1734,7 +1734,7 @@ export const UpdateTestCase404Response = zod.union([
       "No test case exists for the id supplied in the request body (used by the update endpoint, which resolves the test case by its body id).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -1742,7 +1742,7 @@ export const UpdateTestCase404Response = zod.union([
       "The referenced resource does not exist, or the caller does not have access to its project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -1752,13 +1752,13 @@ export const UpdateTestCase404Response = zod.union([
 ]);
 
 export const UpdateTestCase500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const UpdateTestCaseDefaultResponse = zod.strictObject({
+export const UpdateTestCaseDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -1779,14 +1779,14 @@ export const GetTestCaseLinksParams = zod.strictObject({
 });
 
 export const GetTestCaseLinks200Response = zod
-  .strictObject({
+  .looseObject({
     self: zod
       .url()
       .optional()
       .describe("The REST API endpoint to get more resource details."),
     issues: zod
       .array(
-        zod.strictObject({
+        zod.looseObject({
           issueId: zod.int().min(1).describe("The Jira issue ID"),
           self: zod
             .url()
@@ -1817,7 +1817,7 @@ export const GetTestCaseLinks200Response = zod
       .describe("A list of Jira issues linked to this entity"),
     webLinks: zod
       .array(
-        zod.strictObject({
+        zod.looseObject({
           description: zod
             .string()
             .optional()
@@ -1842,7 +1842,7 @@ export const GetTestCaseLinks200Response = zod
   .describe("A list of links for this test case.");
 
 export const GetTestCaseLinks400Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
@@ -1852,29 +1852,29 @@ export const GetTestCaseLinks400Response = zod
 
 export const GetTestCaseLinks401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -1884,13 +1884,13 @@ export const GetTestCaseLinks401Response = zod.union([
 
 export const GetTestCaseLinks404Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("No test case exists for the given testCaseKey."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -1898,7 +1898,7 @@ export const GetTestCaseLinks404Response = zod.union([
       "The referenced resource does not exist, or the caller does not have access to its project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -1908,13 +1908,13 @@ export const GetTestCaseLinks404Response = zod.union([
 ]);
 
 export const GetTestCaseLinks500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const GetTestCaseLinksDefaultResponse = zod.strictObject({
+export const GetTestCaseLinksDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -1938,14 +1938,14 @@ export const CreateTestCaseIssueLinkBody = zod.strictObject({
   issueId: zod.int().min(1).describe("The Jira issue ID"),
 });
 
-export const CreateTestCaseIssueLink201Response = zod.strictObject({
+export const CreateTestCaseIssueLink201Response = zod.looseObject({
   id: zod.int().min(1).optional().describe("The ID of the entity"),
   self: zod.string().optional(),
 });
 
 export const CreateTestCaseIssueLink400Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -1953,7 +1953,7 @@ export const CreateTestCaseIssueLink400Response = zod.union([
       "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -1961,13 +1961,13 @@ export const CreateTestCaseIssueLink400Response = zod.union([
       "A request body field failed validation at the API layer (required field missing, pattern mismatch, size, or numeric bound).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("The request body is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -1978,29 +1978,29 @@ export const CreateTestCaseIssueLink400Response = zod.union([
 
 export const CreateTestCaseIssueLink401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -2009,7 +2009,7 @@ export const CreateTestCaseIssueLink401Response = zod.union([
 ]);
 
 export const CreateTestCaseIssueLink403Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
@@ -2019,7 +2019,7 @@ export const CreateTestCaseIssueLink403Response = zod
 
 export const CreateTestCaseIssueLink404Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -2027,13 +2027,13 @@ export const CreateTestCaseIssueLink404Response = zod.union([
       "A referenced Jira entity (e.g. jiraProjectVersion) does not exist or is not accessible.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("No test case exists for the given testCaseKey."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -2041,7 +2041,7 @@ export const CreateTestCaseIssueLink404Response = zod.union([
       "The referenced resource does not exist, or the caller does not have access to its project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -2051,13 +2051,13 @@ export const CreateTestCaseIssueLink404Response = zod.union([
 ]);
 
 export const CreateTestCaseIssueLink500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const CreateTestCaseIssueLinkDefaultResponse = zod.strictObject({
+export const CreateTestCaseIssueLinkDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -2082,14 +2082,14 @@ export const CreateTestCaseWebLinkBody = zod.strictObject({
   url: zod.string().describe("The web link URL"),
 });
 
-export const CreateTestCaseWebLink201Response = zod.strictObject({
+export const CreateTestCaseWebLink201Response = zod.looseObject({
   id: zod.int().min(1).optional().describe("The ID of the entity"),
   self: zod.string().optional(),
 });
 
 export const CreateTestCaseWebLink400Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -2097,7 +2097,7 @@ export const CreateTestCaseWebLink400Response = zod.union([
       "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -2105,13 +2105,13 @@ export const CreateTestCaseWebLink400Response = zod.union([
       "A request body field failed validation at the API layer (required field missing, pattern mismatch, size, or numeric bound).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("The request body is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -2122,29 +2122,29 @@ export const CreateTestCaseWebLink400Response = zod.union([
 
 export const CreateTestCaseWebLink401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -2153,7 +2153,7 @@ export const CreateTestCaseWebLink401Response = zod.union([
 ]);
 
 export const CreateTestCaseWebLink403Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
@@ -2163,7 +2163,7 @@ export const CreateTestCaseWebLink403Response = zod
 
 export const CreateTestCaseWebLink404Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -2171,7 +2171,7 @@ export const CreateTestCaseWebLink404Response = zod.union([
       "No test case exists for the given testCaseKey (returned by the web-link and test-script write endpoints).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -2179,7 +2179,7 @@ export const CreateTestCaseWebLink404Response = zod.union([
       "The referenced resource does not exist, or the caller does not have access to its project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -2189,13 +2189,13 @@ export const CreateTestCaseWebLink404Response = zod.union([
 ]);
 
 export const CreateTestCaseWebLink500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const CreateTestCaseWebLinkDefaultResponse = zod.strictObject({
+export const CreateTestCaseWebLinkDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -2243,7 +2243,7 @@ export const listTestCaseVersions200ResponseOneStartAtMin = 0;
 
 export const listTestCaseVersions200ResponseOneTotalMin = 0;
 
-export const ListTestCaseVersions200Response = zod.strictObject({
+export const ListTestCaseVersions200Response = zod.looseObject({
   next: zod
     .url()
     .nullish()
@@ -2275,7 +2275,7 @@ export const ListTestCaseVersions200Response = zod.strictObject({
     .describe("Indicates if this is the last page of results."),
   values: zod
     .array(
-      zod.strictObject({
+      zod.looseObject({
         self: zod
           .url()
           .optional()
@@ -2289,7 +2289,7 @@ export const ListTestCaseVersions200Response = zod.strictObject({
 
 export const ListTestCaseVersions400Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -2297,7 +2297,7 @@ export const ListTestCaseVersions400Response = zod.union([
       "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -2305,7 +2305,7 @@ export const ListTestCaseVersions400Response = zod.union([
       "A query parameter failed validation at the API layer (projectKey pattern, or the numeric bounds maxResults >= 1, startAt 0..1000000, folderId >= 1, jiraProjectVersionId >= 1).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -2314,29 +2314,29 @@ export const ListTestCaseVersions400Response = zod.union([
 
 export const ListTestCaseVersions401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -2346,7 +2346,7 @@ export const ListTestCaseVersions401Response = zod.union([
 
 export const ListTestCaseVersions404Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -2354,7 +2354,7 @@ export const ListTestCaseVersions404Response = zod.union([
       "The referenced resource does not exist, or the caller does not have access to its project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -2364,13 +2364,13 @@ export const ListTestCaseVersions404Response = zod.union([
 ]);
 
 export const ListTestCaseVersions500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const ListTestCaseVersionsDefaultResponse = zod.strictObject({
+export const ListTestCaseVersionsDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -2403,7 +2403,7 @@ export const getTestCaseVersion200ResponseLabelsMax = 50;
 export const getTestCaseVersion200ResponseOwnerAccountIdRegExp =
   /^[-:a-zA-Z0-9]{1,128}$/;
 
-export const GetTestCaseVersion200Response = zod.strictObject({
+export const GetTestCaseVersion200Response = zod.looseObject({
   id: zod.int().min(1).describe("The ID of the entity"),
   key: zod
     .string()
@@ -2415,7 +2415,7 @@ export const GetTestCaseVersion200Response = zod.strictObject({
     .max(getTestCaseVersion200ResponseNameMax)
     .regex(getTestCaseVersion200ResponseNameRegExp),
   project: zod
-    .strictObject({
+    .looseObject({
       id: zod.int().min(1).describe("The ID of the entity"),
       self: zod
         .url()
@@ -2446,7 +2446,7 @@ export const GetTestCaseVersion200Response = zod.strictObject({
     .describe("Array of labels associated to this entity."),
   component: zod
     .union([
-      zod.strictObject({
+      zod.looseObject({
         id: zod.int().min(1).describe("The ID of the entity"),
         self: zod
           .url()
@@ -2458,7 +2458,7 @@ export const GetTestCaseVersion200Response = zod.strictObject({
     .optional()
     .describe("ID and link to the Jira component resource."),
   priority: zod
-    .strictObject({
+    .looseObject({
       id: zod.int().min(1).describe("The ID of the entity"),
       self: zod
         .url()
@@ -2467,7 +2467,7 @@ export const GetTestCaseVersion200Response = zod.strictObject({
     })
     .describe("ID and link to the priority resource."),
   status: zod
-    .strictObject({
+    .looseObject({
       id: zod.int().min(1).describe("The ID of the entity"),
       self: zod
         .url()
@@ -2477,7 +2477,7 @@ export const GetTestCaseVersion200Response = zod.strictObject({
     .describe("ID and link to the status resource."),
   folder: zod
     .union([
-      zod.strictObject({
+      zod.looseObject({
         id: zod.int().min(1).describe("The ID of the entity"),
         self: zod
           .url()
@@ -2489,7 +2489,7 @@ export const GetTestCaseVersion200Response = zod.strictObject({
     .optional()
     .describe("ID and link to the folder resource."),
   owner: zod
-    .strictObject({
+    .looseObject({
       accountId: zod
         .string()
         .regex(getTestCaseVersion200ResponseOwnerAccountIdRegExp)
@@ -2504,7 +2504,7 @@ export const GetTestCaseVersion200Response = zod.strictObject({
     })
     .nullish(),
   testScript: zod
-    .strictObject({
+    .looseObject({
       self: zod
         .url()
         .optional()
@@ -2518,14 +2518,14 @@ export const GetTestCaseVersion200Response = zod.strictObject({
       "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
     ),
   links: zod
-    .strictObject({
+    .looseObject({
       self: zod
         .url()
         .optional()
         .describe("The REST API endpoint to get more resource details."),
       issues: zod
         .array(
-          zod.strictObject({
+          zod.looseObject({
             issueId: zod.int().min(1).describe("The Jira issue ID"),
             self: zod
               .url()
@@ -2556,7 +2556,7 @@ export const GetTestCaseVersion200Response = zod.strictObject({
         .describe("A list of Jira issues linked to this entity"),
       webLinks: zod
         .array(
-          zod.strictObject({
+          zod.looseObject({
             description: zod
               .string()
               .optional()
@@ -2584,7 +2584,7 @@ export const GetTestCaseVersion200Response = zod.strictObject({
 
 export const GetTestCaseVersion400Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -2592,7 +2592,7 @@ export const GetTestCaseVersion400Response = zod.union([
       "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -2603,29 +2603,29 @@ export const GetTestCaseVersion400Response = zod.union([
 
 export const GetTestCaseVersion401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -2635,13 +2635,13 @@ export const GetTestCaseVersion401Response = zod.union([
 
 export const GetTestCaseVersion404Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("No test case exists for the given testCaseKey."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -2649,7 +2649,7 @@ export const GetTestCaseVersion404Response = zod.union([
       "The referenced resource does not exist, or the caller does not have access to its project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -2659,13 +2659,13 @@ export const GetTestCaseVersion404Response = zod.union([
 ]);
 
 export const GetTestCaseVersion500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const GetTestCaseVersionDefaultResponse = zod.strictObject({
+export const GetTestCaseVersionDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -2686,7 +2686,7 @@ export const GetTestCaseTestScriptParams = zod.strictObject({
 });
 
 export const GetTestCaseTestScript200Response = zod
-  .strictObject({
+  .looseObject({
     type: zod
       .enum(["plain", "bdd"])
       .describe(
@@ -2698,7 +2698,7 @@ export const GetTestCaseTestScript200Response = zod
   .describe("Response body when retrieving test scripts");
 
 export const GetTestCaseTestScript400Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
@@ -2708,29 +2708,29 @@ export const GetTestCaseTestScript400Response = zod
 
 export const GetTestCaseTestScript401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -2740,7 +2740,7 @@ export const GetTestCaseTestScript401Response = zod.union([
 
 export const GetTestCaseTestScript404Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -2748,7 +2748,7 @@ export const GetTestCaseTestScript404Response = zod.union([
       "No test script (and no test case) exists for the given testCaseKey.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -2756,7 +2756,7 @@ export const GetTestCaseTestScript404Response = zod.union([
       "The referenced resource does not exist, or the caller does not have access to its project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -2766,7 +2766,7 @@ export const GetTestCaseTestScript404Response = zod.union([
 ]);
 
 export const GetTestCaseTestScript422Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
@@ -2775,13 +2775,13 @@ export const GetTestCaseTestScript422Response = zod
   );
 
 export const GetTestCaseTestScript500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const GetTestCaseTestScriptDefaultResponse = zod.strictObject({
+export const GetTestCaseTestScriptDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -2812,14 +2812,14 @@ export const CreateTestCaseTestScriptBody = zod
   })
   .describe("Request body for creating test scripts");
 
-export const CreateTestCaseTestScript201Response = zod.strictObject({
+export const CreateTestCaseTestScript201Response = zod.looseObject({
   id: zod.int().min(1).optional().describe("The ID of the entity"),
   self: zod.string().optional(),
 });
 
 export const CreateTestCaseTestScript400Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -2827,7 +2827,7 @@ export const CreateTestCaseTestScript400Response = zod.union([
       "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -2835,13 +2835,13 @@ export const CreateTestCaseTestScript400Response = zod.union([
       "A request body field failed validation at the API layer (required field missing, pattern mismatch, size, or numeric bound).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("The request body is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -2850,29 +2850,29 @@ export const CreateTestCaseTestScript400Response = zod.union([
 
 export const CreateTestCaseTestScript401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -2881,7 +2881,7 @@ export const CreateTestCaseTestScript401Response = zod.union([
 ]);
 
 export const CreateTestCaseTestScript403Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
@@ -2891,7 +2891,7 @@ export const CreateTestCaseTestScript403Response = zod
 
 export const CreateTestCaseTestScript404Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -2899,7 +2899,7 @@ export const CreateTestCaseTestScript404Response = zod.union([
       "No test case exists for the given testCaseKey (returned by the web-link and test-script write endpoints).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -2907,7 +2907,7 @@ export const CreateTestCaseTestScript404Response = zod.union([
       "The referenced resource does not exist, or the caller does not have access to its project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -2917,13 +2917,13 @@ export const CreateTestCaseTestScript404Response = zod.union([
 ]);
 
 export const CreateTestCaseTestScript500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const CreateTestCaseTestScriptDefaultResponse = zod.strictObject({
+export const CreateTestCaseTestScriptDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -2975,7 +2975,7 @@ export const getTestCaseTestSteps200ResponseTwoValuesItemTestCaseOneTwoTestCaseK
   /(.+-T[0-9]+)/;
 
 export const GetTestCaseTestSteps200Response = zod
-  .strictObject({
+  .looseObject({
     next: zod
       .url()
       .nullish()
@@ -3008,10 +3008,10 @@ export const GetTestCaseTestSteps200Response = zod
     values: zod
       .array(
         zod
-          .strictObject({
+          .looseObject({
             id: zod.int().min(1).nullish().describe("The ID of the test step."),
             inline: zod
-              .strictObject({
+              .looseObject({
                 description: zod
                   .string()
                   .nullish()
@@ -3042,7 +3042,7 @@ export const GetTestCaseTestSteps200Response = zod
               .nullish(),
             testCase: zod
               .union([
-                zod.strictObject({
+                zod.looseObject({
                   self: zod
                     .url()
                     .optional()
@@ -3059,7 +3059,7 @@ export const GetTestCaseTestSteps200Response = zod
                     ),
                   parameters: zod
                     .array(
-                      zod.strictObject({
+                      zod.looseObject({
                         name: zod
                           .string()
                           .optional()
@@ -3096,7 +3096,7 @@ export const GetTestCaseTestSteps200Response = zod
 
 export const GetTestCaseTestSteps400Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -3104,7 +3104,7 @@ export const GetTestCaseTestSteps400Response = zod.union([
       "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -3112,7 +3112,7 @@ export const GetTestCaseTestSteps400Response = zod.union([
       "A query parameter failed validation at the API layer (projectKey pattern, or the numeric bounds maxResults >= 1, startAt 0..1000000, folderId >= 1, jiraProjectVersionId >= 1).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -3121,29 +3121,29 @@ export const GetTestCaseTestSteps400Response = zod.union([
 
 export const GetTestCaseTestSteps401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -3153,13 +3153,13 @@ export const GetTestCaseTestSteps401Response = zod.union([
 
 export const GetTestCaseTestSteps404Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("No test case exists for the given testCaseKey."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -3167,7 +3167,7 @@ export const GetTestCaseTestSteps404Response = zod.union([
       "The referenced resource does not exist, or the caller does not have access to its project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -3177,7 +3177,7 @@ export const GetTestCaseTestSteps404Response = zod.union([
 ]);
 
 export const GetTestCaseTestSteps422Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
@@ -3186,13 +3186,13 @@ export const GetTestCaseTestSteps422Response = zod
   );
 
 export const GetTestCaseTestSteps500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const GetTestCaseTestStepsDefaultResponse = zod.strictObject({
+export const GetTestCaseTestStepsDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -3308,14 +3308,14 @@ export const CreateTestCaseTestStepsBody = zod
     "Request body for creating test steps. A maximum of 100 test steps can be added in one request. To add more than 100 steps, you can submit multiple requests. The mode property allows you to specify whether you want to delete the current test steps and create a new list, or append more items to the end of the current list.",
   );
 
-export const CreateTestCaseTestSteps201Response = zod.strictObject({
+export const CreateTestCaseTestSteps201Response = zod.looseObject({
   id: zod.int().min(1).optional().describe("The ID of the entity"),
   self: zod.string().optional(),
 });
 
 export const CreateTestCaseTestSteps400Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -3323,7 +3323,7 @@ export const CreateTestCaseTestSteps400Response = zod.union([
       "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -3331,19 +3331,19 @@ export const CreateTestCaseTestSteps400Response = zod.union([
       "A request body field failed validation at the API layer (required field missing, pattern mismatch, size, or numeric bound).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("The request body is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("The test step write `mode` is not one of APPEND or OVERWRITE."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -3351,7 +3351,7 @@ export const CreateTestCaseTestSteps400Response = zod.union([
       "The request must contain at least 1 and at most 100 test steps.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -3359,7 +3359,7 @@ export const CreateTestCaseTestSteps400Response = zod.union([
       'A test step is malformed. Covers several variants that share this response shape:\n- "The step should be inline or call to test." (neither inline nor testCase set)\n- "The step should be inline or call to test, not both." (both set)\n- "Test Data, Description and Expected Result are empty." (inline step with no content)\n',
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -3367,7 +3367,7 @@ export const CreateTestCaseTestSteps400Response = zod.union([
       "A call-to-test step references the same test case (circular reference).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -3375,7 +3375,7 @@ export const CreateTestCaseTestSteps400Response = zod.union([
       "A call-to-test step references a test case that does not exist.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -3383,7 +3383,7 @@ export const CreateTestCaseTestSteps400Response = zod.union([
       "A custom field name in the body does not exist for the project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -3391,7 +3391,7 @@ export const CreateTestCaseTestSteps400Response = zod.union([
       'A custom field value has the wrong type for the field definition. The message names the field and the expected type, e.g. "requires a number value", "requires a string value", "requires a boolean value", "requires a string which is in the format yyyy-MM-dd", or "requires a list".\n',
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -3399,7 +3399,7 @@ export const CreateTestCaseTestSteps400Response = zod.union([
       "A choice custom field value references an option name that does not exist.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -3407,7 +3407,7 @@ export const CreateTestCaseTestSteps400Response = zod.union([
       "The project has required custom fields but the request omitted them.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -3415,7 +3415,7 @@ export const CreateTestCaseTestSteps400Response = zod.union([
       "Custom fields were provided but not all required ones are present.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -3423,7 +3423,7 @@ export const CreateTestCaseTestSteps400Response = zod.union([
       "A required custom field was provided with a null or empty value.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -3434,29 +3434,29 @@ export const CreateTestCaseTestSteps400Response = zod.union([
 
 export const CreateTestCaseTestSteps401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -3466,7 +3466,7 @@ export const CreateTestCaseTestSteps401Response = zod.union([
 
 export const CreateTestCaseTestSteps403Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -3474,7 +3474,7 @@ export const CreateTestCaseTestSteps403Response = zod.union([
       "The caller lacks a required Zephyr permission (when the project's permission system is enabled).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -3483,7 +3483,7 @@ export const CreateTestCaseTestSteps403Response = zod.union([
 
 export const CreateTestCaseTestSteps404Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -3491,7 +3491,7 @@ export const CreateTestCaseTestSteps404Response = zod.union([
       "No test case exists for the given testCaseKey (returned by the web-link and test-script write endpoints).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -3499,7 +3499,7 @@ export const CreateTestCaseTestSteps404Response = zod.union([
       "The referenced resource does not exist, or the caller does not have access to its project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -3509,13 +3509,13 @@ export const CreateTestCaseTestSteps404Response = zod.union([
 ]);
 
 export const CreateTestCaseTestSteps500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const CreateTestCaseTestStepsDefaultResponse = zod.strictObject({
+export const CreateTestCaseTestStepsDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -3540,7 +3540,7 @@ export const GetTestCaseAttachment200Response = zod.unknown();
 
 export const GetTestCaseAttachment400Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -3548,7 +3548,7 @@ export const GetTestCaseAttachment400Response = zod.union([
       "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -3559,29 +3559,29 @@ export const GetTestCaseAttachment400Response = zod.union([
 
 export const GetTestCaseAttachment401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -3590,13 +3590,105 @@ export const GetTestCaseAttachment401Response = zod.union([
 ]);
 
 export const GetTestCaseAttachment500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const GetTestCaseAttachmentDefaultResponse = zod.strictObject({
+export const GetTestCaseAttachmentDefaultResponse = zod.looseObject({
+  errorCode: zod.int(),
+  message: zod.string(),
+});
+
+/**
+ * Deletes the attachment with the given ID from the test case.
+ * @summary Delete attachment
+ */
+export const deleteTestCaseAttachmentMetadataPathTestCaseKeyRegExp =
+  /(.+-T[0-9]+)/;
+
+export const DeleteTestCaseAttachmentMetadataParams = zod.strictObject({
+  testCaseKey: zod
+    .string()
+    .regex(deleteTestCaseAttachmentMetadataPathTestCaseKeyRegExp)
+    .describe(
+      "The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+",
+    ),
+  attachmentId: zod.int().min(1).describe("The numeric ID of the attachment."),
+});
+
+export const DeleteTestCaseAttachmentMetadata204Response = zod.void();
+
+export const DeleteTestCaseAttachmentMetadata400Response = zod.union([
+  zod
+    .looseObject({
+      errorCode: zod.int(),
+      message: zod.string(),
+    })
+    .describe(
+      "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+    ),
+  zod
+    .looseObject({
+      errorCode: zod.int(),
+      message: zod.string(),
+    })
+    .describe(
+      "A numeric path parameter was sent with a non-numeric value (for example a non-numeric test case version).",
+    ),
+]);
+
+export const DeleteTestCaseAttachmentMetadata401Response = zod.union([
+  zod
+    .looseObject({
+      error: zod.string(),
+    })
+    .describe("The Authorization header is missing."),
+  zod
+    .looseObject({
+      error: zod.string(),
+    })
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .looseObject({
+      error: zod.string(),
+    })
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .looseObject({
+      error: zod.string(),
+    })
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .looseObject({
+      error: zod.string(),
+    })
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const DeleteTestCaseAttachmentMetadata403Response = zod.looseObject({
+  errorCode: zod.int(),
+  message: zod.string(),
+});
+
+export const DeleteTestCaseAttachmentMetadata404Response = zod.looseObject({
+  errorCode: zod.int(),
+  message: zod.string(),
+});
+
+export const DeleteTestCaseAttachmentMetadata500Response = zod
+  .looseObject({
+    errorCode: zod.int(),
+    message: zod.string(),
+  })
+  .describe("The backend service returned a 5xx or could not be reached.");
+
+export const DeleteTestCaseAttachmentMetadataDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -3636,7 +3728,7 @@ export const UploadTestCaseAttachment200Response = zod.unknown();
 
 export const UploadTestCaseAttachment400Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -3644,7 +3736,7 @@ export const UploadTestCaseAttachment400Response = zod.union([
       "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -3655,29 +3747,29 @@ export const UploadTestCaseAttachment400Response = zod.union([
 
 export const UploadTestCaseAttachment401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -3686,13 +3778,13 @@ export const UploadTestCaseAttachment401Response = zod.union([
 ]);
 
 export const UploadTestCaseAttachment500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const UploadTestCaseAttachmentDefaultResponse = zod.strictObject({
+export const UploadTestCaseAttachmentDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -3740,7 +3832,7 @@ export const CreateTestCaseTestStepAttachment200Response = zod.unknown();
 
 export const CreateTestCaseTestStepAttachment400Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -3748,7 +3840,7 @@ export const CreateTestCaseTestStepAttachment400Response = zod.union([
       "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -3756,7 +3848,7 @@ export const CreateTestCaseTestStepAttachment400Response = zod.union([
       "A numeric path parameter was sent with a non-numeric value (for example a non-numeric test case version).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -3767,29 +3859,29 @@ export const CreateTestCaseTestStepAttachment400Response = zod.union([
 
 export const CreateTestCaseTestStepAttachment401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -3798,18 +3890,16 @@ export const CreateTestCaseTestStepAttachment401Response = zod.union([
 ]);
 
 export const CreateTestCaseTestStepAttachment500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const CreateTestCaseTestStepAttachmentDefaultResponse = zod.strictObject(
-  {
-    errorCode: zod.int(),
-    message: zod.string(),
-  },
-);
+export const CreateTestCaseTestStepAttachmentDefaultResponse = zod.looseObject({
+  errorCode: zod.int(),
+  message: zod.string(),
+});
 
 /**
  * Returns the content of an attachment for the given test case step. `testCaseStepId` is the numeric ID of the step within the test case. Retrieve it from `GET /testcases/{testCaseKey}/teststeps`.
@@ -3834,7 +3924,7 @@ export const GetTestCaseStepAttachment200Response = zod.unknown();
 
 export const GetTestCaseStepAttachment400Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -3842,7 +3932,7 @@ export const GetTestCaseStepAttachment400Response = zod.union([
       "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -3853,29 +3943,29 @@ export const GetTestCaseStepAttachment400Response = zod.union([
 
 export const GetTestCaseStepAttachment401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -3884,16 +3974,111 @@ export const GetTestCaseStepAttachment401Response = zod.union([
 ]);
 
 export const GetTestCaseStepAttachment500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const GetTestCaseStepAttachmentDefaultResponse = zod.strictObject({
+export const GetTestCaseStepAttachmentDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
+
+/**
+ * Deletes the attachment with the given ID from the test case step. `testCaseStepId` is the numeric ID of the step within the test case. Retrieve it from `GET /testcases/{testCaseKey}/teststeps`.
+ * @summary Delete step attachment
+ */
+export const deleteTestCaseStepAttachmentMetadataPathTestCaseIdOrKeyRegExp =
+  /([0-9]+)|([A-Z][A-Z_0-9]+-T[0-9]+)/;
+
+export const DeleteTestCaseStepAttachmentMetadataParams = zod.strictObject({
+  testCaseIdOrKey: zod
+    .string()
+    .regex(deleteTestCaseStepAttachmentMetadataPathTestCaseIdOrKeyRegExp)
+    .describe("The ID or key of the test case."),
+  testCaseStepId: zod
+    .int()
+    .min(1)
+    .describe("The ID of the step within the test case."),
+  attachmentId: zod.int().min(1).describe("The numeric ID of the attachment."),
+});
+
+export const DeleteTestCaseStepAttachmentMetadata204Response = zod.void();
+
+export const DeleteTestCaseStepAttachmentMetadata400Response = zod.union([
+  zod
+    .looseObject({
+      errorCode: zod.int(),
+      message: zod.string(),
+    })
+    .describe(
+      "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+    ),
+  zod
+    .looseObject({
+      errorCode: zod.int(),
+      message: zod.string(),
+    })
+    .describe(
+      "A numeric path parameter was sent with a non-numeric value (for example a non-numeric test case version).",
+    ),
+]);
+
+export const DeleteTestCaseStepAttachmentMetadata401Response = zod.union([
+  zod
+    .looseObject({
+      error: zod.string(),
+    })
+    .describe("The Authorization header is missing."),
+  zod
+    .looseObject({
+      error: zod.string(),
+    })
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .looseObject({
+      error: zod.string(),
+    })
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .looseObject({
+      error: zod.string(),
+    })
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .looseObject({
+      error: zod.string(),
+    })
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const DeleteTestCaseStepAttachmentMetadata403Response = zod.looseObject({
+  errorCode: zod.int(),
+  message: zod.string(),
+});
+
+export const DeleteTestCaseStepAttachmentMetadata404Response = zod.looseObject({
+  errorCode: zod.int(),
+  message: zod.string(),
+});
+
+export const DeleteTestCaseStepAttachmentMetadata500Response = zod
+  .looseObject({
+    errorCode: zod.int(),
+    message: zod.string(),
+  })
+  .describe("The backend service returned a 5xx or could not be reached.");
+
+export const DeleteTestCaseStepAttachmentMetadataDefaultResponse =
+  zod.looseObject({
+    errorCode: zod.int(),
+    message: zod.string(),
+  });
 
 /**
  * Returns a paged list of attachments for a test case step, including their database ID and file name.
@@ -3918,10 +4103,10 @@ export const GetTestCaseTestStepAttachmentsReferenceParams = zod.strictObject({
 });
 
 export const GetTestCaseTestStepAttachmentsReference200Response =
-  zod.strictObject({
+  zod.looseObject({
     attachments: zod
       .array(
-        zod.strictObject({
+        zod.looseObject({
           id: zod.int().optional().describe("Database ID of the attachment."),
           name: zod
             .string()
@@ -3933,7 +4118,7 @@ export const GetTestCaseTestStepAttachmentsReference200Response =
   });
 
 export const GetTestCaseTestStepAttachmentsReference400Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
@@ -3943,29 +4128,29 @@ export const GetTestCaseTestStepAttachmentsReference400Response = zod
 
 export const GetTestCaseTestStepAttachmentsReference401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -3975,7 +4160,7 @@ export const GetTestCaseTestStepAttachmentsReference401Response = zod.union([
 
 export const GetTestCaseTestStepAttachmentsReference404Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -3983,19 +4168,19 @@ export const GetTestCaseTestStepAttachmentsReference404Response = zod.union([
       "No test case exists for the given testCaseKey (returned by the web-link and test-script write endpoints).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("The given test step id does not exist for the test case."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("The test case step exists but has no attachment metadata."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -4003,7 +4188,7 @@ export const GetTestCaseTestStepAttachmentsReference404Response = zod.union([
       "The referenced resource does not exist, or the caller does not have access to its project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -4013,14 +4198,14 @@ export const GetTestCaseTestStepAttachmentsReference404Response = zod.union([
 ]);
 
 export const GetTestCaseTestStepAttachmentsReference500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
 export const GetTestCaseTestStepAttachmentsReferenceDefaultResponse =
-  zod.strictObject({
+  zod.looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   });
@@ -4039,10 +4224,10 @@ export const GetTestCaseAttachmentsReferenceParams = zod.strictObject({
     .describe("The ID or key of the test case."),
 });
 
-export const GetTestCaseAttachmentsReference200Response = zod.strictObject({
+export const GetTestCaseAttachmentsReference200Response = zod.looseObject({
   attachments: zod
     .array(
-      zod.strictObject({
+      zod.looseObject({
         id: zod.int().optional().describe("Database ID of the attachment."),
         name: zod.string().optional().describe("File name of the attachment."),
       }),
@@ -4051,7 +4236,7 @@ export const GetTestCaseAttachmentsReference200Response = zod.strictObject({
 });
 
 export const GetTestCaseAttachmentsReference400Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
@@ -4061,29 +4246,29 @@ export const GetTestCaseAttachmentsReference400Response = zod
 
 export const GetTestCaseAttachmentsReference401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -4093,7 +4278,7 @@ export const GetTestCaseAttachmentsReference401Response = zod.union([
 
 export const GetTestCaseAttachmentsReference404Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -4101,13 +4286,13 @@ export const GetTestCaseAttachmentsReference404Response = zod.union([
       "No test case exists for the given testCaseKey (returned by the web-link and test-script write endpoints).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("The test case exists but has no attachment metadata."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -4115,7 +4300,7 @@ export const GetTestCaseAttachmentsReference404Response = zod.union([
       "The referenced resource does not exist, or the caller does not have access to its project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -4125,13 +4310,13 @@ export const GetTestCaseAttachmentsReference404Response = zod.union([
 ]);
 
 export const GetTestCaseAttachmentsReference500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const GetTestCaseAttachmentsReferenceDefaultResponse = zod.strictObject({
+export const GetTestCaseAttachmentsReferenceDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -4190,7 +4375,7 @@ export const listTestCycles200ResponseTwoValuesItemNameRegExp = /^(?!\s*$).+/;
 export const listTestCycles200ResponseTwoValuesItemOwnerAccountIdRegExp =
   /^[-:a-zA-Z0-9]{1,128}$/;
 
-export const ListTestCycles200Response = zod.strictObject({
+export const ListTestCycles200Response = zod.looseObject({
   next: zod
     .url()
     .nullish()
@@ -4223,7 +4408,7 @@ export const ListTestCycles200Response = zod.strictObject({
   values: zod
     .array(
       zod
-        .strictObject({
+        .looseObject({
           id: zod.int().min(1).describe("The ID of the entity"),
           key: zod
             .string()
@@ -4234,7 +4419,7 @@ export const ListTestCycles200Response = zod.strictObject({
             .regex(listTestCycles200ResponseTwoValuesItemNameRegExp)
             .describe("Name of the Test Cycle"),
           project: zod
-            .strictObject({
+            .looseObject({
               id: zod.int().min(1).describe("The ID of the entity"),
               self: zod
                 .url()
@@ -4246,7 +4431,7 @@ export const ListTestCycles200Response = zod.strictObject({
             .describe("ID and link relative to Zephyr project."),
           jiraProjectVersion: zod
             .union([
-              zod.strictObject({
+              zod.looseObject({
                 id: zod.int().min(1).describe("The ID of the entity"),
                 self: zod
                   .url()
@@ -4262,7 +4447,7 @@ export const ListTestCycles200Response = zod.strictObject({
               "ID and Link to fetch information about Jira Project version. Relates to 'Version' or 'Releases' in Jira projects.",
             ),
           status: zod
-            .strictObject({
+            .looseObject({
               id: zod.int().min(1).describe("The ID of the entity"),
               self: zod
                 .url()
@@ -4274,7 +4459,7 @@ export const ListTestCycles200Response = zod.strictObject({
             .describe("ID and link to the status resource."),
           folder: zod
             .union([
-              zod.strictObject({
+              zod.looseObject({
                 id: zod.int().min(1).describe("The ID of the entity"),
                 self: zod
                   .url()
@@ -4304,7 +4489,7 @@ export const ListTestCycles200Response = zod.strictObject({
               "The planned end date of the test cycle. This field cannot be blank. Setting it as null or excluding it from the request will leave the field values unchanged. ISO 8601 Format (i.e., yyyy-MM-dd'T'HH:mm:ss'Z')",
             ),
           owner: zod
-            .strictObject({
+            .looseObject({
               accountId: zod
                 .string()
                 .regex(
@@ -4327,7 +4512,7 @@ export const ListTestCycles200Response = zod.strictObject({
               "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
             ),
           links: zod
-            .strictObject({
+            .looseObject({
               self: zod
                 .url()
                 .optional()
@@ -4336,7 +4521,7 @@ export const ListTestCycles200Response = zod.strictObject({
                 ),
               issues: zod
                 .array(
-                  zod.strictObject({
+                  zod.looseObject({
                     issueId: zod.int().min(1).describe("The Jira issue ID"),
                     self: zod
                       .url()
@@ -4367,7 +4552,7 @@ export const ListTestCycles200Response = zod.strictObject({
                 .describe("A list of Jira issues linked to this entity"),
               webLinks: zod
                 .array(
-                  zod.strictObject({
+                  zod.looseObject({
                     description: zod
                       .string()
                       .optional()
@@ -4394,7 +4579,7 @@ export const ListTestCycles200Response = zod.strictObject({
                 .describe("A list of web links for this entity"),
               testPlans: zod
                 .array(
-                  zod.strictObject({
+                  zod.looseObject({
                     id: zod
                       .int()
                       .min(1)
@@ -4437,7 +4622,7 @@ export const ListTestCycles200Response = zod.strictObject({
 
 export const ListTestCycles400Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -4445,7 +4630,7 @@ export const ListTestCycles400Response = zod.union([
       "A query parameter failed validation at the API layer (projectKey pattern, or the numeric bounds maxResults >= 1, startAt 0..1000000, folderId >= 1, jiraProjectVersionId >= 1).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -4454,29 +4639,29 @@ export const ListTestCycles400Response = zod.union([
 
 export const ListTestCycles401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -4486,7 +4671,7 @@ export const ListTestCycles401Response = zod.union([
 
 export const ListTestCycles404Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -4494,13 +4679,13 @@ export const ListTestCycles404Response = zod.union([
       "The projectKey filter refers to a project that does not exist or is deactivated.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("The folderId filter refers to a folder that does not exist."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -4508,7 +4693,7 @@ export const ListTestCycles404Response = zod.union([
       "The referenced resource does not exist, or the caller does not have access to its project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -4518,13 +4703,13 @@ export const ListTestCycles404Response = zod.union([
 ]);
 
 export const ListTestCycles500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const ListTestCyclesDefaultResponse = zod.strictObject({
+export const ListTestCyclesDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -4599,7 +4784,7 @@ export const CreateTestCycleBody = zod.strictObject({
     ),
 });
 
-export const CreateTestCycle201Response = zod.strictObject({
+export const CreateTestCycle201Response = zod.looseObject({
   id: zod.int().min(1).optional().describe("The ID of the entity"),
   self: zod.string().optional(),
   key: zod.string().optional(),
@@ -4607,7 +4792,7 @@ export const CreateTestCycle201Response = zod.strictObject({
 
 export const CreateTestCycle400Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -4615,7 +4800,7 @@ export const CreateTestCycle400Response = zod.union([
       "A request body field failed validation at the API layer (required field missing, pattern mismatch, size, or numeric bound).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -4623,13 +4808,13 @@ export const CreateTestCycle400Response = zod.union([
       "A request body field has the wrong type or format (for example a non-ISO-8601 date).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("The request body is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -4637,7 +4822,7 @@ export const CreateTestCycle400Response = zod.union([
       "The folderId in the body refers to a folder that does not exist.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -4645,7 +4830,7 @@ export const CreateTestCycle400Response = zod.union([
       "The folderId refers to a folder that is not a TEST_CYCLE folder.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -4653,7 +4838,7 @@ export const CreateTestCycle400Response = zod.union([
       "A custom field name in the body does not exist for the project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -4661,7 +4846,7 @@ export const CreateTestCycle400Response = zod.union([
       'A custom field value has the wrong type for the field definition. The message names the field and the expected type, e.g. "requires a number value", "requires a string value", "requires a boolean value", "requires a string which is in the format yyyy-MM-dd", or "requires a list".\n',
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -4669,7 +4854,7 @@ export const CreateTestCycle400Response = zod.union([
       "A choice custom field value references an option name that does not exist.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -4677,7 +4862,7 @@ export const CreateTestCycle400Response = zod.union([
       "The project has required custom fields but the request omitted them.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -4685,7 +4870,7 @@ export const CreateTestCycle400Response = zod.union([
       "Custom fields were provided but not all required ones are present.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -4693,7 +4878,7 @@ export const CreateTestCycle400Response = zod.union([
       "A required custom field was provided with a null or empty value.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -4704,29 +4889,29 @@ export const CreateTestCycle400Response = zod.union([
 
 export const CreateTestCycle401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -4736,7 +4921,7 @@ export const CreateTestCycle401Response = zod.union([
 
 export const CreateTestCycle403Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -4744,7 +4929,7 @@ export const CreateTestCycle403Response = zod.union([
       "The caller lacks a required Zephyr permission (when the project's permission system is enabled).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -4753,7 +4938,7 @@ export const CreateTestCycle403Response = zod.union([
 
 export const CreateTestCycle404Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -4761,13 +4946,13 @@ export const CreateTestCycle404Response = zod.union([
       "The projectKey filter refers to a project that does not exist or is deactivated.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("The statusName does not exist for the project."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -4775,7 +4960,7 @@ export const CreateTestCycle404Response = zod.union([
       "No statusName was supplied and the project has no default status of the relevant group.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -4783,7 +4968,7 @@ export const CreateTestCycle404Response = zod.union([
       "A referenced Jira entity (e.g. jiraProjectVersion) does not exist or is not accessible.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -4791,7 +4976,7 @@ export const CreateTestCycle404Response = zod.union([
       "The referenced resource does not exist, or the caller does not have access to its project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -4801,13 +4986,13 @@ export const CreateTestCycle404Response = zod.union([
 ]);
 
 export const CreateTestCycle500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const CreateTestCycleDefaultResponse = zod.strictObject({
+export const CreateTestCycleDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -4880,7 +5065,7 @@ export const listTestCyclesCursorPaginated200ResponseTwoValuesItemNameRegExp =
 export const listTestCyclesCursorPaginated200ResponseTwoValuesItemOwnerAccountIdRegExp =
   /^[-:a-zA-Z0-9]{1,128}$/;
 
-export const ListTestCyclesCursorPaginated200Response = zod.strictObject({
+export const ListTestCyclesCursorPaginated200Response = zod.looseObject({
   next: zod.url().nullish(),
   nextStartAtId: zod
     .int()
@@ -4890,7 +5075,7 @@ export const ListTestCyclesCursorPaginated200Response = zod.strictObject({
   values: zod
     .array(
       zod
-        .strictObject({
+        .looseObject({
           id: zod.int().min(1).describe("The ID of the entity"),
           key: zod
             .string()
@@ -4905,7 +5090,7 @@ export const ListTestCyclesCursorPaginated200Response = zod.strictObject({
             )
             .describe("Name of the Test Cycle"),
           project: zod
-            .strictObject({
+            .looseObject({
               id: zod.int().min(1).describe("The ID of the entity"),
               self: zod
                 .url()
@@ -4917,7 +5102,7 @@ export const ListTestCyclesCursorPaginated200Response = zod.strictObject({
             .describe("ID and link relative to Zephyr project."),
           jiraProjectVersion: zod
             .union([
-              zod.strictObject({
+              zod.looseObject({
                 id: zod.int().min(1).describe("The ID of the entity"),
                 self: zod
                   .url()
@@ -4933,7 +5118,7 @@ export const ListTestCyclesCursorPaginated200Response = zod.strictObject({
               "ID and Link to fetch information about Jira Project version. Relates to 'Version' or 'Releases' in Jira projects.",
             ),
           status: zod
-            .strictObject({
+            .looseObject({
               id: zod.int().min(1).describe("The ID of the entity"),
               self: zod
                 .url()
@@ -4945,7 +5130,7 @@ export const ListTestCyclesCursorPaginated200Response = zod.strictObject({
             .describe("ID and link to the status resource."),
           folder: zod
             .union([
-              zod.strictObject({
+              zod.looseObject({
                 id: zod.int().min(1).describe("The ID of the entity"),
                 self: zod
                   .url()
@@ -4975,7 +5160,7 @@ export const ListTestCyclesCursorPaginated200Response = zod.strictObject({
               "The planned end date of the test cycle. This field cannot be blank. Setting it as null or excluding it from the request will leave the field values unchanged. ISO 8601 Format (i.e., yyyy-MM-dd'T'HH:mm:ss'Z')",
             ),
           owner: zod
-            .strictObject({
+            .looseObject({
               accountId: zod
                 .string()
                 .regex(
@@ -4998,7 +5183,7 @@ export const ListTestCyclesCursorPaginated200Response = zod.strictObject({
               "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
             ),
           links: zod
-            .strictObject({
+            .looseObject({
               self: zod
                 .url()
                 .optional()
@@ -5007,7 +5192,7 @@ export const ListTestCyclesCursorPaginated200Response = zod.strictObject({
                 ),
               issues: zod
                 .array(
-                  zod.strictObject({
+                  zod.looseObject({
                     issueId: zod.int().min(1).describe("The Jira issue ID"),
                     self: zod
                       .url()
@@ -5038,7 +5223,7 @@ export const ListTestCyclesCursorPaginated200Response = zod.strictObject({
                 .describe("A list of Jira issues linked to this entity"),
               webLinks: zod
                 .array(
-                  zod.strictObject({
+                  zod.looseObject({
                     description: zod
                       .string()
                       .optional()
@@ -5065,7 +5250,7 @@ export const ListTestCyclesCursorPaginated200Response = zod.strictObject({
                 .describe("A list of web links for this entity"),
               testPlans: zod
                 .array(
-                  zod.strictObject({
+                  zod.looseObject({
                     id: zod
                       .int()
                       .min(1)
@@ -5108,7 +5293,7 @@ export const ListTestCyclesCursorPaginated200Response = zod.strictObject({
 
 export const ListTestCyclesCursorPaginated400Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -5116,7 +5301,7 @@ export const ListTestCyclesCursorPaginated400Response = zod.union([
       "A query parameter failed validation at the API layer (projectKey pattern, or the numeric bounds maxResults >= 1, startAt 0..1000000, folderId >= 1, jiraProjectVersionId >= 1).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -5125,29 +5310,29 @@ export const ListTestCyclesCursorPaginated400Response = zod.union([
 
 export const ListTestCyclesCursorPaginated401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -5157,7 +5342,7 @@ export const ListTestCyclesCursorPaginated401Response = zod.union([
 
 export const ListTestCyclesCursorPaginated404Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -5165,13 +5350,13 @@ export const ListTestCyclesCursorPaginated404Response = zod.union([
       "The projectKey filter refers to a project that does not exist or is deactivated.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("The folderId filter refers to a folder that does not exist."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -5179,7 +5364,7 @@ export const ListTestCyclesCursorPaginated404Response = zod.union([
       "The referenced resource does not exist, or the caller does not have access to its project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -5189,13 +5374,13 @@ export const ListTestCyclesCursorPaginated404Response = zod.union([
 ]);
 
 export const ListTestCyclesCursorPaginated500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const ListTestCyclesCursorPaginatedDefaultResponse = zod.strictObject({
+export const ListTestCyclesCursorPaginatedDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -5221,7 +5406,7 @@ export const getTestCycle200ResponseOwnerAccountIdRegExp =
   /^[-:a-zA-Z0-9]{1,128}$/;
 
 export const GetTestCycle200Response = zod
-  .strictObject({
+  .looseObject({
     id: zod.int().min(1).describe("The ID of the entity"),
     key: zod
       .string()
@@ -5232,7 +5417,7 @@ export const GetTestCycle200Response = zod
       .regex(getTestCycle200ResponseNameRegExp)
       .describe("Name of the Test Cycle"),
     project: zod
-      .strictObject({
+      .looseObject({
         id: zod.int().min(1).describe("The ID of the entity"),
         self: zod
           .url()
@@ -5242,7 +5427,7 @@ export const GetTestCycle200Response = zod
       .describe("ID and link relative to Zephyr project."),
     jiraProjectVersion: zod
       .union([
-        zod.strictObject({
+        zod.looseObject({
           id: zod.int().min(1).describe("The ID of the entity"),
           self: zod
             .url()
@@ -5256,7 +5441,7 @@ export const GetTestCycle200Response = zod
         "ID and Link to fetch information about Jira Project version. Relates to 'Version' or 'Releases' in Jira projects.",
       ),
     status: zod
-      .strictObject({
+      .looseObject({
         id: zod.int().min(1).describe("The ID of the entity"),
         self: zod
           .url()
@@ -5266,7 +5451,7 @@ export const GetTestCycle200Response = zod
       .describe("ID and link to the status resource."),
     folder: zod
       .union([
-        zod.strictObject({
+        zod.looseObject({
           id: zod.int().min(1).describe("The ID of the entity"),
           self: zod
             .url()
@@ -5294,7 +5479,7 @@ export const GetTestCycle200Response = zod
         "The planned end date of the test cycle. This field cannot be blank. Setting it as null or excluding it from the request will leave the field values unchanged. ISO 8601 Format (i.e., yyyy-MM-dd'T'HH:mm:ss'Z')",
       ),
     owner: zod
-      .strictObject({
+      .looseObject({
         accountId: zod
           .string()
           .regex(getTestCycle200ResponseOwnerAccountIdRegExp)
@@ -5315,14 +5500,14 @@ export const GetTestCycle200Response = zod
         "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
       ),
     links: zod
-      .strictObject({
+      .looseObject({
         self: zod
           .url()
           .optional()
           .describe("The REST API endpoint to get more resource details."),
         issues: zod
           .array(
-            zod.strictObject({
+            zod.looseObject({
               issueId: zod.int().min(1).describe("The Jira issue ID"),
               self: zod
                 .url()
@@ -5353,7 +5538,7 @@ export const GetTestCycle200Response = zod
           .describe("A list of Jira issues linked to this entity"),
         webLinks: zod
           .array(
-            zod.strictObject({
+            zod.looseObject({
               description: zod
                 .string()
                 .optional()
@@ -5376,7 +5561,7 @@ export const GetTestCycle200Response = zod
           .describe("A list of web links for this entity"),
         testPlans: zod
           .array(
-            zod.strictObject({
+            zod.looseObject({
               id: zod
                 .int()
                 .min(1)
@@ -5415,7 +5600,7 @@ export const GetTestCycle200Response = zod
   .describe("Details of a test cycle");
 
 export const GetTestCycle400Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
@@ -5425,29 +5610,29 @@ export const GetTestCycle400Response = zod
 
 export const GetTestCycle401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -5457,13 +5642,13 @@ export const GetTestCycle401Response = zod.union([
 
 export const GetTestCycle404Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("No test cycle exists with the given id or key."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -5471,7 +5656,7 @@ export const GetTestCycle404Response = zod.union([
       "The referenced resource does not exist, or the caller does not have access to its project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -5481,13 +5666,13 @@ export const GetTestCycle404Response = zod.union([
 ]);
 
 export const GetTestCycle500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const GetTestCycleDefaultResponse = zod.strictObject({
+export const GetTestCycleDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -5613,7 +5798,7 @@ export const UpdateTestCycle200Response = zod.unknown();
 
 export const UpdateTestCycle400Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -5621,13 +5806,13 @@ export const UpdateTestCycle400Response = zod.union([
       "A request body field failed validation at the API layer (required field missing, pattern mismatch, size, or numeric bound).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("The request body is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -5635,7 +5820,7 @@ export const UpdateTestCycle400Response = zod.union([
       "A request body field has the wrong type or format (for example a non-ISO-8601 date).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -5643,13 +5828,13 @@ export const UpdateTestCycle400Response = zod.union([
       "The `testCycleIdOrKey` path parameter does not match the required pattern",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("The status id does not exist for the project."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -5657,7 +5842,7 @@ export const UpdateTestCycle400Response = zod.union([
       "On update, custom fields were provided but not all of the project's custom fields are present in the request.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -5665,7 +5850,7 @@ export const UpdateTestCycle400Response = zod.union([
       "The folderId in the body refers to a folder that does not exist.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -5673,7 +5858,7 @@ export const UpdateTestCycle400Response = zod.union([
       "The folderId refers to a folder that is not a TEST_CYCLE folder.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -5681,7 +5866,7 @@ export const UpdateTestCycle400Response = zod.union([
       "A custom field name in the body does not exist for the project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -5689,7 +5874,7 @@ export const UpdateTestCycle400Response = zod.union([
       'A custom field value has the wrong type for the field definition. The message names the field and the expected type, e.g. "requires a number value", "requires a string value", "requires a boolean value", "requires a string which is in the format yyyy-MM-dd", or "requires a list".\n',
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -5697,7 +5882,7 @@ export const UpdateTestCycle400Response = zod.union([
       "A choice custom field value references an option name that does not exist.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -5705,7 +5890,7 @@ export const UpdateTestCycle400Response = zod.union([
       "A required custom field was provided with a null or empty value.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -5716,29 +5901,29 @@ export const UpdateTestCycle400Response = zod.union([
 
 export const UpdateTestCycle401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -5748,7 +5933,7 @@ export const UpdateTestCycle401Response = zod.union([
 
 export const UpdateTestCycle403Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -5756,7 +5941,7 @@ export const UpdateTestCycle403Response = zod.union([
       "The caller lacks a required Zephyr permission (when the project's permission system is enabled).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -5765,13 +5950,13 @@ export const UpdateTestCycle403Response = zod.union([
 
 export const UpdateTestCycle404Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("No test cycle exists with the given id or key."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -5779,7 +5964,7 @@ export const UpdateTestCycle404Response = zod.union([
       "The referenced resource does not exist, or the caller does not have access to its project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -5789,13 +5974,13 @@ export const UpdateTestCycle404Response = zod.union([
 ]);
 
 export const UpdateTestCycle500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const UpdateTestCycleDefaultResponse = zod.strictObject({
+export const UpdateTestCycleDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -5815,14 +6000,14 @@ export const GetTestCycleLinksParams = zod.strictObject({
 });
 
 export const GetTestCycleLinks200Response = zod
-  .strictObject({
+  .looseObject({
     self: zod
       .url()
       .optional()
       .describe("The REST API endpoint to get more resource details."),
     issues: zod
       .array(
-        zod.strictObject({
+        zod.looseObject({
           issueId: zod.int().min(1).describe("The Jira issue ID"),
           self: zod
             .url()
@@ -5853,7 +6038,7 @@ export const GetTestCycleLinks200Response = zod
       .describe("A list of Jira issues linked to this entity"),
     webLinks: zod
       .array(
-        zod.strictObject({
+        zod.looseObject({
           description: zod
             .string()
             .optional()
@@ -5876,7 +6061,7 @@ export const GetTestCycleLinks200Response = zod
       .describe("A list of web links for this entity"),
     testPlans: zod
       .array(
-        zod.strictObject({
+        zod.looseObject({
           id: zod
             .int()
             .min(1)
@@ -5909,7 +6094,7 @@ export const GetTestCycleLinks200Response = zod
   .describe("Represents all links that a Test Cycle has.");
 
 export const GetTestCycleLinks400Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
@@ -5919,29 +6104,29 @@ export const GetTestCycleLinks400Response = zod
 
 export const GetTestCycleLinks401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -5951,13 +6136,13 @@ export const GetTestCycleLinks401Response = zod.union([
 
 export const GetTestCycleLinks404Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("No test cycle exists with the given id or key."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -5965,7 +6150,7 @@ export const GetTestCycleLinks404Response = zod.union([
       "The referenced resource does not exist, or the caller does not have access to its project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -5975,13 +6160,13 @@ export const GetTestCycleLinks404Response = zod.union([
 ]);
 
 export const GetTestCycleLinks500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const GetTestCycleLinksDefaultResponse = zod.strictObject({
+export const GetTestCycleLinksDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -6008,7 +6193,7 @@ export const CreateTestCycleIssueLink201Response = zod.unknown();
 
 export const CreateTestCycleIssueLink400Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -6016,7 +6201,7 @@ export const CreateTestCycleIssueLink400Response = zod.union([
       "The `testCycleIdOrKey` path parameter does not match the required pattern",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -6024,13 +6209,13 @@ export const CreateTestCycleIssueLink400Response = zod.union([
       "A request body field failed validation at the API layer (required field missing, pattern mismatch, size, or numeric bound).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("The request body is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -6038,7 +6223,7 @@ export const CreateTestCycleIssueLink400Response = zod.union([
       "A request body field has the wrong type or format (for example a non-ISO-8601 date).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -6049,29 +6234,29 @@ export const CreateTestCycleIssueLink400Response = zod.union([
 
 export const CreateTestCycleIssueLink401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -6080,7 +6265,7 @@ export const CreateTestCycleIssueLink401Response = zod.union([
 ]);
 
 export const CreateTestCycleIssueLink403Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
@@ -6090,13 +6275,13 @@ export const CreateTestCycleIssueLink403Response = zod
 
 export const CreateTestCycleIssueLink404Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("No test cycle exists with the given id or key."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -6104,7 +6289,7 @@ export const CreateTestCycleIssueLink404Response = zod.union([
       "A referenced Jira entity (e.g. jiraProjectVersion) does not exist or is not accessible.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -6112,7 +6297,7 @@ export const CreateTestCycleIssueLink404Response = zod.union([
       "The referenced resource does not exist, or the caller does not have access to its project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -6122,13 +6307,13 @@ export const CreateTestCycleIssueLink404Response = zod.union([
 ]);
 
 export const CreateTestCycleIssueLink500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const CreateTestCycleIssueLinkDefaultResponse = zod.strictObject({
+export const CreateTestCycleIssueLinkDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -6156,7 +6341,7 @@ export const CreateTestCycleWebLink201Response = zod.unknown();
 
 export const CreateTestCycleWebLink400Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -6164,7 +6349,7 @@ export const CreateTestCycleWebLink400Response = zod.union([
       "The `testCycleIdOrKey` path parameter does not match the required pattern",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -6172,13 +6357,13 @@ export const CreateTestCycleWebLink400Response = zod.union([
       "A request body field failed validation at the API layer (required field missing, pattern mismatch, size, or numeric bound).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("The request body is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -6187,29 +6372,29 @@ export const CreateTestCycleWebLink400Response = zod.union([
 
 export const CreateTestCycleWebLink401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -6218,7 +6403,7 @@ export const CreateTestCycleWebLink401Response = zod.union([
 ]);
 
 export const CreateTestCycleWebLink403Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
@@ -6228,7 +6413,7 @@ export const CreateTestCycleWebLink403Response = zod
 
 export const CreateTestCycleWebLink404Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -6236,7 +6421,7 @@ export const CreateTestCycleWebLink404Response = zod.union([
       "The referenced resource does not exist, or the caller does not have access to its project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -6246,13 +6431,13 @@ export const CreateTestCycleWebLink404Response = zod.union([
 ]);
 
 export const CreateTestCycleWebLink500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const CreateTestCycleWebLinkDefaultResponse = zod.strictObject({
+export const CreateTestCycleWebLinkDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -6274,30 +6459,74 @@ export const GetTestCycleAttachmentParams = zod.strictObject({
 
 export const GetTestCycleAttachment200Response = zod.unknown();
 
-export const GetTestCycleAttachment401Response = zod.strictObject({
+export const GetTestCycleAttachment401Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const GetTestCycleAttachment403Response = zod.strictObject({
+export const GetTestCycleAttachment403Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const GetTestCycleAttachment404Response = zod.strictObject({
+export const GetTestCycleAttachment404Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const GetTestCycleAttachment500Response = zod.strictObject({
+export const GetTestCycleAttachment500Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const GetTestCycleAttachmentDefaultResponse = zod.strictObject({
+export const GetTestCycleAttachmentDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
+
+/**
+ * Deletes the attachment with the given ID from the test cycle.
+ * @summary Delete attachment
+ */
+export const deleteTestCycleAttachmentMetadataPathTestCycleIdOrKeyRegExp =
+  /([0-9]+)|([A-Z][A-Z_0-9]+-R[0-9]+)/;
+
+export const DeleteTestCycleAttachmentMetadataParams = zod.strictObject({
+  testCycleIdOrKey: zod
+    .string()
+    .regex(deleteTestCycleAttachmentMetadataPathTestCycleIdOrKeyRegExp)
+    .describe("The ID or key of the test cycle."),
+  attachmentId: zod.int().min(1).describe("The numeric ID of the attachment."),
+});
+
+export const DeleteTestCycleAttachmentMetadata204Response = zod.void();
+
+export const DeleteTestCycleAttachmentMetadata401Response = zod.looseObject({
+  errorCode: zod.int(),
+  message: zod.string(),
+});
+
+export const DeleteTestCycleAttachmentMetadata403Response = zod.looseObject({
+  errorCode: zod.int(),
+  message: zod.string(),
+});
+
+export const DeleteTestCycleAttachmentMetadata404Response = zod.looseObject({
+  errorCode: zod.int(),
+  message: zod.string(),
+});
+
+export const DeleteTestCycleAttachmentMetadata500Response = zod.looseObject({
+  errorCode: zod.int(),
+  message: zod.string(),
+});
+
+export const DeleteTestCycleAttachmentMetadataDefaultResponse = zod.looseObject(
+  {
+    errorCode: zod.int(),
+    message: zod.string(),
+  },
+);
 
 /**
  * Uploads a file and attaches it to a test cycle.
@@ -6332,37 +6561,37 @@ export const UploadTestCycleAttachmentParams = zod.strictObject({
 
 export const UploadTestCycleAttachment200Response = zod.unknown();
 
-export const UploadTestCycleAttachment400Response = zod.strictObject({
+export const UploadTestCycleAttachment400Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const UploadTestCycleAttachment401Response = zod.strictObject({
+export const UploadTestCycleAttachment401Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const UploadTestCycleAttachment403Response = zod.strictObject({
+export const UploadTestCycleAttachment403Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const UploadTestCycleAttachment404Response = zod.strictObject({
+export const UploadTestCycleAttachment404Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const UploadTestCycleAttachment413Response = zod.strictObject({
+export const UploadTestCycleAttachment413Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const UploadTestCycleAttachment500Response = zod.strictObject({
+export const UploadTestCycleAttachment500Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const UploadTestCycleAttachmentDefaultResponse = zod.strictObject({
+export const UploadTestCycleAttachmentDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -6381,10 +6610,10 @@ export const GetTestCycleAttachmentsParams = zod.strictObject({
     .describe("The ID or key of the test cycle."),
 });
 
-export const GetTestCycleAttachments200Response = zod.strictObject({
+export const GetTestCycleAttachments200Response = zod.looseObject({
   attachments: zod
     .array(
-      zod.strictObject({
+      zod.looseObject({
         id: zod.int().optional().describe("Database ID of the attachment."),
         name: zod.string().optional().describe("File name of the attachment."),
       }),
@@ -6392,22 +6621,22 @@ export const GetTestCycleAttachments200Response = zod.strictObject({
     .optional(),
 });
 
-export const GetTestCycleAttachments401Response = zod.strictObject({
+export const GetTestCycleAttachments401Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const GetTestCycleAttachments404Response = zod.strictObject({
+export const GetTestCycleAttachments404Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const GetTestCycleAttachments500Response = zod.strictObject({
+export const GetTestCycleAttachments500Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const GetTestCycleAttachmentsDefaultResponse = zod.strictObject({
+export const GetTestCycleAttachmentsDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -6459,7 +6688,7 @@ export const listTestPlans200ResponseTwoValuesItemOwnerAccountIdRegExp =
   /^[-:a-zA-Z0-9]{1,128}$/;
 export const listTestPlans200ResponseTwoValuesItemLabelsMax = 50;
 
-export const ListTestPlans200Response = zod.strictObject({
+export const ListTestPlans200Response = zod.looseObject({
   next: zod
     .url()
     .nullish()
@@ -6491,7 +6720,7 @@ export const ListTestPlans200Response = zod.strictObject({
     .describe("Indicates if this is the last page of results."),
   values: zod
     .array(
-      zod.strictObject({
+      zod.looseObject({
         id: zod.int().min(1).describe("The ID of the entity"),
         key: zod
           .string()
@@ -6507,7 +6736,7 @@ export const ListTestPlans200Response = zod.strictObject({
           .nullish()
           .describe("A description of the objective."),
         project: zod
-          .strictObject({
+          .looseObject({
             id: zod.int().min(1).describe("The ID of the entity"),
             self: zod
               .url()
@@ -6516,7 +6745,7 @@ export const ListTestPlans200Response = zod.strictObject({
           })
           .describe("ID and link relative to Zephyr project."),
         status: zod
-          .strictObject({
+          .looseObject({
             id: zod.int().min(1).describe("The ID of the entity"),
             self: zod
               .url()
@@ -6526,7 +6755,7 @@ export const ListTestPlans200Response = zod.strictObject({
           .describe("ID and link to the status resource."),
         folder: zod
           .union([
-            zod.strictObject({
+            zod.looseObject({
               id: zod.int().min(1).describe("The ID of the entity"),
               self: zod
                 .url()
@@ -6540,7 +6769,7 @@ export const ListTestPlans200Response = zod.strictObject({
           .optional()
           .describe("ID and link to the folder resource."),
         owner: zod
-          .strictObject({
+          .looseObject({
             accountId: zod
               .string()
               .regex(listTestPlans200ResponseTwoValuesItemOwnerAccountIdRegExp)
@@ -6566,10 +6795,10 @@ export const ListTestPlans200Response = zod.strictObject({
           .optional()
           .describe("Array of labels associated to this entity."),
         links: zod
-          .strictObject({
+          .looseObject({
             webLinks: zod
               .array(
-                zod.strictObject({
+                zod.looseObject({
                   description: zod
                     .string()
                     .optional()
@@ -6596,7 +6825,7 @@ export const ListTestPlans200Response = zod.strictObject({
               .describe("A list of web links for this entity"),
             issues: zod
               .array(
-                zod.strictObject({
+                zod.looseObject({
                   issueId: zod.int().min(1).describe("The Jira issue ID"),
                   self: zod
                     .url()
@@ -6628,7 +6857,7 @@ export const ListTestPlans200Response = zod.strictObject({
             testCycles: zod
               .array(
                 zod
-                  .strictObject({
+                  .looseObject({
                     id: zod.int().min(1).describe("The ID of the entity"),
                     self: zod
                       .url()
@@ -6665,7 +6894,7 @@ export const ListTestPlans200Response = zod.strictObject({
 
 export const ListTestPlans400Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -6673,7 +6902,7 @@ export const ListTestPlans400Response = zod.union([
       "A query parameter failed validation at the API layer (projectKey pattern, or the numeric bounds maxResults >= 1, startAt 0..1000000, folderId >= 1, jiraProjectVersionId >= 1).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -6682,29 +6911,29 @@ export const ListTestPlans400Response = zod.union([
 
 export const ListTestPlans401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -6713,13 +6942,13 @@ export const ListTestPlans401Response = zod.union([
 ]);
 
 export const ListTestPlans500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const ListTestPlansDefaultResponse = zod.strictObject({
+export const ListTestPlansDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -6778,7 +7007,7 @@ export const CreateTestPlanBody = zod.strictObject({
     ),
 });
 
-export const CreateTestPlan201Response = zod.strictObject({
+export const CreateTestPlan201Response = zod.looseObject({
   id: zod.int().min(1).optional().describe("The ID of the entity"),
   self: zod.string().optional(),
   key: zod.string().optional(),
@@ -6786,7 +7015,7 @@ export const CreateTestPlan201Response = zod.strictObject({
 
 export const CreateTestPlan400Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -6794,7 +7023,7 @@ export const CreateTestPlan400Response = zod.union([
       "A request body field failed validation at the API layer (required field missing, pattern mismatch, size, or numeric bound).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -6802,13 +7031,13 @@ export const CreateTestPlan400Response = zod.union([
       "A request body field has the wrong type or format (for example a non-ISO-8601 date).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("The request body is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -6816,19 +7045,19 @@ export const CreateTestPlan400Response = zod.union([
       "The folderId in the body refers to a folder that does not exist.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("The labels array contains more than the maximum of 50 items."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("The labels array contains an empty or blank label."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -6836,7 +7065,7 @@ export const CreateTestPlan400Response = zod.union([
       "A label in the labels array contains spaces, which is not allowed.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -6844,7 +7073,7 @@ export const CreateTestPlan400Response = zod.union([
       "A custom field name in the body does not exist for the project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -6852,7 +7081,7 @@ export const CreateTestPlan400Response = zod.union([
       'A custom field value has the wrong type for the field definition. The message names the field and the expected type, e.g. "requires a number value", "requires a string value", "requires a boolean value", "requires a string which is in the format yyyy-MM-dd", or "requires a list".\n',
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -6860,7 +7089,7 @@ export const CreateTestPlan400Response = zod.union([
       "A choice custom field value references an option name that does not exist.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -6868,7 +7097,7 @@ export const CreateTestPlan400Response = zod.union([
       "The project has required custom fields but the request omitted them.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -6876,7 +7105,7 @@ export const CreateTestPlan400Response = zod.union([
       "Custom fields were provided but not all required ones are present.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -6884,7 +7113,7 @@ export const CreateTestPlan400Response = zod.union([
       "A required custom field was provided with a null or empty value.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -6895,29 +7124,29 @@ export const CreateTestPlan400Response = zod.union([
 
 export const CreateTestPlan401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -6926,7 +7155,7 @@ export const CreateTestPlan401Response = zod.union([
 ]);
 
 export const CreateTestPlan403Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
@@ -6936,7 +7165,7 @@ export const CreateTestPlan403Response = zod
 
 export const CreateTestPlan404Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -6944,13 +7173,13 @@ export const CreateTestPlan404Response = zod.union([
       "The projectKey filter refers to a project that does not exist or is deactivated.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("The statusName does not exist for the project."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -6958,7 +7187,7 @@ export const CreateTestPlan404Response = zod.union([
       "The referenced resource does not exist, or the caller does not have access to its project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -6968,13 +7197,13 @@ export const CreateTestPlan404Response = zod.union([
 ]);
 
 export const CreateTestPlan500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const CreateTestPlanDefaultResponse = zod.strictObject({
+export const CreateTestPlanDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -7039,7 +7268,7 @@ export const listTestPlansCursorPaginated200ResponseTwoValuesItemOwnerAccountIdR
   /^[-:a-zA-Z0-9]{1,128}$/;
 export const listTestPlansCursorPaginated200ResponseTwoValuesItemLabelsMax = 50;
 
-export const ListTestPlansCursorPaginated200Response = zod.strictObject({
+export const ListTestPlansCursorPaginated200Response = zod.looseObject({
   next: zod.url().nullish(),
   nextStartAtId: zod
     .int()
@@ -7048,7 +7277,7 @@ export const ListTestPlansCursorPaginated200Response = zod.strictObject({
   limit: zod.int().min(listTestPlansCursorPaginated200ResponseOneLimitMin),
   values: zod
     .array(
-      zod.strictObject({
+      zod.looseObject({
         id: zod.int().min(1).describe("The ID of the entity"),
         key: zod
           .string()
@@ -7066,7 +7295,7 @@ export const ListTestPlansCursorPaginated200Response = zod.strictObject({
           .nullish()
           .describe("A description of the objective."),
         project: zod
-          .strictObject({
+          .looseObject({
             id: zod.int().min(1).describe("The ID of the entity"),
             self: zod
               .url()
@@ -7075,7 +7304,7 @@ export const ListTestPlansCursorPaginated200Response = zod.strictObject({
           })
           .describe("ID and link relative to Zephyr project."),
         status: zod
-          .strictObject({
+          .looseObject({
             id: zod.int().min(1).describe("The ID of the entity"),
             self: zod
               .url()
@@ -7085,7 +7314,7 @@ export const ListTestPlansCursorPaginated200Response = zod.strictObject({
           .describe("ID and link to the status resource."),
         folder: zod
           .union([
-            zod.strictObject({
+            zod.looseObject({
               id: zod.int().min(1).describe("The ID of the entity"),
               self: zod
                 .url()
@@ -7099,7 +7328,7 @@ export const ListTestPlansCursorPaginated200Response = zod.strictObject({
           .optional()
           .describe("ID and link to the folder resource."),
         owner: zod
-          .strictObject({
+          .looseObject({
             accountId: zod
               .string()
               .regex(
@@ -7127,10 +7356,10 @@ export const ListTestPlansCursorPaginated200Response = zod.strictObject({
           .optional()
           .describe("Array of labels associated to this entity."),
         links: zod
-          .strictObject({
+          .looseObject({
             webLinks: zod
               .array(
-                zod.strictObject({
+                zod.looseObject({
                   description: zod
                     .string()
                     .optional()
@@ -7157,7 +7386,7 @@ export const ListTestPlansCursorPaginated200Response = zod.strictObject({
               .describe("A list of web links for this entity"),
             issues: zod
               .array(
-                zod.strictObject({
+                zod.looseObject({
                   issueId: zod.int().min(1).describe("The Jira issue ID"),
                   self: zod
                     .url()
@@ -7189,7 +7418,7 @@ export const ListTestPlansCursorPaginated200Response = zod.strictObject({
             testCycles: zod
               .array(
                 zod
-                  .strictObject({
+                  .looseObject({
                     id: zod.int().min(1).describe("The ID of the entity"),
                     self: zod
                       .url()
@@ -7226,7 +7455,7 @@ export const ListTestPlansCursorPaginated200Response = zod.strictObject({
 
 export const ListTestPlansCursorPaginated400Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -7234,7 +7463,7 @@ export const ListTestPlansCursorPaginated400Response = zod.union([
       "A query parameter failed validation at the API layer (projectKey pattern, or the numeric bounds maxResults >= 1, startAt 0..1000000, folderId >= 1, jiraProjectVersionId >= 1).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -7243,29 +7472,29 @@ export const ListTestPlansCursorPaginated400Response = zod.union([
 
 export const ListTestPlansCursorPaginated401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -7274,13 +7503,13 @@ export const ListTestPlansCursorPaginated401Response = zod.union([
 ]);
 
 export const ListTestPlansCursorPaginated500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const ListTestPlansCursorPaginatedDefaultResponse = zod.strictObject({
+export const ListTestPlansCursorPaginatedDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -7309,7 +7538,7 @@ export const getTestPlan200ResponseOwnerAccountIdRegExp =
   /^[-:a-zA-Z0-9]{1,128}$/;
 export const getTestPlan200ResponseLabelsMax = 50;
 
-export const GetTestPlan200Response = zod.strictObject({
+export const GetTestPlan200Response = zod.looseObject({
   id: zod.int().min(1).describe("The ID of the entity"),
   key: zod
     .string()
@@ -7322,7 +7551,7 @@ export const GetTestPlan200Response = zod.strictObject({
     .regex(getTestPlan200ResponseNameRegExp),
   objective: zod.string().nullish().describe("A description of the objective."),
   project: zod
-    .strictObject({
+    .looseObject({
       id: zod.int().min(1).describe("The ID of the entity"),
       self: zod
         .url()
@@ -7331,7 +7560,7 @@ export const GetTestPlan200Response = zod.strictObject({
     })
     .describe("ID and link relative to Zephyr project."),
   status: zod
-    .strictObject({
+    .looseObject({
       id: zod.int().min(1).describe("The ID of the entity"),
       self: zod
         .url()
@@ -7341,7 +7570,7 @@ export const GetTestPlan200Response = zod.strictObject({
     .describe("ID and link to the status resource."),
   folder: zod
     .union([
-      zod.strictObject({
+      zod.looseObject({
         id: zod.int().min(1).describe("The ID of the entity"),
         self: zod
           .url()
@@ -7353,7 +7582,7 @@ export const GetTestPlan200Response = zod.strictObject({
     .optional()
     .describe("ID and link to the folder resource."),
   owner: zod
-    .strictObject({
+    .looseObject({
       accountId: zod
         .string()
         .regex(getTestPlan200ResponseOwnerAccountIdRegExp)
@@ -7379,10 +7608,10 @@ export const GetTestPlan200Response = zod.strictObject({
     .optional()
     .describe("Array of labels associated to this entity."),
   links: zod
-    .strictObject({
+    .looseObject({
       webLinks: zod
         .array(
-          zod.strictObject({
+          zod.looseObject({
             description: zod
               .string()
               .optional()
@@ -7405,7 +7634,7 @@ export const GetTestPlan200Response = zod.strictObject({
         .describe("A list of web links for this entity"),
       issues: zod
         .array(
-          zod.strictObject({
+          zod.looseObject({
             issueId: zod.int().min(1).describe("The Jira issue ID"),
             self: zod
               .url()
@@ -7437,7 +7666,7 @@ export const GetTestPlan200Response = zod.strictObject({
       testCycles: zod
         .array(
           zod
-            .strictObject({
+            .looseObject({
               id: zod.int().min(1).describe("The ID of the entity"),
               self: zod
                 .url()
@@ -7470,7 +7699,7 @@ export const GetTestPlan200Response = zod.strictObject({
 });
 
 export const GetTestPlan400Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
@@ -7480,29 +7709,29 @@ export const GetTestPlan400Response = zod
 
 export const GetTestPlan401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -7512,13 +7741,13 @@ export const GetTestPlan401Response = zod.union([
 
 export const GetTestPlan404Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("No test plan exists for the given ID or key."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -7526,7 +7755,7 @@ export const GetTestPlan404Response = zod.union([
       "The referenced resource does not exist, or the caller does not have access to its project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -7536,13 +7765,13 @@ export const GetTestPlan404Response = zod.union([
 ]);
 
 export const GetTestPlan500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const GetTestPlanDefaultResponse = zod.strictObject({
+export const GetTestPlanDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -7570,14 +7799,14 @@ export const CreateTestPlanWebLinkBody = zod
   })
   .and(zod.unknown());
 
-export const CreateTestPlanWebLink201Response = zod.strictObject({
+export const CreateTestPlanWebLink201Response = zod.looseObject({
   id: zod.int().min(1).optional().describe("The ID of the entity"),
   self: zod.string().optional(),
 });
 
 export const CreateTestPlanWebLink400Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -7585,7 +7814,7 @@ export const CreateTestPlanWebLink400Response = zod.union([
       "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -7593,7 +7822,7 @@ export const CreateTestPlanWebLink400Response = zod.union([
       "A request body field failed validation at the API layer (required field missing, pattern mismatch, size, or numeric bound).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -7602,29 +7831,29 @@ export const CreateTestPlanWebLink400Response = zod.union([
 
 export const CreateTestPlanWebLink401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -7633,7 +7862,7 @@ export const CreateTestPlanWebLink401Response = zod.union([
 ]);
 
 export const CreateTestPlanWebLink403Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
@@ -7643,13 +7872,13 @@ export const CreateTestPlanWebLink403Response = zod
 
 export const CreateTestPlanWebLink404Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("No test plan exists for the given ID or key."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -7657,7 +7886,7 @@ export const CreateTestPlanWebLink404Response = zod.union([
       "The referenced resource does not exist, or the caller does not have access to its project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -7667,20 +7896,20 @@ export const CreateTestPlanWebLink404Response = zod.union([
 ]);
 
 export const CreateTestPlanWebLink422Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("A web link with the same URL already exists on the test plan.");
 
 export const CreateTestPlanWebLink500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const CreateTestPlanWebLinkDefaultResponse = zod.strictObject({
+export const CreateTestPlanWebLinkDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -7705,14 +7934,14 @@ export const CreateTestPlanIssueLinkBody = zod.strictObject({
   issueId: zod.int().min(1).describe("The Jira issue ID"),
 });
 
-export const CreateTestPlanIssueLink201Response = zod.strictObject({
+export const CreateTestPlanIssueLink201Response = zod.looseObject({
   id: zod.int().min(1).optional().describe("The ID of the entity"),
   self: zod.string().optional(),
 });
 
 export const CreateTestPlanIssueLink400Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -7720,7 +7949,7 @@ export const CreateTestPlanIssueLink400Response = zod.union([
       "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -7728,7 +7957,7 @@ export const CreateTestPlanIssueLink400Response = zod.union([
       "A request body field failed validation at the API layer (required field missing, pattern mismatch, size, or numeric bound).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -7737,29 +7966,29 @@ export const CreateTestPlanIssueLink400Response = zod.union([
 
 export const CreateTestPlanIssueLink401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -7768,7 +7997,7 @@ export const CreateTestPlanIssueLink401Response = zod.union([
 ]);
 
 export const CreateTestPlanIssueLink403Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
@@ -7778,13 +8007,13 @@ export const CreateTestPlanIssueLink403Response = zod
 
 export const CreateTestPlanIssueLink404Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("No test plan exists for the given ID or key."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -7792,7 +8021,7 @@ export const CreateTestPlanIssueLink404Response = zod.union([
       "A referenced Jira entity (e.g. jiraProjectVersion) does not exist or is not accessible.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -7800,7 +8029,7 @@ export const CreateTestPlanIssueLink404Response = zod.union([
       "The referenced resource does not exist, or the caller does not have access to its project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -7810,7 +8039,7 @@ export const CreateTestPlanIssueLink404Response = zod.union([
 ]);
 
 export const CreateTestPlanIssueLink422Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
@@ -7819,13 +8048,13 @@ export const CreateTestPlanIssueLink422Response = zod
   );
 
 export const CreateTestPlanIssueLink500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const CreateTestPlanIssueLinkDefaultResponse = zod.strictObject({
+export const CreateTestPlanIssueLinkDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -7856,14 +8085,14 @@ export const CreateTestPlanTestCycleLinkBody = zod.strictObject({
     .describe("The ID or key of the test cycle."),
 });
 
-export const CreateTestPlanTestCycleLink201Response = zod.strictObject({
+export const CreateTestPlanTestCycleLink201Response = zod.looseObject({
   id: zod.int().min(1).optional().describe("The ID of the entity"),
   self: zod.string().optional(),
 });
 
 export const CreateTestPlanTestCycleLink400Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -7871,7 +8100,7 @@ export const CreateTestPlanTestCycleLink400Response = zod.union([
       "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -7879,7 +8108,7 @@ export const CreateTestPlanTestCycleLink400Response = zod.union([
       "A request body field failed validation at the API layer (required field missing, pattern mismatch, size, or numeric bound).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -7888,29 +8117,29 @@ export const CreateTestPlanTestCycleLink400Response = zod.union([
 
 export const CreateTestPlanTestCycleLink401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -7919,7 +8148,7 @@ export const CreateTestPlanTestCycleLink401Response = zod.union([
 ]);
 
 export const CreateTestPlanTestCycleLink403Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
@@ -7929,19 +8158,19 @@ export const CreateTestPlanTestCycleLink403Response = zod
 
 export const CreateTestPlanTestCycleLink404Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("No test plan exists for the given ID or key."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("No test cycle exists with the given id or key."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -7949,7 +8178,7 @@ export const CreateTestPlanTestCycleLink404Response = zod.union([
       "The referenced resource does not exist, or the caller does not have access to its project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -7959,20 +8188,20 @@ export const CreateTestPlanTestCycleLink404Response = zod.union([
 ]);
 
 export const CreateTestPlanTestCycleLink422Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("A link to the same test cycle already exists on the entity.");
 
 export const CreateTestPlanTestCycleLink500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const CreateTestPlanTestCycleLinkDefaultResponse = zod.strictObject({
+export const CreateTestPlanTestCycleLinkDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -7998,7 +8227,7 @@ export const GetTestPlanAttachment200Response = zod.unknown();
 
 export const GetTestPlanAttachment400Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -8006,7 +8235,7 @@ export const GetTestPlanAttachment400Response = zod.union([
       "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -8014,7 +8243,7 @@ export const GetTestPlanAttachment400Response = zod.union([
       "A query parameter failed validation at the API layer (projectKey pattern, or the numeric bounds maxResults >= 1, startAt 0..1000000, folderId >= 1, jiraProjectVersionId >= 1).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -8025,29 +8254,29 @@ export const GetTestPlanAttachment400Response = zod.union([
 
 export const GetTestPlanAttachment401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -8056,13 +8285,105 @@ export const GetTestPlanAttachment401Response = zod.union([
 ]);
 
 export const GetTestPlanAttachment500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const GetTestPlanAttachmentDefaultResponse = zod.strictObject({
+export const GetTestPlanAttachmentDefaultResponse = zod.looseObject({
+  errorCode: zod.int(),
+  message: zod.string(),
+});
+
+/**
+ * Deletes the attachment with the given ID from the test plan.
+ * @summary Delete attachment
+ */
+export const deleteTestPlanAttachmentMetadataPathTestPlanIdOrKeyRegExp =
+  /([0-9]+)|(.+-P[0-9]+)/;
+
+export const DeleteTestPlanAttachmentMetadataParams = zod.strictObject({
+  testPlanIdOrKey: zod
+    .string()
+    .regex(deleteTestPlanAttachmentMetadataPathTestPlanIdOrKeyRegExp)
+    .describe(
+      "The ID or key of the test plan. Test plan keys are of the format [A-Z]+-P[0-9]+",
+    ),
+  attachmentId: zod.int().min(1).describe("The numeric ID of the attachment."),
+});
+
+export const DeleteTestPlanAttachmentMetadata204Response = zod.void();
+
+export const DeleteTestPlanAttachmentMetadata400Response = zod.union([
+  zod
+    .looseObject({
+      errorCode: zod.int(),
+      message: zod.string(),
+    })
+    .describe(
+      "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+    ),
+  zod
+    .looseObject({
+      errorCode: zod.int(),
+      message: zod.string(),
+    })
+    .describe(
+      "A numeric path parameter was sent with a non-numeric value (for example a non-numeric test case version).",
+    ),
+]);
+
+export const DeleteTestPlanAttachmentMetadata401Response = zod.union([
+  zod
+    .looseObject({
+      error: zod.string(),
+    })
+    .describe("The Authorization header is missing."),
+  zod
+    .looseObject({
+      error: zod.string(),
+    })
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .looseObject({
+      error: zod.string(),
+    })
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .looseObject({
+      error: zod.string(),
+    })
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .looseObject({
+      error: zod.string(),
+    })
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const DeleteTestPlanAttachmentMetadata403Response = zod.looseObject({
+  errorCode: zod.int(),
+  message: zod.string(),
+});
+
+export const DeleteTestPlanAttachmentMetadata404Response = zod.looseObject({
+  errorCode: zod.int(),
+  message: zod.string(),
+});
+
+export const DeleteTestPlanAttachmentMetadata500Response = zod
+  .looseObject({
+    errorCode: zod.int(),
+    message: zod.string(),
+  })
+  .describe("The backend service returned a 5xx or could not be reached.");
+
+export const DeleteTestPlanAttachmentMetadataDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -8083,10 +8404,10 @@ export const GetTestPlanAttachmentsReferenceParams = zod.strictObject({
     ),
 });
 
-export const GetTestPlanAttachmentsReference200Response = zod.strictObject({
+export const GetTestPlanAttachmentsReference200Response = zod.looseObject({
   attachments: zod
     .array(
-      zod.strictObject({
+      zod.looseObject({
         id: zod.int().optional().describe("Database ID of the attachment."),
         name: zod.string().optional().describe("File name of the attachment."),
       }),
@@ -8095,7 +8416,7 @@ export const GetTestPlanAttachmentsReference200Response = zod.strictObject({
 });
 
 export const GetTestPlanAttachmentsReference400Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
@@ -8105,29 +8426,29 @@ export const GetTestPlanAttachmentsReference400Response = zod
 
 export const GetTestPlanAttachmentsReference401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -8137,19 +8458,19 @@ export const GetTestPlanAttachmentsReference401Response = zod.union([
 
 export const GetTestPlanAttachmentsReference404Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("No test plan exists for the given ID or key."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("The test plan exists but has no attachment metadata."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -8157,7 +8478,7 @@ export const GetTestPlanAttachmentsReference404Response = zod.union([
       "The referenced resource does not exist, or the caller does not have access to its project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -8167,13 +8488,13 @@ export const GetTestPlanAttachmentsReference404Response = zod.union([
 ]);
 
 export const GetTestPlanAttachmentsReference500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const GetTestPlanAttachmentsReferenceDefaultResponse = zod.strictObject({
+export const GetTestPlanAttachmentsReferenceDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -8214,7 +8535,7 @@ export const CreateTestPlanAttachment200Response = zod.unknown();
 
 export const CreateTestPlanAttachment400Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -8222,7 +8543,7 @@ export const CreateTestPlanAttachment400Response = zod.union([
       "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -8233,29 +8554,29 @@ export const CreateTestPlanAttachment400Response = zod.union([
 
 export const CreateTestPlanAttachment401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -8264,13 +8585,13 @@ export const CreateTestPlanAttachment401Response = zod.union([
 ]);
 
 export const CreateTestPlanAttachment500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const CreateTestPlanAttachmentDefaultResponse = zod.strictObject({
+export const CreateTestPlanAttachmentDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -8370,7 +8691,7 @@ export const listTestExecutions200ResponseTwoValuesItemExecutedByIdRegExp =
 export const listTestExecutions200ResponseTwoValuesItemAssignedToIdRegExp =
   /^[-:a-zA-Z0-9]{1,128}$/;
 
-export const ListTestExecutions200Response = zod.strictObject({
+export const ListTestExecutions200Response = zod.looseObject({
   next: zod
     .url()
     .nullish()
@@ -8402,7 +8723,7 @@ export const ListTestExecutions200Response = zod.strictObject({
     .describe("Indicates if this is the last page of results."),
   values: zod
     .array(
-      zod.strictObject({
+      zod.looseObject({
         id: zod.int().min(1).describe("The ID of the entity"),
         key: zod
           .string()
@@ -8410,7 +8731,7 @@ export const ListTestExecutions200Response = zod.strictObject({
           .optional()
           .describe("Test execution key"),
         project: zod
-          .strictObject({
+          .looseObject({
             id: zod.int().min(1).describe("The ID of the entity"),
             self: zod
               .url()
@@ -8418,7 +8739,7 @@ export const ListTestExecutions200Response = zod.strictObject({
               .describe("The REST API endpoint to get more resource details."),
           })
           .describe("ID and link relative to Zephyr project."),
-        testCase: zod.strictObject({
+        testCase: zod.looseObject({
           self: zod
             .url()
             .optional()
@@ -8427,7 +8748,7 @@ export const ListTestExecutions200Response = zod.strictObject({
         }),
         environment: zod
           .union([
-            zod.strictObject({
+            zod.looseObject({
               id: zod.int().min(1).describe("The ID of the entity"),
               self: zod
                 .url()
@@ -8442,7 +8763,7 @@ export const ListTestExecutions200Response = zod.strictObject({
           .describe("ID and link to the environment resource."),
         jiraProjectVersion: zod
           .union([
-            zod.strictObject({
+            zod.looseObject({
               id: zod.int().min(1).describe("The ID of the entity"),
               self: zod
                 .url()
@@ -8458,7 +8779,7 @@ export const ListTestExecutions200Response = zod.strictObject({
             "ID and Link to fetch information about Jira Project version. Relates to 'Version' or 'Releases' in Jira projects.",
           ),
         testExecutionStatus: zod
-          .strictObject({
+          .looseObject({
             id: zod.int().min(1).describe("The ID of the entity"),
             self: zod
               .url()
@@ -8504,7 +8825,7 @@ export const ListTestExecutions200Response = zod.strictObject({
           ),
         testCycle: zod
           .union([
-            zod.strictObject({
+            zod.looseObject({
               self: zod
                 .url()
                 .optional()
@@ -8523,14 +8844,14 @@ export const ListTestExecutions200Response = zod.strictObject({
             "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
           ),
         links: zod
-          .strictObject({
+          .looseObject({
             self: zod
               .url()
               .optional()
               .describe("The REST API endpoint to get more resource details."),
             issues: zod
               .array(
-                zod.strictObject({
+                zod.looseObject({
                   issueId: zod.int().min(1).describe("The Jira issue ID"),
                   self: zod
                     .url()
@@ -8568,7 +8889,7 @@ export const ListTestExecutions200Response = zod.strictObject({
 
 export const ListTestExecutions400Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -8576,7 +8897,7 @@ export const ListTestExecutions400Response = zod.union([
       "A query parameter failed validation at the API layer (projectKey pattern, or the numeric bounds maxResults >= 1, startAt 0..1000000, folderId >= 1, jiraProjectVersionId >= 1).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -8585,29 +8906,29 @@ export const ListTestExecutions400Response = zod.union([
 
 export const ListTestExecutions401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -8616,13 +8937,13 @@ export const ListTestExecutions401Response = zod.union([
 ]);
 
 export const ListTestExecutions500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const ListTestExecutionsDefaultResponse = zod.strictObject({
+export const ListTestExecutionsDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -8726,14 +9047,14 @@ export const CreateTestExecutionBody = zod.strictObject({
     ),
 });
 
-export const CreateTestExecution201Response = zod.strictObject({
+export const CreateTestExecution201Response = zod.looseObject({
   id: zod.int().min(1).optional().describe("The ID of the entity"),
   self: zod.string().optional(),
 });
 
 export const CreateTestExecution400Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -8741,13 +9062,13 @@ export const CreateTestExecution400Response = zod.union([
       "A request body field failed validation at the API layer (required field missing, pattern mismatch, size, or numeric bound).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("The request body is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -8755,7 +9076,7 @@ export const CreateTestExecution400Response = zod.union([
       "A custom field name in the body does not exist for the project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -8763,7 +9084,7 @@ export const CreateTestExecution400Response = zod.union([
       'A custom field value has the wrong type for the field definition. The message names the field and the expected type, e.g. "requires a number value", "requires a string value", "requires a boolean value", "requires a string which is in the format yyyy-MM-dd", or "requires a list".\n',
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -8771,7 +9092,7 @@ export const CreateTestExecution400Response = zod.union([
       "The statusName provided for creating a test execution does not exist in the project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -8779,7 +9100,7 @@ export const CreateTestExecution400Response = zod.union([
       "The project has required custom fields but the request omitted them.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -8787,7 +9108,7 @@ export const CreateTestExecution400Response = zod.union([
       "Custom fields were provided but not all required ones are present.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -8795,7 +9116,7 @@ export const CreateTestExecution400Response = zod.union([
       "A required custom field was provided with a null or empty value.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -8806,29 +9127,29 @@ export const CreateTestExecution400Response = zod.union([
 
 export const CreateTestExecution401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -8837,7 +9158,7 @@ export const CreateTestExecution401Response = zod.union([
 ]);
 
 export const CreateTestExecution403Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
@@ -8847,19 +9168,19 @@ export const CreateTestExecution403Response = zod
 
 export const CreateTestExecution404Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("No test case exists for the given testCaseKey."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("No test cycle exists with the given id or key."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -8867,7 +9188,7 @@ export const CreateTestExecution404Response = zod.union([
       "The projectKey filter refers to a project that does not exist or is deactivated.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -8875,7 +9196,7 @@ export const CreateTestExecution404Response = zod.union([
       "The referenced resource does not exist, or the caller does not have access to its project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -8885,13 +9206,13 @@ export const CreateTestExecution404Response = zod.union([
 ]);
 
 export const CreateTestExecution500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const CreateTestExecutionDefaultResponse = zod.strictObject({
+export const CreateTestExecutionDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -9006,7 +9327,7 @@ export const listTestExecutionsNextgen200ResponseTwoValuesItemExecutedByIdRegExp
 export const listTestExecutionsNextgen200ResponseTwoValuesItemAssignedToIdRegExp =
   /^[-:a-zA-Z0-9]{1,128}$/;
 
-export const ListTestExecutionsNextgen200Response = zod.strictObject({
+export const ListTestExecutionsNextgen200Response = zod.looseObject({
   next: zod.url().nullish(),
   nextStartAtId: zod
     .int()
@@ -9015,7 +9336,7 @@ export const ListTestExecutionsNextgen200Response = zod.strictObject({
   limit: zod.int().min(listTestExecutionsNextgen200ResponseOneLimitMin),
   values: zod
     .array(
-      zod.strictObject({
+      zod.looseObject({
         id: zod.int().min(1).describe("The ID of the entity"),
         key: zod
           .string()
@@ -9023,7 +9344,7 @@ export const ListTestExecutionsNextgen200Response = zod.strictObject({
           .optional()
           .describe("Test execution key"),
         project: zod
-          .strictObject({
+          .looseObject({
             id: zod.int().min(1).describe("The ID of the entity"),
             self: zod
               .url()
@@ -9031,7 +9352,7 @@ export const ListTestExecutionsNextgen200Response = zod.strictObject({
               .describe("The REST API endpoint to get more resource details."),
           })
           .describe("ID and link relative to Zephyr project."),
-        testCase: zod.strictObject({
+        testCase: zod.looseObject({
           self: zod
             .url()
             .optional()
@@ -9040,7 +9361,7 @@ export const ListTestExecutionsNextgen200Response = zod.strictObject({
         }),
         environment: zod
           .union([
-            zod.strictObject({
+            zod.looseObject({
               id: zod.int().min(1).describe("The ID of the entity"),
               self: zod
                 .url()
@@ -9055,7 +9376,7 @@ export const ListTestExecutionsNextgen200Response = zod.strictObject({
           .describe("ID and link to the environment resource."),
         jiraProjectVersion: zod
           .union([
-            zod.strictObject({
+            zod.looseObject({
               id: zod.int().min(1).describe("The ID of the entity"),
               self: zod
                 .url()
@@ -9071,7 +9392,7 @@ export const ListTestExecutionsNextgen200Response = zod.strictObject({
             "ID and Link to fetch information about Jira Project version. Relates to 'Version' or 'Releases' in Jira projects.",
           ),
         testExecutionStatus: zod
-          .strictObject({
+          .looseObject({
             id: zod.int().min(1).describe("The ID of the entity"),
             self: zod
               .url()
@@ -9125,7 +9446,7 @@ export const ListTestExecutionsNextgen200Response = zod.strictObject({
           ),
         testCycle: zod
           .union([
-            zod.strictObject({
+            zod.looseObject({
               self: zod
                 .url()
                 .optional()
@@ -9144,14 +9465,14 @@ export const ListTestExecutionsNextgen200Response = zod.strictObject({
             "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
           ),
         links: zod
-          .strictObject({
+          .looseObject({
             self: zod
               .url()
               .optional()
               .describe("The REST API endpoint to get more resource details."),
             issues: zod
               .array(
-                zod.strictObject({
+                zod.looseObject({
                   issueId: zod.int().min(1).describe("The Jira issue ID"),
                   self: zod
                     .url()
@@ -9189,7 +9510,7 @@ export const ListTestExecutionsNextgen200Response = zod.strictObject({
 
 export const ListTestExecutionsNextgen400Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -9197,7 +9518,7 @@ export const ListTestExecutionsNextgen400Response = zod.union([
       "A query parameter failed validation at the API layer (projectKey pattern, or the numeric bounds maxResults >= 1, startAt 0..1000000, folderId >= 1, jiraProjectVersionId >= 1).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -9206,29 +9527,29 @@ export const ListTestExecutionsNextgen400Response = zod.union([
 
 export const ListTestExecutionsNextgen401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -9237,13 +9558,13 @@ export const ListTestExecutionsNextgen401Response = zod.union([
 ]);
 
 export const ListTestExecutionsNextgen500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const ListTestExecutionsNextgenDefaultResponse = zod.strictObject({
+export const ListTestExecutionsNextgenDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -9286,7 +9607,7 @@ export const getTestExecution200ResponseExecutedByIdRegExp =
 export const getTestExecution200ResponseAssignedToIdRegExp =
   /^[-:a-zA-Z0-9]{1,128}$/;
 
-export const GetTestExecution200Response = zod.strictObject({
+export const GetTestExecution200Response = zod.looseObject({
   id: zod.int().min(1).describe("The ID of the entity"),
   key: zod
     .string()
@@ -9294,7 +9615,7 @@ export const GetTestExecution200Response = zod.strictObject({
     .optional()
     .describe("Test execution key"),
   project: zod
-    .strictObject({
+    .looseObject({
       id: zod.int().min(1).describe("The ID of the entity"),
       self: zod
         .url()
@@ -9302,7 +9623,7 @@ export const GetTestExecution200Response = zod.strictObject({
         .describe("The REST API endpoint to get more resource details."),
     })
     .describe("ID and link relative to Zephyr project."),
-  testCase: zod.strictObject({
+  testCase: zod.looseObject({
     self: zod
       .url()
       .optional()
@@ -9311,7 +9632,7 @@ export const GetTestExecution200Response = zod.strictObject({
   }),
   environment: zod
     .union([
-      zod.strictObject({
+      zod.looseObject({
         id: zod.int().min(1).describe("The ID of the entity"),
         self: zod
           .url()
@@ -9324,7 +9645,7 @@ export const GetTestExecution200Response = zod.strictObject({
     .describe("ID and link to the environment resource."),
   jiraProjectVersion: zod
     .union([
-      zod.strictObject({
+      zod.looseObject({
         id: zod.int().min(1).describe("The ID of the entity"),
         self: zod
           .url()
@@ -9338,7 +9659,7 @@ export const GetTestExecution200Response = zod.strictObject({
       "ID and Link to fetch information about Jira Project version. Relates to 'Version' or 'Releases' in Jira projects.",
     ),
   testExecutionStatus: zod
-    .strictObject({
+    .looseObject({
       id: zod.int().min(1).describe("The ID of the entity"),
       self: zod
         .url()
@@ -9382,7 +9703,7 @@ export const GetTestExecution200Response = zod.strictObject({
     .describe("Indicates if the test execution was done manually or not."),
   testCycle: zod
     .union([
-      zod.strictObject({
+      zod.looseObject({
         self: zod
           .url()
           .optional()
@@ -9399,14 +9720,14 @@ export const GetTestExecution200Response = zod.strictObject({
       "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
     ),
   links: zod
-    .strictObject({
+    .looseObject({
       self: zod
         .url()
         .optional()
         .describe("The REST API endpoint to get more resource details."),
       issues: zod
         .array(
-          zod.strictObject({
+          zod.looseObject({
             issueId: zod.int().min(1).describe("The Jira issue ID"),
             self: zod
               .url()
@@ -9440,7 +9761,7 @@ export const GetTestExecution200Response = zod.strictObject({
 });
 
 export const GetTestExecution400Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
@@ -9450,29 +9771,29 @@ export const GetTestExecution400Response = zod
 
 export const GetTestExecution401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -9482,13 +9803,13 @@ export const GetTestExecution401Response = zod.union([
 
 export const GetTestExecution404Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("No test execution exists with the given id or key."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -9496,7 +9817,7 @@ export const GetTestExecution404Response = zod.union([
       "The referenced resource does not exist, or the caller does not have access to its project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -9506,13 +9827,13 @@ export const GetTestExecution404Response = zod.union([
 ]);
 
 export const GetTestExecution500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const GetTestExecutionDefaultResponse = zod.strictObject({
+export const GetTestExecutionDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -9584,7 +9905,7 @@ export const UpdateTestExecution200Response = zod.unknown();
 
 export const UpdateTestExecution400Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -9592,7 +9913,7 @@ export const UpdateTestExecution400Response = zod.union([
       "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -9600,7 +9921,7 @@ export const UpdateTestExecution400Response = zod.union([
       "A request body field failed validation at the API layer (required field missing, pattern mismatch, size, or numeric bound).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -9609,29 +9930,29 @@ export const UpdateTestExecution400Response = zod.union([
 
 export const UpdateTestExecution401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -9640,7 +9961,7 @@ export const UpdateTestExecution401Response = zod.union([
 ]);
 
 export const UpdateTestExecution403Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
@@ -9650,13 +9971,13 @@ export const UpdateTestExecution403Response = zod
 
 export const UpdateTestExecution404Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("No test execution exists with the given id or key."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -9664,7 +9985,7 @@ export const UpdateTestExecution404Response = zod.union([
       "The referenced resource does not exist, or the caller does not have access to its project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -9675,7 +9996,7 @@ export const UpdateTestExecution404Response = zod.union([
 
 export const UpdateTestExecution422Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -9683,7 +10004,7 @@ export const UpdateTestExecution422Response = zod.union([
       "The provided status name does not exist for the test execution's project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -9693,13 +10014,13 @@ export const UpdateTestExecution422Response = zod.union([
 ]);
 
 export const UpdateTestExecution500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const UpdateTestExecutionDefaultResponse = zod.strictObject({
+export const UpdateTestExecutionDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -9756,7 +10077,7 @@ export const getTestExecutionTestSteps200ResponseOneStartAtMin = 0;
 export const getTestExecutionTestSteps200ResponseOneTotalMin = 0;
 
 export const GetTestExecutionTestSteps200Response = zod
-  .strictObject({
+  .looseObject({
     next: zod
       .url()
       .nullish()
@@ -9789,13 +10110,13 @@ export const GetTestExecutionTestSteps200Response = zod
     values: zod
       .array(
         zod
-          .strictObject({
+          .looseObject({
             id: zod
               .int()
               .nullish()
               .describe("The id of the test step (test script result)"),
             inline: zod
-              .strictObject({
+              .looseObject({
                 description: zod
                   .string()
                   .nullish()
@@ -9825,7 +10146,7 @@ export const GetTestExecutionTestSteps200Response = zod
                   .nullish()
                   .describe("The AI reference. Zephyr only feature"),
                 status: zod
-                  .strictObject({
+                  .looseObject({
                     id: zod.int().min(1).describe("The ID of the entity"),
                     self: zod
                       .url()
@@ -9848,7 +10169,7 @@ export const GetTestExecutionTestSteps200Response = zod
 
 export const GetTestExecutionTestSteps400Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -9856,7 +10177,7 @@ export const GetTestExecutionTestSteps400Response = zod.union([
       "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -9864,7 +10185,7 @@ export const GetTestExecutionTestSteps400Response = zod.union([
       "A query parameter failed validation at the API layer (projectKey pattern, or the numeric bounds maxResults >= 1, startAt 0..1000000, folderId >= 1, jiraProjectVersionId >= 1).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -9873,29 +10194,29 @@ export const GetTestExecutionTestSteps400Response = zod.union([
 
 export const GetTestExecutionTestSteps401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -9905,13 +10226,13 @@ export const GetTestExecutionTestSteps401Response = zod.union([
 
 export const GetTestExecutionTestSteps404Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("No test execution exists with the given id or key."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -9919,7 +10240,7 @@ export const GetTestExecutionTestSteps404Response = zod.union([
       "The referenced resource does not exist, or the caller does not have access to its project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -9929,13 +10250,13 @@ export const GetTestExecutionTestSteps404Response = zod.union([
 ]);
 
 export const GetTestExecutionTestSteps500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const GetTestExecutionTestStepsDefaultResponse = zod.strictObject({
+export const GetTestExecutionTestStepsDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -9978,7 +10299,7 @@ export const PutTestExecutionTestSteps200Response = zod.unknown();
 
 export const PutTestExecutionTestSteps400Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -9986,7 +10307,7 @@ export const PutTestExecutionTestSteps400Response = zod.union([
       "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -9994,7 +10315,7 @@ export const PutTestExecutionTestSteps400Response = zod.union([
       "A request body field failed validation at the API layer (required field missing, pattern mismatch, size, or numeric bound).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -10003,29 +10324,29 @@ export const PutTestExecutionTestSteps400Response = zod.union([
 
 export const PutTestExecutionTestSteps401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -10034,7 +10355,7 @@ export const PutTestExecutionTestSteps401Response = zod.union([
 ]);
 
 export const PutTestExecutionTestSteps403Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
@@ -10044,13 +10365,13 @@ export const PutTestExecutionTestSteps403Response = zod
 
 export const PutTestExecutionTestSteps404Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("No test execution exists with the given id or key."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -10058,7 +10379,7 @@ export const PutTestExecutionTestSteps404Response = zod.union([
       "The referenced resource does not exist, or the caller does not have access to its project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -10067,22 +10388,22 @@ export const PutTestExecutionTestSteps404Response = zod.union([
     ),
 ]);
 
-export const PutTestExecutionTestSteps409Response = zod.strictObject({
+export const PutTestExecutionTestSteps409Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
 export const PutTestExecutionTestSteps422Response = zod.union([
-  zod.strictObject({
+  zod.looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   }),
-  zod.strictObject({
+  zod.looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   }),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -10092,13 +10413,13 @@ export const PutTestExecutionTestSteps422Response = zod.union([
 ]);
 
 export const PutTestExecutionTestSteps500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const PutTestExecutionTestStepsDefaultResponse = zod.strictObject({
+export const PutTestExecutionTestStepsDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -10119,7 +10440,7 @@ export const SyncTestExecutionScriptParams = zod.strictObject({
     ),
 });
 
-export const SyncTestExecutionScript200Response = zod.strictObject({
+export const SyncTestExecutionScript200Response = zod.looseObject({
   self: zod
     .url()
     .optional()
@@ -10127,7 +10448,7 @@ export const SyncTestExecutionScript200Response = zod.strictObject({
 });
 
 export const SyncTestExecutionScript400Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
@@ -10137,29 +10458,29 @@ export const SyncTestExecutionScript400Response = zod
 
 export const SyncTestExecutionScript401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -10168,7 +10489,7 @@ export const SyncTestExecutionScript401Response = zod.union([
 ]);
 
 export const SyncTestExecutionScript403Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
@@ -10178,13 +10499,13 @@ export const SyncTestExecutionScript403Response = zod
 
 export const SyncTestExecutionScript404Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("No test execution exists with the given id or key."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -10192,7 +10513,7 @@ export const SyncTestExecutionScript404Response = zod.union([
       "The referenced resource does not exist, or the caller does not have access to its project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -10201,19 +10522,19 @@ export const SyncTestExecutionScript404Response = zod.union([
     ),
 ]);
 
-export const SyncTestExecutionScript409Response = zod.strictObject({
+export const SyncTestExecutionScript409Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
 export const SyncTestExecutionScript500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const SyncTestExecutionScriptDefaultResponse = zod.strictObject({
+export const SyncTestExecutionScriptDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -10262,7 +10583,7 @@ export const CreateTestExecutionTestStepAttachmentParams = zod.strictObject({
 export const CreateTestExecutionTestStepAttachment200Response = zod.unknown();
 
 export const CreateTestExecutionTestStepAttachment400Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
@@ -10272,29 +10593,29 @@ export const CreateTestExecutionTestStepAttachment400Response = zod
 
 export const CreateTestExecutionTestStepAttachment401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -10303,14 +10624,14 @@ export const CreateTestExecutionTestStepAttachment401Response = zod.union([
 ]);
 
 export const CreateTestExecutionTestStepAttachment500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
 export const CreateTestExecutionTestStepAttachmentDefaultResponse =
-  zod.strictObject({
+  zod.looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   });
@@ -10331,14 +10652,14 @@ export const ListTestExecutionLinksParams = zod.strictObject({
     ),
 });
 
-export const ListTestExecutionLinks200Response = zod.strictObject({
+export const ListTestExecutionLinks200Response = zod.looseObject({
   self: zod
     .url()
     .optional()
     .describe("The REST API endpoint to get more resource details."),
   issues: zod
     .array(
-      zod.strictObject({
+      zod.looseObject({
         issueId: zod.int().min(1).describe("The Jira issue ID"),
         self: zod
           .url()
@@ -10371,7 +10692,7 @@ export const ListTestExecutionLinks200Response = zod.strictObject({
 
 export const ListTestExecutionLinks400Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -10379,7 +10700,7 @@ export const ListTestExecutionLinks400Response = zod.union([
       "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -10390,29 +10711,29 @@ export const ListTestExecutionLinks400Response = zod.union([
 
 export const ListTestExecutionLinks401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -10421,13 +10742,13 @@ export const ListTestExecutionLinks401Response = zod.union([
 ]);
 
 export const ListTestExecutionLinks500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const ListTestExecutionLinksDefaultResponse = zod.strictObject({
+export const ListTestExecutionLinksDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -10456,7 +10777,7 @@ export const CreateTestExecutionIssueLink201Response = zod.unknown();
 
 export const CreateTestExecutionIssueLink400Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -10464,7 +10785,7 @@ export const CreateTestExecutionIssueLink400Response = zod.union([
       "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -10472,7 +10793,7 @@ export const CreateTestExecutionIssueLink400Response = zod.union([
       "A request body field failed validation at the API layer (required field missing, pattern mismatch, size, or numeric bound).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -10481,29 +10802,29 @@ export const CreateTestExecutionIssueLink400Response = zod.union([
 
 export const CreateTestExecutionIssueLink401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -10512,7 +10833,7 @@ export const CreateTestExecutionIssueLink401Response = zod.union([
 ]);
 
 export const CreateTestExecutionIssueLink403Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
@@ -10522,13 +10843,13 @@ export const CreateTestExecutionIssueLink403Response = zod
 
 export const CreateTestExecutionIssueLink404Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("No test execution exists with the given id or key."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -10536,7 +10857,7 @@ export const CreateTestExecutionIssueLink404Response = zod.union([
       "A referenced Jira entity (e.g. jiraProjectVersion) does not exist or is not accessible.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -10544,7 +10865,7 @@ export const CreateTestExecutionIssueLink404Response = zod.union([
       "The referenced resource does not exist, or the caller does not have access to its project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -10554,13 +10875,13 @@ export const CreateTestExecutionIssueLink404Response = zod.union([
 ]);
 
 export const CreateTestExecutionIssueLink500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const CreateTestExecutionIssueLinkDefaultResponse = zod.strictObject({
+export const CreateTestExecutionIssueLinkDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -10593,10 +10914,10 @@ export const GetTestExecutionTestStepAttachmentsReferenceParams =
   });
 
 export const GetTestExecutionTestStepAttachmentsReference200Response =
-  zod.strictObject({
+  zod.looseObject({
     attachments: zod
       .array(
-        zod.strictObject({
+        zod.looseObject({
           id: zod.int().optional().describe("Database ID of the attachment."),
           name: zod
             .string()
@@ -10608,7 +10929,7 @@ export const GetTestExecutionTestStepAttachmentsReference200Response =
   });
 
 export const GetTestExecutionTestStepAttachmentsReference400Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
@@ -10619,29 +10940,29 @@ export const GetTestExecutionTestStepAttachmentsReference400Response = zod
 export const GetTestExecutionTestStepAttachmentsReference401Response =
   zod.union([
     zod
-      .strictObject({
+      .looseObject({
         error: zod.string(),
       })
       .describe("The Authorization header is missing."),
     zod
-      .strictObject({
+      .looseObject({
         error: zod.string(),
       })
       .describe(
         "The bearer token does not have the three dot-separated parts of a JWT.",
       ),
     zod
-      .strictObject({
+      .looseObject({
         error: zod.string(),
       })
       .describe("A segment of the bearer token is not valid base64."),
     zod
-      .strictObject({
+      .looseObject({
         error: zod.string(),
       })
       .describe("A decoded segment of the bearer token is not valid JSON."),
     zod
-      .strictObject({
+      .looseObject({
         error: zod.string(),
       })
       .describe(
@@ -10652,13 +10973,13 @@ export const GetTestExecutionTestStepAttachmentsReference401Response =
 export const GetTestExecutionTestStepAttachmentsReference404Response =
   zod.union([
     zod
-      .strictObject({
+      .looseObject({
         errorCode: zod.int(),
         message: zod.string(),
       })
       .describe("No test execution exists with the given id or key."),
     zod
-      .strictObject({
+      .looseObject({
         errorCode: zod.int(),
         message: zod.string(),
       })
@@ -10666,7 +10987,7 @@ export const GetTestExecutionTestStepAttachmentsReference404Response =
         "The test execution step with the given ID does not exist in the test execution.",
       ),
     zod
-      .strictObject({
+      .looseObject({
         errorCode: zod.int(),
         message: zod.string(),
       })
@@ -10674,7 +10995,7 @@ export const GetTestExecutionTestStepAttachmentsReference404Response =
         "No attachment metadata was found for the given test execution step.",
       ),
     zod
-      .strictObject({
+      .looseObject({
         errorCode: zod.int(),
         message: zod.string(),
       })
@@ -10682,7 +11003,7 @@ export const GetTestExecutionTestStepAttachmentsReference404Response =
         "The referenced resource does not exist, or the caller does not have access to its project.",
       ),
     zod
-      .strictObject({
+      .looseObject({
         errorCode: zod.int(),
         message: zod.string(),
       })
@@ -10692,14 +11013,14 @@ export const GetTestExecutionTestStepAttachmentsReference404Response =
   ]);
 
 export const GetTestExecutionTestStepAttachmentsReference500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
 export const GetTestExecutionTestStepAttachmentsReferenceDefaultResponse =
-  zod.strictObject({
+  zod.looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   });
@@ -10720,24 +11041,19 @@ export const GetTestExecutionAttachmentsReferenceParams = zod.strictObject({
     ),
 });
 
-export const GetTestExecutionAttachmentsReference200Response = zod.strictObject(
-  {
-    attachments: zod
-      .array(
-        zod.strictObject({
-          id: zod.int().optional().describe("Database ID of the attachment."),
-          name: zod
-            .string()
-            .optional()
-            .describe("File name of the attachment."),
-        }),
-      )
-      .optional(),
-  },
-);
+export const GetTestExecutionAttachmentsReference200Response = zod.looseObject({
+  attachments: zod
+    .array(
+      zod.looseObject({
+        id: zod.int().optional().describe("Database ID of the attachment."),
+        name: zod.string().optional().describe("File name of the attachment."),
+      }),
+    )
+    .optional(),
+});
 
 export const GetTestExecutionAttachmentsReference400Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
@@ -10747,29 +11063,29 @@ export const GetTestExecutionAttachmentsReference400Response = zod
 
 export const GetTestExecutionAttachmentsReference401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -10779,19 +11095,19 @@ export const GetTestExecutionAttachmentsReference401Response = zod.union([
 
 export const GetTestExecutionAttachmentsReference404Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("No test execution exists with the given id or key."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
     .describe("No attachment metadata was found for the given test execution."),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -10799,7 +11115,7 @@ export const GetTestExecutionAttachmentsReference404Response = zod.union([
       "The referenced resource does not exist, or the caller does not have access to its project.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -10809,14 +11125,14 @@ export const GetTestExecutionAttachmentsReference404Response = zod.union([
 ]);
 
 export const GetTestExecutionAttachmentsReference500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
 export const GetTestExecutionAttachmentsReferenceDefaultResponse =
-  zod.strictObject({
+  zod.looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   });
@@ -10859,7 +11175,7 @@ export const UploadTestExecutionAttachmentParams = zod.strictObject({
 export const UploadTestExecutionAttachment200Response = zod.unknown();
 
 export const UploadTestExecutionAttachment400Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
@@ -10869,29 +11185,29 @@ export const UploadTestExecutionAttachment400Response = zod
 
 export const UploadTestExecutionAttachment401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -10900,13 +11216,13 @@ export const UploadTestExecutionAttachment401Response = zod.union([
 ]);
 
 export const UploadTestExecutionAttachment500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const UploadTestExecutionAttachmentDefaultResponse = zod.strictObject({
+export const UploadTestExecutionAttachmentDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -10936,7 +11252,7 @@ export const GetTestExecutionStepAttachment200Response = zod.unknown();
 
 export const GetTestExecutionStepAttachment400Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -10944,7 +11260,7 @@ export const GetTestExecutionStepAttachment400Response = zod.union([
       "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -10955,29 +11271,29 @@ export const GetTestExecutionStepAttachment400Response = zod.union([
 
 export const GetTestExecutionStepAttachment401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -10986,16 +11302,122 @@ export const GetTestExecutionStepAttachment401Response = zod.union([
 ]);
 
 export const GetTestExecutionStepAttachment500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const GetTestExecutionStepAttachmentDefaultResponse = zod.strictObject({
+export const GetTestExecutionStepAttachmentDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
+
+/**
+ * Deletes the attachment with the given ID from the test execution step. `testExecutionStepId` is the numeric ID of the step within the test execution. Retrieve it from `GET /testexecutions/{testExecutionIdOrKey}/teststeps`.
+ * @summary Delete step attachment
+ */
+export const deleteTestExecutionStepAttachmentMetadataPathTestExecutionIdOrKeyRegExp =
+  /([0-9]+)|(.+-E[0-9]+)/;
+
+export const DeleteTestExecutionStepAttachmentMetadataParams = zod.strictObject(
+  {
+    testExecutionIdOrKey: zod
+      .string()
+      .regex(
+        deleteTestExecutionStepAttachmentMetadataPathTestExecutionIdOrKeyRegExp,
+      )
+      .describe(
+        "The ID or key of the test execution. Test execution keys are of the format [A-Z]+-E[0-9]+",
+      ),
+    testExecutionStepId: zod
+      .int()
+      .min(1)
+      .describe("The ID of the step within the test execution."),
+    attachmentId: zod
+      .int()
+      .min(1)
+      .describe("The numeric ID of the attachment."),
+  },
+);
+
+export const DeleteTestExecutionStepAttachmentMetadata204Response = zod.void();
+
+export const DeleteTestExecutionStepAttachmentMetadata400Response = zod.union([
+  zod
+    .looseObject({
+      errorCode: zod.int(),
+      message: zod.string(),
+    })
+    .describe(
+      "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+    ),
+  zod
+    .looseObject({
+      errorCode: zod.int(),
+      message: zod.string(),
+    })
+    .describe(
+      "A query parameter failed validation at the API layer (projectKey pattern, or the numeric bounds maxResults >= 1, startAt 0..1000000, folderId >= 1, jiraProjectVersionId >= 1).",
+    ),
+]);
+
+export const DeleteTestExecutionStepAttachmentMetadata401Response = zod.union([
+  zod
+    .looseObject({
+      error: zod.string(),
+    })
+    .describe("The Authorization header is missing."),
+  zod
+    .looseObject({
+      error: zod.string(),
+    })
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .looseObject({
+      error: zod.string(),
+    })
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .looseObject({
+      error: zod.string(),
+    })
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .looseObject({
+      error: zod.string(),
+    })
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const DeleteTestExecutionStepAttachmentMetadata403Response =
+  zod.looseObject({
+    errorCode: zod.int(),
+    message: zod.string(),
+  });
+
+export const DeleteTestExecutionStepAttachmentMetadata404Response =
+  zod.looseObject({
+    errorCode: zod.int(),
+    message: zod.string(),
+  });
+
+export const DeleteTestExecutionStepAttachmentMetadata500Response = zod
+  .looseObject({
+    errorCode: zod.int(),
+    message: zod.string(),
+  })
+  .describe("The backend service returned a 5xx or could not be reached.");
+
+export const DeleteTestExecutionStepAttachmentMetadataDefaultResponse =
+  zod.looseObject({
+    errorCode: zod.int(),
+    message: zod.string(),
+  });
 
 /**
  * Returns the content of an attachment for the given test execution.
@@ -11018,7 +11440,7 @@ export const GetTestExecutionAttachment200Response = zod.unknown();
 
 export const GetTestExecutionAttachment400Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -11026,7 +11448,7 @@ export const GetTestExecutionAttachment400Response = zod.union([
       "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
     ),
   zod
-    .strictObject({
+    .looseObject({
       errorCode: zod.int(),
       message: zod.string(),
     })
@@ -11037,29 +11459,29 @@ export const GetTestExecutionAttachment400Response = zod.union([
 
 export const GetTestExecutionAttachment401Response = zod.union([
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("The Authorization header is missing."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
       "The bearer token does not have the three dot-separated parts of a JWT.",
     ),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A segment of the bearer token is not valid base64."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe("A decoded segment of the bearer token is not valid JSON."),
   zod
-    .strictObject({
+    .looseObject({
       error: zod.string(),
     })
     .describe(
@@ -11068,16 +11490,113 @@ export const GetTestExecutionAttachment401Response = zod.union([
 ]);
 
 export const GetTestExecutionAttachment500Response = zod
-  .strictObject({
+  .looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   })
   .describe("The backend service returned a 5xx or could not be reached.");
 
-export const GetTestExecutionAttachmentDefaultResponse = zod.strictObject({
+export const GetTestExecutionAttachmentDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
+
+/**
+ * Deletes the attachment with the given ID from the test execution.
+ * @summary Delete attachment
+ */
+export const deleteTestExecutionAttachmentMetadataPathTestExecutionIdOrKeyRegExp =
+  /([0-9]+)|(.+-E[0-9]+)/;
+
+export const DeleteTestExecutionAttachmentMetadataParams = zod.strictObject({
+  testExecutionIdOrKey: zod
+    .string()
+    .regex(deleteTestExecutionAttachmentMetadataPathTestExecutionIdOrKeyRegExp)
+    .describe(
+      "The ID or key of the test execution. Test execution keys are of the format [A-Z]+-E[0-9]+",
+    ),
+  attachmentId: zod.int().min(1).describe("The numeric ID of the attachment."),
+});
+
+export const DeleteTestExecutionAttachmentMetadata204Response = zod.void();
+
+export const DeleteTestExecutionAttachmentMetadata400Response = zod.union([
+  zod
+    .looseObject({
+      errorCode: zod.int(),
+      message: zod.string(),
+    })
+    .describe(
+      "A path parameter failed validation at the API layer (for example a testCaseKey that does not match its required pattern).",
+    ),
+  zod
+    .looseObject({
+      errorCode: zod.int(),
+      message: zod.string(),
+    })
+    .describe(
+      "A query parameter failed validation at the API layer (projectKey pattern, or the numeric bounds maxResults >= 1, startAt 0..1000000, folderId >= 1, jiraProjectVersionId >= 1).",
+    ),
+]);
+
+export const DeleteTestExecutionAttachmentMetadata401Response = zod.union([
+  zod
+    .looseObject({
+      error: zod.string(),
+    })
+    .describe("The Authorization header is missing."),
+  zod
+    .looseObject({
+      error: zod.string(),
+    })
+    .describe(
+      "The bearer token does not have the three dot-separated parts of a JWT.",
+    ),
+  zod
+    .looseObject({
+      error: zod.string(),
+    })
+    .describe("A segment of the bearer token is not valid base64."),
+  zod
+    .looseObject({
+      error: zod.string(),
+    })
+    .describe("A decoded segment of the bearer token is not valid JSON."),
+  zod
+    .looseObject({
+      error: zod.string(),
+    })
+    .describe(
+      "The JWT is well-formed but its signature could not be verified (wrong secret, tampered, or unknown issuer).",
+    ),
+]);
+
+export const DeleteTestExecutionAttachmentMetadata403Response = zod.looseObject(
+  {
+    errorCode: zod.int(),
+    message: zod.string(),
+  },
+);
+
+export const DeleteTestExecutionAttachmentMetadata404Response = zod.looseObject(
+  {
+    errorCode: zod.int(),
+    message: zod.string(),
+  },
+);
+
+export const DeleteTestExecutionAttachmentMetadata500Response = zod
+  .looseObject({
+    errorCode: zod.int(),
+    message: zod.string(),
+  })
+  .describe("The backend service returned a 5xx or could not be reached.");
+
+export const DeleteTestExecutionAttachmentMetadataDefaultResponse =
+  zod.looseObject({
+    errorCode: zod.int(),
+    message: zod.string(),
+  });
 
 /**
  * Returns all projects.
@@ -11111,7 +11630,7 @@ export const listProjects200ResponseOneStartAtMin = 0;
 
 export const listProjects200ResponseOneTotalMin = 0;
 
-export const ListProjects200Response = zod.strictObject({
+export const ListProjects200Response = zod.looseObject({
   next: zod
     .url()
     .nullish()
@@ -11143,7 +11662,7 @@ export const ListProjects200Response = zod.strictObject({
     .describe("Indicates if this is the last page of results."),
   values: zod
     .array(
-      zod.strictObject({
+      zod.looseObject({
         id: zod.int().describe("The ID of the project in Zephyr."),
         jiraProjectId: zod.int().describe("The ID of the project in Jira."),
         key: zod.string(),
@@ -11155,17 +11674,17 @@ export const ListProjects200Response = zod.strictObject({
     .optional(),
 });
 
-export const ListProjects401Response = zod.strictObject({
+export const ListProjects401Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const ListProjects500Response = zod.strictObject({
+export const ListProjects500Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const ListProjectsDefaultResponse = zod.strictObject({
+export const ListProjectsDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -11183,7 +11702,7 @@ export const GetProjectParams = zod.strictObject({
     .describe("The Zephyr project ID or Jira project key"),
 });
 
-export const GetProject200Response = zod.strictObject({
+export const GetProject200Response = zod.looseObject({
   id: zod.int().describe("The ID of the project in Zephyr."),
   jiraProjectId: zod.int().describe("The ID of the project in Jira."),
   key: zod.string(),
@@ -11192,22 +11711,22 @@ export const GetProject200Response = zod.strictObject({
     .describe("Indicates whether the project has Zephyr enabled on it."),
 });
 
-export const GetProject401Response = zod.strictObject({
+export const GetProject401Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const GetProject404Response = zod.strictObject({
+export const GetProject404Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const GetProject500Response = zod.strictObject({
+export const GetProject500Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const GetProjectDefaultResponse = zod.strictObject({
+export const GetProjectDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -11262,7 +11781,7 @@ export const listFolders200ResponseTwoValuesItemNameMax = 255;
 export const listFolders200ResponseTwoValuesItemNameRegExp = /^(?!\\s*$).+/;
 export const listFolders200ResponseTwoValuesItemIndexMin = 0;
 
-export const ListFolders200Response = zod.strictObject({
+export const ListFolders200Response = zod.looseObject({
   next: zod
     .url()
     .nullish()
@@ -11294,7 +11813,7 @@ export const ListFolders200Response = zod.strictObject({
     .describe("Indicates if this is the last page of results."),
   values: zod
     .array(
-      zod.strictObject({
+      zod.looseObject({
         id: zod.int().min(1).describe("The ID of the entity"),
         parentId: zod.int().min(1).describe("The ID of the entity"),
         name: zod
@@ -11309,7 +11828,7 @@ export const ListFolders200Response = zod.strictObject({
             'Valid values: `"TEST_CASE"`, `"TEST_PLAN"`, `"TEST_CYCLE"`',
           ),
         project: zod
-          .strictObject({
+          .looseObject({
             id: zod.int().min(1).describe("The ID of the entity"),
             self: zod
               .url()
@@ -11323,17 +11842,17 @@ export const ListFolders200Response = zod.strictObject({
     .optional(),
 });
 
-export const ListFolders401Response = zod.strictObject({
+export const ListFolders401Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const ListFolders500Response = zod.strictObject({
+export const ListFolders500Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const ListFoldersDefaultResponse = zod.strictObject({
+export const ListFoldersDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -11371,22 +11890,22 @@ export const CreateFolderBody = zod.strictObject({
     .describe('Valid values: `"TEST_CASE"`, `"TEST_PLAN"`, `"TEST_CYCLE"`'),
 });
 
-export const CreateFolder201Response = zod.strictObject({
+export const CreateFolder201Response = zod.looseObject({
   id: zod.int().min(1).optional().describe("The ID of the entity"),
   self: zod.string().optional(),
 });
 
-export const CreateFolder401Response = zod.strictObject({
+export const CreateFolder401Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const CreateFolder500Response = zod.strictObject({
+export const CreateFolder500Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const CreateFolderDefaultResponse = zod.strictObject({
+export const CreateFolderDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -11405,7 +11924,7 @@ export const getFolder200ResponseNameMax = 255;
 export const getFolder200ResponseNameRegExp = /^(?!\\s*$).+/;
 export const getFolder200ResponseIndexMin = 0;
 
-export const GetFolder200Response = zod.strictObject({
+export const GetFolder200Response = zod.looseObject({
   id: zod.int().min(1).describe("The ID of the entity"),
   parentId: zod.int().min(1).describe("The ID of the entity"),
   name: zod
@@ -11418,7 +11937,7 @@ export const GetFolder200Response = zod.strictObject({
     .string()
     .describe('Valid values: `"TEST_CASE"`, `"TEST_PLAN"`, `"TEST_CYCLE"`'),
   project: zod
-    .strictObject({
+    .looseObject({
       id: zod.int().min(1).describe("The ID of the entity"),
       self: zod
         .url()
@@ -11429,22 +11948,22 @@ export const GetFolder200Response = zod.strictObject({
     .describe("ID and link relative to Zephyr project."),
 });
 
-export const GetFolder401Response = zod.strictObject({
+export const GetFolder401Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const GetFolder404Response = zod.strictObject({
+export const GetFolder404Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const GetFolder500Response = zod.strictObject({
+export const GetFolder500Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const GetFolderDefaultResponse = zod.strictObject({
+export const GetFolderDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -11498,7 +12017,7 @@ export const listPriorities200ResponseTwoValuesItemTwoColorRegExp =
   /#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})/;
 export const listPriorities200ResponseTwoValuesItemTwoDefaultDefault = false;
 
-export const ListPriorities200Response = zod.strictObject({
+export const ListPriorities200Response = zod.looseObject({
   next: zod
     .url()
     .nullish()
@@ -11530,10 +12049,10 @@ export const ListPriorities200Response = zod.strictObject({
     .describe("Indicates if this is the last page of results."),
   values: zod
     .array(
-      zod.strictObject({
+      zod.looseObject({
         id: zod.int().min(1).describe("The ID of the entity"),
         project: zod
-          .strictObject({
+          .looseObject({
             id: zod.int().min(1).describe("The ID of the entity"),
             self: zod
               .url()
@@ -11564,17 +12083,17 @@ export const ListPriorities200Response = zod.strictObject({
     .optional(),
 });
 
-export const ListPriorities401Response = zod.strictObject({
+export const ListPriorities401Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const ListPriorities500Response = zod.strictObject({
+export const ListPriorities500Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const ListPrioritiesDefaultResponse = zod.strictObject({
+export const ListPrioritiesDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -11613,22 +12132,22 @@ export const CreatePriorityBody = zod.strictObject({
     .describe("A color in hexadecimal format"),
 });
 
-export const CreatePriority201Response = zod.strictObject({
+export const CreatePriority201Response = zod.looseObject({
   id: zod.int().min(1).optional().describe("The ID of the entity"),
   self: zod.string().optional(),
 });
 
-export const CreatePriority401Response = zod.strictObject({
+export const CreatePriority401Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const CreatePriority500Response = zod.strictObject({
+export const CreatePriority500Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const CreatePriorityDefaultResponse = zod.strictObject({
+export const CreatePriorityDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -11651,10 +12170,10 @@ export const getPriority200ResponseTwoColorRegExp =
   /#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})/;
 export const getPriority200ResponseTwoDefaultDefault = false;
 
-export const GetPriority200Response = zod.strictObject({
+export const GetPriority200Response = zod.looseObject({
   id: zod.int().min(1).describe("The ID of the entity"),
   project: zod
-    .strictObject({
+    .looseObject({
       id: zod.int().min(1).describe("The ID of the entity"),
       self: zod
         .url()
@@ -11680,22 +12199,22 @@ export const GetPriority200Response = zod.strictObject({
   default: zod.boolean().default(getPriority200ResponseTwoDefaultDefault),
 });
 
-export const GetPriority401Response = zod.strictObject({
+export const GetPriority401Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const GetPriority404Response = zod.strictObject({
+export const GetPriority404Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const GetPriority500Response = zod.strictObject({
+export const GetPriority500Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const GetPriorityDefaultResponse = zod.strictObject({
+export const GetPriorityDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -11750,22 +12269,22 @@ export const UpdatePriorityBody = zod.strictObject({
 
 export const UpdatePriority200Response = zod.unknown();
 
-export const UpdatePriority401Response = zod.strictObject({
+export const UpdatePriority401Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const UpdatePriority404Response = zod.strictObject({
+export const UpdatePriority404Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const UpdatePriority500Response = zod.strictObject({
+export const UpdatePriority500Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const UpdatePriorityDefaultResponse = zod.strictObject({
+export const UpdatePriorityDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -11821,7 +12340,7 @@ export const listStatuses200ResponseTwoValuesItemOneIndexMin = 0;
 export const listStatuses200ResponseTwoValuesItemTwoArchivedDefault = false;
 export const listStatuses200ResponseTwoValuesItemTwoDefaultDefault = false;
 
-export const ListStatuses200Response = zod.strictObject({
+export const ListStatuses200Response = zod.looseObject({
   next: zod
     .url()
     .nullish()
@@ -11853,10 +12372,10 @@ export const ListStatuses200Response = zod.strictObject({
     .describe("Indicates if this is the last page of results."),
   values: zod
     .array(
-      zod.strictObject({
+      zod.looseObject({
         id: zod.int().min(1).describe("The ID of the entity"),
         project: zod
-          .strictObject({
+          .looseObject({
             id: zod.int().min(1).describe("The ID of the entity"),
             self: zod
               .url()
@@ -11889,17 +12408,17 @@ export const ListStatuses200Response = zod.strictObject({
     .optional(),
 });
 
-export const ListStatuses401Response = zod.strictObject({
+export const ListStatuses401Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const ListStatuses500Response = zod.strictObject({
+export const ListStatuses500Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const ListStatusesDefaultResponse = zod.strictObject({
+export const ListStatusesDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -11941,22 +12460,22 @@ export const CreateStatusBody = zod.strictObject({
     .describe("A color in hexadecimal format"),
 });
 
-export const CreateStatus201Response = zod.strictObject({
+export const CreateStatus201Response = zod.looseObject({
   id: zod.int().min(1).optional().describe("The ID of the entity"),
   self: zod.string().optional(),
 });
 
-export const CreateStatus401Response = zod.strictObject({
+export const CreateStatus401Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const CreateStatus500Response = zod.strictObject({
+export const CreateStatus500Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const CreateStatusDefaultResponse = zod.strictObject({
+export const CreateStatusDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -11978,10 +12497,10 @@ export const getStatus200ResponseOneIndexMin = 0;
 export const getStatus200ResponseTwoArchivedDefault = false;
 export const getStatus200ResponseTwoDefaultDefault = false;
 
-export const GetStatus200Response = zod.strictObject({
+export const GetStatus200Response = zod.looseObject({
   id: zod.int().min(1).describe("The ID of the entity"),
   project: zod
-    .strictObject({
+    .looseObject({
       id: zod.int().min(1).describe("The ID of the entity"),
       self: zod
         .url()
@@ -12009,22 +12528,22 @@ export const GetStatus200Response = zod.strictObject({
   default: zod.boolean().default(getStatus200ResponseTwoDefaultDefault),
 });
 
-export const GetStatus401Response = zod.strictObject({
+export const GetStatus401Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const GetStatus404Response = zod.strictObject({
+export const GetStatus404Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const GetStatus500Response = zod.strictObject({
+export const GetStatus500Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const GetStatusDefaultResponse = zod.strictObject({
+export const GetStatusDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -12080,22 +12599,22 @@ export const UpdateStatusBody = zod.strictObject({
 
 export const UpdateStatus200Response = zod.unknown();
 
-export const UpdateStatus401Response = zod.strictObject({
+export const UpdateStatus401Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const UpdateStatus404Response = zod.strictObject({
+export const UpdateStatus404Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const UpdateStatus500Response = zod.strictObject({
+export const UpdateStatus500Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const UpdateStatusDefaultResponse = zod.strictObject({
+export const UpdateStatusDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -12146,7 +12665,7 @@ export const listEnvironments200ResponseTwoValuesItemOneIndexMin = 0;
 
 export const listEnvironments200ResponseTwoValuesItemTwoArchivedDefault = false;
 
-export const ListEnvironments200Response = zod.strictObject({
+export const ListEnvironments200Response = zod.looseObject({
   next: zod
     .url()
     .nullish()
@@ -12178,10 +12697,10 @@ export const ListEnvironments200Response = zod.strictObject({
     .describe("Indicates if this is the last page of results."),
   values: zod
     .array(
-      zod.strictObject({
+      zod.looseObject({
         id: zod.int().min(1).describe("The ID of the entity"),
         project: zod
-          .strictObject({
+          .looseObject({
             id: zod.int().min(1).describe("The ID of the entity"),
             self: zod
               .url()
@@ -12209,17 +12728,17 @@ export const ListEnvironments200Response = zod.strictObject({
     .optional(),
 });
 
-export const ListEnvironments401Response = zod.strictObject({
+export const ListEnvironments401Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const ListEnvironments500Response = zod.strictObject({
+export const ListEnvironments500Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const ListEnvironmentsDefaultResponse = zod.strictObject({
+export const ListEnvironmentsDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -12251,41 +12770,41 @@ export const CreateEnvironmentBody = zod.strictObject({
     .describe("The environment description."),
 });
 
-export const CreateEnvironment201Response = zod.strictObject({
+export const CreateEnvironment201Response = zod.looseObject({
   id: zod.int().min(1).optional().describe("The ID of the entity"),
   self: zod.string().optional(),
 });
 
 export const CreateEnvironment400Response = zod.union([
-  zod.strictObject({
+  zod.looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   }),
-  zod.strictObject({
+  zod.looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   }),
-  zod.strictObject({
+  zod.looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   }),
-  zod.strictObject({
+  zod.looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   }),
 ]);
 
-export const CreateEnvironment401Response = zod.strictObject({
+export const CreateEnvironment401Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const CreateEnvironment500Response = zod.strictObject({
+export const CreateEnvironment500Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const CreateEnvironmentDefaultResponse = zod.strictObject({
+export const CreateEnvironmentDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -12306,10 +12825,10 @@ export const getEnvironment200ResponseOneIndexMin = 0;
 
 export const getEnvironment200ResponseTwoArchivedDefault = false;
 
-export const GetEnvironment200Response = zod.strictObject({
+export const GetEnvironment200Response = zod.looseObject({
   id: zod.int().min(1).describe("The ID of the entity"),
   project: zod
-    .strictObject({
+    .looseObject({
       id: zod.int().min(1).describe("The ID of the entity"),
       self: zod
         .url()
@@ -12330,22 +12849,22 @@ export const GetEnvironment200Response = zod.strictObject({
   archived: zod.boolean().default(getEnvironment200ResponseTwoArchivedDefault),
 });
 
-export const GetEnvironment401Response = zod.strictObject({
+export const GetEnvironment401Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const GetEnvironment404Response = zod.strictObject({
+export const GetEnvironment404Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const GetEnvironment500Response = zod.strictObject({
+export const GetEnvironment500Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const GetEnvironmentDefaultResponse = zod.strictObject({
+export const GetEnvironmentDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -12393,44 +12912,44 @@ export const UpdateEnvironmentBody = zod.strictObject({
 export const UpdateEnvironment200Response = zod.unknown();
 
 export const UpdateEnvironment400Response = zod.union([
-  zod.strictObject({
+  zod.looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   }),
-  zod.strictObject({
+  zod.looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   }),
-  zod.strictObject({
+  zod.looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   }),
-  zod.strictObject({
+  zod.looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   }),
-  zod.strictObject({
+  zod.looseObject({
     errorCode: zod.int(),
     message: zod.string(),
   }),
 ]);
 
-export const UpdateEnvironment401Response = zod.strictObject({
+export const UpdateEnvironment401Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const UpdateEnvironment404Response = zod.strictObject({
+export const UpdateEnvironment404Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const UpdateEnvironment500Response = zod.strictObject({
+export const UpdateEnvironment500Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const UpdateEnvironmentDefaultResponse = zod.strictObject({
+export const UpdateEnvironmentDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -12446,22 +12965,22 @@ export const DeleteLinkParams = zod.strictObject({
 
 export const DeleteLink200Response = zod.unknown();
 
-export const DeleteLink401Response = zod.strictObject({
+export const DeleteLink401Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const DeleteLink404Response = zod.strictObject({
+export const DeleteLink404Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const DeleteLink500Response = zod.strictObject({
+export const DeleteLink500Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const DeleteLinkDefaultResponse = zod.strictObject({
+export const DeleteLinkDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -12479,7 +12998,7 @@ export const GetIssueLinkTestCasesParams = zod.strictObject({
     .describe("The key of the Jira issue"),
 });
 
-export const GetIssueLinkTestCases200ResponseItem = zod.strictObject({
+export const GetIssueLinkTestCases200ResponseItem = zod.looseObject({
   key: zod.string().optional(),
   version: zod.int().optional(),
   self: zod
@@ -12491,22 +13010,22 @@ export const GetIssueLinkTestCases200Response = zod.array(
   GetIssueLinkTestCases200ResponseItem,
 );
 
-export const GetIssueLinkTestCases401Response = zod.strictObject({
+export const GetIssueLinkTestCases401Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const GetIssueLinkTestCases404Response = zod.strictObject({
+export const GetIssueLinkTestCases404Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const GetIssueLinkTestCases500Response = zod.strictObject({
+export const GetIssueLinkTestCases500Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const GetIssueLinkTestCasesDefaultResponse = zod.strictObject({
+export const GetIssueLinkTestCasesDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -12525,7 +13044,7 @@ export const GetIssueLinkTestCyclesParams = zod.strictObject({
 });
 
 export const GetIssueLinkTestCycles200ResponseItem = zod
-  .strictObject({
+  .looseObject({
     id: zod.int().min(1).describe("The ID of the entity"),
     self: zod
       .url()
@@ -12537,22 +13056,22 @@ export const GetIssueLinkTestCycles200Response = zod.array(
   GetIssueLinkTestCycles200ResponseItem,
 );
 
-export const GetIssueLinkTestCycles401Response = zod.strictObject({
+export const GetIssueLinkTestCycles401Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const GetIssueLinkTestCycles404Response = zod.strictObject({
+export const GetIssueLinkTestCycles404Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const GetIssueLinkTestCycles500Response = zod.strictObject({
+export const GetIssueLinkTestCycles500Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const GetIssueLinkTestCyclesDefaultResponse = zod.strictObject({
+export const GetIssueLinkTestCyclesDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -12571,7 +13090,7 @@ export const GetIssueLinkTestPlansParams = zod.strictObject({
 });
 
 export const GetIssueLinkTestPlans200ResponseItem = zod
-  .strictObject({
+  .looseObject({
     id: zod.int().min(1).describe("The ID of the entity"),
     self: zod
       .url()
@@ -12583,22 +13102,22 @@ export const GetIssueLinkTestPlans200Response = zod.array(
   GetIssueLinkTestPlans200ResponseItem,
 );
 
-export const GetIssueLinkTestPlans401Response = zod.strictObject({
+export const GetIssueLinkTestPlans401Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const GetIssueLinkTestPlans404Response = zod.strictObject({
+export const GetIssueLinkTestPlans404Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const GetIssueLinkTestPlans500Response = zod.strictObject({
+export const GetIssueLinkTestPlans500Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const GetIssueLinkTestPlansDefaultResponse = zod.strictObject({
+export const GetIssueLinkTestPlansDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -12617,7 +13136,7 @@ export const GetIssueLinkTestExecutionsParams = zod.strictObject({
 });
 
 export const GetIssueLinkTestExecutions200ResponseItem = zod
-  .strictObject({
+  .looseObject({
     id: zod.int().min(1).describe("The ID of the entity"),
     self: zod
       .url()
@@ -12629,22 +13148,22 @@ export const GetIssueLinkTestExecutions200Response = zod.array(
   GetIssueLinkTestExecutions200ResponseItem,
 );
 
-export const GetIssueLinkTestExecutions401Response = zod.strictObject({
+export const GetIssueLinkTestExecutions401Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const GetIssueLinkTestExecutions404Response = zod.strictObject({
+export const GetIssueLinkTestExecutions404Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const GetIssueLinkTestExecutions500Response = zod.strictObject({
+export const GetIssueLinkTestExecutions500Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const GetIssueLinkTestExecutionsDefaultResponse = zod.strictObject({
+export const GetIssueLinkTestExecutionsDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -12721,9 +13240,9 @@ export const CreateCustomExecutionsBody = zod.strictObject({
 export const createCustomExecutions200ResponseTestCycleKeyRegExp =
   /([A-Z][A-Z_0-9]+-R[0-9]+)/;
 
-export const CreateCustomExecutions200Response = zod.strictObject({
+export const CreateCustomExecutions200Response = zod.looseObject({
   testCycle: zod
-    .strictObject({
+    .looseObject({
       id: zod
         .int()
         .min(1)
@@ -12742,17 +13261,17 @@ export const CreateCustomExecutions200Response = zod.strictObject({
     .optional(),
 });
 
-export const CreateCustomExecutions401Response = zod.strictObject({
+export const CreateCustomExecutions401Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const CreateCustomExecutions500Response = zod.strictObject({
+export const CreateCustomExecutions500Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const CreateCustomExecutionsDefaultResponse = zod.strictObject({
+export const CreateCustomExecutionsDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -12830,9 +13349,9 @@ export const CreateCucumberExecutionsBody = zod.strictObject({
 export const createCucumberExecutions200ResponseTestCycleKeyRegExp =
   /([A-Z][A-Z_0-9]+-R[0-9]+)/;
 
-export const CreateCucumberExecutions200Response = zod.strictObject({
+export const CreateCucumberExecutions200Response = zod.looseObject({
   testCycle: zod
-    .strictObject({
+    .looseObject({
       id: zod
         .int()
         .min(1)
@@ -12851,17 +13370,17 @@ export const CreateCucumberExecutions200Response = zod.strictObject({
     .optional(),
 });
 
-export const CreateCucumberExecutions401Response = zod.strictObject({
+export const CreateCucumberExecutions401Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const CreateCucumberExecutions500Response = zod.strictObject({
+export const CreateCucumberExecutions500Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const CreateCucumberExecutionsDefaultResponse = zod.strictObject({
+export const CreateCucumberExecutionsDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -12938,9 +13457,9 @@ export const CreateJUnitExecutionsBody = zod.strictObject({
 export const createJUnitExecutions200ResponseTestCycleKeyRegExp =
   /([A-Z][A-Z_0-9]+-R[0-9]+)/;
 
-export const CreateJUnitExecutions200Response = zod.strictObject({
+export const CreateJUnitExecutions200Response = zod.looseObject({
   testCycle: zod
-    .strictObject({
+    .looseObject({
       id: zod
         .int()
         .min(1)
@@ -12959,17 +13478,17 @@ export const CreateJUnitExecutions200Response = zod.strictObject({
     .optional(),
 });
 
-export const CreateJUnitExecutions401Response = zod.strictObject({
+export const CreateJUnitExecutions401Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const CreateJUnitExecutions500Response = zod.strictObject({
+export const CreateJUnitExecutions500Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const CreateJUnitExecutionsDefaultResponse = zod.strictObject({
+export const CreateJUnitExecutionsDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -12992,17 +13511,17 @@ export const RetrieveBDDTestCasesHeader = zod.object({
 
 export const RetrieveBDDTestCases200Response = zod.unknown();
 
-export const RetrieveBDDTestCases401Response = zod.strictObject({
+export const RetrieveBDDTestCases401Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const RetrieveBDDTestCases500Response = zod.strictObject({
+export const RetrieveBDDTestCases500Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const RetrieveBDDTestCasesDefaultResponse = zod.strictObject({
+export const RetrieveBDDTestCasesDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
@@ -13012,17 +13531,17 @@ export const RetrieveBDDTestCasesDefaultResponse = zod.strictObject({
  */
 export const Healthcheck200Response = zod.unknown();
 
-export const Healthcheck401Response = zod.strictObject({
+export const Healthcheck401Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const Healthcheck500Response = zod.strictObject({
+export const Healthcheck500Response = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
 
-export const HealthcheckDefaultResponse = zod.strictObject({
+export const HealthcheckDefaultResponse = zod.looseObject({
   errorCode: zod.int(),
   message: zod.string(),
 });
