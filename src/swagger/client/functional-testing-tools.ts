@@ -102,7 +102,8 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
       "Within a block, tests run sequentially by default — set `parallel: true` on a block to run its tests in parallel instead. " +
       "Blocks themselves always run one after another. " +
       "Set `maxRetryAttempts` (0-3) on a block to automatically retry its failed tests before they count as failed. " +
-      "Optionally accepts `agentName` to save a tunnel agent override for future runs of the suite.",
+      "Optionally accepts `agentName` to save a tunnel agent override for future runs of the suite. " +
+      "Returns `slug`, which identifies the suite for other suite tools (e.g. `swagger_run_suite`).",
     inputSchema: CreateFunctionalTestingSuiteParamsSchema,
     outputSchema: CreateFunctionalTestingSuiteResponseSchema,
     handler: "createFunctionalTestingSuite",
@@ -115,6 +116,7 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
     summary:
       "Lists all test suites available in your Swagger Functional Testing workspace. " +
       "Use this tool when you need to discover available suites before running them or checking their execution history. " +
+      "Each suite's `slug` identifies it for other suite tools (e.g. `swagger_run_suite`). " +
       "Do not use this tool to retrieve individual tests or test suite execution results.",
     handler: "listFunctionalTestingSuites",
     idempotent: true,
@@ -126,7 +128,7 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
     summary:
       "Runs a specific test suite in your Swagger Functional Testing workspace. " +
       "The execution is asynchronous — it returns an executionId, not results directly. " +
-      "Use `swagger_get_suite_status` with your suiteId and executionId to track progress and retrieve the final per-test results. " +
+      "Use `swagger_get_suite_status` with your slug and executionId to track progress and retrieve the final per-test results. " +
       "Optionally accepts a `tunnelAgentName` argument to override the suite's saved tunnel for this run. " +
       "Do not use this tool to run a single test — use `swagger_run_test` instead.",
     inputSchema: RunFunctionalTestingSuiteParamsSchema,
@@ -142,7 +144,7 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
       "Get the status of a Swagger Functional Testing suite execution. " +
       "Returns the overall status (pending, canceled, passed or failed), whether the run is finished, and a per-test breakdown with pass/fail. " +
       "Use this to poll for the outcome of a suite run triggered by `swagger_run_suite`. " +
-      "Requires both `suiteId` and the `executionId` arguments returned by `swagger_run_suite`.",
+      "Requires the suite's `slug` and the `executionId` returned by `swagger_run_suite`.",
     inputSchema: GetFunctionalTestingSuiteExecutionSchema,
     handler: "getFunctionalTestingSuiteExecution",
     idempotent: true,
