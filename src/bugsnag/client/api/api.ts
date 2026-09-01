@@ -654,7 +654,7 @@ export interface ProjectRoles {
 }
 
 /**
- * @expot
+ * @export
  * @interface CollaboratorApiView
  */
 export interface CollaboratorApiView {
