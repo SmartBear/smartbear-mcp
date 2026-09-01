@@ -640,6 +640,32 @@ Expected Output: Array of up to 50 spans focused around the target span
     "outputSchema": undefined,
     "title": "BugSnag: Get Trace",
   },
+  "bugsnag_list_project_collaborators": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "BugSnag: List Project Collaborators",
+    },
+    "description": "List all collaborators with access to a specific Bugsnag project
+
+**Toolset:** Projects
+
+**Parameters:**
+- projectId (string) *required*: The ID of the Bugsnag project
+- collaboratorNameOrId (string): Optional: filter by collaborator name or ID (partial match on name)
+
+**Use Cases:** 1. Find all team members with access to a project 2. Locate a specific collaborator to assign errors or tasks 3. Check project team membership 4. Get collaborator details for project management and reporting 5. Retrieve collaborator information for communication and coordination
+
+**Hints:** 1. Use collaboratorNameOrId to filter results by partial name match or exact ID",
+    "inputSchema": [
+      "collaboratorNameOrId",
+      "projectId",
+    ],
+    "outputSchema": undefined,
+    "title": "BugSnag: List Project Collaborators",
+  },
   "bugsnag_list_project_errors": {
     "annotations": {
       "destructiveHint": false,
