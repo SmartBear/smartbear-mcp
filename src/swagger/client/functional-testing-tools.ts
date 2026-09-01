@@ -37,6 +37,7 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
       "and assertions: expected HTTP status code ranges, and expected response body assertions (exact match or field-level rules matched by path). " +
       "Top-level `parameters` are path parameters, not request body parameters. " +
       "Every step MUST set `baseUrl` to that endpoint's server URL,so it is extracted into a shared parameter. " +
+      "Whenever `baseUrl` is set, also set `apiName` to the name of the API it belongs to. " +
       "If a `{pathParam}` placeholder appears in more than one step's URL, you MUST define a matching entry in `parameters` so its value is shared across all steps. " +
       "Returns the ID and the URL to definition of the newly created test; the ID can be used with `swagger_run_test` to run it " +
       "or grouped with other test IDs into a Suite via `swagger_create_suite`.",

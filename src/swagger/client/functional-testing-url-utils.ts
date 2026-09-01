@@ -39,9 +39,12 @@ export function normalizeBaseUrl(baseUrl: string): string {
   return baseUrl.replace(/\/+$/, "");
 }
 
-/** Derives the definition-level parameter name generated for a step's `baseUrl`. */
-export function baseUrlParamName(baseUrl: string): string {
-  return `baseURL${sanitizeForParamName(hostnameFor(baseUrl))}`;
+/**
+ * Derives the definition-level parameter name generated for a step's `baseUrl`.
+ */
+export function baseUrlParamName(baseUrl: string, apiName?: string): string {
+  const suffix = sanitizeForParamName(apiName || hostnameFor(baseUrl));
+  return `baseURL${suffix}`;
 }
 
 /**
@@ -79,7 +82,7 @@ export function generateUniqueParamName(
 
 export type TemplatedFunctionalTestingTestStep = Omit<
   CreateFunctionalTestingTestStep,
-  "baseUrl"
+  "baseUrl" | "apiName"
 >;
 
 interface BaseUrlTemplatingResult {
@@ -88,9 +91,9 @@ interface BaseUrlTemplatingResult {
 }
 
 /**
- * Extracts each step's `baseUrl` into a definition-level `baseURL<Host>` parameter, templates it into the step's
- * `url`, and converts any remaining `{pathParam}` placeholders into `${var(pathParam)}`
- * definition-level parameters.
+ * Extracts each step's `baseUrl` into a definition-level `baseURL<ApiName>` parameter (falling back to
+ * `baseURL<Host>` when `apiName` is not set), templates it into the step's `url`, and converts any
+ * remaining `{pathParam}` placeholders into `${var(pathParam)}` definition-level parameters.
  */
 export function applyBaseUrlTemplating(
   steps: CreateFunctionalTestingTestStep[] | undefined,
@@ -126,7 +129,7 @@ export function applyBaseUrlTemplating(
   };
 
   const resultSteps = steps?.map((step) => {
-    const { baseUrl, url, ...rest } = step;
+    const { baseUrl, apiName, url, ...rest } = step;
 
     let prefix = "";
     let remainder = url;
@@ -140,7 +143,7 @@ export function applyBaseUrlTemplating(
       }
       const paramName = getOrCreateParamName(
         `baseUrl:${split.normalizedBase}`,
-        baseUrlParamName(baseUrl),
+        baseUrlParamName(baseUrl, apiName),
         split.normalizedBase,
       );
       prefix = `\${var(${paramName})}`;

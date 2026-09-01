@@ -180,6 +180,28 @@ describe("applyBaseUrlTemplating", () => {
     expect(generatedBaseUrlParam?.name).toBe("baseURLpetstoreswaggerio");
   });
 
+  it("names the base-url parameter after apiName", () => {
+    const result = applyBaseUrlTemplating(
+      [
+        {
+          baseUrl: "https://petstore.swagger.io/v2",
+          url: "https://petstore.swagger.io/v2/pet/{petId}",
+          httpMethod: "GET",
+          apiName: "Petstore",
+        },
+      ],
+      undefined,
+    );
+
+    expect(result.steps?.[0].url).toBe(
+      "${var(baseURLPetstore)}/pet/${var(petId)}",
+    );
+    expect(result.parameters).toEqual([
+      { name: "baseURLPetstore", value: "https://petstore.swagger.io/v2" },
+      { name: "petId", value: "" },
+    ]);
+  });
+
   it("converts {pathParam} placeholders to ${var(name)} when the step has no baseUrl", () => {
     const result = applyBaseUrlTemplating(
       [

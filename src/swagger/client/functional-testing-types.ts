@@ -561,6 +561,14 @@ export const CreateFunctionalTestingTestStepSchema = z.object({
         "on every step it is extracted into a definition-level " +
         "parameter and templated into the step url",
     ),
+  apiName: z
+    .string()
+    .trim()
+    .min(1)
+    .optional()
+    .describe(
+      'Name of the API that this step\'s baseUrl belongs to, e.g. "Petstore". ',
+    ),
   httpMethod: z
     .enum(HTTP_METHODS)
     .describe("HTTP method for the API call (defaults to GET server-side)")
@@ -613,7 +621,7 @@ export const CreateFunctionalTestingTestParamsSchema = z
         pathParamCounts.set(name, (pathParamCounts.get(name) ?? 0) + 1);
       }
       if (step.baseUrl) {
-        allowedNames.add(baseUrlParamName(step.baseUrl));
+        allowedNames.add(baseUrlParamName(step.baseUrl, step.apiName));
         if (splitUrlByBaseUrl(step.url, step.baseUrl) === null) {
           ctx.addIssue({
             code: "custom",
