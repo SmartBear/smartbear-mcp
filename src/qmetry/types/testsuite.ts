@@ -6,6 +6,7 @@ import {
   type PaginationPayload,
   type SortPayload,
 } from "./common";
+import type { UdfFieldValue, UdfValue } from "./udf";
 
 export interface ReleaseCycleMapping {
   releaseId: number;
@@ -13,23 +14,28 @@ export interface ReleaseCycleMapping {
 }
 
 export interface CreateTestSuitePayload {
-  parentFolderId: string; // required - Test Case folder ID
-  name: string; // required - Test Case name
-  isAutomatedFlag?: boolean; // optional - Indicates if the test case is automated
-  testsuiteOwner?: number; // optional - OwnerId of Testcase
-  testSuiteState?: number; // optional - StatusId of Testcase
-  description?: string; // optional - Description of Testcase
+  parentFolderId: string; // required - Test Suite parent folder ID
+  name: string; // required - Test Suite name
+  isAutomatedFlag?: boolean; // optional - Indicates if the test suite is automated
+  testsuiteOwner?: number; // optional - OwnerId of Test Suite
+  testSuiteState?: number; // optional - StatusId of Test Suite
+  description?: string; // optional - Description of Test Suite
   associateRelCyc?: boolean; // optional - associate release cycle
   releaseCycleMapping?: ReleaseCycleMapping[]; // optional - release cycle mapping
+  udfFields?: Record<string, UdfValue>; // UDF values — spread flat onto payload root before sending
+  [key: string]: unknown;
 }
 export interface UpdateTestSuitePayload {
   id: number; // required - Test Suite ID
   TsFolderID: number; // required - Test Suite folder ID
-  entityKey: string; // required - Test Case folder ID
-  name?: string; // required - Test Case name
-  testsuiteOwner?: number; // optional - OwnerId of Testcase
-  testSuiteState?: number; // optional - StatusId of Testcase
-  description?: string; // optional - Description of Testcase
+  entityKey: string; // required - Entity key of Test Suite
+  name?: string; // optional - Test Suite name
+  testsuiteOwner?: number; // optional - OwnerId of Test Suite
+  testSuiteState?: number; // optional - StatusId of Test Suite
+  description?: string; // optional - Description of Test Suite
+  UDF?: Record<string, UdfFieldValue>; // UDF wrapper { fieldName: { fieldID, value } } for update
+  udfFields?: Record<string, UdfValue>; // flat UDF key→value pairs (also spread onto root)
+  [key: string]: unknown;
 }
 export interface FetchTestSuitesForTestCasePayload
   extends PaginationPayload,

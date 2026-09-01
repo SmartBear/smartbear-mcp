@@ -1,6 +1,7 @@
 import { appendClientIdentity } from "../../common/info";
 import { ToolError } from "../../common/tools";
 import type { SwaggerConfiguration } from "./configuration";
+import { applyEdits } from "./patch-spec-utils";
 import type {
   CreateDocumentationPageArgs,
   CreateDocumentationPageResult,
@@ -47,6 +48,8 @@ import type {
   CreateApiFromPromptResponse,
   CreateApiParams,
   CreateApiResponse,
+  PatchApiParams,
+  PatchApiResponse,
   ScanApiStandardizationFromRegistryParams,
   ScanApiStandardizationFromRegistryResult,
   ScanStandardizationParams,
@@ -64,6 +67,8 @@ import type {
 import {
   buildPortalLiveUrl,
   findTableOfContentsItem,
+  isAsyncAPI,
+  isOpenAPI,
   normalizeSlug,
 } from "./utils";
 
@@ -602,9 +607,32 @@ export class SwaggerAPI {
         body: JSON.stringify(body),
       },
     );
-    return this.handleResponse<Product | SuccessResponse>(response, {
-      success: true,
-    } as SuccessResponse);
+    const result = await this.handleResponse<Product | SuccessResponse>(
+      response,
+      {
+        success: true,
+      } as SuccessResponse,
+    );
+
+    if (hasId(result) && "slug" in result && "portalId" in result) {
+      try {
+        const product = result as Product;
+        const portalDetails = await this.getPortal(String(product.portalId));
+        const url = buildPortalLiveUrl(
+          this.config,
+          portalDetails,
+          product.slug,
+          null,
+          null,
+          false,
+        );
+        return { ...product, url } as Product & { url: string };
+      } catch (error) {
+        console.warn("Failed to build URL for updated product:", error);
+      }
+    }
+
+    return result;
   }
 
   /**
@@ -1187,15 +1215,12 @@ export class SwaggerAPI {
   }
 
   /**
-   * Get API definition from SwaggerHub Registry
-   * @param params Parameters including owner, api name, version, and options
-   * @param options Optional transport options
-   * @returns API definition (OpenAPI/Swagger specification)
+   * Execute the shared GET request for an API definition.
    */
-  async getApiDefinition(
+  private async fetchApiDefinitionResponse(
     params: ApiDefinitionParams,
     options?: { accept?: "text/plain" | "application/json" },
-  ): Promise<unknown> {
+  ): Promise<Response> {
     const searchParams = new URLSearchParams();
 
     if (params.resolved !== undefined)
@@ -1205,12 +1230,25 @@ export class SwaggerAPI {
 
     const url = `${this.config.registryBasePath}/apis/${encodeURIComponent(params.owner)}/${encodeURIComponent(params.api)}/${encodeURIComponent(params.version)}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
 
-    const response = await fetch(url, {
+    return fetch(url, {
       method: "GET",
       headers: options?.accept
         ? { ...this.headers, Accept: options.accept }
         : this.headers,
     });
+  }
+
+  /**
+   * Get API definition from SwaggerHub Registry
+   * @param params Parameters including owner, api name, version, and options
+   * @param options Optional transport options
+   * @returns API definition (OpenAPI/Swagger specification)
+   */
+  async getApiDefinition(
+    params: ApiDefinitionParams,
+    options?: { accept?: "text/plain" | "application/json" },
+  ): Promise<unknown> {
+    const response = await this.fetchApiDefinitionResponse(params, options);
 
     if (!response.ok) {
       throw new ToolError(
@@ -1228,11 +1266,27 @@ export class SwaggerAPI {
   }
 
   /**
-   * Create or Update API in SwaggerHub Registry
-   * @param params Parameters for creating or updating the API including owner, name, version, specification, and definition
+   * Create or Update API in SwaggerHub Registry (tool entry point)
+   * @param params Parameters for creating or updating the API including owner, name, and definition
    * @returns Created or updated API metadata with URL. HTTP 201 indicates creation, HTTP 200 indicates update
    */
   async createOrUpdateApi(params: CreateApiParams): Promise<CreateApiResponse> {
+    // Fixed values: visibility=private, automock=false, version=1.0.0
+    return this.saveApiDefinition(params, { isPrivate: true });
+  }
+
+  /**
+   * Save an API definition to SwaggerHub Registry
+   * @param params Parameters for creating or updating the API including owner, name, and definition
+   * @param options Query parameters sent with the save request. `version` targets a
+   * specific version; `isPrivate` is only meaningful when creating and is omitted
+   * otherwise so an existing API keeps its visibility
+   * @returns Created or updated API metadata with URL. HTTP 201 indicates creation, HTTP 200 indicates update
+   */
+  async saveApiDefinition(
+    params: CreateApiParams,
+    options: { version?: string; isPrivate?: boolean } = {},
+  ): Promise<CreateApiResponse> {
     // Determine the format of the definition
     let contentType: string;
     let requestBody: string;
@@ -1258,14 +1312,15 @@ export class SwaggerAPI {
       }
     }
 
-    // Construct the URL with query parameters
-    // Fixed values: visibility=private, automock=false, version=1.0.0
     const searchParams = new URLSearchParams();
-    searchParams.append("isPrivate", "true");
+    if (options.version) searchParams.append("version", options.version);
+    if (typeof options.isPrivate === "boolean")
+      searchParams.append("isPrivate", String(options.isPrivate));
 
+    const query = searchParams.toString();
     const url = `${this.config.registryBasePath}/apis/${encodeURIComponent(
       params.owner,
-    )}/${encodeURIComponent(params.apiName)}?${searchParams.toString()}`;
+    )}/${encodeURIComponent(params.apiName)}${query ? `?${query}` : ""}`;
 
     // Use POST method with the appropriate content type
     const response = await fetch(url, {
@@ -1280,7 +1335,7 @@ export class SwaggerAPI {
     if (!response.ok) {
       const errorText = await response.text().catch(() => "");
       throw new ToolError(
-        `SwaggerHub Registry API createOrUpdateApi failed - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}. URL: ${url}`,
+        `SwaggerHub Registry API saveApiDefinition failed - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}. URL: ${url}`,
       );
     }
 
@@ -1520,5 +1575,85 @@ export class SwaggerAPI {
     }
 
     return updated;
+  }
+
+  private async apiVersionExists({
+    owner,
+    apiName,
+    version,
+  }: {
+    owner: string;
+    apiName: string;
+    version: string;
+  }): Promise<boolean> {
+    const response = await this.fetchApiDefinitionResponse(
+      { owner, api: apiName, version },
+      { accept: "text/plain" },
+    );
+    if (response.status === 404) return false;
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "");
+      throw new ToolError(
+        `SwaggerHub Registry API apiVersionExists failed - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}. owner=${owner}, apiName=${apiName}, version=${version}`,
+      );
+    }
+    return true;
+  }
+
+  async patchApi(params: PatchApiParams): Promise<PatchApiResponse> {
+    const createNewVersion = Boolean(params.newVersion);
+    const targetVersion = params.newVersion || params.version;
+
+    if (createNewVersion) {
+      const exists = await this.apiVersionExists({
+        owner: params.owner,
+        apiName: params.apiName,
+        version: targetVersion,
+      });
+      if (exists) {
+        throw new ToolError(
+          `Version ${targetVersion} already exists for ${params.owner}/${params.apiName}. Choose a different version name or omit newVersion to patch in place.`,
+        );
+      }
+    }
+
+    const rawResult = await this.getApiDefinition(
+      { owner: params.owner, api: params.apiName, version: params.version },
+      { accept: "text/plain" },
+    );
+    let text = rawResult as string;
+
+    if (!isOpenAPI(text) && !isAsyncAPI(text)) {
+      throw new ToolError(
+        "SwaggerHub Registry API patchApi failed - invalid format. Only OpenAPI and AsyncAPI definitions are supported.",
+      );
+    }
+
+    const { text: patchedText, failed } = applyEdits(text, params.edits);
+    text = patchedText;
+
+    if (failed.length > 0) {
+      return { failed, saved: false };
+    }
+
+    // new spec should be private
+    // updated spec should keep the existing visibility (private/public)
+    const saveResult = await this.saveApiDefinition(
+      {
+        owner: params.owner,
+        apiName: params.apiName,
+        definition: text,
+      },
+      createNewVersion
+        ? { version: targetVersion, isPrivate: true }
+        : { version: targetVersion },
+    );
+
+    return {
+      saved: true,
+      operation: saveResult.operation,
+      version: saveResult.version,
+      url: saveResult.url,
+    };
   }
 }

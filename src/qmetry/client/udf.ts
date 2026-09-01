@@ -5,6 +5,7 @@ import type {
   FetchCascadeChildValuesPayload,
   FetchTestRunUdfMetadataPayload,
   FetchTestRunUdfValuesPayload,
+  FetchUdfLayoutPayload,
 } from "../types/udf";
 import { qmetryRequest } from "./api/client-api";
 import { resolveDefaults } from "./utils";
@@ -132,6 +133,7 @@ function parseRawUdfs(row: Record<string, any>): Record<string, unknown> {
 function enrichUdfsForRow(
   row: Record<string, any>,
   fieldDefs: Record<string, UdfFieldDefinition>,
+  lookupOptions: Record<string, any[]> = {},
 ) {
   const rawUdfs = parseRawUdfs(row);
   const hasMetadata = Object.keys(fieldDefs).length > 0;
@@ -144,14 +146,50 @@ function enrichUdfsForRow(
       const rawValue = Object.hasOwn(rawUdfs, fieldName)
         ? rawUdfs[fieldName]
         : null;
-      const value =
+      let value: unknown =
         typeof rawValue === "string" ? stripHtml(rawValue) : rawValue;
+      // Resolve uniqueLabel → display name for lookup fields
+      const options: any[] = def.qmListName
+        ? (lookupOptions[def.qmListName] ?? [])
+        : [];
+      let valueResolved = false;
+      if (options.length > 0) {
+        if (typeof value === "string") {
+          const match = options.find((o) => o.uniqueLabel === value);
+          if (match) {
+            value = match.name;
+            valueResolved = true;
+          }
+        } else if (Array.isArray(value)) {
+          let allResolved = true;
+          value = value.map((v) => {
+            const match = options.find((o) => o.uniqueLabel === v);
+            if (!match) allResolved = false;
+            return match ? match.name : v;
+          });
+          valueResolved = allResolved;
+        } else {
+          valueResolved = true;
+        }
+      }
+      const isLookupField = [
+        "LOOKUPLIST",
+        "MULTILOOKUPLIST",
+        "CASCADINGLIST",
+      ].includes(def.fieldTypeName ?? "");
       return {
         name: fieldName,
         label: def.fieldLabel ?? fieldName,
         fieldID: def.projectUserFieldID ?? null,
         fieldType: def.fieldTypeName ?? "UNKNOWN",
         value,
+        ...(isLookupField && !valueResolved && value !== null
+          ? {
+              _rawValue: true,
+              _note:
+                "Lookup options unavailable — value is raw internal ID. Call Fetch Test Run UDF Metadata to resolve.",
+            }
+          : {}),
       };
     });
   }
@@ -341,6 +379,199 @@ export async function fetchUdfModules() {
 }
 
 /**
+ * Fetches UDF field definitions for TC, TS, or IS entities from the newlayout endpoint.
+ * pageName "ADD" → create operation field list (no fieldID needed).
+ * pageName "DETAIL" → update operation field list (includes fieldID/projectUserFieldID required by UDF update wrapper).
+ * Returns normalized fields array + step fields (TC only) + list options for lookup fields.
+ */
+export async function fetchUdfLayout(
+  token: string,
+  baseUrl: string,
+  project: string | undefined,
+  payload: FetchUdfLayoutPayload,
+) {
+  const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
+    baseUrl,
+    project,
+  );
+
+  if (!payload.entityType || !["TC", "TS", "IS"].includes(payload.entityType)) {
+    throw new Error(
+      "[fetchUdfLayout] Missing or invalid required parameter: 'entityType'. Must be 'TC', 'TS', or 'IS'.",
+    );
+  }
+
+  const pageName = payload.pageName ?? "ADD";
+
+  // screenname per entity type, confirmed from browser network calls
+  const ENTITY_SCREEN: Record<string, string> = {
+    TC: "TESTCASE",
+    IS: "ISSUE",
+    // TS: no screenname header sent by browser
+  };
+  const extraHeaders: Record<string, string> = { action: "udf-view" };
+  if (ENTITY_SCREEN[payload.entityType]) {
+    extraHeaders.screenname = ENTITY_SCREEN[payload.entityType];
+  }
+
+  const raw = await qmetryRequest<{
+    qmUDF?: Record<string, Record<string, any>>;
+    qmTCSUDF?: { TCS?: Record<string, any> };
+    qmSDF?: Record<string, Record<string, any>>;
+    qmDefaultValue?: Record<string, Record<string, any>>;
+    qmTCSDefaultValue?: { TCS?: Record<string, any> };
+    tcSteps?: Array<any>;
+    gis?: {
+      customList?: Record<
+        string,
+        Array<{ id: number; name: string; isArchived: boolean }>
+      >;
+    };
+  }>({
+    method: "POST",
+    path: QMETRY_PATHS.UDF.GET_LAYOUT,
+    token,
+    project: resolvedProject,
+    baseUrl: resolvedBaseUrl,
+    body: { entityType: payload.entityType, pageName },
+    scopeId: payload.scopeId,
+    orgCode: payload.orgCode,
+    extraHeaders,
+  });
+
+  // UDF fields — allowBlank=false means the field is mandatory
+  const entityUdfMap = raw.qmUDF?.[payload.entityType] ?? {};
+  const fields = Object.values(entityUdfMap).map((def: any) => ({
+    name: def.name as string,
+    label: def.label ?? (def.fieldLabel as string) ?? def.name,
+    fieldTypeName: def.fieldTypeName as string,
+    fieldID: (def.projectUserFieldID ?? def.fieldID ?? null) as number | null,
+    isMandatory: (def.allowBlank === false) as boolean,
+    ...(def.qmListName ? { listName: def.qmListName as string } : {}),
+  }));
+
+  // TC-only: step UDF definitions live in qmTCSUDF.TCS — allowBlank=false means mandatory
+  const stepUdfMap = raw.qmTCSUDF?.TCS ?? {};
+  const stepFields = Object.values(stepUdfMap).map((def: any) => ({
+    name: def.name as string,
+    label: def.label ?? (def.fieldLabel as string) ?? def.name,
+    fieldTypeName: def.fieldTypeName as string,
+    fieldID: (def.projectUserFieldID ?? def.fieldID ?? null) as number | null,
+    isMandatory: (def.allowBlank === false) as boolean,
+    ...(def.qmListName ? { listName: def.qmListName as string } : {}),
+  }));
+
+  // System fields (SDF) — allowBlank=false means the field is mandatory
+  const sdfMap = raw.qmSDF?.[payload.entityType] ?? {};
+  const systemFields = Object.values(sdfMap).map((def: any) => ({
+    name: def.name as string,
+    label: (def.fieldLabel as string) ?? def.name,
+    fieldTypeName: def.fieldTypeName as string,
+    isMandatory: (def.allowBlank === false) as boolean,
+  }));
+
+  // Default values that QMetry pre-fills: { fieldName: defaultValueId }
+  const defaultValues: Record<string, any> =
+    raw.qmDefaultValue?.[payload.entityType] ?? {};
+
+  // TC-only: step system fields from tcSteps — mandatory=true means the field is required
+  const stepSystemFields =
+    payload.entityType === "TC"
+      ? (raw.tcSteps ?? []).map((f: any) => ({
+          name: f.name as string,
+          label: f.label as string,
+          fieldTypeName: f.fieldType as string,
+          isMandatory: (f.mandatory === true) as boolean,
+        }))
+      : [];
+
+  // TC-only: step UDF default values
+  const stepDefaultValues: Record<string, any> =
+    payload.entityType === "TC" ? (raw.qmTCSDefaultValue?.TCS ?? {}) : {};
+
+  let listOptions = raw.gis?.customList ?? {};
+
+  // Check if any lookup field is missing options from gis.customList
+  const lookupTypes = new Set([
+    "LOOKUPLIST",
+    "MULTILOOKUPLIST",
+    "CASCADINGLIST",
+  ]);
+  const allLookupFields = [...fields, ...stepFields].filter(
+    (f) => lookupTypes.has(f.fieldTypeName) && f.listName,
+  );
+  const missingOptions = allLookupFields.some(
+    (f) => !listOptions[f.listName!] || listOptions[f.listName!].length === 0,
+  );
+
+  if (missingOptions) {
+    // Fallback: fetch metadata endpoint which returns qmUDFList with full option IDs
+    const metaRaw = await qmetryRequest<{
+      qmUDFList?: Record<
+        string,
+        Array<{ id: number; name: string; isArchived: boolean }>
+      >;
+    }>({
+      method: "POST",
+      path: QMETRY_PATHS.UDF.TEST_RUN_UDF_METADATA,
+      token,
+      project: resolvedProject,
+      baseUrl: resolvedBaseUrl,
+      body: { entityType: payload.entityType },
+      scopeId: payload.scopeId,
+      orgCode: payload.orgCode,
+    });
+    const metaList = metaRaw.qmUDFList ?? {};
+    // Merge: prefer gis.customList but fill in gaps from metadata
+    listOptions = { ...metaList, ...listOptions };
+    // Re-fill any that were empty in gis but present in metadata
+    for (const key of Object.keys(metaList)) {
+      if (!listOptions[key] || listOptions[key].length === 0) {
+        listOptions[key] = metaList[key];
+      }
+    }
+  }
+
+  const updateNote =
+    pageName === "ADD"
+      ? "Use 'fieldID: null' fields for create — no fieldID needed on create. " +
+        "For LOOKUPLIST/MULTILOOKUPLIST/CASCADINGLIST: use IDs from 'listOptions[listName]' as values. " +
+        "Pass values flat via udfFields param on the create tool."
+      : "Use 'fieldID' from each field when building the 'UDF' wrapper for update: " +
+        "{ fieldName: { fieldID: <fieldID>, value: <value> } }. " +
+        "Also pass the same values flat via udfFields param. " +
+        "For LOOKUPLIST/MULTILOOKUPLIST/CASCADINGLIST: use IDs from 'listOptions[listName]'.";
+
+  // Surface diagnostic info when expected data is missing — helps detect QMetry API gaps
+  const diagnostics: Record<string, string> = {};
+  if (systemFields.length === 0) {
+    diagnostics._systemFields_note =
+      "QMetry API returned no system field definitions (qmSDF missing or empty). " +
+      "Treat 'name' (Summary) and 'testCaseState' (Status) as always mandatory. " +
+      "Use customListObjs.testCaseState from project info for Status options.";
+  }
+  if (Object.keys(defaultValues).length === 0) {
+    diagnostics._defaultValues_note =
+      "QMetry API returned no default values (qmDefaultValue missing or empty). " +
+      "Cannot auto-apply defaults — ask user for mandatory fields that have no value.";
+  }
+
+  return {
+    entityType: payload.entityType,
+    pageName,
+    fields,
+    systemFields,
+    defaultValues,
+    ...(payload.entityType === "TC"
+      ? { stepFields, stepSystemFields, stepDefaultValues }
+      : {}),
+    listOptions,
+    ...diagnostics,
+    _note: updateNote,
+  };
+}
+
+/**
  * Fetches Test Run UDF metadata for the current project.
  * Returns all available Test Run UDF field definitions (name, fieldID, type)
  * and lookup list options (for LOOKUPLIST, MULTILOOKUPLIST, CASCADINGLIST fields).
@@ -506,13 +737,26 @@ export async function fetchTestRunUdfValues(
     // metadata call is best-effort — proceed without enrichment
   }
 
+  // If metadata returned but qmUDFList is empty, check if any field needs lookup options
+  // that we don't have — surface a warning in the output rather than silently failing
+  const lookupFieldsMissingOptions = Object.values(fieldDefs).filter(
+    (def: any) =>
+      ["LOOKUPLIST", "MULTILOOKUPLIST", "CASCADINGLIST"].includes(
+        def.fieldTypeName,
+      ) &&
+      def.qmListName &&
+      (!lookupOptions[def.qmListName] ||
+        lookupOptions[def.qmListName].length === 0),
+  );
+  const hasLookupWarning = lookupFieldsMissingOptions.length > 0;
+
   // Step 4: extract and enrich UDF values from each run
   // When metadata is available, ALL project-defined UDF fields are included (null for unset fields).
   // This ensures every run shows the full set of available UDF fields, not just those with values.
   const rows: any[] = runsResponse.data ?? [];
   const runs = rows.map((row: any) => {
     const { udfjson: _udfjson, ...rowWithoutRawUdfJson } = row;
-    const enrichedUdfs = enrichUdfsForRow(row, fieldDefs);
+    const enrichedUdfs = enrichUdfsForRow(row, fieldDefs, lookupOptions);
 
     return {
       ...rowWithoutRawUdfJson,
@@ -529,6 +773,14 @@ export async function fetchTestRunUdfValues(
     sourceContext,
     hasTcRunUdf: runsResponse.hasTcRunUdf ?? true,
     total: runsResponse.total ?? rows.length,
+    ...(hasLookupWarning
+      ? {
+          _lookupWarning:
+            `Lookup options missing for fields: ${lookupFieldsMissingOptions.map((d: any) => d.name).join(", ")}. ` +
+            "Values for these fields may show raw internal IDs instead of display names. " +
+            "Call 'Fetch Test Run UDF Metadata' separately and use its 'lookupOptions' to resolve display names.",
+        }
+      : {}),
     defaultColumns: TEST_RUN_UDF_DISPLAY_COLUMNS[sourceContext].map(
       (column) => column.header,
     ),

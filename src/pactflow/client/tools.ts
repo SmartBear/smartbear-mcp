@@ -103,7 +103,6 @@ export const TOOLS: PactflowToolParams[] = [
     idempotent: true,
     openWorld: false,
     clients: ["pactflow"], // ONLY pactflow
-    enableElicitation: true,
     tags: ["pactflow-ai"],
   },
   {
@@ -119,7 +118,6 @@ export const TOOLS: PactflowToolParams[] = [
     idempotent: true,
     openWorld: false,
     clients: ["pactflow"],
-    enableElicitation: true,
     tags: ["pactflow-ai"],
   },
   {

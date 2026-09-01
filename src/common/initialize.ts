@@ -8,8 +8,11 @@ import type { ClientInfo } from "./types";
  *
  * clientInfo has been a required field of `initialize` params since the
  * original 2024-11-05 MCP spec version, so it is captured unconditionally.
- * Capability detection (sampling/elicitation) predates that and stays gated
+ * Capability detection (elicitation) predates that and stays gated
  * behind protocolVersion 2025-11-25 to preserve existing behavior.
+ *
+ * Sampling capability detection was removed after the MCP spec deprecated
+ * the Sampling feature (2026-07-28, SEP-2577).
  */
 export function handleInitializeMessage(
   server: SmartBearMcpServer,
@@ -44,10 +47,6 @@ export function handleInitializeMessage(
       string,
       unknown
     >;
-
-    if (Object.hasOwn(clientCapabilities, "sampling")) {
-      server.setSamplingSupported(true);
-    }
 
     if (Object.hasOwn(clientCapabilities, "elicitation")) {
       server.setElicitationSupported(true);

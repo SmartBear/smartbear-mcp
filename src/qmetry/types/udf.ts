@@ -1,6 +1,14 @@
 import { z } from "zod";
 import { CommonFields } from "./common";
 
+// Reused across TC / TS / IS UDF update wrappers
+export type UdfValue =
+  | string
+  | number
+  | number[]
+  | { parent: number; child?: number }
+  | null;
+
 export interface UdfModule {
   moduleID: number;
   mandatory: boolean;
@@ -166,6 +174,39 @@ export const FetchCascadeChildValuesArgsSchema = z.object({
     .default(false)
     .describe(
       "Whether to include archived child items in the response (default: false).",
+    ),
+});
+
+// ---------------------------------------------------------------------------
+// Fetch UDF Layout (field definitions for TC / TS / IS)
+// ---------------------------------------------------------------------------
+
+export interface FetchUdfLayoutPayload {
+  entityType: "TC" | "TS" | "IS";
+  pageName?: "ADD" | "DETAIL";
+  scopeId?: number;
+  orgCode?: string;
+}
+
+export const FetchUdfLayoutArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  entityType: z
+    .enum(["TC", "TS", "IS"])
+    .describe(
+      "Entity type to fetch UDF field definitions for. " +
+        "'TC' = Test Case (also returns step UDFs in stepFields), " +
+        "'TS' = Test Suite, " +
+        "'IS' = Issue.",
+    ),
+  pageName: z
+    .enum(["ADD", "DETAIL"])
+    .optional()
+    .default("ADD")
+    .describe(
+      "'ADD' returns fields for create operations (no fieldID needed). " +
+        "'DETAIL' returns fields for update operations and includes fieldID (projectUserFieldID) " +
+        "required by the UDF update wrapper. Call with 'DETAIL' before updating an entity's UDF values.",
     ),
 });
 

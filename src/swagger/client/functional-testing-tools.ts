@@ -11,6 +11,7 @@ import {
   RunFunctionalTestingSuiteParamsSchema,
   RunFunctionalTestingTestParamsSchema,
 } from "./functional-testing-types";
+import { READ_ONLY, WRITE, WRITE_DESTRUCTIVE } from "./tool-constants";
 import type { SwaggerToolParams } from "./tools";
 
 export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
@@ -23,7 +24,7 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
       "Do not use this tool to retrieve test execution results or history.",
     handler: "listFunctionalTestingTests",
     idempotent: true,
-    readOnly: true,
+    ...READ_ONLY,
   },
   {
     title: "Create Test",
@@ -32,14 +33,15 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
       "Creates a new API test in your Swagger Functional Testing workspace. " +
       "This tool only creates API tests (not browser or native-mobile tests). " +
       "Use this when you need to programmatically create a test with a defined set of API request steps. " +
-      "Each step requires a URL and may specify an HTTP method (defaults to GET), request body, headers, and redirect handling. " +
-      "Returns the ID and the URL to definition of the newly created test; the ID can be used with `swagger_run_test` to run it, " +
+      "Each step requires a URL and may specify an HTTP method (defaults to GET), request body, headers, redirect handling, " +
+      "and assertions: expected HTTP status code ranges, and expected response body assertions (exact match or field-level rules matched by path). " +
+      "Returns the ID and the URL to definition of the newly created test; the ID can be used with `swagger_run_test` to run it " +
       "or grouped with other test IDs into a Suite via `swagger_create_suite`.",
     inputSchema: CreateFunctionalTestingTestParamsSchema,
     outputSchema: CreateFunctionalTestingTestResponseSchema,
     handler: "createFunctionalTestingTest",
+    ...WRITE,
     idempotent: false,
-    readOnly: false,
   },
   {
     title: "Run Test",
@@ -50,8 +52,9 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
       "Use `swagger_get_test_status` with that executionId to track progress and retrieve the final result.",
     inputSchema: RunFunctionalTestingTestParamsSchema,
     handler: "runFunctionalTestingTest",
+    ...WRITE,
+    openWorld: true,
     idempotent: false,
-    readOnly: false,
   },
   {
     title: "Get Test Status",
@@ -63,7 +66,7 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
     inputSchema: GetFunctionalTestingExecutionTestSchema,
     handler: "getFunctionalTestingExecution",
     idempotent: true,
-    readOnly: true,
+    ...READ_ONLY,
   },
   {
     title: "List Suite Executions",
@@ -74,8 +77,8 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
       "Do not use this tool to retrieve the status of a single execution or individual test results.",
     inputSchema: ListFunctionalTestingSuiteExecutionsSchema,
     handler: "listFunctionalTestingSuiteExecutions",
-    readOnly: true,
     idempotent: true,
+    ...READ_ONLY,
   },
   {
     title: "Cancel Suite Execution",
@@ -86,7 +89,7 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
       "Do not use this tool to cancel individual test runs.",
     inputSchema: CancelFunctionalTestingSuiteExecutionSchema,
     handler: "cancelFunctionalTestingSuiteExecution",
-    readOnly: false,
+    ...WRITE_DESTRUCTIVE,
     idempotent: false,
   },
   {
@@ -103,8 +106,8 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
     inputSchema: CreateFunctionalTestingSuiteParamsSchema,
     outputSchema: CreateFunctionalTestingSuiteResponseSchema,
     handler: "createFunctionalTestingSuite",
+    ...WRITE,
     idempotent: false,
-    readOnly: false,
   },
   {
     title: "List Suites",
@@ -115,7 +118,7 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
       "Do not use this tool to retrieve individual tests or test suite execution results.",
     handler: "listFunctionalTestingSuites",
     idempotent: true,
-    readOnly: true,
+    ...READ_ONLY,
   },
   {
     title: "Run Suite",
@@ -128,8 +131,9 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
       "Do not use this tool to run a single test — use `swagger_run_test` instead.",
     inputSchema: RunFunctionalTestingSuiteParamsSchema,
     handler: "runFunctionalTestingSuite",
+    ...WRITE,
+    openWorld: true,
     idempotent: false,
-    readOnly: false,
   },
   {
     title: "Get Suite Status",
@@ -142,7 +146,7 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
     inputSchema: GetFunctionalTestingSuiteExecutionSchema,
     handler: "getFunctionalTestingSuiteExecution",
     idempotent: true,
-    readOnly: true,
+    ...READ_ONLY,
   },
   {
     title: "Get Test Execution History",
@@ -156,6 +160,6 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
     inputSchema: GetFunctionalTestHistoryParamsSchema,
     handler: "getFunctionalTestingTestHistory",
     idempotent: true,
-    readOnly: true,
+    ...READ_ONLY,
   },
 ];

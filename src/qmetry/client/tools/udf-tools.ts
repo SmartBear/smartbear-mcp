@@ -4,10 +4,113 @@ import {
   FetchCascadeChildValuesArgsSchema,
   FetchTestRunUdfMetadataArgsSchema,
   FetchTestRunUdfValuesArgsSchema,
+  FetchUdfLayoutArgsSchema,
 } from "../../types/udf";
 import type { QMetryToolParams } from "./types";
 
 export const UDF_TOOLS: QMetryToolParams[] = [
+  {
+    title: "Fetch UDF Layout",
+    toolset: "UDF",
+    summary:
+      "Fetch UDF (User Defined Field) definitions for Test Case, Test Suite, or Issue entities. " +
+      "Returns field names, types, fieldIDs, and lookup option IDs. " +
+      "Call this BEFORE creating or updating an entity with UDF values.",
+    handler: QMetryToolsHandlers.FETCH_UDF_LAYOUT,
+    inputSchema: FetchUdfLayoutArgsSchema,
+    purpose:
+      "Discovers the UDF fields configured for a given entity type (TC/TS/IS) in the current QMetry project. " +
+      "For 'ADD' (create): returns field names, types, and list option IDs — no fieldID needed. " +
+      "For 'DETAIL' (update): returns fieldID (projectUserFieldID) required in the UDF update wrapper. " +
+      "Also returns step UDF definitions for Test Cases (stepFields). " +
+      "The 'listOptions' map provides valid IDs for LOOKUPLIST, MULTILOOKUPLIST, and CASCADINGLIST fields. " +
+      "For CASCADINGLIST child options, also call 'Fetch Cascade Child Values' after selecting a parent.",
+    useCases: [
+      "Discover UDF fields before creating a Test Case with custom fields",
+      "Get fieldIDs before updating a Test Suite's UDF values",
+      "Find valid dropdown option IDs for a LOOKUPLIST UDF before setting a value",
+      "Identify mandatory UDF fields before creating an Issue",
+      "List all step-level UDF fields available for Test Case steps",
+      "Get CASCADINGLIST parent option IDs before fetching child values",
+    ],
+    examples: [
+      {
+        description: "Get UDF field definitions for creating a Test Case",
+        parameters: { entityType: "TC", pageName: "ADD" },
+        expectedOutput:
+          "{ fields: [{ name: 'custom_text', label: 'Custom Text', fieldTypeName: 'STRING', fieldID: null, isMandatory: false }, ...], " +
+          "stepFields: [{ name: 'step_field', label: 'Step Field', fieldTypeName: 'STRING', ... }], " +
+          "listOptions: { myListKey: [{ id: 101, name: 'Option A' }] } }",
+      },
+      {
+        description: "Get UDF fieldIDs for updating a Test Suite",
+        parameters: { entityType: "TS", pageName: "DETAIL" },
+        expectedOutput:
+          "{ fields: [{ name: 'dropdown_field', label: 'Dropdown', fieldTypeName: 'LOOKUPLIST', fieldID: 2002, isMandatory: false, listName: 'myListKey' }, ...], " +
+          "listOptions: { myListKey: [{ id: 101, name: 'Option A' }, { id: 102, name: 'Option B' }] } }",
+      },
+      {
+        description: "Get UDF field definitions for creating an Issue",
+        parameters: { entityType: "IS", pageName: "ADD" },
+        expectedOutput:
+          "{ fields: [{ name: 'TCR_STR', label: 'String Field', fieldTypeName: 'STRING', fieldID: null }, ...], listOptions: {} }",
+      },
+    ],
+    hints: [
+      "CALL THIS TOOL FIRST: Before creating or updating TC/TS/IS entities, always call this tool with pageName='ADD' to discover mandatory fields, defaults, field names, types, and valid option IDs.",
+      "pageName='ADD': Use before CREATE operations — returns field names + types + list options. fieldID is null (not needed on create).",
+      "pageName='DETAIL': Use before UPDATE operations — returns fieldID (projectUserFieldID) required in the UDF wrapper.",
+      "WORKFLOW FOR CREATE with UDFs:",
+      "  1. Call Fetch UDF Layout with entityType + pageName='ADD'",
+      "  2. For LOOKUPLIST/MULTILOOKUPLIST: pick IDs from listOptions[field.listName]",
+      "  3. For CASCADINGLIST: pick parent ID from listOptions[field.listName], then call Fetch Cascade Child Values to get child IDs",
+      "  4. Pass UDF values via 'udfFields' param on the create tool: { fieldName: value }",
+      "  5. Example: { udfFields: { custom_text: 'value', lookup_field: 101, multi_field: [101, 102], cascade_field: { parent: 201, child: 202 } } }",
+      "WORKFLOW FOR UPDATE with UDFs:",
+      "  1. Call Fetch UDF Layout with entityType + pageName='DETAIL' to get fieldIDs",
+      "  2. For LOOKUPLIST/MULTILOOKUPLIST: pick IDs from listOptions[field.listName]",
+      "  3. For CASCADINGLIST: pick parent ID, then call Fetch Cascade Child Values for child IDs",
+      "  4. Pass both 'udfFields' (flat root keys) AND 'UDF' wrapper (with fieldID) on the update tool:",
+      "     udfFields: { custom_text: 'new value', lookup_field: 102 }",
+      "     UDF: { custom_text: { fieldID: 1001, value: 'new value' }, lookup_field: { fieldID: 1002, value: 102 } }",
+      "  5. For LOOKUPLIST/MULTILOOKUPLIST in update: also set flat alias key — e.g. lookup_fieldAlias: 'Option B'",
+      "stepFields (TC only): Step-level UDF definitions are separate from entity-level UDF fields. " +
+        "They appear in stepFields (not fields). Use them when setting UDF values on test case steps.",
+      "listOptions: A map of listName → [{id, name, isArchived}]. Use 'id' as the UDF value for LOOKUPLIST/MULTILOOKUPLIST. " +
+        "Only include non-archived options unless user explicitly wants archived items.",
+      "EMPTY listOptions: If listOptions[field.listName] is missing or empty for a lookup field, the newlayout endpoint did not return those options. " +
+        "This tool automatically attempts a fallback to the UDF metadata endpoint to populate them. " +
+        "If listOptions is STILL empty after this tool returns, call 'Fetch Test Run UDF Metadata' with the same entityType — " +
+        "its 'lookupOptions' map uses the same listName keys and contains the full option list.",
+      "isMandatory: If true, this field MUST be included. Source: allowBlank=false in QMetry API (for UDF/system fields) or mandatory=true (for step system fields).",
+      "DATETIMEPICKER fields: date value MUST match the project's active date format.",
+      "  Get format: project info → dateTimeFormatID → find in dateTimeFormatNew where id matches → read unique_value.",
+      "  unique_value pattern: yyyy=4-digit year, MM=2-digit month (01-12), dd=2-digit day, MMM=3-letter month (Jan/Feb/...).",
+      "  Re-format user date to match before sending. NEVER guess the format — always check project info first.",
+      "defaultValues: Pre-configured defaults from QMetry. If a mandatory field has a defaultValues entry, use that value automatically without asking the user. Only ask user for mandatory fields with NO default.",
+      "stepDefaultValues: Same as defaultValues but for test case step fields.",
+      "PRE-CREATE MANDATORY CHECK WORKFLOW (CRITICAL — do this before every create):",
+      "  1. Call Fetch UDF Layout with pageName='ADD' for the entity type",
+      "  2. Check systemFields: for each field where isMandatory=true, check if defaultValues[field.name] exists",
+      "     - Has default → use defaultValues[field.name] as the value, no need to ask user",
+      "     - No default → MUST ask user to provide value before creating",
+      "  3. Check fields (UDF): same logic — isMandatory=true + no defaultValues entry → ask user",
+      "  4. For TC steps: check stepSystemFields and stepFields isMandatory, use stepDefaultValues for auto-fill",
+      "  5. Only after all mandatory fields are resolved (via default or user input) → proceed with create",
+      "This tool is scoped per project — list options, fieldIDs, and defaults are all project-specific.",
+    ],
+    outputDescription:
+      "JSON with 'entityType', 'pageName'. " +
+      "All data is scoped by entityType key in the QMetry newlayout response: TC uses qmUDF.TC / qmSDF.TC / qmDefaultValue.TC; TS uses qmUDF.TS / qmSDF.TS / qmDefaultValue.TS; IS uses qmUDF.IS / qmSDF.IS / qmDefaultValue.IS. " +
+      "'fields' array — UDF fields (name, label, fieldTypeName, fieldID, isMandatory, optional listName); isMandatory=true when allowBlank=false in QMetry. " +
+      "'systemFields' array — system fields like Summary/Priority/Status (name, label, fieldTypeName, isMandatory); isMandatory=true when allowBlank=false. " +
+      "'defaultValues' object — { fieldName: defaultValueId } pre-configured defaults (auto-fill when user omits the field; no need to ask user). " +
+      "TC-only: 'stepFields' — step UDF fields; 'stepSystemFields' — step system fields (mandatory via tcSteps[].mandatory=true); 'stepDefaultValues' — { fieldName: defaultValueId } from qmTCSDefaultValue.TCS. " +
+      "'listOptions' map (listName → [{id, name, isArchived}]). '_note' with workflow instructions.",
+    readOnly: true,
+    destructive: false,
+    idempotent: true,
+  },
   {
     title: "Bulk Update Test Run UDFs",
     toolset: "UDF",
@@ -259,12 +362,17 @@ export const UDF_TOOLS: QMetryToolParams[] = [
       "ALWAYS call this tool before 'Bulk Update Test Run UDFs' when the user has not explicitly provided a numeric fieldID. " +
         "The 'fieldID' in the bulk update corresponds to 'projectUserFieldID' in this response.",
       "This tool is the authoritative source of fieldIDs for all Test Run UDF fields — do NOT guess or hard-code fieldIDs.",
-      "For LOOKUPLIST and MULTILOOKUPLIST fields, the response 'lookupOptions' contains the valid item IDs and labels to use as values in bulk updates.",
+      "For LOOKUPLIST and MULTILOOKUPLIST fields, the response 'lookupOptions' contains items with 'id', 'name' (display label), and 'uniqueLabel' (internal key stored in executions). " +
+        "When execution UDF values are returned by Fetch Issue Executions or Fetch Test Run UDF Values, LOOKUPLIST/MULTILOOKUPLIST values are already resolved from uniqueLabel → name. " +
+        "For bulk updates, use the item 'id' as the value.",
       "DATE fields use MM-DD-YYYY format (e.g. '06-23-2026') when setting values via Bulk Update Test Run UDFs.",
+      "EMPTY lookupOptions: If 'lookupOptions' is empty or missing a list key for a LOOKUPLIST/MULTILOOKUPLIST field, " +
+        "the API did not return options for that field. In this case the user must provide the option name manually " +
+        "or check the QMetry UI for available option IDs. Do NOT proceed with a guess — ask the user for the option ID or name.",
     ],
     outputDescription:
       "JSON object with 'fields' array (each item has fieldID, name, label, fieldType, allowBlank, and optional listName/listMasterID) " +
-      "and 'lookupOptions' map for list-based fields.",
+      "and 'lookupOptions' map for list-based fields. If lookupOptions is empty for a list field, options could not be fetched automatically.",
     readOnly: true,
     destructive: false,
     idempotent: true,
@@ -319,6 +427,10 @@ export const UDF_TOOLS: QMetryToolParams[] = [
       "'viewId' is auto-resolved from latestViews.TE.viewId — leave blank unless explicitly overriding. It is only needed when sourceRows is not supplied.",
       "If 'hasTcRunUdf' is false in the response, no Test Run UDFs are configured for this project.",
       "The 'testRunUdfs' array on each run contains enriched UDF values with label and fieldID — use fieldID from here when calling 'Bulk Update Test Run UDFs'.",
+      "VALUE RESOLUTION: For LOOKUPLIST and MULTILOOKUPLIST fields, 'value' is resolved from the internal uniqueLabel key to the human-readable display name using qmUDFList lookup options. Always display the resolved name, never the raw uniqueLabel.",
+      "LOOKUP RESOLUTION WARNING: If the response contains '_lookupWarning', lookup options were missing for some fields. " +
+        "Individual UDF entries may have '_rawValue: true' and '_note' indicating the value is an unresolved internal ID. " +
+        "In that case, call 'Fetch Test Run UDF Metadata' separately and use its 'lookupOptions' to resolve the display name before showing the user.",
       "This tool calls UDF metadata internally — no need to call 'Fetch Test Run UDF Metadata' separately when viewing values.",
       "When sourceRows is omitted, this tool also calls the test-suite-run execution list API internally. When sourceRows is provided, it reuses those rows and does not refetch the parent execution list.",
     ],
@@ -379,7 +491,9 @@ export const UDF_TOOLS: QMetryToolParams[] = [
         "  2. Call this tool ('Fetch Cascade Child Values') with a parent item 'id' from step 1 → get child item IDs.\n" +
         "  3. Call 'Bulk Update Test Run UDFs' with value: { parent: <parentId>, child: <childId> } and the 'fieldID' from step 1.",
       "The parent item IDs are in the 'lookupOptions' map returned by 'Fetch Test Run UDF Metadata'. " +
-        "Each entry under the field's listName contains items with 'id' — use that 'id' as the 'id' parameter here.",
+        "Each entry under the field's listName contains items with 'id' — use that 'id' as the 'id' parameter here. " +
+        "IMPORTANT: If 'lookupOptions' from Fetch Test Run UDF Metadata is empty for the CASCADINGLIST field, " +
+        "the API did not return parent options. In this case, ask the user to provide the parent item ID from the QMetry UI — do NOT guess.",
       "The response 'children' array contains objects with 'id', 'name', 'uniqueLabel', and 'isArchived'. " +
         "Use 'id' as the 'child' value in the bulk update payload.",
       "Set 'isArchReq: true' only if the user explicitly asks to include archived/inactive child options.",
