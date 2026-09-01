@@ -38,12 +38,12 @@ import { ListSpans } from "./tool/performance/list-spans";
 import { ListTraceFields } from "./tool/performance/list-trace-fields";
 import { SetNetworkEndpointGroupings } from "./tool/performance/set-network-endpoint-groupings";
 import { GetCurrentProject } from "./tool/project/get-current-project";
+import { ListProjectCollaborators } from "./tool/project/list-project-collaborators";
 import { ListProjectEventFilters } from "./tool/project/list-project-event-filters";
 import { ListProjects } from "./tool/project/list-projects";
 import { GetBuild } from "./tool/release/get-build";
 import { GetRelease } from "./tool/release/get-release";
 import { ListReleases } from "./tool/release/list-releases";
-import { ListProjectCollaborators } from "./tool/project/list-project-collaborators";
 
 const HUB_PREFIX = "00000";
 const DEFAULT_DOMAIN = "bugsnag.com";

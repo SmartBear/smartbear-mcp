@@ -2,6 +2,7 @@ import { type FilterObject, toUrlSearchParams } from "../filters";
 import { type ApiResponse, BaseAPI, getQueryParams } from "./base";
 import {
   type Build,
+  type Collaborator,
   type EventField,
   type Project,
   type ProjectNetworkGroupingRuleset,
@@ -10,7 +11,6 @@ import {
   type Span,
   type SpanGroup,
   type TraceField,
-  type Collaborator,
 } from "./index";
 
 export class ProjectAPI extends BaseAPI {

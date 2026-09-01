@@ -1,9 +1,9 @@
 import type {
+  CollaboratorApiView,
   OrganizationApiView,
   ProjectApiView,
   ReleaseApiView,
   ReleaseGroup,
-  CollaboratorApiView,
 } from "./api";
 
 // Exporting all the types required outside of the api module - all imports from the tool should come from here
