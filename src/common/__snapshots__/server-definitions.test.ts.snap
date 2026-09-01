@@ -13602,6 +13602,85 @@ Expected Output: The five environments starting from the 10th Environment from t
     ],
     "title": "Zephyr: Get Environments",
   },
+  "zephyr_get_folders": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "Zephyr: Get Folders",
+    },
+    "description": "Get folders, optionally filtered by project and folder type
+
+**Toolset:** Folders
+
+**Parameters:**
+- maxResults (number): Specifies the maximum number of results to return in a single call. The default value is 10, and the maximum value that can be requested is 1000.
+
+Note that the server may enforce a lower limit than requested, depending on resource availability or other internal constraints. If this happens, the result set may be truncated. Always check the maxResults value in the response to confirm how many results were actually returned.
+ (default: 10)
+- startAt (number): Zero-indexed starting position. Should be a multiple of maxResults. (default: 0)
+- projectKey (string): Jira project key filter
+- folderType (string): Folder type filter. Either \`"TEST_CASE"\`, \`"TEST_PLAN"\` or \`"TEST_CYCLE"\`
+
+**Use Cases:** 1. List folders in a Zephyr project 2. Get Test Case folders for a project 3. Get Test Plan folders for a project 4. Get Test Cycle folders for a project 5. Browse the folder structure in Zephyr
+
+**Examples:**
+1. Get the first 10 Folders
+\`\`\`json
+{
+  "maxResults": 10,
+  "startAt": 0
+}
+\`\`\`
+Expected Output: The first 10 Folders with their details
+
+2. Get Folders from the project SA
+\`\`\`json
+{
+  "projectKey": "SA",
+  "maxResults": 10,
+  "startAt": 0
+}
+\`\`\`
+Expected Output: Folders belonging to project SA with their details
+
+3. Get Test Case Folders from the project MM2
+\`\`\`json
+{
+  "projectKey": "MM2",
+  "folderType": "TEST_CASE",
+  "maxResults": 10,
+  "startAt": 0
+}
+\`\`\`
+Expected Output: Test Case Folders belonging to project MM2 with their details
+
+4. Get Test Cycle Folders across all projects
+\`\`\`json
+{
+  "folderType": "TEST_CYCLE",
+  "maxResults": 10,
+  "startAt": 0
+}
+\`\`\`
+Expected Output: Test Cycle Folders from all projects with their details",
+    "inputSchema": [
+      "folderType",
+      "maxResults",
+      "projectKey",
+      "startAt",
+    ],
+    "outputSchema": [
+      "isLast",
+      "maxResults",
+      "next",
+      "startAt",
+      "total",
+      "values",
+    ],
+    "title": "Zephyr: Get Folders",
+  },
   "zephyr_get_issue_link_test_cases": {
     "annotations": {
       "destructiveHint": false,
