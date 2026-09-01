@@ -4,6 +4,7 @@ import type {
   CancelFunctionalTestingSuiteExecutionParams,
   CreateFunctionalTestingSuiteParams,
   CreateFunctionalTestingSuiteResponse,
+  CreateFunctionalTestingTestParameter,
   CreateFunctionalTestingTestParams,
   CreateFunctionalTestingTestResponse,
   GetFunctionalTestHistoryParams,
@@ -18,6 +19,10 @@ import type {
   RunFunctionalTestingTestParams,
   TestRunHistoryResponse,
 } from "./functional-testing-types";
+import {
+  applyBaseUrlTemplating,
+  type TemplatedFunctionalTestingTestStep,
+} from "./functional-testing-url-utils";
 
 const API_HOSTNAME = "api.reflect.run";
 
@@ -105,17 +110,23 @@ export class FunctionalTestingAPI {
   async createTest(
     args: CreateFunctionalTestingTestParams,
   ): Promise<CreateFunctionalTestingTestResponse> {
-    const {
-      type: _type,
-      steps,
-      ...rest
-    } = args as Record<string, unknown> & {
-      steps?: unknown[];
-    };
-    const sanitizedSteps = steps?.map((step) => {
-      const { type: _stepType, ...stepRest } = step as Record<string, unknown>;
-      return { ...stepRest, type: "api" };
-    });
+    const { steps, parameters, ...rest } = args;
+
+    let templatedSteps: TemplatedFunctionalTestingTestStep[] | undefined;
+    let mergedParameters: CreateFunctionalTestingTestParameter[];
+    try {
+      ({ steps: templatedSteps, parameters: mergedParameters } =
+        applyBaseUrlTemplating(steps, parameters));
+    } catch (error) {
+      throw new ToolError(
+        error instanceof Error ? error.message : String(error),
+      );
+    }
+
+    const sanitizedSteps = templatedSteps?.map((step) => ({
+      ...step,
+      type: "api",
+    }));
     const response = await this.ftFetch(
       `tests`,
       {
@@ -125,6 +136,9 @@ export class FunctionalTestingAPI {
           ...rest,
           type: "api",
           steps: sanitizedSteps,
+          ...(mergedParameters.length > 0
+            ? { parameters: mergedParameters }
+            : {}),
         }),
       },
       errorMessageFor(`create Functional Testing test`),

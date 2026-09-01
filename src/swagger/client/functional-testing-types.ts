@@ -1,4 +1,9 @@
 import { z } from "zod";
+import {
+  baseUrlParamName,
+  extractPathParamNames,
+  splitUrlByBaseUrl,
+} from "./functional-testing-url-utils";
 
 export const RunFunctionalTestingTestParamsSchema = z.object({
   testId: z
@@ -534,8 +539,36 @@ export const CreateFunctionalTestingAssertionsSchema = z.object({
     .describe("Assertion rules evaluated against the response body"),
 });
 
+export const CreateFunctionalTestingTestParameterSchema = z.object({
+  name: z.string().trim().min(1).describe("Path parameter name"),
+  value: z.string().optional().describe("Parameter default value"),
+});
+
 export const CreateFunctionalTestingTestStepSchema = z.object({
-  url: z.url().describe("URL for the API call"),
+  url: z
+    .string()
+    .trim()
+    .min(1)
+    .describe(
+      "Full URL for the API call. May include OAS-style {pathParam} placeholders, which are " +
+        "always converted into reusable parameters. baseUrl MUST also be set and url must start with it.",
+    ),
+  baseUrl: z
+    .url()
+    .optional()
+    .describe(
+      "Server/common URL for this step's endpoint (e.g. https://petstore.swagger.io/v2). REQUIRED " +
+        "on every step it is extracted into a definition-level " +
+        "parameter and templated into the step url",
+    ),
+  apiName: z
+    .string()
+    .trim()
+    .min(1)
+    .optional()
+    .describe(
+      'Name of the API that this step\'s baseUrl belongs to, e.g. "Petstore". ',
+    ),
   httpMethod: z
     .enum(HTTP_METHODS)
     .describe("HTTP method for the API call (defaults to GET server-side)")
@@ -559,21 +592,93 @@ export const CreateFunctionalTestingTestStepSchema = z.object({
   ),
 });
 
-export const CreateFunctionalTestingTestParamsSchema = z.object({
-  name: z.string().describe("Name for the new test").trim().min(1),
-  description: z
-    .string()
-    .trim()
-    .describe("Optional description for the test")
-    .optional(),
-  steps: z
-    .array(CreateFunctionalTestingTestStepSchema)
-    .describe("Test steps to include in the test")
-    .optional(),
-});
+export const CreateFunctionalTestingTestParamsSchema = z
+  .object({
+    name: z.string().describe("Name for the new test").trim().min(1),
+    description: z
+      .string()
+      .trim()
+      .describe("Optional description for the test")
+      .optional(),
+    steps: z
+      .array(CreateFunctionalTestingTestStepSchema)
+      .describe("Test steps to include in the test")
+      .optional(),
+    parameters: z
+      .array(CreateFunctionalTestingTestParameterSchema)
+      .describe(
+        "Definition-level path parameters for the test (e.g. base URLs, path params), not request body parameters.",
+      )
+      .optional(),
+  })
+  .superRefine((data, ctx) => {
+    const allowedNames = new Set<string>();
+    const pathParamCounts = new Map<string, number>();
+
+    data.steps?.forEach((step, index) => {
+      for (const name of extractPathParamNames(step.url)) {
+        allowedNames.add(name);
+        pathParamCounts.set(name, (pathParamCounts.get(name) ?? 0) + 1);
+      }
+      if (step.baseUrl) {
+        allowedNames.add(baseUrlParamName(step.baseUrl, step.apiName));
+        if (splitUrlByBaseUrl(step.url, step.baseUrl) === null) {
+          ctx.addIssue({
+            code: "custom",
+            message: `Step url "${step.url}" must start with its baseUrl "${step.baseUrl}".`,
+            path: ["steps", index, "url"],
+          });
+        }
+      } else {
+        ctx.addIssue({
+          code: "custom",
+          message:
+            `Step url "${step.url}" does not set "baseUrl". ` +
+            "Every step must set baseUrl to its server/common URL " +
+            "(e.g. https://petstore.swagger.io/v2) so it is extracted into a shared parameter, " +
+            "even when only one step uses that URL.",
+          path: ["steps", index, "baseUrl"],
+        });
+      }
+    });
+
+    const definedParamNames = new Set(
+      (data.parameters ?? []).map((p) => p.name),
+    );
+    for (const [name, count] of pathParamCounts) {
+      if (count >= 2 && !definedParamNames.has(name)) {
+        ctx.addIssue({
+          code: "custom",
+          message:
+            `Path parameter "{${name}}" appears in ${count} steps and must be defined in "parameters" ` +
+            "so its value is shared across all steps.",
+          path: ["parameters"],
+        });
+      }
+    }
+
+    data.parameters?.forEach((param, index) => {
+      if (!allowedNames.has(param.name)) {
+        ctx.addIssue({
+          code: "custom",
+          message:
+            `Parameter "${param.name}" is not a path parameter: it must match a {${param.name}} placeholder ` +
+            "in a step's url, or the generated base-URL parameter name for a step's baseUrl. " +
+            "The parameters field only accepts path parameters, not request body parameters.",
+          path: ["parameters", index, "name"],
+        });
+      }
+    });
+  });
 
 export type CreateFunctionalTestingTestParams = z.infer<
   typeof CreateFunctionalTestingTestParamsSchema
+>;
+export type CreateFunctionalTestingTestParameter = z.infer<
+  typeof CreateFunctionalTestingTestParameterSchema
+>;
+export type CreateFunctionalTestingTestStep = z.infer<
+  typeof CreateFunctionalTestingTestStepSchema
 >;
 export type CreateFunctionalTestingStatusRange = z.infer<
   typeof CreateFunctionalTestingStatusRangeSchema
