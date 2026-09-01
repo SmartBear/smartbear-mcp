@@ -39,7 +39,7 @@ export async function createTestCases(
     project,
   );
 
-  const { udfFields, ...restPayload } = payload as any;
+  const { udfFields, skipSteps, ...restPayload } = payload as any;
   const body: CreateTestCasesPayload = {
     ...DEFAULT_CREATE_TESTCASES_PAYLOAD,
     ...(udfFields ?? {}),
@@ -56,10 +56,13 @@ export async function createTestCases(
       "[createTestCases] Missing or invalid required parameter: 'name'.",
     );
   }
-  if (!Array.isArray(body.steps) || body.steps.length === 0) {
+  if (!skipSteps && (!Array.isArray(body.steps) || body.steps.length === 0)) {
     throw new Error(
       "[createTestCases] Missing or invalid required parameter: 'steps' — must be a non-empty array. Generate steps from context if the user did not provide them.",
     );
+  }
+  if (skipSteps) {
+    delete body.steps;
   }
 
   return qmetryRequest<unknown>({

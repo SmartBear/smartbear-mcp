@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  createTestCases,
   fetchTestCaseDetails,
   fetchTestCaseExecutions,
   fetchTestCaseSteps,
@@ -505,6 +506,69 @@ describe("testcase API clients", () => {
       await expect(
         linkTestcaseToIssues(token, baseUrl, projectKey, payload),
       ).rejects.toThrow(/Missing or invalid required parameter: 'dfIDs'/);
+    });
+  });
+
+  describe("createTestCases", () => {
+    const mockResponse = { id: "TC-1", name: "Login Test Case" };
+
+    it("should POST without steps when skipSteps is true", async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => mockResponse,
+      });
+
+      const payload = {
+        tcFolderID: "102653",
+        name: "Login Test Case",
+        skipSteps: true,
+      } as any;
+
+      const result = await createTestCases(token, baseUrl, projectKey, payload);
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        `${baseUrl}/rest/testcases`,
+        expect.objectContaining({
+          method: "POST",
+          body: expect.not.stringContaining('"steps"'),
+        }),
+      );
+      expect(result).toEqual(mockResponse);
+    });
+
+    it("should throw on missing steps when skipSteps is not set", async () => {
+      const payload = {
+        tcFolderID: "102653",
+        name: "Login Test Case",
+      } as any;
+
+      await expect(
+        createTestCases(token, baseUrl, projectKey, payload),
+      ).rejects.toThrow(/Missing or invalid required parameter: 'steps'/);
+    });
+
+    it("should POST with steps when provided", async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => mockResponse,
+      });
+
+      const payload = {
+        tcFolderID: "102653",
+        name: "Login Test Case",
+        steps: [{ orderId: 1, description: "Navigate to login page" }],
+      } as any;
+
+      const result = await createTestCases(token, baseUrl, projectKey, payload);
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        `${baseUrl}/rest/testcases`,
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining('"steps"'),
+        }),
+      );
+      expect(result).toEqual(mockResponse);
     });
   });
 });

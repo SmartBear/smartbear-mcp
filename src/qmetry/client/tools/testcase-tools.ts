@@ -29,10 +29,11 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       "For fields like priority, owner, component, etc., fetch their valid values using the project info tool. " +
       "If tcFolderID is not provided, it will be auto-resolved to the root test case folder using project info.\n\n" +
       "STEPS RULE (CRITICAL — apply before every create call):\n" +
-      "ALWAYS include 'steps' in the payload. Steps must NEVER be omitted.\n" +
-      "  - If the user explicitly provides steps, use them as given.\n" +
-      "  - If the user has NOT provided steps, generate meaningful steps based on the test case name, description, and any other context provided. Use your knowledge to infer logical test steps.\n" +
-      "  - NEVER send steps: [] (empty array) — always send at least 1 valid step object.\n" +
+      "Include 'steps' in the payload UNLESS the user explicitly says not to create steps.\n" +
+      "  - SCENARIO 1: User explicitly provides steps → use them as given.\n" +
+      "  - SCENARIO 2: User has NOT mentioned steps (and did not say to skip them) → generate meaningful steps from the test case name, description, and context. Use your knowledge to infer logical test steps.\n" +
+      "  - SCENARIO 3: User explicitly says NOT to create steps (e.g. 'no steps', 'without steps', 'skip steps') → set skipSteps: true and omit the 'steps' field entirely.\n" +
+      "  - NEVER send steps: [] (empty array) — either send at least 1 valid step object or omit steps entirely with skipSteps: true.\n" +
       "STEP DEFAULT VALUES: After generating or parsing steps, check 'stepDefaultValues' from Fetch UDF Layout.\n" +
       "  For each step field that has a default value in stepDefaultValues AND the user has not explicitly provided a value for that field in the step: send the default value.\n" +
       "  Do NOT ask the user — auto-apply defaults silently.",
@@ -143,6 +144,16 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       },
       {
         description:
+          "SCENARIO 3: User explicitly says no steps — 'create a test case without any steps'",
+        parameters: {
+          name: "Login Test Case",
+          skipSteps: true,
+        },
+        expectedOutput:
+          "Test case created with no steps because user explicitly asked to skip them.",
+      },
+      {
+        description:
           "User provides name only — steps auto-generated from test case name context",
         parameters: {
           name: "Password Reset Test Case",
@@ -162,11 +173,11 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
     ],
     hints: [
       "╔══════════════════════════════════════════════════════════════════════════════╗",
-      "║  STEPS RULE — ALWAYS INCLUDE STEPS ON EVERY CREATE CALL (NO EXCEPTIONS)      ║",
+      "║  STEPS RULE — INCLUDE STEPS UNLESS USER EXPLICITLY ASKS TO SKIP THEM         ║",
       "╚══════════════════════════════════════════════════════════════════════════════╝",
       "",
-      "MANDATORY: ALWAYS include 'steps' in the payload. Steps must NEVER be omitted.",
-      "NEVER send steps: [] (empty array) — always send at least 1 valid step object.",
+      "Include 'steps' in the payload unless the user explicitly says NOT to create steps.",
+      "NEVER send steps: [] (empty array) — either send at least 1 valid step object or omit steps with skipSteps: true.",
       "",
       "HOW TO POPULATE STEPS:",
       "",
@@ -176,13 +187,18 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       "    Example: 'create test case, step 1 - open browser, step 2 - click login'",
       "      → steps: [{ orderId: 1, description: 'open browser' }, { orderId: 2, description: 'click login' }]",
       "",
-      "  SCENARIO 2 — User does NOT provide steps.",
+      "  SCENARIO 2 — User does NOT mention steps at all.",
       "    Action: Generate meaningful steps based on the test case name, description, and all other context provided.",
       "    Use your knowledge of the feature/flow being tested to infer logical, realistic test steps.",
       "    Always include at least 2-4 steps that make sense for the test case.",
       "    Example: name='Login Test Case' → steps: [{orderId:1, description:'Navigate to login page'}, {orderId:2, description:'Enter credentials'}, {orderId:3, description:'Submit form'}, {orderId:4, description:'Verify login success'}]",
       "",
-      "STEP DEFAULT VALUES — apply after step generation:",
+      "  SCENARIO 3 — User explicitly says NOT to create steps.",
+      "    Trigger phrases: 'no steps', 'without steps', 'skip steps', 'don\\'t add steps', 'without any steps'.",
+      "    Action: Set skipSteps: true and omit the 'steps' field entirely from the payload.",
+      "    Example: 'create test case Login Test Case without steps' → { name: 'Login Test Case', skipSteps: true }",
+      "",
+      "STEP DEFAULT VALUES — apply after step generation (scenarios 1 and 2 only):",
       "  After building the steps array (from user input OR auto-generated), check 'stepDefaultValues' from Fetch UDF Layout.",
       "  stepDefaultValues shape: { fieldName: defaultValue } — e.g. { 'lookup19': 5232630 }",
       "  For EACH step, for EACH key in stepDefaultValues:",
@@ -192,10 +208,11 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       "  Example: stepDefaultValues = { status: 5232630 } → every step's UDF.status = 5232630 unless user gave a different value.",
       "",
       "DECISION TABLE:",
-      "  | User provided steps? | Action                                                                      |",
-      "  |----------------------|-----------------------------------------------------------------------------|",
-      "  | YES                  | Use steps from user's prompt; fill step UDF defaults from stepDefaultValues |",
-      "  | NO                   | Auto-generate steps from context; fill step UDF defaults from stepDefaultValues |",
+      "  | Situation                          | Action                                                                      |",
+      "  |------------------------------------|-----------------------------------------------------------------------------|",
+      "  | User provided steps                | Use steps from user's prompt; fill step UDF defaults from stepDefaultValues |",
+      "  | User did not mention steps         | Auto-generate steps from context; fill step UDF defaults from stepDefaultValues |",
+      "  | User explicitly said NO steps      | Set skipSteps: true, omit 'steps' field entirely                            |",
       "",
       "╚══════════════════════════════════════════════════════════════════════════════╝",
       "",

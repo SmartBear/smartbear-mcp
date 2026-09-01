@@ -15,18 +15,19 @@ import { qmetryRequest } from "./api/client-api";
 import { getProjectInfo } from "./project";
 import { resolveDefaults } from "./utils";
 
-// extTrackerType value used by QMetry's `integrationsystems` list to mean "Jira"
-// (as opposed to Rally=2 or Azure=3).
+// extTrackerType values used by QMetry's `integrationsystems` list.
 const EXT_TRACKER_TYPE_JIRA = 1;
+const EXT_TRACKER_TYPE_AZURE = 3;
 
 /**
- * Hard gate shared by create/update: if the project is Jira-integrated
- * (isExtTrackerConfigured) with Jira as the external tracker (extTrackerType)
- * and the Requirement module is configured to sync with it (isRQConfigured),
- * requirements must be managed in Jira, not QMetry.
+ * Hard gate shared by create/update: if the project has an external tracker
+ * configured (isExtTrackerConfigured) that is either Jira (extTrackerType=1)
+ * or Azure (extTrackerType=3), and the Requirement module is configured to
+ * sync with it (isRQConfigured), requirements must be managed in that external
+ * system, not QMetry.
  * @throws If the gate blocks the operation.
  */
-async function assertRequirementNotJiraSynced(
+async function assertRequirementNotExternallySynced(
   token: string,
   baseUrl: string,
   project: string | undefined,
@@ -41,14 +42,23 @@ async function assertRequirementNotJiraSynced(
 
   if (
     projectInfo.isExtTrackerConfigured === true &&
-    projectInfo.extTrackerType === EXT_TRACKER_TYPE_JIRA &&
     projectInfo.isRQConfigured === true
   ) {
-    throw new Error(
-      `[${functionName}] Blocked: This project is Jira-integrated and the Requirement module is ` +
-        `configured to sync with Jira issue types. Requirements must be ${action} in Jira, not QMetry, ` +
-        "for this project.",
-    );
+    const trackerType = projectInfo.extTrackerType;
+    if (trackerType === EXT_TRACKER_TYPE_JIRA) {
+      throw new Error(
+        `[${functionName}] Blocked: This project is Jira-integrated and the Requirement module is ` +
+          `configured to sync with Jira issue types. Requirements must be ${action} in Jira, not QMetry, ` +
+          "for this project.",
+      );
+    }
+    if (trackerType === EXT_TRACKER_TYPE_AZURE) {
+      throw new Error(
+        `[${functionName}] Blocked: This project is Azure-integrated and the Requirement module is ` +
+          `configured to sync with Azure. Requirements must be ${action} in Azure, not QMetry, ` +
+          "for this project.",
+      );
+    }
   }
 }
 
@@ -80,7 +90,7 @@ export async function createRequirement(
     );
   }
 
-  await assertRequirementNotJiraSynced(
+  await assertRequirementNotExternallySynced(
     token,
     resolvedBaseUrl,
     resolvedProject,
@@ -131,7 +141,7 @@ export async function updateRequirement(
     );
   }
 
-  await assertRequirementNotJiraSynced(
+  await assertRequirementNotExternallySynced(
     token,
     resolvedBaseUrl,
     resolvedProject,

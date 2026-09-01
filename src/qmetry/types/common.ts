@@ -633,19 +633,32 @@ export const CreateTestCaseArgsSchema = z.object({
         "System will fetch project info using the projectKey and extract rootFolders.TC.id automatically. " +
         "Manual folder ID only needed if you want to target a specific sub-folder.",
     ),
+  skipSteps: z
+    .boolean()
+    .optional()
+    .describe(
+      "Set to true ONLY when the user explicitly says they do NOT want steps created " +
+        "(e.g. 'create test case without steps', 'no steps', 'skip steps'). " +
+        "When true, the 'steps' field must be omitted entirely. " +
+        "When false or absent (the default), steps MUST always be included — " +
+        "auto-generate them from context if the user did not provide them.",
+    ),
   steps: z
     .array(CreateTestCaseStepSchema)
     .min(1)
+    .optional()
     .describe(
-      "STEPS RULE — ALWAYS include this field. Steps must NEVER be omitted.\n" +
+      "STEPS RULE — include this field unless the user explicitly says NOT to create steps.\n" +
         "\n" +
         "NEVER send steps: [] (empty array) — always send at least 1 valid step object.\n" +
+        "Omit this field entirely (and set skipSteps: true) ONLY when the user explicitly asks to skip steps.\n" +
         "\n" +
         "HOW TO POPULATE:\n" +
         "  - If user explicitly provides steps: parse each step into { orderId, description, inputData?, expectedOutcome? }.\n" +
-        "  - If user does NOT provide steps: auto-generate meaningful steps based on the test case name, description, and context.\n" +
+        "  - If user does NOT provide steps (and did not say to skip them): auto-generate meaningful steps based on the test case name, description, and context.\n" +
         "    Use your knowledge to infer 2-5 logical, realistic steps for the feature or flow being tested.\n" +
         "    Example: name='Login Test Case' → [{orderId:1, description:'Navigate to login page'}, {orderId:2, description:'Enter credentials'}, {orderId:3, description:'Submit and verify success'}]\n" +
+        "  - If user explicitly said NOT to create steps: omit this field and set skipSteps: true.\n" +
         "\n" +
         "STEP DEFAULT VALUES:\n" +
         "  After building the steps array, check 'stepDefaultValues' from Fetch UDF Layout.\n" +

@@ -42,7 +42,6 @@ const PROJECT_FIELDS_TO_OMIT = new Set([
   "allowEditRecordData",
   "allowEditPublicView",
   "logiServerUrl",
-  "buildNumber",
   "dynamicWebhookEnabled",
   "isLocked",
   "isBuildLOcked",

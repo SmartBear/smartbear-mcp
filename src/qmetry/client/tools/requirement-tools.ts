@@ -22,8 +22,8 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       "Allows users to create a new requirement in QMetry, including custom fields (UDFs), and release/cycle mapping. " +
       "For fields like requirementOwner, requirementState, etc., fetch their valid values using the project info tool. " +
       "If rqFolderId is not provided, it will be auto-resolved to the root requirement folder using project info. " +
-      "HARD GATE: if the project is Jira-integrated and the Requirement module is configured to sync with Jira " +
-      "issue types, this tool refuses to create the requirement in QMetry",
+      "HARD GATE: if the project is Jira-integrated or Azure-integrated and the Requirement module is configured to sync with that external system, " +
+      "this tool refuses to create the requirement in QMetry",
     useCases: [
       "Create a basic requirement with just a name",
       "Add detailed metadata like priority, component, and description to a requirement",
@@ -70,9 +70,9 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       "If the user provides a name instead of an ID for owner/state/priority/component, fetch project info, find the matching entry by name in the relevant customListObjs list, and use its ID. If not found, skip that field and tell the user it was omitted because the value wasn't available in the current project.",
       "Release/cycle mapping is optional. If the user wants to associate a release and cycle, set associateRelCyc: true and provide releaseCycleMapping.",
       "HARD GATE (not configurable): before creating, this tool checks project info for isExtTrackerConfigured, extTrackerType, and isRQConfigured. " +
-        "If the project has an external tracker configured, that tracker is Jira (extTrackerType=1), and the Requirement module is synced with it " +
-        "(isRQConfigured=true), the create is refused with an error — do NOT retry or work around this. Tell the user requirements for this project " +
-        "must be created directly in Jira, then synced into QMetry.",
+        "If the project has an external tracker configured (isExtTrackerConfigured=true) and isRQConfigured=true, and the tracker is Jira (extTrackerType=1) " +
+        "or Azure (extTrackerType=3), the create is refused with an error — do NOT retry or work around this. " +
+        "Tell the user requirements for this project must be created directly in the external system (Jira or Azure), then synced into QMetry.",
       "",
       "UDF (User Defined Fields) WORKFLOW FOR CREATE:",
       "1. Call 'Fetch UDF Layout' with entityType='RQ', pageName='ADD' to discover field names, types, and list option IDs.",
@@ -99,8 +99,8 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       "Update a QMetry requirement's priority, or custom field (UDF) values. Can also create new versions." +
       "Requires rqId and rqVersionId, which can be auto-resolved from the requirement entityKey using the requirement list and version detail tools." +
       "Only fields provided will be updated." +
-      "HARD GATE: if the project is Jira-integrated and the Requirement module is configured to sync with Jira " +
-      "issue types, this tool refuses to update the requirement in QMetry — it must be updated in Jira instead.",
+      "HARD GATE: if the project is Jira-integrated or Azure-integrated and the Requirement module is configured to sync with that external system, " +
+      "this tool refuses to update the requirement in QMetry — it must be updated in the external system instead.",
     useCases: [
       "Update the name, description, priority, owner, state, or component of a requirement",
       "Add or remove attachments on a requirement",
@@ -141,9 +141,9 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       "attachments (if used) requires both ADD and REMOVE arrays — pass empty arrays when there is nothing to add or remove.",
       "Only fields explicitly listed in this tool's parameters are supported — releaseCycleMapping and associateRelCyc are create-only and not supported here.",
       "HARD GATE: before updating, this tool checks project info for isExtTrackerConfigured, extTrackerType, and isRQConfigured. " +
-        "If the project has an external tracker configured, that tracker is Jira (extTrackerType=1), and the Requirement module is synced with it " +
-        "(isRQConfigured=true), the update is refused with an error — do NOT retry or work around this. Tell the user requirements for this project " +
-        "must be updated directly in Jira, then synced into QMetry.",
+        "If the project has an external tracker configured (isExtTrackerConfigured=true) and isRQConfigured=true, and the tracker is Jira (extTrackerType=1) " +
+        "or Azure (extTrackerType=3), the update is refused with an error — do NOT retry or work around this. " +
+        "Tell the user requirements for this project must be updated directly in the external system (Jira or Azure), then synced into QMetry.",
       "",
       "UDF (User Defined Fields) WORKFLOW FOR UPDATE:",
       "1. Call 'Fetch UDF Layout' with entityType='RQ', pageName='DETAIL' to get field names, fieldIDs (projectUserFieldID), and list option IDs.",
