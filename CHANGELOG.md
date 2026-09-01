@@ -7,9 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-- [QMetry]: Added Test Case, Test Suite, Issue module, Create/Update UDF capability Added. [#666](https://github.com/SmartBear/smartbear-mcp/pull/666)
-- [QMetry] Security: Removed `Qmetry-Token` and `apikey` header fallbacks from `getToken()` to prevent OAuth bypass on HTTP transport.
-- [QMetry] Security: Added input validation (`.max(255)`, `.regex()`, `..` guard) on `fileName` in `ExportHtmlReportArgsSchema`
+## [0.39.0] - 2026-08-31
 
 ### Changed
 
