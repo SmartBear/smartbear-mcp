@@ -190,7 +190,6 @@ export interface FetchUdfLayoutPayload {
 
 export const FetchUdfLayoutArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
   entityType: z
     .enum(["TC", "TS", "IS"])
     .describe(

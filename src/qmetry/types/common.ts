@@ -833,7 +833,6 @@ export const TestCaseStepsArgsSchema = z.object({
 
 export const TestCaseStepsWithUdfArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
   tcID: CommonFields.tcID,
   viewId: CommonFields.tcViewId,
   version: CommonFields.versionOptional,
@@ -1085,14 +1084,12 @@ export const TestSuiteListArgsSchema = z.object({
 
 export const FetchTestSuiteDetailsArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
   id: z.number().int().positive().describe("Test Suite ID (numeric ID)"),
   scope: CommonFields.scope,
 });
 
 export const FetchIssueDetailsArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
   defectId: z
     .number()
     .int()

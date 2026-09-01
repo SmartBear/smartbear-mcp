@@ -73,7 +73,18 @@ export const ExportHtmlReportArgsSchema = z.object({
   htmlContent: z.string().describe("HTML content to be exported as a report."),
   fileName: z
     .string()
-    .describe("Name for the exported report file (without extension)."),
+    .max(255)
+    .regex(
+      /^[a-zA-Z0-9._-]+$/,
+      "fileName may only contain letters, digits, '.', '_' and '-' - path separators are not allowed.",
+    )
+    .refine((value) => !value.includes(".."), {
+      message: "fileName must not contain '..' sequences.",
+    })
+    .describe(
+      "Name for the exported report file (without extension). " +
+        "Letters, digits, '.', '_' and '-' only - no path separators or '..' sequences.",
+    ),
 });
 
 export interface ExportHtmlReportPayload {

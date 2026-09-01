@@ -74,7 +74,7 @@ export class QmetryClient implements Client {
 
   getToken() {
     // 1. OAuth Bearer token (from authorization server)
-    let contextToken = getRequestHeader("Authorization");
+    const contextToken = getRequestHeader("Authorization");
     if (contextToken) {
       const token = Array.isArray(contextToken)
         ? contextToken[0]
@@ -83,18 +83,6 @@ export class QmetryClient implements Client {
         return token.substring(7);
       }
       return token;
-    }
-
-    // 2. Direct Qmetry API key headers
-    contextToken =
-      getRequestHeader("Qmetry-Token") || getRequestHeader("apikey");
-
-    if (Array.isArray(contextToken)) {
-      contextToken = contextToken[0];
-    }
-
-    if (contextToken) {
-      return contextToken;
     }
 
     if (!this.token) throw new Error("Client not configured");

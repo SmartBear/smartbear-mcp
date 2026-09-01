@@ -6,10 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
-- [QMetry]: Added Test Case, Test Suite, Issue module, Create/Update UDF capability Added. [#666](https://github.com/SmartBear/smartbear-mcp/pull/666)
 
+- [QMetry]: Added Test Case, Test Suite, Issue module, Create/Update UDF capability Added. [#666](https://github.com/SmartBear/smartbear-mcp/pull/666)
+- [QMetry] Security: Removed `Qmetry-Token` and `apikey` header fallbacks from `getToken()` to prevent OAuth bypass on HTTP transport.
+- [QMetry] Security: Added input validation (`.max(255)`, `.regex()`, `..` guard) on `fileName` in `ExportHtmlReportArgsSchema`
 
 ### Changed
+
 - [PactFlow] Refactored the internal PactFlow client from a monolithic 2,400-line class into six domain API classes (`PacticipantApi`, `EnvironmentApi`, `ContractApi`, `WebhookApi`, `AdminApi`, `AIApi`) backed by a shared `HttpClient`. This is an internal implementation change; all tool behaviour and the external `PactflowClient` interface are unchanged. [#686](https://github.com/SmartBear/smartbear-mcp/pull/686)
 - [Swagger] Functional Testing improvements: clarified the `create_suite` `name` parameter to require a human-readable suite name; renamed the `suiteId` parameter to `slug` on `run_suite`, `get_suite_status`, `list_suite_executions`, and `cancel_suite_execution` and their responses; and dropped the redundant numeric `id` from `Suite` objects returned by `create_suite` and `list_suites`.
 
@@ -21,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Bugsnag] Updated cache usage in `getOrganization()`, `getProjects()`, `getCurrentProject()`, `getProjectEventFields()`, and `getProjectTraceFields()`.
 
 ### Changed
+
 - [Swagger] Updated `update_portal_product` to returns a `url` field in the response, providing the portal URL for the updated product. [#684](https://github.com/SmartBear/smartbear-mcp/pull/684)
 
 - [Common] Removed support for the MCP `sampling` capability, which was deprecated in the 2026-07-28 MCP specification revision ([SEP-2577](https://github.com/modelcontextprotocol/modelcontextprotocol/pull/2577)). The server no longer negotiates the `sampling` client capability or sends `sampling/createMessage` requests. [#685](https://github.com/SmartBear/smartbear-mcp/pull/685)
@@ -28,8 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Swagger] Updated the `list_tests` tool to return test definition `url` for each found test. Updated the `list_suites` tool to return the Suite definition `url` for each found Suite.
 
 ## [0.37.0] - 2026-08-20
-- [QMetry]: Added Test Case, Test Suite, Issue module, Create/Update UDF capability Added. [#666](https://github.com/SmartBear/smartbear-mcp/pull/666)
 
+- [QMetry]: Added Test Case, Test Suite, Issue module, Create/Update UDF capability Added. [#666](https://github.com/SmartBear/smartbear-mcp/pull/666)
 
 ### Added
 
@@ -46,7 +50,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - [PactFlow] `publish_provider_contract` tool: added support for AsyncAPI provider contracts (`specification: "asyncapi"`), alongside the existing OpenAPI (`"oas"`) support.
-
 
 ### Changed
 
