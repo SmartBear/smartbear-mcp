@@ -30,9 +30,9 @@ All tools listed below are only available through the Local MCP Server. They are
 
 #### `create_test`
 
-- Purpose: Creates a new API test in your Swagger Functional Testing workspace. Use this tool when you need to create an end-to-end API test, either from an existing API spec or by directly providing the request steps (URL, HTTP method, headers, body, redirect handling). Each step can optionally define assertions for HTTP status code ranges the response must fall within and body assertions evaluated against the response body, e.g. matching, comparing, or extracting a field by path.
+- Purpose: Creates a new API test in your Swagger Functional Testing workspace. Use this tool when you need to create an end-to-end API test, either from an existing API spec or by directly providing the request steps (URL, HTTP method, headers, body, redirect handling). Each step can optionally define assertions for HTTP status code ranges the response must fall within and body assertions evaluated against the response body, e.g. matching, comparing, or extracting a field by path. Every step must set a step-level `baseUrl` to that endpoint's server/common URL, and should also set `apiName` to the name of the API it belongs to; the `baseUrl` is extracted into a shared `parameters` entry. A step's URL may also include OAS-style `{pathParam}` placeholders, which are always converted into definition-level parameters — if the same `{pathParam}` appears in more than one step, it must be defined in `parameters` so its value is shared across steps. The top-level `parameters` array only accepts these path/base-URL parameters, not request body parameters.
 - Returns: The created test ID and the URL to test definition; the ID can be used with `run_test` to run it.
-- Use case: Create an API test from an existing API spec or from directly supplied endpoint data, optionally with assertions to validate the response status and body.
+- Use case: Create an API test from an existing API spec or from directly supplied endpoint data, optionally with assertions to validate the response status and body, and with base URLs/path parameters templated as reusable variables shared across steps.
 
 ---
 

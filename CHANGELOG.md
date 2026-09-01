@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [QMetry] Security: Removed `Qmetry-Token` and `apikey` header fallbacks from `getToken()` to prevent OAuth bypass on HTTP transport. [#697](https://github.com/SmartBear/smartbear-mcp/pull/697)
 - [QMetry] Security: Added input validation (`.max(255)`, `.regex()`, `..` guard) on `fileName` in `ExportHtmlReportArgsSchema` [#697](https://github.com/SmartBear/smartbear-mcp/pull/697)
 
+### Added
+
+- [Swagger] Extended the `create_test` Functional Testing tool with a step-level `baseUrl`/`apiName` and a definition-level `parameters` array. Every step must now set `baseUrl` to its server/common URL; it is extracted into a generated `baseURL<ApiName>` parameter (falling back to `baseURL<Host>` when `apiName` is not set) and templated into the step's `url`. OAS-style `{pathParam}` placeholders in every step's `url` are always converted to `${var(pathParam)}` references with matching generated parameters, and a `{pathParam}` shared by more than one step must be defined in `parameters` so its value stays in sync across steps. `parameters` only accepts these path/base-URL parameters, not request body parameters.
+
 ## [0.39.0] - 2026-08-31
 
 ### Changed
