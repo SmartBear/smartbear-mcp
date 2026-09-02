@@ -4,7 +4,13 @@ import type { ToolParams } from "../../../common/types";
 import type { BugsnagClient } from "../../client";
 
 const inputSchema = z.object({
-  projectId: z.string().min(1).describe("The ID of the Bugsnag project"),
+  projectId: z
+    .string()
+    .min(1)
+    .optional()
+    .describe(
+      "The ID of the Bugsnag project. If omitted, uses the current project if one is set.",
+    ),
   collaboratorNameOrId: z
     .string()
     .optional()
@@ -36,31 +42,19 @@ export class ListProjectCollaborators extends Tool<BugsnagClient> {
   handle: ToolHandler = async (args, _extra) => {
     const params = inputSchema.parse(args);
     try {
+      const project = await this.client.getInputProject(params.projectId);
       const collaborators = (
         await this.client.projectApi.listProjectCollaborators(
-          params.projectId,
+          project.id,
           params.collaboratorNameOrId,
         )
       ).body;
 
-      if (!collaborators || collaborators.length === 0) {
-        return {
-          content: [
-            {
-              type: "text",
-              text: `No collaborators found for project ${params.projectId}${
-                params.collaboratorNameOrId
-                  ? ` matching "${params.collaboratorNameOrId}"`
-                  : ""
-              }`,
-            },
-          ],
-        };
-      }
+      const data = collaborators ?? [];
 
       const content = {
-        data: collaborators,
-        count: collaborators.length,
+        data,
+        count: data.length,
         filtered: !!params.collaboratorNameOrId,
       };
 

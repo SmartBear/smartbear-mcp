@@ -3428,9 +3428,12 @@ describe("BugsnagClient", () => {
           "proj-1",
           undefined,
         );
-        expect(result.content[0].text).toBe(
-          "No collaborators found for project proj-1",
-        );
+        const expectedResult = {
+          data: [],
+          count: 0,
+          filtered: false,
+        };
+        expect(result.content[0].text).toBe(JSON.stringify(expectedResult));
       });
 
       it("should return filtered empty message when no matches found", async () => {
@@ -3452,9 +3455,12 @@ describe("BugsnagClient", () => {
           "proj-1",
           "NonExistent",
         );
-        expect(result.content[0].text).toBe(
-          'No collaborators found for project proj-1 matching "NonExistent"',
-        );
+        const expectedResult = {
+          data: [],
+          count: 0,
+          filtered: true,
+        };
+        expect(result.content[0].text).toBe(JSON.stringify(expectedResult));
       });
 
       it("should handle API errors gracefully", async () => {
@@ -3484,9 +3490,12 @@ describe("BugsnagClient", () => {
 
         const result = await toolHandler({ projectId: "proj-1" });
 
-        expect(result.content[0].text).toBe(
-          "No collaborators found for project proj-1",
-        );
+        const expectedResult = {
+          data: [],
+          count: 0,
+          filtered: false,
+        };
+        expect(result.content[0].text).toBe(JSON.stringify(expectedResult));
       });
 
       it("should validate required projectId parameter", async () => {

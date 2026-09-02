@@ -653,7 +653,7 @@ Expected Output: Array of up to 50 spans focused around the target span
 **Toolset:** Projects
 
 **Parameters:**
-- projectId (string) *required*: The ID of the Bugsnag project
+- projectId (string): The ID of the Bugsnag project. If omitted, uses the current project if one is set.
 - collaboratorNameOrId (string): Optional: filter by collaborator name or ID (partial match on name)
 
 **Use Cases:** 1. Find all team members with access to a project 2. Locate a specific collaborator to assign errors or tasks 3. Check project team membership 4. Get collaborator details for project management and reporting 5. Retrieve collaborator information for communication and coordination

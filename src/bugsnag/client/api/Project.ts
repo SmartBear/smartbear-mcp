@@ -522,7 +522,7 @@ export class ProjectAPI extends BaseAPI {
     //filter by name or ID if provided
     if (collaboratorNameOrId) {
       const filterValue = collaboratorNameOrId.toLowerCase();
-      collaborators.body = collaborators.body.filter(
+      collaborators.body = (collaborators.body ?? []).filter(
         (c) =>
           c.id === collaboratorNameOrId ||
           c.name?.toLowerCase().includes(filterValue),
