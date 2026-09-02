@@ -1634,6 +1634,7 @@ describe("SwaggerAPI", () => {
         `${DUMMY_REGISTRY_BASE_PATH}/apis/orgname/petstore?isPrivate=true`,
         expect.objectContaining({ method: "POST" }),
       );
+      expect(fetchMock).toHaveBeenCalledTimes(2);
       expect(result.operation).toBe("create");
     });
 
@@ -1661,6 +1662,7 @@ describe("SwaggerAPI", () => {
         `${DUMMY_REGISTRY_BASE_PATH}/apis/orgname/petstore`,
         expect.objectContaining({ method: "POST" }),
       );
+      expect(fetchMock).toHaveBeenCalledTimes(2);
       expect(result.operation).toBe("update");
     });
   });
