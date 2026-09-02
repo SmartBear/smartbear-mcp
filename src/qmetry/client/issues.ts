@@ -200,8 +200,11 @@ export async function fetchIssues(
     body,
   });
 
-  const { filterTemplate: _filterTemplate, columns: _columns, ...rest } =
-    result;
+  const {
+    filterTemplate: _filterTemplate,
+    columns: _columns,
+    ...rest
+  } = result;
   return rest;
 }
 

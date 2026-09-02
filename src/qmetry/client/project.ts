@@ -101,7 +101,7 @@ const PROJECT_FIELDS_TO_OMIT = new Set([
   "nomenclature",
   "nomenclatureInfo",
   "refreshContent",
-  "packages"
+  "packages",
 ]);
 
 /**
@@ -151,7 +151,10 @@ export async function getProjects(
     ...payload,
   };
 
-  const result = await qmetryRequest<{ data: Record<string, unknown>[]; total: number }>({
+  const result = await qmetryRequest<{
+    data: Record<string, unknown>[];
+    total: number;
+  }>({
     method: "POST",
     path: QMETRY_PATHS.PROJECT.GET_PROJECTS,
     token,
@@ -165,7 +168,9 @@ export async function getProjects(
       ...result,
       data: result.data.map((item) =>
         Object.fromEntries(
-          Object.entries(item).filter(([key]) => !PROJECT_LIST_FIELDS_TO_OMIT.has(key)),
+          Object.entries(item).filter(
+            ([key]) => !PROJECT_LIST_FIELDS_TO_OMIT.has(key),
+          ),
         ),
       ),
     };

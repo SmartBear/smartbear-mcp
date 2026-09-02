@@ -174,7 +174,7 @@ export const CommonFields = {
     .describe(
       "ViewId for test cases - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
         "Leave empty unless you have a specific viewId. " +
-        "System will fetch project info using the projectKey and extract latestViews.TC.viewId automatically."
+        "System will fetch project info using the projectKey and extract latestViews.TC.viewId automatically.",
     ),
   rqViewId: z
     .number()
@@ -182,7 +182,7 @@ export const CommonFields = {
     .describe(
       "ViewId for requirements - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
         "Leave empty unless you have a specific viewId. " +
-        "System will fetch project info using the projectKey and extract latestViews.RQ.viewId automatically."
+        "System will fetch project info using the projectKey and extract latestViews.RQ.viewId automatically.",
     ),
   rqFolderPath: z
     .string()
@@ -245,7 +245,7 @@ export const CommonFields = {
     .describe(
       "ViewId for test execution - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
         "Leave empty unless you have a specific viewId. " +
-        "System will fetch project info using the projectKey and extract latestViews.TE.viewId automatically."
+        "System will fetch project info using the projectKey and extract latestViews.TE.viewId automatically.",
     ),
   tsfeViewId: z
     .number()
@@ -253,7 +253,7 @@ export const CommonFields = {
     .describe(
       "ViewId for test suite folders - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
         "Leave empty unless you have a specific viewId. " +
-        "System will fetch project info using the projectKey and extract latestViews.TSFS.viewId automatically."
+        "System will fetch project info using the projectKey and extract latestViews.TSFS.viewId automatically.",
     ),
   tsViewId: z
     .number()
@@ -261,7 +261,7 @@ export const CommonFields = {
     .describe(
       "ViewId for test suites - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
         "Leave empty unless you have a specific viewId. " +
-        "System will fetch project info using the projectKey and extract latestViews.TS.viewId automatically."
+        "System will fetch project info using the projectKey and extract latestViews.TS.viewId automatically.",
     ),
   tsrunID: z.coerce
     .string()
@@ -908,10 +908,7 @@ const RequirementAttachmentsSchema = z
 
 export const CreateRequirementArgsSchema = z.object({
   name: z.string().describe("Requirement name (required)."),
-  priority: z
-    .number()
-    .optional()
-    .describe("Priority ID of the requirement."),
+  priority: z.number().optional().describe("Priority ID of the requirement."),
   component: z
     .array(z.number())
     .optional()
@@ -934,7 +931,10 @@ export const CreateRequirementArgsSchema = z.object({
     )
     .optional()
     .describe("Release/cycle mapping for the requirement."),
-  description: z.string().optional().describe("Description of the requirement."),
+  description: z
+    .string()
+    .optional()
+    .describe("Description of the requirement."),
   associateRelCyc: z
     .boolean()
     .optional()
@@ -988,10 +988,7 @@ export const UpdateRequirementArgsSchema = z.object({
     .number()
     .optional()
     .describe("State ID of the requirement."),
-  priority: z
-    .number()
-    .optional()
-    .describe("Priority ID of the requirement."),
+  priority: z.number().optional().describe("Priority ID of the requirement."),
   attachments: RequirementAttachmentsSchema,
   udfFields: UdfFieldsSchema,
   UDF: z
@@ -1441,7 +1438,7 @@ export const IssuesListArgsSchema = z.object({
     .describe(
       "ViewId for issues - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
         "Leave empty unless you have a specific viewId. " +
-        "System will fetch project info using the projectKey and extract latestViews.IS.viewId automatically." 
+        "System will fetch project info using the projectKey and extract latestViews.IS.viewId automatically.",
     ),
   start: CommonFields.start,
   page: CommonFields.page,

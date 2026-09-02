@@ -86,7 +86,8 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
       "Filter parameter should be a JSON string with filter criteria",
       "Common filter fields: 'name' (string), 'projectKey' (string)",
     ],
-    outputDescription: "JSON object containing list of projects details, including Version, Build Number(if greater than or equal to 1), Project ID, name, Project Key and Date Format",
+    outputDescription:
+      "JSON object containing list of projects details, including Version, Build Number(if greater than or equal to 1), Project ID, name, Project Key and Date Format",
     readOnly: true,
     idempotent: true,
   },

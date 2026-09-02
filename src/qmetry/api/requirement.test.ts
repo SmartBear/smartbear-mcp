@@ -179,7 +179,9 @@ describe("requirement API clients", () => {
         component: [689030],
         requirementOwner: 8,
         requirementState: 688912,
-        releaseCycleMapping: [{ release: 1628, cycle: [1839, 1840], version: 1 }],
+        releaseCycleMapping: [
+          { release: 1628, cycle: [1839, 1840], version: 1 },
+        ],
         rqFolderId: "633",
       };
 
@@ -417,7 +419,9 @@ describe("requirement API clients", () => {
       const [, options] = updateCall;
       const sentBody = JSON.parse(options.body);
       expect(sentBody.name).toBe("Updated login requirement");
-      expect(sentBody.description).toBe("Users must be able to log in with SSO.");
+      expect(sentBody.description).toBe(
+        "Users must be able to log in with SSO.",
+      );
       expect(sentBody.component).toEqual([689030]);
       expect(sentBody.requirementOwner).toBe(8);
       expect(sentBody.requirementState).toBe(688912);

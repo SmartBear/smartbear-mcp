@@ -159,8 +159,11 @@ export async function fetchTestSuites(
     body,
   });
 
-  const { filterTemplate: _filterTemplate, columns: _columns, ...rest } =
-    result;
+  const {
+    filterTemplate: _filterTemplate,
+    columns: _columns,
+    ...rest
+  } = result;
   return rest;
 }
 
