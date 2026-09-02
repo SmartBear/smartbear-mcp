@@ -74,7 +74,7 @@ describe("QmetryClient", () => {
       expect(result).toBe("TEST-TOKEN-123");
     });
 
-    it("should fall back to Qmetry-Token header when Authorization not present", async () => {
+    it("should ignore Qmetry-Token header and fall back to configured token", async () => {
       const testClient = await createConfiguredClient();
       const { requestContextStorage } = await import(
         "../common/request-context.js"
@@ -83,10 +83,10 @@ describe("QmetryClient", () => {
         { headers: { "qmetry-token": "direct-api-key" } },
         () => testClient.getToken(),
       );
-      expect(result).toBe("direct-api-key");
+      expect(result).toBe("fake-token");
     });
 
-    it("should fall back to apikey header when Qmetry-Token not present", async () => {
+    it("should ignore apikey header and fall back to configured token", async () => {
       const testClient = await createConfiguredClient();
       const { requestContextStorage } = await import(
         "../common/request-context.js"
@@ -95,7 +95,7 @@ describe("QmetryClient", () => {
         { headers: { apikey: "fallback-api-key" } },
         () => testClient.getToken(),
       );
-      expect(result).toBe("fallback-api-key");
+      expect(result).toBe("fake-token");
     });
 
     it("should use configured token when no headers present", async () => {
