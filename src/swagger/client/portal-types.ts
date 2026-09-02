@@ -717,6 +717,7 @@ export const ProductOutputSchema = z.looseObject({
   description: z.string().optional(),
   public: z.boolean().optional(),
   hidden: z.boolean().optional(),
+  url: z.string().optional(),
 });
 
 export const ProductsListOutputSchema = z.object({
@@ -742,7 +743,7 @@ export const CreateTocOutputSchema = z.object({
   documentId: z.string().optional(),
 });
 
-export const DocumentOutputSchema = z.object({
+export const DocumentOutputSchema = z.looseObject({
   id: z.string().optional(),
   type: z.enum(["html", "markdown"]).optional(),
   source: z.enum(["internal", "external"]).optional(),

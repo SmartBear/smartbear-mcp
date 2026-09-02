@@ -5,6 +5,7 @@ import {
   TestCaseExecutionsArgsSchema,
   TestCaseListArgsSchema,
   TestCaseStepsArgsSchema,
+  TestCaseStepsWithUdfArgsSchema,
   TestCaseVersionDetailsArgsSchema,
   UpdateTestCaseArgsSchema,
 } from "../../types/common";
@@ -19,10 +20,20 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
     handler: QMetryToolsHandlers.CREATE_TEST_CASE,
     inputSchema: CreateTestCaseArgsSchema,
     purpose:
-      "Allows users to create a new test case in QMetry, including steps, custom fields, and release/cycle mapping. " +
+      "REQUIRED WORKFLOW: Before calling this tool, ALWAYS call 'Fetch UDF Layout' (entityType='TC', pageName='ADD') first. " +
+      "That call reveals mandatory UDF fields, system field requirements, and default values to auto-apply. " +
+      "Skipping it causes CO.MANDATORY_FIELDS_MISSING errors. " +
+      "Allows users to create a new test case in QMetry, optionally with steps, custom fields, and release/cycle mapping. " +
       "Supports all major test case fields and step-level UDFs. " +
       "For fields like priority, owner, component, etc., fetch their valid values using the project info tool. " +
-      "If tcFolderID is not provided, it will be auto-resolved to the root test case folder using project info.",
+      "If tcFolderID is not provided, it will be auto-resolved to the root test case folder using project info.\n\n" +
+      "STEPS DECISION RULE (CRITICAL — apply before every create call):\n" +
+      "DEFAULT: Do NOT include 'steps' in the payload. Omit the field entirely.\n" +
+      "A test case without steps is fully valid. Most users only want steps when they say so.\n" +
+      "Include 'steps' ONLY in these two scenarios:\n" +
+      "  1. User explicitly mentions steps in their prompt (e.g., 'create with steps', 'step 1 - ...', 'add these steps').\n" +
+      "  2. Fetch UDF Layout returns stepSystemFields[] OR stepFields[] with isMandatory=true on any field — backend requires at least 1 step. Fill mandatory step UDF fields in step.UDF.\n" +
+      "In all other cases: omit 'steps' field. NEVER send steps: [] (empty array).",
 
     useCases: [
       "Create a basic test case with just a name and folder",
@@ -36,23 +47,51 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
     ],
     examples: [
       {
-        description: "Create a test case in the root folder (auto-resolved)",
+        description:
+          "MOST COMMON: Create test case with name only — NO steps (user did not mention steps). Steps field is OMITTED from payload.",
         parameters: {
           name: "Login Test Case",
         },
         expectedOutput:
-          "Test case created in the root test case folder with ID and summary details",
+          "Test case created without steps. Steps field omitted entirely from payload — do NOT add steps: [].",
       },
       {
-        description: "Create a simple test case in folder 102653",
+        description:
+          "Create test case with metadata only — no steps (user did not mention steps)",
         parameters: {
           tcFolderID: "102653",
           name: "Login Test Case",
+          priority: 2025268,
+          testCaseState: 2025271,
+          estimatedTime: 3600,
+          description: "Verifies login flow",
         },
-        expectedOutput: "Test case created with ID and summary details",
+        expectedOutput:
+          "Test case created with metadata, no steps. Steps omitted from payload.",
       },
       {
-        description: "Create a test case with steps and metadata",
+        description:
+          "SCENARIO 1: User explicitly asked for steps — 'create test case with step 1 - Go to login page, step 2 - enter credentials'",
+        parameters: {
+          tcFolderID: "102653",
+          name: "Login Flow Test",
+          steps: [
+            {
+              orderId: 1,
+              description: "Go to login page",
+            },
+            {
+              orderId: 2,
+              description: "Enter credentials",
+            },
+          ],
+        },
+        expectedOutput:
+          "Test case created with 2 steps because user explicitly mentioned steps in prompt.",
+      },
+      {
+        description:
+          "SCENARIO 1: User provided steps with full metadata (steps explicitly mentioned in prompt)",
         parameters: {
           tcFolderID: "102653",
           name: "Test Case 1",
@@ -85,13 +124,173 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
             },
           ],
         },
-        expectedOutput: "Test case created with steps and metadata",
+        expectedOutput:
+          "Test case created with steps because user explicitly requested steps. All metadata populated.",
+      },
+      {
+        description:
+          "SCENARIO 2: stepSystemFields has isMandatory=true — backend requires at least 1 step even though user did not ask for steps",
+        parameters: {
+          name: "Mandatory Step Test Case",
+          steps: [
+            {
+              orderId: 1,
+              description: "Step 1",
+            },
+          ],
+        },
+        expectedOutput:
+          "Test case created with 1 mandatory step because stepSystemFields from Fetch UDF Layout had isMandatory=true. User was not prompted for step details — a minimal step was included to satisfy backend requirement.",
       },
     ],
     hints: [
+      "╔══════════════════════════════════════════════════════════════════════════════╗",
+      "║  STEPS DECISION RULE — APPLY BEFORE EVERY CREATE CALL (NO EXCEPTIONS)       ║",
+      "╚══════════════════════════════════════════════════════════════════════════════╝",
+      "",
+      "DEFAULT: OMIT 'steps' from payload. Do NOT include steps: [] (empty array).",
+      "Test cases without steps are fully valid. The backend does NOT require steps unless noted below.",
+      "",
+      "INCLUDE 'steps' ONLY in exactly 2 scenarios:",
+      "",
+      "  SCENARIO 1 — User explicitly mentions steps in their prompt.",
+      "    Trigger phrases: 'with steps', 'step 1 -', 'add steps', 'include steps', 'following steps', 'these steps'.",
+      "    Action: Parse the user's step text into { orderId, description, inputData?, expectedOutcome? } objects.",
+      "    Example: 'create test case, step 1 - open browser, step 2 - click login'",
+      "      → steps: [{ orderId: 1, description: 'open browser' }, { orderId: 2, description: 'click login' }]",
+      "",
+      "  SCENARIO 2 — Fetch UDF Layout returns stepSystemFields[] OR stepFields[] with isMandatory=true on any entry.",
+      "    Trigger: stepSystemFields (built-in step fields) OR stepFields (step-level UDFs) has at least 1 field where isMandatory=true.",
+      "    Action: MUST include at least 1 step. If user gave no step text, use description='Step 1' as placeholder.",
+      "    Also fill mandatory step UDF fields (from stepFields) in step.UDF — use stepDefaultValues if defaults exist, else a placeholder value.",
+      "    IMPORTANT: Inform the user that a step was required by the backend configuration.",
+      "",
+      "NEVER include steps in any other case — including when the user only says 'create test case named X'.",
+      "NEVER send steps: [] — either omit the key entirely OR send array with at least 1 valid step.",
+      "",
+      "QUICK DECISION TABLE:",
+      "  | User mentioned steps? | stepSystemFields OR stepFields mandatory? | Action                                                        |",
+      "  |-----------------------|------------------------------------------|---------------------------------------------------------------|",
+      "  | NO                    | NO                                       | OMIT steps entirely (most common case)                        |",
+      "  | YES                   | NO                                       | Include steps from user's prompt                              |",
+      "  | NO                    | YES                                      | Include 1 placeholder step + fill mandatory step UDFs, inform user |",
+      "  | YES                   | YES                                      | Include steps from user's prompt + fill mandatory step UDFs   |",
+      "",
+      "╚══════════════════════════════════════════════════════════════════════════════╝",
+      "",
+      "╔══════════════════════════════════════════════════════════════════╗",
+      "║  STEP 0 — NON-NEGOTIABLE: Call 'Fetch UDF Layout' BEFORE create  ║",
+      "╚══════════════════════════════════════════════════════════════════╝",
+      "NEVER call 'Create Test Case' without first calling 'Fetch UDF Layout' with entityType='TC', pageName='ADD'.",
+      "Skipping this step WILL cause 400 errors (CO.MANDATORY_FIELDS_MISSING) because mandatory fields and defaults are unknown.",
+      "This rule has NO exceptions — not even when the user only provided a name and nothing else.",
+      "",
+      "=== MANDATORY PRE-CREATE CHECK ===",
+      "",
+      "SYSTEM FIELDS mandatory check — use 'systemFields' array from Fetch UDF Layout:",
+      "  Each entry: { name, label, fieldTypeName, isMandatory }",
+      "  isMandatory=true (allowBlank=false in QMetry) means the field MUST have a value.",
+      "  IMPORTANT: QMetry's API sometimes returns 'systemFields: []' (empty) even when system fields ARE mandatory.",
+      "  If 'systemFields' is empty, treat the following as always mandatory: name (Summary), testCaseState (Status).",
+      "  For testCaseState default: check 'customListObjs.testCaseState' from Fetch Project Info — use first non-archived entry as fallback.",
+      "",
+      "UDF FIELDS mandatory check — use 'fields' array from Fetch UDF Layout:",
+      "  Each entry: { name, label, fieldTypeName, isMandatory, listName? }",
+      "  IMPORTANT: QMetry's API sometimes returns isMandatory=false for fields that ARE enforced as mandatory.",
+      "  The 'isMandatory' flag is a hint, not a guarantee. Trust the actual API error over this flag.",
+      "  When isMandatory=true: field MUST have a value.",
+      "",
+      "DEFAULT VALUES — use 'defaultValues' object from Fetch UDF Layout:",
+      "  Shape: { fieldName: defaultValueId }  e.g. { 'lookup19': 5232630, 'estimatedTime': 18305.0, 'priority': 5232497 }",
+      "  These are pre-configured QMetry defaults. ALWAYS auto-apply them — even when user did not mention the field.",
+      "  IMPORTANT: QMetry's API sometimes returns 'defaultValues: {}' (empty) even when defaults exist in QMetry settings.",
+      "  If 'defaultValues' is empty, you cannot auto-apply — ask user for mandatory fields without defaults.",
+      "  RULE: if isMandatory=true AND defaultValues[field.name] exists → use default, do NOT ask user.",
+      "  RULE: if isMandatory=true AND NO defaultValues[field.name] → MUST ask user before creating.",
+      "  RULE: if isMandatory=false AND defaultValues[field.name] exists → auto-apply default if user didn't specify.",
+      "  RULE: if isMandatory=false AND no default → skip if user didn't provide.",
+      "",
+      "╔══════════════════════════════════════════════════════════════════════════╗",
+      "║  PRE-FLIGHT DEFAULT SWEEP — MANDATORY STEP BEFORE EVERY CREATE CALL     ║",
+      "╚══════════════════════════════════════════════════════════════════════════╝",
+      "After resolving mandatory fields, do a full sweep of ALL defaultValues entries:",
+      "  For EACH key in defaultValues:",
+      "    IF the user did not explicitly provide that field → add it to the payload using the default value.",
+      "    This applies regardless of isMandatory — non-mandatory defaults MUST also be auto-applied.",
+      "  Example: defaultValues = { lookup19: 5232630, estimatedTime: 18305, priority: 5232497 }",
+      "    → user only said 'create a test case named X'",
+      "    → payload MUST include: lookup19=5232630, estimatedTime=18305, priority=5232497",
+      "    → WRONG to omit priority/estimatedTime just because they are not mandatory — they have defaults.",
+      "  Skipping this sweep = missing fields in the created record = user-visible data loss.",
+      "╚══════════════════════════════════════════════════════════════════════════╝",
+      "",
+      "TEST CASE STEPS mandatory check — use BOTH 'stepSystemFields' AND 'stepFields' arrays from Fetch UDF Layout:",
+      "  stepSystemFields: built-in step fields { name, label, fieldTypeName, isMandatory }",
+      "  stepFields: step-level UDF fields { name, label, fieldTypeName, isMandatory, listName? }",
+      "  If ANY field in EITHER array has isMandatory=true → SCENARIO 2 triggered → MUST include at least 1 step.",
+      "  Mandatory stepFields UDFs must be filled in step.UDF — use stepDefaultValues for defaults, else placeholder.",
+      "  If NO field in EITHER array has isMandatory=true AND user did not mention steps → OMIT steps from payload.",
+      "  Step defaults: use 'stepDefaultValues' object — same auto-fill logic as defaultValues.",
+      "",
+      "DECISION MATRIX:",
+      "  | isMandatory | Has default | Action                              |",
+      "  |-------------|-------------|-------------------------------------|",
+      "  | true        | YES         | Auto-fill with default, no ask      |",
+      "  | true        | NO          | Ask user before creating            |",
+      "  | false       | YES         | Auto-fill with default — REQUIRED   |",
+      "  | false       | NO          | Skip if user didn't provide         |",
+      "",
+      "Only after ALL mandatory fields are resolved AND default sweep is complete → proceed with create.",
+      "=== END MANDATORY PRE-CREATE CHECK ===",
+      "",
+      "=== ERROR RECOVERY: CO.MANDATORY_FIELDS_MISSING ===",
+      "If create fails with error code 'CO.MANDATORY_FIELDS_MISSING', DO NOT give up. Auto-recover:",
+      "  1. Parse the 'MISSING_FIELDS' list from the error response (comma-separated field labels).",
+      "  2. Match each label against 'fields[].label' and 'systemFields[].label' from the Fetch UDF Layout response.",
+      "  3. For matched UDF fields: check 'listOptions[field.listName]' for valid option IDs.",
+      "  4. For matched system fields (e.g. 'Status'): check 'customListObjs.testCaseState' from project info.",
+      "  5. If the field has a 'defaultValues' entry: auto-fill it silently.",
+      "  6. If no default exists: ask the user ONLY for the missing fields by label.",
+      "  7. Retry create with the resolved values added to the payload.",
+      "  NEVER ask user to 'try again' manually — resolve and retry automatically.",
+      "=== END ERROR RECOVERY ===",
+      "",
+      "=== DATE FORMAT CHECK (MANDATORY — EVERY CREATE REQUEST) ===",
+      "ALWAYS call 'Fetch QMetry Project Info' before every create request — not only when the user explicitly mentions a date.",
+      "Any UDF field could be a DATETIMEPICKER. Wrong format causes QMetry to silently discard the field value (API returns success but value is NOT stored — no error).",
+      "Project info response contains 'dateTimeFormatID' and 'dateTimeFormatNew' array.",
+      "STEP 1: From project info, read dateTimeFormatID (e.g. 3).",
+      "STEP 2: Find entry in dateTimeFormatNew where id === dateTimeFormatID → read its unique_value (e.g. 'yyyy-MM-dd').",
+      "STEP 3: unique_value is the Java/QMetry format pattern. Mapping:",
+      "  yyyy = 4-digit year | MM = 2-digit month (01-12) | dd = 2-digit day | MMM = 3-letter month (Jan/Feb/...)",
+      "  Example: id=1 → MM-dd-yyyy → '10-25-2000' | id=2 → dd-MM-yyyy → '25-10-2000' | id=3 → yyyy-MM-dd → '2000-10-25' | id=4 → dd-MMM-yyyy → '25-Oct-2000'",
+      "STEP 4: For EVERY DATETIMEPICKER field in the payload (user-provided OR from defaultValues):",
+      "  - Parse the date regardless of what format the user typed",
+      "  - Re-format it using the active unique_value pattern",
+      "  - Send the re-formatted string to the API",
+      "Examples with unique_value='yyyy-MM-dd':",
+      "  User says '25 Dec 2024' → send '2024-12-25'",
+      "  User says '12/25/2024' → send '2024-12-25'",
+      "  Default value is a date string '2024-12-25' → already correct, keep it",
+      "NEVER send a date in a format different from the project's active dateTimeFormatID format.",
+      "Fetch project info ONCE per create/update operation and reuse dateTimeFormatID for all date fields.",
+      "=== END DATE FORMAT CHECK ===",
+      "",
       "If tcFolderID is not provided, it will be auto-resolved to the root test case folder using project info (rootFolders.TC.id).",
       "To get valid values for priority, owner, component, etc., call the project info tool and use the returned customListObjs IDs.",
-      "If the user provides a priority name (e.g. 'Blocker'), fetch project info, find the matching priority in customListObjs.priority[index].name, and use its ID in the payload. If the name is not found, skip the priority field (it is not required) and show a user-friendly message: 'Test case created without priority, as given priority is not available in the current project.'",
+      "STALE / NOT-FOUND ID RECOVERY (applies to ALL system fields — priority, component/label, owner, status, testCaseType, testingType, release, cycle): " +
+        "If the user references a value by name and it is NOT found in your current cached project info data, DO NOT give up or skip the field immediately. " +
+        "Instead: call 'Fetch QMetry Project Info' fresh (no arguments needed) to get the latest snapshot, then re-scan the relevant customListObjs list. " +
+        "This is mandatory when: (a) the user just added a new label/priority/status/user in QMetry UI, or (b) the cached info is from an earlier turn. " +
+        "Only skip + show a friendly message if the value is still missing AFTER the fresh fetch.",
+      "FOLDER ID RESOLUTION (tcFolderID): " +
+        "Project info only exposes the ROOT folder ID (rootFolders.TC.id). Sub-folder IDs are NOT returned by project info. " +
+        "If the user specifies a sub-folder (e.g. 'Folder 1'), use this resolution order: " +
+        "1. Check if the user already provided the numeric folder ID — use it directly. " +
+        "2. Try fetching test cases with folderPath='<folder name>' and scope='folder' — if a TC exists there, its folder context confirms the path, but the ID is still needed from the UI. " +
+        "3. If still unresolved, ask the user: 'Please provide the numeric folder ID for \"<folder name>\". You can find it in the QMetry URL when browsing that folder (look for folderId=XXXXX).' " +
+        "NEVER silently fall back to root folder when the user explicitly named a sub-folder — always ask first.",
+      "If the user provides a priority name (e.g. 'Blocker'), fetch project info, find the matching priority in customListObjs.priority[index].name, and use its ID in the payload. If the name is not found after a fresh fetch, skip the priority field (it is not required) and show a user-friendly message: 'Test case created without priority, as given priority is not available in the current project.'",
       "If the user provides a component name, fetch project info, find the matching component in customListObjs.component[index].name, and use its ID in the payload. If the name is not found, skip the component field (it is not required) and show a user-friendly message: 'Test case created without component, as given component is not available in the current project.'",
       "If the user provides an owner name, fetch project info, find the matching owner in customListObjs.owner[index].name, and use its ID in the payload as testcaseOwner. If the name is not found, skip the testcaseOwner field (it is not required) and show a user-friendly message: 'Test case created without owner, as given owner is not available in the current project.'",
       "If the user provides a test case state name, fetch project info, find the matching state in customListObjs.testCaseState[index].name, and use its ID in the payload as testCaseState. If the name is not found, skip the testCaseState field (it is not required) and show a user-friendly message: 'Test case created without test case state, as given state is not available in the current project.'",
@@ -99,7 +298,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       "If the user provides a testing type name, fetch project info, find the matching type in customListObjs.testingType[index].name, and use its ID in the payload as testingType. If the name is not found, skip the testingType field (it is not required) and show a user-friendly message: 'Test case created without testing type, as given testing type is not available in the current project.'",
       "Example: If user says 'Create test case with title \"High priority test case\" and set priority to \"Blocker\"', first call project info, map 'Blocker' to its ID, and use that ID for the priority field in the create payload. If user says 'set priority to \"Urgent\"' and 'Urgent' is not found, skip the priority field and show: 'Test case created without priority, as given priority is not available in the current project.'",
       "tcFolderID is required; use the root folder ID from project info or a specific folder.",
-      "Steps are optional but recommended for manual test cases.",
+      "STEPS: Omit steps from payload by default. Only include steps when user explicitly mentions them (SCENARIO 1) or stepSystemFields/stepFields has isMandatory=true (SCENARIO 2). See STEPS DECISION RULE at top of hints.",
       "If the user provides a prompt like 'create test case with steps as step 1 - Go to login page, step 2 - give credential, step 3 - go to test case page, step 4 - create test case', LLM should parse each step and convert it into the steps payload array, mapping each step to an object with orderId, description, and optionally inputData and expectedOutcome.",
       "Example mapping: 'step 1 - Go to login page' → { orderId: 1, description: 'Go to login page' }.",
       "LLM should increment orderId for each step, use the step text as description, and optionally infer inputData/expectedOutcome if provided in the prompt.",
@@ -115,8 +314,39 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       "LLM should ensure that provided release/cycle names or IDs exist in the current project before using them in the payload. If not found, skip and show a user-friendly message: 'Test case created without release/cycle association, as given release/cycle is not available in the current project.'",
       "All IDs (priority, owner, etc.) must be valid for your QMetry instance.",
       "If a custom field is mandatory, include it in the UDF object.",
-      "Estimated time is in minutes.",
+      "estimatedTime is in SECONDS (e.g. 3600 = 1 hour, 36000 = 10 hours). NOT minutes.",
       "Description and testingType are optional but recommended for clarity.",
+      "",
+      "UDF (User Defined Fields) WORKFLOW FOR CREATE:",
+      "1. Call 'Fetch UDF Layout' with entityType='TC', pageName='ADD' to discover field names, types, list option IDs, and udfmID (projectUserFieldID).",
+      "   IF listOptions[field.listName] is empty after Fetch UDF Layout, the tool already tried a metadata fallback. " +
+        "   If STILL empty, ask the user to provide the option ID from the QMetry UI — do NOT guess numeric IDs.",
+      "2. For LOOKUPLIST fields: pick one ID from listOptions[field.listName][].id.",
+      "3. For MULTILOOKUPLIST fields: pick an array of IDs from listOptions[field.listName][].id.",
+      "4. For CASCADINGLIST fields (ROOT-LEVEL UDF — MANDATORY STEPS):",
+      "   a. MUST call 'Fetch Cascade Child Values' with parentId to get available child options (do NOT skip this step).",
+      "   b. Pass the cascade value as: { parent: parentId, child: childId } in udfFields.",
+      "   Example: udfFields: { project19: { parent: 5232623, child: 5232625 } }",
+      "5. For STRING/LARGETEXT/NUMBER/DATETIMEPICKER: pass value directly.",
+      "6. Pass all UDF values via 'udfFields' param: { fieldName: value }.",
+      "7. Mandatory UDF fields (isMandatory=true) MUST be included or create will fail.",
+      "",
+      "STEP UDFs: Pass step UDF values in each step's 'UDF' object.",
+      "Call 'Fetch UDF Layout' for stepFields to discover field names, types, and udfmID (projectUserFieldID).",
+      "Step UDF field types follow same rules as root UDF EXCEPT for CASCADINGLIST — step cascade requires a DIFFERENT format:",
+      "",
+      "STEP CASCADINGLIST UDF FORMAT (critical — different from root cascade):",
+      "For a cascade field named 'project19' with udfmID=2637584, parent={id:5232626, value:'React'}, child={id:5232628, value:'Redux'}:",
+      "You MUST include THREE keys inside the step's UDF object:",
+      "  1. fieldName: { parent: parentId, child: childId }",
+      "     e.g. project19: { parent: 5232626, child: 5232628 }",
+      "  2. fieldName_value: [{ FieldID: 'fieldName', FieldValue: [{ id: parentId, value: 'parentLabel', child: { id: childId, value: 'childLabel' } }], type: 'CASCADINGLIST' }]",
+      "     e.g. project19_value: [{ FieldID: 'project19', FieldValue: [{ id: 5232626, value: 'React', child: { id: 5232628, value: 'Redux' } }], type: 'CASCADINGLIST' }]",
+      "  3. fieldName_selectedList: { id: udfmID, name: 'fieldName', type: 'CASCADINGLIST' }",
+      "     e.g. project19_selectedList: { id: 2637584, name: 'project19', type: 'CASCADINGLIST' }",
+      "To get parentLabel and childLabel: call 'Fetch Cascade Child Values' — it returns option labels alongside IDs.",
+      "udfmID comes from Fetch UDF Layout stepFields[].projectUserFieldID.",
+      "NEVER omit _value or _selectedList for step cascade fields — the API silently ignores cascade data without them.",
     ],
     outputDescription:
       "JSON object containing the new test case ID, summary, and creation metadata.",
@@ -376,6 +606,24 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       },
     ],
     hints: [
+      "=== DEFAULT VALUES — APPLY FOR ANY UNSET FIELD ===",
+      "Call 'Fetch UDF Layout' with entityType='TC', pageName='DETAIL' before updating.",
+      "defaultValues (from Fetch UDF Layout): { fieldName: defaultValueId } — sweep ALL entries.",
+      "  For EACH key in defaultValues: if user did not explicitly provide that field → include it in payload with the default value.",
+      "  This applies to non-mandatory fields too (e.g. priority, estimatedTime). Omitting them = data loss.",
+      "=== END DEFAULT VALUES ===",
+      "",
+      "=== DATE FORMAT CHECK (MANDATORY — EVERY UPDATE REQUEST) ===",
+      "ALWAYS call 'Fetch QMetry Project Info' before every update request — not only when the user explicitly mentions a date.",
+      "Any UDF field could be a DATETIMEPICKER. Wrong format causes QMetry to silently discard the field value (API returns success but value is NOT stored — no error).",
+      "STEP 1: From project info, read dateTimeFormatID (e.g. 3).",
+      "STEP 2: Find entry in dateTimeFormatNew where id === dateTimeFormatID → read its unique_value (e.g. 'yyyy-MM-dd').",
+      "STEP 3: unique_value pattern: yyyy=4-digit year, MM=2-digit month (01-12), dd=2-digit day, MMM=3-letter month (Jan/Feb/...).",
+      "  Example: id=1 → MM-dd-yyyy → '10-25-2000' | id=2 → dd-MM-yyyy → '25-10-2000' | id=3 → yyyy-MM-dd → '2000-10-25' | id=4 → dd-MMM-yyyy → '25-Oct-2000'",
+      "STEP 4: For EVERY DATETIMEPICKER field in the payload: parse any user-provided date and re-format it using the active unique_value pattern before sending.",
+      "NEVER assume a date format — always derive it from dateTimeFormatID. Wrong format = silent data loss.",
+      "=== END DATE FORMAT CHECK ===",
+      "",
       "CRITICAL - VERSION CREATION vs UPDATE DISTINCTION:",
       "This tool supports TWO MODES using the SAME API endpoint:",
       "",
@@ -757,6 +1005,19 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       "executionMinutes time is in minutes (legacy field).",
       "estimatedTime is in seconds (preferred for version creation).",
       "Description and testingType are optional but recommended for clarity.",
+      "",
+      "UDF (User Defined Fields) WORKFLOW FOR UPDATE:",
+      "1. Call 'Fetch UDF Layout' with entityType='TC', pageName='DETAIL' to get field names, fieldIDs (projectUserFieldID), and list option IDs.",
+      "   IF listOptions[field.listName] is empty after Fetch UDF Layout, the tool already tried a metadata fallback. " +
+        "   If STILL empty, ask the user to provide the option ID from the QMetry UI — do NOT guess numeric IDs.",
+      "2. For LOOKUPLIST fields: pick one ID from listOptions[field.listName][].id.",
+      "3. For MULTILOOKUPLIST fields: pick an array of IDs; also pass the alias flat key (e.g., fieldNameAlias: 'Option Label').",
+      "4. For CASCADINGLIST fields: pick parent ID + fetch child with 'Fetch Cascade Child Values'. Pass { parent: parentId, child: childId }.",
+      "5. Pass BOTH 'udfFields' (flat root values) AND 'UDF' wrapper (with fieldID) — both required for update.",
+      "   Example: udfFields: { custom_text: 'new value' }, UDF: { custom_text: { fieldID: 1001, value: 'new value' } }",
+      "6. Mandatory UDF fields (isMandatory=true) MUST be included.",
+      "STEP UDFs for update: Use same step UDF field names from 'Fetch UDF Layout' stepFields. Pass in each step's 'UDF' object.",
+      "For MULTILOOKUPLIST step UDFs in update: use { ADD: [id1, id2], REMOVE: [id3] } format.",
     ],
     outputDescription:
       "JSON object containing the test case ID, version ID, summary, update/creation metadata. " +
@@ -1235,6 +1496,42 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       "and 'testRunUdfs' (array of objects each with name, label, fieldID, fieldType, value — use 'label' for display headers, null if not set). " +
       "ALL project-defined UDF fields are always included, even those with no value. " +
       "Top-level 'hasTcRunUdf' flag indicates whether the project has Test Run UDFs configured. When false, a 'testRunUdfNote' field provides a professional explanation instead.",
+    readOnly: true,
+    idempotent: true,
+  },
+  {
+    title: "Fetch Test Case Steps With UDF",
+    toolset: "Test Cases",
+    summary:
+      "Fetch test case steps including UDF field values via viewColumns endpoint",
+    handler: QMetryToolsHandlers.FETCH_TEST_CASE_STEPS_WITH_UDF,
+    inputSchema: TestCaseStepsWithUdfArgsSchema,
+    purpose:
+      "Retrieve test case steps with full UDF data. Use this instead of 'Fetch Test Case Steps' when you need step-level UDF field values — the basic steps endpoint omits UDF data.",
+    useCases: [
+      "Get step UDF field values for a test case",
+      "Retrieve steps with custom fields before updating step UDFs",
+      "Inspect step-level UDF data for reporting",
+    ],
+    examples: [
+      {
+        description: "Fetch steps with UDF values for test case ID 112768054",
+        parameters: { tcID: 112768054 },
+        expectedOutput:
+          "Steps with UDF object containing field values, ID_<field> arrays for lookup IDs, UDF_<field> prefixed values, filterTemplate with UDF field definitions",
+      },
+    ],
+    hints: [
+      "Response includes 'filterTemplate' array listing all UDF fields with their fieldType and udfmID",
+      "UDF values in each step row: UDF_<fieldName> = display value, UDF_ID_<fieldName> = numeric IDs",
+      "Step UDF object also has ID_<fieldName> for lookup IDs",
+      "LOOKUPLIST: id = UDF_ID_<fieldName>, display = UDF_<fieldName>",
+      "MULTILOOKUPLIST: ids = UDF_ID_<fieldName> (array), display = UDF_<fieldName>",
+      "CASCADINGLIST: parent = UDF_ID_<fieldName>[0], child = UDF_ID_<fieldName>[1]",
+      "viewId auto-resolved from project info if not provided",
+    ],
+    outputDescription:
+      "JSON object with data array (steps with UDF values), filterTemplate (UDF field definitions), columns (visible/hidden column config), total count, and viewId",
     readOnly: true,
     idempotent: true,
   },

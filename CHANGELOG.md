@@ -10,6 +10,70 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - [Swagger] `create_api_from_prompt` tool: now create-only - fails with a conflict error instead of overwriting when the generated API version already exists. Marked as non-destructive.
+- [QMetry] Security: Removed `Qmetry-Token` and `apikey` header fallbacks from `getToken()` to prevent OAuth bypass on HTTP transport. [#697](https://github.com/SmartBear/smartbear-mcp/pull/697)
+- [QMetry] Security: Added input validation (`.max(255)`, `.regex()`, `..` guard) on `fileName` in `ExportHtmlReportArgsSchema` [#697](https://github.com/SmartBear/smartbear-mcp/pull/697)
+
+### Added
+
+- [Swagger] Extended the `create_test` Functional Testing tool with a step-level `baseUrl`/`apiName` and a definition-level `parameters` array. Every step must now set `baseUrl` to its server/common URL; it is extracted into a generated `baseURL<ApiName>` parameter (falling back to `baseURL<Host>` when `apiName` is not set) and templated into the step's `url`. OAS-style `{pathParam}` placeholders in every step's `url` are always converted to `${var(pathParam)}` references with matching generated parameters, and a `{pathParam}` shared by more than one step must be defined in `parameters` so its value stays in sync across steps. `parameters` only accepts these path/base-URL parameters, not request body parameters.
+
+## [0.39.0] - 2026-08-31
+
+### Changed
+
+- [PactFlow] Refactored the internal PactFlow client from a monolithic 2,400-line class into six domain API classes (`PacticipantApi`, `EnvironmentApi`, `ContractApi`, `WebhookApi`, `AdminApi`, `AIApi`) backed by a shared `HttpClient`. This is an internal implementation change; all tool behaviour and the external `PactflowClient` interface are unchanged. [#686](https://github.com/SmartBear/smartbear-mcp/pull/686)
+- [Swagger] Functional Testing improvements: clarified the `create_suite` `name` parameter to require a human-readable suite name; renamed the `suiteId` parameter to `slug` on `run_suite`, `get_suite_status`, `list_suite_executions`, and `cancel_suite_execution` and their responses; and dropped the redundant numeric `id` from `Suite` objects returned by `create_suite` and `list_suites`.
+- [Swagger] Updated the `list_tests` tool to return test definition `url` for each found test. Updated the `list_suites` tool to return the Suite definition `url` for each found Suite.
+
+## [0.38.0] - 2026-08-27
+
+- [Bugsnag] Use a single process-wide `CacheService` and namespace every cache key with a SHA-256 hash of the authenticated caller's token. [#679](https://github.com/SmartBear/smartbear-mcp/pull/679)
+- [Bugsnag] Prefer the request auth header when resolving the cache namespace via `getAuthToken()` so per-request auth is honored.
+- [Bugsnag] Ensure unauthenticated callers bypass the shared cache to avoid exposing cached data.
+- [Bugsnag] Updated cache usage in `getOrganization()`, `getProjects()`, `getCurrentProject()`, `getProjectEventFields()`, and `getProjectTraceFields()`.
+
+### Changed
+
+- [Swagger] Updated `update_portal_product` to returns a `url` field in the response, providing the portal URL for the updated product. [#684](https://github.com/SmartBear/smartbear-mcp/pull/684)
+
+- [Common] Removed support for the MCP `sampling` capability, which was deprecated in the 2026-07-28 MCP specification revision ([SEP-2577](https://github.com/modelcontextprotocol/modelcontextprotocol/pull/2577)). The server no longer negotiates the `sampling` client capability or sends `sampling/createMessage` requests. [#685](https://github.com/SmartBear/smartbear-mcp/pull/685)
+- [PactFlow] The `generate`/`review` tools' OpenAPI matcher recommendation flow no longer relies on MCP sampling: when an OpenAPI document is provided without a `matcher`, the tool now always returns a prompt for the host AI to execute directly and resubmit with a single recommended matcher, rather than a list of up to 5 recommendations to choose from via elicitation. [#685](https://github.com/SmartBear/smartbear-mcp/pull/685)
+
+## [0.37.0] - 2026-08-20
+
+- [QMetry]: Added Test Case, Test Suite, Issue module, Create/Update UDF capability Added. [#666](https://github.com/SmartBear/smartbear-mcp/pull/666)
+
+### Added
+
+- [Swagger] Added `patch_api` Registry tool that applies targeted search/replace edits to a YAML API definition and saves the result as a new version or in place. Edits are atomic - nothing is saved unless every edit applies - and failed edits are reported with `no_match`/`ambiguous` details so the caller can correct them.
+- [Swagger] Extended the `create_test` Functional Testing tool's steps with assertion support via a step-level `assertions` object: `statusCodes` for HTTP status code ranges, and `body`/`bodyType`/`bodyRules` for asserting on response body fields.
+
+### Changed
+
+- [Swagger] `get_api_definition` tool: added a `format` parameter - `json` (default) may convert YAML to JSON, `text` returns the definition as YAML, which is the required source for `patch_api` edits.
+- [Swagger] Improved error handling on Swagger Functional Testing, providing more information when requests to the upstream API fail
+
+## [0.36.0] - 2026-08-18
+
+### Added
+
+- [PactFlow] `publish_provider_contract` tool: added support for AsyncAPI provider contracts (`specification: "asyncapi"`), alongside the existing OpenAPI (`"oas"`) support.
+
+### Changed
+
+- [Zephyr] Update Zephyr Schemas [#664](https://github.com/SmartBear/smartbear-mcp/pull/664)
+- [Common] Migrated the MCP server implementation from `@modelcontextprotocol/sdk` v1 to the `@modelcontextprotocol/{server,node,server-legacy}` v2 packages. This is an internal implementation change; tool, prompt, and resource behavior is unchanged. As part of this, `[Zephyr]` tools that combine a params and body schema (e.g. `create_test_case_issue_link`, `update_test_case`) now advertise a flat JSON Schema instead of `allOf`, for compatibility with MCP clients that don't support `allOf`. [#654](https://github.com/SmartBear/smartbear-mcp/pull/654)
+- [Common] Corrected the Node.js version requirement in the README to 22+.
+
+### Fixed
+
+- [Swagger] Fixed `swagger_get_document` and `swagger_update_document` tools returning `MCP error -32602` schema mismatch when the API response contained additional properties not defined in the output schema.
+
+### Fixed
+
+- [Swagger] Corrected tool annotation hints for the Functional Testing tools so they no longer fall back to registration defaults: `run_test` and `run_suite` are now declared open-world (`openWorldHint: true`), `cancel_suite_execution` is declared destructive (`destructiveHint: true`), and all tools use the shared `READ_ONLY`/`WRITE`/`WRITE_DESTRUCTIVE` presets to set `readOnlyHint`/`destructiveHint`/`openWorldHint` explicitly.
+
+## [0.35.0] - 2026-08-11
 
 ### Added
 

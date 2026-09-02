@@ -1,6 +1,14 @@
 import { z } from "zod";
 import { CommonFields } from "./common";
 
+// Reused across TC / TS / IS UDF update wrappers
+export type UdfValue =
+  | string
+  | number
+  | number[]
+  | { parent: number; child?: number }
+  | null;
+
 export interface UdfModule {
   moduleID: number;
   mandatory: boolean;
@@ -28,12 +36,10 @@ export interface FetchUdfFieldTypesPayload {
 
 export const FetchUdfFieldTypesArgsSchema = z.object({
   projectKey: CommonFields.projectKey,
-  baseUrl: CommonFields.baseUrl,
 });
 
 export const FetchUdfModulesArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
 });
 
 export interface UdfFieldValue {
@@ -91,7 +97,7 @@ const UdfFieldValueSchema = z.object({
 
 export const BulkUpdateTestRunUdfsArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   tcRunIDs: z
     .array(z.number().int().positive())
     .min(1)
@@ -122,7 +128,6 @@ export interface FetchTestRunUdfMetadataPayload {
 
 export const FetchTestRunUdfMetadataArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
 });
 
 // ---------------------------------------------------------------------------
@@ -153,7 +158,7 @@ export interface FetchCascadeChildValuesPayload {
 
 export const FetchCascadeChildValuesArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   id: z
     .number()
     .int()
@@ -172,9 +177,41 @@ export const FetchCascadeChildValuesArgsSchema = z.object({
     ),
 });
 
+// ---------------------------------------------------------------------------
+// Fetch UDF Layout (field definitions for TC / TS / IS)
+// ---------------------------------------------------------------------------
+
+export interface FetchUdfLayoutPayload {
+  entityType: "TC" | "TS" | "IS";
+  pageName?: "ADD" | "DETAIL";
+  scopeId?: number;
+  orgCode?: string;
+}
+
+export const FetchUdfLayoutArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  entityType: z
+    .enum(["TC", "TS", "IS"])
+    .describe(
+      "Entity type to fetch UDF field definitions for. " +
+        "'TC' = Test Case (also returns step UDFs in stepFields), " +
+        "'TS' = Test Suite, " +
+        "'IS' = Issue.",
+    ),
+  pageName: z
+    .enum(["ADD", "DETAIL"])
+    .optional()
+    .default("ADD")
+    .describe(
+      "'ADD' returns fields for create operations (no fieldID needed). " +
+        "'DETAIL' returns fields for update operations and includes fieldID (projectUserFieldID) " +
+        "required by the UDF update wrapper. Call with 'DETAIL' before updating an entity's UDF values.",
+    ),
+});
+
 export const FetchTestRunUdfValuesArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   tsrunID: z.coerce
     .string()
     .optional()

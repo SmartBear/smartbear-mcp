@@ -1,4 +1,9 @@
 import { z } from "zod";
+import {
+  baseUrlParamName,
+  extractPathParamNames,
+  splitUrlByBaseUrl,
+} from "./functional-testing-url-utils";
 
 export const RunFunctionalTestingTestParamsSchema = z.object({
   testId: z
@@ -17,17 +22,17 @@ export const GetFunctionalTestingExecutionTestSchema = z.object({
 });
 
 export const ListFunctionalTestingSuiteExecutionsSchema = z.object({
-  suiteId: z
+  slug: z
     .string()
-    .describe("ID of the Functional Testing suite to list executions for")
+    .describe("Slug of the Functional Testing suite to list executions for.")
     .trim()
     .min(1),
 });
 
 export const CancelFunctionalTestingSuiteExecutionSchema = z.object({
-  suiteId: z
+  slug: z
     .string()
-    .describe("ID of the Functional Testing suite the execution belongs to")
+    .describe("Slug of the Functional Testing suite the execution belongs to.")
     .trim()
     .min(1),
   executionId: z
@@ -71,7 +76,15 @@ export const RunApiTestsBlockSchema = z.object({
 
 export const CreateFunctionalTestingSuiteParamsSchema = z
   .object({
-    name: z.string().describe("Name for the new suite").trim().min(1),
+    name: z
+      .string()
+      .describe(
+        "Name for the new suite. Use the name explicitly provided by the user, or if none was given, " +
+          "a descriptive name derived from the purpose or context of the tests being grouped into this suite. " +
+          "This must be a human-readable name, not a numeric ID or test ID.",
+      )
+      .trim()
+      .min(1),
     agentName: z
       .string()
       .trim()
@@ -110,8 +123,11 @@ export type CreateFunctionalTestingSuiteParams = z.infer<
 >;
 
 export const CreateFunctionalTestingSuiteResponseSchema = z.object({
-  id: z.number().describe("ID of the newly created suite"),
-  slug: z.string().describe("Slug of the newly created suite"),
+  slug: z
+    .string()
+    .describe(
+      "Slug of the newly created suite. Use this value as the `slug` argument for other Functional Testing suite tools (e.g. `swagger_run_suite`).",
+    ),
   url: z
     .string()
     .describe("Link to the created suite in Swagger Functional Testing UI"),
@@ -122,9 +138,9 @@ export type CreateFunctionalTestingSuiteResponse = z.infer<
 >;
 
 export const RunFunctionalTestingSuiteParamsSchema = z.object({
-  suiteId: z
+  slug: z
     .string()
-    .describe("ID of the Functional Testing suite to run")
+    .describe("Slug of the Functional Testing suite to run.")
     .trim()
     .min(1),
   tunnelAgentName: z
@@ -138,9 +154,9 @@ export const RunFunctionalTestingSuiteParamsSchema = z.object({
 });
 
 export const GetFunctionalTestingSuiteExecutionSchema = z.object({
-  suiteId: z
+  slug: z
     .string()
-    .describe("ID of the Functional Testing suite")
+    .describe("Slug of the Functional Testing suite.")
     .trim()
     .min(1),
   executionId: z
@@ -177,28 +193,42 @@ export interface SuiteExecution {
 }
 
 export interface ListSuiteExecutionsResponse {
-  suiteId: string;
+  slug: string;
   executions: {
     data: SuiteExecution[];
   };
 }
 
+export interface FunctionalTestingTestSummary {
+  id: number;
+  name: string;
+  created: number;
+  tags: string[];
+  folders: string[];
+  url: string;
+}
+
+export interface ListTestsResponse {
+  tests: FunctionalTestingTestSummary[];
+}
+
 export interface Suite {
-  id: string;
-  accountId: number;
   name: string;
   slug: string;
   created: number;
-  numTestInstances: number;
 }
 
 export interface ListSuitesResponse {
   suites: Suite[];
-  stats?: {
-    executions: number;
-    passRate: number;
-    avgRuntimeSecs: number;
-    cumExecTimeSecs: number;
+}
+
+export interface ListSuitesApiResponse {
+  suites: {
+    data: {
+      name: string;
+      suiteId: string;
+      created: number;
+    }[];
   };
 }
 
@@ -256,8 +286,289 @@ export const CreateFunctionalTestingTestHeaderSchema = z.object({
 
 export const HTTP_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"] as const;
 
+export const CreateFunctionalTestingStatusRangeSchema = z
+  .object({
+    start: z
+      .number()
+      .int()
+      .min(100)
+      .max(599)
+      .describe("Start of the HTTP status code range, inclusive"),
+    end: z
+      .number()
+      .int()
+      .min(100)
+      .max(599)
+      .describe("End of the HTTP status code range, inclusive"),
+  })
+  .refine((range) => range.start <= range.end, {
+    message: "start must be less than or equal to end",
+    path: ["start"],
+  });
+
+export const CreateFunctionalTestingBodyRuleSchema = z
+  .object({
+    path: z
+      .string()
+      .regex(
+        /^(\["[^"]*"\])+$/,
+        'Path must be in bracket notation, e.g. \'["data"]["id"]\'.',
+      )
+      .describe(
+        'Path to the field to assert, in bracket notation (e.g. \'["data"]["id"]\').',
+      ),
+    assertionType: z
+      .enum(["string", "number", "regex"])
+      .describe("Type of assertion"),
+    operator: z
+      .enum(["eq", "lt", "gt", "lte", "gte", "contains"])
+      .optional()
+      .describe(
+        "Comparison operator for compare assertions. Required (with target) when targets is not set; " +
+          "not usable together with targets, lower/upper, or with assertionType 'regex'.",
+      ),
+    target: z
+      .string()
+      .optional()
+      .describe(
+        "Expected value for compare assertions. Required (with operator) when targets is not set; " +
+          "not usable together with targets, lower/upper, or with assertionType 'regex'.",
+      ),
+    targets: z
+      .array(z.string())
+      .optional()
+      .describe(
+        "List of allowed values for a list-match assertion (assertionType 'string' or 'number' only). " +
+          "Not usable together with operator/target or lower/upper.",
+      ),
+    lower: z
+      .string()
+      .optional()
+      .describe(
+        "Lower bound for a number range assertion (assertionType 'number' only). Must be set together with upper.",
+      ),
+    upper: z
+      .string()
+      .optional()
+      .describe(
+        "Upper bound for a number range assertion (assertionType 'number' only). Must be set together with lower.",
+      ),
+    pattern: z
+      .enum(["nonempty"])
+      .optional()
+      .describe(
+        "Pattern type for regex assertions. Required when assertionType is 'regex' (only 'nonempty' is supported " +
+          "- there is no way to assert against an arbitrary regex string).",
+      ),
+    assignment: z
+      .string()
+      .optional()
+      .describe("Variable name to assign the extracted value to"),
+  })
+  .meta({
+    // Structural rules (in addition to the .superRefine() below) so the generated
+    // JSON Schema states which fields are required/forbidden per assertionType and
+    // assertion mode, instead of leaving every field optional with the constraint
+    // only in prose.
+    allOf: [
+      {
+        if: { properties: { assertionType: { const: "regex" } } },
+        // biome-ignore lint/suspicious/noThenProperty: JSON Schema if/then/else keyword, not a thenable
+        then: {
+          required: ["pattern"],
+          properties: {
+            operator: false,
+            target: false,
+            targets: false,
+            lower: false,
+            upper: false,
+          },
+        },
+        message:
+          "pattern is required, and operator/target/targets/lower/upper must not be set, when assertionType is 'regex'",
+      },
+      {
+        if: { not: { properties: { assertionType: { const: "regex" } } } },
+        // biome-ignore lint/suspicious/noThenProperty: JSON Schema if/then/else keyword, not a thenable
+        then: { properties: { pattern: false } },
+        message: "pattern must not be set unless assertionType is 'regex'",
+      },
+      {
+        if: { required: ["targets"] },
+        // biome-ignore lint/suspicious/noThenProperty: JSON Schema if/then/else keyword, not a thenable
+        then: {
+          properties: {
+            operator: false,
+            target: false,
+            lower: false,
+            upper: false,
+          },
+        },
+        message:
+          "targets cannot be combined with operator/target or lower/upper",
+      },
+      {
+        if: {
+          anyOf: [{ required: ["lower"] }, { required: ["upper"] }],
+        },
+        // biome-ignore lint/suspicious/noThenProperty: JSON Schema if/then/else keyword, not a thenable
+        then: {
+          required: ["lower", "upper"],
+          properties: {
+            assertionType: { const: "number" },
+            operator: false,
+            target: false,
+            targets: false,
+          },
+        },
+        message:
+          "lower and upper must both be set together, only with assertionType 'number', and cannot be combined with operator/target/targets",
+      },
+    ],
+  })
+  .superRefine((rule, ctx) => {
+    const hasRange = rule.lower !== undefined || rule.upper !== undefined;
+    const hasCompare = rule.operator !== undefined || rule.target !== undefined;
+    const hasTargets = rule.targets !== undefined;
+
+    if (rule.assertionType === "regex") {
+      if (rule.pattern === undefined) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["pattern"],
+          message: "pattern is required when assertionType is 'regex'.",
+        });
+      }
+      if (hasCompare || hasTargets || hasRange) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["assertionType"],
+          message:
+            "operator, target, targets, lower and upper have no effect with assertionType 'regex' " +
+            "(the backend silently ignores them) and must not be set.",
+        });
+      }
+      return;
+    }
+
+    if (rule.pattern !== undefined) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["pattern"],
+        message: "pattern is only valid with assertionType 'regex'.",
+      });
+    }
+
+    if (hasRange && rule.assertionType !== "number") {
+      ctx.addIssue({
+        code: "custom",
+        path: ["lower"],
+        message:
+          "lower/upper range assertions are only valid with assertionType 'number'.",
+      });
+      return;
+    }
+
+    if (hasTargets) {
+      if (hasCompare || hasRange) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["targets"],
+          message:
+            "targets defines a list-match assertion and cannot be combined with operator/target or lower/upper.",
+        });
+      }
+      return;
+    }
+
+    if (hasRange) {
+      if (hasCompare) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["lower"],
+          message: "lower/upper cannot be combined with operator/target.",
+        });
+      }
+      if (rule.lower === undefined || rule.upper === undefined) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["lower"],
+          message:
+            "Both lower and upper are required for a range assertion; setting only one silently evaluates as always-false at runtime.",
+        });
+      }
+      return;
+    }
+
+    if (rule.operator === undefined) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["operator"],
+        message:
+          "operator is required for a compare assertion when targets/lower/upper are not set.",
+      });
+    }
+    if (rule.target === undefined) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["target"],
+        message:
+          "target is required for a compare assertion when targets/lower/upper are not set.",
+      });
+    }
+  });
+
+export const CreateFunctionalTestingAssertionsSchema = z.object({
+  statusCodes: z
+    .array(CreateFunctionalTestingStatusRangeSchema)
+    .optional()
+    .describe(
+      "Expected HTTP status code ranges, e.g. [{start: 200, end: 299}]",
+    ),
+  body: z
+    .string()
+    .optional()
+    .describe("Expected exact response body, compared as-is"),
+  bodyType: z
+    .enum(["json", "xml"])
+    .optional()
+    .describe('Response body format, defaults to "json"'),
+  bodyRules: z
+    .array(CreateFunctionalTestingBodyRuleSchema)
+    .optional()
+    .describe("Assertion rules evaluated against the response body"),
+});
+
+export const CreateFunctionalTestingTestParameterSchema = z.object({
+  name: z.string().trim().min(1).describe("Path parameter name"),
+  value: z.string().optional().describe("Parameter default value"),
+});
+
 export const CreateFunctionalTestingTestStepSchema = z.object({
-  url: z.url().describe("URL for the API call"),
+  url: z
+    .string()
+    .trim()
+    .min(1)
+    .describe(
+      "Full URL for the API call. May include OAS-style {pathParam} placeholders, which are " +
+        "always converted into reusable parameters. baseUrl MUST also be set and url must start with it.",
+    ),
+  baseUrl: z
+    .url()
+    .optional()
+    .describe(
+      "Server/common URL for this step's endpoint (e.g. https://petstore.swagger.io/v2). REQUIRED " +
+        "on every step it is extracted into a definition-level " +
+        "parameter and templated into the step url",
+    ),
+  apiName: z
+    .string()
+    .trim()
+    .min(1)
+    .optional()
+    .describe(
+      'Name of the API that this step\'s baseUrl belongs to, e.g. "Petstore". ',
+    ),
   httpMethod: z
     .enum(HTTP_METHODS)
     .describe("HTTP method for the API call (defaults to GET server-side)")
@@ -276,23 +587,107 @@ export const CreateFunctionalTestingTestStepSchema = z.object({
     .trim()
     .describe("Human-readable label for this step")
     .optional(),
+  assertions: CreateFunctionalTestingAssertionsSchema.optional().describe(
+    "Expected response assertions: status code ranges, exact body match, and/or field-level body rules.",
+  ),
 });
 
-export const CreateFunctionalTestingTestParamsSchema = z.object({
-  name: z.string().describe("Name for the new test").trim().min(1),
-  description: z
-    .string()
-    .trim()
-    .describe("Optional description for the test")
-    .optional(),
-  steps: z
-    .array(CreateFunctionalTestingTestStepSchema)
-    .describe("Test steps to include in the test")
-    .optional(),
-});
+export const CreateFunctionalTestingTestParamsSchema = z
+  .object({
+    name: z.string().describe("Name for the new test").trim().min(1),
+    description: z
+      .string()
+      .trim()
+      .describe("Optional description for the test")
+      .optional(),
+    steps: z
+      .array(CreateFunctionalTestingTestStepSchema)
+      .describe("Test steps to include in the test")
+      .optional(),
+    parameters: z
+      .array(CreateFunctionalTestingTestParameterSchema)
+      .describe(
+        "Definition-level path parameters for the test (e.g. base URLs, path params), not request body parameters.",
+      )
+      .optional(),
+  })
+  .superRefine((data, ctx) => {
+    const allowedNames = new Set<string>();
+    const pathParamCounts = new Map<string, number>();
+
+    data.steps?.forEach((step, index) => {
+      for (const name of extractPathParamNames(step.url)) {
+        allowedNames.add(name);
+        pathParamCounts.set(name, (pathParamCounts.get(name) ?? 0) + 1);
+      }
+      if (step.baseUrl) {
+        allowedNames.add(baseUrlParamName(step.baseUrl, step.apiName));
+        if (splitUrlByBaseUrl(step.url, step.baseUrl) === null) {
+          ctx.addIssue({
+            code: "custom",
+            message: `Step url "${step.url}" must start with its baseUrl "${step.baseUrl}".`,
+            path: ["steps", index, "url"],
+          });
+        }
+      } else {
+        ctx.addIssue({
+          code: "custom",
+          message:
+            `Step url "${step.url}" does not set "baseUrl". ` +
+            "Every step must set baseUrl to its server/common URL " +
+            "(e.g. https://petstore.swagger.io/v2) so it is extracted into a shared parameter, " +
+            "even when only one step uses that URL.",
+          path: ["steps", index, "baseUrl"],
+        });
+      }
+    });
+
+    const definedParamNames = new Set(
+      (data.parameters ?? []).map((p) => p.name),
+    );
+    for (const [name, count] of pathParamCounts) {
+      if (count >= 2 && !definedParamNames.has(name)) {
+        ctx.addIssue({
+          code: "custom",
+          message:
+            `Path parameter "{${name}}" appears in ${count} steps and must be defined in "parameters" ` +
+            "so its value is shared across all steps.",
+          path: ["parameters"],
+        });
+      }
+    }
+
+    data.parameters?.forEach((param, index) => {
+      if (!allowedNames.has(param.name)) {
+        ctx.addIssue({
+          code: "custom",
+          message:
+            `Parameter "${param.name}" is not a path parameter: it must match a {${param.name}} placeholder ` +
+            "in a step's url, or the generated base-URL parameter name for a step's baseUrl. " +
+            "The parameters field only accepts path parameters, not request body parameters.",
+          path: ["parameters", index, "name"],
+        });
+      }
+    });
+  });
 
 export type CreateFunctionalTestingTestParams = z.infer<
   typeof CreateFunctionalTestingTestParamsSchema
+>;
+export type CreateFunctionalTestingTestParameter = z.infer<
+  typeof CreateFunctionalTestingTestParameterSchema
+>;
+export type CreateFunctionalTestingTestStep = z.infer<
+  typeof CreateFunctionalTestingTestStepSchema
+>;
+export type CreateFunctionalTestingStatusRange = z.infer<
+  typeof CreateFunctionalTestingStatusRangeSchema
+>;
+export type CreateFunctionalTestingBodyRule = z.infer<
+  typeof CreateFunctionalTestingBodyRuleSchema
+>;
+export type CreateFunctionalTestingAssertions = z.infer<
+  typeof CreateFunctionalTestingAssertionsSchema
 >;
 
 export const CreateFunctionalTestingTestResponseSchema = z.object({

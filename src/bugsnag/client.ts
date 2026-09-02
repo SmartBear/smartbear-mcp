@@ -1,5 +1,6 @@
+import { createHmac } from "node:crypto";
 import { z } from "zod";
-import type { CacheService } from "../common/cache";
+import { CacheService } from "../common/cache";
 import { getUserAgent } from "../common/info";
 import { getRequestHeader } from "../common/request-context";
 import type { SmartBearMcpServer } from "../common/server";
@@ -46,14 +47,33 @@ import { ListReleases } from "./tool/release/list-releases";
 const HUB_PREFIX = "00000";
 const DEFAULT_DOMAIN = "bugsnag.com";
 const HUB_DOMAIN = "bugsnag.smartbear.com";
+const BUGSNAG_CACHE_TTL_SECONDS = 60;
 
 const cacheKeys = {
   ORG: "bugsnag_org",
   PROJECTS: "bugsnag_projects",
   PROJECT_EVENT_FIELDS: "bugsnag_project_event_fields",
   PROJECT_TRACE_FIELDS: "bugsnag_project_trace_fields",
-  CURRENT_PROJECT: "bugsnag_current_project",
 };
+
+// Keep one Bugsnag cache for the process so reconnecting sessions from the
+// same account can reuse account-level data. Session state is kept on each
+// BugsnagClient instance instead of in this shared store.
+//
+// Isolation therefore comes entirely from the key, not from the store — see
+// cacheKey(), which namespaces every entry by a hash of the caller's
+// credential. That is the ONLY boundary between accounts here, so nothing
+// caller-controlled (a project API key arrives in a request header and is not
+// secret) may ever be used as the namespace on its own.
+//
+// Built lazily so it picks up test doubles for CacheService.
+let sharedCacheInstance: CacheService | undefined;
+function getSharedCache(): CacheService {
+  if (!sharedCacheInstance) {
+    sharedCacheInstance = new CacheService();
+  }
+  return sharedCacheInstance;
+}
 
 // Exclude certain event fields from the project event filters to improve agent usage
 const EXCLUDED_EVENT_FIELDS = new Set([
@@ -77,14 +97,16 @@ const ConfigurationSchema = z.object({
 });
 
 export class BugsnagClient implements Client {
-  private cache?: CacheService;
   private _projectApiKey?: string;
   private _isConfigured: boolean = false;
   private _currentUserApi: CurrentUserAPI | undefined;
   private _errorsApi: ErrorAPI | undefined;
   private _projectApi: ProjectAPI | undefined;
   private _appEndpoint: string | undefined;
+  private _cacheAuthority: string | undefined;
+  private _endpoint: string | undefined;
   private _authToken?: string;
+  private _selectedProjects = new Map<string, Project>();
 
   get currentUserApi(): CurrentUserAPI {
     if (!this._currentUserApi) throw new Error("Client not configured");
@@ -106,6 +128,54 @@ export class BugsnagClient implements Client {
     return this._appEndpoint;
   }
 
+  // Namespaces the shared cache by API authority and caller credential, hashed
+  // so neither value is exposed in a cache key. Tokens are meaningful only
+  // within their issuing authority, so both values are required for isolation.
+  // Returns undefined when there is no credential at all — callers then bypass the
+  // cache rather than sharing a single anonymous bucket.
+  private cacheNamespace(): string | undefined {
+    const authToken = this.getAuthToken();
+    if (!authToken) {
+      return undefined;
+    }
+    const cacheAuthority = this.getRequestApiAuthority();
+    const namespace = createHmac("sha256", "bugsnag-cache-ns")
+      .update(cacheAuthority)
+      .update("\0")
+      .update(authToken)
+      .digest("hex")
+      .slice(0, 32);
+    return `tok:${namespace}`;
+  }
+
+  private cacheKey(key: string): string | undefined {
+    const namespace = this.cacheNamespace();
+    if (!namespace) {
+      return undefined;
+    }
+    return `${namespace}:${key}`;
+  }
+
+  // Namespaced cache read. Returns undefined when there is no credential to
+  // namespace by, so the caller falls through to the API.
+  private cacheGet<T>(key: string): T | undefined {
+    const namespacedKey = this.cacheKey(key);
+    if (!namespacedKey) {
+      return undefined;
+    }
+    return getSharedCache().get<T>(namespacedKey);
+  }
+
+  // Namespaced cache write. No-ops when there is no credential to namespace
+  // by, so an unauthenticated caller can never populate a shared entry.
+  private cacheSet<T>(key: string, value: T): void {
+    const namespacedKey = this.cacheKey(key);
+    if (!namespacedKey) {
+      return;
+    }
+    getSharedCache().set(namespacedKey, value, BUGSNAG_CACHE_TTL_SECONDS);
+  }
+
   name = "BugSnag";
   capabilityPrefix = "bugsnag";
   configPrefix = "Bugsnag";
@@ -113,13 +183,17 @@ export class BugsnagClient implements Client {
   defaultToolsets = ["Projects"];
 
   async configure(
-    server: SmartBearMcpServer,
+    _server: SmartBearMcpServer,
     config: z.infer<typeof ConfigurationSchema>,
   ): Promise<void> {
-    this.cache = server.getCache();
-
+    this._endpoint = config.endpoint;
     this._appEndpoint = this.getEndpoint(
       "app",
+      config.project_api_key,
+      config.endpoint,
+    );
+    this._cacheAuthority = this.getEndpoint(
+      "api",
       config.project_api_key,
       config.endpoint,
     );
@@ -128,6 +202,29 @@ export class BugsnagClient implements Client {
 
     // Initialize APIs even if auth_token is missing, to allow request-level auth
     await this.initializeApis(config);
+  }
+
+  getProjectApiKey(): string | undefined {
+    const contextHeader = getRequestHeader("Bugsnag-Project-Api-Key");
+    const requestProjectApiKey = Array.isArray(contextHeader)
+      ? contextHeader[0]
+      : contextHeader;
+
+    return requestProjectApiKey || this._projectApiKey;
+  }
+
+  private getRequestApiAuthority(): string {
+    const authority = this.getEndpoint(
+      "api",
+      this.getProjectApiKey(),
+      this._endpoint,
+    );
+    if (this._cacheAuthority && authority !== this._cacheAuthority) {
+      throw new ToolError(
+        `Bugsnag-Project-Api-Key cannot switch the API authority from ${this._cacheAuthority} to ${authority} within an active MCP session. Reconnect with the project key during session initialization.`,
+      );
+    }
+    return authority;
   }
 
   getAuthToken(): string | null {
@@ -152,7 +249,10 @@ export class BugsnagClient implements Client {
     }
 
     // Fall back to configured token (needs prefix for Authorization header)
-    return this._authToken ? `token ${this._authToken}` : null;
+    if (this._authToken) {
+      return `token ${this._authToken}`;
+    }
+    return null;
   }
 
   getBearerToken(): string | null {
@@ -254,7 +354,7 @@ export class BugsnagClient implements Client {
   }
 
   async getOrganization(): Promise<Organization> {
-    let org = this.cache?.get<Organization>(cacheKeys.ORG);
+    let org = this.cacheGet<Organization>(cacheKeys.ORG);
     if (!org) {
       const response = await this.currentUserApi.listUserOrganizations();
       const orgs = response.body;
@@ -262,7 +362,7 @@ export class BugsnagClient implements Client {
         throw new Error("No organizations found for the current user.");
       }
       org = orgs[0];
-      this.cache?.set(cacheKeys.ORG, org);
+      this.cacheSet(cacheKeys.ORG, org);
     }
     return org;
   }
@@ -272,14 +372,14 @@ export class BugsnagClient implements Client {
   // stores them in the cache for future use.
   // It throws an error if no organizations are found in the cache.
   async getProjects(): Promise<Project[]> {
-    let projects = this.cache?.get<Project[]>(cacheKeys.PROJECTS);
+    let projects = this.cacheGet<Project[]>(cacheKeys.PROJECTS);
     if (!projects) {
       const org = await this.getOrganization();
       const response = await this.currentUserApi.getOrganizationProjects(
         org.id,
       );
       projects = response.body;
-      this.cache?.set(cacheKeys.PROJECTS, projects);
+      this.cacheSet(cacheKeys.PROJECTS, projects);
     }
     return projects;
   }
@@ -290,20 +390,21 @@ export class BugsnagClient implements Client {
   }
 
   async getCurrentProject(): Promise<Project | null> {
-    let project = this.cache?.get<Project>(cacheKeys.CURRENT_PROJECT) ?? null;
-    if (!project && this._projectApiKey) {
-      const projects = await this.getProjects();
-      project =
-        projects.find((p: Project) => p.api_key === this._projectApiKey) ??
-        null;
-      this.cache?.set(cacheKeys.CURRENT_PROJECT, project);
+    const projectApiKey = this.getProjectApiKey();
+    if (!projectApiKey) {
+      const namespace = this.cacheNamespace();
+      return namespace ? (this._selectedProjects.get(namespace) ?? null) : null;
     }
-    return project;
+
+    const projects = await this.getProjects();
+    return (
+      projects.find((project) => project.api_key === projectApiKey) ?? null
+    );
   }
 
   async getProjectEventFields(project: Project): Promise<EventField[]> {
     const projectFiltersCache =
-      this.cache?.get<Record<string, EventField[]>>(
+      this.cacheGet<Record<string, EventField[]>>(
         cacheKeys.PROJECT_EVENT_FIELDS,
       ) || {};
     if (!projectFiltersCache[project.id]) {
@@ -315,14 +416,14 @@ export class BugsnagClient implements Client {
           field.display_id && !EXCLUDED_EVENT_FIELDS.has(field.display_id),
       );
       projectFiltersCache[project.id] = filtersResponse;
-      this.cache?.set(cacheKeys.PROJECT_EVENT_FIELDS, projectFiltersCache);
+      this.cacheSet(cacheKeys.PROJECT_EVENT_FIELDS, projectFiltersCache);
     }
     return projectFiltersCache[project.id];
   }
 
   async getProjectTraceFields(project: Project): Promise<TraceField[]> {
     const projectFiltersCache =
-      this.cache?.get<Record<string, TraceField[]>>(
+      this.cacheGet<Record<string, TraceField[]>>(
         cacheKeys.PROJECT_TRACE_FIELDS,
       ) || {};
     if (!projectFiltersCache[project.id]) {
@@ -330,7 +431,7 @@ export class BugsnagClient implements Client {
         await this.projectApi.listProjectTraceFields(project.id)
       ).body;
       projectFiltersCache[project.id] = filtersResponse;
-      this.cache?.set(cacheKeys.PROJECT_TRACE_FIELDS, projectFiltersCache);
+      this.cacheSet(cacheKeys.PROJECT_TRACE_FIELDS, projectFiltersCache);
     }
     return projectFiltersCache[project.id];
   }
@@ -365,9 +466,12 @@ export class BugsnagClient implements Client {
       if (!maybeProject) {
         throw new ToolError(`Project with ID ${projectId} not found.`);
       }
-      // If this hasn't been configured at startup, set this to the current project for future tool calls
-      if (!this._projectApiKey) {
-        this.cache?.set(cacheKeys.CURRENT_PROJECT, maybeProject);
+      // Without an effective project key, remember this selection for future calls.
+      if (!this.getProjectApiKey()) {
+        const namespace = this.cacheNamespace();
+        if (namespace) {
+          this._selectedProjects.set(namespace, maybeProject);
+        }
       }
       return maybeProject;
     } else {
@@ -465,7 +569,7 @@ export class BugsnagClient implements Client {
         path: "{id}",
         description: "Retrieve a specific event by its ID.",
       },
-      async (uri, variables, _extra) => {
+      async (uri, variables, _ctx) => {
         return {
           contents: [
             {

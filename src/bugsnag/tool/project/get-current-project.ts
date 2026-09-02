@@ -1,6 +1,4 @@
-import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ZodRawShape } from "zod";
-import { Tool, ToolError } from "../../../common/tools";
+import { Tool, ToolError, type ToolHandler } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { BugsnagClient } from "../../client";
 import { toolInputParameters } from "../../input-schemas";
@@ -28,7 +26,7 @@ export class GetCurrentProject extends Tool<BugsnagClient> {
     ],
   };
 
-  handle: ToolCallback<ZodRawShape> = async (_args, _extra) => {
+  handle: ToolHandler = async (_args, _ctx) => {
     const project = await this.client.getCurrentProject();
     if (!project) {
       throw new ToolError(

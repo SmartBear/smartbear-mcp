@@ -4,6 +4,8 @@ import { SwaggerAPI } from "./client/api";
 import { SwaggerConfiguration } from "./client/configuration";
 
 const fetchMock = createFetchMock(vi);
+const DUMMY_REGISTRY_BASE_PATH = "https://registry.example.test";
+const DUMMY_PORTAL_BASE_PATH = "https://api.portal.swaggerhub.com/v1";
 
 describe("SwaggerAPI", () => {
   let api: SwaggerAPI;
@@ -14,7 +16,11 @@ describe("SwaggerAPI", () => {
     fetchMock.enableMocks();
     fetchMock.resetMocks();
 
-    config = new SwaggerConfiguration({ token: "test-token" });
+    config = new SwaggerConfiguration({
+      token: "test-token",
+      registryBasePath: DUMMY_REGISTRY_BASE_PATH,
+      portalBasePath: DUMMY_PORTAL_BASE_PATH,
+    });
     api = new SwaggerAPI(config, "SmartBear-MCP/1.0.0");
   });
 
@@ -30,7 +36,7 @@ describe("SwaggerAPI", () => {
       const result = await api.getPortals();
 
       expect(fetchMock).toHaveBeenCalledWith(
-        "https://api.portal.swaggerhub.com/v1/portals",
+        `${config.portalBasePath}/portals`,
         {
           method: "GET",
           headers: {
@@ -58,7 +64,7 @@ describe("SwaggerAPI", () => {
       const result = await api.createPortal(createData);
 
       expect(fetchMock).toHaveBeenCalledWith(
-        "https://api.portal.swaggerhub.com/v1/portals",
+        `${config.portalBasePath}/portals`,
         {
           method: "POST",
           headers: {
@@ -81,7 +87,7 @@ describe("SwaggerAPI", () => {
       const result = await api.getPortal("portal-123");
 
       expect(fetchMock).toHaveBeenCalledWith(
-        "https://api.portal.swaggerhub.com/v1/portals/portal-123",
+        `${config.portalBasePath}/portals/portal-123`,
         {
           method: "GET",
           headers: {
@@ -107,7 +113,7 @@ describe("SwaggerAPI", () => {
       const result = await api.updatePortal("portal-123", updateData);
 
       expect(fetchMock).toHaveBeenCalledWith(
-        "https://api.portal.swaggerhub.com/v1/portals/portal-123",
+        `${config.portalBasePath}/portals/portal-123`,
         {
           method: "PATCH",
           headers: {
@@ -130,7 +136,7 @@ describe("SwaggerAPI", () => {
       const result = await api.getPortalProducts("portal-123");
 
       expect(fetchMock).toHaveBeenCalledWith(
-        "https://api.portal.swaggerhub.com/v1/portals/portal-123/products",
+        `${config.portalBasePath}/portals/portal-123/products`,
         {
           method: "GET",
           headers: {
@@ -158,7 +164,7 @@ describe("SwaggerAPI", () => {
       const result = await api.createPortalProduct("portal-123", createData);
 
       expect(fetchMock).toHaveBeenCalledWith(
-        "https://api.portal.swaggerhub.com/v1/portals/portal-123/products",
+        `${config.portalBasePath}/portals/portal-123/products`,
         {
           method: "POST",
           headers: {
@@ -181,7 +187,7 @@ describe("SwaggerAPI", () => {
       const result = await api.getPortalProduct("prod-123");
 
       expect(fetchMock).toHaveBeenCalledWith(
-        "https://api.portal.swaggerhub.com/v1/products/prod-123",
+        `${config.portalBasePath}/products/prod-123`,
         {
           method: "GET",
           headers: {
@@ -202,7 +208,7 @@ describe("SwaggerAPI", () => {
       await api.deletePortalProduct("prod-123");
 
       expect(fetchMock).toHaveBeenCalledWith(
-        "https://api.portal.swaggerhub.com/v1/products/prod-123",
+        `${config.portalBasePath}/products/prod-123`,
         {
           method: "DELETE",
           headers: {
@@ -216,18 +222,32 @@ describe("SwaggerAPI", () => {
   });
 
   describe("updatePortalProduct", () => {
-    it("should update product with patch data", async () => {
-      const mockResponse = { id: "prod-123", name: "Updated Product" };
+    it("should update product with patch data and return URL", async () => {
+      const mockProductResponse = {
+        id: "prod-123",
+        name: "Updated Product",
+        slug: "my-product",
+        portalId: "portal-456",
+      };
+      const mockPortalResponse = {
+        id: "portal-456",
+        subdomain: "my-portal",
+        name: "My Portal",
+      };
       const updateData = { name: "Updated Product", public: true };
 
-      fetchMock.mockResponseOnce(JSON.stringify(mockResponse), {
+      fetchMock.mockResponseOnce(JSON.stringify(mockProductResponse), {
+        headers: { "content-type": "application/json" },
+      });
+
+      fetchMock.mockResponseOnce(JSON.stringify(mockPortalResponse), {
         headers: { "content-type": "application/json" },
       });
 
       const result = await api.updatePortalProduct("prod-123", updateData);
 
       expect(fetchMock).toHaveBeenCalledWith(
-        "https://api.portal.swaggerhub.com/v1/products/prod-123",
+        `${config.portalBasePath}/products/prod-123`,
         {
           method: "PATCH",
           headers: {
@@ -238,7 +258,43 @@ describe("SwaggerAPI", () => {
           body: JSON.stringify(updateData),
         },
       );
-      expect(result).toEqual(mockResponse);
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${config.portalBasePath}/portals/portal-456`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: "Bearer test-token",
+            "Content-Type": "application/json",
+            "User-Agent": "SmartBear-MCP/1.0.0",
+          },
+        },
+      );
+
+      expect(result).toEqual({
+        ...mockProductResponse,
+        url: "https://my-portal.portal.swaggerhub.com/my-product",
+      });
+    });
+
+    it("should return product without URL when URL generation fails", async () => {
+      const mockProductResponse = {
+        id: "prod-123",
+        name: "Updated Product",
+        slug: "my-product",
+        portalId: "portal-456",
+      };
+      const updateData = { name: "Updated Product", public: true };
+
+      fetchMock.mockResponseOnce(JSON.stringify(mockProductResponse), {
+        headers: { "content-type": "application/json" },
+      });
+
+      fetchMock.mockResponseOnce("Portal not found", { status: 404 });
+
+      const result = await api.updatePortalProduct("prod-123", updateData);
+
+      expect(result).toEqual(mockProductResponse);
     });
   });
 
@@ -319,7 +375,7 @@ describe("SwaggerAPI", () => {
       });
 
       expect(fetchMock).toHaveBeenCalledWith(
-        "https://api.swaggerhub.com/apis/orgname/petstore/1.0.0",
+        `${config.registryBasePath}/apis/orgname/petstore/1.0.0`,
         {
           method: "GET",
           headers: {
@@ -332,7 +388,7 @@ describe("SwaggerAPI", () => {
       );
 
       expect(fetchMock).toHaveBeenCalledWith(
-        "https://api.swaggerhub.com/standardization/orgname/scan",
+        `${config.registryBasePath}/standardization/orgname/scan`,
         expect.objectContaining({
           method: "POST",
           body: JSON.stringify(definition),
@@ -497,7 +553,7 @@ describe("SwaggerAPI", () => {
       // Verify publish was called first
       expect(fetchMock).toHaveBeenNthCalledWith(
         1,
-        `https://api.portal.swaggerhub.com/v1/products/${productId}/published-content?preview=false`,
+        `${config.portalBasePath}/products/${productId}/published-content?preview=false`,
         {
           method: "PUT",
           headers,
@@ -507,7 +563,7 @@ describe("SwaggerAPI", () => {
       // Verify metadata was fetched after publish
       expect(fetchMock).toHaveBeenNthCalledWith(
         2,
-        `https://api.portal.swaggerhub.com/v1/products/${productId}`,
+        `${config.portalBasePath}/products/${productId}`,
         {
           method: "GET",
           headers,
@@ -550,7 +606,7 @@ describe("SwaggerAPI", () => {
 
       expect(fetchMock).toHaveBeenNthCalledWith(
         1,
-        `https://api.portal.swaggerhub.com/v1/products/${productId}/published-content?preview=true`,
+        `${config.portalBasePath}/products/${productId}/published-content?preview=true`,
         {
           method: "PUT",
           headers,
@@ -746,7 +802,6 @@ describe("SwaggerAPI", () => {
   });
 
   describe("createDocumentationPage", () => {
-    const BASE = "https://api.portal.swaggerhub.com/v1";
     const headers = {
       Authorization: "Bearer test-token",
       "Content-Type": "application/json",
@@ -798,22 +853,34 @@ describe("SwaggerAPI", () => {
       fetchMock.mockResponse((req) => {
         const { url, method } = req;
 
-        if (url === `${BASE}/portals/${portalId}`) {
+        if (url === `${DUMMY_PORTAL_BASE_PATH}/portals/${portalId}`) {
           return Promise.resolve(JSON.stringify(portalResponse));
         }
-        if (url === `${BASE}/products/${productId}` && method === "GET") {
+        if (
+          url === `${DUMMY_PORTAL_BASE_PATH}/products/${productId}` &&
+          method === "GET"
+        ) {
           return Promise.resolve(JSON.stringify(productResponse));
         }
-        if (url === `${BASE}/products/${productId}/sections`) {
+        if (
+          url === `${DUMMY_PORTAL_BASE_PATH}/products/${productId}/sections`
+        ) {
           return Promise.resolve(JSON.stringify(sectionsResponse));
         }
-        if (url.startsWith(`${BASE}/products/${productId}/sections?`)) {
+        if (
+          url.startsWith(
+            `${DUMMY_PORTAL_BASE_PATH}/products/${productId}/sections?`,
+          )
+        ) {
           return Promise.resolve(JSON.stringify(sectionsWithEmbedResponse));
         }
-        if (url === `${BASE}/sections/${sectionId}/table-of-contents`) {
+        if (
+          url ===
+          `${DUMMY_PORTAL_BASE_PATH}/sections/${sectionId}/table-of-contents`
+        ) {
           return Promise.resolve(JSON.stringify(tocItemResponse));
         }
-        if (url === `${BASE}/documents/${documentId}`) {
+        if (url === `${DUMMY_PORTAL_BASE_PATH}/documents/${documentId}`) {
           return Promise.resolve(JSON.stringify(updateDocumentResponse));
         }
 
@@ -831,20 +898,26 @@ describe("SwaggerAPI", () => {
         pageContent: "# Hello",
       });
 
-      expect(fetchMock).toHaveBeenCalledWith(`${BASE}/portals/${portalId}`, {
-        method: "GET",
-        headers,
-      });
-      expect(fetchMock).toHaveBeenCalledWith(`${BASE}/products/${productId}`, {
-        method: "GET",
-        headers,
-      });
       expect(fetchMock).toHaveBeenCalledWith(
-        `${BASE}/products/${productId}/sections`,
+        `${DUMMY_PORTAL_BASE_PATH}/portals/${portalId}`,
+        {
+          method: "GET",
+          headers,
+        },
+      );
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${DUMMY_PORTAL_BASE_PATH}/products/${productId}`,
+        {
+          method: "GET",
+          headers,
+        },
+      );
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${DUMMY_PORTAL_BASE_PATH}/products/${productId}/sections`,
         { method: "GET", headers },
       );
       expect(fetchMock).toHaveBeenCalledWith(
-        `${BASE}/sections/${sectionId}/table-of-contents`,
+        `${DUMMY_PORTAL_BASE_PATH}/sections/${sectionId}/table-of-contents`,
         {
           method: "POST",
           headers,
@@ -859,7 +932,7 @@ describe("SwaggerAPI", () => {
         },
       );
       expect(fetchMock).toHaveBeenCalledWith(
-        `${BASE}/documents/${documentId}`,
+        `${DUMMY_PORTAL_BASE_PATH}/documents/${documentId}`,
         {
           method: "PATCH",
           headers,
@@ -895,7 +968,7 @@ describe("SwaggerAPI", () => {
       });
 
       expect(fetchMock).toHaveBeenCalledWith(
-        `${BASE}/sections/${sectionId}/table-of-contents`,
+        `${DUMMY_PORTAL_BASE_PATH}/sections/${sectionId}/table-of-contents`,
         {
           method: "POST",
           headers,
@@ -934,13 +1007,15 @@ describe("SwaggerAPI", () => {
 
       fetchMock.mockResponse((req) => {
         const { url } = req;
-        if (url === `${BASE}/portals/${portalId}`) {
+        if (url === `${DUMMY_PORTAL_BASE_PATH}/portals/${portalId}`) {
           return Promise.resolve(JSON.stringify(portalResponse));
         }
-        if (url === `${BASE}/products/${productId}`) {
+        if (url === `${DUMMY_PORTAL_BASE_PATH}/products/${productId}`) {
           return Promise.resolve(JSON.stringify(productResponse));
         }
-        if (url === `${BASE}/products/${productId}/sections`) {
+        if (
+          url === `${DUMMY_PORTAL_BASE_PATH}/products/${productId}/sections`
+        ) {
           return Promise.resolve(JSON.stringify(emptySections));
         }
         return Promise.reject(new Error(`Unexpected fetch: ${url}`));
@@ -969,7 +1044,7 @@ describe("SwaggerAPI", () => {
       });
 
       expect(fetchMock).toHaveBeenCalledWith(
-        `${BASE}/sections/${sectionId}/table-of-contents`,
+        `${DUMMY_PORTAL_BASE_PATH}/sections/${sectionId}/table-of-contents`,
         {
           method: "POST",
           headers,
@@ -984,7 +1059,7 @@ describe("SwaggerAPI", () => {
         },
       );
       expect(fetchMock).toHaveBeenCalledWith(
-        `${BASE}/documents/${documentId}`,
+        `${DUMMY_PORTAL_BASE_PATH}/documents/${documentId}`,
         {
           method: "PATCH",
           headers,
@@ -1028,7 +1103,7 @@ describe("SwaggerAPI", () => {
 
       expect(result.pageDetails.slug).toBe("my-custom-slug");
       expect(fetchMock).toHaveBeenCalledWith(
-        `${BASE}/sections/${sectionId}/table-of-contents`,
+        `${DUMMY_PORTAL_BASE_PATH}/sections/${sectionId}/table-of-contents`,
         expect.objectContaining({
           body: expect.stringContaining('"slug":"my-custom-slug"'),
         }),
@@ -1522,6 +1597,202 @@ describe("SwaggerAPI", () => {
       // The org-level conflict must short-circuit instead of retrying other
       // subdomain candidates.
       expect(createCalls).toHaveLength(1);
+    });
+  });
+
+  describe("patchApi", () => {
+    const owner = "orgname";
+    const apiName = "petstore";
+
+    const baseDefinition = [
+      "openapi: 3.0.0",
+      "info:",
+      "  title: Pets",
+      "  version: 1.0.0",
+      "paths:",
+      "  /pets:",
+      "    get:",
+      "      summary: List all pets",
+      "      responses:",
+      "        '200':",
+      "          description: OK",
+      "  /pets/{id}:",
+      "    get:",
+      "      summary: Get a pet",
+      "      responses:",
+      "        '200':",
+      "          description: OK",
+      "",
+    ].join("\n");
+
+    it("applies edits, sets info.version, and saves api", async () => {
+      fetchMock
+        .mockResponseOnce("", { status: 404 })
+        .mockResponseOnce(baseDefinition)
+        .mockResponseOnce("", { headers: { "X-Version": "1.0.1" } });
+
+      const result = await api.patchApi({
+        owner,
+        apiName,
+        version: "1.0.0",
+        newVersion: "1.0.1",
+        edits: [
+          {
+            oldString: "      summary: List all pets",
+            replaceString:
+              "      operationId: listPets\n      summary: List all pets",
+          },
+        ],
+      });
+
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        1,
+        `${DUMMY_REGISTRY_BASE_PATH}/apis/orgname/petstore/1.0.1`,
+        expect.objectContaining({ method: "GET" }),
+      );
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        2,
+        `${DUMMY_REGISTRY_BASE_PATH}/apis/orgname/petstore/1.0.0`,
+        expect.objectContaining({ method: "GET" }),
+      );
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        3,
+        `${DUMMY_REGISTRY_BASE_PATH}/apis/orgname/petstore?version=1.0.1&isPrivate=true`,
+        expect.objectContaining({ method: "POST" }),
+      );
+
+      expect(result.saved).toBe(true);
+      expect(result.failed).toBeUndefined();
+      expect(result.operation).toBe("update");
+      expect(result.version).toBe("1.0.1");
+      expect(result.url).toBe(
+        "https://app.swaggerhub.com/apis/orgname/petstore/1.0.1",
+      );
+    });
+
+    it("rejects a newVersion that already exists without saving", async () => {
+      fetchMock.mockResponseOnce(baseDefinition);
+
+      await expect(
+        api.patchApi({
+          owner,
+          apiName,
+          version: "1.0.0",
+          newVersion: "1.0.1",
+          edits: [
+            { oldString: "title: Pets", replaceString: "title: Pet Store" },
+          ],
+        }),
+      ).rejects.toThrow(/already exists/i);
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("overwrites the base version when newVersion is not provided", async () => {
+      fetchMock
+        .mockResponseOnce(baseDefinition)
+        .mockResponseOnce("", { headers: { "X-Version": "1.0.0" } });
+
+      const result = await api.patchApi({
+        owner,
+        apiName,
+        version: "1.0.0",
+        edits: [
+          { oldString: "title: Pets", replaceString: "title: Pet Store" },
+        ],
+      });
+
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        1,
+        `${DUMMY_REGISTRY_BASE_PATH}/apis/orgname/petstore/1.0.0`,
+        expect.objectContaining({ method: "GET" }),
+      );
+      // Visibility must not be sent for an in-place patch, otherwise the
+      // existing version could silently change visibility.
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        2,
+        `${DUMMY_REGISTRY_BASE_PATH}/apis/orgname/petstore?version=1.0.0`,
+        expect.objectContaining({ method: "POST" }),
+      );
+      expect(result.saved).toBe(true);
+      expect(result.version).toBe("1.0.0");
+    });
+
+    it("reports no_match and ambiguous failures without saving", async () => {
+      fetchMock
+        .mockResponseOnce("", { status: 404 })
+        .mockResponseOnce(baseDefinition);
+
+      const result = await api.patchApi({
+        owner,
+        apiName,
+        version: "1.0.0",
+        newVersion: "1.0.1",
+        edits: [
+          { oldString: "does not exist anywhere", replaceString: "x" },
+          { oldString: "  version: 1.0.0\npaths:", replaceString: "y" },
+          { oldString: "description: OK", replaceString: "description: OK!" },
+        ],
+      });
+
+      expect(result.saved).toBe(false);
+      expect(result.failed).toEqual([
+        {
+          index: 0,
+          oldString: "does not exist anywhere",
+          error: "no_match",
+          matchCount: 0,
+        },
+        {
+          index: 2,
+          oldString: "description: OK",
+          error: "ambiguous",
+          matchCount: 2,
+        },
+      ]);
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+
+    it("patches an AsyncAPI definition", async () => {
+      const asyncapiDefinition = [
+        "asyncapi: 3.0.0",
+        "info:",
+        "  title: Events",
+        "  version: 1.0.0",
+        "channels:",
+        "  pets:",
+        "    address: pets",
+      ].join("\n");
+
+      fetchMock
+        .mockResponseOnce(asyncapiDefinition)
+        .mockResponseOnce("", { headers: { "X-Version": "1.0.0" } });
+
+      const result = await api.patchApi({
+        owner,
+        apiName,
+        version: "1.0.0",
+        edits: [
+          { oldString: "title: Events", replaceString: "title: Pet Events" },
+        ],
+      });
+
+      expect(result.saved).toBe(true);
+    });
+
+    it("rejects a definition that is neither OpenAPI nor AsyncAPI", async () => {
+      fetchMock.mockResponseOnce("foo: bar\nbaz: 1");
+
+      await expect(
+        api.patchApi({
+          owner,
+          apiName,
+          version: "1.0.0",
+          edits: [{ oldString: "foo: bar", replaceString: "foo: baz" }],
+        }),
+      ).rejects.toThrow(/invalid format/i);
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
     });
   });
 });
