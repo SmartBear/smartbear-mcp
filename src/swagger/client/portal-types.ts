@@ -717,6 +717,7 @@ export const ProductOutputSchema = z.looseObject({
   description: z.string().optional(),
   public: z.boolean().optional(),
   hidden: z.boolean().optional(),
+  url: z.string().optional(),
 });
 
 export const ProductsListOutputSchema = z.object({

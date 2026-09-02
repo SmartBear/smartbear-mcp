@@ -21,7 +21,7 @@ All tools listed below are only available through the Local MCP Server. They are
 #### `list_suites`
 
 - Purpose: Lists all test Suites available in your Swagger Functional Testing workspace. Use this tool when you need to discover available Suites before running them or checking their execution history. Do not use this tool to retrieve individual tests or test Suite execution results.
-- Returns: An object with a `suites` array of the test Suites in the workspace, alongside aggregate `stats`. When no Suites exist, the `suites` array is empty (`{ "suites": [] }`).
+- Returns: An object with a `suites` array of the test Suites in the workspace. Each Suite includes its `slug`, which identifies it for other suite tools (e.g. `run_suite`). When no Suites exist, the `suites` array is empty (`{ "suites": [] }`).
 - Use case: Discover available test Suites.
 
 ---
@@ -30,9 +30,9 @@ All tools listed below are only available through the Local MCP Server. They are
 
 #### `create_test`
 
-- Purpose: Creates a new API test in your Swagger Functional Testing workspace. Use this tool when you need to create an end-to-end API test, either from an existing API spec or by directly providing the request steps (URL, HTTP method, headers, body, redirect handling). Each step can optionally define assertions for HTTP status code ranges the response must fall within and body assertions evaluated against the response body, e.g. matching, comparing, or extracting a field by path.
+- Purpose: Creates a new API test in your Swagger Functional Testing workspace. Use this tool when you need to create an end-to-end API test, either from an existing API spec or by directly providing the request steps (URL, HTTP method, headers, body, redirect handling). Each step can optionally define assertions for HTTP status code ranges the response must fall within and body assertions evaluated against the response body, e.g. matching, comparing, or extracting a field by path. Every step must set a step-level `baseUrl` to that endpoint's server/common URL, and should also set `apiName` to the name of the API it belongs to; the `baseUrl` is extracted into a shared `parameters` entry. A step's URL may also include OAS-style `{pathParam}` placeholders, which are always converted into definition-level parameters — if the same `{pathParam}` appears in more than one step, it must be defined in `parameters` so its value is shared across steps. The top-level `parameters` array only accepts these path/base-URL parameters, not request body parameters.
 - Returns: The created test ID and the URL to test definition; the ID can be used with `run_test` to run it.
-- Use case: Create an API test from an existing API spec or from directly supplied endpoint data, optionally with assertions to validate the response status and body.
+- Use case: Create an API test from an existing API spec or from directly supplied endpoint data, optionally with assertions to validate the response status and body, and with base URLs/path parameters templated as reusable variables shared across steps.
 
 ---
 
@@ -46,7 +46,7 @@ All tools listed below are only available through the Local MCP Server. They are
   - `title` — a label that must be unique across the Suite's blocks
 
   Optionally accepts `agentName` to save a tunnel agent override for future runs of the Suite.
-- Returns: The created Suite's `id`, `slug`, and `url`.
+- Returns: The created Suite's `slug` and `url`.
 - Use case: Group existing tests into a Suite, optionally with parallel/sequential blocks and retry behavior, for collective execution.
 
 ---
@@ -77,25 +77,25 @@ All tools listed below are only available through the Local MCP Server. They are
 
 #### `run_suite`
 
-- Purpose: Runs a specific test Suite in your Swagger Functional Testing workspace. Use this tool when you need to verify expected API functionality by executing all tests within your Suite. Requires a `suiteId`. Optionally accepts a `tunnelAgentName` that will override any tunnels saved on each API tests within that Suite; when omitted, each test's saved tunnel is used instead.
-- Returns: Run details including `suiteId`, `executionId` and current status. First two (`suiteId` and `executionId`) can be used in `get_suite_status` tool to poll the Suite run result.
+- Purpose: Runs a specific test Suite in your Swagger Functional Testing workspace. Use this tool when you need to verify expected API functionality by executing all tests within your Suite. Requires the Suite's `slug` (from `create_suite` or `list_suites`). Optionally accepts a `tunnelAgentName` that will override any tunnels saved on each API tests within that Suite; when omitted, each test's saved tunnel is used instead.
+- Returns: Run details including `executionId` and current status. That `executionId`, together with the Suite's `slug`, can be used in `get_suite_status` tool to poll the Suite run result.
 - Use case: Trigger a Suite run that exercises every test it contains.
 
 #### `get_suite_status`
 
-- Purpose: Retrieves the status and per-test result of triggered Suite execution. Requires the `suiteId` of your test Suite and the `executionId` returned by `run_suite`.
-- Returns: Execution details including `suiteId`, `executionId`, overall status (pending, canceled, passed, or failed), whether run finished, and a per-test breakdown. The per-test results include status (pending, canceled, passed, or failed), runtime and number of steps.
+- Purpose: Retrieves the status and per-test result of triggered Suite execution. Requires the `slug` of your test Suite and the `executionId` returned by `run_suite`.
+- Returns: Execution details including `executionId`, overall status (pending, canceled, passed, or failed), whether run finished, and a per-test breakdown. The per-test results include status (pending, canceled, passed, or failed), runtime and number of steps.
 - Use case: Poll for the outcome of a Suite run after calling `run_suite`.
 
 #### `list_suite_executions`
 
-- Purpose: Lists all executions for a given test Suite in your Swagger Functional Testing workspace. Use this tool when you need to review execution history and timings for a specific Suite. Do not use this tool to retrieve the status of a single execution or individual test results. Requires a `suiteId`.
+- Purpose: Lists all executions for a given test Suite in your Swagger Functional Testing workspace. Use this tool when you need to review execution history and timings for a specific Suite. Do not use this tool to retrieve the status of a single execution or individual test results. Requires the Suite's `slug`.
 - Returns: Complete list of executions for the given Suite. An empty list is returned when no executions exist.
 - Use case: Review the execution history and timings of a test Suite.
 
 #### `cancel_suite_execution`
 
-- Purpose: Cancels an ongoing test Suite execution in your Swagger Functional Testing workspace. Use this tool when you need to stop a long-running or accidentally triggered Suite run. Do not use this tool to cancel individual test runs. Requires a `suiteId` and an `executionId`.
+- Purpose: Cancels an ongoing test Suite execution in your Swagger Functional Testing workspace. Use this tool when you need to stop a long-running or accidentally triggered Suite run. Do not use this tool to cancel individual test runs. Requires the Suite's `slug` and an `executionId`.
 - Returns: Confirmation of the cancellation. The cancelled execution is persisted in run history with status `cancelled`.
 - Use case: Stop a long-running or accidentally triggered Suite run.
 
