@@ -434,7 +434,7 @@ describe("SwaggerAPI", () => {
       });
 
       expect(fetchMock).toHaveBeenCalledWith(
-        "https://api.swaggerhub.com/apis/orgname/petstore/.ai?specType=openapi30x&createOnly=true",
+        `${config.registryBasePath}/apis/orgname/petstore/.ai?specType=openapi30x&createOnly=true`,
         expect.objectContaining({ method: "POST" }),
       );
       expect(result).toEqual({
