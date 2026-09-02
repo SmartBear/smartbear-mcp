@@ -5192,7 +5192,7 @@ Expected Output: { parentId: 5126498, parentName: "abc", children: [...], _note:
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
-- viewId (number): ViewId for issues - SYSTEM AUTOMATICALLY RESOLVES THIS. Leave empty unless you have a specific viewId. System will fetch project info using the projectKey and extract latestViews.IS.viewId automatically. Manual viewId only needed if you want to override the automatic resolution.
+- viewId (number): ViewId for issues - SYSTEM AUTOMATICALLY RESOLVES THIS. Leave empty unless you have a specific viewId. System will fetch project info using the projectKey and extract latestViews.IS.viewId automatically.
 - start (number): Start index for pagination - defaults to 0 (default: 0)
 - page (number): Page number to return (starts from 1) (default: 1)
 - limit (number): Number of records (default 10). (default: 10)
@@ -6111,7 +6111,7 @@ Expected Output: Detailed requirement information including summary, description
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
-- viewId (number): ViewId for requirements - SYSTEM AUTOMATICALLY RESOLVES THIS. Leave empty unless you have a specific viewId. System will fetch project info using the projectKey and extract latestViews.RQ.viewId automatically. Manual viewId only needed if you want to override the automatic resolution.
+- viewId (number): ViewId for requirements - SYSTEM AUTOMATICALLY RESOLVES THIS. Leave empty unless you have a specific viewId. System will fetch project info using the projectKey and extract latestViews.RQ.viewId automatically.
 - folderPath (string): Folder path for requirements - SYSTEM AUTOMATICALLY SETS TO ROOT. Leave empty unless you want specific folder. System will automatically use empty string "" (root directory). Only specify if user wants specific folder like "Automation/Regression". (default: "")
 - start (number): Start index for pagination - defaults to 0 (default: 0)
 - page (number): Page number to return (starts from 1) (default: 1)
@@ -6935,7 +6935,7 @@ Expected Output: Version 2 details for test case 123
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
-- viewId (number): ViewId for test cases - SYSTEM AUTOMATICALLY RESOLVES THIS. Leave empty unless you have a specific viewId. System will fetch project info using the projectKey and extract latestViews.TC.viewId automatically. Manual viewId only needed if you want to override the automatic resolution.
+- viewId (number): ViewId for test cases - SYSTEM AUTOMATICALLY RESOLVES THIS. Leave empty unless you have a specific viewId. System will fetch project info using the projectKey and extract latestViews.TC.viewId automatically.
 - folderPath (string): Folder path for test cases - SYSTEM AUTOMATICALLY SETS TO ROOT. Leave empty unless you want specific folder. System will automatically use empty string "" (root directory). Only specify if user wants specific folder like "Automation/Regression". (default: "")
 - folderID (number): Folder ID - unique numeric identifier for the specific folder. Use this to target a specific folder within the project hierarchy. Applies to any entity type (test cases, requirements, test suites, etc.).
 - start (number): Start index for pagination - defaults to 0 (default: 0)
@@ -7455,7 +7455,7 @@ Expected Output: Full test suite detail object with UDFTypeData, UDF field value
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
-- viewId (number): ViewId for test suites - SYSTEM AUTOMATICALLY RESOLVES THIS. Leave empty unless you have a specific viewId. System will fetch project info using the projectKey and extract latestViews.TS.viewId automatically. Manual viewId only needed if you want to override the automatic resolution.
+- viewId (number): ViewId for test suites - SYSTEM AUTOMATICALLY RESOLVES THIS. Leave empty unless you have a specific viewId. System will fetch project info using the projectKey and extract latestViews.TS.viewId automatically.
 - folderPath (string): Folder path for test suites - SYSTEM AUTOMATICALLY SETS TO ROOT. Leave empty unless you want specific folder. System will automatically use empty string "" (root directory). Only specify if user wants specific folder like "Automation/Regression". (default: "")
 - start (number): Start index for pagination - defaults to 0 (default: 0)
 - page (number): Page number to return (starts from 1) (default: 1)
