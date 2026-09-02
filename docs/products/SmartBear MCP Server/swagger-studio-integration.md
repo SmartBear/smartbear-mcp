@@ -52,7 +52,7 @@ The Swagger Studio client provides comprehensive API and Domain management capab
 | --- | --- | --- | --- |
 | `owner` | Organization name (owner of the API) | string | Yes |
 | `apiName` | API name. If an API with this name already exists under the specified owner, it will be updated. | string | Yes |
-| `definition` | API definition content (OpenAPI/AsyncAPI specification in JSON or YAML format). Format is automatically detected. API is created with fixed values: version 1.0.0, private visibility, automock disabled, and no project assignment. | string | Yes |
+| `definition` | API definition content (OpenAPI/AsyncAPI specification in JSON or YAML format). Format is automatically detected. On create, fixed values are used: version 1.0.0, private visibility, automock disabled, and no project assignment. On update, the API's existing visibility is preserved. | string | Yes |
 
 #### `scan_api_standardization`
 
@@ -81,8 +81,8 @@ The Swagger Studio client provides comprehensive API and Domain management capab
 
 #### `create_api_from_prompt`
 
--   Purpose: Generate and save an API definition based on a natural language prompt using SmartBear AI. This tool automatically applies organization governance and standardization rules during API generation. The specType parameter determines the format of the generated definition.
--   Returns: API metadata including owner, name, specType, version (from X-Version header if available), SwaggerHub URL, and operation type ('create' or 'update'). HTTP 201 indicates creation, HTTP 200 indicates update.
+-   Purpose: Generate and save a new API or a new version of an existing API from a natural language prompt using SmartBear AI, applying the organization's governance and standardization rules during generation. The specType parameter determines the format of the generated definition. Fails with a conflict error if the API version already exists.
+-   Returns: API metadata including owner, name, specType, version (from X-Version header if available), SwaggerHub URL, and operation type ('create').
 -   Use case: Rapidly create APIs from natural language descriptions (e.g., "Create a RESTful API for managing a pet store with endpoints for pets, orders, and inventory"), generate API prototypes for proof-of-concept work, or bootstrap new API projects with AI assistance while ensuring compliance with organization standards.
 -   Parameters:
 
