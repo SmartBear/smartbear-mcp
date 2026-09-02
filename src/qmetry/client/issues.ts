@@ -517,6 +517,7 @@ export async function fetchIssueDetails(
   if (typeof payload.orgCode === "string") {
     extraHeaders["orgcode"] = payload.orgCode;
   }
+  extraHeaders["Content-Type"] = "application/json";
   return qmetryRequest<unknown>({
     method: "GET",
     path: url,
