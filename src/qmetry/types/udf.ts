@@ -178,11 +178,11 @@ export const FetchCascadeChildValuesArgsSchema = z.object({
 });
 
 // ---------------------------------------------------------------------------
-// Fetch UDF Layout (field definitions for TC / TS / IS)
+// Fetch UDF Layout (field definitions for TC / TS / IS / RQ)
 // ---------------------------------------------------------------------------
 
 export interface FetchUdfLayoutPayload {
-  entityType: "TC" | "TS" | "IS";
+  entityType: "TC" | "TS" | "IS" | "RQ";
   pageName?: "ADD" | "DETAIL";
   scopeId?: number;
   orgCode?: string;
@@ -191,12 +191,13 @@ export interface FetchUdfLayoutPayload {
 export const FetchUdfLayoutArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
   entityType: z
-    .enum(["TC", "TS", "IS"])
+    .enum(["TC", "TS", "IS", "RQ"])
     .describe(
       "Entity type to fetch UDF field definitions for. " +
         "'TC' = Test Case (also returns step UDFs in stepFields), " +
         "'TS' = Test Suite, " +
-        "'IS' = Issue.",
+        "'IS' = Issue, " +
+        "'RQ' = Requirement.",
     ),
   pageName: z
     .enum(["ADD", "DETAIL"])

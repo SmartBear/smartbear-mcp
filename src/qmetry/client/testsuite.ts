@@ -150,7 +150,7 @@ export async function fetchTestSuites(
     );
   }
 
-  return qmetryRequest<unknown>({
+  const result = await qmetryRequest<Record<string, unknown>>({
     method: "POST",
     path: QMETRY_PATHS.TESTSUITE.GET_TS_LIST,
     token,
@@ -158,6 +158,13 @@ export async function fetchTestSuites(
     baseUrl: resolvedBaseUrl,
     body,
   });
+
+  const {
+    filterTemplate: _filterTemplate,
+    columns: _columns,
+    ...rest
+  } = result;
+  return rest;
 }
 
 /**

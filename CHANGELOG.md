@@ -7,20 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-### Fixed
+### Added
 
-- [Swagger] `create_or_update_api` tool: no longer forces private visibility when updating an existing API. Visibility is now set to private only on creation; updates preserve the API's current visibility.
+- [QMetry] Added `Create Requirement` and `Update Requirement` tools for creating and modifying requirements, with automatic root-folder resolution, sync-gate protection, and UDF support (including DATETIMEPICKER normalization). [#699](https://github.com/SmartBear/smartbear-mcp/pull/699)
+- [QMetry] Added `Link Test Case to Issues` tool for associating defects/issues with a test case. [#699](https://github.com/SmartBear/smartbear-mcp/pull/699)
+- [QMetry] `Create Test Case` now auto-generates 2–5 steps from context when the user does not provide them, and automatically applies `stepDefaultValues` from the UDF layout to every step's UDF fields. [#699](https://github.com/SmartBear/smartbear-mcp/pull/699)
+- [Swagger] Extended the `create_test` Functional Testing tool with a step-level `baseUrl`/`apiName` and a definition-level `parameters` array. Every step must now set `baseUrl` to its server/common URL; it is extracted into a generated `baseURL<ApiName>` parameter (falling back to `baseURL<Host>` when `apiName` is not set) and templated into the step's `url`. OAS-style `{pathParam}` placeholders in every step's `url` are always converted to `${var(pathParam)}` references with matching generated parameters, and a `{pathParam}` shared by more than one step must be defined in `parameters` so its value stays in sync across steps. `parameters` only accepts these path/base-URL parameters, not request body parameters.
+- [Zephyr] Added `Get Folders` tool to retrieve Folders available within a Zephyr account, with optional filtering by project key and folder type.
 
 ### Changed
 
 - [Swagger] `create_api_from_prompt` tool: now create-only - fails with a conflict error instead of overwriting when the generated API version already exists. Marked as non-destructive.
 - [QMetry] Security: Removed `Qmetry-Token` and `apikey` header fallbacks from `getToken()` to prevent OAuth bypass on HTTP transport. [#697](https://github.com/SmartBear/smartbear-mcp/pull/697)
-- [QMetry] Security: Added input validation (`.max(255)`, `.regex()`, `..` guard) on `fileName` in `ExportHtmlReportArgsSchema` [#697](https://github.com/SmartBear/smartbear-mcp/pull/697)
+- [QMetry] Security: Added input validation (`.max(255)`, `.regex()`, `..` guard) on `fileName` in `ExportHtmlReportArgsSchema`. [#697](https://github.com/SmartBear/smartbear-mcp/pull/697)
+- [QMetry] Trimmed noisy fields from test suite list, issue list, and project info API responses to reduce token usage. [#699](https://github.com/SmartBear/smartbear-mcp/pull/699)
 
-### Added
+### Fixed
 
-- [Swagger] Extended the `create_test` Functional Testing tool with a step-level `baseUrl`/`apiName` and a definition-level `parameters` array. Every step must now set `baseUrl` to its server/common URL; it is extracted into a generated `baseURL<ApiName>` parameter (falling back to `baseURL<Host>` when `apiName` is not set) and templated into the step's `url`. OAS-style `{pathParam}` placeholders in every step's `url` are always converted to `${var(pathParam)}` references with matching generated parameters, and a `{pathParam}` shared by more than one step must be defined in `parameters` so its value stays in sync across steps. `parameters` only accepts these path/base-URL parameters, not request body parameters.
-- [Zephyr] Added `Get Folders` tool to retrieve Folders available within a Zephyr account, with optional filtering by project key and folder type.
+- [Swagger] `create_or_update_api` tool: no longer forces private visibility when updating an existing API. Visibility is now set to private only on creation; updates preserve the API's current visibility.
 
 ## [0.39.0] - 2026-08-31
 
