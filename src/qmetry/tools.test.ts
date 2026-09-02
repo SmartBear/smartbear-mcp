@@ -245,6 +245,203 @@ describe("QmetryClient tools", () => {
     });
   });
 
+  describe("Create Requirement", () => {
+    it("should create requirement with required parameters", async () => {
+      (project.getProjectInfo as any).mockResolvedValue({
+        rootFolders: { RQ: { id: 633 } },
+      });
+      (requirement.createRequirement as any).mockResolvedValue({
+        id: 2073,
+        entityKey: "MAC-RQ-730",
+        name: "New login requirement",
+      });
+
+      const handler = getHandler("Create Requirement");
+      const result = await handler({ name: "New login requirement" });
+
+      expect(requirement.createRequirement).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          name: "New login requirement",
+          rqFolderId: "633",
+        }),
+      );
+
+      expect(result.content[0].text).toContain("MAC-RQ-730");
+    });
+
+    it("should auto-resolve rqFolderId when omitted", async () => {
+      (project.getProjectInfo as any).mockResolvedValue({
+        rootFolders: { RQ: { id: 633 } },
+      });
+      (requirement.createRequirement as any).mockResolvedValue({ id: 2073 });
+
+      const handler = getHandler("Create Requirement");
+      await handler({ name: "New login requirement" });
+
+      expect(project.getProjectInfo).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+      );
+      expect(requirement.createRequirement).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({ rqFolderId: "633" }),
+      );
+    });
+
+    it("should not overwrite rqFolderId when already supplied", async () => {
+      // Even though folderPath auto-resolution still fires a getProjectInfo call
+      // (it always defaults folderPath to "" for any handler with an auto-resolve
+      // entry), the caller-supplied rqFolderId must be preserved, not overwritten.
+      (project.getProjectInfo as any).mockResolvedValue({
+        rootFolders: { RQ: { id: 633 } },
+      });
+      (requirement.createRequirement as any).mockResolvedValue({ id: 2073 });
+
+      const handler = getHandler("Create Requirement");
+      await handler({ name: "New login requirement", rqFolderId: "999" });
+
+      expect(requirement.createRequirement).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({ rqFolderId: "999" }),
+      );
+    });
+
+    it("should create requirement with metadata and udfFields", async () => {
+      (requirement.createRequirement as any).mockResolvedValue({
+        id: 2074,
+        entityKey: "MAC-RQ-731",
+      });
+
+      const handler = getHandler("Create Requirement");
+      const result = await handler({
+        name: "Requirement with metadata",
+        rqFolderId: "633",
+        priority: 688864,
+        requirementOwner: 8,
+        udfFields: { custom_text: "value" },
+      });
+
+      expect(requirement.createRequirement).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          name: "Requirement with metadata",
+          priority: 688864,
+          requirementOwner: 8,
+          udfFields: { custom_text: "value" },
+        }),
+      );
+
+      expect(result.content[0].text).toContain("MAC-RQ-731");
+    });
+  });
+
+  describe("Update Requirement", () => {
+    it("should update requirement priority", async () => {
+      (requirement.updateRequirement as any).mockResolvedValue({
+        id: 2073,
+        entityKey: "MAC-RQ-730",
+        priority: 688865,
+      });
+
+      const handler = getHandler("Update Requirement");
+      const result = await handler({
+        rqId: 2073,
+        rqVersionId: 2087,
+        updateWithVersion: false,
+        priority: 688865,
+      });
+
+      expect(requirement.updateRequirement).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          rqId: 2073,
+          rqVersionId: 2087,
+          updateWithVersion: false,
+          priority: 688865,
+        }),
+      );
+
+      expect(result.content[0].text).toContain("688865");
+    });
+
+    it("should update requirement name, description, component, owner, and state", async () => {
+      (requirement.updateRequirement as any).mockResolvedValue({
+        id: 2073,
+        entityKey: "MAC-RQ-730",
+        name: "Updated login requirement",
+      });
+
+      const handler = getHandler("Update Requirement");
+      const result = await handler({
+        rqId: 2073,
+        rqVersionId: 2087,
+        name: "Updated login requirement",
+        description: "Users must be able to log in with SSO.",
+        component: [689030],
+        requirementOwner: 8,
+        requirementState: 688912,
+      });
+
+      expect(requirement.updateRequirement).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          rqId: 2073,
+          rqVersionId: 2087,
+          name: "Updated login requirement",
+          description: "Users must be able to log in with SSO.",
+          component: [689030],
+          requirementOwner: 8,
+          requirementState: 688912,
+        }),
+      );
+
+      expect(result.content[0].text).toContain("Updated login requirement");
+    });
+
+    it("should update requirement with UDF wrapper and udfFields", async () => {
+      (requirement.updateRequirement as any).mockResolvedValue({
+        id: 2073,
+        entityKey: "MAC-RQ-730",
+      });
+
+      const handler = getHandler("Update Requirement");
+      const result = await handler({
+        rqId: 2073,
+        rqVersionId: 2087,
+        udfFields: { custom_text: "value" },
+        UDF: { custom_text: { fieldID: 2001, value: "value" } },
+      });
+
+      expect(requirement.updateRequirement).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          rqId: 2073,
+          rqVersionId: 2087,
+          udfFields: { custom_text: "value" },
+          UDF: { custom_text: { fieldID: 2001, value: "value" } },
+        }),
+      );
+
+      expect(result.content[0].text).toContain("MAC-RQ-730");
+    });
+  });
+
   describe("Fetch Requirements", () => {
     it("should auto-resolve viewId and call fetchRequirements with default pagination", async () => {
       // Mock project info response for auto-resolution
@@ -2494,6 +2691,54 @@ describe("QmetryClient tools", () => {
       );
 
       expect(result.content[0].text).toContain("linked");
+    });
+  });
+
+  describe("Link Test Case to Issues", () => {
+    it("should link issues to test case", async () => {
+      (testcase.linkTestcaseToIssues as any).mockResolvedValue({
+        success: true,
+        message: "Issues linked successfully",
+      });
+
+      const handler = getHandler("Link Test Case to Issues");
+      const result = await handler({
+        tcID: "8d7b-TC-63",
+        dfIDs: [2039, 2038, 2037, 1528],
+      });
+
+      expect(testcase.linkTestcaseToIssues).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          tcID: "8d7b-TC-63",
+          dfIDs: [2039, 2038, 2037, 1528],
+        }),
+      );
+
+      expect(result.content[0].text).toContain("linked");
+    });
+
+    it("should handle API errors gracefully", async () => {
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+
+      (testcase.linkTestcaseToIssues as any).mockRejectedValue(
+        new Error("Test case not found"),
+      );
+
+      const handler = getHandler("Link Test Case to Issues");
+      const result = await handler({
+        tcID: "8d7b-TC-99",
+        dfIDs: [111],
+      });
+
+      expect(result.content[0].success).toBe(false);
+      expect(result.content[0].text).toContain("Test case not found");
+
+      consoleSpy.mockRestore();
     });
   });
 });

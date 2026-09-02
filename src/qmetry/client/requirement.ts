@@ -1,14 +1,163 @@
 import { QMETRY_PATHS } from "../config/rest-endpoints";
 import {
+  type CreateRequirementPayload,
+  DEFAULT_CREATE_REQUIREMENT_PAYLOAD,
   DEFAULT_FETCH_REQUIREMENT_DETAILS_PAYLOAD,
   DEFAULT_FETCH_REQUIREMENTS_LINKED_TO_TESTCASE_PAYLOAD,
   DEFAULT_FETCH_REQUIREMENTS_PAYLOAD,
+  DEFAULT_UPDATE_REQUIREMENT_PAYLOAD,
   type FetchRequirementDetailsPayload,
   type FetchRequirementsLinkedToTestCasePayload,
   type FetchRequirementsPayload,
+  type UpdateRequirementPayload,
 } from "../types/requirements";
 import { qmetryRequest } from "./api/client-api";
+import { getProjectInfo } from "./project";
 import { resolveDefaults } from "./utils";
+
+// extTrackerType values used by QMetry's `integrationsystems` list.
+const EXT_TRACKER_TYPE_JIRA = 1;
+const EXT_TRACKER_TYPE_AZURE = 3;
+
+/**
+ * Hard gate shared by create/update: if the project has an external tracker
+ * configured (isExtTrackerConfigured) that is either Jira (extTrackerType=1)
+ * or Azure (extTrackerType=3), and the Requirement module is configured to
+ * sync with it (isRQConfigured), requirements must be managed in that external
+ * system, not QMetry.
+ * @throws If the gate blocks the operation.
+ */
+async function assertRequirementNotExternallySynced(
+  token: string,
+  baseUrl: string,
+  project: string | undefined,
+  functionName: string,
+  action: "created" | "updated",
+) {
+  const projectInfo = (await getProjectInfo(token, baseUrl, project)) as {
+    isExtTrackerConfigured?: boolean;
+    extTrackerType?: number;
+    isRQConfigured?: boolean;
+  };
+
+  if (
+    projectInfo.isExtTrackerConfigured === true &&
+    projectInfo.isRQConfigured === true
+  ) {
+    const trackerType = projectInfo.extTrackerType;
+    if (trackerType === EXT_TRACKER_TYPE_JIRA) {
+      throw new Error(
+        `[${functionName}] Blocked: This project is Jira-integrated and the Requirement module is ` +
+          `configured to sync with Jira issue types. Requirements must be ${action} in Jira, not QMetry, ` +
+          "for this project.",
+      );
+    }
+    if (trackerType === EXT_TRACKER_TYPE_AZURE) {
+      throw new Error(
+        `[${functionName}] Blocked: This project is Azure-integrated and the Requirement module is ` +
+          `configured to sync with Azure. Requirements must be ${action} in Azure, not QMetry, ` +
+          "for this project.",
+      );
+    }
+  }
+}
+
+/**
+ * Create a requirement.
+ * @throws If `name` is missing/invalid, or if the Jira-integration gate blocks creation.
+ */
+export async function createRequirement(
+  token: string,
+  baseUrl: string,
+  project: string | undefined,
+  payload: CreateRequirementPayload,
+) {
+  const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
+    baseUrl,
+    project,
+  );
+
+  const { udfFields, ...restPayload } = payload as any;
+  const body: CreateRequirementPayload = {
+    ...DEFAULT_CREATE_REQUIREMENT_PAYLOAD,
+    ...restPayload,
+    ...(udfFields ?? {}),
+  };
+
+  if (typeof body.name !== "string") {
+    throw new Error(
+      "[createRequirement] Missing or invalid required parameter: 'name'.",
+    );
+  }
+
+  await assertRequirementNotExternallySynced(
+    token,
+    resolvedBaseUrl,
+    resolvedProject,
+    "createRequirement",
+    "created",
+  );
+
+  return qmetryRequest<unknown>({
+    method: "POST",
+    path: QMETRY_PATHS.REQUIREMENT.CREATE_UPDATE_RQ,
+    token,
+    project: resolvedProject,
+    baseUrl: resolvedBaseUrl,
+    body,
+  });
+}
+
+/**
+ * Update a requirement.
+ * @throws If `rqId` or `rqVersionId` are missing/invalid, or if the Jira-integration gate blocks the update.
+ */
+export async function updateRequirement(
+  token: string,
+  baseUrl: string,
+  project: string | undefined,
+  payload: UpdateRequirementPayload,
+) {
+  const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
+    baseUrl,
+    project,
+  );
+
+  const { udfFields, ...restPayload } = payload as any;
+  const body: UpdateRequirementPayload = {
+    ...DEFAULT_UPDATE_REQUIREMENT_PAYLOAD,
+    ...restPayload,
+    ...(udfFields ?? {}),
+  };
+
+  if (typeof body.rqId !== "number") {
+    throw new Error(
+      "[updateRequirement] Missing or invalid required parameter: 'rqId'.",
+    );
+  }
+  if (typeof body.rqVersionId !== "number") {
+    throw new Error(
+      "[updateRequirement] Missing or invalid required parameter: 'rqVersionId'.",
+    );
+  }
+
+  await assertRequirementNotExternallySynced(
+    token,
+    resolvedBaseUrl,
+    resolvedProject,
+    "updateRequirement",
+    "updated",
+  );
+
+  return qmetryRequest<unknown>({
+    method: "PUT",
+    path: QMETRY_PATHS.REQUIREMENT.CREATE_UPDATE_RQ,
+    token,
+    project: resolvedProject,
+    baseUrl: resolvedBaseUrl,
+    body,
+  });
+}
 
 /**
  * Fetches a list of requirements.
@@ -41,7 +190,7 @@ export async function fetchRequirements(
     );
   }
 
-  return qmetryRequest<unknown>({
+  const result = await qmetryRequest<Record<string, unknown>>({
     method: "POST",
     path: QMETRY_PATHS.REQUIREMENT.GET_RQ_LIST,
     token,
@@ -49,6 +198,10 @@ export async function fetchRequirements(
     baseUrl: resolvedBaseUrl,
     body,
   });
+
+  const { filterTemplate: _filterTemplate, columns: _columns, ...rest } =
+    result;
+  return rest;
 }
 
 /**

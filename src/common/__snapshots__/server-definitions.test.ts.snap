@@ -4522,6 +4522,87 @@ Expected Output: Release 'Summer 2024 Release' created with dates and 'Beta Test
     "outputSchema": undefined,
     "title": "QMetry: Create Release",
   },
+  "qmetry_create_requirement": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+      "title": "QMetry: Create Requirement",
+    },
+    "description": "Create a new requirement in QMetry with metadata and release/cycle mapping.
+
+**Toolset:** Requirements
+
+**Parameters:**
+- name (string) *required*: Requirement name (required).
+- priority (number): Priority ID of the requirement.
+- component (array): Component (Label) IDs associated with the requirement.
+- requirementOwner (number): Owner ID of the requirement.
+- requirementState (number): State ID of the requirement.
+- releaseCycleMapping (array): Release/cycle mapping for the requirement.
+- description (string): Description of the requirement.
+- associateRelCyc (boolean): Whether to associate the release/cycle mapping.
+- rqFolderId (string): Requirement folder ID - SYSTEM AUTOMATICALLY RESOLVES THIS. Leave empty unless you have a specific folder ID. System will fetch project info using the projectKey and extract rootFolders.RQ.id automatically. Manual folder ID only needed if you want to target a specific sub-folder.
+- scope (string): Scope of the requirement, usually 'project'. (default: "project")
+- udfFields (record<string, union>): Flat UDF field values. Keys = UDF field names from 'Fetch UDF Layout'. Values depend on fieldTypeName: STRING/LARGETEXT: string, NUMBER: number, DATETIMEPICKER: date string ('14-08-2026'), LOOKUPLIST: numeric ID, MULTILOOKUPLIST: array of IDs [101, 102], CASCADINGLIST: { parent: 101, child: 102 }. Call 'Fetch UDF Layout' with entityType + pageName='ADD' to discover available fields and list option IDs.
+
+**Output Description:** JSON object containing the new requirement ID, summary, and creation metadata.
+
+**Use Cases:** 1. Create a basic requirement with just a name 2. Add detailed metadata like priority, component, and description to a requirement 3. Associate a requirement with a specific release/cycle for planning 4. Set requirementOwner and requirementState using valid IDs from project info 5. Create a requirement in a specific folder using rqFolderId 6. Set custom fields (UDFs) values on the new requirement
+
+**Examples:**
+1. Create a requirement in the root folder (auto-resolved)
+\`\`\`json
+{
+  "name": "New login requirement"
+}
+\`\`\`
+Expected Output: Requirement created in the root requirement folder with ID and summary details
+
+2. Create a requirement with metadata
+\`\`\`json
+{
+  "name": "New login requirement",
+  "priority": 688864,
+  "component": [
+    689030
+  ],
+  "requirementOwner": 8,
+  "requirementState": 688912,
+  "description": "Users must be able to log in with SSO.",
+  "associateRelCyc": true,
+  "releaseCycleMapping": [
+    {
+      "release": 1628,
+      "cycle": [
+        1839,
+        1840
+      ],
+      "version": 1
+    }
+  ]
+}
+\`\`\`
+Expected Output: Requirement created with metadata. Example uses: priority=688864, component=[689030], requirementOwner=8, requirementState=688912 — resolve these IDs from project info's customListObjs before use.
+
+**Hints:** 1. 'name' is the only mandatory field — sets the requirement's title/summary. Every other field is optional. 2. 'description' is a free-text field (supports HTML) for detailed requirement information. 3. 'component' is an array of Component (Label) IDs — resolve names to IDs from project info before use. 4. If rqFolderId is not provided, it will be auto-resolved to the root requirement folder using project info (rootFolders.RQ.id). 5. To get valid values for priority, component, requirementOwner (owner), requirementState (state), call the 'Admin/Get info Service' API (FETCH_PROJECT_INFO tool) and use the returned customListObjs IDs. 6. If the user provides a name instead of an ID for owner/state/priority/component, fetch project info, find the matching entry by name in the relevant customListObjs list, and use its ID. If not found, skip that field and tell the user it was omitted because the value wasn't available in the current project. 7. Release/cycle mapping is optional. If the user wants to associate a release and cycle, set associateRelCyc: true and provide releaseCycleMapping. 8. HARD GATE (not configurable): before creating, this tool checks project info for isExtTrackerConfigured, extTrackerType, and isRQConfigured. If the project has an external tracker configured, that tracker is Jira (extTrackerType=1), and the Requirement module is synced with it (isRQConfigured=true), the create is refused with an error — do NOT retry or work around this. Tell the user requirements for this project must be created directly in Jira, then synced into QMetry. 9.  10. UDF (User Defined Fields) WORKFLOW FOR CREATE: 11. 1. Call 'Fetch UDF Layout' with entityType='RQ', pageName='ADD' to discover field names, types, and list option IDs. 12.    IF listOptions[field.listName] is empty after Fetch UDF Layout, the tool already tried a metadata fallback.    If STILL empty, ask the user to provide the option ID from the QMetry UI — do NOT guess numeric IDs. 13. 2. For LOOKUPLIST fields: pick one ID from listOptions[field.listName][].id. 14. 3. For MULTILOOKUPLIST fields: pick an array of IDs. 15. 4. For CASCADINGLIST fields: pick parent ID, then call 'Fetch Cascade Child Values' for child ID. Pass { parent: parentId, child: childId }. 16. 5. Pass all UDF values via 'udfFields' param: { fieldName: value }. 17. 6. Mandatory UDF fields (isMandatory=true) MUST be included or create will fail.",
+    "inputSchema": [
+      "associateRelCyc",
+      "component",
+      "description",
+      "name",
+      "priority",
+      "releaseCycleMapping",
+      "requirementOwner",
+      "requirementState",
+      "rqFolderId",
+      "scope",
+      "udfFields",
+    ],
+    "outputSchema": undefined,
+    "title": "QMetry: Create Requirement",
+  },
   "qmetry_create_test_case": {
     "annotations": {
       "destructiveHint": false,
@@ -4536,34 +4617,31 @@ Expected Output: Release 'Summer 2024 Release' created with dates and 'Beta Test
 
 **Parameters:**
 - tcFolderID (string): Test Case folder ID - SYSTEM AUTOMATICALLY RESOLVES THIS. Leave empty unless you have a specific folder ID. System will fetch project info using the projectKey and extract rootFolders.TC.id automatically. Manual folder ID only needed if you want to target a specific sub-folder.
-- steps (array): STEPS INCLUSION RULE — read before deciding whether to include this field:
+- skipSteps (boolean): Set to true ONLY when the user explicitly says they do NOT want steps created (e.g. 'create test case without steps', 'no steps', 'skip steps'). When true, the 'steps' field must be omitted entirely. When false or absent (the default), steps MUST always be included — auto-generate them from context if the user did not provide them.
+- steps (array): STEPS RULE — include this field unless the user explicitly says NOT to create steps.
 
-DEFAULT BEHAVIOR: OMIT 'steps' entirely from the payload. Do NOT include steps: [] (empty array).
-A test case without steps is valid and is the normal case when the user did not mention steps.
+NEVER send steps: [] (empty array) — always send at least 1 valid step object.
+Omit this field entirely (and set skipSteps: true) ONLY when the user explicitly asks to skip steps.
 
-INCLUDE 'steps' ONLY in these two scenarios:
-  SCENARIO 1 — User explicitly mentions steps in their prompt.
-    Examples: 'create test case with steps', 'step 1: open browser, step 2: click login',
-    'add these steps: ...', 'include steps', 'create with following steps'.
-    When user provides step text, parse each step into { orderId, description, inputData?, expectedOutcome? }.
+HOW TO POPULATE:
+  - If user explicitly provides steps: parse each step into { orderId, description, inputData?, expectedOutcome? }.
+  - If user does NOT provide steps (and did not say to skip them): auto-generate meaningful steps based on the test case name, description, and context.
+    Use your knowledge to infer 2-5 logical, realistic steps for the feature or flow being tested.
+    Example: name='Login Test Case' → [{orderId:1, description:'Navigate to login page'}, {orderId:2, description:'Enter credentials'}, {orderId:3, description:'Submit and verify success'}]
+  - If user explicitly said NOT to create steps: omit this field and set skipSteps: true.
 
-  SCENARIO 2 — Any field in 'stepSystemFields' OR 'stepFields' from Fetch UDF Layout has isMandatory=true.
-    stepSystemFields = built-in step fields (description, expectedOutcome, etc.).
-    stepFields = step-level UDF fields (custom fields configured per project).
-    If EITHER array has isMandatory=true on any entry, the backend REQUIRES at least 1 step.
-    In this case you MUST include at least 1 step even if the user did not mention steps.
-    Also fill mandatory step UDF fields from stepFields in step.UDF — use stepDefaultValues if defaults exist, else placeholder.
-    Ask the user for step content OR create a placeholder step with description='Step 1'.
-
-NEVER include 'steps' in any other scenario — omitting it keeps the payload clean and avoids BE errors.
-NEVER send steps: [] (empty array) — either omit the field or send at least 1 valid step object.
+STEP DEFAULT VALUES:
+  After building the steps array, check 'stepDefaultValues' from Fetch UDF Layout.
+  stepDefaultValues shape: { fieldName: defaultValue }
+  For each step: for each key in stepDefaultValues, if the user did NOT explicitly provide a value for that field → add it to step.UDF with the default value.
+  Auto-apply silently — do NOT ask the user.
 
 Step object fields:
   orderId (required): sequential integer starting at 1
   description (required): step action text
   inputData (optional): test data for this step
   expectedOutcome (optional): what should happen after this step
-  UDF (optional): step-level custom fields
+  UDF (optional): step-level custom fields — auto-fill defaults from stepDefaultValues
   tcStepID (omit on create — only used when updating existing steps)
 - name (string) *required*
 - priority (number)
@@ -4583,15 +4661,33 @@ Step object fields:
 **Use Cases:** 1. Create a basic test case with just a name and folder 2. Add detailed steps with custom fields (UDFs) to a test case 3. Associate test case with specific release/cycle for planning 4. Set priority, owner, component, and other metadata using valid IDs from project info 5. Create test cases for automation or manual testing types 6. Add test case to a specific folder using tcFolderID 7. Include estimated execution time and description 8. Map test case to multiple cycles/releases
 
 **Examples:**
-1. MOST COMMON: Create test case with name only — NO steps (user did not mention steps). Steps field is OMITTED from payload.
+1. MOST COMMON: User provides only a name — steps are auto-generated from context.
 \`\`\`json
 {
-  "name": "Login Test Case"
+  "name": "Login Test Case",
+  "steps": [
+    {
+      "orderId": 1,
+      "description": "Navigate to the login page"
+    },
+    {
+      "orderId": 2,
+      "description": "Enter valid username and password"
+    },
+    {
+      "orderId": 3,
+      "description": "Click the Login button"
+    },
+    {
+      "orderId": 4,
+      "description": "Verify successful login and dashboard is shown"
+    }
+  ]
 }
 \`\`\`
-Expected Output: Test case created without steps. Steps field omitted entirely from payload — do NOT add steps: [].
+Expected Output: Test case created with auto-generated steps inferred from the test case name 'Login Test Case'.
 
-2. Create test case with metadata only — no steps (user did not mention steps)
+2. Create test case with metadata only — steps auto-generated from context
 \`\`\`json
 {
   "tcFolderID": "102653",
@@ -4599,10 +4695,28 @@ Expected Output: Test case created without steps. Steps field omitted entirely f
   "priority": 2025268,
   "testCaseState": 2025271,
   "estimatedTime": 3600,
-  "description": "Verifies login flow"
+  "description": "Verifies login flow",
+  "steps": [
+    {
+      "orderId": 1,
+      "description": "Navigate to the login page"
+    },
+    {
+      "orderId": 2,
+      "description": "Enter valid credentials"
+    },
+    {
+      "orderId": 3,
+      "description": "Submit the login form"
+    },
+    {
+      "orderId": 4,
+      "description": "Verify redirection to the home page"
+    }
+  ]
 }
 \`\`\`
-Expected Output: Test case created with metadata, no steps. Steps omitted from payload.
+Expected Output: Test case created with metadata and auto-generated steps based on description 'Verifies login flow'.
 
 3. SCENARIO 1: User explicitly asked for steps — 'create test case with step 1 - Go to login page, step 2 - enter credentials'
 \`\`\`json
@@ -4664,21 +4778,54 @@ Expected Output: Test case created with 2 steps because user explicitly mentione
 \`\`\`
 Expected Output: Test case created with steps because user explicitly requested steps. All metadata populated.
 
-5. SCENARIO 2: stepSystemFields has isMandatory=true — backend requires at least 1 step even though user did not ask for steps
+5. SCENARIO 3: User explicitly says no steps — 'create a test case without any steps'
 \`\`\`json
 {
-  "name": "Mandatory Step Test Case",
+  "name": "Login Test Case",
+  "skipSteps": true
+}
+\`\`\`
+Expected Output: Test case created with no steps because user explicitly asked to skip them.
+
+6. User provides name only — steps auto-generated from test case name context
+\`\`\`json
+{
+  "name": "Password Reset Test Case",
   "steps": [
     {
       "orderId": 1,
-      "description": "Step 1"
+      "description": "Navigate to the login page"
+    },
+    {
+      "orderId": 2,
+      "description": "Click on 'Forgot Password' link"
+    },
+    {
+      "orderId": 3,
+      "description": "Enter registered email address"
+    },
+    {
+      "orderId": 4,
+      "description": "Submit the password reset form"
+    },
+    {
+      "orderId": 5,
+      "description": "Check email for reset link and verify it arrives"
+    },
+    {
+      "orderId": 6,
+      "description": "Click reset link and set a new password"
+    },
+    {
+      "orderId": 7,
+      "description": "Verify login succeeds with the new password"
     }
   ]
 }
 \`\`\`
-Expected Output: Test case created with 1 mandatory step because stepSystemFields from Fetch UDF Layout had isMandatory=true. User was not prompted for step details — a minimal step was included to satisfy backend requirement.
+Expected Output: Test case created with 7 auto-generated steps inferred from the name 'Password Reset Test Case'. No user-provided steps — LLM generated them from context.
 
-**Hints:** 1. ╔══════════════════════════════════════════════════════════════════════════════╗ 2. ║  STEPS DECISION RULE — APPLY BEFORE EVERY CREATE CALL (NO EXCEPTIONS)       ║ 3. ╚══════════════════════════════════════════════════════════════════════════════╝ 4.  5. DEFAULT: OMIT 'steps' from payload. Do NOT include steps: [] (empty array). 6. Test cases without steps are fully valid. The backend does NOT require steps unless noted below. 7.  8. INCLUDE 'steps' ONLY in exactly 2 scenarios: 9.  10.   SCENARIO 1 — User explicitly mentions steps in their prompt. 11.     Trigger phrases: 'with steps', 'step 1 -', 'add steps', 'include steps', 'following steps', 'these steps'. 12.     Action: Parse the user's step text into { orderId, description, inputData?, expectedOutcome? } objects. 13.     Example: 'create test case, step 1 - open browser, step 2 - click login' 14.       → steps: [{ orderId: 1, description: 'open browser' }, { orderId: 2, description: 'click login' }] 15.  16.   SCENARIO 2 — Fetch UDF Layout returns stepSystemFields[] OR stepFields[] with isMandatory=true on any entry. 17.     Trigger: stepSystemFields (built-in step fields) OR stepFields (step-level UDFs) has at least 1 field where isMandatory=true. 18.     Action: MUST include at least 1 step. If user gave no step text, use description='Step 1' as placeholder. 19.     Also fill mandatory step UDF fields (from stepFields) in step.UDF — use stepDefaultValues if defaults exist, else a placeholder value. 20.     IMPORTANT: Inform the user that a step was required by the backend configuration. 21.  22. NEVER include steps in any other case — including when the user only says 'create test case named X'. 23. NEVER send steps: [] — either omit the key entirely OR send array with at least 1 valid step. 24.  25. QUICK DECISION TABLE: 26.   | User mentioned steps? | stepSystemFields OR stepFields mandatory? | Action                                                        | 27.   |-----------------------|------------------------------------------|---------------------------------------------------------------| 28.   | NO                    | NO                                       | OMIT steps entirely (most common case)                        | 29.   | YES                   | NO                                       | Include steps from user's prompt                              | 30.   | NO                    | YES                                      | Include 1 placeholder step + fill mandatory step UDFs, inform user | 31.   | YES                   | YES                                      | Include steps from user's prompt + fill mandatory step UDFs   | 32.  33. ╚══════════════════════════════════════════════════════════════════════════════╝ 34.  35. ╔══════════════════════════════════════════════════════════════════╗ 36. ║  STEP 0 — NON-NEGOTIABLE: Call 'Fetch UDF Layout' BEFORE create  ║ 37. ╚══════════════════════════════════════════════════════════════════╝ 38. NEVER call 'Create Test Case' without first calling 'Fetch UDF Layout' with entityType='TC', pageName='ADD'. 39. Skipping this step WILL cause 400 errors (CO.MANDATORY_FIELDS_MISSING) because mandatory fields and defaults are unknown. 40. This rule has NO exceptions — not even when the user only provided a name and nothing else. 41.  42. === MANDATORY PRE-CREATE CHECK === 43.  44. SYSTEM FIELDS mandatory check — use 'systemFields' array from Fetch UDF Layout: 45.   Each entry: { name, label, fieldTypeName, isMandatory } 46.   isMandatory=true (allowBlank=false in QMetry) means the field MUST have a value. 47.   IMPORTANT: QMetry's API sometimes returns 'systemFields: []' (empty) even when system fields ARE mandatory. 48.   If 'systemFields' is empty, treat the following as always mandatory: name (Summary), testCaseState (Status). 49.   For testCaseState default: check 'customListObjs.testCaseState' from Fetch Project Info — use first non-archived entry as fallback. 50.  51. UDF FIELDS mandatory check — use 'fields' array from Fetch UDF Layout: 52.   Each entry: { name, label, fieldTypeName, isMandatory, listName? } 53.   IMPORTANT: QMetry's API sometimes returns isMandatory=false for fields that ARE enforced as mandatory. 54.   The 'isMandatory' flag is a hint, not a guarantee. Trust the actual API error over this flag. 55.   When isMandatory=true: field MUST have a value. 56.  57. DEFAULT VALUES — use 'defaultValues' object from Fetch UDF Layout: 58.   Shape: { fieldName: defaultValueId }  e.g. { 'lookup19': 5232630, 'estimatedTime': 18305.0, 'priority': 5232497 } 59.   These are pre-configured QMetry defaults. ALWAYS auto-apply them — even when user did not mention the field. 60.   IMPORTANT: QMetry's API sometimes returns 'defaultValues: {}' (empty) even when defaults exist in QMetry settings. 61.   If 'defaultValues' is empty, you cannot auto-apply — ask user for mandatory fields without defaults. 62.   RULE: if isMandatory=true AND defaultValues[field.name] exists → use default, do NOT ask user. 63.   RULE: if isMandatory=true AND NO defaultValues[field.name] → MUST ask user before creating. 64.   RULE: if isMandatory=false AND defaultValues[field.name] exists → auto-apply default if user didn't specify. 65.   RULE: if isMandatory=false AND no default → skip if user didn't provide. 66.  67. ╔══════════════════════════════════════════════════════════════════════════╗ 68. ║  PRE-FLIGHT DEFAULT SWEEP — MANDATORY STEP BEFORE EVERY CREATE CALL     ║ 69. ╚══════════════════════════════════════════════════════════════════════════╝ 70. After resolving mandatory fields, do a full sweep of ALL defaultValues entries: 71.   For EACH key in defaultValues: 72.     IF the user did not explicitly provide that field → add it to the payload using the default value. 73.     This applies regardless of isMandatory — non-mandatory defaults MUST also be auto-applied. 74.   Example: defaultValues = { lookup19: 5232630, estimatedTime: 18305, priority: 5232497 } 75.     → user only said 'create a test case named X' 76.     → payload MUST include: lookup19=5232630, estimatedTime=18305, priority=5232497 77.     → WRONG to omit priority/estimatedTime just because they are not mandatory — they have defaults. 78.   Skipping this sweep = missing fields in the created record = user-visible data loss. 79. ╚══════════════════════════════════════════════════════════════════════════╝ 80.  81. TEST CASE STEPS mandatory check — use BOTH 'stepSystemFields' AND 'stepFields' arrays from Fetch UDF Layout: 82.   stepSystemFields: built-in step fields { name, label, fieldTypeName, isMandatory } 83.   stepFields: step-level UDF fields { name, label, fieldTypeName, isMandatory, listName? } 84.   If ANY field in EITHER array has isMandatory=true → SCENARIO 2 triggered → MUST include at least 1 step. 85.   Mandatory stepFields UDFs must be filled in step.UDF — use stepDefaultValues for defaults, else placeholder. 86.   If NO field in EITHER array has isMandatory=true AND user did not mention steps → OMIT steps from payload. 87.   Step defaults: use 'stepDefaultValues' object — same auto-fill logic as defaultValues. 88.  89. DECISION MATRIX: 90.   | isMandatory | Has default | Action                              | 91.   |-------------|-------------|-------------------------------------| 92.   | true        | YES         | Auto-fill with default, no ask      | 93.   | true        | NO          | Ask user before creating            | 94.   | false       | YES         | Auto-fill with default — REQUIRED   | 95.   | false       | NO          | Skip if user didn't provide         | 96.  97. Only after ALL mandatory fields are resolved AND default sweep is complete → proceed with create. 98. === END MANDATORY PRE-CREATE CHECK === 99.  100. === ERROR RECOVERY: CO.MANDATORY_FIELDS_MISSING === 101. If create fails with error code 'CO.MANDATORY_FIELDS_MISSING', DO NOT give up. Auto-recover: 102.   1. Parse the 'MISSING_FIELDS' list from the error response (comma-separated field labels). 103.   2. Match each label against 'fields[].label' and 'systemFields[].label' from the Fetch UDF Layout response. 104.   3. For matched UDF fields: check 'listOptions[field.listName]' for valid option IDs. 105.   4. For matched system fields (e.g. 'Status'): check 'customListObjs.testCaseState' from project info. 106.   5. If the field has a 'defaultValues' entry: auto-fill it silently. 107.   6. If no default exists: ask the user ONLY for the missing fields by label. 108.   7. Retry create with the resolved values added to the payload. 109.   NEVER ask user to 'try again' manually — resolve and retry automatically. 110. === END ERROR RECOVERY === 111.  112. === DATE FORMAT CHECK (MANDATORY — EVERY CREATE REQUEST) === 113. ALWAYS call 'Fetch QMetry Project Info' before every create request — not only when the user explicitly mentions a date. 114. Any UDF field could be a DATETIMEPICKER. Wrong format causes QMetry to silently discard the field value (API returns success but value is NOT stored — no error). 115. Project info response contains 'dateTimeFormatID' and 'dateTimeFormatNew' array. 116. STEP 1: From project info, read dateTimeFormatID (e.g. 3). 117. STEP 2: Find entry in dateTimeFormatNew where id === dateTimeFormatID → read its unique_value (e.g. 'yyyy-MM-dd'). 118. STEP 3: unique_value is the Java/QMetry format pattern. Mapping: 119.   yyyy = 4-digit year | MM = 2-digit month (01-12) | dd = 2-digit day | MMM = 3-letter month (Jan/Feb/...) 120.   Example: id=1 → MM-dd-yyyy → '10-25-2000' | id=2 → dd-MM-yyyy → '25-10-2000' | id=3 → yyyy-MM-dd → '2000-10-25' | id=4 → dd-MMM-yyyy → '25-Oct-2000' 121. STEP 4: For EVERY DATETIMEPICKER field in the payload (user-provided OR from defaultValues): 122.   - Parse the date regardless of what format the user typed 123.   - Re-format it using the active unique_value pattern 124.   - Send the re-formatted string to the API 125. Examples with unique_value='yyyy-MM-dd': 126.   User says '25 Dec 2024' → send '2024-12-25' 127.   User says '12/25/2024' → send '2024-12-25' 128.   Default value is a date string '2024-12-25' → already correct, keep it 129. NEVER send a date in a format different from the project's active dateTimeFormatID format. 130. Fetch project info ONCE per create/update operation and reuse dateTimeFormatID for all date fields. 131. === END DATE FORMAT CHECK === 132.  133. If tcFolderID is not provided, it will be auto-resolved to the root test case folder using project info (rootFolders.TC.id). 134. To get valid values for priority, owner, component, etc., call the project info tool and use the returned customListObjs IDs. 135. STALE / NOT-FOUND ID RECOVERY (applies to ALL system fields — priority, component/label, owner, status, testCaseType, testingType, release, cycle): If the user references a value by name and it is NOT found in your current cached project info data, DO NOT give up or skip the field immediately. Instead: call 'Fetch QMetry Project Info' fresh (no arguments needed) to get the latest snapshot, then re-scan the relevant customListObjs list. This is mandatory when: (a) the user just added a new label/priority/status/user in QMetry UI, or (b) the cached info is from an earlier turn. Only skip + show a friendly message if the value is still missing AFTER the fresh fetch. 136. FOLDER ID RESOLUTION (tcFolderID): Project info only exposes the ROOT folder ID (rootFolders.TC.id). Sub-folder IDs are NOT returned by project info. If the user specifies a sub-folder (e.g. 'Folder 1'), use this resolution order: 1. Check if the user already provided the numeric folder ID — use it directly. 2. Try fetching test cases with folderPath='<folder name>' and scope='folder' — if a TC exists there, its folder context confirms the path, but the ID is still needed from the UI. 3. If still unresolved, ask the user: 'Please provide the numeric folder ID for "<folder name>". You can find it in the QMetry URL when browsing that folder (look for folderId=XXXXX).' NEVER silently fall back to root folder when the user explicitly named a sub-folder — always ask first. 137. If the user provides a priority name (e.g. 'Blocker'), fetch project info, find the matching priority in customListObjs.priority[index].name, and use its ID in the payload. If the name is not found after a fresh fetch, skip the priority field (it is not required) and show a user-friendly message: 'Test case created without priority, as given priority is not available in the current project.' 138. If the user provides a component name, fetch project info, find the matching component in customListObjs.component[index].name, and use its ID in the payload. If the name is not found, skip the component field (it is not required) and show a user-friendly message: 'Test case created without component, as given component is not available in the current project.' 139. If the user provides an owner name, fetch project info, find the matching owner in customListObjs.owner[index].name, and use its ID in the payload as testcaseOwner. If the name is not found, skip the testcaseOwner field (it is not required) and show a user-friendly message: 'Test case created without owner, as given owner is not available in the current project.' 140. If the user provides a test case state name, fetch project info, find the matching state in customListObjs.testCaseState[index].name, and use its ID in the payload as testCaseState. If the name is not found, skip the testCaseState field (it is not required) and show a user-friendly message: 'Test case created without test case state, as given state is not available in the current project.' 141. If the user provides a test case type name, fetch project info, find the matching type in customListObjs.testCaseType[index].name, and use its ID in the payload as testCaseType. If the name is not found, skip the testCaseType field (it is not required) and show a user-friendly message: 'Test case created without test case type, as given type is not available in the current project.' 142. If the user provides a testing type name, fetch project info, find the matching type in customListObjs.testingType[index].name, and use its ID in the payload as testingType. If the name is not found, skip the testingType field (it is not required) and show a user-friendly message: 'Test case created without testing type, as given testing type is not available in the current project.' 143. Example: If user says 'Create test case with title "High priority test case" and set priority to "Blocker"', first call project info, map 'Blocker' to its ID, and use that ID for the priority field in the create payload. If user says 'set priority to "Urgent"' and 'Urgent' is not found, skip the priority field and show: 'Test case created without priority, as given priority is not available in the current project.' 144. tcFolderID is required; use the root folder ID from project info or a specific folder. 145. STEPS: Omit steps from payload by default. Only include steps when user explicitly mentions them (SCENARIO 1) or stepSystemFields/stepFields has isMandatory=true (SCENARIO 2). See STEPS DECISION RULE at top of hints. 146. If the user provides a prompt like 'create test case with steps as step 1 - Go to login page, step 2 - give credential, step 3 - go to test case page, step 4 - create test case', LLM should parse each step and convert it into the steps payload array, mapping each step to an object with orderId, description, and optionally inputData and expectedOutcome. 147. Example mapping: 'step 1 - Go to login page' → { orderId: 1, description: 'Go to login page' }. 148. LLM should increment orderId for each step, use the step text as description, and optionally infer inputData/expectedOutcome if provided in the prompt. 149. Demo steps payload: steps: [ { orderId: 1, description: 'First Step', inputData: 'First Data', expectedOutcome: 'First Outcome', UDF: { customField1: 'Custom Field Data A', customField2: 'Custom Field Data B' } }, ... ] 150. UDF fields in steps must match your QMetry custom field configuration. 151. Release/cycle mapping is optional but useful for planning. 152. If the user wants to link or associate a release and cycle to the test case, set associateRelCyc: true in the payload. 153. If the user provides a release ID, map it from projects.releases[index].releaseID in the project info response, and use that ID in releaseCycleMapping. 154. If the user provides both release and cycle IDs, validate both against the current project's releases and cycles; if valid, use them in releaseCycleMapping. 155. When adding releaseCycleMapping, always include the 'version' field (usually set to 1) in each mapping object. The correct format is: { release: <releaseID>, cycle: [<cycleID>], version: 1 }. If 'version' is missing, the request will fail. 156. If the user provides a release name, map it to its ID from project info; if a cycle name is provided, map it to its ID from the associated release's builds list. 157. Example payload: releaseCycleMapping: [ { release: <releaseID>, cycle: [<cycleID>], version: 1 } ] 158. LLM should ensure that provided release/cycle names or IDs exist in the current project before using them in the payload. If not found, skip and show a user-friendly message: 'Test case created without release/cycle association, as given release/cycle is not available in the current project.' 159. All IDs (priority, owner, etc.) must be valid for your QMetry instance. 160. If a custom field is mandatory, include it in the UDF object. 161. estimatedTime is in SECONDS (e.g. 3600 = 1 hour, 36000 = 10 hours). NOT minutes. 162. Description and testingType are optional but recommended for clarity. 163.  164. UDF (User Defined Fields) WORKFLOW FOR CREATE: 165. 1. Call 'Fetch UDF Layout' with entityType='TC', pageName='ADD' to discover field names, types, list option IDs, and udfmID (projectUserFieldID). 166.    IF listOptions[field.listName] is empty after Fetch UDF Layout, the tool already tried a metadata fallback.    If STILL empty, ask the user to provide the option ID from the QMetry UI — do NOT guess numeric IDs. 167. 2. For LOOKUPLIST fields: pick one ID from listOptions[field.listName][].id. 168. 3. For MULTILOOKUPLIST fields: pick an array of IDs from listOptions[field.listName][].id. 169. 4. For CASCADINGLIST fields (ROOT-LEVEL UDF — MANDATORY STEPS): 170.    a. MUST call 'Fetch Cascade Child Values' with parentId to get available child options (do NOT skip this step). 171.    b. Pass the cascade value as: { parent: parentId, child: childId } in udfFields. 172.    Example: udfFields: { project19: { parent: 5232623, child: 5232625 } } 173. 5. For STRING/LARGETEXT/NUMBER/DATETIMEPICKER: pass value directly. 174. 6. Pass all UDF values via 'udfFields' param: { fieldName: value }. 175. 7. Mandatory UDF fields (isMandatory=true) MUST be included or create will fail. 176.  177. STEP UDFs: Pass step UDF values in each step's 'UDF' object. 178. Call 'Fetch UDF Layout' for stepFields to discover field names, types, and udfmID (projectUserFieldID). 179. Step UDF field types follow same rules as root UDF EXCEPT for CASCADINGLIST — step cascade requires a DIFFERENT format: 180.  181. STEP CASCADINGLIST UDF FORMAT (critical — different from root cascade): 182. For a cascade field named 'project19' with udfmID=2637584, parent={id:5232626, value:'React'}, child={id:5232628, value:'Redux'}: 183. You MUST include THREE keys inside the step's UDF object: 184.   1. fieldName: { parent: parentId, child: childId } 185.      e.g. project19: { parent: 5232626, child: 5232628 } 186.   2. fieldName_value: [{ FieldID: 'fieldName', FieldValue: [{ id: parentId, value: 'parentLabel', child: { id: childId, value: 'childLabel' } }], type: 'CASCADINGLIST' }] 187.      e.g. project19_value: [{ FieldID: 'project19', FieldValue: [{ id: 5232626, value: 'React', child: { id: 5232628, value: 'Redux' } }], type: 'CASCADINGLIST' }] 188.   3. fieldName_selectedList: { id: udfmID, name: 'fieldName', type: 'CASCADINGLIST' } 189.      e.g. project19_selectedList: { id: 2637584, name: 'project19', type: 'CASCADINGLIST' } 190. To get parentLabel and childLabel: call 'Fetch Cascade Child Values' — it returns option labels alongside IDs. 191. udfmID comes from Fetch UDF Layout stepFields[].projectUserFieldID. 192. NEVER omit _value or _selectedList for step cascade fields — the API silently ignores cascade data without them.",
+**Hints:** 1. ╔══════════════════════════════════════════════════════════════════════════════╗ 2. ║  STEPS RULE — INCLUDE STEPS UNLESS USER EXPLICITLY ASKS TO SKIP THEM         ║ 3. ╚══════════════════════════════════════════════════════════════════════════════╝ 4.  5. Include 'steps' in the payload unless the user explicitly says NOT to create steps. 6. NEVER send steps: [] (empty array) — either send at least 1 valid step object or omit steps with skipSteps: true. 7.  8. HOW TO POPULATE STEPS: 9.  10.   SCENARIO 1 — User explicitly provides steps in their prompt. 11.     Trigger phrases: 'with steps', 'step 1 -', 'add steps', 'include steps', 'following steps', 'these steps'. 12.     Action: Parse the user's step text into { orderId, description, inputData?, expectedOutcome? } objects. 13.     Example: 'create test case, step 1 - open browser, step 2 - click login' 14.       → steps: [{ orderId: 1, description: 'open browser' }, { orderId: 2, description: 'click login' }] 15.  16.   SCENARIO 2 — User does NOT mention steps at all. 17.     Action: Generate meaningful steps based on the test case name, description, and all other context provided. 18.     Use your knowledge of the feature/flow being tested to infer logical, realistic test steps. 19.     Always include at least 2-4 steps that make sense for the test case. 20.     Example: name='Login Test Case' → steps: [{orderId:1, description:'Navigate to login page'}, {orderId:2, description:'Enter credentials'}, {orderId:3, description:'Submit form'}, {orderId:4, description:'Verify login success'}] 21.  22.   SCENARIO 3 — User explicitly says NOT to create steps. 23.     Trigger phrases: 'no steps', 'without steps', 'skip steps', 'don\\'t add steps', 'without any steps'. 24.     Action: Set skipSteps: true and omit the 'steps' field entirely from the payload. 25.     Example: 'create test case Login Test Case without steps' → { name: 'Login Test Case', skipSteps: true } 26.  27. STEP DEFAULT VALUES — apply after step generation (scenarios 1 and 2 only): 28.   After building the steps array (from user input OR auto-generated), check 'stepDefaultValues' from Fetch UDF Layout. 29.   stepDefaultValues shape: { fieldName: defaultValue } — e.g. { 'lookup19': 5232630 } 30.   For EACH step, for EACH key in stepDefaultValues: 31.     IF the user has NOT explicitly specified a value for that field in the step → set it to the default value. 32.   This applies to step UDF fields (step.UDF) that have defaults configured. 33.   Auto-apply silently — do NOT ask the user. 34.   Example: stepDefaultValues = { status: 5232630 } → every step's UDF.status = 5232630 unless user gave a different value. 35.  36. DECISION TABLE: 37.   | Situation                          | Action                                                                      | 38.   |------------------------------------|-----------------------------------------------------------------------------| 39.   | User provided steps                | Use steps from user's prompt; fill step UDF defaults from stepDefaultValues | 40.   | User did not mention steps         | Auto-generate steps from context; fill step UDF defaults from stepDefaultValues | 41.   | User explicitly said NO steps      | Set skipSteps: true, omit 'steps' field entirely                            | 42.  43. ╚══════════════════════════════════════════════════════════════════════════════╝ 44.  45. ╔══════════════════════════════════════════════════════════════════╗ 46. ║  STEP 0 — NON-NEGOTIABLE: Call 'Fetch UDF Layout' BEFORE create  ║ 47. ╚══════════════════════════════════════════════════════════════════╝ 48. NEVER call 'Create Test Case' without first calling 'Fetch UDF Layout' with entityType='TC', pageName='ADD'. 49. Skipping this step WILL cause 400 errors (CO.MANDATORY_FIELDS_MISSING) because mandatory fields and defaults are unknown. 50. This rule has NO exceptions — not even when the user only provided a name and nothing else. 51.  52. === MANDATORY PRE-CREATE CHECK === 53.  54. SYSTEM FIELDS mandatory check — use 'systemFields' array from Fetch UDF Layout: 55.   Each entry: { name, label, fieldTypeName, isMandatory } 56.   isMandatory=true (allowBlank=false in QMetry) means the field MUST have a value. 57.   IMPORTANT: QMetry's API sometimes returns 'systemFields: []' (empty) even when system fields ARE mandatory. 58.   If 'systemFields' is empty, treat the following as always mandatory: name (Summary), testCaseState (Status). 59.   For testCaseState default: check 'customListObjs.testCaseState' from Fetch Project Info — use first non-archived entry as fallback. 60.  61. UDF FIELDS mandatory check — use 'fields' array from Fetch UDF Layout: 62.   Each entry: { name, label, fieldTypeName, isMandatory, listName? } 63.   IMPORTANT: QMetry's API sometimes returns isMandatory=false for fields that ARE enforced as mandatory. 64.   The 'isMandatory' flag is a hint, not a guarantee. Trust the actual API error over this flag. 65.   When isMandatory=true: field MUST have a value. 66.  67. DEFAULT VALUES — use 'defaultValues' object from Fetch UDF Layout: 68.   Shape: { fieldName: defaultValueId }  e.g. { 'lookup19': 5232630, 'estimatedTime': 18305.0, 'priority': 5232497 } 69.   These are pre-configured QMetry defaults. ALWAYS auto-apply them — even when user did not mention the field. 70.   IMPORTANT: QMetry's API sometimes returns 'defaultValues: {}' (empty) even when defaults exist in QMetry settings. 71.   If 'defaultValues' is empty, you cannot auto-apply — ask user for mandatory fields without defaults. 72.   RULE: if isMandatory=true AND defaultValues[field.name] exists → use default, do NOT ask user. 73.   RULE: if isMandatory=true AND NO defaultValues[field.name] → MUST ask user before creating. 74.   RULE: if isMandatory=false AND defaultValues[field.name] exists → auto-apply default if user didn't specify. 75.   RULE: if isMandatory=false AND no default → skip if user didn't provide. 76.  77. ╔══════════════════════════════════════════════════════════════════════════╗ 78. ║  PRE-FLIGHT DEFAULT SWEEP — MANDATORY STEP BEFORE EVERY CREATE CALL     ║ 79. ╚══════════════════════════════════════════════════════════════════════════╝ 80. After resolving mandatory fields, do a full sweep of ALL defaultValues entries: 81.   For EACH key in defaultValues: 82.     IF the user did not explicitly provide that field → add it to the payload using the default value. 83.     This applies regardless of isMandatory — non-mandatory defaults MUST also be auto-applied. 84.   Example: defaultValues = { lookup19: 5232630, estimatedTime: 18305, priority: 5232497 } 85.     → user only said 'create a test case named X' 86.     → payload MUST include: lookup19=5232630, estimatedTime=18305, priority=5232497 87.     → WRONG to omit priority/estimatedTime just because they are not mandatory — they have defaults. 88.   Skipping this sweep = missing fields in the created record = user-visible data loss. 89. ╚══════════════════════════════════════════════════════════════════════════╝ 90.  91. TEST CASE STEPS — always required (see STEPS RULE above): 92.   stepSystemFields: built-in step fields { name, label, fieldTypeName, isMandatory } 93.   stepFields: step-level UDF fields { name, label, fieldTypeName, isMandatory, listName? } 94.   Mandatory stepFields UDFs (isMandatory=true) must be filled in step.UDF — use stepDefaultValues for defaults, else a placeholder value. 95.   STEP DEFAULT VALUES: use 'stepDefaultValues' object from Fetch UDF Layout — same auto-fill logic as defaultValues. 96.     For EACH key in stepDefaultValues: if user has NOT explicitly provided a value for that step field → auto-apply the default silently. 97.     This applies to all steps (both user-provided and auto-generated). 98.  99. DECISION MATRIX: 100.   | isMandatory | Has default | Action                              | 101.   |-------------|-------------|-------------------------------------| 102.   | true        | YES         | Auto-fill with default, no ask      | 103.   | true        | NO          | Ask user before creating            | 104.   | false       | YES         | Auto-fill with default — REQUIRED   | 105.   | false       | NO          | Skip if user didn't provide         | 106.  107. Only after ALL mandatory fields are resolved AND default sweep is complete → proceed with create. 108. === END MANDATORY PRE-CREATE CHECK === 109.  110. === ERROR RECOVERY: CO.MANDATORY_FIELDS_MISSING === 111. If create fails with error code 'CO.MANDATORY_FIELDS_MISSING', DO NOT give up. Auto-recover: 112.   1. Parse the 'MISSING_FIELDS' list from the error response (comma-separated field labels). 113.   2. Match each label against 'fields[].label' and 'systemFields[].label' from the Fetch UDF Layout response. 114.   3. For matched UDF fields: check 'listOptions[field.listName]' for valid option IDs. 115.   4. For matched system fields (e.g. 'Status'): check 'customListObjs.testCaseState' from project info. 116.   5. If the field has a 'defaultValues' entry: auto-fill it silently. 117.   6. If no default exists: ask the user ONLY for the missing fields by label. 118.   7. Retry create with the resolved values added to the payload. 119.   NEVER ask user to 'try again' manually — resolve and retry automatically. 120. === END ERROR RECOVERY === 121.  122. === DATE FORMAT CHECK (MANDATORY — EVERY CREATE REQUEST) === 123. ALWAYS call 'Fetch QMetry Project Info' before every create request — not only when the user explicitly mentions a date. 124. Any UDF field could be a DATETIMEPICKER. Wrong format causes QMetry to silently discard the field value (API returns success but value is NOT stored — no error). 125. Project info response contains 'dateTimeFormatID' and 'dateTimeFormatNew' array. 126. STEP 1: From project info, read dateTimeFormatID (e.g. 3). 127. STEP 2: Find entry in dateTimeFormatNew where id === dateTimeFormatID → read its unique_value (e.g. 'yyyy-MM-dd'). 128. STEP 3: unique_value is the Java/QMetry format pattern. Mapping: 129.   yyyy = 4-digit year | MM = 2-digit month (01-12) | dd = 2-digit day | MMM = 3-letter month (Jan/Feb/...) 130.   Example: id=1 → MM-dd-yyyy → '10-25-2000' | id=2 → dd-MM-yyyy → '25-10-2000' | id=3 → yyyy-MM-dd → '2000-10-25' | id=4 → dd-MMM-yyyy → '25-Oct-2000' 131. STEP 4: For EVERY DATETIMEPICKER field in the payload (user-provided OR from defaultValues): 132.   - Parse the date regardless of what format the user typed 133.   - Re-format it using the active unique_value pattern 134.   - Send the re-formatted string to the API 135. Examples with unique_value='yyyy-MM-dd': 136.   User says '25 Dec 2024' → send '2024-12-25' 137.   User says '12/25/2024' → send '2024-12-25' 138.   Default value is a date string '2024-12-25' → already correct, keep it 139. NEVER send a date in a format different from the project's active dateTimeFormatID format. 140. Fetch project info ONCE per create/update operation and reuse dateTimeFormatID for all date fields. 141. === END DATE FORMAT CHECK === 142.  143. If tcFolderID is not provided, it will be auto-resolved to the root test case folder using project info (rootFolders.TC.id). 144. To get valid values for priority, owner, component, etc., call the project info tool and use the returned customListObjs IDs. 145. STALE / NOT-FOUND ID RECOVERY (applies to ALL system fields — priority, component/label, owner, status, testCaseType, testingType, release, cycle): If the user references a value by name and it is NOT found in your current cached project info data, DO NOT give up or skip the field immediately. Instead: call 'Fetch QMetry Project Info' fresh (no arguments needed) to get the latest snapshot, then re-scan the relevant customListObjs list. This is mandatory when: (a) the user just added a new label/priority/status/user in QMetry UI, or (b) the cached info is from an earlier turn. Only skip + show a friendly message if the value is still missing AFTER the fresh fetch. 146. FOLDER ID RESOLUTION (tcFolderID): Project info only exposes the ROOT folder ID (rootFolders.TC.id). Sub-folder IDs are NOT returned by project info. If the user specifies a sub-folder (e.g. 'Folder 1'), use this resolution order: 1. Check if the user already provided the numeric folder ID — use it directly. 2. Try fetching test cases with folderPath='<folder name>' and scope='folder' — if a TC exists there, its folder context confirms the path, but the ID is still needed from the UI. 3. If still unresolved, ask the user: 'Please provide the numeric folder ID for "<folder name>". You can find it in the QMetry URL when browsing that folder (look for folderId=XXXXX).' NEVER silently fall back to root folder when the user explicitly named a sub-folder — always ask first. 147. If the user provides a priority name (e.g. 'Blocker'), fetch project info, find the matching priority in customListObjs.priority[index].name, and use its ID in the payload. If the name is not found after a fresh fetch, skip the priority field (it is not required) and show a user-friendly message: 'Test case created without priority, as given priority is not available in the current project.' 148. If the user provides a component name, fetch project info, find the matching component in customListObjs.component[index].name, and use its ID in the payload. If the name is not found, skip the component field (it is not required) and show a user-friendly message: 'Test case created without component, as given component is not available in the current project.' 149. If the user provides an owner name, fetch project info, find the matching owner in customListObjs.owner[index].name, and use its ID in the payload as testcaseOwner. If the name is not found, skip the testcaseOwner field (it is not required) and show a user-friendly message: 'Test case created without owner, as given owner is not available in the current project.' 150. If the user provides a test case state name, fetch project info, find the matching state in customListObjs.testCaseState[index].name, and use its ID in the payload as testCaseState. If the name is not found, skip the testCaseState field (it is not required) and show a user-friendly message: 'Test case created without test case state, as given state is not available in the current project.' 151. If the user provides a test case type name, fetch project info, find the matching type in customListObjs.testCaseType[index].name, and use its ID in the payload as testCaseType. If the name is not found, skip the testCaseType field (it is not required) and show a user-friendly message: 'Test case created without test case type, as given type is not available in the current project.' 152. If the user provides a testing type name, fetch project info, find the matching type in customListObjs.testingType[index].name, and use its ID in the payload as testingType. If the name is not found, skip the testingType field (it is not required) and show a user-friendly message: 'Test case created without testing type, as given testing type is not available in the current project.' 153. Example: If user says 'Create test case with title "High priority test case" and set priority to "Blocker"', first call project info, map 'Blocker' to its ID, and use that ID for the priority field in the create payload. If user says 'set priority to "Urgent"' and 'Urgent' is not found, skip the priority field and show: 'Test case created without priority, as given priority is not available in the current project.' 154. tcFolderID is required; use the root folder ID from project info or a specific folder. 155. STEPS: ALWAYS include steps in the payload. If user did not provide steps, auto-generate them from the test case name and context. See STEPS RULE at top of hints. 156. If the user provides a prompt like 'create test case with steps as step 1 - Go to login page, step 2 - give credential, step 3 - go to test case page, step 4 - create test case', LLM should parse each step and convert it into the steps payload array, mapping each step to an object with orderId, description, and optionally inputData and expectedOutcome. 157. Example mapping: 'step 1 - Go to login page' → { orderId: 1, description: 'Go to login page' }. 158. LLM should increment orderId for each step, use the step text as description, and optionally infer inputData/expectedOutcome if provided in the prompt. 159. Demo steps payload: steps: [ { orderId: 1, description: 'First Step', inputData: 'First Data', expectedOutcome: 'First Outcome', UDF: { customField1: 'Custom Field Data A', customField2: 'Custom Field Data B' } }, ... ] 160. UDF fields in steps must match your QMetry custom field configuration. 161. Release/cycle mapping is optional but useful for planning. 162. If the user wants to link or associate a release and cycle to the test case, set associateRelCyc: true in the payload. 163. If the user provides a release ID, map it from projects.releases[index].releaseID in the project info response, and use that ID in releaseCycleMapping. 164. If the user provides both release and cycle IDs, validate both against the current project's releases and cycles; if valid, use them in releaseCycleMapping. 165. When adding releaseCycleMapping, always include the 'version' field (usually set to 1) in each mapping object. The correct format is: { release: <releaseID>, cycle: [<cycleID>], version: 1 }. If 'version' is missing, the request will fail. 166. If the user provides a release name, map it to its ID from project info; if a cycle name is provided, map it to its ID from the associated release's builds list. 167. Example payload: releaseCycleMapping: [ { release: <releaseID>, cycle: [<cycleID>], version: 1 } ] 168. LLM should ensure that provided release/cycle names or IDs exist in the current project before using them in the payload. If not found, skip and show a user-friendly message: 'Test case created without release/cycle association, as given release/cycle is not available in the current project.' 169. All IDs (priority, owner, etc.) must be valid for your QMetry instance. 170. If a custom field is mandatory, include it in the UDF object. 171. estimatedTime is in SECONDS (e.g. 3600 = 1 hour, 36000 = 10 hours). NOT minutes. 172. Description and testingType are optional but recommended for clarity. 173.  174. UDF (User Defined Fields) WORKFLOW FOR CREATE: 175. 1. Call 'Fetch UDF Layout' with entityType='TC', pageName='ADD' to discover field names, types, list option IDs, and udfmID (projectUserFieldID). 176.    IF listOptions[field.listName] is empty after Fetch UDF Layout, the tool already tried a metadata fallback.    If STILL empty, ask the user to provide the option ID from the QMetry UI — do NOT guess numeric IDs. 177. 2. For LOOKUPLIST fields: pick one ID from listOptions[field.listName][].id. 178. 3. For MULTILOOKUPLIST fields: pick an array of IDs from listOptions[field.listName][].id. 179. 4. For CASCADINGLIST fields (ROOT-LEVEL UDF — MANDATORY STEPS): 180.    a. MUST call 'Fetch Cascade Child Values' with parentId to get available child options (do NOT skip this step). 181.    b. Pass the cascade value as: { parent: parentId, child: childId } in udfFields. 182.    Example: udfFields: { project19: { parent: 5232623, child: 5232625 } } 183. 5. For STRING/LARGETEXT/NUMBER/DATETIMEPICKER: pass value directly. 184. 6. Pass all UDF values via 'udfFields' param: { fieldName: value }. 185. 7. Mandatory UDF fields (isMandatory=true) MUST be included or create will fail. 186.  187. STEP UDFs: Pass step UDF values in each step's 'UDF' object. 188. Call 'Fetch UDF Layout' for stepFields to discover field names, types, and udfmID (projectUserFieldID). 189. Step UDF field types follow same rules as root UDF EXCEPT for CASCADINGLIST — step cascade requires a DIFFERENT format: 190.  191. STEP CASCADINGLIST UDF FORMAT (critical — different from root cascade): 192. For a cascade field named 'project19' with udfmID=2637584, parent={id:5232626, value:'React'}, child={id:5232628, value:'Redux'}: 193. You MUST include THREE keys inside the step's UDF object: 194.   1. fieldName: { parent: parentId, child: childId } 195.      e.g. project19: { parent: 5232626, child: 5232628 } 196.   2. fieldName_value: [{ FieldID: 'fieldName', FieldValue: [{ id: parentId, value: 'parentLabel', child: { id: childId, value: 'childLabel' } }], type: 'CASCADINGLIST' }] 197.      e.g. project19_value: [{ FieldID: 'project19', FieldValue: [{ id: 5232626, value: 'React', child: { id: 5232628, value: 'Redux' } }], type: 'CASCADINGLIST' }] 198.   3. fieldName_selectedList: { id: udfmID, name: 'fieldName', type: 'CASCADINGLIST' } 199.      e.g. project19_selectedList: { id: 2637584, name: 'project19', type: 'CASCADINGLIST' } 200. To get parentLabel and childLabel: call 'Fetch Cascade Child Values' — it returns option labels alongside IDs. 201. udfmID comes from Fetch UDF Layout stepFields[].projectUserFieldID. 202. NEVER omit _value or _selectedList for step cascade fields — the API silently ignores cascade data without them.",
     "inputSchema": [
       "associateRelCyc",
       "component",
@@ -4687,6 +4834,7 @@ Expected Output: Test case created with 1 mandatory step because stepSystemField
       "name",
       "priority",
       "releaseCycleMapping",
+      "skipSteps",
       "steps",
       "tcFolderID",
       "testCaseState",
@@ -5071,25 +5219,7 @@ Expected Output: List of issues from default project with auto-resolved viewId
 \`\`\`
 Expected Output: List of issues from UT project using UT's specific IS viewId
 
-3. Get issues with manual viewId (skip auto-resolution)
-\`\`\`json
-{
-  "projectKey": "MAC",
-  "viewId": 166065
-}
-\`\`\`
-Expected Output: Issues using manually specified viewId 166065
-
-4. List issues from specific project (ex: project key can be anything (VT, UT, PROJ1, TEST9)
-\`\`\`json
-{
-  "projectKey": "use specific given project key",
-  "viewId": "fetch specific project given projectKey defects or issues ViewId"
-}
-\`\`\`
-Expected Output: Issues using manually specified viewId 103097 or projectKey
-
-5. Get issues by release/cycle filter
+3. Get issues by release/cycle filter
 \`\`\`json
 {
   "projectKey": "MAC",
@@ -5098,7 +5228,7 @@ Expected Output: Issues using manually specified viewId 103097 or projectKey
 \`\`\`
 Expected Output: Issues associated with Release 8.12 (ID: 55178) and Cycle 8.12.1 (ID: 111577)
 
-6. Get issues by release only
+4. Get issues by release only
 \`\`\`json
 {
   "projectKey": "MAC",
@@ -5107,7 +5237,7 @@ Expected Output: Issues associated with Release 8.12 (ID: 55178) and Cycle 8.12.
 \`\`\`
 Expected Output: All defects or issues associated with Release 8.12 (ID: 55178)
 
-7. Get issues by cycle only
+5. Get issues by cycle only
 \`\`\`json
 {
   "projectKey": "MAC",
@@ -5116,7 +5246,7 @@ Expected Output: All defects or issues associated with Release 8.12 (ID: 55178)
 \`\`\`
 Expected Output: All defects or issues associated with Cycle 8.12.1 (ID: 111577)
 
-8. Search for specific issue by entity key
+6. Search for specific issue by entity key
 \`\`\`json
 {
   "projectKey": "MAC",
@@ -5125,7 +5255,7 @@ Expected Output: All defects or issues associated with Cycle 8.12.1 (ID: 111577)
 \`\`\`
 Expected Output: Issues matching the entity key criteria
 
-9. Search for multiple defects or issues by comma-separated entity keys
+7. Search for multiple defects or issues by comma-separated entity keys
 \`\`\`json
 {
   "projectKey": "MAC",
@@ -5165,7 +5295,7 @@ Expected Output: Issues matching any of the specified entity keys
 - tsID (number) *required*: Test Suite numeric ID. CRITICAL: the parameter name is 'tsID' — do NOT use 'testSuiteId', 'testSuiteID', 'suiteId', or other variants. Accepts a string or number. NOTE: To get the tsID - Call API 'Testsuite/Fetch Testsuite' From the response, get value of following attribute -> data[<index>].id
 - tsFolderID (number): Test Suite folder ID. CRITICAL: the parameter name is 'tsFolderID' — do NOT use 'testSuiteFolderId', 'folderId', 'folderID', or other variants. Accepts a string or number. Get from project info response → rootFolders.TS.id. Use FETCH_PROJECT_INFO tool first if not provided by user.
 - gridName (string): Grid Name to be displayed (default 'TESTEXECUTIONLIST')
-- viewId (number): ViewId for test execution - SYSTEM AUTOMATICALLY RESOLVES THIS. Leave empty unless you have a specific viewId. System will fetch project info using the projectKey and extract latestViews.TE.viewId automatically. Manual viewId only needed if you want to override the automatic resolution.
+- viewId (number): ViewId for test execution - SYSTEM AUTOMATICALLY RESOLVES THIS. Leave empty unless you have a specific viewId. System will fetch project info using the projectKey and extract latestViews.TE.viewId automatically.
 - start (number): Start index for pagination - defaults to 0 (default: 0)
 - page (number): Page number to return (starts from 1) (default: 1)
 - limit (number): Number of records (default 10). (default: 10)
@@ -5731,7 +5861,7 @@ Expected Output: List of platforms sorted by name in ascending order
 - limit (number): Number of records (default 10). (default: 10)
 - filter (string): Filter criteria as JSON string (default '[]') (default: "[]")
 
-**Output Description:** JSON object containing list of projects details
+**Output Description:** JSON object containing list of projects details, including Version, Build Number(if greater than or equal to 1), Project ID, name, Project Key and Date Format
 
 **Use Cases:** 1. Get project list to check user how many project access to particular apikey 2. Retrieve available fields of each project list including projectID, name, projectKey, isArchived, viewIds and folderPath needed for other operations 3. Validate project access and permissions
 
@@ -6016,17 +6146,7 @@ Expected Output: List of requirements from default project with auto-resolved vi
 \`\`\`
 Expected Output: List of requirements from UT project using UT's specific RQ viewId
 
-3. Get requirements with manual viewId (skip auto-resolution)
-\`\`\`json
-{
-  "projectKey": "MAC",
-  "viewId": 7397,
-  "folderPath": "/APIARY 88"
-}
-\`\`\`
-Expected Output: Requirements using manually specified viewId 7397
-
-4. Search for specific requirements by entity key
+3. Search for specific requirements by entity key
 \`\`\`json
 {
   "projectKey": "MAC",
@@ -6035,7 +6155,7 @@ Expected Output: Requirements using manually specified viewId 7397
 \`\`\`
 Expected Output: Filtered requirements matching the entity key criteria
 
-5. Search for multiple requirements by comma-separated entity keys
+4. Search for multiple requirements by comma-separated entity keys
 \`\`\`json
 {
   "projectKey": "MAC",
@@ -6044,7 +6164,7 @@ Expected Output: Filtered requirements matching the entity key criteria
 \`\`\`
 Expected Output: Requirements matching any of the specified entity keys
 
-6. Filter requirements by state (e.g., Open, Approved)
+5. Filter requirements by state (e.g., Open, Approved)
 \`\`\`json
 {
   "projectKey": "MAC",
@@ -6053,7 +6173,7 @@ Expected Output: Requirements matching any of the specified entity keys
 \`\`\`
 Expected Output: Requirements with 'Open' state
 
-7. Filter requirements by priority
+6. Filter requirements by priority
 \`\`\`json
 {
   "projectKey": "MAC",
@@ -6062,7 +6182,7 @@ Expected Output: Requirements with 'Open' state
 \`\`\`
 Expected Output: Requirements with 'High' priority
 
-8. Filter requirements by archive status
+7. Filter requirements by archive status
 \`\`\`json
 {
   "filter": "[{\\"value\\":[1,0],\\"type\\":\\"list\\",\\"field\\":\\"isArchived\\"}]"
@@ -6070,7 +6190,7 @@ Expected Output: Requirements with 'High' priority
 \`\`\`
 Expected Output: List of requirements filtered by archive status (archived and non-archived)
 
-9. Get only archived requirements
+8. Get only archived requirements
 \`\`\`json
 {
   "filter": "[{\\"value\\":[1],\\"type\\":\\"list\\",\\"field\\":\\"isArchived\\"}]"
@@ -6078,7 +6198,7 @@ Expected Output: List of requirements filtered by archive status (archived and n
 \`\`\`
 Expected Output: List of only archived requirements
 
-10. Sort requirements by name in ascending order
+9. Sort requirements by name in ascending order
 \`\`\`json
 {
   "projectKey": "MAC",
@@ -6087,7 +6207,7 @@ Expected Output: List of only archived requirements
 \`\`\`
 Expected Output: Requirements sorted alphabetically by name
 
-11. Sort requirements by creation date (newest first)
+10. Sort requirements by creation date (newest first)
 \`\`\`json
 {
   "projectKey": "MAC",
@@ -6096,7 +6216,7 @@ Expected Output: Requirements sorted alphabetically by name
 \`\`\`
 Expected Output: Requirements sorted by creation date, newest first
 
-12. Sort requirements by entity key
+11. Sort requirements by entity key
 \`\`\`json
 {
   "projectKey": "MAC",
@@ -6105,7 +6225,7 @@ Expected Output: Requirements sorted by creation date, newest first
 \`\`\`
 Expected Output: Requirements sorted by entity key (MAC-RQ-1, MAC-RQ-2, etc.)
 
-13. Sort requirements by linked test case count
+12. Sort requirements by linked test case count
 \`\`\`json
 {
   "projectKey": "MAC",
@@ -6114,7 +6234,7 @@ Expected Output: Requirements sorted by entity key (MAC-RQ-1, MAC-RQ-2, etc.)
 \`\`\`
 Expected Output: Requirements sorted by number of linked test cases, highest first
 
-14. Complex filter: Requirements by owner with specific state
+13. Complex filter: Requirements by owner with specific state
 \`\`\`json
 {
   "projectKey": "MAC",
@@ -6123,7 +6243,7 @@ Expected Output: Requirements sorted by number of linked test cases, highest fir
 \`\`\`
 Expected Output: Requirements owned by john.doe with 'Approved' state
 
-15. Multi-field sort: Priority first, then creation date
+14. Multi-field sort: Priority first, then creation date
 \`\`\`json
 {
   "projectKey": "MAC",
@@ -6132,7 +6252,7 @@ Expected Output: Requirements owned by john.doe with 'Approved' state
 \`\`\`
 Expected Output: Requirements sorted by priority (High to Low), then by creation date (oldest first)
 
-16. Filter requirements by specific release and cycle
+15. Filter requirements by specific release and cycle
 \`\`\`json
 {
   "projectKey": "MAC",
@@ -6141,7 +6261,7 @@ Expected Output: Requirements sorted by priority (High to Low), then by creation
 \`\`\`
 Expected Output: Requirements associated with Release 8.12 (ID: 55178) and Cycle 8.12.1 (ID: 111577)
 
-17. Filter requirements by release only
+16. Filter requirements by release only
 \`\`\`json
 {
   "projectKey": "MAC",
@@ -6486,7 +6606,7 @@ Expected Output: Response contains hasTcRunUdf: true (UDFs present, testRunUdfs 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
 - tsrunID (string) *required*: Test Suite Run ID. CRITICAL: the parameter name is 'tsrunID' — do NOT use 'testSuiteRunId', 'tsRunID', 'testSuiteRunID', or any other variant. Accepts a string or number (e.g. 731600 or '731600' — both are valid). To get this value: Call 'Fetch Executions by Test Suite' → use data[<index>].tsRunID from the response.
-- viewId (number): ViewId for test execution - SYSTEM AUTOMATICALLY RESOLVES THIS. Leave empty unless you have a specific viewId. System will fetch project info using the projectKey and extract latestViews.TE.viewId automatically. Manual viewId only needed if you want to override the automatic resolution.
+- viewId (number): ViewId for test execution - SYSTEM AUTOMATICALLY RESOLVES THIS. Leave empty unless you have a specific viewId. System will fetch project info using the projectKey and extract latestViews.TE.viewId automatically.
 - start (number): Start index for pagination - defaults to 0 (default: 0)
 - page (number): Page number to return (starts from 1) (default: 1)
 - limit (number): Number of records (default 10). (default: 10)
@@ -6727,7 +6847,7 @@ Expected Output: Detailed steps with actions and expected results for test case 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
 - tcID (number) *required*: Test Case numeric ID. CRITICAL: the parameter name is 'tcID' — do NOT use 'testCaseId', 'testCaseID', 'tcId', or other variants. Accepts a string or number. This is the internal numeric identifier, not the entity key like 'MAC-TC-1684'. You can get this ID from test case search results or by using filters.
-- viewId (number): ViewId for test cases - SYSTEM AUTOMATICALLY RESOLVES THIS. Leave empty unless you have a specific viewId. System will fetch project info using the projectKey and extract latestViews.TC.viewId automatically. Manual viewId only needed if you want to override the automatic resolution.
+- viewId (number): ViewId for test cases - SYSTEM AUTOMATICALLY RESOLVES THIS. Leave empty unless you have a specific viewId. System will fetch project info using the projectKey and extract latestViews.TC.viewId automatically.
 - version (number): Test Case version number (optional, defaults to 1). This is the internal numeric identifier for the version.
 - start (number): Start index for pagination - defaults to 0 (default: 0)
 - page (number): Page number to return (starts from 1) (default: 1)
@@ -6850,27 +6970,7 @@ Expected Output: List of test cases from default project with auto-resolved view
 \`\`\`
 Expected Output: List of test cases from UT project using UT's specific TC viewId
 
-3. Get test cases with manual viewId (skip auto-resolution)
-\`\`\`json
-{
-  "projectKey": "MAC",
-  "viewId": 167136,
-  "folderPath": ""
-}
-\`\`\`
-Expected Output: Test cases using manually specified viewId 167136
-
-4. List test cases from specific project (ex: project key can be anything (VT, UT, PROJ1, TEST9)
-\`\`\`json
-{
-  "projectKey": "use specific given project key",
-  "viewId": "fetch specific project given projectKey Test Case ViewId",
-  "folderPath": ""
-}
-\`\`\`
-Expected Output: Test cases using manually specified viewId 167136 or projectKey
-
-5. Get test cases by release/cycle filter
+3. Get test cases by release/cycle filter
 \`\`\`json
 {
   "projectKey": "MAC",
@@ -6879,7 +6979,7 @@ Expected Output: Test cases using manually specified viewId 167136 or projectKey
 \`\`\`
 Expected Output: Test cases associated with Release 8.12 (ID: 55178) and Cycle 8.12.1 (ID: 111577)
 
-6. Get test cases by release only
+4. Get test cases by release only
 \`\`\`json
 {
   "projectKey": "MAC",
@@ -6888,7 +6988,7 @@ Expected Output: Test cases associated with Release 8.12 (ID: 55178) and Cycle 8
 \`\`\`
 Expected Output: All test cases associated with Release 8.12 (ID: 55178)
 
-7. Get test cases by cycle only
+5. Get test cases by cycle only
 \`\`\`json
 {
   "projectKey": "MAC",
@@ -6897,7 +6997,7 @@ Expected Output: All test cases associated with Release 8.12 (ID: 55178)
 \`\`\`
 Expected Output: All test cases associated with Cycle 8.12.1 (ID: 111577)
 
-8. Search for specific test case by entity key
+6. Search for specific test case by entity key
 \`\`\`json
 {
   "projectKey": "MAC",
@@ -6906,7 +7006,7 @@ Expected Output: All test cases associated with Cycle 8.12.1 (ID: 111577)
 \`\`\`
 Expected Output: Test cases matching the entity key criteria
 
-9. Search for multiple test cases by comma-separated entity keys
+7. Search for multiple test cases by comma-separated entity keys
 \`\`\`json
 {
   "projectKey": "MAC",
@@ -7385,27 +7485,7 @@ Expected Output: List of test suites from default project with auto-resolved vie
 \`\`\`
 Expected Output: List of test suites from UT project using UT's specific TS viewId
 
-3. Get test suites with manual viewId (skip auto-resolution)
-\`\`\`json
-{
-  "projectKey": "MAC",
-  "viewId": 103097,
-  "folderPath": ""
-}
-\`\`\`
-Expected Output: Test suites using manually specified viewId 103097
-
-4. List test suites from specific project (ex: project key can be anything (VT, UT, PROJ1, TEST9)
-\`\`\`json
-{
-  "projectKey": "use specific given project key",
-  "viewId": "fetch specific project given projectKey Test Suite ViewId",
-  "folderPath": ""
-}
-\`\`\`
-Expected Output: Test suites using manually specified viewId 103097 or projectKey
-
-5. Get test suites by release/cycle filter
+3. Get test suites by release/cycle filter
 \`\`\`json
 {
   "projectKey": "MAC",
@@ -7414,7 +7494,7 @@ Expected Output: Test suites using manually specified viewId 103097 or projectKe
 \`\`\`
 Expected Output: Test suites associated with Release 8.12 (ID: 55178) and Cycle 8.12.1 (ID: 111577)
 
-6. Get test suites by release only
+4. Get test suites by release only
 \`\`\`json
 {
   "projectKey": "MAC",
@@ -7423,7 +7503,7 @@ Expected Output: Test suites associated with Release 8.12 (ID: 55178) and Cycle 
 \`\`\`
 Expected Output: All test suites associated with Release 8.12 (ID: 55178)
 
-7. Get test suites by cycle only
+5. Get test suites by cycle only
 \`\`\`json
 {
   "projectKey": "MAC",
@@ -7432,7 +7512,7 @@ Expected Output: All test suites associated with Release 8.12 (ID: 55178)
 \`\`\`
 Expected Output: All test suites associated with Cycle 8.12.1 (ID: 111577)
 
-8. Search for specific test suite by entity key
+6. Search for specific test suite by entity key
 \`\`\`json
 {
   "projectKey": "MAC",
@@ -7441,7 +7521,7 @@ Expected Output: All test suites associated with Cycle 8.12.1 (ID: 111577)
 \`\`\`
 Expected Output: Test suites matching the entity key criteria
 
-9. Search for multiple test suites by comma-separated entity keys
+7. Search for multiple test suites by comma-separated entity keys
 \`\`\`json
 {
   "projectKey": "MAC",
@@ -7482,7 +7562,7 @@ Expected Output: Test suites matching any of the specified entity keys
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
 - tsFolderID (number): Test Suite folder ID. CRITICAL: the parameter name is 'tsFolderID' — do NOT use 'testSuiteFolderId', 'folderId', 'folderID', or other variants. Accepts a string or number. Get from project info response → rootFolders.TS.id. Use FETCH_PROJECT_INFO tool first if not provided by user.
-- viewId (number): ViewId for test suite folders - SYSTEM AUTOMATICALLY RESOLVES THIS. Leave empty unless you have a specific viewId. System will fetch project info using the projectKey and extract latestViews.TSFS.viewId automatically. Manual viewId only needed if you want to override the automatic resolution.
+- viewId (number): ViewId for test suite folders - SYSTEM AUTOMATICALLY RESOLVES THIS. Leave empty unless you have a specific viewId. System will fetch project info using the projectKey and extract latestViews.TSFS.viewId automatically.
 - start (number): Start index for pagination - defaults to 0 (default: 0)
 - page (number): Page number to return (starts from 1) (default: 1)
 - limit (number): Number of records (default 10). (default: 10)
@@ -7566,7 +7646,7 @@ Expected Output: Test suites list with detailed column metadata for better inter
 \`\`\`
 Expected Output: Test suites available in specific folder ID 42 for test case linking
 
-**Hints:** 1. CRITICAL: tsFolderID is REQUIRED - Test Suite folder ID will be auto-resolved if not provided 2. viewId will be AUTOMATICALLY RESOLVED from project info if not provided 3. HOW TO GET tsFolderID: 4. 1. Call FETCH_PROJECT_INFO tool first to get project configuration 5. 2. From the response, use rootFolders.TS.id for the root test suite folder 6. 3. Example: rootFolders.TS.id = 113557 (MAC project root TS folder) 7. 4. If user doesn't specify tsFolderID, automatically use rootFolders.TS.id from project info 8. VIEWID AUTO-RESOLUTION: 9. 1. System automatically fetches project info using the projectKey 10. 2. Extracts latestViews.TSFS.viewId automatically 11. 3. Example: latestViews.TSFS.viewId = 104316 (MAC project TSFS view) 12. 4. Manual viewId only needed if you want to override the automatic resolution 13. WORKFLOW: System automatically handles project info if tsFolderID or viewId is not provided 14. PROJECT INFO STRUCTURE: clientData.rootFolders.TS.id contains the root test suite folder ID 15. PROJECT INFO STRUCTURE: latestViews.TSFS.viewId contains the test suite folder view ID 16. For sub-folders: Use specific folder IDs if you know them, or call folder listing APIs 17. FILTER CAPABILITIES: Same as other QMetry list operations 18. FILTER FIELDS: release, cycle, isArchived, name, status, priority 19. RELEASE/CYCLE FILTERING: Use numeric IDs in list format (get from FETCH_RELEASES_AND_CYCLES) 20. ARCHIVE FILTERING: 0=Active, 1=Archived 21. getColumns=true provides additional metadata for result interpretation 22. Multiple filter conditions are combined with AND logic 23. Pagination supported for large result sets (start, page, limit parameters) 24. This tool helps organize test cases into logical test suites 25. Essential for test execution planning and test case management 26. Use this before creating new test suites to check existing ones",
+**Hints:** 1. CRITICAL: tsFolderID is REQUIRED - Test Suite folder ID will be auto-resolved if not provided 2. viewId will be AUTOMATICALLY RESOLVED from project info if not provided 3. HOW TO GET tsFolderID: 4. 1. Call FETCH_PROJECT_INFO tool first to get project configuration 5. 2. From the response, use rootFolders.TS.id for the root test suite folder 6. 3. Example: rootFolders.TS.id = 113557 (MAC project root TS folder) 7. 4. If user doesn't specify tsFolderID, automatically use rootFolders.TS.id from project info 8. VIEWID AUTO-RESOLUTION: 9. 1. System automatically fetches project info using the projectKey 10. 2. Extracts latestViews.TSFS.viewId automatically 11. 3. Example: latestViews.TSFS.viewId = 104316 (MAC project TSFS view) 12. 4. Manual viewId only needed if you want to override the automatic resolution 13. WORKFLOW: System automatically handles project info if tsFolderID or viewId is not provided 14. PROJECT INFO STRUCTURE: rootFolders.TS.id contains the root test suite folder ID 15. PROJECT INFO STRUCTURE: latestViews.TSFS.viewId contains the test suite folder view ID 16. For sub-folders: Use specific folder IDs if you know them, or call folder listing APIs 17. FILTER CAPABILITIES: Same as other QMetry list operations 18. FILTER FIELDS: release, cycle, isArchived, name, status, priority 19. RELEASE/CYCLE FILTERING: Use numeric IDs in list format (get from FETCH_RELEASES_AND_CYCLES) 20. ARCHIVE FILTERING: 0=Active, 1=Archived 21. getColumns=true provides additional metadata for result interpretation 22. Multiple filter conditions are combined with AND logic 23. Pagination supported for large result sets (start, page, limit parameters) 24. This tool helps organize test cases into logical test suites 25. Essential for test execution planning and test case management 26. Use this before creating new test suites to check existing ones",
     "inputSchema": [
       "filter",
       "getColumns",
@@ -7588,18 +7668,18 @@ Expected Output: Test suites available in specific folder ID 42 for test case li
       "readOnlyHint": true,
       "title": "QMetry: Fetch UDF Layout",
     },
-    "description": "Fetch UDF (User Defined Field) definitions for Test Case, Test Suite, or Issue entities. Returns field names, types, fieldIDs, and lookup option IDs. Call this BEFORE creating or updating an entity with UDF values.
+    "description": "Fetch UDF (User Defined Field) definitions for Test Case, Test Suite, Issue, or Requirement entities. Returns field names, types, fieldIDs, and lookup option IDs. Call this BEFORE creating or updating an entity with UDF values.
 
 **Toolset:** UDF
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
-- entityType (enum) *required*: Entity type to fetch UDF field definitions for. 'TC' = Test Case (also returns step UDFs in stepFields), 'TS' = Test Suite, 'IS' = Issue.
+- entityType (enum) *required*: Entity type to fetch UDF field definitions for. 'TC' = Test Case (also returns step UDFs in stepFields), 'TS' = Test Suite, 'IS' = Issue, 'RQ' = Requirement.
 - pageName (enum): 'ADD' returns fields for create operations (no fieldID needed). 'DETAIL' returns fields for update operations and includes fieldID (projectUserFieldID) required by the UDF update wrapper. Call with 'DETAIL' before updating an entity's UDF values. (default: "ADD")
 
 **Output Description:** JSON with 'entityType', 'pageName'. All data is scoped by entityType key in the QMetry newlayout response: TC uses qmUDF.TC / qmSDF.TC / qmDefaultValue.TC; TS uses qmUDF.TS / qmSDF.TS / qmDefaultValue.TS; IS uses qmUDF.IS / qmSDF.IS / qmDefaultValue.IS. 'fields' array — UDF fields (name, label, fieldTypeName, fieldID, isMandatory, optional listName); isMandatory=true when allowBlank=false in QMetry. 'systemFields' array — system fields like Summary/Priority/Status (name, label, fieldTypeName, isMandatory); isMandatory=true when allowBlank=false. 'defaultValues' object — { fieldName: defaultValueId } pre-configured defaults (auto-fill when user omits the field; no need to ask user). TC-only: 'stepFields' — step UDF fields; 'stepSystemFields' — step system fields (mandatory via tcSteps[].mandatory=true); 'stepDefaultValues' — { fieldName: defaultValueId } from qmTCSDefaultValue.TCS. 'listOptions' map (listName → [{id, name, isArchived}]). '_note' with workflow instructions.
 
-**Use Cases:** 1. Discover UDF fields before creating a Test Case with custom fields 2. Get fieldIDs before updating a Test Suite's UDF values 3. Find valid dropdown option IDs for a LOOKUPLIST UDF before setting a value 4. Identify mandatory UDF fields before creating an Issue 5. List all step-level UDF fields available for Test Case steps 6. Get CASCADINGLIST parent option IDs before fetching child values
+**Use Cases:** 1. Discover UDF fields before creating a Test Case with custom fields 2. Get fieldIDs before updating a Test Suite's UDF values 3. Find valid dropdown option IDs for a LOOKUPLIST UDF before setting a value 4. Identify mandatory UDF fields before creating an Issue 5. List all step-level UDF fields available for Test Case steps 6. Get CASCADINGLIST parent option IDs before fetching child values 7. Discover UDF fields before creating or updating a Requirement
 
 **Examples:**
 1. Get UDF field definitions for creating a Test Case
@@ -7629,7 +7709,25 @@ Expected Output: { fields: [{ name: 'dropdown_field', label: 'Dropdown', fieldTy
 \`\`\`
 Expected Output: { fields: [{ name: 'TCR_STR', label: 'String Field', fieldTypeName: 'STRING', fieldID: null }, ...], listOptions: {} }
 
-**Hints:** 1. CALL THIS TOOL FIRST: Before creating or updating TC/TS/IS entities, always call this tool with pageName='ADD' to discover mandatory fields, defaults, field names, types, and valid option IDs. 2. pageName='ADD': Use before CREATE operations — returns field names + types + list options. fieldID is null (not needed on create). 3. pageName='DETAIL': Use before UPDATE operations — returns fieldID (projectUserFieldID) required in the UDF wrapper. 4. WORKFLOW FOR CREATE with UDFs: 5.   1. Call Fetch UDF Layout with entityType + pageName='ADD' 6.   2. For LOOKUPLIST/MULTILOOKUPLIST: pick IDs from listOptions[field.listName] 7.   3. For CASCADINGLIST: pick parent ID from listOptions[field.listName], then call Fetch Cascade Child Values to get child IDs 8.   4. Pass UDF values via 'udfFields' param on the create tool: { fieldName: value } 9.   5. Example: { udfFields: { custom_text: 'value', lookup_field: 101, multi_field: [101, 102], cascade_field: { parent: 201, child: 202 } } } 10. WORKFLOW FOR UPDATE with UDFs: 11.   1. Call Fetch UDF Layout with entityType + pageName='DETAIL' to get fieldIDs 12.   2. For LOOKUPLIST/MULTILOOKUPLIST: pick IDs from listOptions[field.listName] 13.   3. For CASCADINGLIST: pick parent ID, then call Fetch Cascade Child Values for child IDs 14.   4. Pass both 'udfFields' (flat root keys) AND 'UDF' wrapper (with fieldID) on the update tool: 15.      udfFields: { custom_text: 'new value', lookup_field: 102 } 16.      UDF: { custom_text: { fieldID: 1001, value: 'new value' }, lookup_field: { fieldID: 1002, value: 102 } } 17.   5. For LOOKUPLIST/MULTILOOKUPLIST in update: also set flat alias key — e.g. lookup_fieldAlias: 'Option B' 18. stepFields (TC only): Step-level UDF definitions are separate from entity-level UDF fields. They appear in stepFields (not fields). Use them when setting UDF values on test case steps. 19. listOptions: A map of listName → [{id, name, isArchived}]. Use 'id' as the UDF value for LOOKUPLIST/MULTILOOKUPLIST. Only include non-archived options unless user explicitly wants archived items. 20. EMPTY listOptions: If listOptions[field.listName] is missing or empty for a lookup field, the newlayout endpoint did not return those options. This tool automatically attempts a fallback to the UDF metadata endpoint to populate them. If listOptions is STILL empty after this tool returns, call 'Fetch Test Run UDF Metadata' with the same entityType — its 'lookupOptions' map uses the same listName keys and contains the full option list. 21. isMandatory: If true, this field MUST be included. Source: allowBlank=false in QMetry API (for UDF/system fields) or mandatory=true (for step system fields). 22. DATETIMEPICKER fields: date value MUST match the project's active date format. 23.   Get format: project info → dateTimeFormatID → find in dateTimeFormatNew where id matches → read unique_value. 24.   unique_value pattern: yyyy=4-digit year, MM=2-digit month (01-12), dd=2-digit day, MMM=3-letter month (Jan/Feb/...). 25.   Re-format user date to match before sending. NEVER guess the format — always check project info first. 26. defaultValues: Pre-configured defaults from QMetry. If a mandatory field has a defaultValues entry, use that value automatically without asking the user. Only ask user for mandatory fields with NO default. 27. stepDefaultValues: Same as defaultValues but for test case step fields. 28. PRE-CREATE MANDATORY CHECK WORKFLOW (CRITICAL — do this before every create): 29.   1. Call Fetch UDF Layout with pageName='ADD' for the entity type 30.   2. Check systemFields: for each field where isMandatory=true, check if defaultValues[field.name] exists 31.      - Has default → use defaultValues[field.name] as the value, no need to ask user 32.      - No default → MUST ask user to provide value before creating 33.   3. Check fields (UDF): same logic — isMandatory=true + no defaultValues entry → ask user 34.   4. For TC steps: check stepSystemFields and stepFields isMandatory, use stepDefaultValues for auto-fill 35.   5. Only after all mandatory fields are resolved (via default or user input) → proceed with create 36. This tool is scoped per project — list options, fieldIDs, and defaults are all project-specific.",
+4. Get UDF field definitions for creating a Requirement
+\`\`\`json
+{
+  "entityType": "RQ",
+  "pageName": "ADD"
+}
+\`\`\`
+Expected Output: { fields: [{ name: 'rq_custom_field', label: 'Custom Field', fieldTypeName: 'STRING', fieldID: null, isMandatory: false }, ...], listOptions: {} }
+
+5. Get UDF fieldIDs for updating a Requirement
+\`\`\`json
+{
+  "entityType": "RQ",
+  "pageName": "DETAIL"
+}
+\`\`\`
+Expected Output: { fields: [{ name: 'rq_dropdown_field', label: 'Dropdown', fieldTypeName: 'LOOKUPLIST', fieldID: 3002, isMandatory: false, listName: 'myListKey' }, ...], listOptions: { myListKey: [{ id: 101, name: 'Option A' }] } }
+
+**Hints:** 1. CALL THIS TOOL FIRST: Before creating or updating TC/TS/IS/RQ entities with UDF values, always call this tool to discover field names, types, and valid option IDs. 2. pageName='ADD': Use before CREATE operations — returns field names + types + list options. fieldID is null (not needed on create). 3. pageName='DETAIL': Use before UPDATE operations — returns fieldID (projectUserFieldID) required in the UDF wrapper. 4. WORKFLOW FOR CREATE with UDFs: 5.   1. Call Fetch UDF Layout with entityType + pageName='ADD' 6.   2. For LOOKUPLIST/MULTILOOKUPLIST: pick IDs from listOptions[field.listName] 7.   3. For CASCADINGLIST: pick parent ID from listOptions[field.listName], then call Fetch Cascade Child Values to get child IDs 8.   4. Pass UDF values via 'udfFields' param on the create tool: { fieldName: value } 9.   5. Example: { udfFields: { custom_text: 'value', lookup_field: 101, multi_field: [101, 102], cascade_field: { parent: 201, child: 202 } } } 10. WORKFLOW FOR UPDATE with UDFs: 11.   1. Call Fetch UDF Layout with entityType + pageName='DETAIL' to get fieldIDs 12.   2. For LOOKUPLIST/MULTILOOKUPLIST: pick IDs from listOptions[field.listName] 13.   3. For CASCADINGLIST: pick parent ID, then call Fetch Cascade Child Values for child IDs 14.   4. Pass both 'udfFields' (flat root keys) AND 'UDF' wrapper (with fieldID) on the update tool: 15.      udfFields: { custom_text: 'new value', lookup_field: 102 } 16.      UDF: { custom_text: { fieldID: 1001, value: 'new value' }, lookup_field: { fieldID: 1002, value: 102 } } 17.   5. For LOOKUPLIST/MULTILOOKUPLIST in update: also set flat alias key — e.g. lookup_fieldAlias: 'Option B' 18. stepFields (TC only): Step-level UDF definitions are separate from entity-level UDF fields. They appear in stepFields (not fields). Use them when setting UDF values on test case steps. 19. listOptions: A map of listName → [{id, name, isArchived}]. Use 'id' as the UDF value for LOOKUPLIST/MULTILOOKUPLIST. Only include non-archived options unless user explicitly wants archived items. 20. EMPTY listOptions: If listOptions[field.listName] is missing or empty for a lookup field, the newlayout endpoint did not return those options. This tool automatically attempts a fallback to the UDF metadata endpoint to populate them. If listOptions is STILL empty after this tool returns, call 'Fetch Test Run UDF Metadata' with the same entityType — its 'lookupOptions' map uses the same listName keys and contains the full option list. 21. isMandatory: If true, this field MUST be included. Source: allowBlank=false in QMetry API (for UDF/system fields) or mandatory=true (for step system fields). 22. DATETIMEPICKER fields: date value MUST match the project's active date format. 23.   Get format: project info → dateTimeFormatID → find in dateTimeFormatNew where id matches → read unique_value. 24.   unique_value pattern: yyyy=4-digit year, MM=2-digit month (01-12), dd=2-digit day, MMM=3-letter month (Jan/Feb/...). 25.   Re-format user date to match before sending. NEVER guess the format — always check project info first. 26. defaultValues: Pre-configured defaults from QMetry. If a mandatory field has a defaultValues entry, use that value automatically without asking the user. Only ask user for mandatory fields with NO default. 27. stepDefaultValues: Same as defaultValues but for test case step fields. 28. PRE-CREATE MANDATORY CHECK WORKFLOW (CRITICAL — do this before every create): 29.   1. Call Fetch UDF Layout with pageName='ADD' for the entity type 30.   2. Check systemFields: for each field where isMandatory=true, check if defaultValues[field.name] exists 31.      - Has default → use defaultValues[field.name] as the value, no need to ask user 32.      - No default → MUST ask user to provide value before creating 33.   3. Check fields (UDF): same logic — isMandatory=true + no defaultValues entry → ask user 34.   4. For TC steps: check stepSystemFields and stepFields isMandatory, use stepDefaultValues for auto-fill 35.   5. Only after all mandatory fields are resolved (via default or user input) → proceed with create 36. This tool is scoped per project — list options, fieldIDs, and defaults are all project-specific.",
     "inputSchema": [
       "entityType",
       "pageName",
@@ -7960,6 +8058,49 @@ Expected Output: Requirements linked to test case VT-TC-26 successfully.
     "outputSchema": undefined,
     "title": "QMetry: Link Requirements to Testcase",
   },
+  "qmetry_link_test_case_to_issues": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+      "title": "QMetry: Link Test Case to Issues",
+    },
+    "description": "Link one or more defects/issues to a test case by entityKey and issue IDs.
+
+**Toolset:** Test Cases
+
+**Parameters:**
+- tcID (string) *required*: EntityKey of the Test Case to link issues to (e.g. '8d7b-TC-63'). CRITICAL: the parameter name is 'tcID' — do NOT use 'testCaseId' or 'tcId'.
+- dfIDs (array) *required*: Array of numeric defect/issue IDs to link to the test case (e.g. [2039, 2038, 2037]).
+
+**Output Description:** JSON object with success status and linkage details.
+
+**Use Cases:** 1. Link defects/issues to a test case for traceability 2. Bulk link multiple issues to a single test case 3. Automate defect coverage mapping
+
+**Examples:**
+1. Link issues to test case 8d7b-TC-63
+\`\`\`json
+{
+  "tcID": "8d7b-TC-63",
+  "dfIDs": [
+    2039,
+    2038,
+    2037,
+    1528
+  ]
+}
+\`\`\`
+Expected Output: Issues linked to test case 8d7b-TC-63 successfully.
+
+**Hints:** 1. To get the tcID, call the 'Fetch Test Cases' tool and use data[<index>].entityKey. 2. dfIDs must be an array of numeric issue/defect IDs — resolve them using the 'Fetch Defects or Issues' tool. 3. If the user provides a test case entityKey (e.g., 8d7b-TC-63), use it directly as tcID. 4. CRITICAL: the parameter name is 'tcID' — do NOT use 'testCaseId' or 'tcId'. 5. CRITICAL: the parameter name is 'dfIDs' — do NOT use 'issueIds' or 'defectIds'.",
+    "inputSchema": [
+      "dfIDs",
+      "tcID",
+    ],
+    "outputSchema": undefined,
+    "title": "QMetry: Link Test Case to Issues",
+  },
   "qmetry_link_test_cases_to_test_suite": {
     "annotations": {
       "destructiveHint": false,
@@ -8119,7 +8260,7 @@ Expected Output: Test cases VT-TC-4, VT-TC-1, VT-TC-101, and VT-TC-22 linked to 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
 
-**Output Description:** JSON object containing project configuration details, confirmation of project switch, and available project metadata
+**Output Description:** JSON object containing project configuration details, confirmation of project switch, and available project metadata,including Version, Build Number(if greater than or equal to 1), Project ID, name, Project Key and Date Format
 
 **Use Cases:** 1. Switch to a specific project before performing test case operations 2. Set project context for batch operations on test cases 3. Configure the default project for the current session 4. Validate access to a specific project before proceeding with operations
 
@@ -8305,6 +8446,82 @@ Expected Output: Affected release updated successfully.
     ],
     "outputSchema": undefined,
     "title": "QMetry: Update Issue",
+  },
+  "qmetry_update_requirement": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+      "title": "QMetry: Update Requirement",
+    },
+    "description": "Update an existing QMetry requirement by rqId and rqVersionId.
+
+**Toolset:** Requirements
+
+**Parameters:**
+- rqId (number) *required*: Requirement numeric ID (required). This is the internal numeric identifier, not the entity key like 'MAC-RQ-730'.
+- rqVersionId (number) *required*: Requirement version ID (required for update).
+- updateWithVersion (boolean): Pass 'true' to create a new version of the requirement instead of updating the existing version in place.
+- name (string): Name of the requirement.
+- description (string): Description of the requirement.
+- component (array): Component (Label) IDs associated with the requirement.
+- requirementOwner (number): Owner ID of the requirement.
+- requirementState (number): State ID of the requirement.
+- priority (number): Priority ID of the requirement.
+- attachments (object): Attachment changes. ADD and REMOVE are both required arrays (use empty arrays for no change).
+- udfFields (record<string, union>): Flat UDF field values. Keys = UDF field names from 'Fetch UDF Layout'. Values depend on fieldTypeName: STRING/LARGETEXT: string, NUMBER: number, DATETIMEPICKER: date string ('14-08-2026'), LOOKUPLIST: numeric ID, MULTILOOKUPLIST: array of IDs [101, 102], CASCADINGLIST: { parent: 101, child: 102 }. Call 'Fetch UDF Layout' with entityType + pageName='ADD' to discover available fields and list option IDs.
+- UDF (record<string, object>): UDF wrapper required for update operations. Keys = UDF field names. Each value must include fieldID and value. Also set matching flat key in udfFields for the LOOKUPLIST Alias display. Example: { custom_text: { fieldID: 1001, value: 'new value' } }
+
+**Output Description:** JSON object containing the updated requirement ID, summary, and update metadata.
+
+**Use Cases:** 1. Update the name, description, priority, owner, state, or component of a requirement 2. Add or remove attachments on a requirement 3. Update custom field (UDF) values on a requirement 4. Create a new version of a requirement while updating it (updateWithVersion)
+
+**Examples:**
+1. Update the priority of a requirement
+\`\`\`json
+{
+  "rqId": 2073,
+  "rqVersionId": 2087,
+  "updateWithVersion": false,
+  "priority": 688865
+}
+\`\`\`
+Expected Output: Requirement priority updated successfully.
+
+2. Update name, description, owner, and state
+\`\`\`json
+{
+  "rqId": 2073,
+  "rqVersionId": 2087,
+  "name": "Updated login requirement",
+  "description": "Users must be able to log in with SSO.",
+  "requirementOwner": 8,
+  "requirementState": 688912,
+  "component": [
+    689030
+  ]
+}
+\`\`\`
+Expected Output: Requirement updated with new name, description, owner, state, and component.
+
+**Hints:** 1. If the user provides an entityKey (e.g., MAC-RQ-730), first call 'Fetch Requirements' with a filter on entityKeyId to resolve rqId and rqVersionId. 2. updateWithVersion: pass 'true' to create a new version of the requirement instead of updating the current version in place. 3. To get valid values for priority, requirementOwner, requirementState, and component, call the 'Admin/Get info Service' API (FETCH_PROJECT_INFO tool) and use the returned customListObjs IDs. 4. If the user provides a name instead of an ID for owner/state/priority, fetch project info, find the matching entry by name in the relevant customListObjs list, and use its ID. If not found, skip that field and tell the user it was omitted because the value wasn't available in the current project. 5. attachments (if used) requires both ADD and REMOVE arrays — pass empty arrays when there is nothing to add or remove. 6. Only fields explicitly listed in this tool's parameters are supported — releaseCycleMapping and associateRelCyc are create-only and not supported here. 7. HARD GATE: before updating, this tool checks project info for isExtTrackerConfigured, extTrackerType, and isRQConfigured. If the project has an external tracker configured, that tracker is Jira (extTrackerType=1), and the Requirement module is synced with it (isRQConfigured=true), the update is refused with an error — do NOT retry or work around this. Tell the user requirements for this project must be updated directly in Jira, then synced into QMetry. 8.  9. UDF (User Defined Fields) WORKFLOW FOR UPDATE: 10. 1. Call 'Fetch UDF Layout' with entityType='RQ', pageName='DETAIL' to get field names, fieldIDs (projectUserFieldID), and list option IDs. 11.    IF listOptions[field.listName] is empty after Fetch UDF Layout, the tool already tried a metadata fallback.    If STILL empty, ask the user to provide the option ID from the QMetry UI — do NOT guess numeric IDs. 12. 2. For LOOKUPLIST fields: pick one ID from listOptions[field.listName][].id. 13. 3. For MULTILOOKUPLIST fields: pick array of IDs; also pass alias flat key (e.g., fieldNameAlias: 'Option Label'). 14. 4. For CASCADINGLIST fields: pick parent ID + fetch child with 'Fetch Cascade Child Values'. Pass { parent: parentId, child: childId }. 15. 5. Pass BOTH 'udfFields' (flat root values) AND 'UDF' wrapper (with fieldID) — both required for update. Example: udfFields: { rq_field: 'value' }, UDF: { rq_field: { fieldID: 2001, value: 'value' } } 16. 6. Mandatory UDF fields (isMandatory=true) MUST be included.",
+    "inputSchema": [
+      "UDF",
+      "attachments",
+      "component",
+      "description",
+      "name",
+      "priority",
+      "requirementOwner",
+      "requirementState",
+      "rqId",
+      "rqVersionId",
+      "udfFields",
+      "updateWithVersion",
+    ],
+    "outputSchema": undefined,
+    "title": "QMetry: Update Requirement",
   },
   "qmetry_update_test_case": {
     "annotations": {

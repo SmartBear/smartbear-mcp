@@ -191,7 +191,7 @@ export async function fetchIssues(
     );
   }
 
-  return qmetryRequest<unknown>({
+  const result = await qmetryRequest<Record<string, unknown>>({
     method: "POST",
     path: QMETRY_PATHS.ISSUES.GET_ISSUES_LIST,
     token,
@@ -199,6 +199,10 @@ export async function fetchIssues(
     baseUrl: resolvedBaseUrl,
     body,
   });
+
+  const { filterTemplate: _filterTemplate, columns: _columns, ...rest } =
+    result;
+  return rest;
 }
 
 /**

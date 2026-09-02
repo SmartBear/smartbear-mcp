@@ -86,7 +86,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
       "Filter parameter should be a JSON string with filter criteria",
       "Common filter fields: 'name' (string), 'projectKey' (string)",
     ],
-    outputDescription: "JSON object containing list of projects details",
+    outputDescription: "JSON object containing list of projects details, including Version, Build Number(if greater than or equal to 1), Project ID, name, Project Key and Date Format",
     readOnly: true,
     idempotent: true,
   },
@@ -134,7 +134,8 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
       "The project context persists for the current session until changed again",
     ],
     outputDescription:
-      "JSON object containing project configuration details, confirmation of project switch, and available project metadata",
+      "JSON object containing project configuration details, confirmation of project switch, and available project metadata," +
+      "including Version, Build Number(if greater than or equal to 1), Project ID, name, Project Key and Date Format",
     readOnly: false,
     idempotent: true,
   },
