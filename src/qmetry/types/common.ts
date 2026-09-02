@@ -261,7 +261,7 @@ export const CommonFields = {
     .describe(
       "ViewId for test suites - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
         "Leave empty unless you have a specific viewId. " +
-        "System will fetch project info using the projectKey and extract latestViews.TS.viewId automatically. "
+        "System will fetch project info using the projectKey and extract latestViews.TS.viewId automatically."
     ),
   tsrunID: z.coerce
     .string()
