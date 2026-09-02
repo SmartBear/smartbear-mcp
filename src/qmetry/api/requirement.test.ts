@@ -67,10 +67,10 @@ describe("requirement API clients", () => {
   });
 
   // createRequirement/updateRequirement both call getProjectInfo (GET) first as a
-  // Jira-integration gate check, then send the actual create/update request.
-  // Tests that don't care about the gate use a "not Jira-integrated" project info
+  // external-integration gate check, then send the actual create/update request.
+  // Tests that don't care about the gate use a "not externally integrated" project info
   // response for that first call.
-  const notJiraIntegratedProjectInfo = {
+  const notExternallyIntegratedProjectInfo = {
     isExtTrackerConfigured: false,
     extTrackerType: 0,
     isRQConfigured: false,
@@ -78,7 +78,7 @@ describe("requirement API clients", () => {
 
   const mockGateThenResponse = (
     response: any,
-    projectInfo: any = notJiraIntegratedProjectInfo,
+    projectInfo: any = notExternallyIntegratedProjectInfo,
   ) => {
     global.fetch = vi
       .fn()
@@ -244,7 +244,7 @@ describe("requirement API clients", () => {
       ).rejects.toThrow(/QMetry Authorization Error: Insufficient permissions/);
     });
 
-    describe("Jira-integration hard gate", () => {
+    describe("external-integration hard gate", () => {
       it("should block create when project is Jira-integrated and Requirement is synced with Jira", async () => {
         global.fetch = vi.fn().mockResolvedValue(
           mockOk({
@@ -268,7 +268,30 @@ describe("requirement API clients", () => {
         expect(global.fetch).toHaveBeenCalledTimes(1);
       });
 
-      it("should NOT block when external tracker is configured but it isn't Jira (e.g. Rally)", async () => {
+      it("should block create when project is Azure-integrated and Requirement is synced with Azure", async () => {
+        global.fetch = vi.fn().mockResolvedValue(
+          mockOk({
+            isExtTrackerConfigured: true,
+            extTrackerType: 3,
+            isRQConfigured: true,
+          }),
+        );
+
+        await expect(
+          createRequirement(token, baseUrl, projectKey, {
+            name: "New login requirement",
+          }),
+        ).rejects.toThrow(
+          "[createRequirement] Blocked: This project is Azure-integrated and the Requirement module is " +
+            "configured to sync with Azure. Requirements must be created in Azure, not QMetry, " +
+            "for this project.",
+        );
+
+        // Only the project-info GET should have happened — the create POST must never fire.
+        expect(global.fetch).toHaveBeenCalledTimes(1);
+      });
+
+      it("should NOT block when external tracker is configured but it is neither Jira nor Azure (e.g. Rally)", async () => {
         mockGateThenResponse(mockOk({ id: 2073 }), {
           isExtTrackerConfigured: true,
           extTrackerType: 2, // Rally, not Jira
@@ -433,7 +456,7 @@ describe("requirement API clients", () => {
       );
     });
 
-    describe("Jira-integration hard gate", () => {
+    describe("external-integration hard gate", () => {
       it("should block update when project is Jira-integrated and Requirement is synced with Jira", async () => {
         global.fetch = vi.fn().mockResolvedValue(
           mockOk({
@@ -459,7 +482,32 @@ describe("requirement API clients", () => {
         expect(global.fetch).toHaveBeenCalledTimes(1);
       });
 
-      it("should NOT block when external tracker is configured but it isn't Jira (e.g. Rally)", async () => {
+      it("should block update when project is Azure-integrated and Requirement is synced with Azure", async () => {
+        global.fetch = vi.fn().mockResolvedValue(
+          mockOk({
+            isExtTrackerConfigured: true,
+            extTrackerType: 3,
+            isRQConfigured: true,
+          }),
+        );
+
+        await expect(
+          updateRequirement(token, baseUrl, projectKey, {
+            rqId: 2073,
+            rqVersionId: 2087,
+            priority: 688865,
+          }),
+        ).rejects.toThrow(
+          "[updateRequirement] Blocked: This project is Azure-integrated and the Requirement module is " +
+            "configured to sync with Azure. Requirements must be updated in Azure, not QMetry, " +
+            "for this project.",
+        );
+
+        // Only the project-info GET should have happened — the update PUT must never fire.
+        expect(global.fetch).toHaveBeenCalledTimes(1);
+      });
+
+      it("should NOT block when external tracker is configured but it is neither Jira nor Azure (e.g. Rally)", async () => {
         mockGateThenResponse(mockOk({ id: 2073 }), {
           isExtTrackerConfigured: true,
           extTrackerType: 2, // Rally, not Jira
