@@ -7,12 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+
+- [Swagger] `create_api_from_prompt` tool: now create-only - fails with a conflict error instead of overwriting when the generated API version already exists. Marked as non-destructive.
+- [QMetry] Security: Removed `Qmetry-Token` and `apikey` header fallbacks from `getToken()` to prevent OAuth bypass on HTTP transport. [#697](https://github.com/SmartBear/smartbear-mcp/pull/697)
+- [QMetry] Security: Added input validation (`.max(255)`, `.regex()`, `..` guard) on `fileName` in `ExportHtmlReportArgsSchema` [#697](https://github.com/SmartBear/smartbear-mcp/pull/697)
+
 ### Added
+
+- [Swagger] Extended the `create_test` Functional Testing tool with a step-level `baseUrl`/`apiName` and a definition-level `parameters` array. Every step must now set `baseUrl` to its server/common URL; it is extracted into a generated `baseURL<ApiName>` parameter (falling back to `baseURL<Host>` when `apiName` is not set) and templated into the step's `url`. OAS-style `{pathParam}` placeholders in every step's `url` are always converted to `${var(pathParam)}` references with matching generated parameters, and a `{pathParam}` shared by more than one step must be defined in `parameters` so its value stays in sync across steps. `parameters` only accepts these path/base-URL parameters, not request body parameters.
 - [Zephyr] Added `Get Folders` tool to retrieve Folders available within a Zephyr account, with optional filtering by project key and folder type.
 
 ## [0.39.0] - 2026-08-31
 
 ### Changed
+
 - [PactFlow] Refactored the internal PactFlow client from a monolithic 2,400-line class into six domain API classes (`PacticipantApi`, `EnvironmentApi`, `ContractApi`, `WebhookApi`, `AdminApi`, `AIApi`) backed by a shared `HttpClient`. This is an internal implementation change; all tool behaviour and the external `PactflowClient` interface are unchanged. [#686](https://github.com/SmartBear/smartbear-mcp/pull/686)
 - [Swagger] Functional Testing improvements: clarified the `create_suite` `name` parameter to require a human-readable suite name; renamed the `suiteId` parameter to `slug` on `run_suite`, `get_suite_status`, `list_suite_executions`, and `cancel_suite_execution` and their responses; and dropped the redundant numeric `id` from `Suite` objects returned by `create_suite` and `list_suites`.
 - [Swagger] Updated the `list_tests` tool to return test definition `url` for each found test. Updated the `list_suites` tool to return the Suite definition `url` for each found Suite.
@@ -25,15 +34,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Bugsnag] Updated cache usage in `getOrganization()`, `getProjects()`, `getCurrentProject()`, `getProjectEventFields()`, and `getProjectTraceFields()`.
 
 ### Changed
+
 - [Swagger] Updated `update_portal_product` to returns a `url` field in the response, providing the portal URL for the updated product. [#684](https://github.com/SmartBear/smartbear-mcp/pull/684)
 
 - [Common] Removed support for the MCP `sampling` capability, which was deprecated in the 2026-07-28 MCP specification revision ([SEP-2577](https://github.com/modelcontextprotocol/modelcontextprotocol/pull/2577)). The server no longer negotiates the `sampling` client capability or sends `sampling/createMessage` requests. [#685](https://github.com/SmartBear/smartbear-mcp/pull/685)
 - [PactFlow] The `generate`/`review` tools' OpenAPI matcher recommendation flow no longer relies on MCP sampling: when an OpenAPI document is provided without a `matcher`, the tool now always returns a prompt for the host AI to execute directly and resubmit with a single recommended matcher, rather than a list of up to 5 recommendations to choose from via elicitation. [#685](https://github.com/SmartBear/smartbear-mcp/pull/685)
 
-
 ## [0.37.0] - 2026-08-20
-- [QMetry]: Added Test Case, Test Suite, Issue module, Create/Update UDF capability Added. [#666](https://github.com/SmartBear/smartbear-mcp/pull/666)
 
+- [QMetry]: Added Test Case, Test Suite, Issue module, Create/Update UDF capability Added. [#666](https://github.com/SmartBear/smartbear-mcp/pull/666)
 
 ### Added
 
@@ -50,7 +59,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - [PactFlow] `publish_provider_contract` tool: added support for AsyncAPI provider contracts (`specification: "asyncapi"`), alongside the existing OpenAPI (`"oas"`) support.
-
 
 ### Changed
 
