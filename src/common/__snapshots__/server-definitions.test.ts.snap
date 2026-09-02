@@ -11936,7 +11936,7 @@ None",
 **Parameters:**
 - owner (string) *required*: Organization name (owner of the API)
 - apiName (string) *required*: API name
-- definition (string) *required*: API definition content (OpenAPI/AsyncAPI specification in JSON or YAML format). Format is automatically detected. API is created with fixed values: version 1.0.0, private visibility, automock disabled, and no project assignment.",
+- definition (string) *required*: API definition content (OpenAPI/AsyncAPI specification in JSON or YAML format). Format is automatically detected. On create, fixed values are used: version 1.0.0, private visibility, automock disabled, and no project assignment. On update, the API's existing visibility is preserved.",
     "inputSchema": [
       "apiName",
       "definition",
