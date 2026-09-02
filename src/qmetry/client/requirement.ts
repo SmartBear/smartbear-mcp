@@ -84,7 +84,7 @@ export async function createRequirement(
     ...(udfFields ?? {}),
   };
 
-  if (typeof body.name !== "string") {
+  if (typeof body.name !== "string" || body.name.trim() === "") {
     throw new Error(
       "[createRequirement] Missing or invalid required parameter: 'name'.",
     );
@@ -199,8 +199,11 @@ export async function fetchRequirements(
     body,
   });
 
-  const { filterTemplate: _filterTemplate, columns: _columns, ...rest } =
-    result;
+  const {
+    filterTemplate: _filterTemplate,
+    columns: _columns,
+    ...rest
+  } = result;
   return rest;
 }
 

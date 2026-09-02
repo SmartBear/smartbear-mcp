@@ -58,7 +58,10 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
             { orderId: 1, description: "Navigate to the login page" },
             { orderId: 2, description: "Enter valid username and password" },
             { orderId: 3, description: "Click the Login button" },
-            { orderId: 4, description: "Verify successful login and dashboard is shown" },
+            {
+              orderId: 4,
+              description: "Verify successful login and dashboard is shown",
+            },
           ],
         },
         expectedOutput:
@@ -160,15 +163,23 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
           steps: [
             { orderId: 1, description: "Navigate to the login page" },
             { orderId: 2, description: "Click on 'Forgot Password' link" },
-            { orderId: 3, description: "Enter registered email address" },
-            { orderId: 4, description: "Submit the password reset form" },
-            { orderId: 5, description: "Check email for reset link and verify it arrives" },
-            { orderId: 6, description: "Click reset link and set a new password" },
-            { orderId: 7, description: "Verify login succeeds with the new password" },
+            {
+              orderId: 3,
+              description:
+                "Enter registered email address and submit the reset form",
+            },
+            {
+              orderId: 4,
+              description: "Click reset link from email and set a new password",
+            },
+            {
+              orderId: 5,
+              description: "Verify login succeeds with the new password",
+            },
           ],
         },
         expectedOutput:
-          "Test case created with 7 auto-generated steps inferred from the name 'Password Reset Test Case'. No user-provided steps — LLM generated them from context.",
+          "Test case created with 5 auto-generated steps inferred from the name 'Password Reset Test Case'. No user-provided steps — LLM generated them from context.",
       },
     ],
     hints: [
@@ -190,7 +201,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       "  SCENARIO 2 — User does NOT mention steps at all.",
       "    Action: Generate meaningful steps based on the test case name, description, and all other context provided.",
       "    Use your knowledge of the feature/flow being tested to infer logical, realistic test steps.",
-      "    Always include at least 2-4 steps that make sense for the test case.",
+      "    Always include 2-5 steps that make sense for the test case.",
       "    Example: name='Login Test Case' → steps: [{orderId:1, description:'Navigate to login page'}, {orderId:2, description:'Enter credentials'}, {orderId:3, description:'Submit form'}, {orderId:4, description:'Verify login success'}]",
       "",
       "  SCENARIO 3 — User explicitly says NOT to create steps.",
@@ -1579,8 +1590,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
           tcID: "8d7b-TC-63",
           dfIDs: [2039, 2038, 2037, 1528],
         },
-        expectedOutput:
-          "Issues linked to test case 8d7b-TC-63 successfully.",
+        expectedOutput: "Issues linked to test case 8d7b-TC-63 successfully.",
       },
     ],
     hints: [

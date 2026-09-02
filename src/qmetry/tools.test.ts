@@ -7,6 +7,8 @@ import * as requirement from "./client/requirement";
 import * as testcase from "./client/testcase";
 import * as testsuite from "./client/testsuite";
 
+import * as udf from "./client/udf";
+
 vi.mock("./client/project");
 vi.mock("./client/testcase");
 vi.mock("./client/requirement");
@@ -1836,6 +1838,46 @@ describe("QmetryClient tools", () => {
       );
 
       expect(result.content[0].text).toContain("TC-002");
+    });
+
+    it("should apply stepDefaultValues to steps without overriding explicit UDF values", async () => {
+      (project.getProjectInfo as any).mockResolvedValue({});
+      (udf.fetchUdfLayout as any).mockResolvedValue({
+        fields: [],
+        defaultValues: {},
+        stepDefaultValues: { status: 5232630 },
+      });
+      (testcase.createTestCases as any).mockResolvedValue({
+        id: 12347,
+        entityKey: "TC-003",
+        name: "Steps Default Test",
+      });
+
+      const handler = getHandler("Create Test Case");
+      await handler({
+        tcFolderID: "102653",
+        name: "Steps Default Test",
+        steps: [
+          { orderId: 1, description: "Step with no UDF" },
+          {
+            orderId: 2,
+            description: "Step with explicit UDF",
+            UDF: { status: 9999999 },
+          },
+        ],
+      });
+
+      expect(testcase.createTestCases).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          steps: [
+            expect.objectContaining({ orderId: 1, UDF: { status: 5232630 } }),
+            expect.objectContaining({ orderId: 2, UDF: { status: 9999999 } }),
+          ],
+        }),
+      );
     });
   });
 

@@ -13,7 +13,7 @@ import type { UdfFieldValue, UdfValue } from "./udf";
 export interface RequirementReleaseCycleMapping {
   release: number;
   cycle: number[];
-  version?: number;
+  version: number;
 }
 
 export interface RequirementAttachments {

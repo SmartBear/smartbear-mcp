@@ -17,8 +17,8 @@ import {
   type FetchTestCasesLinkedToRequirementPayload,
   type FetchTestCasesPayload,
   type FetchTestCaseVersionDetailsPayload,
-  type linkRequirementToTestCasePayload,
   type LinkTestcaseToIssuesPayload,
+  type linkRequirementToTestCasePayload,
   type UpdateTestCasesPayload,
 } from "../types/testcase.js";
 import { qmetryRequest } from "./api/client-api";
@@ -59,6 +59,11 @@ export async function createTestCases(
   if (!skipSteps && (!Array.isArray(body.steps) || body.steps.length === 0)) {
     throw new Error(
       "[createTestCases] Missing or invalid required parameter: 'steps' — must be a non-empty array. Generate steps from context if the user did not provide them.",
+    );
+  }
+  if (skipSteps && Array.isArray(body.steps) && body.steps.length > 0) {
+    throw new Error(
+      "[createTestCases] Contradictory payload: 'skipSteps' is true but 'steps' contains entries. Remove the steps array or set skipSteps to false.",
     );
   }
   if (skipSteps) {
@@ -491,7 +496,12 @@ export async function fetchTestCaseExecutions(
       );
     }
 
-    const { udfjson: _udfjson, testCaseStatus: _tcs, testSuiteStatus: _tss, ...rest } = row;
+    const {
+      udfjson: _udfjson,
+      testCaseStatus: _tcs,
+      testSuiteStatus: _tss,
+      ...rest
+    } = row;
     return { ...rest, testRunUdfs };
   });
 

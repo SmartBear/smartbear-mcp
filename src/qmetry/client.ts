@@ -487,12 +487,14 @@ export class QmetryClient implements Client {
           // regardless of what format the user or LLM supplied.
           // Note: CREATE_TEST_SUITE is excluded — its full preflight above already handles dates.
           const UDF_DATE_PREFLIGHT_ENTITY_MAP: Partial<
-            Record<string, "TC" | "TS" | "IS">
+            Record<string, "TC" | "TS" | "IS" | "RQ">
           > = {
             [QMetryToolsHandlers.UPDATE_TEST_CASE]: "TC",
             [QMetryToolsHandlers.UPDATE_TEST_SUITE]: "TS",
             [QMetryToolsHandlers.CREATE_ISSUE]: "IS",
             [QMetryToolsHandlers.UPDATE_ISSUE]: "IS",
+            [QMetryToolsHandlers.CREATE_REQUIREMENT]: "RQ",
+            [QMetryToolsHandlers.UPDATE_REQUIREMENT]: "RQ",
           };
           const entityTypeForDate = UDF_DATE_PREFLIGHT_ENTITY_MAP[tool.handler];
           if (entityTypeForDate) {
