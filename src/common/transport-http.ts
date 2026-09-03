@@ -62,17 +62,36 @@ export function handleReadyRequest(
 }
 
 /**
+ * Resolve the request scheme, normalised to http or https.
+ * Proxy chains send a comma-separated list, where the first entry faces the client.
+ */
+function getForwardedProtocol(req: IncomingMessage): string {
+  const forwarded = (req.headers["x-forwarded-proto"] as string) || "";
+  const protocol = forwarded.split(",")[0]?.trim().toLowerCase();
+  return protocol === "https" ? "https" : "http";
+}
+
+/**
  * Helper to construct the base URL from the request, respecting proxy headers.
  * This is critical for cloud deployments where SSL termination happens at the load balancer.
- * If BASE_URL env var is set, it takes precedence over request headers.
+ *
+ * Resolution order:
+ * 1. BASE_URL env var - always preferred, and the only source not derived from
+ *    client input. Set this on any deployment that terminates TLS elsewhere.
+ * 2. x-forwarded-host - only when TRUST_PROXY is enabled. Without a proxy in front
+ *    to overwrite it, any client can forge this header.
+ * 3. Host header.
  */
 export function getBaseUrl(req: IncomingMessage): string {
   const baseUrlOverride = process.env.BASE_URL;
   if (baseUrlOverride) {
     return baseUrlOverride;
   }
-  const protocol = (req.headers["x-forwarded-proto"] as string) || "http";
-  const host = (req.headers["x-forwarded-host"] as string) || req.headers.host;
+  const protocol = getForwardedProtocol(req);
+  const host =
+    process.env.TRUST_PROXY === "true"
+      ? (req.headers["x-forwarded-host"] as string) || req.headers.host
+      : req.headers.host;
   return `${protocol}://${host}`;
 }
 
@@ -700,10 +719,12 @@ export async function newServer(
     };
 
     // Add WWW-Authenticate header to support OAuth discovery flow
-    // This points the client to the Protected Resource Metadata endpoint
-    if (req.headers.host) {
+    // This points the client to the Protected Resource Metadata endpoint.
+    // Built via getBaseUrl so it honours BASE_URL and matches the deployment's
+    // scheme, rather than echoing the Host header over a hardcoded http://.
+    if (process.env.BASE_URL || req.headers.host) {
       headers["WWW-Authenticate"] =
-        `OAuth resource_metadata="http://${req.headers.host}/.well-known/oauth-protected-resource"`;
+        `OAuth resource_metadata="${getBaseUrl(req)}/.well-known/oauth-protected-resource"`;
     }
 
     res.writeHead(401, headers);
