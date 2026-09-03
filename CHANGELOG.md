@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.40.0] - 2026-09-02
+
 ### Added
 
 - [QMetry] Added `Create Requirement` and `Update Requirement` tools for creating and modifying requirements, with automatic root-folder resolution, sync-gate protection, and UDF support (including DATETIMEPICKER normalization). [#699](https://github.com/SmartBear/smartbear-mcp/pull/699)
