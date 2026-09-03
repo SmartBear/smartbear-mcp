@@ -1571,7 +1571,7 @@ export class SwaggerAPI {
       searchParams.set("uri", params.uri);
     }
     const queryString = searchParams.toString();
-    const url = `${this.config.registryBasePath}/standardization/apidom-validate${queryString ? `?${queryString}` : ""}`;
+    const url = `${this.config.registryBasePath}/specs/validate${queryString ? `?${queryString}` : ""}`;
 
     const response = await fetch(url, {
       method: "POST",
@@ -1585,7 +1585,7 @@ export class SwaggerAPI {
     if (!response.ok) {
       const errorText = await response.text().catch(() => "");
       throw new ToolError(
-        `SwaggerHub Registry API apidom-validate failed - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}`,
+        `SwaggerHub Registry API specs/validate failed - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}`,
       );
     }
 

@@ -457,7 +457,7 @@ describe("SwaggerAPI", () => {
       });
 
       expect(fetchMock).toHaveBeenCalledWith(
-        `${config.registryBasePath}/standardization/apidom-validate?maxProblems=10&uri=inmemory%3A%2F%2Fspec.yaml`,
+        `${config.registryBasePath}/specs/validate?maxProblems=10&uri=inmemory%3A%2F%2Fspec.yaml`,
         expect.objectContaining({
           method: "POST",
           headers: expect.objectContaining({
@@ -496,7 +496,7 @@ describe("SwaggerAPI", () => {
         }),
       );
       expect(fetchMock).toHaveBeenCalledWith(
-        `${config.registryBasePath}/standardization/apidom-validate`,
+        `${config.registryBasePath}/specs/validate`,
         expect.objectContaining({
           method: "POST",
           body: JSON.stringify({ definition }),
@@ -512,7 +512,7 @@ describe("SwaggerAPI", () => {
       );
     });
 
-    it("should throw when the apidom-validate endpoint returns an error", async () => {
+    it("should throw when the specs/validate endpoint returns an error", async () => {
       fetchMock.mockResponseOnce("Bad Request", {
         status: 400,
         statusText: "Bad Request",
@@ -522,7 +522,7 @@ describe("SwaggerAPI", () => {
         api.validateApi({
           definition: "openapi: 3.0.0",
         }),
-      ).rejects.toThrow(/apidom-validate failed - status: 400 Bad Request/);
+      ).rejects.toThrow(/specs\/validate failed - status: 400 Bad Request/);
     });
   });
 
