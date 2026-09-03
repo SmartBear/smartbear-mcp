@@ -76,7 +76,7 @@ export const CreateApiParamsSchema = z.object({
   definition: z
     .string()
     .describe(
-      "API definition content (OpenAPI/AsyncAPI specification in JSON or YAML format). Format is automatically detected. API is created with fixed values: version 1.0.0, private visibility, automock disabled, and no project assignment.",
+      "API definition content (OpenAPI/AsyncAPI specification in JSON or YAML format). Format is automatically detected. On create, fixed values are used: version 1.0.0, private visibility, automock disabled, and no project assignment. On update, the API's existing visibility is preserved.",
     ),
 });
 
@@ -261,7 +261,7 @@ export interface CreateApiFromPromptResponse {
   specType: string;
   version?: string; // Version from X-Version header
   url: string;
-  operation: "create" | "update";
+  operation: "create";
 }
 
 export type StandardizationSeverity =
@@ -322,7 +322,7 @@ export const CreateApiFromPromptOutputSchema = z.looseObject({
   specType: z.string().optional(),
   version: z.string().optional(),
   url: z.string().optional(),
-  operation: z.enum(["create", "update"]).optional(),
+  operation: z.literal("create").optional(),
 });
 
 const StandardizationErrorSchema = z.object({

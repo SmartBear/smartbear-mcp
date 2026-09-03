@@ -9,6 +9,7 @@ import type {
   ExportHtmlReportPayload,
   GetGateConfigurationPayload,
 } from "../../qmetry/types/ai-agent.js";
+import { ExportHtmlReportArgsSchema } from "../../qmetry/types/ai-agent.js";
 
 const token = "fake-token";
 const baseUrl = "https://qmetry.example";
@@ -412,6 +413,44 @@ describe("AI Agent API clients", () => {
 
       const [, options] = (globalThis.fetch as any).mock.calls[0];
       expect(options.headers.Authorization).toBe(`Bearer ${token}`);
+    });
+  });
+
+  // ─── ExportHtmlReportArgsSchema fileName validation ─────────────────
+
+  describe("ExportHtmlReportArgsSchema fileName validation", () => {
+    const parseFileName = (fileName: string) =>
+      ExportHtmlReportArgsSchema.safeParse({
+        htmlContent: "<h1>Report</h1>",
+        fileName,
+      });
+
+    it.each([
+      "release-readiness-report",
+      "report_2026.08",
+      "RR-GATE1",
+      "a",
+    ])("should accept valid fileName %s", (fileName) => {
+      expect(parseFileName(fileName).success).toBe(true);
+    });
+
+    it.each([
+      "../../../etc/passwd",
+      "../report",
+      "reports/rr",
+      "reports\\rr",
+      "..",
+      "report..name",
+      "report name",
+      "report$(whoami)",
+      "",
+    ])("should reject traversal or unsafe fileName %s", (fileName) => {
+      expect(parseFileName(fileName).success).toBe(false);
+    });
+
+    it("should reject fileName longer than 255 characters", () => {
+      expect(parseFileName("a".repeat(256)).success).toBe(false);
+      expect(parseFileName("a".repeat(255)).success).toBe(true);
     });
   });
 });

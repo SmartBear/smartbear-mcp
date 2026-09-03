@@ -5,7 +5,8 @@ import { QMETRY_DEFAULTS } from "../config/constants";
  * QMetry API Request Configuration
  *
  * IMPORTANT ARCHITECTURE NOTE:
- * - projectKey and baseUrl are TOOL-LEVEL parameters that get extracted before API calls
+ * - baseUrl is resolved from client configuration (env var / HTTP header), NOT from tool parameters
+ * - projectKey is a TOOL-LEVEL parameter that gets extracted before API calls
  * - They are sent as HTTP headers for authentication/routing, NOT in request bodies
  * - API payload types (like FetchTestCasesPayload) should exclude these parameters
  * - This separation prevents "Body is unusable" errors and follows proper API design
@@ -104,11 +105,6 @@ export const CommonFields = {
     .optional()
     .describe("Project key - unique identifier for the project")
     .default(QMETRY_DEFAULTS.PROJECT_KEY),
-  baseUrl: z
-    .string()
-    .url()
-    .optional()
-    .describe("The base URL for the QMetry instance (must be a valid URL)"),
   start: z
     .number()
     .optional()
@@ -178,8 +174,7 @@ export const CommonFields = {
     .describe(
       "ViewId for test cases - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
         "Leave empty unless you have a specific viewId. " +
-        "System will fetch project info using the projectKey and extract latestViews.TC.viewId automatically. " +
-        "Manual viewId only needed if you want to override the automatic resolution.",
+        "System will fetch project info using the projectKey and extract latestViews.TC.viewId automatically.",
     ),
   rqViewId: z
     .number()
@@ -187,8 +182,7 @@ export const CommonFields = {
     .describe(
       "ViewId for requirements - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
         "Leave empty unless you have a specific viewId. " +
-        "System will fetch project info using the projectKey and extract latestViews.RQ.viewId automatically. " +
-        "Manual viewId only needed if you want to override the automatic resolution.",
+        "System will fetch project info using the projectKey and extract latestViews.RQ.viewId automatically.",
     ),
   rqFolderPath: z
     .string()
@@ -251,8 +245,7 @@ export const CommonFields = {
     .describe(
       "ViewId for test execution - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
         "Leave empty unless you have a specific viewId. " +
-        "System will fetch project info using the projectKey and extract latestViews.TE.viewId automatically. " +
-        "Manual viewId only needed if you want to override the automatic resolution.",
+        "System will fetch project info using the projectKey and extract latestViews.TE.viewId automatically.",
     ),
   tsfeViewId: z
     .number()
@@ -260,8 +253,7 @@ export const CommonFields = {
     .describe(
       "ViewId for test suite folders - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
         "Leave empty unless you have a specific viewId. " +
-        "System will fetch project info using the projectKey and extract latestViews.TSFS.viewId automatically. " +
-        "Manual viewId only needed if you want to override the automatic resolution.",
+        "System will fetch project info using the projectKey and extract latestViews.TSFS.viewId automatically.",
     ),
   tsViewId: z
     .number()
@@ -269,8 +261,7 @@ export const CommonFields = {
     .describe(
       "ViewId for test suites - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
         "Leave empty unless you have a specific viewId. " +
-        "System will fetch project info using the projectKey and extract latestViews.TS.viewId automatically. " +
-        "Manual viewId only needed if you want to override the automatic resolution.",
+        "System will fetch project info using the projectKey and extract latestViews.TS.viewId automatically.",
     ),
   tsrunID: z.coerce
     .string()
@@ -377,7 +368,7 @@ export const CommonFields = {
 
 export const ProjectListArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   params: z.object({
     showArchive: z
       .boolean()
@@ -406,7 +397,7 @@ export const ReleasesCyclesArgsSchema = z.object({
 
 export const BuildArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   start: CommonFields.start,
   page: CommonFields.page,
   limit: CommonFields.limit,
@@ -415,7 +406,7 @@ export const BuildArgsSchema = z.object({
 
 export const PlatformArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   start: CommonFields.start,
   page: CommonFields.page,
   limit: CommonFields.limit,
@@ -431,7 +422,7 @@ export const PlatformArgsSchema = z.object({
 
 export const CreateReleaseArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   release: z.object({
     name: z.string().describe("Release name (required)"),
     description: z.string().optional().describe("Release description"),
@@ -472,7 +463,7 @@ export const CreateReleaseArgsSchema = z.object({
 
 export const CreateCycleArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   cycle: z.object({
     name: z.string().describe("Cycle name (required)"),
     startDate: z
@@ -501,7 +492,7 @@ export const CreateCycleArgsSchema = z.object({
 
 export const UpdateCycleArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   cycle: z.object({
     name: z.string().optional().describe("Cycle name (optional for update)"),
     startDate: z
@@ -638,38 +629,45 @@ export const CreateTestCaseArgsSchema = z.object({
         "System will fetch project info using the projectKey and extract rootFolders.TC.id automatically. " +
         "Manual folder ID only needed if you want to target a specific sub-folder.",
     ),
-  steps: z
-    .array(CreateTestCaseStepSchema)
+  skipSteps: z
+    .boolean()
     .optional()
     .describe(
-      "STEPS INCLUSION RULE — read before deciding whether to include this field:\n" +
+      "Set to true ONLY when the user explicitly says they do NOT want steps created " +
+        "(e.g. 'create test case without steps', 'no steps', 'skip steps'). " +
+        "When true, the 'steps' field must be omitted entirely. " +
+        "When false or absent (the default), steps MUST always be included — " +
+        "auto-generate them from context if the user did not provide them.",
+    ),
+  steps: z
+    .array(CreateTestCaseStepSchema)
+    .min(1)
+    .optional()
+    .describe(
+      "STEPS RULE — include this field unless the user explicitly says NOT to create steps.\n" +
         "\n" +
-        "DEFAULT BEHAVIOR: OMIT 'steps' entirely from the payload. Do NOT include steps: [] (empty array).\n" +
-        "A test case without steps is valid and is the normal case when the user did not mention steps.\n" +
+        "NEVER send steps: [] (empty array) — always send at least 1 valid step object.\n" +
+        "Omit this field entirely (and set skipSteps: true) ONLY when the user explicitly asks to skip steps.\n" +
         "\n" +
-        "INCLUDE 'steps' ONLY in these two scenarios:\n" +
-        "  SCENARIO 1 — User explicitly mentions steps in their prompt.\n" +
-        "    Examples: 'create test case with steps', 'step 1: open browser, step 2: click login',\n" +
-        "    'add these steps: ...', 'include steps', 'create with following steps'.\n" +
-        "    When user provides step text, parse each step into { orderId, description, inputData?, expectedOutcome? }.\n" +
+        "HOW TO POPULATE:\n" +
+        "  - If user explicitly provides steps: parse each step into { orderId, description, inputData?, expectedOutcome? }.\n" +
+        "  - If user does NOT provide steps (and did not say to skip them): auto-generate meaningful steps based on the test case name, description, and context.\n" +
+        "    Use your knowledge to infer 2-5 logical, realistic steps for the feature or flow being tested.\n" +
+        "    Example: name='Login Test Case' → [{orderId:1, description:'Navigate to login page'}, {orderId:2, description:'Enter credentials'}, {orderId:3, description:'Submit and verify success'}]\n" +
+        "  - If user explicitly said NOT to create steps: omit this field and set skipSteps: true.\n" +
         "\n" +
-        "  SCENARIO 2 — Any field in 'stepSystemFields' OR 'stepFields' from Fetch UDF Layout has isMandatory=true.\n" +
-        "    stepSystemFields = built-in step fields (description, expectedOutcome, etc.).\n" +
-        "    stepFields = step-level UDF fields (custom fields configured per project).\n" +
-        "    If EITHER array has isMandatory=true on any entry, the backend REQUIRES at least 1 step.\n" +
-        "    In this case you MUST include at least 1 step even if the user did not mention steps.\n" +
-        "    Also fill mandatory step UDF fields from stepFields in step.UDF — use stepDefaultValues if defaults exist, else placeholder.\n" +
-        "    Ask the user for step content OR create a placeholder step with description='Step 1'.\n" +
-        "\n" +
-        "NEVER include 'steps' in any other scenario — omitting it keeps the payload clean and avoids BE errors.\n" +
-        "NEVER send steps: [] (empty array) — either omit the field or send at least 1 valid step object.\n" +
+        "STEP DEFAULT VALUES:\n" +
+        "  After building the steps array, check 'stepDefaultValues' from Fetch UDF Layout.\n" +
+        "  stepDefaultValues shape: { fieldName: defaultValue }\n" +
+        "  For each step: for each key in stepDefaultValues, if the user did NOT explicitly provide a value for that field → add it to step.UDF with the default value.\n" +
+        "  Auto-apply silently — do NOT ask the user.\n" +
         "\n" +
         "Step object fields:\n" +
         "  orderId (required): sequential integer starting at 1\n" +
         "  description (required): step action text\n" +
         "  inputData (optional): test data for this step\n" +
         "  expectedOutcome (optional): what should happen after this step\n" +
-        "  UDF (optional): step-level custom fields\n" +
+        "  UDF (optional): step-level custom fields — auto-fill defaults from stepDefaultValues\n" +
         "  tcStepID (omit on create — only used when updating existing steps)",
     ),
   name: z.string(),
@@ -705,7 +703,7 @@ export const CreateTestCaseArgsSchema = z.object({
 
 export const UpdateTestCaseArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   tcID: CommonFields.tcID,
   tcVersionID: CommonFields.tcVersionID,
   tcVersion: z
@@ -790,7 +788,7 @@ export const UpdateTestCaseArgsSchema = z.object({
 
 export const TestCaseListArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   viewId: CommonFields.tcViewId,
   folderPath: CommonFields.tcFolderPath,
   folderID: CommonFields.folderID,
@@ -810,7 +808,7 @@ export const TestCaseListArgsSchema = z.object({
 
 export const TestCaseDetailsArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   tcID: CommonFields.tcID,
   start: CommonFields.start,
   page: CommonFields.page,
@@ -819,7 +817,7 @@ export const TestCaseDetailsArgsSchema = z.object({
 
 export const TestCaseVersionDetailsArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   id: CommonFields.id,
   version: CommonFields.version,
   scope: CommonFields.scope,
@@ -827,7 +825,7 @@ export const TestCaseVersionDetailsArgsSchema = z.object({
 
 export const TestCaseStepsArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   id: CommonFields.id,
   version: CommonFields.versionOptional,
   start: CommonFields.start,
@@ -837,7 +835,6 @@ export const TestCaseStepsArgsSchema = z.object({
 
 export const TestCaseStepsWithUdfArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
   tcID: CommonFields.tcID,
   viewId: CommonFields.tcViewId,
   version: CommonFields.versionOptional,
@@ -848,7 +845,7 @@ export const TestCaseStepsWithUdfArgsSchema = z.object({
 
 export const TestCaseExecutionsArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   tcid: CommonFields.tcID,
   tcversion: CommonFields.versionOptional,
   start: CommonFields.start,
@@ -860,7 +857,7 @@ export const TestCaseExecutionsArgsSchema = z.object({
 
 export const RequirementListArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   viewId: CommonFields.rqViewId,
   folderPath: CommonFields.rqFolderPath,
   start: CommonFields.start,
@@ -894,14 +891,120 @@ export const RequirementListArgsSchema = z.object({
 
 export const RequirementDetailsArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   id: CommonFields.rqID,
   version: CommonFields.rqVersion,
 });
 
+const RequirementAttachmentsSchema = z
+  .object({
+    ADD: z.array(z.unknown()).describe("Attachments to add."),
+    REMOVE: z.array(z.unknown()).describe("Attachments to remove."),
+  })
+  .optional()
+  .describe(
+    "Attachment changes. ADD and REMOVE are both required arrays (use empty arrays for no change).",
+  );
+
+export const CreateRequirementArgsSchema = z.object({
+  name: z.string().describe("Requirement name (required)."),
+  priority: z.number().optional().describe("Priority ID of the requirement."),
+  component: z
+    .array(z.number())
+    .optional()
+    .describe("Component (Label) IDs associated with the requirement."),
+  requirementOwner: z
+    .number()
+    .optional()
+    .describe("Owner ID of the requirement."),
+  requirementState: z
+    .number()
+    .optional()
+    .describe("State ID of the requirement."),
+  releaseCycleMapping: z
+    .array(
+      z.object({
+        release: z.number(),
+        cycle: z.array(z.number()),
+        version: z.number(),
+      }),
+    )
+    .optional()
+    .describe("Release/cycle mapping for the requirement."),
+  description: z
+    .string()
+    .optional()
+    .describe("Description of the requirement."),
+  associateRelCyc: z
+    .boolean()
+    .optional()
+    .describe("Whether to associate the release/cycle mapping."),
+  rqFolderId: z
+    .string()
+    .optional()
+    .describe(
+      "Requirement folder ID - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
+        "Leave empty unless you have a specific folder ID. " +
+        "System will fetch project info using the projectKey and extract rootFolders.RQ.id automatically. " +
+        "Manual folder ID only needed if you want to target a specific sub-folder.",
+    ),
+  scope: z
+    .string()
+    .optional()
+    .describe("Scope of the requirement, usually 'project'.")
+    .default("project"),
+  udfFields: UdfFieldsSchema,
+});
+
+export const UpdateRequirementArgsSchema = z.object({
+  rqId: z
+    .number()
+    .describe(
+      "Requirement numeric ID (required). This is the internal numeric identifier, not the entity key like 'MAC-RQ-730'.",
+    ),
+  rqVersionId: z
+    .number()
+    .describe("Requirement version ID (required for update)."),
+  updateWithVersion: z
+    .boolean()
+    .optional()
+    .describe(
+      "Pass 'true' to create a new version of the requirement instead of updating the existing version in place.",
+    ),
+  name: z.string().optional().describe("Name of the requirement."),
+  description: z
+    .string()
+    .optional()
+    .describe("Description of the requirement."),
+  component: z
+    .array(z.number())
+    .optional()
+    .describe("Component (Label) IDs associated with the requirement."),
+  requirementOwner: z
+    .number()
+    .optional()
+    .describe("Owner ID of the requirement."),
+  requirementState: z
+    .number()
+    .optional()
+    .describe("State ID of the requirement."),
+  priority: z.number().optional().describe("Priority ID of the requirement."),
+  attachments: RequirementAttachmentsSchema,
+  udfFields: UdfFieldsSchema,
+  UDF: z
+    .record(z.string(), UdfWrapperFieldSchema)
+    .optional()
+    .describe(
+      "UDF wrapper required for update operations. Keys = UDF field names. " +
+        "Each value must include fieldID and value. " +
+        "Also set matching flat key in udfFields for the LOOKUPLIST Alias display. " +
+        "Example: { custom_text: { fieldID: 1001, value: 'new value' } }",
+    ),
+});
+
 export const RequirementsLinkedToTestCaseArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   tcID: CommonFields.tcID,
   getLinked: z
     .boolean()
@@ -929,9 +1032,22 @@ export const LinkRequirementToTestCaseArgsSchema = z.object({
     ),
 });
 
+export const LinkTestcaseToIssuesArgsSchema = z.object({
+  tcID: z
+    .string()
+    .describe(
+      "EntityKey of the Test Case to link issues to (e.g. '8d7b-TC-63'). CRITICAL: the parameter name is 'tcID' — do NOT use 'testCaseId' or 'tcId'.",
+    ),
+  dfIDs: z
+    .array(z.coerce.number())
+    .describe(
+      "Array of numeric defect/issue IDs to link to the test case (e.g. [2039, 2038, 2037]).",
+    ),
+});
+
 export const TestCasesLinkedToRequirementArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   rqID: CommonFields.rqID,
   getLinked: z
     .boolean()
@@ -1068,7 +1184,7 @@ export const UpdateTestSuiteArgsSchema = z.object({
 
 export const TestSuiteListArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   viewId: CommonFields.tsViewId,
   folderPath: CommonFields.tsFolderPath,
   start: CommonFields.start,
@@ -1089,14 +1205,12 @@ export const TestSuiteListArgsSchema = z.object({
 
 export const FetchTestSuiteDetailsArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
   id: z.number().int().positive().describe("Test Suite ID (numeric ID)"),
   scope: CommonFields.scope,
 });
 
 export const FetchIssueDetailsArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
   defectId: z
     .number()
     .int()
@@ -1108,7 +1222,7 @@ export const FetchIssueDetailsArgsSchema = z.object({
 
 export const TestSuitesForTestCaseArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   tsFolderID: CommonFields.tsFolderID.optional(),
   viewId: CommonFields.tsfeViewId,
   start: CommonFields.start,
@@ -1158,7 +1272,7 @@ export const RequirementsLinkedTestCasesToTestSuiteArgsSchema = z
 
 export const IssuesLinkedToTestCaseArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   tcID: CommonFields.tcID,
   getLinked: CommonFields.getLinked.optional().default(true),
   start: CommonFields.start,
@@ -1169,7 +1283,7 @@ export const IssuesLinkedToTestCaseArgsSchema = z.object({
 
 export const TestCasesByTestSuiteArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   tsID: CommonFields.tsID,
   getLinked: CommonFields.getLinked.optional().default(true),
   start: CommonFields.start,
@@ -1180,7 +1294,7 @@ export const TestCasesByTestSuiteArgsSchema = z.object({
 
 export const ExecutionsByTestSuiteArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   tsID: CommonFields.tsID, // API payload param - sent in request body (REQUIRED)
   tsFolderID: CommonFields.tsFolderID.optional(),
   gridName: CommonFields.gridName,
@@ -1193,7 +1307,7 @@ export const ExecutionsByTestSuiteArgsSchema = z.object({
 
 export const TestCaseRunsByTestSuiteRunArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   tsrunID: CommonFields.tsrunID, // API payload param - sent in request body (REQUIRED)
   viewId: CommonFields.teViewId, // auto-resolved via SYSTEM if not provided
   start: CommonFields.start,
@@ -1207,7 +1321,7 @@ export const TestCaseRunsByTestSuiteRunArgsSchema = z.object({
 
 export const LinkedIssuesByTestCaseRunArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   entityId: CommonFields.entityId, // API payload param - sent in request body (REQUIRED)
   getLinked: CommonFields.getLinked,
   getColumns: CommonFields.getColumns,
@@ -1220,7 +1334,7 @@ export const LinkedIssuesByTestCaseRunArgsSchema = z.object({
 
 export const CreateIssueArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   issueType: z.number().describe("Issue type ID (e.g. Bug, Enhancement, etc.)"),
   issuePriority: z
     .number()
@@ -1317,15 +1431,14 @@ export const UpdateIssueArgsSchema = z.object({
 
 export const IssuesListArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   viewId: z
     .number()
     .optional()
     .describe(
       "ViewId for issues - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
         "Leave empty unless you have a specific viewId. " +
-        "System will fetch project info using the projectKey and extract latestViews.IS.viewId automatically. " +
-        "Manual viewId only needed if you want to override the automatic resolution.",
+        "System will fetch project info using the projectKey and extract latestViews.IS.viewId automatically.",
     ),
   start: CommonFields.start,
   page: CommonFields.page,
@@ -1348,7 +1461,7 @@ export const IssuesListArgsSchema = z.object({
 // Export for Link Issues to Testcase Run tool
 export const LinkIssuesToTestcaseRunArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   issueIds: z
     .array(z.union([z.string(), z.number()]))
     .describe("ID of issues to be linked to Testcase Run"),
@@ -1361,7 +1474,7 @@ export const LinkIssuesToTestcaseRunArgsSchema = z.object({
 
 export const IssueExecutionsArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   linkedAssetId: z.coerce
     .number()
     .describe(
@@ -1391,7 +1504,7 @@ export const IssueExecutionsArgsSchema = z.object({
 // Export for Link Platforms to Test Suite tool
 export const LinkPlatformsToTestSuiteArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   qmTsId: z.coerce
     .number()
     .describe(
@@ -1411,7 +1524,7 @@ export const LinkPlatformsToTestSuiteArgsSchema = z.object({
 // Export for Bulk Update Test Case Execution Status tool
 export const BulkUpdateExecutionStatusArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   entityIDs: z.coerce
     .string()
     .describe(
@@ -1625,7 +1738,7 @@ export const ImportAutomationResultsPayloadSchema = z.object({
 
 export const FetchAutomationStatusPayloadSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   requestID: z.coerce
     .number()
     .describe(
@@ -1635,7 +1748,7 @@ export const FetchAutomationStatusPayloadSchema = z.object({
 
 export const AnalyticsQueryArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
-  baseUrl: CommonFields.baseUrl,
+
   query: z
     .string()
     .describe(

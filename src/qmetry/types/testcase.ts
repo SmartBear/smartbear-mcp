@@ -142,6 +142,11 @@ export interface linkRequirementToTestCasePayload {
   rqVersionIds: string; // required - Comma-separated values of versionId of the Requirement (e.g. '236124,236125')
 }
 
+export interface LinkTestcaseToIssuesPayload {
+  tcID: string; // required - EntityKey of Testcase (e.g. '8d7b-TC-63')
+  dfIDs: number[]; // required - Array of numeric defect/issue IDs
+}
+
 export interface FetchTestCaseExecutionsPayload
   extends PaginationPayload,
     FilterPayload,
@@ -170,6 +175,7 @@ export const DEFAULT_CREATE_TESTCASES_PAYLOAD: Omit<
   "tcFolderID" | "name"
 > = {
   scope: "project",
+  steps: [],
 };
 
 export const DEFAULT_UPDATE_TESTCASES_PAYLOAD: Omit<

@@ -419,6 +419,54 @@ describe("SwaggerAPI", () => {
     });
   });
 
+  describe("createApiFromPrompt", () => {
+    it("should always send createOnly=true and return operation 'create'", async () => {
+      fetchMock.mockResponseOnce("", {
+        status: 201,
+        headers: { "X-Version": "1.0.0" },
+      });
+
+      const result = await api.createApiFromPrompt({
+        owner: "orgname",
+        apiName: "petstore",
+        prompt: "Create a RESTful API for managing a pet store",
+        specType: "openapi30x",
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${config.registryBasePath}/apis/orgname/petstore/.ai?specType=openapi30x&createOnly=true`,
+        expect.objectContaining({ method: "POST" }),
+      );
+      expect(result).toEqual({
+        owner: "orgname",
+        apiName: "petstore",
+        specType: "openapi30x",
+        version: "1.0.0",
+        url: "https://app.swaggerhub.com/apis/orgname/petstore/1.0.0",
+        operation: "create",
+      });
+    });
+
+    it("should throw when the generated version already exists (409 Conflict)", async () => {
+      fetchMock.mockResponseOnce(
+        "API 'petstore' version '1.0.0' already exists",
+        {
+          status: 409,
+          statusText: "Conflict",
+        },
+      );
+
+      await expect(
+        api.createApiFromPrompt({
+          owner: "orgname",
+          apiName: "petstore",
+          prompt: "Create a RESTful API for managing a pet store",
+          specType: "openapi30x",
+        }),
+      ).rejects.toThrow(/createApiFromPrompt failed - status: 409 Conflict/);
+    });
+  });
+
   describe("publishPortalProduct", () => {
     const headers = {
       Authorization: "Bearer test-token",
@@ -1549,6 +1597,73 @@ describe("SwaggerAPI", () => {
       // The org-level conflict must short-circuit instead of retrying other
       // subdomain candidates.
       expect(createCalls).toHaveLength(1);
+    });
+  });
+
+  describe("createOrUpdateApi", () => {
+    const owner = "orgname";
+    const apiName = "petstore";
+    const definition = [
+      "openapi: 3.0.0",
+      "info:",
+      "  title: Pets",
+      "  version: 1.0.0",
+      "paths: {}",
+      "",
+    ].join("\n");
+
+    it("sends isPrivate=true when creating a new API", async () => {
+      fetchMock.mockResponseOnce("", { status: 404 }).mockResponseOnce("", {
+        status: 201,
+        headers: { "X-Version": "1.0.0" },
+      });
+
+      const result = await api.createOrUpdateApi({
+        owner,
+        apiName,
+        definition,
+      });
+
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        1,
+        `${DUMMY_REGISTRY_BASE_PATH}/apis/orgname/petstore`,
+        expect.objectContaining({ method: "GET" }),
+      );
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        2,
+        `${DUMMY_REGISTRY_BASE_PATH}/apis/orgname/petstore?isPrivate=true`,
+        expect.objectContaining({ method: "POST" }),
+      );
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(result.operation).toBe("create");
+    });
+
+    it("omits isPrivate when updating an existing API, preserving visibility", async () => {
+      fetchMock.mockResponseOnce("", { status: 200 }).mockResponseOnce("", {
+        status: 200,
+        headers: { "X-Version": "1.0.0" },
+      });
+
+      const result = await api.createOrUpdateApi({
+        owner,
+        apiName,
+        definition,
+      });
+
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        1,
+        `${DUMMY_REGISTRY_BASE_PATH}/apis/orgname/petstore`,
+        expect.objectContaining({ method: "GET" }),
+      );
+      // Visibility must not be sent on update, otherwise an existing public
+      // API would silently be flipped to private.
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        2,
+        `${DUMMY_REGISTRY_BASE_PATH}/apis/orgname/petstore`,
+        expect.objectContaining({ method: "POST" }),
+      );
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(result.operation).toBe("update");
     });
   });
 

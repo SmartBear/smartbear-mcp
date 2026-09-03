@@ -343,6 +343,21 @@ describe("UDF API clients", () => {
       gis: { customList: {} },
     };
 
+    const mockRqLayoutResponse = {
+      qmUDF: {
+        RQ: {
+          "FLD.rq_str": {
+            name: "rq_str",
+            label: "RQ String",
+            fieldTypeName: "STRING",
+            projectUserFieldID: 3001,
+            isMandatory: false,
+          },
+        },
+      },
+      gis: { customList: {} },
+    };
+
     it("should POST to GET_LAYOUT endpoint with entityType and pageName", async () => {
       global.fetch = vi.fn().mockResolvedValue(mockOk(mockTcLayoutResponse));
 
@@ -417,6 +432,20 @@ describe("UDF API clients", () => {
         pageName: "ADD",
       })) as any;
 
+      expect(result.stepFields).toBeUndefined();
+    });
+
+    it("should accept entityType RQ and NOT include stepFields", async () => {
+      global.fetch = vi.fn().mockResolvedValue(mockOk(mockRqLayoutResponse));
+
+      const result = (await fetchUdfLayout(token, baseUrl, projectKey, {
+        entityType: "RQ",
+        pageName: "ADD",
+      })) as any;
+
+      expect(result.entityType).toBe("RQ");
+      expect(result.fields).toHaveLength(1);
+      expect(result.fields[0].name).toBe("rq_str");
       expect(result.stepFields).toBeUndefined();
     });
 

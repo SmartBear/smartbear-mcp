@@ -24,7 +24,6 @@ import { QMETRY_DEFAULTS, QMetryToolsHandlers } from "./config/constants";
 const ConfigurationSchema = z.object({
   api_key: z
     .string()
-    .optional()
     .describe(
       "QMetry API key for authentication (not required when using OAuth)",
     ),
@@ -74,7 +73,7 @@ export class QmetryClient implements Client {
 
   getToken() {
     // 1. OAuth Bearer token (from authorization server)
-    let contextToken = getRequestHeader("Authorization");
+    const contextToken = getRequestHeader("Authorization");
     if (contextToken) {
       const token = Array.isArray(contextToken)
         ? contextToken[0]
@@ -83,18 +82,6 @@ export class QmetryClient implements Client {
         return token.substring(7);
       }
       return token;
-    }
-
-    // 2. Direct Qmetry API key headers
-    contextToken =
-      getRequestHeader("Qmetry-Token") || getRequestHeader("apikey");
-
-    if (Array.isArray(contextToken)) {
-      contextToken = contextToken[0];
-    }
-
-    if (contextToken) {
-      return contextToken;
     }
 
     if (!this.token) throw new Error("Client not configured");
@@ -116,7 +103,7 @@ export class QmetryClient implements Client {
     _getInput: GetInputFunction,
   ): Promise<void> {
     const resolveContext = (args: Record<string, any>) => ({
-      baseUrl: args.baseUrl ?? this.endpoint,
+      baseUrl: this.endpoint,
       projectKey: args.projectKey ?? this.projectApiKey,
     });
 
@@ -325,6 +312,24 @@ export class QmetryClient implements Client {
                   ],
                 };
               }
+
+              // Auto-apply stepDefaultValues to each step's UDF for fields not explicitly set
+              const stepDefaults = layout.stepDefaultValues ?? {};
+              if (
+                Array.isArray(a.steps) &&
+                Object.keys(stepDefaults).length > 0
+              ) {
+                for (const step of a.steps) {
+                  if (!step.UDF) step.UDF = {};
+                  for (const [fieldName, defVal] of Object.entries(
+                    stepDefaults,
+                  )) {
+                    if (!(fieldName in step.UDF)) {
+                      step.UDF[fieldName] = defVal;
+                    }
+                  }
+                }
+              }
             } catch {
               // Preflight is best-effort — proceed without it if layout fetch fails
             }
@@ -482,12 +487,14 @@ export class QmetryClient implements Client {
           // regardless of what format the user or LLM supplied.
           // Note: CREATE_TEST_SUITE is excluded — its full preflight above already handles dates.
           const UDF_DATE_PREFLIGHT_ENTITY_MAP: Partial<
-            Record<string, "TC" | "TS" | "IS">
+            Record<string, "TC" | "TS" | "IS" | "RQ">
           > = {
             [QMetryToolsHandlers.UPDATE_TEST_CASE]: "TC",
             [QMetryToolsHandlers.UPDATE_TEST_SUITE]: "TS",
             [QMetryToolsHandlers.CREATE_ISSUE]: "IS",
             [QMetryToolsHandlers.UPDATE_ISSUE]: "IS",
+            [QMetryToolsHandlers.CREATE_REQUIREMENT]: "RQ",
+            [QMetryToolsHandlers.UPDATE_REQUIREMENT]: "RQ",
           };
           const entityTypeForDate = UDF_DATE_PREFLIGHT_ENTITY_MAP[tool.handler];
           if (entityTypeForDate) {

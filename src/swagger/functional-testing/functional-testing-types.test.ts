@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   CreateFunctionalTestingBodyRuleSchema,
   CreateFunctionalTestingStatusRangeSchema,
+  CreateFunctionalTestingTestParamsSchema,
+  CreateFunctionalTestingTestStepSchema,
 } from "../client/functional-testing-types";
 
 describe("CreateFunctionalTestingStatusRangeSchema", () => {
@@ -244,5 +246,177 @@ describe("CreateFunctionalTestingBodyRuleSchema", () => {
       });
       expect(result.success).toBe(true);
     });
+  });
+});
+
+describe("CreateFunctionalTestingTestStepSchema", () => {
+  it("accepts a plain url without baseUrl", () => {
+    const result = CreateFunctionalTestingTestStepSchema.safeParse({
+      url: "https://example.com/api/users",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts a url with baseUrl set", () => {
+    const result = CreateFunctionalTestingTestStepSchema.safeParse({
+      url: "https://petstore.swagger.io/v2/pet/{petId}",
+      baseUrl: "https://petstore.swagger.io/v2",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects a baseUrl that is not a valid URL", () => {
+    const result = CreateFunctionalTestingTestStepSchema.safeParse({
+      url: "https://petstore.swagger.io/v2/pet/1",
+      baseUrl: "petstore",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts an already-templated url", () => {
+    const result = CreateFunctionalTestingTestStepSchema.safeParse({
+      url: "${var(baseURLPetstore)}/pet/${var(petId)}",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects an empty url", () => {
+    const result = CreateFunctionalTestingTestStepSchema.safeParse({
+      url: "",
+    });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("CreateFunctionalTestingTestParamsSchema", () => {
+  it("accepts top-level parameters that match a step's baseUrl and path placeholders", () => {
+    const result = CreateFunctionalTestingTestParamsSchema.safeParse({
+      name: "My Test",
+      steps: [
+        {
+          baseUrl: "https://petstore.swagger.io/v2",
+          url: "https://petstore.swagger.io/v2/pet/{petId}",
+        },
+      ],
+      parameters: [
+        {
+          name: "baseURLpetstoreswaggerio",
+          value: "https://petstore.swagger.io/v2",
+        },
+        { name: "petId" },
+      ],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects a parameter with an empty name", () => {
+    const result = CreateFunctionalTestingTestParamsSchema.safeParse({
+      name: "My Test",
+      parameters: [{ name: "" }],
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a top-level parameter that is not referenced as a path parameter by any step", () => {
+    const result = CreateFunctionalTestingTestParamsSchema.safeParse({
+      name: "My Test",
+      steps: [
+        {
+          baseUrl: "https://petstore.swagger.io/v2",
+          url: "https://petstore.swagger.io/v2/pet/1",
+        },
+      ],
+      parameters: [{ name: "petName", value: "Rex" }],
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toContain("not a path parameter");
+    }
+  });
+
+  it("rejects a step that does not set baseUrl", () => {
+    const result = CreateFunctionalTestingTestParamsSchema.safeParse({
+      name: "My Test",
+      steps: [{ url: "https://petstore.swagger.io/v2/pet/1" }],
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].path).toEqual(["steps", 0, "baseUrl"]);
+      expect(result.error.issues[0].message).toContain(
+        'Step url "https://petstore.swagger.io/v2/pet/1" does not set "baseUrl"',
+      );
+    }
+  });
+
+  it("rejects a path param used in multiple steps without a matching parameter definition", () => {
+    const result = CreateFunctionalTestingTestParamsSchema.safeParse({
+      name: "My Test",
+      steps: [
+        {
+          baseUrl: "https://petstore.swagger.io/v2",
+          url: "https://petstore.swagger.io/v2/pet/{petId}",
+        },
+        {
+          baseUrl: "https://petstore.swagger.io/v2",
+          url: "https://petstore.swagger.io/v2/pet/{petId}/uploadImage",
+        },
+      ],
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toContain(
+        'Path parameter "{petId}" appears in 2 steps',
+      );
+    }
+  });
+
+  it("accepts a path param used in multiple steps when a matching parameter is defined", () => {
+    const result = CreateFunctionalTestingTestParamsSchema.safeParse({
+      name: "My Test",
+      steps: [
+        {
+          baseUrl: "https://petstore.swagger.io/v2",
+          url: "https://petstore.swagger.io/v2/pet/{petId}",
+        },
+        {
+          baseUrl: "https://petstore.swagger.io/v2",
+          url: "https://petstore.swagger.io/v2/pet/{petId}/uploadImage",
+        },
+      ],
+      parameters: [{ name: "petId", value: "123" }],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts a path param used in only one step without a parameter definition", () => {
+    const result = CreateFunctionalTestingTestParamsSchema.safeParse({
+      name: "My Test",
+      steps: [
+        {
+          baseUrl: "https://petstore.swagger.io/v2",
+          url: "https://petstore.swagger.io/v2/pet/{petId}",
+        },
+      ],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects a step whose url does not start with its baseUrl", () => {
+    const result = CreateFunctionalTestingTestParamsSchema.safeParse({
+      name: "My Test",
+      steps: [
+        {
+          baseUrl: "https://petstore.swagger.io/v2",
+          url: "https://other.example.com/pet/1",
+        },
+      ],
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].path).toEqual(["steps", 0, "url"]);
+      expect(result.error.issues[0].message).toContain(
+        "must start with its baseUrl",
+      );
+    }
   });
 });

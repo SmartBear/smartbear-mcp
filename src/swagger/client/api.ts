@@ -1271,8 +1271,38 @@ export class SwaggerAPI {
    * @returns Created or updated API metadata with URL. HTTP 201 indicates creation, HTTP 200 indicates update
    */
   async createOrUpdateApi(params: CreateApiParams): Promise<CreateApiResponse> {
-    // Fixed values: visibility=private, automock=false, version=1.0.0
-    return this.saveApiDefinition(params, { isPrivate: true });
+    // New API: fixed values - visibility=private, automock=false, version=1.0.0
+    // Existing API: isPrivate is omitted so the registry preserves current visibility
+    const exists = await this.apiExists({
+      owner: params.owner,
+      apiName: params.apiName,
+    });
+    return this.saveApiDefinition(params, exists ? {} : { isPrivate: true });
+  }
+
+  /**
+   * Check whether an API (any version) already exists for the given owner/name.
+   */
+  private async apiExists({
+    owner,
+    apiName,
+  }: {
+    owner: string;
+    apiName: string;
+  }): Promise<boolean> {
+    const url = `${this.config.registryBasePath}/apis/${encodeURIComponent(owner)}/${encodeURIComponent(apiName)}`;
+    const response = await fetch(url, {
+      method: "GET",
+      headers: this.headers,
+    });
+    if (response.status === 404) return false;
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "");
+      throw new ToolError(
+        `SwaggerHub Registry API apiExists failed - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}. owner=${owner}, apiName=${apiName}`,
+      );
+    }
+    return true;
   }
 
   /**
@@ -1358,7 +1388,7 @@ export class SwaggerAPI {
   /**
    * Create API from Prompt using SmartBear AI
    * @param params Parameters for creating API from prompt including owner, api name, prompt, and specification type
-   * @returns Created API metadata with URL. HTTP 201 indicates creation, HTTP 200 for update, HTTP 205 for reload
+   * @returns Created API metadata with URL. HTTP 201 indicates creation; HTTP 409 is thrown if the generated version already exists
    */
   async createApiFromPrompt(
     params: CreateApiFromPromptParams,
@@ -1367,6 +1397,8 @@ export class SwaggerAPI {
     const searchParams = new URLSearchParams();
     const specType = params.specType ?? "openapi30x";
     searchParams.append("specType", specType);
+    // createOnly ensures this tool never overwrites an existing API version
+    searchParams.append("createOnly", "true");
 
     const url = `${this.config.registryBasePath}/apis/${encodeURIComponent(
       params.owner,
@@ -1389,10 +1421,6 @@ export class SwaggerAPI {
       );
     }
 
-    // Determine operation type based on HTTP status code
-    // 201 = new API created, 200 = existing API updated, 205 = API saved and should be reloaded
-    const operation = response.status === 201 ? "create" : "update";
-
     // Extract version from X-Version header
     const version = response.headers.get("X-Version");
 
@@ -1405,7 +1433,7 @@ export class SwaggerAPI {
       url: version
         ? `${this.config.uiBasePath}/apis/${params.owner}/${params.apiName}/${version}`
         : `${this.config.uiBasePath}/apis/${params.owner}/${params.apiName}`,
-      operation,
+      operation: "create",
     };
   }
 
