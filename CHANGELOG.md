@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- [Common] Security: `WWW-Authenticate` OAuth discovery URLs are no longer derived from the client-supplied `Host` header over a hardcoded `http://`. The header is now built via `getBaseUrl()`, honouring the `BASE_URL` env var and deriving the scheme from `X-Forwarded-Proto`. `X-Forwarded-Host` is now only trusted when the new `TRUST_PROXY` env var is enabled, since it can be forged by clients on deployments without a proxy stripping it. Both variables are documented in the README.
+
 ## [0.40.0] - 2026-09-02
 
 ### Added

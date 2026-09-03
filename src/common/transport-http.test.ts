@@ -123,6 +123,7 @@ describe("transport-http helpers", () => {
   describe("getBaseUrl", () => {
     afterEach(() => {
       delete process.env.BASE_URL;
+      delete process.env.TRUST_PROXY;
     });
 
     it("should return BASE_URL env var when set", () => {
@@ -131,13 +132,39 @@ describe("transport-http helpers", () => {
       expect(getBaseUrl(req)).toBe("https://override.example.com");
     });
 
-    it("should use x-forwarded-proto and x-forwarded-host when present", () => {
+    it("should use x-forwarded-proto and x-forwarded-host when TRUST_PROXY is enabled", () => {
+      process.env.TRUST_PROXY = "true";
       const req = fakeRequest({
         "x-forwarded-proto": "https",
         "x-forwarded-host": "proxy.example.com",
         host: "localhost:3000",
       });
       expect(getBaseUrl(req)).toBe("https://proxy.example.com");
+    });
+
+    it("should ignore x-forwarded-host when TRUST_PROXY is not enabled", () => {
+      const req = fakeRequest({
+        "x-forwarded-proto": "https",
+        "x-forwarded-host": "attacker.example.com",
+        host: "realhost.example.com",
+      });
+      expect(getBaseUrl(req)).toBe("https://realhost.example.com");
+    });
+
+    it("should normalise an unrecognised x-forwarded-proto to http", () => {
+      const req = fakeRequest({
+        "x-forwarded-proto": "gopher",
+        host: "myhost:8080",
+      });
+      expect(getBaseUrl(req)).toBe("http://myhost:8080");
+    });
+
+    it("should use the client-facing entry of an x-forwarded-proto chain", () => {
+      const req = fakeRequest({
+        "x-forwarded-proto": "https, http",
+        host: "myhost:8080",
+      });
+      expect(getBaseUrl(req)).toBe("https://myhost:8080");
     });
 
     it("should default protocol to http when x-forwarded-proto is absent", () => {
@@ -217,6 +244,8 @@ describe("newServer (OAuth flow)", () => {
   afterEach(() => {
     // Restore clientRegistry.getAll
     clientRegistry.getAll = originalGetAll;
+    delete process.env.BASE_URL;
+    delete process.env.TRUST_PROXY;
   });
 
   it("should return 401 with WWW-Authenticate header when no clients are configured", async () => {
@@ -232,6 +261,52 @@ describe("newServer (OAuth flow)", () => {
     expect(res._status).toBe(401);
     expect(res._headers["WWW-Authenticate"]).toBe(
       'OAuth resource_metadata="http://myserver.example.com:3000/.well-known/oauth-protected-resource"',
+    );
+  });
+
+  it("should build WWW-Authenticate from BASE_URL, ignoring a forged Host", async () => {
+    clientRegistry.getAll = () => [];
+    process.env.BASE_URL = "https://real.example.com";
+
+    const req = fakeRequest({ host: "evil.attacker.com" });
+    const res = fakeResponse();
+
+    await newServer(req, res);
+
+    expect(res._headers["WWW-Authenticate"]).toBe(
+      'OAuth resource_metadata="https://real.example.com/.well-known/oauth-protected-resource"',
+    );
+  });
+
+  it("should not reflect x-forwarded-host into WWW-Authenticate by default", async () => {
+    clientRegistry.getAll = () => [];
+
+    const req = fakeRequest({
+      "x-forwarded-host": "evil.attacker.com",
+      host: "myserver.example.com:3000",
+    });
+    const res = fakeResponse();
+
+    await newServer(req, res);
+
+    expect(res._headers["WWW-Authenticate"]).toBe(
+      'OAuth resource_metadata="http://myserver.example.com:3000/.well-known/oauth-protected-resource"',
+    );
+  });
+
+  it("should use https in WWW-Authenticate when terminating TLS at a proxy", async () => {
+    clientRegistry.getAll = () => [];
+
+    const req = fakeRequest({
+      "x-forwarded-proto": "https",
+      host: "myserver.example.com",
+    });
+    const res = fakeResponse();
+
+    await newServer(req, res);
+
+    expect(res._headers["WWW-Authenticate"]).toBe(
+      'OAuth resource_metadata="https://myserver.example.com/.well-known/oauth-protected-resource"',
     );
   });
 
