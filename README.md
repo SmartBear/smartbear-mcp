@@ -43,17 +43,18 @@ See individual guides for suggested prompts and supported tools and resources:
 
 ## Remote MCP Servers
 
-For BugSnag, Swagger, and Zephyr, SmartBear hosts Remote MCP Servers that you can connect to directly from your MCP client via a URL — no installation, Node.js, or API tokens required. Authentication is handled through an OAuth browser flow.
+For BugSnag, Swagger, Zephyr, and QMetry, SmartBear hosts Remote MCP Servers that you can connect to directly from your MCP client via a URL — no installation, Node.js, or API tokens required. Authentication is handled through an OAuth browser flow.
 
 | Product | Server URL |
 |---|---|
 | **Swagger** | `https://swagger.mcp.smartbear.com/mcp` |
 | **BugSnag** | `https://bugsnag.mcp.smartbear.com/mcp` |
 | **Zephyr** | `https://zephyr.mcp.smartbear.com/mcp` |
+| **QMetry** | `https://qmetry.mcp.smartbear.com/mcp` |
 
 See the [Remote MCP Servers guide](https://developer.smartbear.com/smartbear-mcp/docs/remote-mcp-servers) for per-client setup instructions. You can connect to multiple remote servers at the same time.
 
-> **Need BearQ, Reflect, QMetry, QTM4J, PactFlow, Collaborator, or Functional Testing?** These products are only available via the local npm package below, which bundles all products into a single MCP server.
+> **Need BearQ, Reflect, QTM4J, PactFlow, Collaborator, or Functional Testing?** These products are only available via the local npm package below, which bundles all products into a single MCP server.
 
 ## Prerequisites
 

@@ -59,6 +59,14 @@
       "contentUrl": "remote-zephyr.md"
     },
     {
+      "order": 3,
+      "parent": "remote-mcp-servers",
+      "name": "QMetry Remote Server",
+      "slug": "remote-qmetry",
+      "type": "markdown",
+      "contentUrl": "remote-qmetry.md"
+    },
+    {
       "order": 1,
       "parent": "getting-started",
       "name": "Local MCP Server",
