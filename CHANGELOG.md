@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [Swagger] Updated and fixed Functional Testing tool descriptions for clarity and LLM usability: added explicit async/polling guidance to `run_test` and `run_suite`, enumerated status values with descriptions for `get_test_status` and `get_suite_status`, added `limit`/`offset` pagination hints and total run count to `get_test_history`, standardized status terminology to `canceled` across all tool descriptions, and restructured the public doc into `Tests` and `Suites` sections with bold field labels and cross-tool references.
 
+- [Common] Security: `WWW-Authenticate` OAuth discovery URLs are no longer derived from the client-supplied `Host` header over a hardcoded `http://`. The header is now built via `getBaseUrl()`, honouring the `BASE_URL` env var and deriving the scheme from `X-Forwarded-Proto`. `X-Forwarded-Host` is now only trusted when the new `TRUST_PROXY` env var is enabled, since it can be forged by clients on deployments without a proxy stripping it. Both variables are documented in the README.
+
 ## [0.40.0] - 2026-09-02
 
 ### Added
