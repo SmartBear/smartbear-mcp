@@ -305,9 +305,9 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
         expectedOutput: "Issue type updated successfully.",
       },
       {
-        description: "Update affected release",
-        parameters: { DefectId: 118150, affectedRelease: 3730 },
-        expectedOutput: "Affected release updated successfully.",
+        description: "Update affected release and affected cycles",
+        parameters: { DefectId: 118150, affectedRelease: 3730, "affectedCycles":[1168] },
+        expectedOutput: "Affected release and affected cycles updated successfully.",
       },
     ],
     hints: [

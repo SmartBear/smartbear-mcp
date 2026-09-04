@@ -1416,7 +1416,7 @@ export const UpdateIssueArgsSchema = z.object({
     .optional()
     .describe("Release IDs affected by this issue"),
   affectedCycles: z
-    .number()
+    .array(z.number())
     .optional()
     .describe("Cycle IDs affected by this issue"),
   udfFields: UdfFieldsSchema,

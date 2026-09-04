@@ -64,7 +64,7 @@ export interface UpdateIssuePayload {
   issuePriority?: number;
   issueType?: number;
   affectedRelease?: number;
-  affectedCycles?: number;
+  affectedCycles?: number[];
   description?: string;
   issueOwner?: number;
   UDF?: Record<string, UdfFieldValue>; // UDF wrapper { fieldName: { fieldID, value } } for update
