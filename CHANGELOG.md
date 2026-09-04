@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Common] Modern-era (2026-07-28) requests now carry client identity: the protocol version, client info and capabilities are extracted from each request's `_meta` envelope into the request context, so error reports and downstream `User-Agent` headers are attributed for clients that no longer send an `initialize` handshake. Legacy per-connection capture is unchanged. [#691](https://github.com/SmartBear/smartbear-mcp/pull/691)
 - [Common] Elicitation on the modern (2026-07-28) era now uses the multi round-trip pattern ([SEP-2322](https://github.com/modelcontextprotocol/modelcontextprotocol/pull/2322)): tools that need user input return an `input_required` result carrying an embedded `elicitation/create` request, and the client's retry supplies the answers via `inputResponses`. Answers from earlier rounds are correlated through a server-minted `requestState`. Modern clients that do not declare the `elicitation` capability, and all legacy (2025-11-25) clients, keep the existing instruction-based fallback. [#705](https://github.com/SmartBear/smartbear-mcp/pull/705)
 
+### Fixed
+
+- [Swagger] Updated and fixed Functional Testing tool descriptions for clarity and LLM usability: added explicit async/polling guidance to `run_test` and `run_suite`, enumerated status values with descriptions for `get_test_status` and `get_suite_status`, added `limit`/`offset` pagination hints and total run count to `get_test_history`, standardized status terminology to `canceled` across all tool descriptions, and restructured the public doc into `Tests` and `Suites` sections with bold field labels and cross-tool references.
+
 ## [0.40.0] - 2026-09-02
 
 ### Added

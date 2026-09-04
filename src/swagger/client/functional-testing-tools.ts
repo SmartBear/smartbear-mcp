@@ -91,7 +91,7 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
     summary:
       "Cancels an ongoing test suite execution in your Swagger Functional Testing workspace. " +
       "Use this tool when you need to stop a long-running or accidentally triggered suite run. " +
-      "The canceled execution is preserved in run history with status `cancelled`. " +
+      "The canceled execution is preserved in run history with status `canceled`. " +
       "Do not use this tool to cancel individual test runs.",
     inputSchema: CancelFunctionalTestingSuiteExecutionSchema,
     handler: "cancelFunctionalTestingSuiteExecution",
@@ -161,8 +161,9 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
     toolset: "Functional Testing",
     summary:
       "Retrieves the execution history for a given test in your Swagger Functional Testing workspace. " +
-      "Returns a list of past runs, each including pass/fail status, run time, creation timestamp, " +
+      "Returns the total run count and a list of past runs, each including pass/fail status, run time, creation timestamp, " +
       "and — for failed runs — a per-step breakdown of failure details. " +
+      "Supports pagination via `limit` (1–100, default 25) and `offset` (default 0). " +
       "Use this tool when you need to check past run results, identify failures, or assess test reliability over time. " +
       "Do not use this tool to run a test or retrieve suite-level execution results.",
     inputSchema: GetFunctionalTestHistoryParamsSchema,
