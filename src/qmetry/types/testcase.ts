@@ -88,7 +88,7 @@ export interface UpdateTestCasesPayload {
   name?: string; // optional - Test Case name
   priority?: number; // optional - PriorityID of Testcase
   component?: number[]; // optional - Component(Label) Ids
-  owner?: number; // optional - OwnerId of Testcase
+  testcaseOwner?: number; // optional - OwnerId of Testcase
   testCaseState?: number; // optional - StatusId of Testcase
   testCaseType?: number; // optional - Id of Test Category
   executionMinutes?: number; // optional - Execution Time (minutes)

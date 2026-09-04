@@ -757,7 +757,7 @@ export const UpdateTestCaseArgsSchema = z.object({
   name: z.string().optional(),
   priority: z.number().optional(),
   component: z.array(z.number()).optional(),
-  owner: z.number().optional(),
+  testcaseOwner: z.number().optional(),
   testCaseState: z.number().optional(),
   testCaseType: z.number().optional(),
   estimatedTime: z
