@@ -15,8 +15,13 @@ import {
 } from "@modelcontextprotocol/server";
 import { SSEServerTransport } from "@modelcontextprotocol/server-legacy/sse";
 import { clientRegistry } from "./client-registry";
-import { handleInitializeMessage } from "./initialize";
 import {
+  extractModernClientMeta,
+  handleInitializeMessage,
+} from "./initialize";
+import {
+  type ModernClientMeta,
+  setModernRequestClient,
   setRequestMcpClient,
   withRequestContext,
   withRequestHeaders,
@@ -497,10 +502,43 @@ async function handleMcpEndpoint(
     return;
   }
 
+  // Modern requests carry no session, so the client's identity and
+  // capabilities arrive in each request's `_meta` envelope (SEP-2575). Lift
+  // them into the request context now: this is the modern counterpart of the
+  // legacy `initialize` capture, and it is what makes client attribution
+  // (Bugsnag metadata, downstream User-Agent) work for modern callers.
   const headers = webHeadersToRecord(probe.headers);
+  const clientMeta = extractModernClientMetaFromBody(parsedBody);
   await modernServerStorage.run(server, () =>
-    withRequestHeaders(headers, () => modern(req, res, parsedBody)),
+    withRequestHeaders(headers, () => {
+      if (clientMeta) {
+        setModernRequestClient(clientMeta);
+      }
+      return modern(req, res, parsedBody);
+    }),
   );
+}
+
+/**
+ * Lift modern-era client metadata from a parsed request body.
+ *
+ * JSON-RPC batches were removed by the 2025-06-18 revision, so a modern body
+ * is a single message in practice; arrays are still scanned defensively so a
+ * batched client is attributed rather than silently anonymous.
+ */
+function extractModernClientMetaFromBody(
+  parsedBody: unknown,
+): ModernClientMeta | undefined {
+  if (Array.isArray(parsedBody)) {
+    for (const message of parsedBody) {
+      const meta = extractModernClientMeta(message);
+      if (meta) {
+        return meta;
+      }
+    }
+    return undefined;
+  }
+  return extractModernClientMeta(parsedBody);
 }
 
 /**

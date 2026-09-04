@@ -4,9 +4,16 @@ import {
   StdioServerTransport,
   serveStdio,
 } from "@modelcontextprotocol/server/stdio";
+import {
+  setProcessClientIdentity,
+  toClientIdentity,
+} from "./client-identity";
 import { clientRegistry } from "./client-registry";
 import { USER_AGENT } from "./info";
-import { handleInitializeMessage } from "./initialize";
+import {
+  extractModernClientMeta,
+  handleInitializeMessage,
+} from "./initialize";
 import { SmartBearMcpServer } from "./server";
 import { registerShutdownHandler } from "./shutdown";
 import { getTypeDescription, isOptionalType } from "./zod-utils";
@@ -88,6 +95,18 @@ export function createInitializeCaptureTap(): {
 
   return {
     observe(message: JSONRPCMessage): void {
+      // Modern era: no handshake, so identity arrives on every request in
+      // `_meta` and needs no server instance to record. Stdio serves exactly
+      // one client per process, so the process-wide slot — the same one the
+      // legacy capture writes — is the right home for it, and nothing needs
+      // buffering.
+      const modernMeta = extractModernClientMeta(message);
+      if (modernMeta) {
+        setProcessClientIdentity(
+          toClientIdentity(modernMeta.clientInfo, modernMeta.protocolVersion),
+        );
+        return;
+      }
       if (activeServer) {
         handleInitializeMessage(activeServer, message);
         return;
