@@ -116,6 +116,12 @@
           "isSecret": false
         },
         {
+          "name": "QTM4J_API_VERSION",
+          "description": "QTM4J API version prefix (optional). Defaults to /rest/api/latest. Override to set a specific API version.",
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
           "name": "QTM4J_AUTOMATION_API_KEY",
           "description": "QTM4J Automation API key used exclusively by the automation import tools. Leave empty to disable automation tools. Learn more: https://developer.smartbear.com/smartbear-mcp/docs/qtm4j-integration",
           "isRequired": false,
