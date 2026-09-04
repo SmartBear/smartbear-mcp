@@ -21,6 +21,7 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
     summary:
       "Lists all API tests available in your Swagger Functional Testing account. " +
       "Use this tool when you need to discover available tests before running them or checking their status. " +
+      "Returns test IDs usable with `swagger_run_test` to execute a single test, or passable to `swagger_create_suite` to group tests into a suite. " +
       "Do not use this tool to retrieve test execution results or history.",
     handler: "listFunctionalTestingTests",
     idempotent: true,
@@ -65,8 +66,8 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
     toolset: "Functional Testing",
     summary:
       "Get the status of a Swagger Functional Testing test execution. " +
-      "It returns information about the execution such as its status (running, passed or failed), run time, " +
-      "as well as the break down of the status of each test step.",
+      "Returns the execution status (`running`, `passed`, or `failed`), run time, and a per-step breakdown. " +
+      "Poll this tool after calling `swagger_run_test` until status is `passed` or `failed`; `running` means the execution is still in progress.",
     inputSchema: GetFunctionalTestingExecutionTestSchema,
     handler: "getFunctionalTestingExecution",
     idempotent: true,
@@ -90,6 +91,7 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
     summary:
       "Cancels an ongoing test suite execution in your Swagger Functional Testing workspace. " +
       "Use this tool when you need to stop a long-running or accidentally triggered suite run. " +
+      "The canceled execution is preserved in run history with status `cancelled`. " +
       "Do not use this tool to cancel individual test runs.",
     inputSchema: CancelFunctionalTestingSuiteExecutionSchema,
     handler: "cancelFunctionalTestingSuiteExecution",
@@ -146,8 +148,8 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
     toolset: "Functional Testing",
     summary:
       "Get the status of a Swagger Functional Testing suite execution. " +
-      "Returns the overall status (pending, canceled, passed or failed), whether the run is finished, and a per-test breakdown with pass/fail. " +
-      "Use this to poll for the outcome of a suite run triggered by `swagger_run_suite`. " +
+      "Returns the overall status (`pending`, `canceled`, `passed`, or `failed`), whether the run is finished, and a per-test breakdown with pass/fail, runtime, and step count. " +
+      "`pending` means the execution has not started yet. Poll this tool after calling `swagger_run_suite` until `finished` is `true`. " +
       "Requires the suite's `slug` and the `executionId` returned by `swagger_run_suite`.",
     inputSchema: GetFunctionalTestingSuiteExecutionSchema,
     handler: "getFunctionalTestingSuiteExecution",
