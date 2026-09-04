@@ -8377,7 +8377,7 @@ Expected Output: Cycle updated with new name and dates successfully
 - description (string): Detailed description of the defect/issue
 - issueOwner (number): Owner/user ID for the issue
 - affectedRelease (number): Release IDs affected by this issue
-- affectedCycles (number): Cycle IDs affected by this issue
+- affectedCycles (array): Cycle IDs affected by this issue
 - udfFields (record<string, union>): Flat UDF field values. Keys = UDF field names from 'Fetch UDF Layout'. Values depend on fieldTypeName: STRING/LARGETEXT: string, NUMBER: number, DATETIMEPICKER: date string ('14-08-2026'), LOOKUPLIST: numeric ID, MULTILOOKUPLIST: array of IDs [101, 102], CASCADINGLIST: { parent: 101, child: 102 }. Call 'Fetch UDF Layout' with entityType + pageName='ADD' to discover available fields and list option IDs.
 - UDF (record<string, object>): UDF wrapper required for update. Keys = UDF field names. Each value must include fieldID (from 'Fetch UDF Layout' with pageName='DETAIL') and value.
 
@@ -8413,14 +8413,17 @@ Expected Output: Issue priority updated successfully.
 \`\`\`
 Expected Output: Issue type updated successfully.
 
-4. Update affected release
+4. Update affected release and affected cycles
 \`\`\`json
 {
   "DefectId": 118150,
-  "affectedRelease": 3730
+  "affectedRelease": 3730,
+  "affectedCycles": [
+    1168
+  ]
 }
 \`\`\`
-Expected Output: Affected release updated successfully.
+Expected Output: Affected release and affected cycles updated successfully.
 
 **Hints:** 1. === DEFAULT VALUES — APPLY FOR ANY UNSET FIELD === 2. ALWAYS call 'Fetch UDF Layout' with entityType='IS', pageName='DETAIL' before updating. 3. defaultValues (from Fetch UDF Layout, i.e. qmDefaultValue.IS): { fieldName: defaultValueId } — sweep ALL entries. 4.   defaultValues can contain BOTH system field defaults AND UDF field defaults — handle each differently: 5.   → SYSTEM field defaults (fields in qmSDF.IS, e.g. component/Labels, issueType, issuePriority): route to TOP-LEVEL params, NOT to udfFields. 6.      - MULTILOOKUPLIST system fields (e.g. component): default is a single ID — wrap in array: component: [5232632]. 7.      - LOOKUPLIST system fields (e.g. issueType, issuePriority): default is a single ID — use directly. 8.   → UDF field defaults (fields in qmUDF.IS, e.g. str1, lookup19, age19): route to udfFields param. 9.   For EACH key in defaultValues: if user did not explicitly provide that field → include it in payload using default, routed correctly. 10.   This applies to non-mandatory fields too (e.g. component/Labels). Omitting them = data loss. 11.   IMPORTANT: QMetry's API sometimes returns 'defaultValues: {}' (empty) — if so, skip auto-apply and ask user for mandatory fields without defaults. 12. systemFields (from qmSDF.IS): isMandatory=true fields must retain a valid value after update. 13.   IMPORTANT: QMetry's API sometimes returns 'systemFields: []' (empty). If so, treat summary, issueType, issuePriority as always mandatory. 14. fields/UDF (from qmUDF.IS): isMandatory=true UDF fields must be included if being changed. 15. === END DEFAULT VALUES === 16.  17. === DATE FORMAT CHECK (MANDATORY — EVERY UPDATE REQUEST) === 18. ALWAYS call 'Fetch QMetry Project Info' before every update request — not only when the user explicitly mentions a date. 19. Any UDF field could be a DATETIMEPICKER. Wrong format causes QMetry to silently discard the field value (API returns success but value is NOT stored — no error). 20. STEP 1: From project info, read dateTimeFormatID (e.g. 3). 21. STEP 2: Find entry in dateTimeFormatNew where id === dateTimeFormatID → read its unique_value (e.g. 'yyyy-MM-dd'). 22. STEP 3: unique_value pattern: yyyy=4-digit year, MM=2-digit month (01-12), dd=2-digit day, MMM=3-letter month (Jan/Feb/...). 23.   Example: id=1 → MM-dd-yyyy → '10-25-2000' | id=2 → dd-MM-yyyy → '25-10-2000' | id=3 → yyyy-MM-dd → '2000-10-25' | id=4 → dd-MMM-yyyy → '25-Oct-2000' 24. STEP 4: For EVERY DATETIMEPICKER field in the payload: parse any user-provided date and re-format it using the active unique_value pattern before sending. 25. NEVER assume a date format — always derive it from dateTimeFormatID. Wrong format = silent data loss. 26. === END DATE FORMAT CHECK === 27.  28. To get the DefectId, call the Issue/Fetch issue tool and use data[<index>].id from the response. 29. if you have pass issue key (VT-IS-5, MAC-IS-10 etc.) then first fetch issue by issue key to get issue id. 30. Along with DefectId, pass only those fields which are to be updated. 31. Refer to the Create Issue tool for valid field mappings and values. 32. You can update summary, priority, type, affectedRelease, affectedCycles, description, sync_with, issueOwner, component, environment, tcRunID, etc. 33. If you provide entityKey, it will be used for additional validation but DefectId is required. 34.  35. UDF (User Defined Fields) WORKFLOW FOR UPDATE: 36. 1. Call 'Fetch UDF Layout' with entityType='IS', pageName='DETAIL' to get field names, fieldIDs (projectUserFieldID), and list option IDs. 37.    IF listOptions[field.listName] is empty after Fetch UDF Layout, the tool already tried a metadata fallback.    If STILL empty, ask the user to provide the option ID from the QMetry UI — do NOT guess numeric IDs. 38. 2. For LOOKUPLIST fields: pick one ID from listOptions[field.listName][].id. 39. 3. For MULTILOOKUPLIST fields: pick array of IDs; also pass alias flat key (e.g., fieldNameAlias: 'Option Label'). 40. 4. For CASCADINGLIST fields: pick parent ID + fetch child with 'Fetch Cascade Child Values'. Pass { parent: parentId, child: childId }. 41. 5. Pass BOTH 'udfFields' (flat root values) AND 'UDF' wrapper (with fieldID) — both required for update. 42.    Example: udfFields: { is_field: 'value' }, UDF: { is_field: { fieldID: 3001, value: 'value' } } 43. 6. Mandatory UDF fields (isMandatory=true) MUST be included.",
     "inputSchema": [
