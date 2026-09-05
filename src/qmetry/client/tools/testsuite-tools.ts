@@ -333,23 +333,6 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
           "List of test suites from UT project using UT's specific TS viewId",
       },
       {
-        description:
-          "Get test suites with manual viewId (skip auto-resolution)",
-        parameters: { projectKey: "MAC", viewId: 103097, folderPath: "" }, // This is an example viewId, must be resolved per project TS viewId
-        expectedOutput: "Test suites using manually specified viewId 103097", // This is an example viewId, must be resolved per project TS viewId
-      },
-      {
-        description:
-          "List test suites from specific project (ex: project key can be anything (VT, UT, PROJ1, TEST9)",
-        parameters: {
-          projectKey: "use specific given project key",
-          viewId: "fetch specific project given projectKey Test Suite ViewId", // auto-resolved
-          folderPath: "",
-        },
-        expectedOutput:
-          "Test suites using manually specified viewId 103097 or projectKey", // This is an example viewId, must be resolved per project TS viewId
-      },
-      {
         description: "Get test suites by release/cycle filter",
         parameters: {
           projectKey: "MAC",
@@ -523,7 +506,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       "3. Example: latestViews.TSFS.viewId = 104316 (MAC project TSFS view)", // This is an example viewId, must be resolved per project TSFS viewId
       "4. Manual viewId only needed if you want to override the automatic resolution",
       "WORKFLOW: System automatically handles project info if tsFolderID or viewId is not provided",
-      "PROJECT INFO STRUCTURE: clientData.rootFolders.TS.id contains the root test suite folder ID",
+      "PROJECT INFO STRUCTURE: rootFolders.TS.id contains the root test suite folder ID",
       "PROJECT INFO STRUCTURE: latestViews.TSFS.viewId contains the test suite folder view ID",
       "For sub-folders: Use specific folder IDs if you know them, or call folder listing APIs",
       "FILTER CAPABILITIES: Same as other QMetry list operations",

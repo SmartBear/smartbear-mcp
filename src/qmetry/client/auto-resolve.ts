@@ -47,6 +47,13 @@ export const AUTO_RESOLVE_MODULES: ModuleAutoResolveConfig[] = [
     moduleName: "Requirements",
   },
   {
+    handler: QMetryToolsHandlers.CREATE_REQUIREMENT,
+    folderIdPath: "rootFolders.RQ.id",
+    folderIdField: "rqFolderId",
+    folderIdAsString: true,
+    moduleName: "Requirements",
+  },
+  {
     handler: QMetryToolsHandlers.FETCH_TEST_SUITES,
     viewIdPath: "latestViews.TS.viewId",
     moduleName: "Test Suites",

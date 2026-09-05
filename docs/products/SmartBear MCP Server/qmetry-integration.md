@@ -54,6 +54,22 @@ The QMetry client provides the following test management capabilities as listed 
 -   Returns: List of available platforms for cross-platform testing.
 -   Use case: Retrieve all platforms.
 
+### `create_requirement`
+
+-   Purpose: Create a new requirement in QMetry with metadata and release/cycle mapping.
+-   Parameters: Requirement name (`name`), optional folder ID (`rqFolderId`), priority, component array, owner (`requirementOwner`), state (`requirementState`), description, release/cycle mapping (`associateRelCyc`, `releaseCycleMapping`), and custom fields (`udfFields`).
+-   Returns: JSON object containing the new requirement ID, summary, and creation metadata.
+-   Use case: Create requirements with detailed metadata and custom fields (UDFs), set priority/owner/state using valid IDs from project info, associate with release/cycle for planning, create requirements in a specific folder.
+-   Note: If the project's Requirement module is integrated with Jira or Azure, this tool will refuse to create the requirement in QMetry — requirements must be created directly in the external system (Jira or Azure) and synced into QMetry.
+
+### `update_requirement`
+
+-   Purpose: Update an existing QMetry requirement by requirement ID and version ID.
+-   Parameters: Requirement ID (`rqId`), version ID (`rqVersionId`), optional flag to create a new version (`updateWithVersion`), and optional fields to update including name, description, priority, owner (`requirementOwner`), state (`requirementState`), component array, attachments, and custom fields (`udfFields`, `UDF`).
+-   Returns: JSON object containing the updated requirement ID, summary, and update metadata.
+-   Use case: Update requirement metadata or custom fields (UDFs), change priority/owner/state, modify description, create a new requirement version while updating, bulk update using entity key auto-resolution.
+-   Note: If the project's Requirement module is integrated with Jira or Azure, this tool will refuse to update the requirement in QMetry — requirements must be updated directly in the external system (Jira or Azure) and synced into QMetry.
+
 ### `list_qmetry_requirements`
 
 -   Purpose: Fetch QMetry requirements from the current project.
@@ -137,6 +153,13 @@ The QMetry client provides the following test management capabilities as listed 
 -   Parameters: Test Case identifier (`tcID`).
 -   Returns: Complete list of test case executions.
 -   Use case: Retrieve available test case execution records including Test Run UDFs.
+
+### `link_test_case_to_issues`
+
+-   Purpose: Link one or more defects/issues to a QMetry test case.
+-   Parameters: Test case entity key (`tcID`), array of numeric issue/defect IDs (`dfIDs`).
+-   Returns: JSON object with success status and linkage details.
+-   Use case: Link single or multiple defects/issues directly to a test case for traceability, automate defect coverage mapping, maintain issue-test case relationships.
 
 ### `create_test_suite`
 

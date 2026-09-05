@@ -9,6 +9,7 @@ import { ApiClient } from "./common/api-client";
 
 import { GetEnvironments } from "./tool/environment/get-environments";
 import { CreateFolder } from "./tool/folder/create-folder";
+import { GetFolders } from "./tool/folder/get-folders";
 import { GetTestCases as GetIssueLinkTestCases } from "./tool/issue-link/get-test-cases";
 import { GetTestCycles as GetIssueLinkTestCycles } from "./tool/issue-link/get-test-cycles";
 import { GetTestExecutions as GetIssueLinkTestExecutions } from "./tool/issue-link/get-test-executions.ts";
@@ -134,6 +135,7 @@ export class ZephyrClient implements Client {
       new CreateTestSteps(this),
       new CreateTestCaseIssueLink(this),
       new CreateTestCycleIssueLink(this),
+      new GetFolders(this),
       new CreateFolder(this),
       new CreateTestScript(this),
       new UpdateTestExecution(this),
