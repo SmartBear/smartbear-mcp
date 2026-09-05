@@ -2,6 +2,7 @@ import { ResourceTemplate } from "@modelcontextprotocol/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import z from "zod";
 import Bugsnag from "./bugsnag";
+import { setModernRequestClient, withRequestHeaders } from "./request-context";
 import { SmartBearMcpServer } from "./server";
 import { ToolError } from "./tools";
 
@@ -62,6 +63,91 @@ describe("SmartBearMcpServer", () => {
         name: "Cursor",
         version: "0.9.0",
       });
+    });
+  });
+
+  describe("modern-era client state (per request)", () => {
+    /** Run `fn` as if serving one modern-era request from `clientInfo`. */
+    function inModernRequest<T>(
+      meta: {
+        protocolVersion?: string;
+        clientInfo?: { name: string; version: string };
+        clientCapabilities?: Record<string, unknown>;
+      },
+      fn: () => T,
+    ): T {
+      return withRequestHeaders({}, () => {
+        setModernRequestClient(meta);
+        return fn();
+      });
+    }
+
+    it("prefers the request's _meta clientInfo over the connection's", () => {
+      server.setClientInfo({ name: "Legacy Client", version: "1.0.0" });
+
+      const info = inModernRequest(
+        {
+          protocolVersion: "2026-07-28",
+          clientInfo: { name: "Modern Client", version: "2.0.0" },
+        },
+        () => server.getClientInfo(),
+      );
+
+      expect(info).toEqual({ name: "Modern Client", version: "2.0.0" });
+      // The legacy value is untouched and still serves legacy callers.
+      expect(server.getClientInfo()).toEqual({
+        name: "Legacy Client",
+        version: "1.0.0",
+      });
+    });
+
+    it("attributes the identity used for Bugsnag and User-Agent", () => {
+      const identity = inModernRequest(
+        {
+          protocolVersion: "2026-07-28",
+          clientInfo: { name: "Modern Client", version: "2.0.0" },
+        },
+        () => server.getMcpClientIdentity(),
+      );
+
+      expect(identity).toEqual({
+        name: "Modern Client",
+        version: "2.0.0",
+        protocolVersion: "2026-07-28",
+      });
+    });
+
+    it("reads elicitation support from the request's declared capabilities", () => {
+      // Modern clients do not declare `elicitation` (MRTR replaces it), so the
+      // polyfill path stays in effect until MRTR lands.
+      expect(
+        inModernRequest({ protocolVersion: "2026-07-28" }, () =>
+          server.isElicitationSupported(),
+        ),
+      ).toBe(false);
+
+      expect(
+        inModernRequest(
+          {
+            protocolVersion: "2026-07-28",
+            clientCapabilities: { elicitation: {} },
+          },
+          () => server.isElicitationSupported(),
+        ),
+      ).toBe(true);
+    });
+
+    it("does not let a modern request's state leak into legacy serving", () => {
+      server.setElicitationSupported(true);
+
+      expect(
+        inModernRequest({ protocolVersion: "2026-07-28" }, () =>
+          server.isElicitationSupported(),
+        ),
+      ).toBe(false);
+
+      // Outside the modern request the legacy connection flag still applies.
+      expect(server.isElicitationSupported()).toBe(true);
     });
   });
 
