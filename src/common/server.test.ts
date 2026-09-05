@@ -2,10 +2,7 @@ import { ResourceTemplate } from "@modelcontextprotocol/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import z from "zod";
 import Bugsnag from "./bugsnag";
-import {
-  setModernRequestClient,
-  withRequestHeaders,
-} from "./request-context";
+import { setModernRequestClient, withRequestHeaders } from "./request-context";
 import { SmartBearMcpServer } from "./server";
 import { ToolError } from "./tools";
 

@@ -1,8 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import {
-  extractModernClientMeta,
-  handleInitializeMessage,
-} from "./initialize";
+import { extractModernClientMeta, handleInitializeMessage } from "./initialize";
 import type { SmartBearMcpServer } from "./server";
 
 const PROTOCOL_VERSION_KEY = "io.modelcontextprotocol/protocolVersion";

@@ -4,16 +4,10 @@ import {
   StdioServerTransport,
   serveStdio,
 } from "@modelcontextprotocol/server/stdio";
-import {
-  setProcessClientIdentity,
-  toClientIdentity,
-} from "./client-identity";
+import { setProcessClientIdentity, toClientIdentity } from "./client-identity";
 import { clientRegistry } from "./client-registry";
 import { USER_AGENT } from "./info";
-import {
-  extractModernClientMeta,
-  handleInitializeMessage,
-} from "./initialize";
+import { extractModernClientMeta, handleInitializeMessage } from "./initialize";
 import { SmartBearMcpServer } from "./server";
 import { registerShutdownHandler } from "./shutdown";
 import { getTypeDescription, isOptionalType } from "./zod-utils";

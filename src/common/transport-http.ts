@@ -15,10 +15,7 @@ import {
 } from "@modelcontextprotocol/server";
 import { SSEServerTransport } from "@modelcontextprotocol/server-legacy/sse";
 import { clientRegistry } from "./client-registry";
-import {
-  extractModernClientMeta,
-  handleInitializeMessage,
-} from "./initialize";
+import { extractModernClientMeta, handleInitializeMessage } from "./initialize";
 import {
   type ModernClientMeta,
   setModernRequestClient,

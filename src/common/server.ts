@@ -119,7 +119,10 @@ export class SmartBearMcpServer extends McpServer {
   getMcpClientIdentity(): McpClientIdentity {
     const modernMeta = getRequestClientMeta();
     if (modernMeta) {
-      return toClientIdentity(modernMeta.clientInfo, modernMeta.protocolVersion);
+      return toClientIdentity(
+        modernMeta.clientInfo,
+        modernMeta.protocolVersion,
+      );
     }
     return (
       this.mcpClientIdentity ??
