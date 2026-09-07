@@ -6,12 +6,17 @@ import { McpServer, ResourceTemplate } from "@modelcontextprotocol/server";
 import { ZodObject, z } from "zod";
 import Bugsnag, { type BugsnagEvent } from "../common/bugsnag";
 import { CacheService } from "./cache";
-import { type McpClientIdentity, toClientIdentity } from "./client-identity";
+import {
+  getCurrentClientIdentity,
+  type McpClientIdentity,
+  toClientIdentity,
+} from "./client-identity";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./info";
 import {
   executeElicitationOrPolyfill,
   isElicitationPolyfillResult,
 } from "./pollyfills";
+import { getRequestClientMeta, getRequestEra } from "./request-context";
 import { ToolError } from "./tools";
 import type { Client, ClientInfo, ToolParams } from "./types";
 import {
@@ -59,7 +64,20 @@ export class SmartBearMcpServer extends McpServer {
     this.elicitationSupported = supported;
   }
 
+  /**
+   * Whether the current caller supports server-initiated elicitation.
+   *
+   * Modern era: read from the capabilities this request declared in `_meta`.
+   * In practice modern clients do not declare `elicitation` — the 2026-07-28
+   * revision replaces server-initiated elicitation with MRTR — so this
+   * resolves false and callers fall back to the polyfill until MRTR lands.
+   * Legacy era: the per-connection flag captured at `initialize`.
+   */
   isElicitationSupported(): boolean {
+    if (getRequestEra() === "modern") {
+      const capabilities = getRequestClientMeta()?.clientCapabilities;
+      return !!capabilities && Object.hasOwn(capabilities, "elicitation");
+    }
     return this.elicitationSupported;
   }
 
@@ -67,8 +85,13 @@ export class SmartBearMcpServer extends McpServer {
     this.clientInfo = info;
   }
 
+  /**
+   * Client info for the current caller: from this request's `_meta` envelope in
+   * the modern era, falling back to the value captured at `initialize` for
+   * legacy connections.
+   */
   getClientInfo(): ClientInfo | undefined {
-    return this.clientInfo;
+    return getRequestClientMeta()?.clientInfo ?? this.clientInfo;
   }
 
   getClients(): Client[] {
@@ -84,13 +107,27 @@ export class SmartBearMcpServer extends McpServer {
   }
 
   /**
-   * Return the MCP client identity for this session. Prefers the value captured
-   * at `initialize`; falls back to the SDK's `getClientVersion()` so callers
-   * still get an answer if the explicit capture was skipped.
+   * Return the MCP client identity for the current caller.
+   *
+   * Resolution order: the metadata this request carried in `_meta` (modern
+   * era over HTTP, per request), then the value captured at `initialize`
+   * (legacy era, per connection), then the process-wide identity (which is how
+   * modern-era stdio records its single client), then the SDK's
+   * `getClientVersion()` so callers still get an answer if every capture was
+   * skipped.
    */
   getMcpClientIdentity(): McpClientIdentity {
+    const modernMeta = getRequestClientMeta();
+    if (modernMeta) {
+      return toClientIdentity(
+        modernMeta.clientInfo,
+        modernMeta.protocolVersion,
+      );
+    }
     return (
-      this.mcpClientIdentity ?? toClientIdentity(this.server.getClientVersion())
+      this.mcpClientIdentity ??
+      getCurrentClientIdentity() ??
+      toClientIdentity(this.server.getClientVersion())
     );
   }
 
