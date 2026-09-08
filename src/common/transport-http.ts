@@ -18,6 +18,7 @@ import { clientRegistry } from "./client-registry";
 import { extractModernClientMeta, handleInitializeMessage } from "./initialize";
 import {
   type ModernClientMeta,
+  type ProtocolEra,
   setModernRequestClient,
   setRequestMcpClient,
   withRequestContext,
@@ -126,6 +127,10 @@ export async function runHttpMode() {
     // clients are blocked by CORS preflight without these.
     "mcp-method",
     "mcp-name",
+    // SEP-2243 param-driven request headers: tools may declare inputSchema
+    // properties carrying an `x-mcp-header` annotation, which conforming
+    // clients deliver as HTTP headers of the declared name.
+    "x-mcp-header",
     ...allowedAuthHeaders,
   ].join(", ");
 
@@ -858,9 +863,10 @@ async function buildConfiguredServer(
   headers: Record<string, string | string[] | undefined>,
   host: string | undefined,
   res: ServerResponse,
+  era: ProtocolEra,
 ): Promise<SmartBearMcpServer | null> {
   const enabledToolsets = getConfig("smartbear", "toolsets") || undefined;
-  const server = new SmartBearMcpServer(enabledToolsets);
+  const server = new SmartBearMcpServer(enabledToolsets, era);
   try {
     // Run configuration within request context so that client getAuthToken()
     // methods can access request headers via AsyncLocalStorage
@@ -947,6 +953,7 @@ export async function newServer(
     req.headers,
     req.headers.host,
     res,
+    "legacy",
   );
 }
 
@@ -966,6 +973,7 @@ export async function newServerFromWebRequest(
     webHeadersToRecord(request.headers),
     request.headers.get("host") ?? undefined,
     res,
+    "modern",
   );
 }
 

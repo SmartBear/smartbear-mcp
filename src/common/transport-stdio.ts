@@ -1,5 +1,6 @@
 import { enableCompileCache } from "node:module";
 import type { JSONRPCMessage } from "@modelcontextprotocol/server";
+import type { ProtocolEra } from "./request-context";
 import {
   StdioServerTransport,
   serveStdio,
@@ -39,8 +40,10 @@ function getNoConfigMessage(): string[] {
  * has selected the protocol era, and the returned instance is pinned for the
  * lifetime of the connection.
  */
-export async function buildStdioServer(): Promise<SmartBearMcpServer> {
-  const server = new SmartBearMcpServer(process.env.MCP_TOOLSETS);
+export async function buildStdioServer(
+  era: ProtocolEra = "legacy",
+): Promise<SmartBearMcpServer> {
+  const server = new SmartBearMcpServer(process.env.MCP_TOOLSETS, era);
 
   // Setup clients from environment variables
   const configuredCount = await clientRegistry.configure(
@@ -161,8 +164,11 @@ export async function runStdioMode() {
   });
 
   const handle = serveStdio(
-    async () => {
-      const server = await buildStdioServer();
+    async (ctx) => {
+      // The factory runs after the opening exchange has selected the era, so
+      // the instance is built with era-appropriate capabilities (the modern
+      // era drops `logging`; `listChanged` stays advertised on both).
+      const server = await buildStdioServer(ctx.era);
       capture.attachServer(server);
       return server;
     },

@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- [Common] Protocol-compliance fixes for the modern (2026-07-28) era: cacheable list/read results (`tools/list`, `prompts/list`, `resources/list`, `resources/templates/list`, `resources/read`) now carry cache hints (`ttlMs` from `CACHE_TTL`, `cacheScope: private`); `tools/list` output is deterministically ordered (alphabetical by name, both eras); the modern era no longer advertises the deprecated `logging` capability (SEP-2577), while `tools.listChanged` remains advertised on both eras (the SDK's serving entries implement `subscriptions/listen` natively for modern clients); `x-mcp-header` added to the CORS allow-list for SEP-2243 param-driven request headers (declaration validation is SDK-enforced at tool registration). Legacy (2025-11-25) capabilities and responses are unchanged.
+
 - [Common] Rewrote the transport bootstrap to serve both the 2025-11-25 and 2026-07-28 (RC) MCP protocol revisions from a single deployment, on stdio (`serveStdio`, `legacy: "serve"`) and HTTP (per-request routing between the existing sessionful wiring and a new stateless `createMcpHandler` leg). Existing 2025-11-25 clients are unaffected. [#687](https://github.com/SmartBear/smartbear-mcp/pull/687)
 - [Common] Modern-era (2026-07-28) requests now carry client identity: the protocol version, client info and capabilities are extracted from each request's `_meta` envelope into the request context, so error reports and downstream `User-Agent` headers are attributed for clients that no longer send an `initialize` handshake. Legacy per-connection capture is unchanged. [#691](https://github.com/SmartBear/smartbear-mcp/pull/691)
 
