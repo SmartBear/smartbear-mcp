@@ -91,7 +91,7 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
     summary:
       "Cancels an ongoing test suite execution in your Swagger Functional Testing workspace. " +
       "Use this tool when you need to stop a long-running or accidentally triggered suite run. " +
-      "The cancelled execution is preserved in run history with status `cancelled`. " +
+      "The canceled execution is preserved in run history with status `canceled`. " +
       "Do not use this tool to cancel individual test runs.",
     inputSchema: CancelFunctionalTestingSuiteExecutionSchema,
     handler: "cancelFunctionalTestingSuiteExecution",
@@ -148,8 +148,8 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
     toolset: "Functional Testing",
     summary:
       "Get the status of a Swagger Functional Testing suite execution. " +
-      "Returns the overall status (`pending`, `cancelled`, `passed`, or `failed`), whether the run is finished, and a per-test breakdown with pass/fail, runtime, step count, and for failed tests a `failedStepsByIndex` map of step index to error message. " +
-      "`pending` means the execution has not started yet. Poll this tool after calling `swagger_run_suite` until `finished` is `true`. " +
+      "Returns the overall status (`pending`, `canceled`, `passed`, or `failed`), whether the run is finished, and a per-test breakdown with pass/fail, runtime, step count, and for failed tests a `failedStepsByIndex` map of step index to error message. " +
+      "`pending` means the execution has not yet finished (queued or actively running). Poll this tool after calling `swagger_run_suite` until `finished` is `true`. " +
       "Requires the suite's `slug` and the `executionId` returned by `swagger_run_suite`.",
     inputSchema: GetFunctionalTestingSuiteExecutionSchema,
     handler: "getFunctionalTestingSuiteExecution",
