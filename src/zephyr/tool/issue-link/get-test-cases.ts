@@ -7,11 +7,9 @@ import {
   GetIssueLinkTestCases200Response as GetIssueLinkTestCasesResponse,
 } from "../../common/rest-api-schemas";
 
-export const UpdatedGetIssueLinkTestCasesResponse = zod.strictObject(
-  {
+export const UpdatedGetIssueLinkTestCasesResponse = zod.strictObject({
     testCases:zod.array(GetIssueLinkTestCasesResponse)
-  }
-);
+});
 
 export class GetTestCases extends Tool<ZephyrClient> {
   specification: ToolParams = {
