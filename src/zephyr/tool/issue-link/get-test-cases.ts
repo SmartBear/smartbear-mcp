@@ -1,3 +1,4 @@
+import { z as zod } from "zod";
 import { Tool, type ToolHandler } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { ZephyrClient } from "../../client";
@@ -5,6 +6,12 @@ import {
   GetIssueLinkTestCasesParams as GetIssueLinkTestCasesPathParam,
   GetIssueLinkTestCases200Response as GetIssueLinkTestCasesResponse,
 } from "../../common/rest-api-schemas";
+
+export const UpdatedGetIssueLinkTestCasesResponse = zod.strictObject(
+  {
+    testCases:zod.array(GetIssueLinkTestCasesResponse)
+  }
+);
 
 export class GetTestCases extends Tool<ZephyrClient> {
   specification: ToolParams = {
@@ -14,7 +21,7 @@ export class GetTestCases extends Tool<ZephyrClient> {
     readOnly: true,
     idempotent: true,
     inputSchema: GetIssueLinkTestCasesPathParam,
-    outputSchema: GetIssueLinkTestCasesResponse,
+    outputSchema: UpdatedGetIssueLinkTestCasesResponse,
     examples: [
       {
         description: "Check which test cases are linked to Jira issue PROJ-123",
