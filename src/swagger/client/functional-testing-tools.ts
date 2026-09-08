@@ -148,7 +148,7 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
     toolset: "Functional Testing",
     summary:
       "Get the status of a Swagger Functional Testing suite execution. " +
-      "Returns the overall status (`pending`, `cancelled`, `passed`, or `failed`), whether the run is finished, and a per-test breakdown with pass/fail, runtime, and step count. " +
+      "Returns the overall status (`pending`, `cancelled`, `passed`, or `failed`), whether the run is finished, and a per-test breakdown with pass/fail, runtime, step count, and for failed tests a `failedStepsByIndex` map of step index to error message. " +
       "`pending` means the execution has not started yet. Poll this tool after calling `swagger_run_suite` until `finished` is `true`. " +
       "Requires the suite's `slug` and the `executionId` returned by `swagger_run_suite`.",
     inputSchema: GetFunctionalTestingSuiteExecutionSchema,
