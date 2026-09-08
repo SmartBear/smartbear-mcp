@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { GetIssueLinkTestCasesParams as GetIssueLinkTestCasesPathParam } from "../../common/rest-api-schemas";
 import {
-  GetIssueLinkTestCasesParams as GetIssueLinkTestCasesPathParam,
-} from "../../common/rest-api-schemas";
-import {GetTestCases, UpdatedGetIssueLinkTestCasesResponse} from "./get-test-cases";
+  GetTestCases,
+  UpdatedGetIssueLinkTestCasesResponse,
+} from "./get-test-cases";
 
 describe("GetIssueLinkTestCases", () => {
   let mockClient: any;

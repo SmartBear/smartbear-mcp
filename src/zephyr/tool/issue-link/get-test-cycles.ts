@@ -5,7 +5,6 @@ import type { ZephyrClient } from "../../client";
 import {
   GetIssueLinkTestCyclesParams as GetIssueLinkTestCyclesPathParam,
   GetIssueLinkTestCycles200Response as GetIssueLinkTestCyclesResponse,
-
 } from "../../common/rest-api-schemas";
 
 export const UpdatedGetIssueLinkTestCyclesResponse = zod.strictObject({
