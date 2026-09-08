@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [Common] Rewrote the transport bootstrap to serve both the 2025-11-25 and 2026-07-28 (RC) MCP protocol revisions from a single deployment, on stdio (`serveStdio`, `legacy: "serve"`) and HTTP (per-request routing between the existing sessionful wiring and a new stateless `createMcpHandler` leg). Existing 2025-11-25 clients are unaffected. [#687](https://github.com/SmartBear/smartbear-mcp/pull/687)
 - [Common] Modern-era (2026-07-28) requests now carry client identity: the protocol version, client info and capabilities are extracted from each request's `_meta` envelope into the request context, so error reports and downstream `User-Agent` headers are attributed for clients that no longer send an `initialize` handshake. Legacy per-connection capture is unchanged. [#691](https://github.com/SmartBear/smartbear-mcp/pull/691)
+- [Zephyr] Change outputSchema for issue link test cases, cycles and executions to be objects instead of arrays. [#706](https://github.com/SmartBear/smartbear-mcp/pull/706)
 
 ## [0.40.0] - 2026-09-02
 
