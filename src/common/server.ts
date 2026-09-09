@@ -132,9 +132,10 @@ export class SmartBearMcpServer extends McpServer {
    * Whether the current caller supports server-initiated elicitation.
    *
    * Modern era: read from the capabilities this request declared in `_meta`.
-   * In practice modern clients do not declare `elicitation` — the 2026-07-28
-   * revision replaces server-initiated elicitation with MRTR — so this
-   * resolves false and callers fall back to the polyfill until MRTR lands.
+   * Only consulted on the legacy code path — modern requests that declare
+   * `elicitation` are served via the multi round-trip pattern (MRTR,
+   * SEP-2322) in `executeElicitationOrPolyfill` before this is reached, and
+   * modern requests that do not declare it fall back to the polyfill.
    * Legacy era: the per-connection flag captured at `initialize`.
    */
   isElicitationSupported(): boolean {

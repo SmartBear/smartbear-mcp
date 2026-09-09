@@ -507,8 +507,10 @@ async function handleMcpEndpoint(
   // Modern requests carry no session, so the client's identity and
   // capabilities arrive in each request's `_meta` envelope (SEP-2575). Lift
   // them into the request context now: this is the modern counterpart of the
-  // legacy `initialize` capture, and it is what makes client attribution
-  // (Bugsnag metadata, downstream User-Agent) work for modern callers.
+  // legacy `initialize` capture, and it is what attributes Bugsnag error
+  // reports to the calling client. Note the downstream `User-Agent` is built
+  // when the product clients are configured (above, before this point), so on
+  // HTTP it does not yet reflect the per-request client — tracked separately.
   const headers = webHeadersToRecord(probe.headers);
   const clientMeta = extractModernClientMetaFromBody(parsedBody);
   await modernServerStorage.run(server, () =>

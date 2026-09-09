@@ -89,9 +89,12 @@ export function setRequestMcpClient(identity: McpClientIdentity): void {
 /**
  * Mark the current request as served by the modern (2026-07-28) era and record
  * the client metadata lifted from its `_meta` envelope. The derived
- * {@link McpClientIdentity} is set too, so existing attribution consumers
- * (Bugsnag metadata, downstream User-Agent) work for modern clients without
- * knowing where the identity came from. No-op outside a request context.
+ * {@link McpClientIdentity} is set too, so consumers that read the identity at
+ * request time (Bugsnag error metadata) work for modern clients without
+ * knowing where the identity came from. Downstream `User-Agent` strings are
+ * built when product clients are configured, so on HTTP they do not yet carry
+ * this per-request identity (stdio uses the process-wide identity and is
+ * unaffected) — tracked separately. No-op outside a request context.
  */
 export function setModernRequestClient(meta: ModernClientMeta): void {
   const context = getRequestContext();

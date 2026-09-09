@@ -118,8 +118,8 @@ describe("SmartBearMcpServer", () => {
     });
 
     it("reads elicitation support from the request's declared capabilities", () => {
-      // Modern clients do not declare `elicitation` (MRTR replaces it), so the
-      // polyfill path stays in effect until MRTR lands.
+      // Without a declared `elicitation` capability the polyfill path is
+      // used; with it, the modern era is served via MRTR (SEP-2322).
       expect(
         inModernRequest({ protocolVersion: "2026-07-28" }, () =>
           server.isElicitationSupported(),
