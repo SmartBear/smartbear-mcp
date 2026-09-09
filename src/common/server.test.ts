@@ -1077,6 +1077,143 @@ describe("SmartBearMcpServer", () => {
       expect(server.isToolEnabled(mockClient, "other")).toBe(false);
     });
   });
+
+  describe("MRTR elicitation through the tool wrapper", () => {
+    let mockClient: any;
+
+    // A modern client that declared `elicitation` — required before the SDK
+    // will carry an embedded elicitation request.
+    const MODERN_ENVELOPE = {
+      "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+      "io.modelcontextprotocol/clientCapabilities": {
+        elicitation: { form: {} },
+      },
+    };
+
+    /** Register one tool whose completion depends on an elicited value. */
+    async function registerElicitingTool(): Promise<
+      (args: any, ctx: any) => Promise<any>
+    > {
+      await server.addClient(mockClient);
+      const registerFn = mockClient.registerTools.mock.calls[0][0];
+      const getInput = mockClient.registerTools.mock.calls[0][1];
+
+      registerFn({ title: "Elicit Tool", summary: "s" }, async () => {
+        const answer = await getInput({
+          message: "Severity?",
+          requestedSchema: {
+            type: "object",
+            properties: { severity: { type: "string" } },
+            required: ["severity"],
+          },
+        });
+        if (answer.action !== "accept") {
+          return { content: [{ type: "text", text: "aborted" }] };
+        }
+        return {
+          content: [
+            { type: "text", text: `severity=${answer.content?.severity}` },
+          ],
+        };
+      });
+
+      // The spy sits on the shared McpServer prototype, so calls accumulate
+      // across tests — take the registration this helper just made.
+      return superRegisterToolMock.mock.calls.at(-1)[2];
+    }
+
+    beforeEach(() => {
+      mockClient = {
+        name: "Test Product",
+        capabilityPrefix: "test_product",
+        configPrefix: "test-product",
+        config: z.object({}),
+        registerTools: vi.fn(),
+        configure: vi.fn(),
+        isConfigured: vi.fn().mockReturnValue(true),
+      };
+    });
+
+    it("returns input_required on round 1 and the real result on retry", async () => {
+      const handler = await registerElicitingTool();
+
+      // Round 1: a modern request with no answers yet — the tool cannot
+      // finish, so the handler must RETURN (not throw) an input_required
+      // result for the SDK to encode.
+      const round1 = await handler(
+        {},
+        {
+          mcpReq: {
+            envelope: MODERN_ENVELOPE,
+            requestState: () => undefined,
+          },
+        },
+      );
+      expect(round1.resultType).toBe("input_required");
+      expect(round1.inputRequests.input_1.method).toBe("elicitation/create");
+      expect(round1.inputRequests.input_1.params.message).toBe("Severity?");
+
+      // Round 2: the client collected the input and retried.
+      const round2 = await handler(
+        {},
+        {
+          mcpReq: {
+            envelope: MODERN_ENVELOPE,
+            inputResponses: {
+              input_1: { action: "accept", content: { severity: "warning" } },
+            },
+            requestState: () => undefined,
+          },
+        },
+      );
+      expect(round2.content).toEqual([
+        { type: "text", text: "severity=warning" },
+      ]);
+    });
+
+    it("treats a declined elicitation as the tool's abort path", async () => {
+      const handler = await registerElicitingTool();
+
+      const result = await handler(
+        {},
+        {
+          mcpReq: {
+            envelope: MODERN_ENVELOPE,
+            inputResponses: { input_1: { action: "decline" } },
+            requestState: () => undefined,
+          },
+        },
+      );
+      expect(result.content).toEqual([{ type: "text", text: "aborted" }]);
+    });
+
+    it("still uses server-initiated elicitation for legacy invocations", async () => {
+      // The shared fixture declares elicitation supported and stubs the
+      // server-initiated call; a legacy ctx must keep taking that path rather
+      // than returning an MRTR input_required result.
+      server.server.elicitInput = vi
+        .fn()
+        .mockResolvedValue({ action: "accept", content: { severity: "info" } });
+      const handler = await registerElicitingTool();
+
+      const result = await handler({}, { mcpReq: {} });
+
+      expect(server.server.elicitInput).toHaveBeenCalledOnce();
+      expect(result.resultType).toBeUndefined();
+      expect(result.content).toEqual([{ type: "text", text: "severity=info" }]);
+    });
+
+    it("keeps the instruction polyfill when legacy elicitation is unsupported", async () => {
+      server.setElicitationSupported(false);
+      const handler = await registerElicitingTool();
+
+      const result = await handler({}, { mcpReq: {} });
+
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toContain("Input collection required");
+      expect(server.server.elicitInput).not.toHaveBeenCalled();
+    });
+  });
 });
 
 // cspell:ignore groupa groupb

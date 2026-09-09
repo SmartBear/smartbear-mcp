@@ -19,7 +19,9 @@ import {
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./info";
 import {
   executeElicitationOrPolyfill,
+  InputRequiredSignal,
   isElicitationPolyfillResult,
+  runWithElicitationScope,
 } from "./pollyfills";
 import {
   getRequestClientMeta,
@@ -247,13 +249,24 @@ export class SmartBearMcpServer extends McpServer {
                   `The tool is not configured - configuration options for ${client.name} are missing or invalid.`,
                 );
               }
-              const result = await cb(args, ctx);
+              // Elicitation state (era, MRTR answers) is per invocation, but
+              // the getInput callback handed to clients is per registration —
+              // the scope bridges the two.
+              const result = await runWithElicitationScope(ctx, () =>
+                cb(args, ctx),
+              );
               if (result) {
                 this.validateCallbackResult(result, params);
                 this.addStructuredContentAsText(result);
               }
               return result;
             } catch (e) {
+              // MRTR (2026-07-28): the tool needs client input before it can
+              // finish. Not an error — return the input_required result and
+              // let the client retry with the collected input.
+              if (e instanceof InputRequiredSignal) {
+                return e.result;
+              }
               // ToolErrors should not be reported to BugSnag
               if (e instanceof ToolError) {
                 return {
