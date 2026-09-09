@@ -1,6 +1,5 @@
 import { enableCompileCache } from "node:module";
 import type { JSONRPCMessage } from "@modelcontextprotocol/server";
-import type { ProtocolEra } from "./request-context";
 import {
   StdioServerTransport,
   serveStdio,
@@ -9,6 +8,7 @@ import { setProcessClientIdentity, toClientIdentity } from "./client-identity";
 import { clientRegistry } from "./client-registry";
 import { USER_AGENT } from "./info";
 import { extractModernClientMeta, handleInitializeMessage } from "./initialize";
+import type { ProtocolEra } from "./request-context";
 import { SmartBearMcpServer } from "./server";
 import { registerShutdownHandler } from "./shutdown";
 import { getTypeDescription, isOptionalType } from "./zod-utils";

@@ -127,10 +127,6 @@ export async function runHttpMode() {
     // clients are blocked by CORS preflight without these.
     "mcp-method",
     "mcp-name",
-    // SEP-2243 param-driven request headers: tools may declare inputSchema
-    // properties carrying an `x-mcp-header` annotation, which conforming
-    // clients deliver as HTTP headers of the declared name.
-    "x-mcp-header",
     ...allowedAuthHeaders,
   ].join(", ");
 
