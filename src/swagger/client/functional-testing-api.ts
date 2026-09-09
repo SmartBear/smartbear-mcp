@@ -312,7 +312,7 @@ export class FunctionalTestingAPI {
           ],
           [
             409,
-            "Suite execution cannot be cancelled because it has already finished.",
+            "Suite execution cannot be canceled because it has already finished.",
           ],
         ]),
         errorMessageFor("cancel suite execution"),
