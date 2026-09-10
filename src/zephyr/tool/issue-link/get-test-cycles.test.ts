@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { GetIssueLinkTestCyclesParams as GetIssueLinkTestCyclesPathParam } from "../../common/rest-api-schemas";
 import {
-  GetTestCycles,
-  UpdatedGetIssueLinkTestCyclesResponse,
-} from "./get-test-cycles";
+  GetIssueLinkTestCyclesParams as GetIssueLinkTestCyclesPathParam,
+  GetIssueLinkTestCycles200Response as GetIssueLinkTestCyclesResponse,
+} from "../../common/rest-api-schemas";
+import { GetTestCycles } from "./get-test-cycles";
 
 describe("GetIssueLinkTestCycles", () => {
   let mockClient: any;
@@ -31,7 +31,7 @@ describe("GetIssueLinkTestCycles", () => {
       GetIssueLinkTestCyclesPathParam,
     );
     expect(instance.specification.outputSchema).toBe(
-      UpdatedGetIssueLinkTestCyclesResponse,
+      GetIssueLinkTestCyclesResponse,
     );
   });
 
@@ -55,7 +55,7 @@ describe("GetIssueLinkTestCycles", () => {
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/issuelinks/PROJ-123/testcycles",
     );
-    expect(result.structuredContent).toEqual({ testCycles: responseMock });
+    expect(result.structuredContent).toEqual(responseMock);
     expect(result.content).toEqual([]);
   });
 
@@ -67,7 +67,7 @@ describe("GetIssueLinkTestCycles", () => {
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/issuelinks/PROJ-123/testcycles",
     );
-    expect(result.structuredContent).toEqual({ testCycles: [] });
+    expect(result.structuredContent).toEqual([]);
     expect(result.content).toEqual([]);
   });
 
@@ -83,7 +83,7 @@ describe("GetIssueLinkTestCycles", () => {
     mockClient.getApiClient().get.mockResolvedValueOnce(undefined);
 
     const result = await instance.handle({ issueKey: "PROJ-123" }, {} as any);
-    expect(result.structuredContent).toEqual({ testCycles: undefined });
+    expect(result.structuredContent).toEqual(undefined);
   });
 
   it("should throw validation error if issueKey is missing", async () => {
@@ -101,6 +101,6 @@ describe("GetIssueLinkTestCycles", () => {
     mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
 
     const result = await instance.handle({ issueKey: "PROJ-123" }, {} as any);
-    expect(result.structuredContent).toEqual({ testCycles: responseMock });
+    expect(result.structuredContent).toEqual(responseMock);
   });
 });
