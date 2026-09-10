@@ -13,151 +13,150 @@ export const API_CONFIG = {
   /** Default base URL for QTM4J Cloud */
   DEFAULT_BASE_URL: "https://qtmcloud.qmetry.com",
 
-  /** API version prefix */
-  API_VERSION: "/rest/api/latest",
+  /** Default API version prefix */
+  DEFAULT_API_VERSION: "/rest/api/latest",
 } as const;
 
 /**
  * API Endpoints
+ *
+ * Versioned endpoints are relative paths that receive the configurable version
+ * prefix (default /rest/api/latest) at runtime. Automation endpoints are absolute
+ * and unversioned — they always use /rest/api/automation/*.
  */
 export const ENDPOINTS = {
   /** Projects endpoint */
-  PROJECTS: `${API_CONFIG.API_VERSION}/projects`,
+  PROJECTS: "/projects",
 
   /** Create test case endpoint */
-  CREATE_TEST_CASE: `${API_CONFIG.API_VERSION}/testcases`,
+  CREATE_TEST_CASE: "/testcases",
 
   /** Search test cases endpoint */
-  SEARCH_TEST_CASES: `${API_CONFIG.API_VERSION}/testcases/search`,
+  SEARCH_TEST_CASES: "/testcases/search",
 
   /** Resolve test case keys → internal UIDs for a given project */
   RESOLVE_TEST_CASE_IDS: (projectId: number) =>
-    `${API_CONFIG.API_VERSION}/projects/${projectId}/mcp/testcases/resolve-ids`,
+    `/projects/${projectId}/mcp/testcases/resolve-ids`,
 
   /** Update test cycle endpoint */
-  UPDATE_TEST_CYCLE: (id: string) =>
-    `${API_CONFIG.API_VERSION}/testcycles/${id}`,
+  UPDATE_TEST_CYCLE: (id: string) => `/testcycles/${id}`,
 
   /** Create test cycle endpoint */
-  CREATE_TEST_CYCLE: `${API_CONFIG.API_VERSION}/testcycles`,
+  CREATE_TEST_CYCLE: "/testcycles",
 
   /** Search test cycles endpoint */
-  SEARCH_TEST_CYCLES: `${API_CONFIG.API_VERSION}/testcycles/search`,
+  SEARCH_TEST_CYCLES: "/testcycles/search",
 
   /** Update test case endpoint */
   UPDATE_TEST_CASE: (id: string, versionNo: number) =>
-    `${API_CONFIG.API_VERSION}/testcases/${id}/versions/${versionNo}`,
+    `/testcases/${id}/versions/${versionNo}`,
 
   RESOLVE_TEST_CYCLE_IDS: (projectId: number) =>
-    `${API_CONFIG.API_VERSION}/projects/${projectId}/mcp/testcycles/resolve-ids`,
+    `/projects/${projectId}/mcp/testcycles/resolve-ids`,
 
   /** Resolve requirement keys → internal Jira issue IDs for a given project */
   RESOLVE_REQUIREMENT_IDS: (projectId: number) =>
-    `${API_CONFIG.API_VERSION}/projects/${projectId}/mcp/requirement/resolve-ids`,
+    `/projects/${projectId}/mcp/requirement/resolve-ids`,
 
   /** Link requirements to test case endpoint */
   LINK_REQUIREMENTS: (id: string, versionNo: number) =>
-    `${API_CONFIG.API_VERSION}/testcases/${id}/version/${versionNo}/requirements/link`,
+    `/testcases/${id}/version/${versionNo}/requirements/link`,
 
   /** Unlink requirements from test case endpoint */
   UNLINK_REQUIREMENTS: (id: string, versionNo: number) =>
-    `${API_CONFIG.API_VERSION}/testcases/${id}/versions/${versionNo}/requirements/unlink`,
+    `/testcases/${id}/versions/${versionNo}/requirements/unlink`,
 
   /** Link test cases to requirement endpoint */
   LINK_TESTCASES_TO_REQUIREMENT: (requirementId: number) =>
-    `${API_CONFIG.API_VERSION}/requirements/${requirementId}/testcases/link`,
+    `/requirements/${requirementId}/testcases/link`,
 
   /** Unlink test cases from requirement endpoint */
   UNLINK_TESTCASES_FROM_REQUIREMENT: (requirementId: number) =>
-    `${API_CONFIG.API_VERSION}/requirements/${requirementId}/testcases/unlink`,
+    `/requirements/${requirementId}/testcases/unlink`,
 
   /** Get linked requirements for a test case endpoint */
-  GET_LINKED_REQUIREMENTS: (id: string) =>
-    `${API_CONFIG.API_VERSION}/testcases/${id}/requirements`,
+  GET_LINKED_REQUIREMENTS: (id: string) => `/testcases/${id}/requirements`,
 
   /** Get linked test cases for a requirement endpoint */
   GET_LINKED_TESTCASES_FOR_REQUIREMENT: (requirementId: number) =>
-    `${API_CONFIG.API_VERSION}/requirements/${requirementId}/testcases`,
+    `/requirements/${requirementId}/testcases`,
 
   /** Link test cases to test cycle endpoint */
   LINK_TESTCASES_TO_CYCLE: (cycleId: string) =>
-    `${API_CONFIG.API_VERSION}/testcycles/${cycleId}/testcases`,
+    `/testcycles/${cycleId}/testcases`,
 
   /** Unlink test cases from test cycle endpoint */
   UNLINK_TESTCASES_FROM_CYCLE: (cycleId: string) =>
-    `${API_CONFIG.API_VERSION}/testcycles/${cycleId}/testcases`,
+    `/testcycles/${cycleId}/testcases`,
 
   /** Search test cases linked to a test cycle endpoint */
   SEARCH_LINKED_TESTCASES_IN_CYCLE: (cycleId: string) =>
-    `${API_CONFIG.API_VERSION}/testcycles/${cycleId}/testcases/search`,
+    `/testcycles/${cycleId}/testcases/search`,
 
   /** Get linked requirements for a test cycle endpoint */
   GET_LINKED_REQUIREMENTS_FOR_CYCLE: (cycleId: string) =>
-    `${API_CONFIG.API_VERSION}/testcycles/${cycleId}/requirements`,
+    `/testcycles/${cycleId}/requirements`,
 
   /** Link requirements to test cycle endpoint */
   LINK_REQUIREMENTS_TO_CYCLE: (cycleId: string) =>
-    `${API_CONFIG.API_VERSION}/testcycles/${cycleId}/requirements/link`,
+    `/testcycles/${cycleId}/requirements/link`,
 
   /** Unlink requirements from test cycle endpoint */
   UNLINK_REQUIREMENTS_FROM_CYCLE: (cycleId: string) =>
-    `${API_CONFIG.API_VERSION}/testcycles/${cycleId}/requirements/unlink`,
+    `/testcycles/${cycleId}/requirements/unlink`,
 
   /** Test steps search endpoint */
   TEST_STEPS: (id: string, versionNo: number) =>
-    `${API_CONFIG.API_VERSION}/testcases/${id}/versions/${versionNo}/teststeps/search`,
+    `/testcases/${id}/versions/${versionNo}/teststeps/search`,
 
   /** Common attributes endpoint (priority, statuses) */
   COMMON_ATTRIBUTES: (projectId: number) =>
-    `${API_CONFIG.API_VERSION}/projects/${projectId}/mcp/common-attributes`,
+    `/projects/${projectId}/mcp/common-attributes`,
 
   /** Labels search endpoint */
-  LABELS: (projectId: number) =>
-    `${API_CONFIG.API_VERSION}/projects/${projectId}/mcp/labels`,
+  LABELS: (projectId: number) => `/projects/${projectId}/mcp/labels`,
 
   /** Components search endpoint */
-  COMPONENTS: (projectId: number) =>
-    `${API_CONFIG.API_VERSION}/projects/${projectId}/mcp/components`,
+  COMPONENTS: (projectId: number) => `/projects/${projectId}/mcp/components`,
 
   /** Environments search endpoint (resolve environment name → ID for executions) */
   ENVIRONMENTS: (projectId: number) =>
-    `${API_CONFIG.API_VERSION}/projects/${projectId}/mcp/environments`,
+    `/projects/${projectId}/mcp/environments`,
 
   /** Builds search endpoint (resolve build name → ID for executions) */
-  BUILDS: (projectId: number) =>
-    `${API_CONFIG.API_VERSION}/projects/${projectId}/mcp/builds`,
+  BUILDS: (projectId: number) => `/projects/${projectId}/mcp/builds`,
 
   /** Resolve defect issue keys → Jira numeric issueIds for a given project */
   RESOLVE_DEFECT_IDS: (projectId: number) =>
-    `${API_CONFIG.API_VERSION}/projects/${projectId}/mcp/defects/resolve-ids`,
+    `/projects/${projectId}/mcp/defects/resolve-ids`,
 
   /** Resolve defect status names → internal status IDs for a given project */
   DEFECT_STATUSES: (projectId: number) =>
-    `${API_CONFIG.API_VERSION}/projects/${projectId}/mcp/defects/statuses`,
+    `/projects/${projectId}/mcp/defects/statuses`,
 
   /** Resolve defect priority names → internal priority IDs for a given project */
   DEFECT_PRIORITIES: (projectId: number) =>
-    `${API_CONFIG.API_VERSION}/projects/${projectId}/mcp/defects/priorities`,
+    `/projects/${projectId}/mcp/defects/priorities`,
 
   /** Resolve execution context (testCycleTestCaseMapId + testCaseExecutionId) by issue keys */
   EXECUTION_CONTEXT: (projectId: number) =>
-    `${API_CONFIG.API_VERSION}/projects/${projectId}/mcp/testcycles/execution-context`,
+    `/projects/${projectId}/mcp/testcycles/execution-context`,
 
   /** Resolve step execution context (seqNo → testStepExecutionId) for a test case execution */
   STEP_EXECUTION_CONTEXT: (projectId: number) =>
-    `${API_CONFIG.API_VERSION}/projects/${projectId}/mcp/testcycles/step-execution-context`,
+    `/projects/${projectId}/mcp/testcycles/step-execution-context`,
 
   /** Start new test case execution */
   START_NEW_EXECUTION: (cycleKey: string, testCycleTestCaseMapId: number) =>
-    `${API_CONFIG.API_VERSION}/testcycles/${cycleKey}/testcases/${testCycleTestCaseMapId}/executions`,
+    `/testcycles/${cycleKey}/testcases/${testCycleTestCaseMapId}/executions`,
 
   /** Update test case execution */
   UPDATE_TEST_CASE_EXECUTION: (cycleKey: string, testCaseExecutionId: number) =>
-    `${API_CONFIG.API_VERSION}/testcycles/${cycleKey}/testcase-executions/${testCaseExecutionId}`,
+    `/testcycles/${cycleKey}/testcase-executions/${testCaseExecutionId}`,
 
   /** Update test step execution */
   UPDATE_TEST_STEP_EXECUTION: (cycleKey: string, testStepExecutionId: number) =>
-    `${API_CONFIG.API_VERSION}/testcycles/${cycleKey}/teststep-executions/${testStepExecutionId}`,
+    `/testcycles/${cycleKey}/teststep-executions/${testStepExecutionId}`,
 
   /** Link bugs to test case execution */
   LINK_BUGS_TEST_CASE_EXECUTION: (
@@ -165,7 +164,7 @@ export const ENDPOINTS = {
     testCaseExecutionId: number,
     returnLinkedDefectCount?: boolean,
   ) =>
-    `${API_CONFIG.API_VERSION}/testcycles/${cycleKey}/testcase-executions/${testCaseExecutionId}/defects${returnLinkedDefectCount ? "?returnLinkedDefectCount=true" : ""}`,
+    `/testcycles/${cycleKey}/testcase-executions/${testCaseExecutionId}/defects${returnLinkedDefectCount ? "?returnLinkedDefectCount=true" : ""}`,
 
   /** Link bugs to test step execution */
   LINK_BUGS_TEST_STEP_EXECUTION: (
@@ -173,21 +172,26 @@ export const ENDPOINTS = {
     testStepExecutionId: number,
     returnLinkedDefectCount?: boolean,
   ) =>
-    `${API_CONFIG.API_VERSION}/testcycles/${cycleKey}/teststep-executions/${testStepExecutionId}/defects${returnLinkedDefectCount ? "?returnLinkedDefectCount=true" : ""}`,
+    `/testcycles/${cycleKey}/teststep-executions/${testStepExecutionId}/defects${returnLinkedDefectCount ? "?returnLinkedDefectCount=true" : ""}`,
 
   /** Get linked bugs for a test case execution (POST with filter body) */
   GET_LINKED_BUGS_TEST_CASE_EXECUTION: (
     cycleKey: string,
     testCaseExecutionId: number,
   ) =>
-    `${API_CONFIG.API_VERSION}/testcycles/${cycleKey}/testcase-executions/${testCaseExecutionId}/defects`,
+    `/testcycles/${cycleKey}/testcase-executions/${testCaseExecutionId}/defects`,
 
   /** Get linked bugs for a test step execution (POST with filter body) */
   GET_LINKED_BUGS_TEST_STEP_EXECUTION: (
     cycleKey: string,
     testStepExecutionId: number,
   ) =>
-    `${API_CONFIG.API_VERSION}/testcycles/${cycleKey}/teststep-executions/${testStepExecutionId}/defects`,
+    `/testcycles/${cycleKey}/teststep-executions/${testStepExecutionId}/defects`,
+
+  /**
+   * Automation endpoints (unversioned, absolute paths)
+   * These bypass the configurable version prefix
+   */
 
   /** Automation: initiate result file import — returns pre-signed S3 upload URL + trackingId */
   AUTOMATION_IMPORT: "/rest/api/automation/importresult",
@@ -595,6 +599,9 @@ export const CONFIG_KEYS = {
 
   /** Base URL configuration key */
   BASE_URL: "base_url",
+
+  /** API VERSION configuration key */
+  API_VERSION: "api_version",
 } as const;
 
 /**
@@ -611,6 +618,10 @@ export const SCHEMA_DESCRIPTIONS = {
   /** Base URL description */
   BASE_URL:
     "QTM4J base URL (default: https://qtmcloud.qmetry.com). Can be customized for on-premise installations.",
+
+  /** API VERSION description */
+  API_VERSION:
+    "QTM4J API version prefix (default: /rest/api/latest). Can be customized for different API versions.",
 
   /** Project ID description */
   PROJECT_ID: "Numeric project ID (e.g., 10000)",
