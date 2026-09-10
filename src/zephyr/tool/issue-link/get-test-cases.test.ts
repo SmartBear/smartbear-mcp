@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { GetIssueLinkTestCasesParams as GetIssueLinkTestCasesPathParam } from "../../common/rest-api-schemas";
 import {
-  GetIssueLinkTestCasesParams as GetIssueLinkTestCasesPathParam,
-  GetIssueLinkTestCases200Response as GetIssueLinkTestCasesResponse,
-} from "../../common/rest-api-schemas";
-import { GetTestCases } from "./get-test-cases";
+  GetTestCases,
+  UpdatedGetIssueLinkTestCasesResponse,
+} from "./get-test-cases";
 
 describe("GetIssueLinkTestCases", () => {
   let mockClient: any;
@@ -29,7 +29,7 @@ describe("GetIssueLinkTestCases", () => {
       GetIssueLinkTestCasesPathParam,
     );
     expect(instance.specification.outputSchema).toBe(
-      GetIssueLinkTestCasesResponse,
+      UpdatedGetIssueLinkTestCasesResponse,
     );
   });
 
