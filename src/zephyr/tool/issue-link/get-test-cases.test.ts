@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { GetIssueLinkTestCasesParams as GetIssueLinkTestCasesPathParam } from "../../common/rest-api-schemas";
 import {
-  GetIssueLinkTestCasesParams as GetIssueLinkTestCasesPathParam,
-  GetIssueLinkTestCases200Response as GetIssueLinkTestCasesResponse,
-} from "../../common/rest-api-schemas";
-import { GetTestCases } from "./get-test-cases";
+  GetTestCases,
+  UpdatedGetIssueLinkTestCasesResponse,
+} from "./get-test-cases";
 
 describe("GetIssueLinkTestCases", () => {
   let mockClient: any;
@@ -29,7 +29,7 @@ describe("GetIssueLinkTestCases", () => {
       GetIssueLinkTestCasesPathParam,
     );
     expect(instance.specification.outputSchema).toBe(
-      GetIssueLinkTestCasesResponse,
+      UpdatedGetIssueLinkTestCasesResponse,
     );
   });
 
@@ -55,7 +55,7 @@ describe("GetIssueLinkTestCases", () => {
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/issuelinks/PROJ-123/testcases",
     );
-    expect(result.structuredContent).toEqual(responseMock);
+    expect(result.structuredContent).toEqual({ testCases: responseMock });
     expect(result.content).toEqual([]);
   });
 
@@ -67,7 +67,7 @@ describe("GetIssueLinkTestCases", () => {
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/issuelinks/PROJ-123/testcases",
     );
-    expect(result.structuredContent).toEqual([]);
+    expect(result.structuredContent).toEqual({ testCases: [] });
     expect(result.content).toEqual([]);
   });
 
@@ -83,7 +83,7 @@ describe("GetIssueLinkTestCases", () => {
     mockClient.getApiClient().get.mockResolvedValueOnce(undefined);
 
     const result = await instance.handle({ issueKey: "PROJ-123" }, {} as any);
-    expect(result.structuredContent).toEqual(undefined);
+    expect(result.structuredContent).toEqual({ testCases: undefined });
   });
 
   it("should throw validation error if issueKey is missing", async () => {
@@ -101,6 +101,6 @@ describe("GetIssueLinkTestCases", () => {
     mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
 
     const result = await instance.handle({ issueKey: "PROJ-123" }, {} as any);
-    expect(result.structuredContent).toEqual(responseMock);
+    expect(result.structuredContent).toEqual({ testCases: responseMock });
   });
 });

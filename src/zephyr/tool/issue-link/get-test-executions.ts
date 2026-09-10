@@ -1,3 +1,4 @@
+import { z as zod } from "zod";
 import { Tool, type ToolHandler } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { ZephyrClient } from "../../client";
@@ -5,6 +6,10 @@ import {
   GetIssueLinkTestExecutionsParams,
   GetIssueLinkTestExecutions200Response as GetIssueLinkTestExecutionsResponse,
 } from "../../common/rest-api-schemas";
+
+export const UpdatedGetIssueLinkTestExecutionsResponse = zod.strictObject({
+  testExecutions: GetIssueLinkTestExecutionsResponse,
+});
 
 export class GetTestExecutions extends Tool<ZephyrClient> {
   specification: ToolParams = {
@@ -14,7 +19,7 @@ export class GetTestExecutions extends Tool<ZephyrClient> {
     readOnly: true,
     idempotent: true,
     inputSchema: GetIssueLinkTestExecutionsParams,
-    outputSchema: GetIssueLinkTestExecutionsResponse,
+    outputSchema: UpdatedGetIssueLinkTestExecutionsResponse,
     examples: [
       {
         description:
@@ -34,7 +39,7 @@ export class GetTestExecutions extends Tool<ZephyrClient> {
       .getApiClient()
       .get(`/issuelinks/${issueKey}/executions`);
     return {
-      structuredContent: response,
+      structuredContent: { testExecutions: response },
       content: [],
     };
   };

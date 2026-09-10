@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { GetIssueLinkTestExecutionsParams as GetIssueLinkTestExecutionsPathParam } from "../../common/rest-api-schemas";
 import {
-  GetIssueLinkTestExecutionsParams as GetIssueLinkTestExecutionsPathParam,
-  GetIssueLinkTestExecutions200Response as GetIssueLinkTestExecutionsResponse,
-} from "../../common/rest-api-schemas";
-import { GetTestExecutions } from "./get-test-executions";
+  GetTestExecutions,
+  UpdatedGetIssueLinkTestExecutionsResponse,
+} from "./get-test-executions";
 
 describe("GetIssueLinkTestExecutions", () => {
   let mockClient: any;
@@ -31,7 +31,7 @@ describe("GetIssueLinkTestExecutions", () => {
       GetIssueLinkTestExecutionsPathParam,
     );
     expect(instance.specification.outputSchema).toBe(
-      GetIssueLinkTestExecutionsResponse,
+      UpdatedGetIssueLinkTestExecutionsResponse,
     );
   });
 
@@ -55,7 +55,7 @@ describe("GetIssueLinkTestExecutions", () => {
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/issuelinks/PROJ-123/executions",
     );
-    expect(result.structuredContent).toEqual(responseMock);
+    expect(result.structuredContent).toEqual({ testExecutions: responseMock });
     expect(result.content).toEqual([]);
   });
 
@@ -67,7 +67,7 @@ describe("GetIssueLinkTestExecutions", () => {
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/issuelinks/PROJ-123/executions",
     );
-    expect(result.structuredContent).toEqual([]);
+    expect(result.structuredContent).toEqual({ testExecutions: [] });
     expect(result.content).toEqual([]);
   });
 
@@ -83,7 +83,7 @@ describe("GetIssueLinkTestExecutions", () => {
     mockClient.getApiClient().get.mockResolvedValueOnce(undefined);
 
     const result = await instance.handle({ issueKey: "PROJ-123" }, {} as any);
-    expect(result.structuredContent).toEqual(undefined);
+    expect(result.structuredContent).toEqual({ testExecutions: undefined });
   });
 
   it("should throw validation error if issueKey is missing", async () => {
@@ -101,6 +101,6 @@ describe("GetIssueLinkTestExecutions", () => {
     mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
 
     const result = await instance.handle({ issueKey: "PROJ-123" }, {} as any);
-    expect(result.structuredContent).toEqual(responseMock);
+    expect(result.structuredContent).toEqual({ testExecutions: responseMock });
   });
 });
