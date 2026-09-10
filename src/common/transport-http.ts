@@ -78,18 +78,52 @@ export function handleReadyRequest(
 }
 
 /**
- * Helper to construct the base URL from the request, respecting proxy headers.
- * This is critical for cloud deployments where SSL termination happens at the load balancer.
- * If BASE_URL env var is set, it takes precedence over request headers.
+ * Lower-cased request headers, as exposed by both Node's `IncomingMessage`
+ * and the web `Headers` API. Lets the base-URL helpers serve both HTTP eras.
  */
-export function getBaseUrl(req: IncomingMessage): string {
+type HeaderRecord = Record<string, string | string[] | undefined>;
+
+/**
+ * Resolve the request scheme, normalised to http or https.
+ * Proxy chains send a comma-separated list, where the first entry faces the client.
+ */
+function getForwardedProtocol(headers: HeaderRecord): string {
+  const forwarded = (headers["x-forwarded-proto"] as string) || "";
+  const protocol = forwarded.split(",")[0]?.trim().toLowerCase();
+  return protocol === "https" ? "https" : "http";
+}
+
+/**
+ * Construct the server's public base URL from request headers, respecting
+ * proxy headers. This is critical for cloud deployments where SSL termination
+ * happens at the load balancer.
+ *
+ * Resolution order:
+ * 1. BASE_URL env var - always preferred, and the only source not derived from
+ *    client input. Set this on any deployment that terminates TLS elsewhere.
+ * 2. x-forwarded-host - only when TRUST_PROXY is enabled. Without a proxy in front
+ *    to overwrite it, any client can forge this header.
+ * 3. Host header.
+ */
+export function getBaseUrlFromHeaders(headers: HeaderRecord): string {
   const baseUrlOverride = process.env.BASE_URL;
   if (baseUrlOverride) {
     return baseUrlOverride;
   }
-  const protocol = (req.headers["x-forwarded-proto"] as string) || "http";
-  const host = (req.headers["x-forwarded-host"] as string) || req.headers.host;
+  const protocol = getForwardedProtocol(headers);
+  const hostHeader = headers.host as string | undefined;
+  const host =
+    process.env.TRUST_PROXY === "true"
+      ? (headers["x-forwarded-host"] as string) || hostHeader
+      : hostHeader;
   return `${protocol}://${host}`;
+}
+
+/**
+ * {@link getBaseUrlFromHeaders} for a Node `IncomingMessage`.
+ */
+export function getBaseUrl(req: IncomingMessage): string {
+  return getBaseUrlFromHeaders(req.headers);
 }
 
 /**
@@ -918,10 +952,13 @@ async function buildConfiguredServer(
     };
 
     // Add WWW-Authenticate header to support OAuth discovery flow
-    // This points the client to the Protected Resource Metadata endpoint
-    if (host) {
+    // This points the client to the Protected Resource Metadata endpoint.
+    // Built via getBaseUrlFromHeaders so it honours BASE_URL and matches the
+    // deployment's scheme, rather than echoing the Host header over a hardcoded
+    // http://. Shared by both HTTP eras, so the modern leg is covered too.
+    if (process.env.BASE_URL || host) {
       responseHeaders["WWW-Authenticate"] =
-        `OAuth resource_metadata="http://${host}/.well-known/oauth-protected-resource"`;
+        `OAuth resource_metadata="${getBaseUrlFromHeaders(headers)}/.well-known/oauth-protected-resource"`;
     }
 
     res.writeHead(401, responseHeaders);
