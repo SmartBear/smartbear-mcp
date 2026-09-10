@@ -18,6 +18,7 @@ import { clientRegistry } from "./client-registry";
 import { extractModernClientMeta, handleInitializeMessage } from "./initialize";
 import {
   type ModernClientMeta,
+  type ProtocolEra,
   setModernRequestClient,
   setRequestMcpClient,
   withRequestContext,
@@ -502,8 +503,10 @@ async function handleMcpEndpoint(
   // Modern requests carry no session, so the client's identity and
   // capabilities arrive in each request's `_meta` envelope (SEP-2575). Lift
   // them into the request context now: this is the modern counterpart of the
-  // legacy `initialize` capture, and it is what makes client attribution
-  // (Bugsnag metadata, downstream User-Agent) work for modern callers.
+  // legacy `initialize` capture, and it is what attributes Bugsnag error
+  // reports to the calling client. Note the downstream `User-Agent` is built
+  // when the product clients are configured (above, before this point), so on
+  // HTTP it does not yet reflect the per-request client — tracked separately.
   const headers = webHeadersToRecord(probe.headers);
   const clientMeta = extractModernClientMetaFromBody(parsedBody);
   await modernServerStorage.run(server, () =>
@@ -858,9 +861,10 @@ async function buildConfiguredServer(
   headers: Record<string, string | string[] | undefined>,
   host: string | undefined,
   res: ServerResponse,
+  era: ProtocolEra,
 ): Promise<SmartBearMcpServer | null> {
   const enabledToolsets = getConfig("smartbear", "toolsets") || undefined;
-  const server = new SmartBearMcpServer(enabledToolsets);
+  const server = new SmartBearMcpServer(enabledToolsets, era);
   try {
     // Run configuration within request context so that client getAuthToken()
     // methods can access request headers via AsyncLocalStorage
@@ -947,6 +951,7 @@ export async function newServer(
     req.headers,
     req.headers.host,
     res,
+    "legacy",
   );
 }
 
@@ -966,6 +971,7 @@ export async function newServerFromWebRequest(
     webHeadersToRecord(request.headers),
     request.headers.get("host") ?? undefined,
     res,
+    "modern",
   );
 }
 

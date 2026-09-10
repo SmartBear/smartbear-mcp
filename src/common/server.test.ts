@@ -118,8 +118,8 @@ describe("SmartBearMcpServer", () => {
     });
 
     it("reads elicitation support from the request's declared capabilities", () => {
-      // Modern clients do not declare `elicitation` (MRTR replaces it), so the
-      // polyfill path stays in effect until MRTR lands.
+      // Without a declared `elicitation` capability the polyfill path is
+      // used; with it, the modern era is served via MRTR (SEP-2322).
       expect(
         inModernRequest({ protocolVersion: "2026-07-28" }, () =>
           server.isElicitationSupported(),
@@ -148,6 +148,65 @@ describe("SmartBearMcpServer", () => {
 
       // Outside the modern request the legacy connection flag still applies.
       expect(server.isElicitationSupported()).toBe(true);
+    });
+  });
+
+  describe("era-specific capabilities", () => {
+    it("keeps logging and tools.listChanged on the legacy era (unchanged for the deprecation window)", () => {
+      const legacyServer = new SmartBearMcpServer();
+      const caps = legacyServer.server.getCapabilities();
+      expect(caps.logging).toEqual({});
+      expect(caps.tools).toEqual({ listChanged: true });
+    });
+
+    it("drops logging (SEP-2577) but keeps listChanged on the modern era", () => {
+      // listChanged stays: the SDK's serving entries implement
+      // subscriptions/listen themselves, and the capability bit is what tells
+      // modern clients they may request tool-list-change notifications.
+      const modernServer = new SmartBearMcpServer(undefined, "modern");
+      const caps = modernServer.server.getCapabilities();
+      expect(caps.logging).toBeUndefined();
+      expect(caps.tools).toEqual({ listChanged: true });
+    });
+  });
+
+  describe("deterministic tool ordering", () => {
+    it("lists tools alphabetically by name regardless of registration order", async () => {
+      // The suite-wide registerTool mock would keep the registry empty; this
+      // test needs the real registration so the sort has something to order.
+      superRegisterToolMock.mockRestore();
+      const client = {
+        name: "Test Product",
+        capabilityPrefix: "test_product",
+        configPrefix: "test-product",
+        config: z.object({}),
+        registerResources: vi.fn(),
+        configure: vi.fn(),
+        isConfigured: vi.fn().mockReturnValue(true),
+        registerTools: async (registerFn: any) => {
+          for (const title of ["Zebra Tool", "Alpha Tool", "Monkey Tool"]) {
+            registerFn(
+              { title, summary: "test", inputSchema: z.object({}) },
+              vi.fn().mockResolvedValue({ content: [] }),
+            );
+          }
+        },
+      };
+      await server.addClient(client as any);
+
+      // The SDK's tools/list handler enumerates this registry in insertion
+      // order; sortToolsDeterministically re-keys it alphabetically. This
+      // reads the same private map the handler reads, so an SDK storage
+      // change breaks this test rather than silently breaking the ordering.
+      const names = Object.keys(
+        (server as unknown as { _registeredTools: Record<string, unknown> })
+          ._registeredTools,
+      );
+      expect(names).toEqual([
+        "test_product_alpha_tool",
+        "test_product_monkey_tool",
+        "test_product_zebra_tool",
+      ]);
     });
   });
 
