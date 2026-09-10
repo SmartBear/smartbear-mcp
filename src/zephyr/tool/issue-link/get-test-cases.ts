@@ -8,7 +8,7 @@ import {
 } from "../../common/rest-api-schemas";
 
 export const UpdatedGetIssueLinkTestCasesResponse = zod.strictObject({
-  testCases: zod.array(GetIssueLinkTestCasesResponse),
+  testCases: GetIssueLinkTestCasesResponse,
 });
 
 export class GetTestCases extends Tool<ZephyrClient> {
