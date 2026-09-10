@@ -69,9 +69,9 @@ describe("CreateTestCase", () => {
 
       const result = await instance.handle(rawArgs);
 
-      // FIELD_CONFIG has 4 entries: PRIORITY, STATUS, COMPONENTS, LABELS, FOLDER
-      expect(mockFieldResolver.getResolver).toHaveBeenCalledTimes(5);
-      expect(mockFieldResolver.getResolver().resolve).toHaveBeenCalledTimes(5);
+      // FIELD_CONFIG has 4 entries: PRIORITY, STATUS, COMPONENTS, LABELS
+      expect(mockFieldResolver.getResolver).toHaveBeenCalledTimes(4);
+      expect(mockFieldResolver.getResolver().resolve).toHaveBeenCalledTimes(4);
       expect(mockApiClient.post).toHaveBeenCalledWith(
         ENDPOINTS.CREATE_TEST_CASE,
         expect.objectContaining({
@@ -190,6 +190,84 @@ describe("CreateTestCase", () => {
 
       expect(result.structuredContent).toBeDefined();
       expect(result.content).toEqual([]);
+    });
+
+    it("should use provided folderId instead of defaulting to 'MCP Generated'", async () => {
+      const rawArgs = {
+        summary: "Test in specific folder",
+        folderId: 2628513,
+      };
+      mockApiClient.post.mockResolvedValueOnce({
+        id: "1",
+        key: "PROJ-TC-1",
+        versionNo: 1,
+        summary: "Test in specific folder",
+      });
+
+      await instance.handle(rawArgs);
+
+      expect(mockApiClient.post).toHaveBeenCalledWith(
+        ENDPOINTS.CREATE_TEST_CASE,
+        expect.objectContaining({ folderId: 2628513 }),
+      );
+    });
+
+    it("should not call the folder resolver for a numeric folderId", async () => {
+      mockFieldResolver.getResolver.mockImplementation(
+        (_resolverKey: string) => ({
+          resolve: vi
+            .fn()
+            .mockImplementation(
+              (
+                inputField: string,
+                _key: string,
+                body: Record<string, unknown>,
+                _ctx: unknown,
+                warnings: string[],
+              ) => {
+                if (inputField === "folderId") {
+                  delete body.folderId;
+                  warnings.push(
+                    "Skipped folderId — not available in the current project.",
+                  );
+                }
+                return Promise.resolve();
+              },
+            ),
+        }),
+      );
+
+      const rawArgs = { summary: "Test", folderId: 2628513 };
+      mockApiClient.post.mockResolvedValueOnce({
+        id: "1",
+        key: "PROJ-TC-1",
+        versionNo: 1,
+        summary: "Test",
+      });
+
+      await instance.handle(rawArgs);
+
+      expect(mockApiClient.post).toHaveBeenCalledWith(
+        ENDPOINTS.CREATE_TEST_CASE,
+        expect.objectContaining({ folderId: 2628513 }),
+      );
+    });
+
+    it("should default folderId to 'MCP Generated' when not provided", async () => {
+      const rawArgs = { summary: "Test without folder" };
+      mockApiClient.post.mockResolvedValueOnce({
+        id: "1",
+        key: "PROJ-TC-1",
+        versionNo: 1,
+        summary: "Test without folder",
+      });
+
+      await instance.handle(rawArgs);
+
+      expect(mockApiClient.post).toHaveBeenCalledWith(
+        ENDPOINTS.CREATE_TEST_CASE,
+        expect.objectContaining({ folderId: "MCP Generated" }),
+      );
     });
   });
 });

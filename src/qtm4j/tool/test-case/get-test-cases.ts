@@ -174,11 +174,11 @@ export class GetTestCases extends Tool<Qtm4jClient> {
         description: "Filter by folder and fix version",
         parameters: {
           filter: {
-            folders: [123, 456],
+            folderId: 123,
             fixVersions: [789],
           },
         },
-        expectedOutput: "Test cases in the specified folders and fix versions",
+        expectedOutput: "Test cases in the specified folder and fix versions",
       },
       {
         description:
