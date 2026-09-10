@@ -1,11 +1,16 @@
 import type {
+  CacheHint,
   CallToolResult,
   ToolAnnotations,
 } from "@modelcontextprotocol/server";
 import { McpServer, ResourceTemplate } from "@modelcontextprotocol/server";
 import { ZodObject, z } from "zod";
 import Bugsnag, { type BugsnagEvent } from "../common/bugsnag";
-import { CacheService } from "./cache";
+import {
+  CacheService,
+  getConfiguredCacheTtlSeconds,
+  isCachingEnabled,
+} from "./cache";
 import {
   getCurrentClientIdentity,
   type McpClientIdentity,
@@ -18,7 +23,11 @@ import {
   isElicitationPolyfillResult,
   runWithElicitationScope,
 } from "./pollyfills";
-import { getRequestClientMeta, getRequestEra } from "./request-context";
+import {
+  getRequestClientMeta,
+  getRequestEra,
+  type ProtocolEra,
+} from "./request-context";
 import { ToolError } from "./tools";
 import type { Client, ClientInfo, ToolParams } from "./types";
 import {
@@ -28,6 +37,37 @@ import {
   isOptionalType,
 } from "./zod-utils";
 
+/**
+ * Cache hints for the cacheable modern-era (2026-07-28) result envelopes.
+ * `ttlMs` follows the operator's CACHE_TTL (the same lifetime the in-process
+ * {@link CacheService} uses); `cacheScope: "private"` because every listing is
+ * derived from the caller's own configuration (auth headers, enabled
+ * toolsets), so a shared cache must never serve one principal's results to
+ * another.
+ */
+function buildCacheHints(): Partial<
+  Record<
+    | "tools/list"
+    | "prompts/list"
+    | "resources/list"
+    | "resources/templates/list"
+    | "resources/read",
+    CacheHint
+  >
+> {
+  const hint: CacheHint = {
+    ttlMs: getConfiguredCacheTtlSeconds() * 1000,
+    cacheScope: "private",
+  };
+  return {
+    "tools/list": hint,
+    "prompts/list": hint,
+    "resources/list": hint,
+    "resources/templates/list": hint,
+    "resources/read": hint,
+  };
+}
+
 export class SmartBearMcpServer extends McpServer {
   private cache: CacheService;
   private elicitationSupported = false;
@@ -36,18 +76,40 @@ export class SmartBearMcpServer extends McpServer {
   private enabledToolsets?: string[];
   private mcpClientIdentity?: McpClientIdentity;
 
-  constructor(enabledToolsets?: string) {
+  constructor(enabledToolsets?: string, era: ProtocolEra = "legacy") {
     super(
       {
         name: MCP_SERVER_NAME,
         version: MCP_SERVER_VERSION,
       },
       {
-        capabilities: {
-          // resources and prompts are supported by some but not all clients
-          tools: { listChanged: true }, // Server supports dynamic tool lists
-          logging: {}, // Server supports logging messages
-        },
+        capabilities:
+          era === "modern"
+            ? {
+                // resources and prompts are supported by some but not all clients.
+                // No `logging`: deprecated by SEP-2577 as of 2026-07-28 (our
+                // diagnostics already go to stderr). `listChanged` stays
+                // advertised: on the modern era it tells clients which
+                // notification types a `subscriptions/listen` filter may
+                // request, and the SDK's serving entries implement
+                // `subscriptions/listen` themselves — no server-side work.
+                tools: { listChanged: true },
+              }
+            : {
+                // Legacy (2025-era) capabilities, unchanged for the
+                // deprecation window.
+                tools: { listChanged: true }, // Server supports dynamic tool lists
+                logging: {}, // Server supports logging messages
+              },
+        // Cache hints stamped onto the cacheable modern-era (2026-07-28)
+        // results (tools/list, prompts/list, resources/list,
+        // resources/templates/list, resources/read). Lifetime follows the
+        // operator's CACHE_TTL; scope is `private` because every result is
+        // derived from the caller's own configuration (auth headers,
+        // toolsets) and must not be served to other principals from a shared
+        // cache. Legacy responses are never affected, and with caching
+        // disabled the SDK default (`ttlMs: 0`) stands.
+        ...(isCachingEnabled() ? { cacheHints: buildCacheHints() } : {}),
       },
     );
     this.cache = new CacheService();
@@ -70,9 +132,10 @@ export class SmartBearMcpServer extends McpServer {
    * Whether the current caller supports server-initiated elicitation.
    *
    * Modern era: read from the capabilities this request declared in `_meta`.
-   * In practice modern clients do not declare `elicitation` — the 2026-07-28
-   * revision replaces server-initiated elicitation with MRTR — so this
-   * resolves false and callers fall back to the polyfill until MRTR lands.
+   * Only consulted on the legacy code path — modern requests that declare
+   * `elicitation` are served via the multi round-trip pattern (MRTR,
+   * SEP-2322) in `executeElicitationOrPolyfill` before this is reached, and
+   * modern requests that do not declare it fall back to the polyfill.
    * Legacy era: the per-connection flag captured at `initialize`.
    */
   isElicitationSupported(): boolean {
@@ -308,6 +371,32 @@ export class SmartBearMcpServer extends McpServer {
         );
       });
     }
+
+    this.sortToolsDeterministically();
+  }
+
+  /**
+   * Re-key the SDK's tool registry alphabetically so `tools/list` output is
+   * deterministic regardless of client registration order.
+   *
+   * The SDK's `tools/list` handler enumerates its registry in insertion
+   * order and offers no ordering hook, so this reaches into the private
+   * `_registeredTools` map. `server.test.ts` asserts the resulting order, so
+   * an SDK upgrade that changes the storage shape fails loudly there.
+   */
+  private sortToolsDeterministically(): void {
+    const registry = (
+      this as unknown as {
+        _registeredTools: Record<string, unknown>;
+      }
+    )._registeredTools;
+    const sorted = Object.fromEntries(
+      Object.entries(registry).sort(([a], [b]) => a.localeCompare(b)),
+    );
+    for (const key of Object.keys(registry)) {
+      delete registry[key];
+    }
+    Object.assign(registry, sorted);
   }
 
   private validateCallbackResult(result: CallToolResult, params: ToolParams) {
