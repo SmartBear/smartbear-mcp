@@ -13,9 +13,11 @@ import {
   type FetchTestCaseDetailsPayload,
   type FetchTestCaseExecutionsPayload,
   type FetchTestCaseStepsPayload,
+  type FetchTestCaseStepsWithUdfPayload,
   type FetchTestCasesLinkedToRequirementPayload,
   type FetchTestCasesPayload,
   type FetchTestCaseVersionDetailsPayload,
+  type LinkTestcaseToIssuesPayload,
   type linkRequirementToTestCasePayload,
   type UpdateTestCasesPayload,
 } from "../types/testcase.js";
@@ -37,9 +39,11 @@ export async function createTestCases(
     project,
   );
 
+  const { udfFields, skipSteps, ...restPayload } = payload as any;
   const body: CreateTestCasesPayload = {
     ...DEFAULT_CREATE_TESTCASES_PAYLOAD,
-    ...payload,
+    ...(udfFields ?? {}),
+    ...restPayload,
   };
 
   if (typeof body.tcFolderID !== "string") {
@@ -51,6 +55,19 @@ export async function createTestCases(
     throw new Error(
       "[createTestCases] Missing or invalid required parameter: 'name'.",
     );
+  }
+  if (!skipSteps && (!Array.isArray(body.steps) || body.steps.length === 0)) {
+    throw new Error(
+      "[createTestCases] Missing or invalid required parameter: 'steps' — must be a non-empty array. Generate steps from context if the user did not provide them.",
+    );
+  }
+  if (skipSteps && Array.isArray(body.steps) && body.steps.length > 0) {
+    throw new Error(
+      "[createTestCases] Contradictory payload: 'skipSteps' is true but 'steps' contains entries. Remove the steps array or set skipSteps to false.",
+    );
+  }
+  if (skipSteps) {
+    delete body.steps;
   }
 
   return qmetryRequest<unknown>({
@@ -78,9 +95,11 @@ export async function updateTestCase(
     project,
   );
 
+  const { udfFields, ...restPayload } = payload as any;
   const body: UpdateTestCasesPayload = {
     ...DEFAULT_UPDATE_TESTCASES_PAYLOAD,
-    ...payload,
+    ...(udfFields ?? {}),
+    ...restPayload,
   };
 
   if (typeof body.tcID !== "number") {
@@ -259,6 +278,48 @@ export async function fetchTestCaseSteps(
 }
 
 /**
+ * Fetches test case steps with UDF field values via viewColumns endpoint.
+ * @throws If `tcID` is missing/invalid.
+ */
+export async function fetchTestCaseStepsWithUdf(
+  token: string,
+  baseUrl: string,
+  project: string | undefined,
+  payload: FetchTestCaseStepsWithUdfPayload,
+) {
+  const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
+    baseUrl,
+    project,
+  );
+
+  if (typeof payload.tcID !== "number") {
+    throw new Error(
+      "[fetchTestCaseStepsWithUdf] Missing or invalid required parameter: 'tcID'.",
+    );
+  }
+
+  const body = {
+    tcID: String(payload.tcID),
+    limit: payload.limit ?? 30,
+    start: payload.start ?? 0,
+    page: payload.page ?? 1,
+    version: payload.version ?? 1,
+    gridName: payload.gridName ?? "TCSTEPLIST",
+    ...(payload.viewId !== undefined ? { viewId: payload.viewId } : {}),
+  };
+
+  return qmetryRequest<unknown>({
+    method: "POST",
+    path: QMETRY_PATHS.TESTCASE.GET_TC_STEPS_WITH_UDF,
+    token,
+    project: resolvedProject,
+    baseUrl: resolvedBaseUrl,
+    body,
+    extraHeaders: { action: "fetch-steps", screenname: "EXECUTION RUN" },
+  });
+}
+
+/**
  * Fetches test cases linked to a specific requirement.
  * @throws If `rqID` is missing/invalid.
  */
@@ -332,8 +393,13 @@ export async function fetchTestCaseExecutions(
   });
 
   if (result.hasTcRunUdf === false) {
+    const rows: any[] = result.data ?? [];
     return {
       ...result,
+      data: rows.map((row: any) => {
+        const { testCaseStatus: _tcs, testSuiteStatus: _tss, ...rest } = row;
+        return rest;
+      }),
       testRunUdfNote:
         "No Test Run UDFs are configured for this project. " +
         "The 'testRunUdfs' field will not be present in execution records. " +
@@ -430,7 +496,12 @@ export async function fetchTestCaseExecutions(
       );
     }
 
-    const { udfjson: _udfjson, ...rest } = row;
+    const {
+      udfjson: _udfjson,
+      testCaseStatus: _tcs,
+      testSuiteStatus: _tss,
+      ...rest
+    } = row;
     return { ...rest, testRunUdfs };
   });
 
@@ -479,6 +550,40 @@ export async function linkRequirementToTestCase(
   return qmetryRequest<unknown>({
     method: "PUT",
     path: QMETRY_PATHS.TESTCASE.LINKED_RQ_TO_TC,
+    token,
+    project: resolvedProject,
+    baseUrl: resolvedBaseUrl,
+    body,
+  });
+}
+
+export async function linkTestcaseToIssues(
+  token: string,
+  baseUrl: string,
+  project: string | undefined,
+  payload: LinkTestcaseToIssuesPayload,
+) {
+  const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
+    baseUrl,
+    project,
+  );
+
+  const body: LinkTestcaseToIssuesPayload = { ...payload };
+
+  if (typeof body.tcID !== "string" || body.tcID.trim() === "") {
+    throw new Error(
+      "[linkTestcaseToIssues] Missing or invalid required parameter: 'tcID'.",
+    );
+  }
+  if (!Array.isArray(body.dfIDs) || body.dfIDs.length === 0) {
+    throw new Error(
+      "[linkTestcaseToIssues] Missing or invalid required parameter: 'dfIDs'.",
+    );
+  }
+
+  return qmetryRequest<unknown>({
+    method: "POST",
+    path: QMETRY_PATHS.TESTCASE.LINK_ISSUES_TO_TC,
     token,
     project: resolvedProject,
     baseUrl: resolvedBaseUrl,

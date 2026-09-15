@@ -16,6 +16,10 @@ import {
 } from "./client/functional-testing-api";
 import type {
   CancelFunctionalTestingSuiteExecutionParams,
+  CreateFunctionalTestingSuiteParams,
+  CreateFunctionalTestingSuiteResponse,
+  CreateFunctionalTestingTestParams,
+  CreateFunctionalTestingTestResponse,
   GetFunctionalTestHistoryParams,
   GetFunctionalTestingExecutionTestParams,
   GetFunctionalTestingSuiteExecutionParams,
@@ -44,6 +48,8 @@ import {
   type GetDocumentArgs,
   type GetProductSectionsArgs,
   type GetTableOfContentsArgs,
+  type PatchApiParams,
+  type PatchApiResponse,
   type Portal,
   type PortalsListResponse,
   type Product,
@@ -76,15 +82,15 @@ import type {
 const ConfigurationSchema = z.object({
   api_key: z.string().optional().describe("Swagger API key for authentication"),
   portal_base_path: z
-    .string()
+    .url()
     .optional()
-    .describe("Base path for Portal API requests (optional)"),
+    .describe("Base URL for Portal API requests (optional)"),
   registry_base_path: z
-    .string()
+    .url()
     .optional()
     .describe("Base path for Registry API requests (optional)"),
   ui_base_path: z
-    .string()
+    .url()
     .optional()
     .describe("Base URL for the SwaggerHub UI (optional)"),
   functional_testing_api_token: z
@@ -94,7 +100,7 @@ const ConfigurationSchema = z.object({
       "Swagger Functional Testing API token. Leave empty to disable Functional Testing tools.",
     ),
   functional_testing_base_path: z
-    .string()
+    .url()
     .optional()
     .describe(
       "Base URL for Swagger Functional Testing API requests (optional)",
@@ -320,7 +326,8 @@ export class SwaggerClient implements Client {
   async getApiDefinition(
     args: ApiDefinitionParams,
   ): Promise<unknown | FallbackResponse> {
-    return this.getApi().getApiDefinition(args);
+    const accept = args.format === "text" ? "text/plain" : "application/json";
+    return this.getApi().getApiDefinition(args, { accept });
   }
 
   async createOrUpdateApi(
@@ -360,7 +367,17 @@ export class SwaggerClient implements Client {
     return this.getApi().standardizeApi(args);
   }
 
+  async patchApi(args: PatchApiParams): Promise<PatchApiResponse> {
+    return this.getApi().patchApi(args);
+  }
+
   // Functional Testing methods
+
+  async createFunctionalTestingTest(
+    args: CreateFunctionalTestingTestParams,
+  ): Promise<CreateFunctionalTestingTestResponse> {
+    return this.withFunctionalTesting((ftApi) => ftApi.createTest(args));
+  }
 
   async listFunctionalTestingTests(): Promise<unknown> {
     return this.withFunctionalTesting((ftApi) => ftApi.listTests());
@@ -424,6 +441,12 @@ export class SwaggerClient implements Client {
     return this.withFunctionalTesting((ftApi) => ftApi.listSuites());
   }
 
+  async createFunctionalTestingSuite(
+    args: CreateFunctionalTestingSuiteParams,
+  ): Promise<CreateFunctionalTestingSuiteResponse> {
+    return this.withFunctionalTesting((ftApi) => ftApi.createSuite(args));
+  }
+
   async getFunctionalTestingTestHistory(
     args: GetFunctionalTestHistoryParams,
   ): Promise<TestRunHistoryResponse> {
@@ -447,7 +470,7 @@ export class SwaggerClient implements Client {
       }
 
       const { handler, formatResponse, ...toolParams } = tool;
-      register(toolParams, async (args, _extra) => {
+      register(toolParams, async (args, _ctx) => {
         try {
           // Dynamic method invocation
           const handlerFn = (this as any)[handler];

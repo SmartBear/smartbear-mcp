@@ -27,6 +27,7 @@
 import path from "node:path";
 import { Matchers, PactV4 } from "@pact-foundation/pact";
 import { describe, expect, it } from "vitest";
+import { CacheService } from "../common/cache";
 import { PactflowClient } from "./client";
 
 const { like, eachLike, regex } = Matchers;
@@ -40,7 +41,10 @@ const provider = new PactV4({
 
 async function createClient(baseUrl: string): Promise<PactflowClient> {
   const client = new PactflowClient();
-  const mockServer = { getClientInfo: () => undefined } as any;
+  const mockServer = {
+    getClientInfo: () => undefined,
+    getCache: () => new CacheService(),
+  } as any;
   await client.configure(mockServer, {
     base_url: baseUrl,
     token: "test-token",

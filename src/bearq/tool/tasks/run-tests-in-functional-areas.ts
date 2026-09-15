@@ -1,7 +1,5 @@
-import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ZodRawShape } from "zod";
 import { z } from "zod";
-import { Tool, ToolError } from "../../../common/tools";
+import { Tool, ToolError, type ToolHandler } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { BearQClient } from "../../client";
 
@@ -28,7 +26,7 @@ export class RunTestsInFunctionalAreas extends Tool<BearQClient> {
     inputSchema,
   };
 
-  handle: ToolCallback<ZodRawShape> = async (args) => {
+  handle: ToolHandler = async (args) => {
     const { functionalAreas, environment } = inputSchema.parse(args);
     const body: Record<string, unknown> = {
       agent: "tester",

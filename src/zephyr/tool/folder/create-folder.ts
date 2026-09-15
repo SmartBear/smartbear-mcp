@@ -1,6 +1,4 @@
-import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ZodRawShape } from "zod";
-import { Tool } from "../../../common/tools";
+import { Tool, type ToolHandler } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { ZephyrClient } from "../../client";
 import {
@@ -55,7 +53,7 @@ export class CreateFolder extends Tool<ZephyrClient> {
     ],
   };
 
-  handle: ToolCallback<ZodRawShape> = async (args) => {
+  handle: ToolHandler = async (args) => {
     const body = CreateFolderBody.parse(args);
     const response = await this.client.getApiClient().post(`/folders`, body);
     return {

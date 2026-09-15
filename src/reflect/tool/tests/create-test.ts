@@ -1,6 +1,4 @@
-import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ZodRawShape } from "zod";
-import { Tool } from "../../../common/tools";
+import { Tool, type ToolHandler } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { ReflectClient } from "../../client";
 import {
@@ -19,7 +17,7 @@ export class CreateTest extends Tool<ReflectClient> {
     inputSchema: buildCreateDefinitionSchema({ isSegment: false }),
   };
 
-  handle: ToolCallback<ZodRawShape> = async (args) => {
+  handle: ToolHandler = async (args) => {
     return createReflectDefinition(this.client, "tests", "test", args);
   };
 }

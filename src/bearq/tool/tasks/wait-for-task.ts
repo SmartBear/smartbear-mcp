@@ -1,7 +1,5 @@
-import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ZodRawShape } from "zod";
 import { z } from "zod";
-import { Tool, ToolError } from "../../../common/tools";
+import { Tool, ToolError, type ToolHandler } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { BearQClient } from "../../client";
 
@@ -30,7 +28,7 @@ export class WaitForTask extends Tool<BearQClient> {
     inputSchema,
   };
 
-  handle: ToolCallback<ZodRawShape> = async (args, extra) => {
+  handle: ToolHandler = async (args, ctx) => {
     const { taskId } = inputSchema.parse(args);
     const url = `${this.client.getBaseUrl()}/tasks/${taskId}/stream`;
     const res = await fetch(url, {
@@ -43,11 +41,11 @@ export class WaitForTask extends Tool<BearQClient> {
     if (!res.body)
       throw new ToolError(`GET /tasks/${taskId}/stream: no response body`);
 
-    const progressToken = extra?._meta?.progressToken;
+    const progressToken = ctx?.mcpReq?._meta?.progressToken;
     let progress = 0;
     const notify = async (event: string, data: unknown) => {
       if (progressToken === undefined) return;
-      await extra.sendNotification({
+      await ctx.mcpReq?.notify({
         method: "notifications/progress",
         params: {
           progressToken,

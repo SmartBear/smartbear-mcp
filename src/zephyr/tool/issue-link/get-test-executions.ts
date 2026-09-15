@@ -1,12 +1,15 @@
-import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ZodRawShape } from "zod";
-import { Tool } from "../../../common/tools";
+import { z as zod } from "zod";
+import { Tool, type ToolHandler } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { ZephyrClient } from "../../client";
 import {
   GetIssueLinkTestExecutionsParams,
   GetIssueLinkTestExecutions200Response as GetIssueLinkTestExecutionsResponse,
 } from "../../common/rest-api-schemas";
+
+export const UpdatedGetIssueLinkTestExecutionsResponse = zod.strictObject({
+  testExecutions: GetIssueLinkTestExecutionsResponse,
+});
 
 export class GetTestExecutions extends Tool<ZephyrClient> {
   specification: ToolParams = {
@@ -16,7 +19,7 @@ export class GetTestExecutions extends Tool<ZephyrClient> {
     readOnly: true,
     idempotent: true,
     inputSchema: GetIssueLinkTestExecutionsParams,
-    outputSchema: GetIssueLinkTestExecutionsResponse,
+    outputSchema: UpdatedGetIssueLinkTestExecutionsResponse,
     examples: [
       {
         description:
@@ -30,7 +33,7 @@ export class GetTestExecutions extends Tool<ZephyrClient> {
     ],
   };
 
-  handle: ToolCallback<ZodRawShape> = async (args) => {
+  handle: ToolHandler = async (args) => {
     const { issueKey } = GetIssueLinkTestExecutionsParams.parse(args);
     const response = await this.client
       .getApiClient()

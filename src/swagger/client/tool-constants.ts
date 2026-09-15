@@ -6,12 +6,12 @@ export const READ_ONLY = {
 
 export const WRITE = {
   readOnly: false,
-  openWorld: true,
+  openWorld: false,
   destructive: false,
 } as const;
 
 export const WRITE_DESTRUCTIVE = {
   readOnly: false,
-  openWorld: true,
+  openWorld: false,
   destructive: true,
 } as const;

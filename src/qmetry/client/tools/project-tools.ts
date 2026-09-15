@@ -86,7 +86,8 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
       "Filter parameter should be a JSON string with filter criteria",
       "Common filter fields: 'name' (string), 'projectKey' (string)",
     ],
-    outputDescription: "JSON object containing list of projects details",
+    outputDescription:
+      "JSON object containing list of projects details, including Version, Build Number(if greater than or equal to 1), Project ID, name, Project Key and Date Format",
     readOnly: true,
     idempotent: true,
   },
@@ -134,7 +135,8 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
       "The project context persists for the current session until changed again",
     ],
     outputDescription:
-      "JSON object containing project configuration details, confirmation of project switch, and available project metadata",
+      "JSON object containing project configuration details, confirmation of project switch, and available project metadata," +
+      "including Version, Build Number(if greater than or equal to 1), Project ID, name, Project Key and Date Format",
     readOnly: false,
     idempotent: true,
   },
@@ -175,9 +177,23 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
       "Use 'default' project key when user doesn't specify one",
       "Extract viewId from latestViews.TC.viewId for test case operations",
       "Use empty string '' as folderPath for root directory",
+      "DATE FORMAT — IMPORTANT: response contains 'dateTimeFormatID' (number) and 'dateTimeFormatNew' (array).",
+      "  dateTimeFormatID = active format ID for this project.",
+      "  dateTimeFormatNew = [{ id, name, unique_value }] — find entry where id === dateTimeFormatID.",
+      "  unique_value is the authoritative date format pattern using Java/QMetry conventions:",
+      "    yyyy = 4-digit year  |  MM = 2-digit month (01-12)  |  dd = 2-digit day  |  MMM = 3-letter month (Jan/Feb/...)",
+      "  Example mappings:",
+      "    unique_value 'MM-dd-yyyy' → format: 12-25-2024",
+      "    unique_value 'dd-MM-yyyy' → format: 25-12-2024",
+      "    unique_value 'yyyy-MM-dd' → format: 2024-12-25",
+      "    unique_value 'dd-MMM-yyyy' → format: 25-Dec-2024",
+      "  Always use this format when sending date values in any create/update payload.",
+      "  Always parse user-provided dates and reformat them to this pattern before sending to API.",
     ],
     outputDescription:
-      "JSON object containing project details, viewIds, folderPaths, and project configuration",
+      "JSON object containing project details, viewIds, folderPaths, project configuration, " +
+      "'dateTimeFormatID' (active date format ID), and 'dateTimeFormatNew' array " +
+      "(each entry: { id, name, unique_value } — use unique_value of the matching entry as the date format pattern for all API date fields).",
     readOnly: true,
     idempotent: true,
   },

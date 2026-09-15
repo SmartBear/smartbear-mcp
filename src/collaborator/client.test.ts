@@ -1,7 +1,6 @@
-import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
-import type { ZodRawShape } from "zod";
+import type { ToolHandler } from "../common/tools";
 import { CollaboratorClient } from "./client";
 
 const fetchMock = createFetchMock(vi);
@@ -307,7 +306,7 @@ describe("CollaboratorClient", () => {
   });
 
   describe("tool handler direct invocation", () => {
-    let handlers: Record<string, ToolCallback<ZodRawShape>> = {};
+    let handlers: Record<string, ToolHandler> = {};
     const mockGetInput = vi.fn();
     beforeEach(() => {
       handlers = {};

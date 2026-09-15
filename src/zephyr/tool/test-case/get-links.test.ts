@@ -1,8 +1,4 @@
-import type { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/protocol.js";
-import type {
-  ServerNotification,
-  ServerRequest,
-} from "@modelcontextprotocol/sdk/types.js";
+import type { ServerContext } from "@modelcontextprotocol/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   GetTestCaseLinksParams,
@@ -14,17 +10,27 @@ describe("GetTestCaseLinks", () => {
   let mockClient: any;
   let instance: GetTestCaseLinks;
 
-  const EXTRA_REQUEST_HANDLER: RequestHandlerExtra<
-    ServerRequest,
-    ServerNotification
-  > = {
-    signal: AbortSignal.timeout(5000),
-    requestId: "",
-    sendNotification: (_notification) => {
-      throw new Error("Function not implemented.");
-    },
-    sendRequest: (_request, _resultSchema, _options?) => {
-      throw new Error("Function not implemented.");
+  const EXTRA_REQUEST_HANDLER: ServerContext = {
+    mcpReq: {
+      id: "",
+      method: "tools/call",
+      signal: AbortSignal.timeout(5000),
+      requestState: () => undefined,
+      notify: (_notification) => {
+        throw new Error("Function not implemented.");
+      },
+      send: (_request: any, _resultSchemaOrOptions?: any, _options?: any) => {
+        throw new Error("Function not implemented.");
+      },
+      log: (_level, _data, _logger) => {
+        throw new Error("Function not implemented.");
+      },
+      elicitInput: (_params, _options) => {
+        throw new Error("Function not implemented.");
+      },
+      requestSampling: (_params, _options) => {
+        throw new Error("Function not implemented.");
+      },
     },
   };
 
@@ -216,14 +222,14 @@ describe("GetTestCaseLinks", () => {
       "/testcases/SA-T10/links",
     );
     expect(result.structuredContent).toBe(responseMock);
-    expect(result.structuredContent?.webLinks).toHaveLength(3);
-    expect((result.structuredContent?.webLinks as any)[0].url).toBe(
+    expect((result.structuredContent as any)?.webLinks).toHaveLength(3);
+    expect((result.structuredContent as any)?.webLinks[0].url).toBe(
       "not-a-valid-url",
     );
-    expect((result.structuredContent?.webLinks as any)[1].url).toBe(
+    expect((result.structuredContent as any)?.webLinks[1].url).toBe(
       "//incomplete",
     );
-    expect((result.structuredContent?.webLinks as any)[2].url).toBe(
+    expect((result.structuredContent as any)?.webLinks[2].url).toBe(
       "http://example.com/path with spaces",
     );
   });

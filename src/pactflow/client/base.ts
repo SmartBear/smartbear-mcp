@@ -10,6 +10,11 @@ export interface ProviderStatesResponse {
   providerStates: ProviderState[];
 }
 
+export const PaginationSchema = z.object({
+  pageNumber: z.number().default(1).optional().describe("Page number"),
+  pageSize: z.number().default(5).optional().describe("Results per page"),
+});
+
 export const CanIDeploySchema = z.object({
   pacticipant: z
     .string()
@@ -137,14 +142,14 @@ export const GetPacticipantSchema = z.object({
 export const ListBranchesSchema = z.object({
   pacticipantName: z.string().describe("Name of the pacticipant"),
   q: z.string().optional().describe("Filter branches by name"),
-  pageNumber: z.number().optional().describe("Page number (default: 1)"),
-  pageSize: z.number().optional().describe("Results per page (default: 100)"),
+  pageNumber: z.number().default(1).optional().describe("Page number"),
+  pageSize: z.number().default(5).optional().describe("Results per page"),
 });
 
 export const ListVersionsSchema = z.object({
   pacticipantName: z.string().describe("Name of the pacticipant"),
-  pageNumber: z.number().optional().describe("Page number"),
-  pageSize: z.number().optional().describe("Results per page"),
+  pageNumber: z.number().default(1).optional().describe("Page number"),
+  pageSize: z.number().default(5).optional().describe("Results per page"),
 });
 
 export const GetVersionSchema = z.object({
@@ -180,9 +185,11 @@ export const RecordDeploymentSchema = z.object({
     ),
 });
 
-export const GetCurrentlyDeployedSchema = z.object({
-  environmentId: z.string().describe("UUID of the environment"),
-});
+export const GetCurrentlyDeployedSchema = z
+  .object({
+    environmentId: z.string().describe("UUID of the environment"),
+  })
+  .extend(PaginationSchema.shape);
 
 export const RecordReleaseSchema = z.object({
   pacticipantName: z
@@ -192,9 +199,11 @@ export const RecordReleaseSchema = z.object({
   environmentId: z.string().describe("UUID of the target environment"),
 });
 
-export const GetCurrentlySupportedSchema = z.object({
-  environmentId: z.string().describe("UUID of the environment"),
-});
+export const GetCurrentlySupportedSchema = z
+  .object({
+    environmentId: z.string().describe("UUID of the environment"),
+  })
+  .extend(PaginationSchema.shape);
 
 export const PublishConsumerContractsSchema = z.object({
   pacticipantName: z
@@ -241,13 +250,15 @@ export const PublishProviderContractSchema = z.object({
     .object({
       content: z
         .string()
-        .describe("Base64-encoded OpenAPI specification content"),
+        .describe("Base64-encoded OpenAPI or AsyncAPI specification content"),
       contentType: z
         .enum(["application/json", "application/yaml", "application/yml"])
-        .describe("Content type of the OpenAPI spec"),
+        .describe("Content type of the spec"),
       specification: z
-        .literal("oas")
-        .describe("Specification type (must be 'oas')"),
+        .enum(["oas", "asyncapi"])
+        .describe(
+          "Specification type: 'oas' for OpenAPI or 'asyncapi' for AsyncAPI",
+        ),
       selfVerificationResults: z
         .object({
           success: z.boolean().describe("Whether self-verification passed"),
@@ -277,7 +288,9 @@ export const PublishProviderContractSchema = z.object({
           "Results of self-verifying the provider against its own contract",
         ),
     })
-    .describe("Provider contract (OpenAPI spec) and verification details"),
+    .describe(
+      "Provider contract (OpenAPI or AsyncAPI spec) and verification details",
+    ),
   tags: z.array(z.string()).optional().describe("Version tags"),
   branch: z.string().optional().describe("Branch name of the provider"),
   buildUrl: z.string().optional().describe("URL of the CI build"),
@@ -349,9 +362,11 @@ export const GetLabelSchema = z.object({
   labelName: z.string().describe("Name of the label"),
 });
 
-export const LabelByNameSchema = z.object({
-  labelName: z.string().describe("Label name to filter by"),
-});
+export const LabelByNameSchema = z
+  .object({
+    labelName: z.string().describe("Label name to filter by"),
+  })
+  .extend(PaginationSchema.shape);
 
 export const UpdatePacticipantSchema = z.object({
   pacticipantName: z.string().describe("Name of the pacticipant to update"),
@@ -380,15 +395,17 @@ export const UpdateVersionSchema = z.object({
 export const GetBranchVersionsSchema = z.object({
   pacticipantName: z.string().describe("Name of the pacticipant"),
   branchName: z.string().describe("Name of the branch"),
-  pageNumber: z.number().optional().describe("Page number"),
-  pageSize: z.number().optional().describe("Results per page"),
+  pageNumber: z.number().default(1).optional().describe("Page number"),
+  pageSize: z.number().default(5).optional().describe("Results per page"),
 });
 
-export const GetVersionDeployedSchema = z.object({
-  pacticipantName: z.string().describe("Name of the pacticipant"),
-  versionNumber: z.string().describe("Version number"),
-  environmentId: z.string().describe("UUID of the environment"),
-});
+export const GetVersionDeployedSchema = z
+  .object({
+    pacticipantName: z.string().describe("Name of the pacticipant"),
+    versionNumber: z.string().describe("Version number"),
+    environmentId: z.string().describe("UUID of the environment"),
+  })
+  .extend(PaginationSchema.shape);
 
 export type GetLabelInput = z.infer<typeof GetLabelSchema>;
 export type LabelByNameInput = z.infer<typeof LabelByNameSchema>;
@@ -397,17 +414,21 @@ export type UpdateVersionInput = z.infer<typeof UpdateVersionSchema>;
 export type GetBranchVersionsInput = z.infer<typeof GetBranchVersionsSchema>;
 export type GetVersionDeployedInput = z.infer<typeof GetVersionDeployedSchema>;
 
-export const GetBiDirectionalProviderVersionSchema = z.object({
-  providerName: z.string().describe("Name of the provider"),
-  providerVersionNumber: z.string().describe("Provider version number"),
-});
+export const GetBiDirectionalProviderVersionSchema = z
+  .object({
+    providerName: z.string().describe("Name of the provider"),
+    providerVersionNumber: z.string().describe("Provider version number"),
+  })
+  .extend(PaginationSchema.shape);
 
-export const GetBiDirectionalConsumerProviderVersionSchema = z.object({
-  providerName: z.string().describe("Name of the provider"),
-  providerVersionNumber: z.string().describe("Provider version number"),
-  consumerName: z.string().describe("Name of the consumer"),
-  consumerVersionNumber: z.string().describe("Consumer version number"),
-});
+export const GetBiDirectionalConsumerProviderVersionSchema = z
+  .object({
+    providerName: z.string().describe("Name of the provider"),
+    providerVersionNumber: z.string().describe("Provider version number"),
+    consumerName: z.string().describe("Name of the consumer"),
+    consumerVersionNumber: z.string().describe("Consumer version number"),
+  })
+  .extend(PaginationSchema.shape);
 
 export type GetBiDirectionalProviderVersionInput = z.infer<
   typeof GetBiDirectionalProviderVersionSchema
@@ -481,9 +502,11 @@ export const ManageLabelSchema = z.object({
   labelName: z.string().describe("Name of the label"),
 });
 export type ManageLabelInput = z.infer<typeof ManageLabelSchema>;
-export const GetIntegrationsByTeamSchema = z.object({
-  teamId: z.string().describe("UUID of the team"),
-});
+export const GetIntegrationsByTeamSchema = z
+  .object({
+    teamId: z.string().describe("UUID of the team"),
+  })
+  .extend(PaginationSchema.shape);
 export type GetIntegrationsByTeamInput = z.infer<
   typeof GetIntegrationsByTeamSchema
 >;
@@ -632,12 +655,19 @@ export const AuditSchema = z.object({
     .describe(
       "Start result set from this audit event UUID (keyset pagination)",
     ),
-  pageNumber: z.number().int().min(1).optional().describe("Page number"),
+  pageNumber: z
+    .number()
+    .int()
+    .min(1)
+    .default(1)
+    .optional()
+    .describe("Page number"),
   pageSize: z
     .number()
     .int()
     .min(1)
     .max(100)
+    .default(5)
     .optional()
     .describe("Results per page (max 100)"),
 });
@@ -651,8 +681,8 @@ export const ListAdminUsersSchema = z.object({
     .max(1)
     .optional()
     .describe("0 = regular users, 1 = system accounts"),
-  page: z.number().optional().describe("Page number"),
-  size: z.number().optional().describe("Results per page"),
+  page: z.number().default(1).optional().describe("Page number"),
+  size: z.number().default(5).optional().describe("Results per page"),
 });
 export type ListAdminUsersInput = z.infer<typeof ListAdminUsersSchema>;
 
@@ -713,8 +743,8 @@ export const UserRoleSchema = z.object({
 export type UserRoleInput = z.infer<typeof UserRoleSchema>;
 export const ListAdminTeamsSchema = z.object({
   q: z.string().optional().describe("Filter teams by name"),
-  page: z.number().optional().describe("Page number"),
-  size: z.number().optional().describe("Results per page"),
+  page: z.number().default(1).optional().describe("Page number"),
+  size: z.number().default(5).optional().describe("Results per page"),
 });
 export type ListAdminTeamsInput = z.infer<typeof ListAdminTeamsSchema>;
 
@@ -722,6 +752,10 @@ export const AdminTeamIdSchema = z.object({
   teamId: z.string().describe("UUID of the team"),
 });
 export type AdminTeamIdInput = z.infer<typeof AdminTeamIdSchema>;
+
+export const ListTeamUsersSchema = AdminTeamIdSchema.extend(
+  PaginationSchema.shape,
+);
 
 export const CreateTeamSchema = z.object({
   name: z.string().min(1).describe("Name of the team"),
@@ -829,18 +863,22 @@ export type CreateSystemAccountInput = z.infer<
   typeof CreateSystemAccountSchema
 >;
 
-export const GetSystemAccountTokensSchema = z.object({
-  accountId: z.string().describe("UUID of the system account"),
-});
+export const GetSystemAccountTokensSchema = z
+  .object({
+    accountId: z.string().describe("UUID of the system account"),
+  })
+  .extend(PaginationSchema.shape);
 export type GetSystemAccountTokensInput = z.infer<
   typeof GetSystemAccountTokensSchema
 >;
 
-export const GetPacticipantNetworkSchema = z.object({
-  pacticipantName: z
-    .string()
-    .describe("Name of the pacticipant to get network for"),
-});
+export const GetPacticipantNetworkSchema = z
+  .object({
+    pacticipantName: z
+      .string()
+      .describe("Name of the pacticipant to get network for"),
+  })
+  .extend(PaginationSchema.shape);
 
 export type GetPacticipantInput = z.infer<typeof GetPacticipantSchema>;
 export type ListBranchesInput = z.infer<typeof ListBranchesSchema>;
@@ -986,3 +1024,118 @@ export interface MetricsResponse {
     countsByTeam: number[];
   };
 }
+
+// ─── Response types for domain API methods ─────────────────────────────────
+// Methods returning HTTP 204 (DELETE operations) use Promise<void> in domain
+// classes and have no interface here.
+
+// Pacticipants
+export type PacticipantsListResponse = Record<string, unknown>;
+export type PacticipantResponse = Record<string, unknown>;
+
+// Branches
+export type BranchesListResponse = Record<string, unknown>;
+export type BranchResponse = Record<string, unknown>;
+export type BranchVersionsResponse = Record<string, unknown>;
+
+// Versions
+export type VersionsListResponse = Record<string, unknown>;
+export type VersionResponse = Record<string, unknown>;
+
+// Environments
+export type EnvironmentsListResponse = Record<string, unknown>;
+export type EnvironmentResponse = Record<string, unknown>;
+
+// Deployments & Releases
+export type DeploymentResponse = Record<string, unknown>;
+export type CurrentlyDeployedResponse = Record<string, unknown>;
+export type DeployedVersionsResponse = Record<string, unknown>;
+export type ReleaseResponse = Record<string, unknown>;
+export type CurrentlySupportedResponse = Record<string, unknown>;
+export type ReleasedVersionsResponse = Record<string, unknown>;
+
+// Contract publishing
+export type PublishContractsResponse = Record<string, unknown>;
+export type PublishProviderContractResponse = Record<string, unknown>;
+export type PactsForVerificationResponse = Record<string, unknown>;
+
+// Bi-Directional Contract Testing
+export type BiDirectionalProviderContractResponse = Record<string, unknown>;
+export type BiDirectionalProviderContractVerificationResultsResponse = Record<
+  string,
+  unknown
+>;
+export type BiDirectionalConsumerContractResponse = Record<string, unknown>;
+export type BiDirectionalConsumerContractVerificationResultsResponse = Record<
+  string,
+  unknown
+>;
+export type BiDirectionalCrossContractVerificationResultsResponse = Record<
+  string,
+  unknown
+>;
+export type BiDirectionalConsumerContractByConsumerResponse = Record<
+  string,
+  unknown
+>;
+export type BiDirectionalProviderContractByConsumerResponse = Record<
+  string,
+  unknown
+>;
+export type BiDirectionalProviderContractVerificationResultsByConsumerResponse =
+  Record<string, unknown>;
+export type BiDirectionalConsumerContractVerificationResultsByConsumerResponse =
+  Record<string, unknown>;
+export type BiDirectionalCrossContractVerificationResultsByConsumerResponse =
+  Record<string, unknown>;
+
+// Integrations
+export type IntegrationsListResponse = Record<string, unknown>;
+export type IntegrationsByTeamResponse = Record<string, unknown>;
+export type PacticipantNetworkResponse = Record<string, unknown>;
+
+// Labels
+export type LabelsListResponse = Record<string, unknown>;
+export type LabelResponse = Record<string, unknown>;
+export type PacticipantsByLabelResponse = Record<string, unknown>;
+
+// Webhooks
+export type WebhooksListResponse = Record<string, unknown>;
+export type WebhookResponse = Record<string, unknown>;
+export type WebhookExecutionResponse = Record<string, unknown>;
+
+// Secrets
+export type SecretsListResponse = Record<string, unknown>;
+export type SecretResponse = Record<string, unknown>;
+
+// User / tokens / preferences
+export type CurrentUserResponse = Record<string, unknown>;
+export type TokensListResponse = Record<string, unknown>;
+export type TokenResponse = Record<string, unknown>;
+export type PreferencesResponse = Record<string, unknown>;
+
+// Audit
+export type AuditLogResponse = Record<string, unknown>;
+
+// Admin – users
+export type AdminUsersListResponse = Record<string, unknown>;
+export type AdminUserResponse = Record<string, unknown>;
+export type InviteUsersResponse = Record<string, unknown>;
+export type UserRolesResponse = Record<string, unknown>;
+
+// Admin – teams
+export type AdminTeamsListResponse = Record<string, unknown>;
+export type AdminTeamResponse = Record<string, unknown>;
+export type TeamUsersListResponse = Record<string, unknown>;
+export type TeamUserResponse = Record<string, unknown>;
+export type TeamUsersResponse = Record<string, unknown>;
+
+// Admin – roles & permissions
+export type AdminRolesListResponse = Record<string, unknown>;
+export type AdminRoleResponse = Record<string, unknown>;
+export type ResetAdminRolesResponse = Record<string, unknown>;
+export type AdminPermissionsListResponse = Record<string, unknown>;
+
+// Admin – system accounts
+export type SystemAccountResponse = Record<string, unknown>;
+export type SystemAccountTokensResponse = Record<string, unknown>;

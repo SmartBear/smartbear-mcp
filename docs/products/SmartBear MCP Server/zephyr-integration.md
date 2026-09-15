@@ -420,6 +420,21 @@ The following environment variables configure the Zephyr integration:
 - **Returns**: A list of links associated with the specified Test Execution, including their details.
 - **Use case**: Retrieve links associated with a specific Test Execution.
 
+## Test Plans
+
+### Retrieval Operations
+
+#### Get Test Plans
+
+- **Purpose**: Retrieve Test Plans available within your Zephyr account.
+- **Parameters**:
+  - optional Project key (`projectKey`)
+  - optional max results to return (`limit`)
+  - optional starting cursor position for pagination (`startAtId`)
+  - optional filter for entities updated after a given time (`updatedAfter`)
+- **Returns**: A list of Test Plans along with their properties.
+- **Use case**: Retrieve the Test Plans, it can be filtered by Project Key and update time.
+
 ## Statuses
 
 ### Retrieval Operations
@@ -464,6 +479,19 @@ The following environment variables configure the Zephyr integration:
 - **Use case**: Getting details about Zephyr Environments based on the provided filters.
 
 ## Folders
+
+### Retrieval Operations
+
+#### Get Folders
+
+- **Purpose**: Retrieve Folders available within your Zephyr account.
+- **Parameters**:
+  - optional Project key (`projectKey`)
+  - optional Folder type (`folderType`)
+  - optional max results to return (`maxResults`)
+  - optional starting position for pagination (`startAt`)
+- **Returns**: A list of Folders along with their properties.
+- **Use case**: Retrieve Folders, filterable by Project Key and Folder Type.
 
 ### Creation Operations
 

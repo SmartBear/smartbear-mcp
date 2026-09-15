@@ -1,7 +1,5 @@
-import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ZodRawShape } from "zod";
 import { z } from "zod";
-import { Tool, ToolError } from "../../../common/tools";
+import { Tool, ToolError, type ToolHandler } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { BugsnagClient } from "../../client";
 import type { Build } from "../../client/api/index";
@@ -54,7 +52,7 @@ export class GetRelease extends Tool<BugsnagClient> {
       "JSON object containing release details along with stability metrics such as user and session stability, and whether it meets project targets",
   };
 
-  handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
+  handle: ToolHandler = async (args, _ctx) => {
     const params = inputSchema.parse(args);
     const project = await this.client.getInputProject(params.projectId);
     const releaseResponse = await this.client.projectApi.getReleaseGroup(

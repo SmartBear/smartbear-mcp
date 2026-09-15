@@ -30,6 +30,11 @@ export const AUTO_RESOLVE_MODULES: ModuleAutoResolveConfig[] = [
     moduleName: "Test Cases",
   },
   {
+    handler: QMetryToolsHandlers.FETCH_TEST_CASE_STEPS_WITH_UDF,
+    viewIdPath: "latestViews.TCS.viewId",
+    moduleName: "Test Case Steps",
+  },
+  {
     handler: QMetryToolsHandlers.CREATE_TEST_CASE,
     folderIdPath: "rootFolders.TC.id",
     folderIdField: "tcFolderID",
@@ -39,6 +44,13 @@ export const AUTO_RESOLVE_MODULES: ModuleAutoResolveConfig[] = [
   {
     handler: QMetryToolsHandlers.FETCH_REQUIREMENTS,
     viewIdPath: "latestViews.RQ.viewId",
+    moduleName: "Requirements",
+  },
+  {
+    handler: QMetryToolsHandlers.CREATE_REQUIREMENT,
+    folderIdPath: "rootFolders.RQ.id",
+    folderIdField: "rqFolderId",
+    folderIdAsString: true,
     moduleName: "Requirements",
   },
   {

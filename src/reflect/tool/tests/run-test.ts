@@ -1,7 +1,5 @@
-import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ZodRawShape } from "zod";
 import { z } from "zod";
-import { Tool, ToolError } from "../../../common/tools";
+import { Tool, ToolError, type ToolHandler } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { ReflectClient } from "../../client";
 import { API_HOSTNAME } from "../../config/constants";
@@ -16,7 +14,7 @@ export class RunTest extends Tool<ReflectClient> {
     }),
   };
 
-  handle: ToolCallback<ZodRawShape> = async (args) => {
+  handle: ToolHandler = async (args) => {
     const { testId } = args as { testId: string };
     if (!testId) throw new ToolError("testId argument is required");
 

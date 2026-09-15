@@ -1,18 +1,16 @@
 import type {
-  PromptCallback,
+  ElicitRequest,
+  ElicitResult,
   ReadResourceTemplateCallback,
   RegisteredPrompt,
   RegisteredResourceTemplate,
   RegisteredTool,
-  ToolCallback,
-} from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { RequestOptions } from "@modelcontextprotocol/sdk/shared/protocol.js";
-import type {
-  ElicitRequest,
-  ElicitResult,
-} from "@modelcontextprotocol/sdk/types.js";
-import type { ZodObject, ZodRawShape, ZodType } from "zod";
+  RequestOptions,
+} from "@modelcontextprotocol/server";
+import type { ZodObject, ZodType } from "zod";
+import type { PromptHandler } from "./prompts";
 import type { SmartBearMcpServer } from "./server";
+import type { ToolHandler } from "./tools";
 
 export interface ToolParams {
   title: string;
@@ -54,9 +52,9 @@ export interface ResourceParams {
   path: string;
 }
 
-export type RegisterToolsFunction = <InputArgs extends ZodRawShape>(
+export type RegisterToolsFunction = (
   params: ToolParams,
-  cb: ToolCallback<InputArgs>,
+  cb: ToolHandler,
 ) => RegisteredTool | null;
 
 export type RegisterResourceFunction = (
@@ -64,9 +62,9 @@ export type RegisterResourceFunction = (
   cb: ReadResourceTemplateCallback,
 ) => RegisteredResourceTemplate;
 
-export type RegisterPromptFunction = <Args extends ZodRawShape>(
+export type RegisterPromptFunction = (
   params: PromptParams,
-  cb: PromptCallback<Args>,
+  cb: PromptHandler,
 ) => RegisteredPrompt;
 
 export type GetInputFunction = (

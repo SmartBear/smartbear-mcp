@@ -8,6 +8,49 @@ import {
   type PaginationPayload,
   type SortPayload,
 } from "./common";
+import type { UdfFieldValue, UdfValue } from "./udf";
+
+export interface RequirementReleaseCycleMapping {
+  release: number;
+  cycle: number[];
+  version: number;
+}
+
+export interface RequirementAttachments {
+  ADD: unknown[];
+  REMOVE: unknown[];
+}
+
+export interface CreateRequirementPayload {
+  name: string; // required - Requirement name
+  priority?: number; // optional - PriorityID of Requirement
+  component?: number[]; // optional - Component(Label) Ids
+  requirementOwner?: number; // optional - OwnerId of Requirement
+  requirementState?: number; // optional - StatusId of Requirement
+  releaseCycleMapping?: RequirementReleaseCycleMapping[]; // optional - release cycle mapping
+  description?: string; // optional - Description of Requirement
+  associateRelCyc?: boolean; // optional - associate release cycle
+  rqFolderId?: string; // optional - Requirement folder ID, auto-resolved if omitted
+  scope?: string; // optional - usually "project"
+  udfFields?: Record<string, UdfValue>; // UDF values — spread flat onto payload root before sending
+  [key: string]: unknown; // allows flat UDF passthrough
+}
+
+export interface UpdateRequirementPayload {
+  rqId: number; // required - Requirement numeric ID
+  rqVersionId: number; // required - Requirement version ID
+  updateWithVersion?: boolean; // optional - whether to create a new version
+  name?: string; // optional - Requirement name
+  description?: string; // optional - Description of Requirement
+  component?: number[]; // optional - Component(Label) Ids
+  requirementOwner?: number; // optional - OwnerId of Requirement
+  requirementState?: number; // optional - StatusId of Requirement
+  priority?: number; // optional - PriorityID of Requirement
+  attachments?: RequirementAttachments; // optional - attachments to add/remove
+  UDF?: Record<string, UdfFieldValue>; // UDF wrapper { fieldName: { fieldID, value } } for update
+  udfFields?: Record<string, UdfValue>; // flat UDF key→value pairs (also spread onto root)
+  [key: string]: unknown;
+}
 
 export interface FetchRequirementsPayload
   extends PaginationPayload,
@@ -73,3 +116,15 @@ export const DEFAULT_FETCH_REQUIREMENTS_LINKED_TO_TESTCASE_PAYLOAD: Omit<
   getLinked: true,
   rqFolderPath: "",
 };
+
+export const DEFAULT_CREATE_REQUIREMENT_PAYLOAD: Omit<
+  CreateRequirementPayload,
+  "name"
+> = {
+  scope: "project",
+};
+
+export const DEFAULT_UPDATE_REQUIREMENT_PAYLOAD: Omit<
+  UpdateRequirementPayload,
+  "rqId" | "rqVersionId"
+> = {};

@@ -7,6 +7,17 @@ type PortalHostSource = {
   subdomain?: string | null;
 } | null;
 
+export function isAsyncAPI(specification = ""): boolean {
+  return /asyncapi\s*[:-]\s*['"]?\d+\./i.test(specification);
+}
+
+export function isOpenAPI(specification = ""): boolean {
+  return (
+    /swagger\s*:\s*['"]?2\.0['"]?/i.test(specification) ||
+    /openapi\s*[:-]\s*['"]?3\.(0|1|2)\./i.test(specification)
+  );
+}
+
 export function normalizeSlug(value: string): string {
   const slug = value
     .toLowerCase()

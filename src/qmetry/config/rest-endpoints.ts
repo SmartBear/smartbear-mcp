@@ -14,15 +14,18 @@ export const QMETRY_PATHS = {
     GET_TC_DETAILS: "/rest/testcases/getVersionDetail",
     GET_TC_DETAILS_BY_VERSION: "/rest/testcases/list",
     GET_TC_STEPS: "/rest/testcases/steps/list",
+    GET_TC_STEPS_WITH_UDF: "/rest/testcases/tcStep/list/viewColumns",
     GET_TC_EXECUTIONS: "/rest/testcases/execution",
     GET_TC_LINKED_TO_RQ: "/rest/testcases/list/forRQ",
     CREATE_UPDATE_TC: "/rest/testcases",
     LINKED_RQ_TO_TC: "/rest/testcases/link/requirements",
+    LINK_ISSUES_TO_TC: "/rest/testcases/link/issues",
   },
   REQUIREMENT: {
     GET_RQ_LIST: "/rest/requirements/list/viewColumns",
     GET_RQ_DETAILS: "/rest/requirements/detail/data",
     GET_RQ_LINKED_TO_TC: "/rest/requirements/list/forTC",
+    CREATE_UPDATE_RQ: "/rest/requirements",
   },
   TESTSUITE: {
     CREATE_UPDATE_TS: "/rest/testsuites",
@@ -35,6 +38,7 @@ export const QMETRY_PATHS = {
     GET_LINKED_ISSUES_BY_TESTCASE_RUN: "/rest/execution/issue/list/forTCRun",
     LINK_PLATFORMS_TO_TESTSUITE: "/rest/testsuites/link/platforms",
     BULK_UPDATE_EXECUTION_STATUS: "/rest/execution/runstatus/bulkupdate",
+    GET_TS_DETAIL: "/rest/testsuites/latest/detail/data",
   },
   ISSUES: {
     GET_ISSUES_LIST: "/rest/issues/list/viewColumns",
@@ -42,6 +46,7 @@ export const QMETRY_PATHS = {
     GET_ISSUES_LINKED_TO_TC: "/rest/issues/list/ForTC",
     LINK_ISSUES_TO_TESTCASE_RUN: "/rest/execution/link/issue",
     GET_ISSUE_EXECUTIONS: "/rest/execution/getExecutionsForIssue",
+    GET_ISSUE_DETAIL: "/rest/issues/",
   },
   AUTOMATION: {
     IMPORT_RESULTS: "/rest/import/createandscheduletestresults/1",
@@ -51,5 +56,11 @@ export const QMETRY_PATHS = {
     BULK_UPDATE_TEST_RUN_UDFS: "/rest/execution/udf/bulkupdate",
     TEST_RUN_UDF_METADATA: "/rest/admin/udf/metadata",
     FETCH_CASCADE_CHILD_VALUES: "/rest/admin/udf/cascade/childValue",
+    GET_LAYOUT: "/rest/admin/newlayout",
+  },
+  AI_AGENT: {
+    GET_GATE_CONFIG: "/rest/aiagent/project/:projectId/gate-config",
+    EXECUTE_REPORT: "/rest/aiagent/report",
+    EXPORT_HTML_REPORT: "/rest/aiagent/htmlreport",
   },
 };

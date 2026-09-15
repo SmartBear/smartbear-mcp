@@ -63,7 +63,7 @@ Add the Swagger remote MCP server to Kiro with one click:
 
 ## Prerequisites
 
-- Node.js 20+ and npm
+- Node.js 22+ and npm
 - Access to SmartBear products (BugSnag, Reflect, Swagger, QMetry, QTM4J or Zephyr)
 - Valid API tokens for the products you want to integrate
 
@@ -320,6 +320,13 @@ Add the following configuration to your `claude_desktop_config.json` to launch t
   }
 }
 ```
+
+## Server Configuration (HTTP mode)
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `BASE_URL` | *(derived from request)* | The server's own public URL, e.g. `https://mcp.example.com`. Set this on any deployment behind a proxy or load balancer — otherwise the address advertised for OAuth discovery is derived from the client-supplied `Host` header. |
+| `TRUST_PROXY` | `false` | Set to `true` only when a proxy in front of the server sets `X-Forwarded-Host` and strips any client-supplied value. |
 
 ## Documentation
 

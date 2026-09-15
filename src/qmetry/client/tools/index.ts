@@ -1,3 +1,4 @@
+export { AI_AGENT_TOOLS } from "./ai-agent-tools";
 export { AUTOMATION_TOOLS } from "./automation-tools";
 export { ISSUE_TOOLS } from "./issue-tools";
 export { PROJECT_TOOLS } from "./project-tools";
@@ -7,6 +8,7 @@ export { TESTSUITE_TOOLS } from "./testsuite-tools";
 export type { QMetryToolParams } from "./types";
 export { UDF_TOOLS } from "./udf-tools";
 
+import { AI_AGENT_TOOLS } from "./ai-agent-tools";
 import { AUTOMATION_TOOLS } from "./automation-tools";
 import { ISSUE_TOOLS } from "./issue-tools";
 import { PROJECT_TOOLS } from "./project-tools";
@@ -24,4 +26,5 @@ export const TOOLS: QMetryToolParams[] = [
   ...ISSUE_TOOLS,
   ...AUTOMATION_TOOLS,
   ...UDF_TOOLS,
+  ...AI_AGENT_TOOLS,
 ];

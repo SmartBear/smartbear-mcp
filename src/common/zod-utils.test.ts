@@ -95,6 +95,9 @@ describe("zod-utils", () => {
       ["string", z.optional(z.string())],
       ["string", z.string().default("default")],
       ["string", z.string().regex(/test/).nullish().describe("regex test")],
+      ["string", z.iso.datetime({ offset: true })],
+      ["string", z.url()],
+      ["string", z.email()],
     ])("should return '%s' for the given Zod type", (expected, zodType) => {
       const result = getReadableTypeName(zodType);
       expect(result).toBe(expected);

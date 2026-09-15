@@ -1,7 +1,8 @@
-import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { ResourceTemplate } from "@modelcontextprotocol/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import z from "zod";
 import Bugsnag from "./bugsnag";
+import { setModernRequestClient, withRequestHeaders } from "./request-context";
 import { SmartBearMcpServer } from "./server";
 import { ToolError } from "./tools";
 
@@ -65,6 +66,150 @@ describe("SmartBearMcpServer", () => {
     });
   });
 
+  describe("modern-era client state (per request)", () => {
+    /** Run `fn` as if serving one modern-era request from `clientInfo`. */
+    function inModernRequest<T>(
+      meta: {
+        protocolVersion?: string;
+        clientInfo?: { name: string; version: string };
+        clientCapabilities?: Record<string, unknown>;
+      },
+      fn: () => T,
+    ): T {
+      return withRequestHeaders({}, () => {
+        setModernRequestClient(meta);
+        return fn();
+      });
+    }
+
+    it("prefers the request's _meta clientInfo over the connection's", () => {
+      server.setClientInfo({ name: "Legacy Client", version: "1.0.0" });
+
+      const info = inModernRequest(
+        {
+          protocolVersion: "2026-07-28",
+          clientInfo: { name: "Modern Client", version: "2.0.0" },
+        },
+        () => server.getClientInfo(),
+      );
+
+      expect(info).toEqual({ name: "Modern Client", version: "2.0.0" });
+      // The legacy value is untouched and still serves legacy callers.
+      expect(server.getClientInfo()).toEqual({
+        name: "Legacy Client",
+        version: "1.0.0",
+      });
+    });
+
+    it("attributes the identity used for Bugsnag and User-Agent", () => {
+      const identity = inModernRequest(
+        {
+          protocolVersion: "2026-07-28",
+          clientInfo: { name: "Modern Client", version: "2.0.0" },
+        },
+        () => server.getMcpClientIdentity(),
+      );
+
+      expect(identity).toEqual({
+        name: "Modern Client",
+        version: "2.0.0",
+        protocolVersion: "2026-07-28",
+      });
+    });
+
+    it("reads elicitation support from the request's declared capabilities", () => {
+      // Without a declared `elicitation` capability the polyfill path is
+      // used; with it, the modern era is served via MRTR (SEP-2322).
+      expect(
+        inModernRequest({ protocolVersion: "2026-07-28" }, () =>
+          server.isElicitationSupported(),
+        ),
+      ).toBe(false);
+
+      expect(
+        inModernRequest(
+          {
+            protocolVersion: "2026-07-28",
+            clientCapabilities: { elicitation: {} },
+          },
+          () => server.isElicitationSupported(),
+        ),
+      ).toBe(true);
+    });
+
+    it("does not let a modern request's state leak into legacy serving", () => {
+      server.setElicitationSupported(true);
+
+      expect(
+        inModernRequest({ protocolVersion: "2026-07-28" }, () =>
+          server.isElicitationSupported(),
+        ),
+      ).toBe(false);
+
+      // Outside the modern request the legacy connection flag still applies.
+      expect(server.isElicitationSupported()).toBe(true);
+    });
+  });
+
+  describe("era-specific capabilities", () => {
+    it("keeps logging and tools.listChanged on the legacy era (unchanged for the deprecation window)", () => {
+      const legacyServer = new SmartBearMcpServer();
+      const caps = legacyServer.server.getCapabilities();
+      expect(caps.logging).toEqual({});
+      expect(caps.tools).toEqual({ listChanged: true });
+    });
+
+    it("drops logging (SEP-2577) but keeps listChanged on the modern era", () => {
+      // listChanged stays: the SDK's serving entries implement
+      // subscriptions/listen themselves, and the capability bit is what tells
+      // modern clients they may request tool-list-change notifications.
+      const modernServer = new SmartBearMcpServer(undefined, "modern");
+      const caps = modernServer.server.getCapabilities();
+      expect(caps.logging).toBeUndefined();
+      expect(caps.tools).toEqual({ listChanged: true });
+    });
+  });
+
+  describe("deterministic tool ordering", () => {
+    it("lists tools alphabetically by name regardless of registration order", async () => {
+      // The suite-wide registerTool mock would keep the registry empty; this
+      // test needs the real registration so the sort has something to order.
+      superRegisterToolMock.mockRestore();
+      const client = {
+        name: "Test Product",
+        capabilityPrefix: "test_product",
+        configPrefix: "test-product",
+        config: z.object({}),
+        registerResources: vi.fn(),
+        configure: vi.fn(),
+        isConfigured: vi.fn().mockReturnValue(true),
+        registerTools: async (registerFn: any) => {
+          for (const title of ["Zebra Tool", "Alpha Tool", "Monkey Tool"]) {
+            registerFn(
+              { title, summary: "test", inputSchema: z.object({}) },
+              vi.fn().mockResolvedValue({ content: [] }),
+            );
+          }
+        },
+      };
+      await server.addClient(client as any);
+
+      // The SDK's tools/list handler enumerates this registry in insertion
+      // order; sortToolsDeterministically re-keys it alphabetically. This
+      // reads the same private map the handler reads, so an SDK storage
+      // change breaks this test rather than silently breaking the ordering.
+      const names = Object.keys(
+        (server as unknown as { _registeredTools: Record<string, unknown> })
+          ._registeredTools,
+      );
+      expect(names).toEqual([
+        "test_product_alpha_tool",
+        "test_product_monkey_tool",
+        "test_product_zebra_tool",
+      ]);
+    });
+  });
+
   describe("addClient", () => {
     let mockClient: any;
 
@@ -115,7 +260,7 @@ describe("SmartBearMcpServer", () => {
           "**Parameters:**\n" +
           "- p1 (string) *required*: The input for the tool",
       );
-      expect(registerToolParams[1].inputSchema.p1.toString()).toBe(
+      expect(registerToolParams[1].inputSchema.shape.p1.toString()).toBe(
         z.string().describe("The input for the tool").toString(),
       );
       expect(registerToolParams[1].annotations).toEqual({
@@ -252,7 +397,7 @@ describe("SmartBearMcpServer", () => {
           "```\n\n" +
           "**Hints:** 1. First hint 2. Second hint",
       );
-      expect(registerToolParams[1].inputSchema.p1.toString()).toBe(
+      expect(registerToolParams[1].inputSchema.shape.p1.toString()).toBe(
         z.string().describe("The input for the tool").toString(),
       );
       expect(registerToolParams[1].annotations).toEqual({
@@ -524,7 +669,9 @@ describe("SmartBearMcpServer", () => {
           "- p4 (boolean): param-defaulted-bool-described-after (default: false)",
       );
 
-      expect(Object.keys(registerToolParams[1].inputSchema).length).toBe(4);
+      expect(Object.keys(registerToolParams[1].inputSchema.shape).length).toBe(
+        4,
+      );
 
       // Output schema should be passed through as the full Zod schema (not a raw
       // shape) so that additionalProperties handling (e.g. looseObject) is preserved
@@ -861,30 +1008,6 @@ describe("SmartBearMcpServer", () => {
     });
   });
 
-  describe("schemaToRawShape", () => {
-    it("should convert Zod schema to raw shape", () => {
-      const schema = z.object({
-        name: z.string().describe("The name of the person"),
-        age: z.number().min(0).describe("The age of the person"),
-        isActive: z.boolean().describe("Is the person active?"),
-      });
-      // biome-ignore lint/complexity/useLiteralKeys: accessing internal method for test
-      const result = server["schemaToRawShape"](schema);
-      expect(result).toEqual(schema.shape);
-    });
-    it("returns an empty object if it's not a ZodObject", () => {
-      const schema = z.array(z.string());
-      // biome-ignore lint/complexity/useLiteralKeys: accessing internal method for test
-      const rawShape = server["schemaToRawShape"](schema);
-      expect(rawShape).toBeUndefined();
-    });
-    it("returns an empty object if the schema is undefined", () => {
-      // biome-ignore lint/complexity/useLiteralKeys: accessing internal method for test
-      const rawShape = server["schemaToRawShape"](undefined);
-      expect(rawShape).toBeUndefined();
-    });
-  });
-
   describe("isToolEnabled", () => {
     const mockClient = {
       name: "Test Product",
@@ -952,6 +1075,143 @@ describe("SmartBearMcpServer", () => {
       expect(server.isToolEnabled(mockClient, "errors")).toBe(true);
       expect(server.isToolEnabled(mockClient, "releases")).toBe(true);
       expect(server.isToolEnabled(mockClient, "other")).toBe(false);
+    });
+  });
+
+  describe("MRTR elicitation through the tool wrapper", () => {
+    let mockClient: any;
+
+    // A modern client that declared `elicitation` — required before the SDK
+    // will carry an embedded elicitation request.
+    const MODERN_ENVELOPE = {
+      "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+      "io.modelcontextprotocol/clientCapabilities": {
+        elicitation: { form: {} },
+      },
+    };
+
+    /** Register one tool whose completion depends on an elicited value. */
+    async function registerElicitingTool(): Promise<
+      (args: any, ctx: any) => Promise<any>
+    > {
+      await server.addClient(mockClient);
+      const registerFn = mockClient.registerTools.mock.calls[0][0];
+      const getInput = mockClient.registerTools.mock.calls[0][1];
+
+      registerFn({ title: "Elicit Tool", summary: "s" }, async () => {
+        const answer = await getInput({
+          message: "Severity?",
+          requestedSchema: {
+            type: "object",
+            properties: { severity: { type: "string" } },
+            required: ["severity"],
+          },
+        });
+        if (answer.action !== "accept") {
+          return { content: [{ type: "text", text: "aborted" }] };
+        }
+        return {
+          content: [
+            { type: "text", text: `severity=${answer.content?.severity}` },
+          ],
+        };
+      });
+
+      // The spy sits on the shared McpServer prototype, so calls accumulate
+      // across tests — take the registration this helper just made.
+      return superRegisterToolMock.mock.calls.at(-1)[2];
+    }
+
+    beforeEach(() => {
+      mockClient = {
+        name: "Test Product",
+        capabilityPrefix: "test_product",
+        configPrefix: "test-product",
+        config: z.object({}),
+        registerTools: vi.fn(),
+        configure: vi.fn(),
+        isConfigured: vi.fn().mockReturnValue(true),
+      };
+    });
+
+    it("returns input_required on round 1 and the real result on retry", async () => {
+      const handler = await registerElicitingTool();
+
+      // Round 1: a modern request with no answers yet — the tool cannot
+      // finish, so the handler must RETURN (not throw) an input_required
+      // result for the SDK to encode.
+      const round1 = await handler(
+        {},
+        {
+          mcpReq: {
+            envelope: MODERN_ENVELOPE,
+            requestState: () => undefined,
+          },
+        },
+      );
+      expect(round1.resultType).toBe("input_required");
+      expect(round1.inputRequests.input_1.method).toBe("elicitation/create");
+      expect(round1.inputRequests.input_1.params.message).toBe("Severity?");
+
+      // Round 2: the client collected the input and retried.
+      const round2 = await handler(
+        {},
+        {
+          mcpReq: {
+            envelope: MODERN_ENVELOPE,
+            inputResponses: {
+              input_1: { action: "accept", content: { severity: "warning" } },
+            },
+            requestState: () => undefined,
+          },
+        },
+      );
+      expect(round2.content).toEqual([
+        { type: "text", text: "severity=warning" },
+      ]);
+    });
+
+    it("treats a declined elicitation as the tool's abort path", async () => {
+      const handler = await registerElicitingTool();
+
+      const result = await handler(
+        {},
+        {
+          mcpReq: {
+            envelope: MODERN_ENVELOPE,
+            inputResponses: { input_1: { action: "decline" } },
+            requestState: () => undefined,
+          },
+        },
+      );
+      expect(result.content).toEqual([{ type: "text", text: "aborted" }]);
+    });
+
+    it("still uses server-initiated elicitation for legacy invocations", async () => {
+      // The shared fixture declares elicitation supported and stubs the
+      // server-initiated call; a legacy ctx must keep taking that path rather
+      // than returning an MRTR input_required result.
+      server.server.elicitInput = vi
+        .fn()
+        .mockResolvedValue({ action: "accept", content: { severity: "info" } });
+      const handler = await registerElicitingTool();
+
+      const result = await handler({}, { mcpReq: {} });
+
+      expect(server.server.elicitInput).toHaveBeenCalledOnce();
+      expect(result.resultType).toBeUndefined();
+      expect(result.content).toEqual([{ type: "text", text: "severity=info" }]);
+    });
+
+    it("keeps the instruction polyfill when legacy elicitation is unsupported", async () => {
+      server.setElicitationSupported(false);
+      const handler = await registerElicitingTool();
+
+      const result = await handler({}, { mcpReq: {} });
+
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toContain("Input collection required");
+      expect(server.server.elicitInput).not.toHaveBeenCalled();
     });
   });
 });

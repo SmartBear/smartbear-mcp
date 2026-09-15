@@ -60,6 +60,7 @@ export default defineConfig({
       "**/dist/**",
       "**/.{idea,git,cache,output,temp}/**",
       "**/*.pact.test.*",
+      "**/.superpowers/**",
     ],
     // Setup files
     // Placeholder for future setup files. Remove if not needed.

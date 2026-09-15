@@ -1,5 +1,7 @@
+import { createHmac } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { USER_AGENT } from "../common/info.js";
+import { withRequestContext } from "../common/request-context";
 import { ToolError } from "../common/tools.js";
 import type {
   ErrorApiView,
@@ -11,7 +13,7 @@ import type {
   TraceField,
 } from "./client/api/api.js";
 import type { BaseAPI } from "./client/api/base.js";
-import type { CurrentUserAPI, ErrorAPI } from "./client/api/index.js";
+import type { CurrentUserAPI, ErrorAPI, Project } from "./client/api/index.js";
 import type { ProjectAPI } from "./client/api/Project.js";
 import { BugsnagClient } from "./client.js";
 import {
@@ -64,6 +66,32 @@ const mockCache = {
   get: vi.fn(),
   del: vi.fn(),
 };
+
+// BugsnagClient now holds a single module-level shared CacheService (see
+// client.ts) instead of one per session, so this mock stands in for that one
+// shared instance across every test.
+vi.mock("../common/cache", () => ({
+  CacheService: vi.fn().mockImplementation(() => mockCache),
+}));
+
+const cacheKeyNames = {
+  ORG: "bugsnag_org",
+  PROJECTS: "bugsnag_projects",
+  PROJECT_EVENT_FIELDS: "bugsnag_project_event_fields",
+  PROJECT_TRACE_FIELDS: "bugsnag_project_trace_fields",
+};
+const BUGSNAG_CACHE_TTL_SECONDS = 60;
+
+// Resolves a logical cache key to the namespaced key the client actually uses.
+// Note this delegates to the implementation, so it cannot prove the namespace
+// is credential-scoped — see the "cache isolation" tests below for that.
+function nsKey(client: BugsnagClient, key: string): string | undefined {
+  return (client as any).cacheKey(key);
+}
+
+function configuredProjects(project: Project): Project[] {
+  return [{ ...project, api_key: "test-project-key" }];
+}
 
 vi.mock("./client/api/CurrentUser.ts", () => ({
   CurrentUserAPI: vi.fn().mockImplementation(() => mockCurrentUserAPI),
@@ -705,13 +733,10 @@ describe("BugsnagClient", () => {
       expect(MockedProjectAPI).toHaveBeenCalledOnce();
     });
 
-    it("should use cache from server.getCache()", async () => {
+    it("uses the shared cache, namespaced by the caller's identity", async () => {
       const client = new BugsnagClient();
-      const mockServer = {
-        getCache: vi.fn().mockReturnValue(mockCache),
-      } as any;
 
-      await client.configure(mockServer, {
+      await client.configure({} as any, {
         auth_token: "test-token",
       });
 
@@ -730,11 +755,194 @@ describe("BugsnagClient", () => {
 
       await client.getProjects();
 
-      expect(mockServer.getCache).toHaveBeenCalled();
-      expect(mockCache.set).toHaveBeenCalledWith("bugsnag_org", mockOrg);
       expect(mockCache.set).toHaveBeenCalledWith(
-        "bugsnag_projects",
+        nsKey(client, "bugsnag_org"),
+        mockOrg,
+        BUGSNAG_CACHE_TTL_SECONDS,
+      );
+      expect(mockCache.set).toHaveBeenCalledWith(
+        nsKey(client, "bugsnag_projects"),
         mockProjects,
+        BUGSNAG_CACHE_TTL_SECONDS,
+      );
+    });
+
+    // Namespacing is the ONLY thing separating accounts in the shared cache
+    // (see the comment above getSharedCache in client.ts), so these cover the
+    // ways two accounts could end up on one key.
+    it("gives two accounts different cache keys even when they share a project API key", async () => {
+      // A BugSnag project API key arrives in a caller-supplied request header
+      // and ships inside customer apps, so it identifies nothing. If it were
+      // the namespace, anyone who knows a project key could read that
+      // project's org and full project list — every project's api_key with it.
+      const accountA = new BugsnagClient();
+      await accountA.configure({} as any, {
+        auth_token: "token-a",
+        project_api_key: "shared-project-key",
+      });
+      const accountB = new BugsnagClient();
+      await accountB.configure({} as any, {
+        auth_token: "token-b",
+        project_api_key: "shared-project-key",
+      });
+
+      for (const key of Object.values(cacheKeyNames)) {
+        expect(nsKey(accountA, key)).not.toEqual(nsKey(accountB, key));
+      }
+      expect(nsKey(accountA, "bugsnag_org")).not.toContain(
+        "shared-project-key",
+      );
+    });
+
+    it("gives the same token different cache keys on different API authorities", async () => {
+      const defaultClient = new BugsnagClient();
+      await defaultClient.configure({} as any, {
+        auth_token: "shared-token",
+        project_api_key: "default-project-key",
+      });
+      const hubClient = new BugsnagClient();
+      await hubClient.configure({} as any, {
+        auth_token: "shared-token",
+        project_api_key: "00000-hub-project-key",
+      });
+
+      for (const key of Object.values(cacheKeyNames)) {
+        expect(nsKey(defaultClient, key)).not.toEqual(nsKey(hubClient, key));
+      }
+    });
+
+    it("uses the request project key before the configured project key", async () => {
+      const client = new BugsnagClient();
+      await client.configure({} as any, {
+        auth_token: "test-token",
+        project_api_key: "configured-project-key",
+      });
+      const configuredProject = getMockProject(
+        "project-1",
+        "Configured project",
+        "configured-project-key",
+      );
+      const requestProject = getMockProject(
+        "project-2",
+        "Request project",
+        "request-project-key",
+      );
+      mockCache.get.mockReturnValueOnce([configuredProject, requestProject]);
+
+      const result = await withRequestContext(
+        {
+          headers: { "bugsnag-project-api-key": "request-project-key" },
+        } as any,
+        () => client.getCurrentProject(),
+      );
+
+      expect(result).toEqual(requestProject);
+      expect(mockCache.get).toHaveBeenCalledWith(
+        nsKey(client, "bugsnag_projects"),
+      );
+      expect(mockCache.set).not.toHaveBeenCalled();
+    });
+
+    it("falls back to the configured project key when the request has no project key", async () => {
+      const client = new BugsnagClient();
+      await client.configure({} as any, {
+        auth_token: "test-token",
+        project_api_key: "configured-project-key",
+      });
+      const configuredProject = getMockProject(
+        "project-1",
+        "Configured project",
+        "configured-project-key",
+      );
+      mockCache.get.mockReturnValueOnce([configuredProject]);
+
+      const result = await withRequestContext({ headers: {} } as any, () =>
+        client.getCurrentProject(),
+      );
+
+      expect(result).toEqual(configuredProject);
+    });
+
+    it("rejects a request project key that switches API authority", async () => {
+      const client = new BugsnagClient();
+      await client.configure({} as any, {
+        auth_token: "test-token",
+        project_api_key: "configured-project-key",
+      });
+
+      await expect(
+        withRequestContext(
+          { headers: { "bugsnag-project-api-key": "00000-hub-key" } } as any,
+          () => client.getCurrentProject(),
+        ),
+      ).rejects.toThrow(
+        "Bugsnag-Project-Api-Key cannot switch the API authority",
+      );
+      expect(mockCache.get).not.toHaveBeenCalled();
+    });
+
+    it("keeps explicitly selected projects isolated between sessions", async () => {
+      const projectA = getMockProject("project-a", "Project A");
+      const projectB = getMockProject("project-b", "Project B");
+      const sessionA = new BugsnagClient();
+      const sessionB = new BugsnagClient();
+      await sessionA.configure({} as any, { auth_token: "shared-token" });
+      await sessionB.configure({} as any, { auth_token: "shared-token" });
+      mockCache.get
+        .mockReturnValueOnce([projectA, projectB])
+        .mockReturnValueOnce([projectA, projectB]);
+
+      await sessionA.getInputProject(projectA.id);
+      await sessionB.getInputProject(projectB.id);
+
+      expect(await sessionA.getCurrentProject()).toEqual(projectA);
+      expect(await sessionB.getCurrentProject()).toEqual(projectB);
+    });
+
+    it("bypasses the cache entirely when there is no credential to namespace by", async () => {
+      // Without a credential there is no identity, so an unauthenticated
+      // caller must not read from — or populate — a shared bucket.
+      const client = new BugsnagClient();
+      await client.configure({} as any, {} as any);
+
+      expect(nsKey(client, "bugsnag_org")).toBeUndefined();
+
+      mockCache.get.mockClear();
+      mockCache.set.mockClear();
+      mockCurrentUserAPI.listUserOrganizations.mockResolvedValueOnce({
+        body: [getMockOrganization("org-a", "Account A Org")],
+      });
+      await client.getOrganization();
+
+      expect(mockCache.get).not.toHaveBeenCalled();
+      expect(mockCache.set).not.toHaveBeenCalled();
+    });
+
+    it("resolves each request to its own namespace from that request's auth header", async () => {
+      // Every session gets its own client (ClientRegistry.cloneClient), but in
+      // HTTP mode the auth header is resent per request and wins over the
+      // configured token — so the namespace must follow the header, not the
+      // instance field.
+      const client = new BugsnagClient();
+      await client.configure({} as any, { auth_token: "token-b" });
+
+      const orgA = getMockOrganization("org-a", "Account A Org");
+      const namespaceForA = createHmac("sha256", "bugsnag-cache-ns")
+        .update("https://api.bugsnag.com")
+        .update("\0")
+        .update("token token-a")
+        .digest("hex")
+        .slice(0, 32);
+
+      mockCache.get.mockReturnValueOnce(orgA);
+      const resultForAccountA = await withRequestContext(
+        { headers: { "bugsnag-auth-token": "token-a" } } as any,
+        () => client.getOrganization(),
+      );
+
+      expect(resultForAccountA).toEqual(orgA);
+      expect(mockCache.get).toHaveBeenCalledWith(
+        `tok:${namespaceForA}:bugsnag_org`,
       );
     });
   });
@@ -775,7 +983,9 @@ describe("BugsnagClient", () => {
 
         const result = await client.getProjects();
 
-        expect(mockCache.get).toHaveBeenCalledWith("bugsnag_projects");
+        expect(mockCache.get).toHaveBeenCalledWith(
+          nsKey(client, "bugsnag_projects"),
+        );
         expect(result).toEqual(mockProjects);
       });
 
@@ -793,8 +1003,9 @@ describe("BugsnagClient", () => {
           "org-1",
         );
         expect(mockCache.set).toHaveBeenCalledWith(
-          "bugsnag_projects",
+          nsKey(client, "bugsnag_projects"),
           mockProjects,
+          BUGSNAG_CACHE_TTL_SECONDS,
         );
         expect(result).toEqual(mockProjects);
       });
@@ -958,16 +1169,11 @@ describe("BugsnagClient", () => {
           projectId: "proj-1",
         });
 
-        expect(mockCache.set).toHaveBeenCalledWith(
-          "bugsnag_current_project",
-          mockProject,
-        );
+        expect(mockCache.set).not.toHaveBeenCalled();
 
         // The subsequent call should get a current project and not throw if a project ID is not provided
 
-        mockCache.get
-          .mockReturnValueOnce(mockProject) // current project
-          .mockReturnValueOnce(mockEventFields);
+        mockCache.get.mockReturnValueOnce(mockEventFields);
         mockErrorAPI.listProjectErrors.mockResolvedValue({
           body: mockErrors,
           totalCount: 1,
@@ -1069,7 +1275,7 @@ describe("BugsnagClient", () => {
         ];
 
         mockCache.get
-          .mockReturnValueOnce(mockProject)
+          .mockReturnValueOnce(configuredProjects(mockProject))
           .mockReturnValueOnce(mockOrg);
         mockProjectAPI.listProjectEventFields.mockResolvedValue({
           body: [
@@ -1112,7 +1318,7 @@ describe("BugsnagClient", () => {
 
       it("should get error details without any latest events or pivots", async () => {
         mockCache.get
-          .mockReturnValueOnce(mockProject)
+          .mockReturnValueOnce(configuredProjects(mockProject))
           .mockReturnValueOnce(mockOrg);
         mockProjectAPI.listProjectEventFields.mockResolvedValue({
           body: [
@@ -1155,7 +1361,7 @@ describe("BugsnagClient", () => {
 
       it("should throw when error ID does not exist", async () => {
         mockCache.get
-          .mockReturnValueOnce(mockProject)
+          .mockReturnValueOnce(configuredProjects(mockProject))
           .mockReturnValueOnce(mockOrg);
         mockErrorAPI.viewErrorOnProject.mockResolvedValue({ body: null });
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
@@ -1296,7 +1502,7 @@ describe("BugsnagClient", () => {
         };
 
         mockCache.get
-          .mockReturnValueOnce(mockProject) // current project
+          .mockReturnValueOnce(configuredProjects(mockProject)) // projects
           .mockReturnValueOnce(mockEventFields); // event fields
         mockErrorAPI.listProjectErrors.mockResolvedValue({
           body: mockErrors,
@@ -1349,7 +1555,7 @@ describe("BugsnagClient", () => {
         };
 
         mockCache.get
-          .mockReturnValueOnce(mockProject) // current project
+          .mockReturnValueOnce(configuredProjects(mockProject)) // projects
           .mockReturnValueOnce(mockEventFields); // event fields
         mockErrorAPI.listProjectErrors.mockResolvedValue({
           body: mockErrors,
@@ -1398,7 +1604,7 @@ describe("BugsnagClient", () => {
         };
 
         mockCache.get
-          .mockReturnValueOnce(mockProject)
+          .mockReturnValueOnce(configuredProjects(mockProject))
           .mockReturnValueOnce(mockEventFields);
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
@@ -1437,7 +1643,7 @@ describe("BugsnagClient", () => {
           "event.since": [{ type: "eq" as const, value: "7d" }],
         };
 
-        mockCache.get.mockReturnValueOnce(mockProject); // current project
+        mockCache.get.mockReturnValueOnce(configuredProjects(mockProject)); // projects
         mockErrorAPI.listErrorEvents.mockResolvedValue({
           body: mockEvents,
           totalCount: 2,
@@ -1485,7 +1691,7 @@ describe("BugsnagClient", () => {
           ],
         };
         mockCache.get
-          .mockReturnValueOnce(mockProject)
+          .mockReturnValueOnce(configuredProjects(mockProject))
           .mockReturnValueOnce(mockEventFields);
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
@@ -1508,7 +1714,7 @@ describe("BugsnagClient", () => {
           "Project 1",
           "test-project-key",
         );
-        mockCache.get.mockReturnValueOnce(mockProject);
+        mockCache.get.mockReturnValueOnce(configuredProjects(mockProject));
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "Get Current Project",
@@ -1561,7 +1767,7 @@ describe("BugsnagClient", () => {
 
         // First get for the project, second for cached build (return null to call API)
         mockCache.get
-          .mockReturnValueOnce(mockProjects[0])
+          .mockReturnValueOnce(configuredProjects(mockProjects[0]))
           .mockReturnValueOnce([mockProjects[0]]);
         mockProjectAPI.getProjectReleaseById.mockResolvedValue({
           body: basicBuild,
@@ -1599,7 +1805,7 @@ describe("BugsnagClient", () => {
 
         // First get for the project, second for cached build (return null to call API)
         mockCache.get
-          .mockReturnValueOnce(mockProjects[0])
+          .mockReturnValueOnce(configuredProjects(mockProjects[0]))
           .mockReturnValueOnce([mockProjects[0]]);
         mockProjectAPI.getProjectReleaseById.mockResolvedValue({
           body: basicBuild,
@@ -1646,7 +1852,7 @@ describe("BugsnagClient", () => {
 
         // First get for the project, second for cached build (return null to call API)
         mockCache.get
-          .mockReturnValueOnce(mockProjectSessionStability)
+          .mockReturnValueOnce(configuredProjects(mockProjectSessionStability))
           .mockReturnValueOnce([mockProjectSessionStability]);
         mockProjectAPI.getProjectReleaseById.mockResolvedValue({
           body: basicBuild,
@@ -1722,7 +1928,7 @@ describe("BugsnagClient", () => {
 
       it("should throw error when build not found", async () => {
         mockCache.get
-          .mockReturnValueOnce(mockProjects[0])
+          .mockReturnValueOnce(configuredProjects(mockProjects[0]))
           .mockReturnValueOnce([mockProjects[0]]);
         mockProjectAPI.getProjectReleaseById.mockResolvedValue({ body: null });
 
@@ -1776,7 +1982,7 @@ describe("BugsnagClient", () => {
 
         // Mock project cache to return the project
         mockCache.get
-          .mockReturnValueOnce(mockProjects[1])
+          .mockReturnValueOnce(configuredProjects(mockProjects[1]))
           .mockReturnValueOnce([mockProjects[1]]);
         mockProjectAPI.listProjectReleaseGroups.mockResolvedValue({
           body: mockReleases,
@@ -1878,7 +2084,7 @@ describe("BugsnagClient", () => {
 
       it("should handle empty releases list", async () => {
         // Mock project cache to return the project
-        mockCache.get.mockReturnValueOnce(mockProjects[0]);
+        mockCache.get.mockReturnValueOnce(configuredProjects(mockProjects[0]));
         mockProjectAPI.listProjectReleaseGroups.mockResolvedValue({ body: [] });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
@@ -2006,7 +2212,7 @@ describe("BugsnagClient", () => {
 
       it("should throw error when release not found", async () => {
         mockCache.get
-          .mockReturnValueOnce(mockProjects[0])
+          .mockReturnValueOnce(configuredProjects(mockProjects[0]))
           .mockReturnValueOnce(null);
         mockProjectAPI.getReleaseGroup.mockResolvedValue({ body: null });
 
@@ -2025,7 +2231,7 @@ describe("BugsnagClient", () => {
       const mockProject = getMockProject("proj-1", "Project 1");
 
       it("should link a Jira issue to an error (link_issue)", async () => {
-        mockCache.get.mockReturnValue(mockProject);
+        mockCache.get.mockReturnValue(configuredProjects(mockProject));
         mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 200 });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
@@ -2052,7 +2258,7 @@ describe("BugsnagClient", () => {
       });
 
       it("should unlink a Jira issue from an error (unlink_issue)", async () => {
-        mockCache.get.mockReturnValue(mockProject);
+        mockCache.get.mockReturnValue(configuredProjects(mockProject));
         mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 200 });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
@@ -2076,7 +2282,7 @@ describe("BugsnagClient", () => {
       });
 
       it("should update error status to snooze for 1 hour with project from cache", async () => {
-        mockCache.get.mockReturnValue(mockProject);
+        mockCache.get.mockReturnValue(configuredProjects(mockProject));
         mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 200 });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
@@ -2108,7 +2314,7 @@ describe("BugsnagClient", () => {
       });
 
       it("should update error status to snooze until 10 additional users affected", async () => {
-        mockCache.get.mockReturnValue(mockProject);
+        mockCache.get.mockReturnValue(configuredProjects(mockProject));
         mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 200 });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
@@ -2140,7 +2346,7 @@ describe("BugsnagClient", () => {
       });
 
       it("should update error status to snooze until 10 additional occurrences", async () => {
-        mockCache.get.mockReturnValue(mockProject);
+        mockCache.get.mockReturnValue(configuredProjects(mockProject));
         mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 200 });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
@@ -2172,7 +2378,7 @@ describe("BugsnagClient", () => {
       });
 
       it("should update error status to snooze until 10 occurrences in 2 hours", async () => {
-        mockCache.get.mockReturnValue(mockProject);
+        mockCache.get.mockReturnValue(configuredProjects(mockProject));
         mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 200 });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
@@ -2206,7 +2412,7 @@ describe("BugsnagClient", () => {
       });
 
       it("should update error successfully with project from cache", async () => {
-        mockCache.get.mockReturnValue(mockProject);
+        mockCache.get.mockReturnValue(configuredProjects(mockProject));
         mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 200 });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
@@ -2258,7 +2464,7 @@ describe("BugsnagClient", () => {
         // Test all operations except override_severity which requires special elicitInput handling
         const operations = ["open", "fix", "ignore", "discard", "undiscard"];
 
-        mockCache.get.mockReturnValue(mockProject);
+        mockCache.get.mockReturnValue(configuredProjects(mockProject));
         mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 200 });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
@@ -2290,7 +2496,7 @@ describe("BugsnagClient", () => {
           content: { severity: "warning" },
         });
 
-        mockCache.get.mockReturnValue(mockProject);
+        mockCache.get.mockReturnValue(configuredProjects(mockProject));
         mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 200 });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
@@ -2332,7 +2538,7 @@ describe("BugsnagClient", () => {
           action: "reject",
         });
 
-        mockCache.get.mockReturnValue(mockProject);
+        mockCache.get.mockReturnValue(configuredProjects(mockProject));
         mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 200 });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
@@ -2354,7 +2560,7 @@ describe("BugsnagClient", () => {
       });
 
       it("should return false when API returns non-success status", async () => {
-        mockCache.get.mockReturnValue(mockProject);
+        mockCache.get.mockReturnValue(configuredProjects(mockProject));
         mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 400 });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
@@ -2417,7 +2623,7 @@ describe("BugsnagClient", () => {
           getMockSpanGroup(2, "POST /api/login", "http_request"),
         ];
 
-        mockCache.get.mockReturnValue(mockProject);
+        mockCache.get.mockReturnValue(configuredProjects(mockProject));
         mockProjectAPI.listProjectSpanGroups.mockResolvedValue({
           body: mockSpanGroups,
           nextUrl: null,
@@ -2470,7 +2676,7 @@ describe("BugsnagClient", () => {
           "span_group.category": [{ type: "eq", value: "http_request" }],
         };
 
-        mockCache.get.mockReturnValue(mockProject);
+        mockCache.get.mockReturnValue(configuredProjects(mockProject));
         mockProjectAPI.listProjectSpanGroups.mockResolvedValue({
           body: mockSpanGroups,
           nextUrl: "/next",
@@ -2529,7 +2735,7 @@ describe("BugsnagClient", () => {
         };
         const mockDistribution = { buckets: [{ range: "0-100ms", count: 50 }] };
 
-        mockCache.get.mockReturnValue(mockProject);
+        mockCache.get.mockReturnValue(configuredProjects(mockProject));
         mockProjectAPI.getProjectSpanGroup.mockResolvedValue({
           body: mockSpanGroup,
         });
@@ -2608,7 +2814,7 @@ describe("BugsnagClient", () => {
           getMockSpan("trace-def", 2, "POST /api/login", "http_request"),
         ];
 
-        mockCache.get.mockReturnValue(mockProject);
+        mockCache.get.mockReturnValue(configuredProjects(mockProject));
         mockProjectAPI.listSpansBySpanGroupId.mockResolvedValue({
           body: mockSpans,
           nextUrl: null,
@@ -2667,7 +2873,7 @@ describe("BugsnagClient", () => {
           getMockSpan("trace-abc", 2, "POST /api/login", "http_request"),
         ];
 
-        mockCache.get.mockReturnValue(mockProject);
+        mockCache.get.mockReturnValue(configuredProjects(mockProject));
         mockProjectAPI.listSpansByTraceId.mockResolvedValue({
           body: mockSpans,
           nextUrl: null,
@@ -2722,8 +2928,8 @@ describe("BugsnagClient", () => {
         ];
 
         mockCache.get.mockImplementation((key: string) => {
-          if (key === "bugsnag_current_project") {
-            return mockProject;
+          if (key === nsKey(client, "bugsnag_projects")) {
+            return configuredProjects(mockProject);
           }
           return undefined;
         });
@@ -2743,8 +2949,9 @@ describe("BugsnagClient", () => {
           "proj-1",
         );
         expect(mockCache.set).toHaveBeenCalledWith(
-          "bugsnag_project_trace_fields",
+          nsKey(client, "bugsnag_project_trace_fields"),
           { "proj-1": mockTraceFields },
+          BUGSNAG_CACHE_TTL_SECONDS,
         );
         expect(result).toEqual({
           content: [
@@ -2765,11 +2972,11 @@ describe("BugsnagClient", () => {
         const mockCachedFilters = { "proj-1": mockPerformanceFilters };
 
         mockCache.get.mockImplementation((key: string) => {
-          if (key === "bugsnag_project_trace_fields") {
+          if (key === nsKey(client, "bugsnag_project_trace_fields")) {
             return mockCachedFilters;
           }
-          if (key === "bugsnag_current_project") {
-            return mockProject;
+          if (key === nsKey(client, "bugsnag_projects")) {
+            return configuredProjects(mockProject);
           }
           return undefined;
         });
@@ -2804,7 +3011,7 @@ describe("BugsnagClient", () => {
         ];
 
         mockCache.get.mockImplementation((key: string) => {
-          if (key === "bugsnag_projects") {
+          if (key === nsKey(clientWithNoApiKey, "bugsnag_projects")) {
             return mockProjects;
           }
           return undefined;
@@ -2827,10 +3034,11 @@ describe("BugsnagClient", () => {
           "proj-2",
         );
         expect(mockCache.set).toHaveBeenCalledWith(
-          "bugsnag_project_trace_fields",
+          nsKey(clientWithNoApiKey, "bugsnag_project_trace_fields"),
           {
             "proj-2": mockTraceFields,
           },
+          BUGSNAG_CACHE_TTL_SECONDS,
         );
         expect(result).toEqual({
           content: [
@@ -2860,7 +3068,7 @@ describe("BugsnagClient", () => {
           ],
         };
 
-        mockCache.get.mockReturnValueOnce(mockProject);
+        mockCache.get.mockReturnValueOnce(configuredProjects(mockProject));
         mockProjectAPI.getProjectNetworkGroupingRuleset.mockResolvedValue({
           body: mockRuleset,
         });
@@ -2920,7 +3128,7 @@ describe("BugsnagClient", () => {
           endpoints: [],
         };
 
-        mockCache.get.mockReturnValueOnce(mockProject);
+        mockCache.get.mockReturnValueOnce(configuredProjects(mockProject));
         mockProjectAPI.getProjectNetworkGroupingRuleset.mockResolvedValue({
           body: mockRuleset,
         });
@@ -2962,7 +3170,7 @@ describe("BugsnagClient", () => {
           endpoints: endpoints,
         };
 
-        mockCache.get.mockReturnValueOnce(mockProject);
+        mockCache.get.mockReturnValueOnce(configuredProjects(mockProject));
         mockProjectAPI.updateProjectNetworkGroupingRuleset.mockResolvedValue({
           status: 200,
           body: mockRuleset,
@@ -3026,7 +3234,7 @@ describe("BugsnagClient", () => {
         const mockProject = { id: "proj-1", name: "Project 1" };
         const endpoints = ["/api/{version}/items/{itemId}"];
 
-        mockCache.get.mockReturnValueOnce(mockProject);
+        mockCache.get.mockReturnValueOnce(configuredProjects(mockProject));
         mockProjectAPI.updateProjectNetworkGroupingRuleset.mockResolvedValue({
           status: 204,
           body: { projectId: "proj-1", endpoints },
@@ -3047,7 +3255,7 @@ describe("BugsnagClient", () => {
         const mockProject = { id: "proj-1", name: "Project 1" };
         const endpoints: string[] = [];
 
-        mockCache.get.mockReturnValueOnce(mockProject);
+        mockCache.get.mockReturnValueOnce(configuredProjects(mockProject));
         mockProjectAPI.updateProjectNetworkGroupingRuleset.mockResolvedValue({
           status: 200,
           body: { projectId: "proj-1", endpoints },
@@ -3077,7 +3285,7 @@ describe("BugsnagClient", () => {
           "/graphql",
         ];
 
-        mockCache.get.mockReturnValueOnce(mockProject);
+        mockCache.get.mockReturnValueOnce(configuredProjects(mockProject));
         mockProjectAPI.updateProjectNetworkGroupingRuleset.mockResolvedValue({
           status: 200,
           body: { projectId: "proj-1", endpoints },

@@ -11,6 +11,7 @@ import {
   ZodOptional,
   ZodRecord,
   ZodString,
+  ZodStringFormat,
   type ZodType,
   ZodUnion,
 } from "zod";
@@ -79,6 +80,7 @@ export function getReadableTypeName(zodType: ZodType): string {
     return `record<${getReadableTypeName(record.def.keyType as ZodType)}, ${getReadableTypeName(record.def.valueType as ZodType)}>`;
   }
   if (zodType instanceof ZodString) return "string";
+  if (zodType instanceof ZodStringFormat) return "string";
   if (zodType instanceof ZodNumber) return "number";
   if (zodType instanceof ZodBoolean) return "boolean";
   if (zodType instanceof ZodArray) return "array";

@@ -1,6 +1,5 @@
-import type { PromptCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { type ZodRawShape, z } from "zod";
-import { Prompt } from "../../common/prompts";
+import { z } from "zod";
+import { Prompt, type PromptHandler } from "../../common/prompts";
 import type { ReflectClient } from "../client";
 
 export class SapTest extends Prompt<ReflectClient> {
@@ -11,7 +10,7 @@ export class SapTest extends Prompt<ReflectClient> {
     argsSchema: z.object({}),
   };
 
-  callback: PromptCallback<ZodRawShape> = (_args) => ({
+  callback: PromptHandler = (_args) => ({
     messages: [
       {
         role: "user",
