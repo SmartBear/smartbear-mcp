@@ -64,5 +64,4 @@ Watchos
 Webapi
 Wsgi
 teststep
-Kiro
 kiro
