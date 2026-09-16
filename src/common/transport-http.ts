@@ -161,6 +161,7 @@ export async function runHttpMode() {
     // clients are blocked by CORS preflight without these.
     "mcp-method",
     "mcp-name",
+    "Smartbear-Toolsets",
     ...allowedAuthHeaders,
   ].join(", ");
 
