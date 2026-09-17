@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.41.0] - 2026-09-16
+
 ### Added
 
 - [Swagger] Added Kiro (AWS) setup instructions and one-click install badge for the Swagger Remote MCP Server.
