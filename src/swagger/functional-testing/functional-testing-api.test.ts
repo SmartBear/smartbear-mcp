@@ -1003,7 +1003,7 @@ describe("FunctionalTestingAPI", () => {
           executionId: "47",
         }),
       ).rejects.toThrow(
-        "Suite execution cannot be cancelled because it has already finished.",
+        "Suite execution cannot be canceled because it has already finished.",
       );
     });
 

@@ -1,10 +1,14 @@
 import type { IncomingMessage } from "node:http";
 import { describe, expect, it } from "vitest";
 import {
+  getRequestClientMeta,
   getRequestContext,
+  getRequestEra,
   getRequestHeader,
   requestContextStorage,
+  setModernRequestClient,
   withRequestContext,
+  withRequestHeaders,
 } from "./request-context";
 
 function fakeRequest(
@@ -80,6 +84,68 @@ describe("request-context", () => {
         getRequestHeader("Non-Existent"),
       );
       expect(result).toBeUndefined();
+    });
+  });
+
+  describe("setModernRequestClient", () => {
+    it("records era and client metadata for the current request", () => {
+      withRequestHeaders({}, () => {
+        setModernRequestClient({
+          protocolVersion: "2026-07-28",
+          clientInfo: { name: "Modern Client", version: "2.0.0" },
+          clientCapabilities: { elicitation: {} },
+        });
+
+        expect(getRequestEra()).toBe("modern");
+        expect(getRequestClientMeta()).toEqual({
+          protocolVersion: "2026-07-28",
+          clientInfo: { name: "Modern Client", version: "2.0.0" },
+          clientCapabilities: { elicitation: {} },
+        });
+      });
+    });
+
+    it("derives the client identity used for downstream attribution", () => {
+      withRequestHeaders({}, () => {
+        setModernRequestClient({
+          protocolVersion: "2026-07-28",
+          clientInfo: { name: "Modern Client", version: "2.0.0" },
+        });
+
+        expect(getRequestContext()?.mcpClient).toEqual({
+          name: "Modern Client",
+          version: "2.0.0",
+          protocolVersion: "2026-07-28",
+        });
+      });
+    });
+
+    it("does not leak between requests", () => {
+      withRequestHeaders({}, () => {
+        setModernRequestClient({ protocolVersion: "2026-07-28" });
+        expect(getRequestEra()).toBe("modern");
+      });
+
+      withRequestHeaders({}, () => {
+        expect(getRequestEra()).toBe("legacy");
+        expect(getRequestClientMeta()).toBeUndefined();
+      });
+    });
+
+    it("is a no-op outside a request context", () => {
+      expect(() =>
+        setModernRequestClient({ protocolVersion: "2026-07-28" }),
+      ).not.toThrow();
+      expect(getRequestClientMeta()).toBeUndefined();
+    });
+  });
+
+  describe("getRequestEra", () => {
+    it("defaults to legacy so untagged paths keep 2025-era behavior", () => {
+      expect(getRequestEra()).toBe("legacy");
+      withRequestHeaders({ authorization: "Bearer abc" }, () => {
+        expect(getRequestEra()).toBe("legacy");
+      });
     });
   });
 

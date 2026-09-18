@@ -1,17 +1,33 @@
 import type {
+  CacheHint,
   CallToolResult,
   ToolAnnotations,
 } from "@modelcontextprotocol/server";
 import { McpServer, ResourceTemplate } from "@modelcontextprotocol/server";
 import { ZodObject, z } from "zod";
 import Bugsnag, { type BugsnagEvent } from "../common/bugsnag";
-import { CacheService } from "./cache";
-import { type McpClientIdentity, toClientIdentity } from "./client-identity";
+import {
+  CacheService,
+  getConfiguredCacheTtlSeconds,
+  isCachingEnabled,
+} from "./cache";
+import {
+  getCurrentClientIdentity,
+  type McpClientIdentity,
+  toClientIdentity,
+} from "./client-identity";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./info";
 import {
   executeElicitationOrPolyfill,
+  InputRequiredSignal,
   isElicitationPolyfillResult,
+  runWithElicitationScope,
 } from "./pollyfills";
+import {
+  getRequestClientMeta,
+  getRequestEra,
+  type ProtocolEra,
+} from "./request-context";
 import { ToolError } from "./tools";
 import type { Client, ClientInfo, ToolParams } from "./types";
 import {
@@ -21,6 +37,37 @@ import {
   isOptionalType,
 } from "./zod-utils";
 
+/**
+ * Cache hints for the cacheable modern-era (2026-07-28) result envelopes.
+ * `ttlMs` follows the operator's CACHE_TTL (the same lifetime the in-process
+ * {@link CacheService} uses); `cacheScope: "private"` because every listing is
+ * derived from the caller's own configuration (auth headers, enabled
+ * toolsets), so a shared cache must never serve one principal's results to
+ * another.
+ */
+function buildCacheHints(): Partial<
+  Record<
+    | "tools/list"
+    | "prompts/list"
+    | "resources/list"
+    | "resources/templates/list"
+    | "resources/read",
+    CacheHint
+  >
+> {
+  const hint: CacheHint = {
+    ttlMs: getConfiguredCacheTtlSeconds() * 1000,
+    cacheScope: "private",
+  };
+  return {
+    "tools/list": hint,
+    "prompts/list": hint,
+    "resources/list": hint,
+    "resources/templates/list": hint,
+    "resources/read": hint,
+  };
+}
+
 export class SmartBearMcpServer extends McpServer {
   private cache: CacheService;
   private elicitationSupported = false;
@@ -29,18 +76,40 @@ export class SmartBearMcpServer extends McpServer {
   private enabledToolsets?: string[];
   private mcpClientIdentity?: McpClientIdentity;
 
-  constructor(enabledToolsets?: string) {
+  constructor(enabledToolsets?: string, era: ProtocolEra = "legacy") {
     super(
       {
         name: MCP_SERVER_NAME,
         version: MCP_SERVER_VERSION,
       },
       {
-        capabilities: {
-          // resources and prompts are supported by some but not all clients
-          tools: { listChanged: true }, // Server supports dynamic tool lists
-          logging: {}, // Server supports logging messages
-        },
+        capabilities:
+          era === "modern"
+            ? {
+                // resources and prompts are supported by some but not all clients.
+                // No `logging`: deprecated by SEP-2577 as of 2026-07-28 (our
+                // diagnostics already go to stderr). `listChanged` stays
+                // advertised: on the modern era it tells clients which
+                // notification types a `subscriptions/listen` filter may
+                // request, and the SDK's serving entries implement
+                // `subscriptions/listen` themselves — no server-side work.
+                tools: { listChanged: true },
+              }
+            : {
+                // Legacy (2025-era) capabilities, unchanged for the
+                // deprecation window.
+                tools: { listChanged: true }, // Server supports dynamic tool lists
+                logging: {}, // Server supports logging messages
+              },
+        // Cache hints stamped onto the cacheable modern-era (2026-07-28)
+        // results (tools/list, prompts/list, resources/list,
+        // resources/templates/list, resources/read). Lifetime follows the
+        // operator's CACHE_TTL; scope is `private` because every result is
+        // derived from the caller's own configuration (auth headers,
+        // toolsets) and must not be served to other principals from a shared
+        // cache. Legacy responses are never affected, and with caching
+        // disabled the SDK default (`ttlMs: 0`) stands.
+        ...(isCachingEnabled() ? { cacheHints: buildCacheHints() } : {}),
       },
     );
     this.cache = new CacheService();
@@ -59,7 +128,21 @@ export class SmartBearMcpServer extends McpServer {
     this.elicitationSupported = supported;
   }
 
+  /**
+   * Whether the current caller supports server-initiated elicitation.
+   *
+   * Modern era: read from the capabilities this request declared in `_meta`.
+   * Only consulted on the legacy code path — modern requests that declare
+   * `elicitation` are served via the multi round-trip pattern (MRTR,
+   * SEP-2322) in `executeElicitationOrPolyfill` before this is reached, and
+   * modern requests that do not declare it fall back to the polyfill.
+   * Legacy era: the per-connection flag captured at `initialize`.
+   */
   isElicitationSupported(): boolean {
+    if (getRequestEra() === "modern") {
+      const capabilities = getRequestClientMeta()?.clientCapabilities;
+      return !!capabilities && Object.hasOwn(capabilities, "elicitation");
+    }
     return this.elicitationSupported;
   }
 
@@ -67,8 +150,13 @@ export class SmartBearMcpServer extends McpServer {
     this.clientInfo = info;
   }
 
+  /**
+   * Client info for the current caller: from this request's `_meta` envelope in
+   * the modern era, falling back to the value captured at `initialize` for
+   * legacy connections.
+   */
   getClientInfo(): ClientInfo | undefined {
-    return this.clientInfo;
+    return getRequestClientMeta()?.clientInfo ?? this.clientInfo;
   }
 
   getClients(): Client[] {
@@ -84,13 +172,27 @@ export class SmartBearMcpServer extends McpServer {
   }
 
   /**
-   * Return the MCP client identity for this session. Prefers the value captured
-   * at `initialize`; falls back to the SDK's `getClientVersion()` so callers
-   * still get an answer if the explicit capture was skipped.
+   * Return the MCP client identity for the current caller.
+   *
+   * Resolution order: the metadata this request carried in `_meta` (modern
+   * era over HTTP, per request), then the value captured at `initialize`
+   * (legacy era, per connection), then the process-wide identity (which is how
+   * modern-era stdio records its single client), then the SDK's
+   * `getClientVersion()` so callers still get an answer if every capture was
+   * skipped.
    */
   getMcpClientIdentity(): McpClientIdentity {
+    const modernMeta = getRequestClientMeta();
+    if (modernMeta) {
+      return toClientIdentity(
+        modernMeta.clientInfo,
+        modernMeta.protocolVersion,
+      );
+    }
     return (
-      this.mcpClientIdentity ?? toClientIdentity(this.server.getClientVersion())
+      this.mcpClientIdentity ??
+      getCurrentClientIdentity() ??
+      toClientIdentity(this.server.getClientVersion())
     );
   }
 
@@ -148,13 +250,24 @@ export class SmartBearMcpServer extends McpServer {
                   `The tool is not configured - configuration options for ${client.name} are missing or invalid.`,
                 );
               }
-              const result = await cb(args, ctx);
+              // Elicitation state (era, MRTR answers) is per invocation, but
+              // the getInput callback handed to clients is per registration —
+              // the scope bridges the two.
+              const result = await runWithElicitationScope(ctx, () =>
+                cb(args, ctx),
+              );
               if (result) {
                 this.validateCallbackResult(result, params);
                 this.addStructuredContentAsText(result);
               }
               return result;
             } catch (e) {
+              // MRTR (2026-07-28): the tool needs client input before it can
+              // finish. Not an error — return the input_required result and
+              // let the client retry with the collected input.
+              if (e instanceof InputRequiredSignal) {
+                return e.result;
+              }
               // ToolErrors should not be reported to BugSnag
               if (e instanceof ToolError) {
                 return {
@@ -258,6 +371,32 @@ export class SmartBearMcpServer extends McpServer {
         );
       });
     }
+
+    this.sortToolsDeterministically();
+  }
+
+  /**
+   * Re-key the SDK's tool registry alphabetically so `tools/list` output is
+   * deterministic regardless of client registration order.
+   *
+   * The SDK's `tools/list` handler enumerates its registry in insertion
+   * order and offers no ordering hook, so this reaches into the private
+   * `_registeredTools` map. `server.test.ts` asserts the resulting order, so
+   * an SDK upgrade that changes the storage shape fails loudly there.
+   */
+  private sortToolsDeterministically(): void {
+    const registry = (
+      this as unknown as {
+        _registeredTools: Record<string, unknown>;
+      }
+    )._registeredTools;
+    const sorted = Object.fromEntries(
+      Object.entries(registry).sort(([a], [b]) => a.localeCompare(b)),
+    );
+    for (const key of Object.keys(registry)) {
+      delete registry[key];
+    }
+    Object.assign(registry, sorted);
   }
 
   private validateCallbackResult(result: CallToolResult, params: ToolParams) {
