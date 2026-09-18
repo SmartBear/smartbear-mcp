@@ -66,6 +66,7 @@
         "ZEPHYR_BASE_URL": "${user_config.ZEPHYR_BASE_URL}",
         "QTM4J_API_KEY": "${user_config.QTM4J_API_KEY}",
         "QTM4J_BASE_URL": "${user_config.QTM4J_BASE_URL}",
+        "QTM4J_API_VERSION": "${user_config.QTM4J_API_VERSION}",
         "QTM4J_AUTOMATION_API_KEY": "${user_config.QTM4J_AUTOMATION_API_KEY}"
       }
     }
@@ -251,6 +252,14 @@
       "type": "string",
       "title": "QTM4J Base URL",
       "description": " QTM4J base URL (optional). Defaults to https://qtmcloud.qmetry.com. Override when using a self-hosted or region-specific instance.",
+      "required": false,
+      "sensitive": false,
+      "default": ""
+    },
+    "QTM4J_API_VERSION": {
+      "type": "string",
+      "title": "QTM4J API Version",
+      "description": "QTM4J API version prefix (optional). Defaults to /rest/api/latest. Override to set a specific API version.",
       "required": false,
       "sensitive": false,
       "default": ""
