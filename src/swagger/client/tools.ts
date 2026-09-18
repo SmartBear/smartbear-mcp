@@ -273,7 +273,7 @@ export const TOOLS: SwaggerToolParams[] = [
     title: "Create or Update API",
     toolset: "Registry API",
     summary:
-      "Create a new API or update an existing API in SwaggerHub Registry for Swagger Studio. The API specification type (OpenAPI, AsyncAPI) is automatically detected from the definition content. APIs are always created with fixed values: version 1.0.0, private visibility, and automock disabled (these values cannot be changed). Returns HTTP 201 for creation, HTTP 200 for update. Response includes 'operation' field indicating whether it was a 'create' or 'update' operation along with API details and SwaggerHub URL.",
+      "Create a new API or update an existing API in SwaggerHub Registry for Swagger Studio. The API specification type (OpenAPI, AsyncAPI) is automatically detected from the definition content. On create, APIs default to version 1.0.0 (override with 'version'), private visibility, and automock disabled; visibility and automock cannot be changed via this tool. Returns HTTP 201 for creation, HTTP 200 for update. Response includes 'operation' field indicating whether it was a 'create' or 'update' operation along with API details and SwaggerHub URL.",
     inputSchema: CreateApiParamsSchema,
     outputSchema: CreateApiOutputSchema,
     handler: "createOrUpdateApi",
@@ -314,7 +314,7 @@ export const TOOLS: SwaggerToolParams[] = [
     title: "Create API from Prompt",
     toolset: "Registry API",
     summary:
-      "Generate and save a new API or a new version of an existing API based on a prompt using SmartBear AI. This tool automatically applies organization governance and standardization rules during API generation. The specType parameter determines the format of the generated definition. Use: 'openapi20' for OpenAPI 2.0, 'openapi30x' for OpenAPI 3.0.x, 'openapi31x' for OpenAPI 3.1.x, 'asyncapi2xx' for AsyncAPI 2.x, 'asyncapi30x' for AsyncAPI 3.0.x. Use this tool when creating APIs that comply with governance policies or when generating APIs from natural language descriptions. Use this tool when users ask to create, generate, or design APIs with governance or standardization requirements. Fails with a conflict error if the API version already exists. Returns API details and SwaggerHub URL.",
+      "Generate and save a new API or a new version of an existing API based on a prompt using SmartBear AI. This tool automatically applies organization governance and standardization rules during API generation. The specType parameter determines the format of the generated definition. Use: 'openapi20' for OpenAPI 2.0, 'openapi30x' for OpenAPI 3.0.x, 'openapi31x' for OpenAPI 3.1.x, 'asyncapi2xx' for AsyncAPI 2.x, 'asyncapi30x' for AsyncAPI 3.0.x. Optionally provide 'version' to save the generated definition as a specific version — omitting it uses the version from the generated definition's info.version field. Use this tool when creating APIs that comply with governance policies or when generating APIs from natural language descriptions. Use this tool when users ask to create, generate, or design APIs with governance or standardization requirements. Fails with a conflict error if the API version already exists. Returns API details and SwaggerHub URL.",
     inputSchema: CreateApiFromPromptParamsSchema,
     outputSchema: CreateApiFromPromptOutputSchema,
     handler: "createApiFromPrompt",

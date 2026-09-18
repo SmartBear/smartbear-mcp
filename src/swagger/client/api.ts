@@ -1277,7 +1277,10 @@ export class SwaggerAPI {
       owner: params.owner,
       apiName: params.apiName,
     });
-    return this.saveApiDefinition(params, exists ? {} : { isPrivate: true });
+    return this.saveApiDefinition(params, {
+      ...(exists ? {} : { isPrivate: true }),
+      version: params.version,
+    });
   }
 
   /**
@@ -1397,6 +1400,7 @@ export class SwaggerAPI {
     const searchParams = new URLSearchParams();
     const specType = params.specType ?? "openapi30x";
     searchParams.append("specType", specType);
+    if (params.version) searchParams.append("version", params.version);
     // createOnly ensures this tool never overwrites an existing API version
     searchParams.append("createOnly", "true");
 
