@@ -321,6 +321,7 @@ Add the following configuration to your `claude_desktop_config.json` to launch t
 |---|---|---|
 | `BASE_URL` | *(derived from request)* | The server's own public URL, e.g. `https://mcp.example.com`. Set this on any deployment behind a proxy or load balancer — otherwise the address advertised for OAuth discovery is derived from the client-supplied `Host` header. |
 | `TRUST_PROXY` | `false` | Set to `true` only when a proxy in front of the server sets `X-Forwarded-Host` and strips any client-supplied value. |
+| `MCP_SERVER_AMPLITUDE_API_KEY` | *(unset — analytics off)* | API key for the shared SmartBear Amplitude project. When set, the server reports `Server Initialized`, `Session Started`, `Session Ended`, `Tool Called` and `Tools Listed` usage events (tool outcome and timing only — never tool arguments, results, credentials or raw email). Unset, nothing is tracked. HTTP mode only. |
 
 ## Documentation
 

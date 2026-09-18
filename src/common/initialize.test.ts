@@ -17,11 +17,12 @@ function modernMessage(
   return { method: "tools/list", params: { _meta: meta } };
 }
 
-function fakeServer() {
+function fakeServer(analyticsSession?: { onInitialized: () => void }) {
   return {
     setClientInfo: vi.fn(),
     setMcpClientIdentity: vi.fn(),
     setElicitationSupported: vi.fn(),
+    getAnalyticsSession: vi.fn().mockReturnValue(analyticsSession),
   } as unknown as SmartBearMcpServer;
 }
 
@@ -65,6 +66,34 @@ describe("handleInitializeMessage", () => {
     });
     // Capability detection stays gated behind 2025-11-25.
     expect(server.setElicitationSupported).not.toHaveBeenCalled();
+  });
+
+  it("notifies the analytics session after the client identity is captured", () => {
+    const onInitialized = vi.fn();
+    const server = fakeServer({ onInitialized });
+
+    handleInitializeMessage(server, {
+      method: "initialize",
+      params: {
+        protocolVersion: "2025-11-25",
+        capabilities: {},
+        clientInfo: { name: "Claude Code", version: "1.2.3" },
+      },
+    });
+
+    expect(onInitialized).toHaveBeenCalledTimes(1);
+    expect(
+      vi.mocked(server.setMcpClientIdentity).mock.invocationCallOrder[0],
+    ).toBeLessThan(onInitialized.mock.invocationCallOrder[0]);
+  });
+
+  it("does not notify analytics for non-initialize messages", () => {
+    const onInitialized = vi.fn();
+    const server = fakeServer({ onInitialized });
+
+    handleInitializeMessage(server, { method: "tools/list", params: {} });
+
+    expect(onInitialized).not.toHaveBeenCalled();
   });
 
   it("does not call setClientInfo when clientInfo is absent", () => {

@@ -14,6 +14,14 @@ import {
   isLegacyRequest,
 } from "@modelcontextprotocol/server";
 import { SSEServerTransport } from "@modelcontextprotocol/server-legacy/sse";
+import {
+  createAnalyticsSession,
+  flushAnalytics,
+  initAnalytics,
+  isToolsListRequest,
+  type SessionTransport,
+  trackToolsListed,
+} from "./analytics";
 import { clientRegistry } from "./client-registry";
 import { extractModernClientMeta, handleInitializeMessage } from "./initialize";
 import {
@@ -138,6 +146,14 @@ export async function runHttpMode() {
 
   // Store transports by session ID
   const transports = new Map<string, SessionEntry>();
+
+  // Usage analytics (Amplitude). Silent no-op without an API key. Registered
+  // before the transport handler so that, with LIFO drain ordering, the final
+  // flush runs after every session has emitted its `Session Ended` event.
+  if (initAnalytics()) {
+    console.log("[MCP HTTP Server] Usage analytics enabled");
+    registerShutdownHandler("analytics", flushAnalytics);
+  }
 
   // Modern (2026-07-28) leg. Created once for the process; the per-request
   // server is injected via modernServerStorage. 2025-era traffic never reaches
@@ -429,15 +445,20 @@ async function createNewTransport(
       console.log(`[MCP] New session initialized: ${newSessionId}`);
       // Store session so subsequent requests can find it
       transports.set(newSessionId, { server, transport });
+      // The SDK awaits this callback before dispatching the `initialize`
+      // message, so the analytics session exists by the time
+      // handleInitializeMessage fires `Session Started`.
+      attachSessionAnalytics(server, newSessionId, "streamable-http");
     },
   });
-  transport.onmessage = (message) => handleInitializeMessage(server, message);
+  transport.onmessage = (message) => handleSessionMessage(server, message);
 
   // Clean up session on close
   transport.onclose = () => {
     if (transport.sessionId) {
       console.log(`[MCP] Session closed: ${transport.sessionId}`);
       transports.delete(transport.sessionId);
+      endSessionAnalytics(server);
       server.cleanupSession(transport.sessionId);
     }
   };
@@ -445,6 +466,55 @@ async function createNewTransport(
   // Connect server to transport to start handling messages
   await server.connect(transport);
   return transport;
+}
+
+/**
+ * Observe one inbound message on a legacy (sessionful) transport: apply the
+ * `initialize` capture, and record `tools/list` for usage analytics. Runs
+ * inside the request context, so the caller's credential is resolvable.
+ */
+export function handleSessionMessage(
+  server: SmartBearMcpServer,
+  message: unknown,
+): void {
+  handleInitializeMessage(server, message);
+  if (isToolsListRequest(message)) {
+    trackToolsListed(server);
+  }
+}
+
+/**
+ * Attach usage-analytics state to a freshly allocated HTTP session. No-op
+ * (nothing attached) when analytics is disabled. `Session Started` and
+ * `Server Initialized` are emitted later, from the `initialize` handshake,
+ * once the client identity and the caller's credential are both available.
+ */
+export function attachSessionAnalytics(
+  server: SmartBearMcpServer,
+  sessionId: string,
+  transport: SessionTransport,
+): void {
+  server.setAnalyticsSession(
+    createAnalyticsSession({
+      sessionId,
+      transport,
+      server,
+      integrations: clientRegistry
+        .getAll()
+        .map((client) => client.capabilityPrefix),
+    }),
+  );
+}
+
+/**
+ * Emit `Session Ended` for a closing HTTP session, attributing the close to
+ * process shutdown when the server is draining. Also triggers a flush so the
+ * event is not left in the SDK buffer once the transport is gone.
+ */
+export function endSessionAnalytics(server: SmartBearMcpServer): void {
+  server
+    .getAnalyticsSession()
+    ?.end(isDraining() ? "server_shutdown" : "client_disconnected");
 }
 
 /**
@@ -545,11 +615,16 @@ async function handleMcpEndpoint(
   const headers = webHeadersToRecord(probe.headers);
   const clientMeta = extractModernClientMetaFromBody(parsedBody);
   await modernServerStorage.run(server, () =>
-    withRequestHeaders(headers, () => {
+    withRequestHeaders(headers, async () => {
       if (clientMeta) {
         setModernRequestClient(clientMeta);
       }
-      return modern(req, res, parsedBody);
+      await modern(req, res, parsedBody);
+      // Sessionless protocol: an accepted `tools/list` is the closest
+      // "client connected" signal.
+      if (res.statusCode < 400 && isToolsListRequest(parsedBody)) {
+        trackToolsListed(server);
+      }
     }),
   );
 }
@@ -721,14 +796,16 @@ async function handleLegacySseRequest(
   // Capture the client identity from the initialize handshake (see the
   // streamable HTTP transport for rationale). Set before connect() so the SDK
   // chains this handler ahead of its own message processing.
-  transport.onmessage = (message) => handleInitializeMessage(server, message);
+  transport.onmessage = (message) => handleSessionMessage(server, message);
 
   // Store the session so POST /message requests can find it
   transports.set(transport.sessionId, { server, transport });
+  attachSessionAnalytics(server, transport.sessionId, "sse");
 
   // Clean up session when connection closes
   res.on("close", () => {
     transports.delete(transport.sessionId);
+    endSessionAnalytics(server);
     server.cleanupSession(transport.sessionId);
   });
 
