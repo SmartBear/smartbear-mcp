@@ -458,17 +458,6 @@ export class SwaggerClient implements Client {
     _getInput: GetInputFunction,
   ): Promise<void> {
     TOOLS.forEach((tool) => {
-      if (tool.toolset === "Functional Testing" && !this.ftApi) {
-        return;
-      }
-      if (
-        tool.toolset !== "Functional Testing" &&
-        !this.api &&
-        this.isConfigured()
-      ) {
-        return;
-      }
-
       const { handler, formatResponse, ...toolParams } = tool;
       register(toolParams, async (args, _ctx) => {
         try {

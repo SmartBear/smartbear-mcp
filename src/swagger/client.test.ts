@@ -254,7 +254,7 @@ describe("SwaggerClient", () => {
       });
     });
 
-    it("should skip FT tools when no FT token is configured", () => {
+    it("should register FT tools even when no FT token is configured, failing only at call time", async () => {
       const mockRegister = vi.fn();
       const mockGetInput = vi.fn();
 
@@ -263,10 +263,24 @@ describe("SwaggerClient", () => {
       const registeredTitles = mockRegister.mock.calls.map(
         (call) => call[0].title,
       );
-      expect(registeredTitles).not.toContain("List Tests");
-      expect(mockRegister).toHaveBeenCalledTimes(
-        TOOLS.filter((t) => t.toolset !== "Functional Testing").length,
+      expect(registeredTitles).toContain("List Tests");
+      expect(mockRegister).toHaveBeenCalledTimes(TOOLS.length);
+
+      const listTestsCall = mockRegister.mock.calls.find(
+        (call) => call[0].title === "List Tests",
       );
+      const handler = listTestsCall?.[1];
+      const result = await handler({}, {});
+
+      expect(result).toEqual({
+        isError: true,
+        content: [
+          {
+            type: "text",
+            text: "Error: Functional Testing API not configured",
+          },
+        ],
+      });
     });
 
     it("should handle tool execution for getPortals", async () => {
