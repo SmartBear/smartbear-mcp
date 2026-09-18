@@ -162,5 +162,15 @@ describe("SearchTestCases", () => {
 
       await expect(instance.handle({})).rejects.toThrow();
     });
+
+    it("should send folderId in filter body when provided", async () => {
+      mockApiClient.post.mockResolvedValueOnce(mockResponse);
+
+      await instance.handle({ filter: { folderId: 53554 } });
+
+      expect(mockApiClient.post).toHaveBeenCalledWith(expect.any(String), {
+        filter: { projectId: "10000", folderId: 53554 },
+      });
+    });
   });
 });

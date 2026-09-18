@@ -13,7 +13,6 @@ import {
 const FIELD_CONFIG: Record<string, string> = {
   [InputField.PRIORITY]: ResolverKeys.CommonAttribute.PRIORITY,
   [InputField.STATUS]: ResolverKeys.CommonAttribute.TESTCASE_STATUS,
-  [InputField.FOLDER]: ResolverKeys.CommonAttribute.TESTCASE_FOLDER,
   [InputField.COMPONENTS]: ResolverKeys.SearchableField.COMPONENTS,
   [InputField.LABELS]: ResolverKeys.SearchableField.LABEL,
 };
@@ -33,7 +32,7 @@ const FIELD_CONFIG: Record<string, string> = {
  *   - components → LAZY
  */
 export class CreateTestCase extends Tool<Qtm4jClient> {
-  // ─── Tool Specification ────────────────────────────────────────────────────
+  // ─── Tool Specification ────────────────────────────────────────
 
   specification: ToolParams = {
     title: TOOL_NAMES.CREATE_TEST_CASE.TITLE,
@@ -121,15 +120,16 @@ export class CreateTestCase extends Tool<Qtm4jClient> {
       "JSON object with test case ID, key, version number, and summary. Warnings included if any fields were skipped.",
   };
 
-  // ─── Handle Implementation ──────────────────────────────────────────────────
+  // ─── Handle Implementation ────────────────────────────────────
 
   handle = async (rawArgs: any) => {
     const fieldResolver = this.client.getResolverRegistry();
     const context = fieldResolver.requireProjectContext();
+    const parsed = CreateTestCaseBody.parse(rawArgs) as Record<string, unknown>;
     const body = {
-      ...(CreateTestCaseBody.parse(rawArgs) as Record<string, unknown>),
+      ...parsed,
       projectId: String(context.projectId),
-      folderId: "MCP Generated",
+      folderId: parsed.folderId ?? "MCP Generated",
     };
     const warnings: string[] = [];
 
