@@ -1290,6 +1290,12 @@ export const TestCasesByTestSuiteArgsSchema = z.object({
   page: CommonFields.page,
   limit: CommonFields.limit,
   filter: CommonFields.filter,
+  getSubEntities: CommonFields.getSubEntities,
+  getColumns: CommonFields.getColumns,
+  restoreDefaultColumns: CommonFields.restoreDefaultColumns,
+  udfFilter: CommonFields.udfFilter,
+  tcFolderPath: CommonFields.tcFolderPath,
+  viewId: CommonFields.tcViewId,
 });
 
 export const ExecutionsByTestSuiteArgsSchema = z.object({

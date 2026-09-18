@@ -98,6 +98,11 @@ export const AUTO_RESOLVE_MODULES: ModuleAutoResolveConfig[] = [
     viewIdPath: "latestViews.IS.viewId",
     moduleName: "Issues",
   },
+  {
+    handler: QMetryToolsHandlers.FETCH_TESTCASES_BY_TESTSUITE,
+    viewIdPath: "latestViews.TC.viewId",
+    moduleName: "Test Cases Linked to Test Suite",
+  },
 ];
 
 /**
