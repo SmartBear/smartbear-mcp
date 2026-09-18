@@ -75,6 +75,13 @@ export interface FetchTestCasesByTestSuitePayload
     FilterPayload {
   tsID: number; // required - Test Suite ID
   getLinked?: boolean; // optional - True to get linked test cases, false for unlinked (default: true)
+  getSubEntities?: boolean; // optional - whether to include sub-entities
+  getColumns?: boolean; // optional - whether to get column information in response
+  restoreDefaultColumns?: boolean; // optional - whether to restore default columns
+  udfFilter?: string; // optional - user-defined field filter as JSON string
+  tcFolderPath?: string; // optional - folder path for test cases
+  viewId?: number; // optional - saved layout/view ID for this test suite's linked-test-case tab
+  isForTsTestCaseTab?: boolean; // always true for this endpoint's usage - not exposed to callers
 }
 
 export const DEFAULT_FETCH_TESTCASES_BY_TESTSUITE_PAYLOAD: Omit<
@@ -84,6 +91,8 @@ export const DEFAULT_FETCH_TESTCASES_BY_TESTSUITE_PAYLOAD: Omit<
   ...DEFAULT_PAGINATION,
   ...DEFAULT_FILTER,
   getLinked: true,
+  getColumns: true,
+  isForTsTestCaseTab: true,
 };
 
 export interface FetchExecutionsByTestSuitePayload
