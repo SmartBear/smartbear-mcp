@@ -1610,6 +1610,13 @@ export class SwaggerAPI {
       body: JSON.stringify({ definition }),
     });
 
+    // 422 is a normal, documented outcome of /specs/validate (the definition
+    // wasn't recognized as a supported spec) with a full structured body,
+    // not an error - don't discard it via the generic !response.ok check.
+    if (response.status === 422) {
+      return this.parseResponse<ApidomValidationResult>(response, {});
+    }
+
     if (!response.ok) {
       const errorText = await response.text().catch(() => "");
       throw new ToolError(

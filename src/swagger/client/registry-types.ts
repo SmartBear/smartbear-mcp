@@ -330,7 +330,7 @@ export interface ApidomValidationFinding {
   column?: number;
   severity: "error" | "warning" | "info";
   message: string;
-  code?: number;
+  code?: number | string;
   source?: string;
   range?: {
     start: { line: number; character: number };
@@ -421,7 +421,10 @@ export const ApidomValidationFindingSchema = z.looseObject({
     .enum(["error", "warning", "info"])
     .describe("Severity of the finding"),
   message: z.string().describe("Human-readable validation message"),
-  code: z.number().optional().describe("Rule or lint code"),
+  code: z
+    .union([z.number(), z.string()])
+    .optional()
+    .describe("Rule or lint code (string or number)"),
   source: z.string().optional().describe("Source of the rule"),
 });
 

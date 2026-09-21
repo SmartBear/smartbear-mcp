@@ -572,6 +572,34 @@ describe("SwaggerAPI", () => {
         }),
       ).rejects.toThrow(/specs\/validate failed - status: 400 Bad Request/);
     });
+
+    it("should return the structured result for an unrecognized definition (422), not throw", async () => {
+      const unrecognizedResult = {
+        valid: false,
+        recognized: false,
+        spec: { namespace: "unknown", format: "YAML" },
+        findings: [
+          {
+            line: 1,
+            column: 1,
+            severity: "error",
+            message: "not recognized",
+            code: "260-26-1789376658181",
+          },
+        ],
+        summary: { errors: 1, warnings: 0, total: 1, durationMs: 1 },
+      };
+      fetchMock.mockResponseOnce(JSON.stringify(unrecognizedResult), {
+        status: 422,
+        headers: { "content-type": "application/json" },
+      });
+
+      const result = await api.validateApi({
+        definition: "not a spec",
+      });
+
+      expect(result).toEqual(unrecognizedResult);
+    });
   });
 
   describe("publishPortalProduct", () => {
