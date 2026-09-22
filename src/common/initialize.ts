@@ -110,4 +110,9 @@ export function handleInitializeMessage(
 
   // Other protocolVersion handling can be added below
   // to maintain backwards compatibility.
+
+  // Usage analytics (HTTP only — stdio servers carry no analytics session).
+  // Runs last so the client identity above is already captured, and inside
+  // the request context so the caller's credential can be resolved.
+  server.getAnalyticsSession()?.onInitialized();
 }

@@ -78,6 +78,38 @@ export interface ClientInfo {
   title?: string;
 }
 
+/**
+ * Usage-analytics declaration for the remote (HTTP) server. The shared
+ * analytics module reads identity from the request's `Authorization` bearer
+ * JWT; a product only says where its claims live. Everything is optional and
+ * anything unresolvable is omitted from events, never guessed.
+ */
+export interface ClientAnalytics {
+  /**
+   * Amplitude `app_name`, one of the values registered in the shared
+   * SmartBear project (Platform, Portal, Test, Explore, Design, Contract
+   * Test, BugSnag). Leave unset until registered.
+   */
+  appName?: string;
+  /**
+   * Request header carrying this product's credential, for products that
+   * receive it in a product-specific header (e.g. `Product-Api-Token`) rather
+   * than `Authorization`. Tried before `Authorization`, which stays the
+   * fallback; whichever candidate decodes as a JWT first is used. Read for
+   * attribution claims only, never for an authorization decision, and only
+   * worth setting when the credential is a JWT — an opaque token or API key
+   * yields no claims and the product stays anonymous.
+   */
+  tokenHeader?: string;
+  /**
+   * Dot-separated claim paths holding a stable product user id, tried in
+   * order. Used for `analytics_id` only when the token has no `email` claim.
+   */
+  userId?: string[];
+  /** Claim paths holding the organization id, tried in order. */
+  organizationId?: string[];
+}
+
 export interface Client {
   /** Human-readable name for the client - usually the product name */
   name: string;
@@ -112,4 +144,6 @@ export interface Client {
    */
   getAuthToken?(): string | null;
   cleanupSession?(mcpSessionId: string): Promise<void>;
+  /** Usage-analytics declaration; see {@link ClientAnalytics}. */
+  analytics?: ClientAnalytics;
 }

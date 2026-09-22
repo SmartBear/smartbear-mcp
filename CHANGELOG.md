@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- [Common] Usage analytics for the remote (HTTP) server, reported to the shared SmartBear Amplitude project when `MCP_SERVER_AMPLITUDE_API_KEY` is set: `Server Initialized`, `Session Started`, `Session Ended`, `Tool Called` and `Tools Listed` events, each carrying `app_name`, `organization`, `analytics_id` (`sha256(email.toLowerCase())` when the product's OAuth token carries an `email` claim, matching SmartBear ID; otherwise `sha256("<integration>:<user id>")` from the claim the product declares), `source` (`MCP`) and `user_agent`. `Tool Called` and `Tools Listed` also carry `mcp_client_name`, `mcp_client_version` and `protocol_version`, so client adoption and protocol migration are measurable for 2026-07-28 clients, which have no `initialize` handshake or session and therefore produce no lifecycle events. Tool arguments, results, credentials and raw email are never sent. Identity claim locations and `app_name` are declared per product via the new optional `Client.analytics` field; BugSnag ships the reference declaration, other integrations report anonymous events until theirs is added. Products that receive their credential in a product-specific header rather than `Authorization` can name it with `analytics.tokenHeader`, which is tried ahead of `Authorization` while that remains the fallback, the first candidate decoding as a JWT winning; no integration declares one yet. Events are flushed on session end and on SIGTERM; a missing key or an Amplitude outage never affects tool calls. Stdio (local) usage is not tracked.
+
 ## [0.41.0] - 2026-09-16
 
 ### Added

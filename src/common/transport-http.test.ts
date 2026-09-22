@@ -2,12 +2,15 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { clientRegistry } from "./client-registry";
 import {
+  attachSessionAnalytics,
   drainHttpTransport,
+  endSessionAnalytics,
   getBaseUrl,
   getHeaderName,
   getQueryStringName,
   handleHealthRequest,
   handleReadyRequest,
+  handleSessionMessage,
   handleStreamableHttpRequest,
   newServer,
   newServerFromWebRequest,
@@ -118,6 +121,21 @@ vi.mock("./server.js", () => ({
 // Mock Bugsnag
 vi.mock("./bugsnag.js", () => ({
   default: { notify: vi.fn() },
+}));
+
+// Mock usage analytics so the session wiring can be asserted without an SDK.
+// Pure helpers (isToolsListRequest) keep their real implementation.
+vi.mock("./analytics", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./analytics")>()),
+  initAnalytics: vi.fn().mockReturnValue(false),
+  flushAnalytics: vi.fn(),
+  createAnalyticsSession: vi.fn(),
+  trackToolsListed: vi.fn(),
+}));
+
+vi.mock("./shutdown", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./shutdown")>()),
+  isDraining: vi.fn().mockReturnValue(false),
 }));
 
 describe("transport-http helpers", () => {
@@ -856,5 +874,122 @@ describe("handleStreamableHttpRequest (session routing)", () => {
 
     expect(handleRequest).toHaveBeenCalledTimes(1);
     expect(res._status).toBeNull();
+  });
+});
+
+describe("session analytics wiring", () => {
+  it("attachSessionAnalytics hands the session id, transport and enabled integrations to the analytics module", async () => {
+    const { createAnalyticsSession } = await import("./analytics");
+    const session = { id: "analytics-session" };
+    vi.mocked(createAnalyticsSession).mockReturnValueOnce(session as any);
+    clientRegistry.getAll = () => [
+      createTestClient({ name: "Bugsnag" }),
+      createTestClient({ name: "Swagger" }),
+    ];
+    const server = { setAnalyticsSession: vi.fn() } as any;
+
+    attachSessionAnalytics(server, "sess-1", "streamable-http");
+
+    expect(createAnalyticsSession).toHaveBeenCalledWith({
+      sessionId: "sess-1",
+      transport: "streamable-http",
+      server,
+      integrations: ["bugsnag", "swagger"],
+    });
+    expect(server.setAnalyticsSession).toHaveBeenCalledWith(session);
+  });
+
+  it("attachSessionAnalytics attaches nothing when analytics is disabled", async () => {
+    const { createAnalyticsSession } = await import("./analytics");
+    vi.mocked(createAnalyticsSession).mockReturnValueOnce(undefined);
+    const server = { setAnalyticsSession: vi.fn() } as any;
+
+    attachSessionAnalytics(server, "sess-1", "sse");
+
+    expect(server.setAnalyticsSession).toHaveBeenCalledWith(undefined);
+  });
+
+  it("endSessionAnalytics attributes a normal close to the client", () => {
+    const end = vi.fn();
+    endSessionAnalytics({ getAnalyticsSession: () => ({ end }) } as any);
+    expect(end).toHaveBeenCalledWith("client_disconnected");
+  });
+
+  it("endSessionAnalytics attributes a close during drain to shutdown", async () => {
+    const { isDraining } = await import("./shutdown");
+    vi.mocked(isDraining).mockReturnValueOnce(true);
+    const end = vi.fn();
+    endSessionAnalytics({ getAnalyticsSession: () => ({ end }) } as any);
+    expect(end).toHaveBeenCalledWith("server_shutdown");
+  });
+
+  it("endSessionAnalytics is a no-op without an analytics session", () => {
+    expect(() =>
+      endSessionAnalytics({ getAnalyticsSession: () => undefined } as any),
+    ).not.toThrow();
+  });
+});
+
+describe("handleSessionMessage", () => {
+  function fakeSessionServer() {
+    return {
+      setClientInfo: vi.fn(),
+      setMcpClientIdentity: vi.fn(),
+      setElicitationSupported: vi.fn(),
+      getAnalyticsSession: vi.fn(),
+    } as any;
+  }
+
+  it("applies the initialize capture and does not record it as a tools/list", async () => {
+    const { trackToolsListed } = await import("./analytics");
+    vi.mocked(trackToolsListed).mockClear();
+    const server = fakeSessionServer();
+
+    handleSessionMessage(server, {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "initialize",
+      params: {
+        protocolVersion: "2025-11-25",
+        capabilities: {},
+        clientInfo: { name: "cursor", version: "1.0.0" },
+      },
+    });
+
+    expect(server.setMcpClientIdentity).toHaveBeenCalledWith({
+      name: "cursor",
+      version: "1.0.0",
+      protocolVersion: "2025-11-25",
+    });
+    expect(trackToolsListed).not.toHaveBeenCalled();
+  });
+
+  it("records a tools/list request against the session's server", async () => {
+    const { trackToolsListed } = await import("./analytics");
+    vi.mocked(trackToolsListed).mockClear();
+    const server = fakeSessionServer();
+
+    handleSessionMessage(server, {
+      jsonrpc: "2.0",
+      id: 2,
+      method: "tools/list",
+    });
+
+    expect(trackToolsListed).toHaveBeenCalledWith(server);
+    expect(server.setMcpClientIdentity).not.toHaveBeenCalled();
+  });
+
+  it("ignores other messages", async () => {
+    const { trackToolsListed } = await import("./analytics");
+    vi.mocked(trackToolsListed).mockClear();
+    const server = fakeSessionServer();
+
+    handleSessionMessage(server, {
+      jsonrpc: "2.0",
+      id: 3,
+      method: "tools/call",
+    });
+
+    expect(trackToolsListed).not.toHaveBeenCalled();
   });
 });
