@@ -1053,67 +1053,6 @@ describe("QmetryClient tools", () => {
       expect(result.content[0].text).toContain("Automated");
       expect(result.content[0].text).toContain("High");
     });
-
-    it("should pass through getSubEntities, restoreDefaultColumns, tcFolderPath, udfFilter and viewId", async () => {
-      (testsuite.fetchTestCasesByTestSuite as any).mockResolvedValue({
-        data: [],
-        totalCount: 0,
-        page: 1,
-        limit: 10,
-      });
-
-      const handler = getHandler("Fetch Test Cases Linked to Test Suite");
-      await handler({
-        tsID: 92091,
-        getSubEntities: true,
-        restoreDefaultColumns: true,
-        tcFolderPath: "Automation/Regression",
-        udfFilter:
-          '[{"type":"string","value":"z","udfmID":718520,"field":"24423_str"}]',
-        viewId: 13450,
-      });
-
-      expect(testsuite.fetchTestCasesByTestSuite).toHaveBeenCalledWith(
-        "fake-token",
-        "https://qmetry.example",
-        "default",
-        expect.objectContaining({
-          tsID: 92091,
-          getSubEntities: true,
-          restoreDefaultColumns: true,
-          tcFolderPath: "Automation/Regression",
-          udfFilter:
-            '[{"type":"string","value":"z","udfmID":718520,"field":"24423_str"}]',
-          viewId: 13450,
-        }),
-      );
-    });
-
-    it("should auto-resolve viewId from project info when not provided", async () => {
-      (project.getProjectInfo as any).mockResolvedValue({
-        latestViews: { TC: { viewId: 12345 } },
-      });
-      (testsuite.fetchTestCasesByTestSuite as any).mockResolvedValue({
-        data: [],
-        totalCount: 0,
-        page: 1,
-        limit: 10,
-      });
-
-      const handler = getHandler("Fetch Test Cases Linked to Test Suite");
-      await handler({ tsID: 92091 });
-
-      expect(project.getProjectInfo).toHaveBeenCalled();
-      expect(testsuite.fetchTestCasesByTestSuite).toHaveBeenCalledWith(
-        "fake-token",
-        "https://qmetry.example",
-        "default",
-        expect.objectContaining({
-          tsID: 92091,
-          viewId: 12345,
-        }),
-      );
-    });
   });
 
   describe("Fetch Executions by Test Suite", () => {

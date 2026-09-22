@@ -7236,12 +7236,6 @@ Expected Output: Active, high priority, automated test cases linked to requireme
 - page (number): Page number to return (starts from 1) (default: 1)
 - limit (number): Number of records (default 10). (default: 10)
 - filter (string): Filter criteria as JSON string (default '[]') (default: "[]")
-- getSubEntities (boolean): Whether to include sub-entities.
-- getColumns (boolean): Whether to get column information in response. (default: true)
-- restoreDefaultColumns (boolean): Whether to restore default columns (default 'false')
-- udfFilter (string): User-defined field filter as JSON string (default '[]') (default: "[]")
-- tcFolderPath (string): Folder path for test cases - SYSTEM AUTOMATICALLY SETS TO ROOT. Leave empty unless you want specific folder. System will automatically use empty string "" (root directory). Only specify if user wants specific folder like "Automation/Regression". (default: "")
-- viewId (number): ViewId for test cases - SYSTEM AUTOMATICALLY RESOLVES THIS. Leave empty unless you have a specific viewId. System will fetch project info using the projectKey and extract latestViews.TC.viewId automatically.
 
 **Output Description:** JSON object with test cases array containing test case details, properties, and suite linkage information
 
@@ -7307,18 +7301,12 @@ Expected Output: Active test cases linked to the test suite
 **Hints:** 1. CRITICAL: tsID parameter is REQUIRED - this is the Test Suite numeric ID 2. getLinked parameter is OPTIONAL - defaults to true if not provided 3. HOW TO GET tsID: 4. 1. Call API 'Testsuite/Fetch Testsuite' to get available test suites 5. 2. From the response, get value of following attribute -> data[<index>].id 6. 3. Example: Test Suite 'Regression Suite' might have ID 1497291 7. tsID is NOT the same as tsFolderID - tsID refers to a specific test suite, not a folder 8. getLinked=true (default): Returns test cases that ARE linked to the test suite 9. getLinked=false: Returns test cases that are NOT linked to the test suite (useful for gap analysis) 10. If getLinked is not specified, it defaults to true (linked test cases) 11. FILTER CAPABILITIES: Support filtering by test case properties 12. FILTER FIELDS: priorityAlias (list), testCaseStateAlias (list), testingTypeAlias (list), testCaseTypeAlias (list), componentAlias (list), owner (list) 13. PRIORITY IDs: Typically 1=High, 2=Medium, 3=Low (verify with your QMetry instance) 14. STATUS IDs: Typically 1=Active, 2=Review, 3=Deprecated (verify with your QMetry instance) 15. TESTING TYPE IDs: Typically 1=Manual, 2=Automated (verify with your QMetry instance) 16. TYPE IDs: Typically 1=Functional, 2=Integration, 3=System (verify with your QMetry instance) 17. Multiple filter conditions are combined with AND logic 18. Use pagination for large result sets (start, page, limit parameters) 19. This tool is essential for test suite management and execution planning 20. Helps verify test suite composition before test runs 21. Critical for understanding test coverage within specific suites 22. Use for test suite analysis and optimization",
     "inputSchema": [
       "filter",
-      "getColumns",
       "getLinked",
-      "getSubEntities",
       "limit",
       "page",
       "projectKey",
-      "restoreDefaultColumns",
       "start",
-      "tcFolderPath",
       "tsID",
-      "udfFilter",
-      "viewId",
     ],
     "outputSchema": undefined,
     "title": "QMetry: Fetch Test Cases Linked to Test Suite",
