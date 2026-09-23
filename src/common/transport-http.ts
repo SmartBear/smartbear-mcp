@@ -709,9 +709,34 @@ async function handleLegacySseRequest(
     }
   >,
 ) {
+  // When the client already has OAuth credentials, commit SSE headers and send
+  // a keepalive comment immediately so the client sees an active stream instead
+  // of silence while newServer() validates the token asynchronously.
+  //
+  // For unauthenticated requests (no Authorization header) we must NOT commit
+  // headers first, because newServer() will write the 401 + WWW-Authenticate
+  // OAuth-discovery response that the client needs to start the OAuth flow.
+  //
+  // After committing headers we patch res.writeHead to a no-op so that
+  // newServer() (401 on unexpected auth failure) and SSEServerTransport.start()
+  // (200 on success) don't throw ERR_HTTP_HEADERS_SENT.
+  const earlyPingSent = !!req.headers.authorization;
+  if (earlyPingSent) {
+    res.writeHead(200, {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache, no-transform",
+      Connection: "keep-alive",
+    });
+    res.write(": ping\n\n");
+    (res as any).writeHead = () => res;
+  }
+
   // Create a new server instance for this connection
   const server = await newServer(req, res);
   if (!server) {
+    if (earlyPingSent) {
+      res.end();
+    }
     return;
   }
 

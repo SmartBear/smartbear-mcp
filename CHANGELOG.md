@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- [Common] Eliminated a long delay on `GET /sse` after OAuth completes. Previously, the SSE response stayed silent while the server validated the OAuth token asynchronously, causing clients (e.g. Antigravity) to interpret the silence as "not ready" and add retry delays. The fix sends SSE response headers and a keepalive comment immediately when an `Authorization` header is present, so the client sees an active stream before `newServer()` finishes.
+
 ## [0.41.0] - 2026-09-16
 
 ### Added
