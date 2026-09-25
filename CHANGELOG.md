@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- [QTM4J] Added optional `folderId` support to `create_test_case` and `create_test_cycle`. If omitted, the asset is created in the `MCP Generated` folder.
+
+### Fixed
+
+- [QTM4J] Fixed `search_test_cases` folder filtering to use `folderId` instead of `folders`, matching the backend API contract.
+
 ## [0.41.0] - 2026-09-16
 
 ### Added

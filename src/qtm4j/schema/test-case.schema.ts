@@ -35,8 +35,13 @@ export const CreateTestCaseBody = zod.object({
   description: zod.string().optional().describe("Test case description"),
   folderId: zod
     .number()
+    .int()
+    .positive()
     .optional()
-    .describe("Folder ID to place the test case in"),
+    .describe(
+      "Numeric folder ID where the test case will be created. " +
+        "If omitted, the test case is created in the 'MCP Generated' folder automatically.",
+    ),
   priority: zod
     .string()
     .optional()
