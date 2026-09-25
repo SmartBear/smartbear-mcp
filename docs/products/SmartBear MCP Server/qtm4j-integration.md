@@ -65,7 +65,7 @@ The following environment variables configure the QTM4J integration:
     - priority names to include (`priority`) — e.g., `["High", "Medium"]`
     - label names to include (`labels`) — e.g., `["Release_1", "Sprint 1"]`
     - component names to include (`components`) — e.g., `["UI", "Cloud"]`
-    - folder IDs to filter by (`folders`)
+    - folder ID to filter by (`folderId`) — numeric ID; right-click a folder in QTM4J and select "Copy Folder Id"
     - assignee Jira account IDs (`assignee`)
     - reporter Jira account IDs (`reporter`)
     - automation status (`isAutomated`)
@@ -123,7 +123,7 @@ The following environment variables configure the QTM4J integration:
   - optional estimated time in HH:MM:SS format (`estimatedTime`) — e.g., `"01:30:00"`
   - optional label names to attach (`labels`) — e.g., `["Release_1", "Sprint 1"]`
   - optional component names to attach (`components`) — e.g., `["UI", "Backend"]`
-  - optional folder ID to place the test case in (`folderId`) — defaults to the `MCP Generated` folder if not provided
+  - optional numeric folder ID (`folderId`) — defaults to `MCP Generated`; right-click the target folder in QTM4J and select "Copy Folder Id"
 - **Returns**: The created test case key (e.g., `SCRUM-TC-146`) and ID.
 - **Use case**: Adding new test cases with metadata, associating them with labels and components, organizing them into folders.
 
@@ -262,9 +262,9 @@ The following environment variables configure the QTM4J integration:
   - optional component names to attach (`components`) — e.g., `["UI", "Cloud"]`
   - optional planned start date (`plannedStartDate`) — format: `dd/MMM/yyyy HH:mm` e.g., `"10/May/2026 00:00"`
   - optional planned end date (`plannedEndDate`) — format: `dd/MMM/yyyy HH:mm`
+  - optional numeric folder ID (`folderId`) — defaults to `MCP Generated`; right-click the target folder in QTM4J and select "Copy Folder Id"
 - **Returns**: The created test cycle key (e.g., `SCRUM-TR-218`) and ID.
 - **Use case**: Creating sprint cycles, release cycles, or environment-specific cycles; organizing test cases for a planned execution window.
-- **Note**: All cycles are placed in the `MCP Generated` folder automatically.
 
 ### Update Operations
 
