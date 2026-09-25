@@ -8902,7 +8902,7 @@ Expected Output: description updated only. Field IDs auto-resolved from project 
 **Parameters:**
 - summary (string) *required*: Test case summary/title
 - description (string): Test case description
-- folderId (number): Folder ID to place the test case in
+- folderId (number): Numeric folder ID where the test case will be created. If omitted, the test case is created in the 'MCP Generated' folder automatically.
 - priority (string): Priority name (e.g., 'High', 'Medium', 'Low'). Auto-resolved to ID.
 - status (string): Status name (e.g., 'To Do', 'In Progress', 'Done'). Auto-resolved to ID.
 - assignee (string): Assignee account ID
@@ -8971,7 +8971,7 @@ Expected Output: Test case created with resolved priority and status IDs
 \`\`\`
 Expected Output: Test case created with resolved labels/components/priority/status and 3 steps
 
-**Hints:** 1. PREREQUISITE: set_project_context must be called before this tool. NEVER auto-select a project. 2. Priority and status values were returned by set_project_context. Use NLP to map user input (e.g., 'Major' → 'High', 'Critical' → 'Blocker'). 3. If priority or status name is not found, the operation proceeds without that field and a warning is returned. 4. Labels and components are resolved on demand. If a name is not found, it is skipped with a warning. 5. Steps: ALWAYS include all three fields — stepDetails, testData, and expectedResult. Generate reasonable values if not provided. 6. folderId is optional. assignee and reporter accept Jira account IDs.",
+**Hints:** 1. PREREQUISITE: set_project_context must be called before this tool. NEVER auto-select a project. 2. Priority and status values were returned by set_project_context. Use NLP to map user input (e.g., 'Major' → 'High', 'Critical' → 'Blocker'). 3. If priority or status name is not found, the operation proceeds without that field and a warning is returned. 4. Labels and components are resolved on demand. If a name is not found, it is skipped with a warning. 5. Steps: ALWAYS include all three fields — stepDetails, testData, and expectedResult. Generate reasonable values if not provided. 6. FOLDER ID: folderId is optional. If omitted, defaults to the 'MCP Generated' folder. To place in a specific folder, ask the user to right-click the target folder in QTM4J and select 'Copy Folder Id' — never try to look it up.",
     "inputSchema": [
       "assignee",
       "components",
@@ -9000,7 +9000,7 @@ Expected Output: Test case created with resolved labels/components/priority/stat
       "readOnlyHint": false,
       "title": "QTM4J: Create Test Cycle",
     },
-    "description": "Create a new test cycle in a QTM4J project. Supports auto-resolving human-readable names for priority and status. Always creates in the 'MCP Generated' folder. projectId is injected automatically from the active project context.
+    "description": "Create a new test cycle in a QTM4J project. Supports auto-resolving human-readable names for priority and status. projectId is injected automatically from the active project context.
 
 **Toolset:** Test Cycles
 
@@ -9009,6 +9009,7 @@ Expected Output: Test case created with resolved labels/components/priority/stat
 - description (string): Detailed description of the test cycle. Max 65 535 characters.
 - priority (string): Priority name (e.g., 'High', 'Medium', 'Low'). Auto-resolved to ID.
 - status (string): Status name (e.g., 'To Do', 'In Progress', 'Done'). Auto-resolved to ID.
+- folderId (number): Numeric folder ID where the test cycle will be created. If omitted, the cycle is created in the 'MCP Generated' folder automatically.
 - assignee (string): Assignee account ID
 - reporter (string): Reporter account ID
 - labels (array): List of label names (e.g., ['Release_1', 'Sprint 1']). Auto-resolved to IDs.
@@ -9050,11 +9051,12 @@ Expected Output: Test cycle created with key 'SCRUM-TR-xxx'
 \`\`\`
 Expected Output: Test cycle created with resolved priority, status, labels, and components
 
-**Hints:** 1. PREREQUISITE: set_project_context must be called before this tool. NEVER auto-select a project. 2. If any priority, status, label, or component name cannot be resolved, the cycle is still created but a warning is returned. Suggest the closest available value from the set_project_context response and ask the user to confirm before retrying. 3. All cycles are placed in the 'MCP Generated' folder — do not pass folderId. 4. Date format: 'dd/MMM/yyyy HH:mm' e.g. '10/May/2026 00:00'. Month must be capitalised. plannedStartDate must be ≤ plannedEndDate.",
+**Hints:** 1. PREREQUISITE: set_project_context must be called before this tool. NEVER auto-select a project. 2. If any priority, status, label, or component name cannot be resolved, the cycle is still created but a warning is returned. Suggest the closest available value from the set_project_context response and ask the user to confirm before retrying. 3. FOLDER ID: folderId is optional. If omitted, defaults to the 'MCP Generated' folder. To place in a specific folder, ask the user to right-click the target folder in QTM4J and select 'Copy Folder Id' — never try to look it up. 4. Date format: 'dd/MMM/yyyy HH:mm' e.g. '10/May/2026 00:00'. Month must be capitalised. plannedStartDate must be ≤ plannedEndDate.",
     "inputSchema": [
       "assignee",
       "components",
       "description",
+      "folderId",
       "labels",
       "plannedEndDate",
       "plannedStartDate",
@@ -10433,17 +10435,14 @@ Expected Output: Test cases with all available fields explicitly requested
 \`\`\`json
 {
   "filter": {
-    "folders": [
-      123,
-      456
-    ],
+    "folderId": 123,
     "fixVersions": [
       789
     ]
   }
 }
 \`\`\`
-Expected Output: Test cases in the specified folders and fix versions
+Expected Output: Test cases in the specified folder and fix version
 
 11. Complex filter: multiple criteria combined with multi-field sort
 \`\`\`json

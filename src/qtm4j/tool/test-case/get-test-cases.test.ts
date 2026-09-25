@@ -141,6 +141,22 @@ describe("SearchTestCases", () => {
       });
     });
 
+    it("should send folderId in filter body when provided", async () => {
+      mockApiClient.post.mockResolvedValueOnce(mockResponse);
+
+      await instance.handle({ filter: { folderId: 16 } });
+
+      expect(mockApiClient.post).toHaveBeenCalledWith(expect.any(String), {
+        filter: { folderId: 16, projectId: "10000" },
+      });
+    });
+
+    it("should reject non-positive folderId in filter", async () => {
+      await expect(
+        instance.handle({ filter: { folderId: 0 } }),
+      ).rejects.toThrow();
+    });
+
     it("should throw when project context is not set", async () => {
       mockRegistry.requireProjectContext.mockImplementation(() => {
         throw new Error("No active project set");
