@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ENDPOINTS } from "../../config/constants";
+import { DEFAULT_FOLDER_NAMES, ENDPOINTS } from "../../config/constants";
 import { CreateTestCase } from "./create-test-case";
 
 describe("CreateTestCase", () => {
@@ -190,6 +190,58 @@ describe("CreateTestCase", () => {
 
       expect(result.structuredContent).toBeDefined();
       expect(result.content).toEqual([]);
+      // folderId must not be clobbered — numeric value must reach the API
+      expect(mockApiClient.post).toHaveBeenCalledWith(
+        ENDPOINTS.CREATE_TEST_CASE,
+        expect.objectContaining({ folderId: 5000 }),
+      );
+    });
+
+    it("should skip folder resolution and pass folderId numeric directly", async () => {
+      mockApiClient.post.mockResolvedValueOnce({
+        id: "1",
+        key: "PROJ-TC-1",
+        versionNo: 1,
+        summary: "TC",
+      });
+
+      await instance.handle({ summary: "TC", folderId: 99 });
+
+      // FOLDER excluded from activeFieldConfig → only 4 resolvers: PRIORITY, STATUS, COMPONENTS, LABELS
+      expect(mockFieldResolver.getResolver).toHaveBeenCalledTimes(4);
+      expect(mockApiClient.post).toHaveBeenCalledWith(
+        ENDPOINTS.CREATE_TEST_CASE,
+        expect.objectContaining({ folderId: 99 }),
+      );
+    });
+
+    it("should default folderId to 'MCP Generated' when not provided", async () => {
+      mockApiClient.post.mockResolvedValueOnce({
+        id: "1",
+        key: "PROJ-TC-1",
+        versionNo: 1,
+        summary: "TC",
+      });
+
+      await instance.handle({ summary: "TC" });
+
+      // Capture count before the assertion call to getResolver() adds to it
+      const resolverCallCount = mockFieldResolver.getResolver.mock.calls.length;
+      const resolveCall = mockFieldResolver
+        .getResolver()
+        .resolve.mock.calls.find((call: any[]) => call[0] === "folderId");
+      expect(resolveCall).toBeDefined();
+      expect(resolveCall[2]).toMatchObject({
+        folderId: DEFAULT_FOLDER_NAMES.MCP_GENERATED,
+      });
+      // All 5 resolvers active: PRIORITY, STATUS, FOLDER, COMPONENTS, LABELS
+      expect(resolverCallCount).toBe(5);
+    });
+
+    it("should reject non-positive folderId", async () => {
+      await expect(
+        instance.handle({ summary: "TC", folderId: 0 }),
+      ).rejects.toThrow();
     });
   });
 });
