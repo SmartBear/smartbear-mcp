@@ -560,6 +560,27 @@ describe("SwaggerAPI", () => {
       );
     });
 
+    it("should throw when both definition and registry coordinates are provided", async () => {
+      await expect(
+        api.validateApi({
+          definition: "openapi: 3.0.0",
+          owner: "orgname",
+          apiName: "petstore",
+          version: "1.0.0",
+        }),
+      ).rejects.toThrow(
+        /Provide either 'definition' or 'owner' \+ 'apiName' \+ 'version', not both/,
+      );
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it("should throw listing the missing coordinates when they are incomplete", async () => {
+      await expect(
+        api.validateApi({ owner: "orgname", apiName: "petstore" }),
+      ).rejects.toThrow(/Missing 'version'/);
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
     it("should throw when the specs/validate endpoint returns an error", async () => {
       fetchMock.mockResponseOnce("Bad Request", {
         status: 400,

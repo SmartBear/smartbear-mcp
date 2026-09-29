@@ -39,11 +39,11 @@ import {
 } from "./portal-utils";
 import type {
   ApiDefinitionParams,
+  ApidomValidationResult,
   ApiProperty,
   ApiSearchParams,
   ApiSearchResponse,
   ApiSpecification,
-  ApidomValidationResult,
   ApisJsonResponse,
   CreateApiFromPromptParams,
   CreateApiFromPromptResponse,
@@ -1567,6 +1567,33 @@ export class SwaggerAPI {
     params: ValidateApiParams,
   ): Promise<ApidomValidationResult | FallbackResponse> {
     let definition = params.definition;
+    const coordinates = {
+      owner: params.owner,
+      apiName: params.apiName,
+      version: params.version,
+    };
+    const providedCoordinates = Object.keys(coordinates).filter(
+      (key) => coordinates[key as keyof typeof coordinates],
+    );
+
+    if (definition && providedCoordinates.length > 0) {
+      throw new ToolError(
+        "Provide either 'definition' or 'owner' + 'apiName' + 'version', not both",
+      );
+    }
+
+    if (
+      !definition &&
+      providedCoordinates.length > 0 &&
+      providedCoordinates.length < 3
+    ) {
+      const missing = Object.keys(coordinates).filter(
+        (key) => !providedCoordinates.includes(key),
+      );
+      throw new ToolError(
+        `Missing ${missing.map((key) => `'${key}'`).join(", ")} - 'owner', 'apiName' and 'version' are all required to validate an existing API`,
+      );
+    }
 
     if (!definition && params.owner && params.apiName && params.version) {
       const fetched = await this.getApiDefinition(

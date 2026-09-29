@@ -41,8 +41,8 @@ import {
 import {
   ApiDefinitionOutputSchema,
   ApiDefinitionParamsSchema,
-  ApiSearchParamsSchema,
   ApidomValidationOutputSchema,
+  ApiSearchParamsSchema,
   CreateApiFromPromptOutputSchema,
   CreateApiFromPromptParamsSchema,
   CreateApiOutputSchema,

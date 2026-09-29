@@ -30,9 +30,9 @@ import type {
 } from "./client/functional-testing-types";
 import {
   type ApiDefinitionParams,
+  type ApidomValidationResult,
   type ApiSearchParams,
   type ApiSearchResponse,
-  type ApidomValidationResult,
   type CreateApiFromPromptParams,
   type CreateApiFromPromptResponse,
   type CreateApiParams,
