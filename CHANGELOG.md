@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- [Swagger] Added `swagger_validate_api` tool to validate OpenAPI and AsyncAPI definitions (raw content or an existing registry API).
+- [Swagger] Added `swagger_validate_api` tool to validate OpenAPI and AsyncAPI definitions (raw content or an existing registry API). [#723](https://github.com/SmartBear/smartbear-mcp/pull/723)
 - [QTM4J] Added optional `folderId` support to `create_test_case` and `create_test_cycle`. If omitted, the asset is created in the `MCP Generated` folder. [#721](https://github.com/SmartBear/smartbear-mcp/pull/721)
 
 ### Fixed
