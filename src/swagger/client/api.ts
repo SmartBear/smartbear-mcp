@@ -39,6 +39,7 @@ import {
 } from "./portal-utils";
 import type {
   ApiDefinitionParams,
+  ApidomValidationResult,
   ApiProperty,
   ApiSearchParams,
   ApiSearchResponse,
@@ -57,6 +58,7 @@ import type {
   StandardizationScanApiResponse,
   StandardizeApiParams,
   StandardizeApiResponse,
+  ValidateApiParams,
 } from "./registry-types";
 import type {
   Organization,
@@ -1553,6 +1555,103 @@ export class SwaggerAPI {
       };
     }
     return results;
+  }
+
+  /**
+   * Validate an API definition using server-side apidom-ls.
+   * Accepts either a raw definition or an existing API identified by owner/apiName/version.
+   * @param params Parameters including definition or registry coordinates
+   * @returns Apidom validation result with findings (line, severity, message)
+   */
+  async validateApi(
+    params: ValidateApiParams,
+  ): Promise<ApidomValidationResult | FallbackResponse> {
+    let definition = params.definition;
+    const coordinates = {
+      owner: params.owner,
+      apiName: params.apiName,
+      version: params.version,
+    };
+    const providedCoordinates = Object.keys(coordinates).filter(
+      (key) => coordinates[key as keyof typeof coordinates],
+    );
+
+    if (definition && providedCoordinates.length > 0) {
+      throw new ToolError(
+        "Provide either 'definition' or 'owner' + 'apiName' + 'version', not both",
+      );
+    }
+
+    if (
+      !definition &&
+      providedCoordinates.length > 0 &&
+      providedCoordinates.length < 3
+    ) {
+      const missing = Object.keys(coordinates).filter(
+        (key) => !providedCoordinates.includes(key),
+      );
+      throw new ToolError(
+        `Missing ${missing.map((key) => `'${key}'`).join(", ")} - 'owner', 'apiName' and 'version' are all required to validate an existing API`,
+      );
+    }
+
+    if (!definition && params.owner && params.apiName && params.version) {
+      const fetched = await this.getApiDefinition(
+        {
+          owner: params.owner,
+          api: params.apiName,
+          version: params.version,
+        },
+        { accept: "text/plain" },
+      );
+      if (typeof fetched !== "string") {
+        throw new ToolError(
+          `Failed to fetch API definition for ${params.owner}/${params.apiName}/${params.version}`,
+        );
+      }
+      definition = fetched;
+    }
+
+    if (!definition) {
+      throw new ToolError(
+        "Either 'definition' or 'owner' + 'apiName' + 'version' must be provided",
+      );
+    }
+
+    const searchParams = new URLSearchParams();
+    if (params.maxProblems !== undefined) {
+      searchParams.set("maxProblems", String(params.maxProblems));
+    }
+    if (params.uri) {
+      searchParams.set("uri", params.uri);
+    }
+    const queryString = searchParams.toString();
+    const url = `${this.config.registryBasePath}/specs/validate${queryString ? `?${queryString}` : ""}`;
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        ...this.headers,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ definition }),
+    });
+
+    // 422 is a normal, documented outcome of /specs/validate (the definition
+    // wasn't recognized as a supported spec) with a full structured body,
+    // not an error - don't discard it via the generic !response.ok check.
+    if (response.status === 422) {
+      return this.parseResponse<ApidomValidationResult>(response, {});
+    }
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "");
+      throw new ToolError(
+        `SwaggerHub Registry API specs/validate failed - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}`,
+      );
+    }
+
+    return this.handleResponse<ApidomValidationResult>(response);
   }
 
   /**
