@@ -569,6 +569,8 @@ describe("probe endpoints", () => {
       const body = JSON.parse(res._body);
       expect(body.status).toBe("ok");
       expect(body.timestamp).toEqual(expect.any(String));
+      expect(body.version).toEqual(expect.any(String));
+      expect(body.region).toBeNull();
     });
 
     // Critical regression guard: liveness must NEVER flip during drain. If
