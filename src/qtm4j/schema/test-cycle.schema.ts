@@ -6,7 +6,9 @@
 import * as zod from "zod";
 
 /**
- * projectId and folderId are injected automatically by the tool.
+ * projectId is injected automatically by the tool.
+ * folderId is optional — supplied by the user as a numeric ID, or defaulted to
+ * the 'MCP Generated' folder by the tool when omitted.
  * priority, status, labels, and components accept human-readable names
  * and are auto-resolved to numeric IDs before the API call.
  */
@@ -34,6 +36,15 @@ export const CreateTestCycleBody = zod.object({
     .optional()
     .describe(
       "Status name (e.g., 'To Do', 'In Progress', 'Done'). Auto-resolved to ID.",
+    ),
+  folderId: zod
+    .number()
+    .int()
+    .positive()
+    .optional()
+    .describe(
+      "Numeric folder ID where the test cycle will be created. " +
+        "If omitted, the cycle is created in the 'MCP Generated' folder automatically.",
     ),
   assignee: zod.string().optional().describe("Assignee account ID"),
   reporter: zod.string().optional().describe("Reporter account ID"),
