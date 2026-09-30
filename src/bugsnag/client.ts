@@ -38,6 +38,7 @@ import { ListSpans } from "./tool/performance/list-spans";
 import { ListTraceFields } from "./tool/performance/list-trace-fields";
 import { SetNetworkEndpointGroupings } from "./tool/performance/set-network-endpoint-groupings";
 import { GetCurrentProject } from "./tool/project/get-current-project";
+import { ListProjectCollaborators } from "./tool/project/list-project-collaborators";
 import { ListProjectEventFilters } from "./tool/project/list-project-event-filters";
 import { ListProjects } from "./tool/project/list-projects";
 import { GetBuild } from "./tool/release/get-build";
@@ -555,6 +556,7 @@ export class BugsnagClient implements Client {
       new ListTraceFields(this),
       new GetNetworkEndpointGroupings(this),
       new SetNetworkEndpointGroupings(this),
+      new ListProjectCollaborators(this),
     ];
 
     for (const tool of tools) {
