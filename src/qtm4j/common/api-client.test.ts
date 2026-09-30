@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ToolError } from "../../common/tools";
+import { API_CONFIG } from "../config/constants";
 import { ApiClient } from "../http/api-client";
 
 // Mock fetch globally
@@ -24,18 +25,19 @@ describe("ApiClient", () => {
   it("should trim trailing slash from baseUrl", () => {
     const client = new ApiClient("token", "https://example.com/");
     const url = client.getUrl("/endpoint");
-    expect(url).toBe("https://example.com/endpoint");
+    expect(url).toBe("https://example.com/rest/api/latest/endpoint");
   });
 
   it("should construct URL without query params", () => {
     const client = new ApiClient("token", "https://api.example.com");
     const url = client.getUrl("/projects");
-    expect(url).toBe("https://api.example.com/projects");
+    expect(url).toBe("https://api.example.com/rest/api/latest/projects");
   });
 
   it("should construct URL with query params", () => {
     const client = new ApiClient("token", "https://api.example.com");
     const url = client.getUrl("/projects", { maxResults: 10, startAt: 0 });
+    expect(url).toContain("/rest/api/latest/projects");
     expect(url).toContain("maxResults=10");
     expect(url).toContain("startAt=0");
   });
@@ -46,6 +48,7 @@ describe("ApiClient", () => {
       maxResults: 10,
       search: undefined,
     });
+    expect(url).toContain("/rest/api/latest/projects");
     expect(url).toContain("maxResults=10");
     expect(url).not.toContain("search");
   });
@@ -53,6 +56,7 @@ describe("ApiClient", () => {
   it("should handle boolean query params", () => {
     const client = new ApiClient("token", "https://api.example.com");
     const url = client.getUrl("/projects", { qmetryEnabled: true });
+    expect(url).toContain("/rest/api/latest/projects");
     expect(url).toContain("qmetryEnabled=true");
   });
 
@@ -84,7 +88,7 @@ describe("ApiClient", () => {
 
     expect(result).toEqual(mockResponse);
     expect(global.fetch).toHaveBeenCalledWith(
-      "https://api.example.com/endpoint",
+      "https://api.example.com/rest/api/latest/endpoint",
       expect.objectContaining({
         method: "GET",
         headers: expect.any(Object),
@@ -112,7 +116,7 @@ describe("ApiClient", () => {
 
     expect(result).toEqual(mockResponse);
     expect(global.fetch).toHaveBeenCalledWith(
-      "https://api.example.com/endpoint",
+      "https://api.example.com/rest/api/latest/endpoint",
       expect.objectContaining({
         method: "POST",
         body: JSON.stringify(requestBody),
@@ -282,6 +286,7 @@ describe("ApiClient", () => {
     const client = new ApiClient(
       "token",
       "https://api.example.com",
+      API_CONFIG.DEFAULT_API_VERSION,
       () => "automation-key",
     );
     const result = await client.getAutomation("/automation", { page: 1 });
@@ -305,6 +310,7 @@ describe("ApiClient", () => {
     const client = new ApiClient(
       "token",
       "https://api.example.com",
+      API_CONFIG.DEFAULT_API_VERSION,
       () => "automation-key",
     );
     const result = await client.postAutomation("/import", { format: "junit" });
@@ -380,5 +386,67 @@ describe("ApiClient", () => {
         Buffer.from("data"),
       ),
     ).rejects.toThrow(ToolError);
+  });
+
+  it("should use custom apiVersion when provided", () => {
+    const client = new ApiClient(
+      "token",
+      "https://api.example.com",
+      "/rest/api/v2",
+    );
+    const url = client.getUrl("/projects");
+    expect(url).toBe("https://api.example.com/rest/api/v2/projects");
+  });
+
+  it("should normalize apiVersion without leading slash", () => {
+    const client = new ApiClient(
+      "token",
+      "https://api.example.com",
+      "rest/api/v3",
+    );
+    const url = client.getUrl("/projects");
+    expect(url).toBe("https://api.example.com/rest/api/v3/projects");
+  });
+
+  it("should strip trailing slash from apiVersion", () => {
+    const client = new ApiClient(
+      "token",
+      "https://api.example.com",
+      "/rest/api/v4/",
+    );
+    const url = client.getUrl("/projects");
+    expect(url).toBe("https://api.example.com/rest/api/v4/projects");
+  });
+
+  it("should bypass apiVersion for unversioned automation endpoints", async () => {
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      headers: { get: () => "10" },
+      text: async () => JSON.stringify({ data: [] }),
+    });
+
+    const client = new ApiClient(
+      "token",
+      "https://api.example.com",
+      "/rest/api/v5",
+      () => "automation-key",
+    );
+    await client.getAutomation("/rest/api/automation/importresult/history");
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      "https://api.example.com/rest/api/automation/importresult/history",
+      expect.any(Object),
+    );
+  });
+
+  it("should bypass apiVersion for unversioned endpoints when explicitly disabled", () => {
+    const client = new ApiClient(
+      "token",
+      "https://api.example.com",
+      "/rest/api/latest",
+    );
+    const url = client.getUrl("/rest/api/automation/importresult", undefined, false);
+    expect(url).toBe("https://api.example.com/rest/api/automation/importresult");
   });
 });

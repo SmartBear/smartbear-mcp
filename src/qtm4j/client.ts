@@ -31,6 +31,11 @@ const ConfigurationSchema = z.object({
     .optional()
     .default(API_CONFIG.DEFAULT_BASE_URL)
     .describe(SCHEMA_DESCRIPTIONS.BASE_URL),
+  [CONFIG_KEYS.API_VERSION]: z
+    .string()
+    .optional()
+    .default(API_CONFIG.DEFAULT_API_VERSION)
+    .describe(SCHEMA_DESCRIPTIONS.API_VERSION),
 });
 
 /**
@@ -51,7 +56,8 @@ const ConfigurationSchema = z.object({
  * {
  *   "qtm4j": {
  *     "api_key": "your-api-key-here",
- *     "base_url": "https://qtmcloud.qmetry.com"
+ *     "base_url": "https://qtmcloud.qmetry.com",
+ *     "api_version": "/rest/api/latest"
  *   }
  * }
  * ```
@@ -69,6 +75,7 @@ export class Qtm4jClient implements Client {
   private _apiKey: string | undefined;
   private _automationApiKey: string | undefined;
   private baseUrl: string = API_CONFIG.DEFAULT_BASE_URL;
+  private apiVersion: string = API_CONFIG.DEFAULT_API_VERSION;
   private apiClient: ApiClient | undefined;
   private resolverRegistry: ResolverRegistry | undefined;
 
@@ -86,11 +93,15 @@ export class Qtm4jClient implements Client {
     if (config[CONFIG_KEYS.BASE_URL]) {
       this.baseUrl = config[CONFIG_KEYS.BASE_URL];
     }
+    if (config[CONFIG_KEYS.API_VERSION]) {
+      this.apiVersion = config[CONFIG_KEYS.API_VERSION];
+    }
 
     // Initialize API client with regular and automation token providers
     this.apiClient = new ApiClient(
       () => this.getAuthToken(),
       this.baseUrl,
+      this.apiVersion,
       () => this.getAutomationApiKey(),
     );
 
