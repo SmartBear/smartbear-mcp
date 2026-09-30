@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.41.1] - 2026-09-30
+
 ### Added
 
 - [Swagger] Added `swagger_validate_api` tool to validate OpenAPI and AsyncAPI definitions (raw content or an existing registry API). [#723](https://github.com/SmartBear/smartbear-mcp/pull/723)
