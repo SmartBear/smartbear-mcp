@@ -13,7 +13,7 @@ RUN npm run build
 
 FROM node:22-alpine AS release
 
-RUN apk add --no-cache libcrypto3=3.5.7-r0 libssl3=3.5.7-r0
+RUN apk upgrade --no-cache libcrypto3 libssl3
 
 COPY --from=builder /app/dist /app/dist
 COPY --from=builder /app/package.json /app/package.json
