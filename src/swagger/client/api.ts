@@ -1281,7 +1281,7 @@ export class SwaggerAPI {
     });
     return this.saveApiDefinition(params, {
       ...(exists ? {} : { isPrivate: true }),
-      version: params.version,
+      version: params.version ?? undefined,
     });
   }
 

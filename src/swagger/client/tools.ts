@@ -275,7 +275,7 @@ export const TOOLS: SwaggerToolParams[] = [
     title: "Create or Update API",
     toolset: "Registry API",
     summary:
-      "Create a new API or update an existing API in SwaggerHub Registry for Swagger Studio. The API specification type (OpenAPI, AsyncAPI) is automatically detected from the definition content. On create, APIs default to version 1.0.0 (override with 'version'), private visibility, and automock disabled; visibility and automock cannot be changed via this tool. Returns HTTP 201 for creation, HTTP 200 for update. Response includes 'operation' field indicating whether it was a 'create' or 'update' operation along with API details and SwaggerHub URL.",
+      "Create a new API or update an existing API in SwaggerHub Registry for Swagger Studio. The API specification type (OpenAPI, AsyncAPI) is automatically detected from the definition content. On create, private visibility and automock disabled are always used and cannot be changed via this tool. The version is taken from 'version' if provided, otherwise from the definition's info.version field — include a non-empty info.version if you omit 'version', or the request fails with a 400 error. Returns HTTP 201 for creation, HTTP 200 for update. Response includes 'operation' field indicating whether it was a 'create' or 'update' operation along with API details and SwaggerHub URL.",
     inputSchema: CreateApiParamsSchema,
     outputSchema: CreateApiOutputSchema,
     handler: "createOrUpdateApi",
