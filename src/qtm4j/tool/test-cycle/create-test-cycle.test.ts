@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ENDPOINTS } from "../../config/constants";
+import { DEFAULT_FOLDER_NAMES, ENDPOINTS } from "../../config/constants";
 import { CreateTestCycle } from "./create-test-cycle";
 
 describe("CreateTestCycle", () => {
@@ -79,7 +79,7 @@ describe("CreateTestCycle", () => {
       expect(result.content).toEqual([]);
     });
 
-    it("should always set folderId to 'MCP Generated' before resolution", async () => {
+    it("should default folderId to 'MCP Generated' when not provided", async () => {
       mockApiClient.post.mockResolvedValueOnce(MINIMAL_RESPONSE);
 
       await instance.handle(MINIMAL_ARGS);
@@ -88,7 +88,28 @@ describe("CreateTestCycle", () => {
         .getResolver()
         .resolve.mock.calls.find((call: any[]) => call[0] === "folderId");
       expect(resolveCall).toBeDefined();
-      expect(resolveCall[2]).toMatchObject({ folderId: "MCP Generated" });
+      expect(resolveCall[2]).toMatchObject({
+        folderId: DEFAULT_FOLDER_NAMES.MCP_GENERATED,
+      });
+    });
+
+    it("should use user-supplied folderId and skip folder resolution", async () => {
+      mockApiClient.post.mockResolvedValueOnce(MINIMAL_RESPONSE);
+
+      await instance.handle({ ...MINIMAL_ARGS, folderId: 42 });
+
+      // FOLDER excluded from activeFieldConfig → only 4 resolvers: PRIORITY, STATUS, LABELS, COMPONENTS
+      expect(mockFieldResolver.getResolver).toHaveBeenCalledTimes(4);
+      expect(mockApiClient.post).toHaveBeenCalledWith(
+        ENDPOINTS.CREATE_TEST_CYCLE,
+        expect.objectContaining({ folderId: 42 }),
+      );
+    });
+
+    it("should reject non-positive folderId", async () => {
+      await expect(
+        instance.handle({ ...MINIMAL_ARGS, folderId: 0 }),
+      ).rejects.toThrow();
     });
 
     it("should call the create endpoint with projectId from context", async () => {

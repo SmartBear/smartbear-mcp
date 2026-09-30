@@ -11,6 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [Swagger] `create_api_from_prompt` and `create_or_update_api` tools: added an optional `version` parameter to save the API definition under a specific version, instead of relying solely on the definition's `info.version` field (or the fixed `1.0.0` default on create).
 
+## [0.41.1] - 2026-09-30
+
+### Added
+
+- [Swagger] Added `swagger_validate_api` tool to validate OpenAPI and AsyncAPI definitions (raw content or an existing registry API). [#723](https://github.com/SmartBear/smartbear-mcp/pull/723)
+- [QTM4J] Added optional `folderId` support to `create_test_case` and `create_test_cycle`. If omitted, the asset is created in the `MCP Generated` folder. [#721](https://github.com/SmartBear/smartbear-mcp/pull/721)
+
+### Fixed
+
+- [QTM4J] Fixed `search_test_cases` folder filtering to use `folderId` instead of `folders`, matching the backend API contract. [#721](https://github.com/SmartBear/smartbear-mcp/pull/721)
+
 ## [0.41.0] - 2026-09-16
 
 ### Added

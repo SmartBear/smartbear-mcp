@@ -1,7 +1,12 @@
 import { Tool } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { Qtm4jClient } from "../../client";
-import { ENDPOINTS, TOOL_NAMES, TOOLSETS } from "../../config/constants";
+import {
+  DEFAULT_FOLDER_NAMES,
+  ENDPOINTS,
+  TOOL_NAMES,
+  TOOLSETS,
+} from "../../config/constants";
 import { InputField, ResolverKeys } from "../../config/field-resolution.types";
 import {
   CreateTestCaseBody,
@@ -115,7 +120,7 @@ export class CreateTestCase extends Tool<Qtm4jClient> {
       "If priority or status name is not found, the operation proceeds without that field and a warning is returned.",
       "Labels and components are resolved on demand. If a name is not found, it is skipped with a warning.",
       "Steps: ALWAYS include all three fields — stepDetails, testData, and expectedResult. Generate reasonable values if not provided.",
-      "folderId is optional. assignee and reporter accept Jira account IDs.",
+      "FOLDER ID: folderId is optional. If omitted, defaults to the 'MCP Generated' folder. To place in a specific folder, ask the user to right-click the target folder in QTM4J and select 'Copy Folder Id' — never try to look it up.",
     ],
     outputDescription:
       "JSON object with test case ID, key, version number, and summary. Warnings included if any fields were skipped.",
@@ -126,15 +131,24 @@ export class CreateTestCase extends Tool<Qtm4jClient> {
   handle = async (rawArgs: any) => {
     const fieldResolver = this.client.getResolverRegistry();
     const context = fieldResolver.requireProjectContext();
-    const body = {
-      ...(CreateTestCaseBody.parse(rawArgs) as Record<string, unknown>),
-      projectId: String(context.projectId),
-      folderId: "MCP Generated",
-    };
-    const warnings: string[] = [];
 
+    const parsed = CreateTestCaseBody.parse(rawArgs) as Record<string, unknown>;
+    const body: Record<string, unknown> = {
+      ...parsed,
+      projectId: String(context.projectId),
+    };
+
+    // Numeric folderId → use as-is, skip resolver. If Absent → default to "MCP Generated".
+    const activeFieldConfig = { ...FIELD_CONFIG };
+    if (typeof body[InputField.FOLDER] === "number") {
+      delete activeFieldConfig[InputField.FOLDER];
+    } else {
+      body[InputField.FOLDER] = DEFAULT_FOLDER_NAMES.MCP_GENERATED;
+    }
+
+    const warnings: string[] = [];
     await Promise.all(
-      Object.entries(FIELD_CONFIG).map(([inputField, resolverKey]) =>
+      Object.entries(activeFieldConfig).map(([inputField, resolverKey]) =>
         fieldResolver
           .getResolver(resolverKey)
           .resolve(inputField, resolverKey, body, context, warnings),
