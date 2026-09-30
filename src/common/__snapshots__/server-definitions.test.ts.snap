@@ -12139,15 +12139,15 @@ None",
       "readOnlyHint": false,
       "title": "Swagger: Create or Update API",
     },
-    "description": "Create a new API or update an existing API in SwaggerHub Registry for Swagger Studio. The API specification type (OpenAPI, AsyncAPI) is automatically detected from the definition content. On create, APIs default to version 1.0.0 (override with 'version'), private visibility, and automock disabled; visibility and automock cannot be changed via this tool. Returns HTTP 201 for creation, HTTP 200 for update. Response includes 'operation' field indicating whether it was a 'create' or 'update' operation along with API details and SwaggerHub URL.
+    "description": "Create a new API or update an existing API in SwaggerHub Registry for Swagger Studio. The API specification type (OpenAPI, AsyncAPI) is automatically detected from the definition content. On create, private visibility and automock disabled are always used and cannot be changed via this tool. The version is taken from 'version' if provided, otherwise from the definition's info.version field — include a non-empty info.version if you omit 'version', or the request fails with a 400 error. Returns HTTP 201 for creation, HTTP 200 for update. Response includes 'operation' field indicating whether it was a 'create' or 'update' operation along with API details and SwaggerHub URL.
 
 **Toolset:** Registry API
 
 **Parameters:**
 - owner (string) *required*: Organization name (owner of the API)
 - apiName (string) *required*: API name
-- definition (string) *required*: API definition content (OpenAPI/AsyncAPI specification in JSON or YAML format). Format is automatically detected. On create, fixed values are used: version 1.0.0 (unless overridden via the version parameter), private visibility, automock disabled, and no project assignment. On update, the API's existing visibility is preserved.
-- version (string): API version to create or update (e.g. '1.0.0'). If omitted, the version is taken from the definition's info.version field (or defaults to 1.0.0 on create).",
+- definition (string) *required*: API definition content (OpenAPI/AsyncAPI specification in JSON or YAML format). Format is automatically detected. On create, private visibility, automock disabled, and no project assignment are always used. On update, the API's existing visibility is preserved. The version is taken from the version parameter if provided, otherwise from this definition's info.version field — include a non-empty info.version if you omit the version parameter, or the request fails.
+- version (string): API version to create or update (e.g. '1.0.0'). If omitted, the version is taken from the definition's info.version field, which must then be a non-empty value or the request fails with a 400 error.",
     "inputSchema": [
       "apiName",
       "definition",
