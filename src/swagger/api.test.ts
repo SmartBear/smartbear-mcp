@@ -181,6 +181,26 @@ describe("SwaggerAPI", () => {
       );
       expect(result).toEqual(mockResponse);
     });
+
+    it("should forward visibility when creating a product", async () => {
+      const mockResponse = { id: "prod-new", visibility: "conditional" };
+      const createData = {
+        type: "new",
+        name: "New Product",
+        slug: "new-product",
+        public: false,
+        visibility: "conditional" as const,
+      };
+
+      fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+      await api.createPortalProduct("portal-123", createData);
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${config.portalBasePath}/portals/portal-123/products`,
+        expect.objectContaining({ body: JSON.stringify(createData) }),
+      );
+    });
   });
 
   describe("getPortalProduct", () => {
@@ -226,6 +246,24 @@ describe("SwaggerAPI", () => {
   });
 
   describe("updatePortalProduct", () => {
+    it("should forward visibility when updating a product", async () => {
+      const updateData = { visibility: "conditional" as const };
+
+      fetchMock.mockResponseOnce(JSON.stringify({ message: "ok" }), {
+        headers: { "content-type": "application/json" },
+      });
+
+      await api.updatePortalProduct("prod-123", updateData);
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${config.portalBasePath}/products/prod-123`,
+        expect.objectContaining({
+          method: "PATCH",
+          body: JSON.stringify(updateData),
+        }),
+      );
+    });
+
     it("should update product with patch data and return URL", async () => {
       const mockProductResponse = {
         id: "prod-123",

@@ -9,6 +9,12 @@ export const PortalArgsSchema = z.object({
     ),
 });
 
+export const ProductVisibilitySchema = z.enum([
+  "visible",
+  "hidden",
+  "conditional",
+]);
+
 export const ProductArgsSchema = z.object({
   productId: z
     .string()
@@ -321,8 +327,11 @@ export const CreateProductArgsSchema = PortalArgsSchema.extend({
     .boolean()
     .optional()
     .describe(
-      "Whether the product is hidden from the portal landing page navigation menus - useful for internal or draft products",
+      "Deprecated, use 'visibility' instead. Whether the product is hidden from the portal landing page navigation menus. Ignored if 'visibility' is provided",
     ),
+  visibility: ProductVisibilitySchema.optional().describe(
+    "Whether the product is shown on the portal landing page - 'visible' shows it to everyone, 'hidden' hides it from everyone, 'conditional' shows it only to users who have access to the product (not allowed when the product is public). Takes precedence over the deprecated 'hidden'",
+  ),
 });
 
 export const UpdateProductArgsSchema = ProductArgsSchema.extend({
@@ -354,8 +363,11 @@ export const UpdateProductArgsSchema = ProductArgsSchema.extend({
     .boolean()
     .optional()
     .describe(
-      "Change navigation visibility - true hides from portal landing page menus while keeping the product accessible via direct links",
+      "Deprecated, use 'visibility' instead. Change navigation visibility - true hides from portal landing page menus while keeping the product accessible via direct links. Ignored if 'visibility' is provided",
     ),
+  visibility: ProductVisibilitySchema.optional().describe(
+    "Change whether the product is shown on the portal landing page - 'visible' shows it to everyone, 'hidden' hides it from everyone, 'conditional' shows it only to users who have access to the product. Not allowed when the product is public; making a 'conditional' product public without also changing visibility fails with 409. Takes precedence over the deprecated 'hidden'",
+  ),
 });
 
 export const ResolveOrganizationPortalArgsSchema = z.object({
@@ -717,6 +729,7 @@ export const ProductOutputSchema = z.looseObject({
   description: z.string().optional(),
   public: z.boolean().optional(),
   hidden: z.boolean().optional(),
+  visibility: ProductVisibilitySchema.optional(),
   url: z.string().optional(),
 });
 
