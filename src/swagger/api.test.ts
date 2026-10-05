@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
 import { SwaggerAPI } from "./client/api";
 import { SwaggerConfiguration } from "./client/configuration";
+import { ApidomValidationOutputSchema } from "./client/registry-types";
 
 const fetchMock = createFetchMock(vi);
 const DUMMY_REGISTRY_BASE_PATH = "https://registry.example.test";
@@ -620,6 +621,32 @@ describe("SwaggerAPI", () => {
       });
 
       expect(result).toEqual(unrecognizedResult);
+    });
+
+    it("should accept every finding severity of the /specs/validate contract in the output schema", async () => {
+      const asyncApiResult = {
+        valid: false,
+        recognized: true,
+        spec: { namespace: "asyncapi", version: "2.6.0", format: "YAML" },
+        findings: ["error", "warning", "information", "hint", "unknown"].map(
+          (severity) => ({
+            line: 1,
+            column: 1,
+            severity,
+            message: 'Object must have required property "info"',
+            code: "asyncapi-document-resolved",
+            source: "@asyncapi/parser",
+          }),
+        ),
+        summary: { errors: 1, warnings: 1, total: 5, durationMs: 1 },
+      };
+      fetchMock.mockResponseOnce(JSON.stringify(asyncApiResult), {
+        headers: { "content-type": "application/json" },
+      });
+
+      const result = await api.validateApi({ definition: "asyncapi: 2.6.0" });
+
+      expect(ApidomValidationOutputSchema.safeParse(result).success).toBe(true);
     });
   });
 

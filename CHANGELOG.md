@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- [Swagger] Fixed `swagger_validate_api` output schema rejecting findings with `information`, `hint` or `unknown` severity and documented `column` as 1-based, matching the `/specs/validate` contract.
+
 ## [0.41.3] - 2026-09-30
 
 ### Added
