@@ -76,7 +76,13 @@ export const CreateApiParamsSchema = z.object({
   definition: z
     .string()
     .describe(
-      "API definition content (OpenAPI/AsyncAPI specification in JSON or YAML format). Format is automatically detected. On create, fixed values are used: version 1.0.0, private visibility, automock disabled, and no project assignment. On update, the API's existing visibility is preserved.",
+      "API definition content (OpenAPI/AsyncAPI specification in JSON or YAML format). Format is automatically detected. On create, private visibility, automock disabled, and no project assignment are always used. On update, the API's existing visibility is preserved. The version is taken from the version parameter if provided, otherwise from this definition's info.version field — include a non-empty info.version if you omit the version parameter, or the request fails.",
+    ),
+  version: z
+    .string()
+    .nullish()
+    .describe(
+      "API version to create or update (e.g. '1.0.0'). If omitted, the version is taken from the definition's info.version field, which must then be a non-empty value or the request fails with a 400 error.",
     ),
 });
 
@@ -165,6 +171,12 @@ export const CreateApiFromPromptParamsSchema = z.object({
     .default("openapi30x")
     .describe(
       "Specification type for the generated API definition. Use: 'openapi20' for OpenAPI 2.0, 'openapi30x' for OpenAPI 3.0.x (default), 'openapi31x' for OpenAPI 3.1.x, 'asyncapi2xx' for AsyncAPI 2.x, 'asyncapi30x' for AsyncAPI 3.0.x",
+    ),
+  version: z
+    .string()
+    .nullish()
+    .describe(
+      "API version to save the AI-generated definition as (e.g. '1.0.0'). If omitted, the version is taken from the generated definition's info.version field.",
     ),
 });
 

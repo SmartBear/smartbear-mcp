@@ -3,6 +3,10 @@ import createFetchMock from "vitest-fetch-mock";
 import { SwaggerAPI } from "./client/api";
 import { SwaggerConfiguration } from "./client/configuration";
 import { ApidomValidationOutputSchema } from "./client/registry-types";
+import {
+  CreateApiFromPromptParamsSchema,
+  CreateApiParamsSchema,
+} from "./client/registry-types";
 
 const fetchMock = createFetchMock(vi);
 const DUMMY_REGISTRY_BASE_PATH = "https://registry.example.test";
@@ -465,6 +469,67 @@ describe("SwaggerAPI", () => {
           specType: "openapi30x",
         }),
       ).rejects.toThrow(/createApiFromPrompt failed - status: 409 Conflict/);
+    });
+
+    it("should append version to the query string when provided", async () => {
+      fetchMock.mockResponseOnce("", {
+        status: 201,
+        headers: { "X-Version": "2.0.0" },
+      });
+
+      await api.createApiFromPrompt({
+        owner: "orgname",
+        apiName: "petstore",
+        prompt: "Create a RESTful API for managing a pet store",
+        specType: "openapi30x",
+        version: "2.0.0",
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${config.registryBasePath}/apis/orgname/petstore/.ai?specType=openapi30x&version=2.0.0&createOnly=true`,
+        expect.objectContaining({ method: "POST" }),
+      );
+    });
+
+    it("should omit version from the query string when not provided", async () => {
+      fetchMock.mockResponseOnce("", {
+        status: 201,
+        headers: { "X-Version": "1.0.0" },
+      });
+
+      await api.createApiFromPrompt({
+        owner: "orgname",
+        apiName: "petstore",
+        prompt: "Create a RESTful API for managing a pet store",
+        specType: "openapi30x",
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${config.registryBasePath}/apis/orgname/petstore/.ai?specType=openapi30x&createOnly=true`,
+        expect.objectContaining({ method: "POST" }),
+      );
+    });
+
+    it("accepts an explicit null version (some MCP clients send null for an unset optional field) and omits it from the query string", async () => {
+      fetchMock.mockResponseOnce("", {
+        status: 201,
+        headers: { "X-Version": "1.0.0" },
+      });
+
+      const parsed = CreateApiFromPromptParamsSchema.parse({
+        owner: "orgname",
+        apiName: "petstore",
+        prompt: "Create a RESTful API for managing a pet store",
+        specType: "openapi30x",
+        version: null,
+      });
+
+      await api.createApiFromPrompt(parsed);
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${config.registryBasePath}/apis/orgname/petstore/.ai?specType=openapi30x&createOnly=true`,
+        expect.objectContaining({ method: "POST" }),
+      );
     });
   });
 
@@ -1847,6 +1912,49 @@ describe("SwaggerAPI", () => {
       );
       expect(fetchMock).toHaveBeenCalledTimes(2);
       expect(result.operation).toBe("update");
+    });
+
+    it("appends the provided version to the query string when creating", async () => {
+      fetchMock.mockResponseOnce("", { status: 404 }).mockResponseOnce("", {
+        status: 201,
+        headers: { "X-Version": "2.0.0" },
+      });
+
+      const result = await api.createOrUpdateApi({
+        owner,
+        apiName,
+        definition,
+        version: "2.0.0",
+      });
+
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        2,
+        `${DUMMY_REGISTRY_BASE_PATH}/apis/orgname/petstore?version=2.0.0&isPrivate=true`,
+        expect.objectContaining({ method: "POST" }),
+      );
+      expect(result.version).toBe("2.0.0");
+    });
+
+    it("accepts an explicit null version (some MCP clients send null for an unset optional field) and omits it from the query string", async () => {
+      fetchMock.mockResponseOnce("", { status: 404 }).mockResponseOnce("", {
+        status: 201,
+        headers: { "X-Version": "1.0.0" },
+      });
+
+      const parsed = CreateApiParamsSchema.parse({
+        owner,
+        apiName,
+        definition,
+        version: null,
+      });
+
+      await api.createOrUpdateApi(parsed);
+
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        2,
+        `${DUMMY_REGISTRY_BASE_PATH}/apis/orgname/petstore?isPrivate=true`,
+        expect.objectContaining({ method: "POST" }),
+      );
     });
   });
 
