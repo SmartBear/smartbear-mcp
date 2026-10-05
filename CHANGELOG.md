@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- [Swagger] Added one-click install buttons for VS Code (GitHub Copilot), Cursor, and Claude Desktop to the Swagger Remote MCP Server setup docs. Reorganized the Kiro section to use the same button-first layout for consistency.
+
 ### Changed
 
 - [Swagger] `create_api_from_prompt` and `create_or_update_api` tools: added an optional `version` parameter to save the API definition under a specific version, instead of relying solely on the definition's `info.version` field (or the fixed `1.0.0` default on create). Accepts `null` as well as omission, since some MCP clients send `null` for an unset optional field.
