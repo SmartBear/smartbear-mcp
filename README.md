@@ -315,6 +315,10 @@ Add the following configuration to your `claude_desktop_config.json` to launch t
 }
 ```
 
+### Loading only the products you use
+
+Set `MCP_CLIENTS` to a comma-separated, case-insensitive list of product names (for example `"MCP_CLIENTS": "QMetry"`) to load only those products. This reduces startup time, which helps on clients with a short `initialize` timeout. Valid names are `BearQ`, `BugSnag`, `Collaborator`, `Contract Testing`, `QMetry`, `QTM4J`, `Reflect`, `Swagger` and `Zephyr`. When unset, all products are loaded.
+
 ## Server Configuration (HTTP mode)
 
 | Variable | Default | Purpose |
