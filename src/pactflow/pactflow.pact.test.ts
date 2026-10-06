@@ -66,6 +66,201 @@ const halJsonResponseHeaders = {
   ),
 };
 
+// ── HAL response fixtures ──────────────────────────────────────────────────
+// Bodies below carry every field the OpenAPI spec marks as required so the
+// pacts exercise the full response contract, not just the fields the client reads.
+
+const timestamp = like("2024-01-01T00:00:00.000Z");
+const halLink = like({ href: "https://example.pactflow.io/resource" });
+const selfLink = { self: halLink };
+const titledLink = like({
+  title: "Resource",
+  name: "resource",
+  href: "https://example.pactflow.io/resource",
+});
+
+const embeddedPacticipant = {
+  name: "ServiceA",
+  _links: like({
+    self: { href: "https://example.pactflow.io/pacticipants/ServiceA" },
+  }),
+};
+const embeddedVersion = {
+  number: "1.0.0",
+  _links: like({
+    self: { href: "https://example.pactflow.io/versions/1.0.0" },
+  }),
+};
+
+// Body for POST …/deployed-versions|released-versions/environment/{id}.
+function environmentRecordBody(
+  flag: "currentlyDeployed" | "currentlySupported",
+) {
+  return {
+    uuid: "00000000-0000-0000-0000-000000000030",
+    createdAt: timestamp,
+    [flag]: true,
+    _links: selfLink,
+    _embedded: {
+      environment: {
+        uuid: "00000000-0000-0000-0000-000000000001",
+        name: "production",
+        displayName: "Production",
+        production: true,
+        createdAt: timestamp,
+        _links: like({}),
+      },
+      pacticipant: embeddedPacticipant,
+      version: embeddedVersion,
+    },
+  };
+}
+
+function webhookResponseBody(uuid: string) {
+  return {
+    uuid,
+    description: "Trigger CI build",
+    events: eachLike({ name: "contract_published" }),
+    request: like({ method: "POST", url: "https://ci.example.com/trigger" }),
+    createdAt: timestamp,
+    _links: {
+      ...selfLink,
+      "pb:execute": halLink,
+      "pb:webhooks": halLink,
+    },
+  };
+}
+
+// Body for POST /webhooks/execute and POST /webhooks/{id}/execute.
+const webhookExecutionBody = {
+  success: true,
+  logs: "Webhook executed successfully",
+  request: like({
+    url: "https://ci.example.com/trigger",
+    headers: like({}),
+  }),
+  _links: { "try-again": halLink },
+};
+
+function secretBody(uuid: string, name: string) {
+  return {
+    uuid,
+    name,
+    description: "CI token",
+    createdAt: timestamp,
+    _links: selfLink,
+  };
+}
+
+function roleBody(uuid: string, name: string) {
+  return {
+    uuid,
+    name,
+    systemDefined: false,
+    createdAt: timestamp,
+    permissions: eachLike({
+      uuid: "00000000-0000-0000-0000-000000000020",
+      scope: "contract_data:read:*",
+      label: "Read contract data",
+      group: "Contract data",
+      description: "Read all contract data",
+    }),
+    _actions: eachLike({
+      name: "update",
+      title: "Update role",
+      method: "PUT",
+      href: `https://example.pactflow.io/admin/roles/${uuid}`,
+    }),
+    _links: selfLink,
+  };
+}
+
+function userBody(uuid: string, email: string, type: 0 | 1 = 0) {
+  return {
+    uuid,
+    email,
+    active: true,
+    createdAt: timestamp,
+    type,
+    typeDescription: type === 0 ? "User" : "System Account",
+    _links: selfLink,
+    _embedded: {
+      roles: eachLike({ uuid: "00000000-0000-0000-0000-000000000007" }),
+      teams: eachLike({ uuid: "00000000-0000-0000-0000-000000000005" }),
+    },
+  };
+}
+
+function teamBody(uuid: string, name: string) {
+  return {
+    uuid,
+    name,
+    numberOfMembers: 1,
+    createdAt: timestamp,
+    _embedded: {
+      administrators: eachLike({
+        uuid: "00000000-0000-0000-0000-000000000012",
+      }),
+      environments: eachLike({ uuid: "00000000-0000-0000-0000-000000000001" }),
+      members: eachLike({ uuid: "00000000-0000-0000-0000-000000000012" }),
+      pacticipants: eachLike({ name: "ServiceA" }),
+    },
+    _links: selfLink,
+  };
+}
+
+function environmentBody(
+  uuid: string,
+  name: string,
+  production: boolean,
+  displayName: string,
+) {
+  return {
+    uuid,
+    name,
+    displayName,
+    production,
+    createdAt: timestamp,
+    _links: {
+      ...selfLink,
+      "pb:currently-deployed-deployed-versions": halLink,
+      "pb:currently-supported-released-versions": halLink,
+      "pb:environments": halLink,
+    },
+  };
+}
+
+function pacticipantBody(
+  name: string,
+  displayName: string,
+  mainBranch: string,
+) {
+  return {
+    name,
+    displayName,
+    mainBranch,
+    createdAt: timestamp,
+    _embedded: { labels: eachLike({ name: "team-a" }) },
+    _links: {
+      ...selfLink,
+      "pb:branch-version": halLink,
+      "pb:branches": halLink,
+      "pb:can-i-deploy-badge": halLink,
+      "pb:can-i-deploy-branch-to-environment-badge": halLink,
+      "pb:label": halLink,
+      "pb:version": halLink,
+      "pb:version-tag": halLink,
+      "pb:versions": halLink,
+      curies: eachLike({
+        name: "pb",
+        href: "https://example.pactflow.io/doc/{rel}",
+        templated: true,
+      }),
+      versions: halLink,
+    },
+  };
+}
+
 // ════════════════════════════════════════════════════════════════════════════
 // Core
 // ════════════════════════════════════════════════════════════════════════════
@@ -129,6 +324,10 @@ describe("Core", () => {
           like({
             summary: like({ reason: like("") }),
             matrix: like([]),
+            notices: eachLike({
+              text: "All required verification results are published and successful",
+              type: "info",
+            }),
           }),
         );
       })
@@ -173,12 +372,9 @@ describe("Core", () => {
         builder.headers({ Authorization: like("Bearer test-token") });
       })
       .willRespondWith(200, (builder) => {
-        builder.headers(halJsonResponseHeaders).jsonBody(
-          like({
-            name: "ServiceA",
-            mainBranch: "main",
-          }),
-        );
+        builder
+          .headers(halJsonResponseHeaders)
+          .jsonBody(like(pacticipantBody("ServiceA", "Service A", "main")));
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
@@ -236,13 +432,18 @@ describe("Core", () => {
         },
       )
       .willRespondWith(200, (builder) => {
-        builder.headers(halJsonResponseHeaders).jsonBody(
-          like({
-            name: "production",
-            uuid: "00000000-0000-0000-0000-000000000001",
-            production: true,
-          }),
-        );
+        builder
+          .headers(halJsonResponseHeaders)
+          .jsonBody(
+            like(
+              environmentBody(
+                "00000000-0000-0000-0000-000000000001",
+                "production",
+                true,
+                "Production",
+              ),
+            ),
+          );
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
@@ -276,7 +477,9 @@ describe("Core", () => {
         },
       )
       .willRespondWith(201, (builder) => {
-        builder.headers(halJsonResponseHeaders).jsonBody(like({}));
+        builder
+          .headers(halJsonResponseHeaders)
+          .jsonBody(like(environmentRecordBody("currentlyDeployed")));
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
@@ -311,7 +514,9 @@ describe("Core", () => {
         },
       )
       .willRespondWith(201, (builder) => {
-        builder.headers(halJsonResponseHeaders).jsonBody(like({}));
+        builder
+          .headers(halJsonResponseHeaders)
+          .jsonBody(like(environmentRecordBody("currentlySupported")));
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
@@ -458,8 +663,55 @@ describe("Core", () => {
               withMainBranchSetCount: 12,
             }),
             integrations: like({ count: 7 }),
-            pactPublications: like({ count: 42 }),
-            verificationResults: like({ count: 1250, successCount: 1200 }),
+            pactPublications: like({
+              count: 42,
+              first: like("2023-01-01T00:00:00.000Z"),
+              last: like("2024-01-01T00:00:00.000Z"),
+            }),
+            verificationResults: like({
+              count: 1250,
+              successCount: 1200,
+              failureCount: 50,
+              distinctCount: 900,
+              first: like("2023-01-01T00:00:00.000Z"),
+              last: like("2024-01-01T00:00:00.000Z"),
+            }),
+            crossContractComparisons: like({ count: 3 }),
+            deployedVersions: like({
+              count: 20,
+              userCreatedCount: 18,
+              currentlyDeployedCount: 5,
+            }),
+            environments: like({ count: 3 }),
+            matrix: like({ count: 100 }),
+            pactVersions: like({ count: 40 }),
+            pactRevisionsPerConsumerVersion: like({
+              distribution: like({ "1": 40 }),
+            }),
+            pacticipantVersions: like({
+              count: 60,
+              withUserCreatedBranchCount: 10,
+              withBranchCount: 50,
+              withBranchSetCount: 50,
+            }),
+            providerContractPublications: like({ count: 5 }),
+            providerContractVersions: like({ count: 5 }),
+            providerContractSelfVerifications: like({ count: 5 }),
+            releasedVersions: like({ count: 4, currentlySupportedCount: 2 }),
+            secrets: like({ count: 2, countsByTeam: eachLike(2) }),
+            tags: like({
+              count: 30,
+              distinctCount: 6,
+              distinctWithPacticipantCount: 6,
+            }),
+            teams: like({ count: 3 }),
+            triggeredWebhooks: like({ count: 12 }),
+            users: like({ activeRegularCount: 8, activeSystemCount: 2 }),
+            verificationResultsPerPactVersion: like({
+              distribution: like({ "1": 40 }),
+            }),
+            webhookExecutions: like({ count: 12 }),
+            webhooks: like({ count: 4 }),
           }),
         );
       })
@@ -492,10 +744,14 @@ describe("Environment management", () => {
       })
       .willRespondWith(201, (b) => {
         b.headers(halJsonResponseHeaders).jsonBody(
-          like({
-            uuid: "00000000-0000-0000-0000-000000000003",
-            name: "production",
-          }),
+          like(
+            environmentBody(
+              "00000000-0000-0000-0000-000000000003",
+              "production",
+              true,
+              "Production",
+            ),
+          ),
         );
       })
       .executeTest(async (mockServer) => {
@@ -533,10 +789,14 @@ describe("Environment management", () => {
       )
       .willRespondWith(200, (b) => {
         b.headers(halJsonResponseHeaders).jsonBody(
-          like({
-            uuid: "00000000-0000-0000-0000-000000000002",
-            name: "staging",
-          }),
+          like(
+            environmentBody(
+              "00000000-0000-0000-0000-000000000002",
+              "staging",
+              false,
+              "Staging",
+            ),
+          ),
         );
       })
       .executeTest(async (mockServer) => {
@@ -627,7 +887,7 @@ describe("Pacticipant CRUD", () => {
       })
       .willRespondWith(201, (b) => {
         b.headers(halJsonResponseHeaders).jsonBody(
-          like({ name: "NewService", displayName: "New Service" }),
+          like(pacticipantBody("NewService", "New Service", "main")),
         );
       })
       .executeTest(async (mockServer) => {
@@ -668,7 +928,7 @@ describe("Pacticipant CRUD", () => {
       })
       .willRespondWith(200, (b) => {
         b.headers(halJsonResponseHeaders).jsonBody(
-          like({ name: "ServiceA", mainBranch: "main" }),
+          like(pacticipantBody("ServiceA", "Service A", "main")),
         );
       })
       .executeTest(async (mockServer) => {
@@ -691,7 +951,7 @@ describe("Pacticipant CRUD", () => {
       })
       .willRespondWith(200, (b) => {
         b.headers(halJsonResponseHeaders).jsonBody(
-          like({ name: "ServiceA", mainBranch: "develop" }),
+          like(pacticipantBody("ServiceA", "Service A", "develop")),
         );
       })
       .executeTest(async (mockServer) => {
@@ -718,7 +978,17 @@ describe("Branch & version management", () => {
         b.headers(authHeader);
       })
       .willRespondWith(200, (b) => {
-        b.headers(halJsonResponseHeaders).jsonBody(like({ number: "1.0.0" }));
+        b.headers(halJsonResponseHeaders).jsonBody(
+          like({
+            number: "1.0.0",
+            createdAt: timestamp,
+            _embedded: {
+              branchVersions: eachLike({ name: "main" }),
+              tags: eachLike({ name: "main" }),
+            },
+            _links: selfLink,
+          }),
+        );
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
@@ -832,7 +1102,13 @@ describe("Labels", () => {
         b.headers(authHeader);
       })
       .willRespondWith(200, (b) => {
-        b.headers(halJsonResponseHeaders).jsonBody(like({ name: "team-a" }));
+        b.headers(halJsonResponseHeaders).jsonBody(
+          like({
+            name: "team-a",
+            createdAt: timestamp,
+            _links: { self: titledLink, pacticipant: titledLink },
+          }),
+        );
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
@@ -874,7 +1150,13 @@ describe("Labels", () => {
         b.headers(jsonHeaders).jsonBody(like({}));
       })
       .willRespondWith(201, (b) => {
-        b.headers(halJsonResponseHeaders).jsonBody(like({ name: "mobile" }));
+        b.headers(halJsonResponseHeaders).jsonBody(
+          like({
+            name: "mobile",
+            createdAt: timestamp,
+            _links: { self: titledLink, pacticipant: titledLink },
+          }),
+        );
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
@@ -1007,10 +1289,7 @@ describe("Webhooks", () => {
       })
       .willRespondWith(200, (b) => {
         b.headers(halJsonResponseHeaders).jsonBody(
-          like({
-            uuid: "wh-uuid-1",
-            request: like({ url: "https://ci.example.com/trigger" }),
-          }),
+          like(webhookResponseBody("wh-uuid-1")),
         );
       })
       .executeTest(async (mockServer) => {
@@ -1036,7 +1315,11 @@ describe("Webhooks", () => {
       })
       .willRespondWith(201, (b) => {
         b.headers(halJsonResponseHeaders).jsonBody(
-          like({ uuid: "wh-uuid-new", ...webhookBody }),
+          like({
+            ...webhookResponseBody("wh-uuid-new"),
+            ...webhookBody,
+            events: eachLike({ name: "contract_published" }),
+          }),
         );
       })
       .executeTest(async (mockServer) => {
@@ -1077,9 +1360,7 @@ describe("Webhooks", () => {
         );
       })
       .willRespondWith(200, (b) => {
-        b.headers(halJsonResponseHeaders).jsonBody(
-          like({ success: like(true), _links: like({}) }),
-        );
+        b.headers(halJsonResponseHeaders).jsonBody(like(webhookExecutionBody));
       })
       .executeTest(async (mockServer) => {
         const response = await fetch(`${mockServer.url}/webhooks/execute`, {
@@ -1106,9 +1387,7 @@ describe("Webhooks", () => {
         b.headers(jsonHeaders).jsonBody(like({}));
       })
       .willRespondWith(200, (b) => {
-        b.headers(halJsonResponseHeaders).jsonBody(
-          like({ success: like(true), _links: like({}) }),
-        );
+        b.headers(halJsonResponseHeaders).jsonBody(like(webhookExecutionBody));
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
@@ -1158,7 +1437,7 @@ describe("Secrets", () => {
       })
       .willRespondWith(200, (b) => {
         b.headers(halJsonResponseHeaders).jsonBody(
-          like({ uuid: "sec-uuid-1", name: "CI_TOKEN" }),
+          like(secretBody("sec-uuid-1", "CI_TOKEN")),
         );
       })
       .executeTest(async (mockServer) => {
@@ -1178,7 +1457,9 @@ describe("Secrets", () => {
         );
       })
       .willRespondWith(200, (b) => {
-        b.headers(halJsonResponseHeaders).jsonBody(like({}));
+        b.headers(halJsonResponseHeaders).jsonBody(
+          like(secretBody("sec-uuid-1", "MYTOKEN")),
+        );
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
@@ -1222,11 +1503,12 @@ describe("User, settings & audit", () => {
       })
       .willRespondWith(200, (b) => {
         b.headers(halJsonResponseHeaders).jsonBody(
-          like({
-            uuid: "00000000-0000-0000-0000-000000000012",
-            email: "user@example.com",
-            active: true,
-          }),
+          like(
+            userBody(
+              "00000000-0000-0000-0000-000000000012",
+              "user@example.com",
+            ),
+          ),
         );
       })
       .executeTest(async (mockServer) => {
@@ -1278,6 +1560,9 @@ describe("User, settings & audit", () => {
           like({
             uuid: "00000000-0000-0000-0000-000000000009",
             value: "new-token-value",
+            description: "CI token",
+            readOnly: false,
+            _links: { ...selfLink, "pb:regenerate": halLink },
           }),
         );
       })
@@ -1408,10 +1693,12 @@ describe("Admin – Users", () => {
       )
       .willRespondWith(200, (b) => {
         b.headers(halJsonResponseHeaders).jsonBody(
-          like({
-            uuid: "00000000-0000-0000-0000-000000000012",
-            email: "admin@example.com",
-          }),
+          like(
+            userBody(
+              "00000000-0000-0000-0000-000000000012",
+              "admin@example.com",
+            ),
+          ),
         );
       })
       .executeTest(async (mockServer) => {
@@ -1433,10 +1720,9 @@ describe("Admin – Users", () => {
       })
       .willRespondWith(201, (b) => {
         b.headers(halJsonResponseHeaders).jsonBody(
-          like({
-            uuid: "00000000-0000-0000-0000-000000000010",
-            email: "new@example.com",
-          }),
+          like(
+            userBody("00000000-0000-0000-0000-000000000010", "new@example.com"),
+          ),
         );
       })
       .executeTest(async (mockServer) => {
@@ -1466,7 +1752,13 @@ describe("Admin – Users", () => {
       )
       .willRespondWith(200, (b) => {
         b.headers(halJsonResponseHeaders).jsonBody(
-          like({ uuid: "00000000-0000-0000-0000-000000000012", active: false }),
+          like({
+            ...userBody(
+              "00000000-0000-0000-0000-000000000012",
+              "admin@example.com",
+            ),
+            active: false,
+          }),
         );
       })
       .executeTest(async (mockServer) => {
@@ -1633,7 +1925,7 @@ describe("Admin – Teams", () => {
       )
       .willRespondWith(200, (b) => {
         b.headers(halJsonResponseHeaders).jsonBody(
-          like({ uuid: "00000000-0000-0000-0000-000000000005", name: "Infra" }),
+          like(teamBody("00000000-0000-0000-0000-000000000005", "Infra")),
         );
       })
       .executeTest(async (mockServer) => {
@@ -1653,10 +1945,7 @@ describe("Admin – Teams", () => {
       })
       .willRespondWith(201, (b) => {
         b.headers(halJsonResponseHeaders).jsonBody(
-          like({
-            uuid: "00000000-0000-0000-0000-000000000004",
-            name: "Platform",
-          }),
+          like(teamBody("00000000-0000-0000-0000-000000000004", "Platform")),
         );
       })
       .executeTest(async (mockServer) => {
@@ -1681,7 +1970,7 @@ describe("Admin – Teams", () => {
       )
       .willRespondWith(200, (b) => {
         b.headers(halJsonResponseHeaders).jsonBody(
-          like({ uuid: "00000000-0000-0000-0000-000000000005" }),
+          like(teamBody("00000000-0000-0000-0000-000000000005", "Infra v2")),
         );
       })
       .executeTest(async (mockServer) => {
@@ -1887,10 +2176,7 @@ describe("Admin – Roles & Permissions", () => {
       })
       .willRespondWith(201, (b) => {
         b.headers(halJsonResponseHeaders).jsonBody(
-          like({
-            uuid: "00000000-0000-0000-0000-000000000006",
-            name: "ReadOnly",
-          }),
+          like(roleBody("00000000-0000-0000-0000-000000000006", "ReadOnly")),
         );
       })
       .executeTest(async (mockServer) => {
@@ -1954,7 +2240,13 @@ describe("Admin – System Accounts", () => {
       })
       .willRespondWith(201, (b) => {
         b.headers(halJsonResponseHeaders).jsonBody(
-          like({ uuid: like("00000000-0000-0000-0000-000000000008") }),
+          like(
+            userBody(
+              "00000000-0000-0000-0000-000000000008",
+              "ci-bot@example.com",
+              1,
+            ),
+          ),
         );
       })
       .executeTest(async (mockServer) => {
@@ -2242,5 +2534,1054 @@ describe("BDCT – consumer-version endpoints", () => {
             bdctInput,
           );
         expect(result).toBeDefined();
+      }));
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// Additional operations — previously uncovered by any interaction
+// ════════════════════════════════════════════════════════════════════════════
+
+const pageBody = like({
+  number: 1,
+  size: 5,
+  totalElements: 1,
+  totalPages: 1,
+});
+
+describe("Admin – Roles by id", () => {
+  const roleId = "00000000-0000-0000-0000-000000000007";
+
+  it("GET /admin/roles/{id} – retrieves a role", () =>
+    provider
+      .addInteraction()
+      .given(`admin role ${roleId} exists`)
+      .uponReceiving(`a request to get admin role ${roleId}`)
+      .withRequest("GET", `/admin/roles/${roleId}`, (b) => {
+        b.headers(authHeader);
+      })
+      .willRespondWith(200, (b) => {
+        b.headers(halJsonResponseHeaders).jsonBody(
+          like(roleBody(roleId, "ReadOnly")),
+        );
+      })
+      .executeTest(async (mockServer) => {
+        const client = await createClient(mockServer.url);
+        const result = await client.getAdminRole({ roleId });
+        expect(result.uuid).toBe(roleId);
+        expect(result.name).toBe("ReadOnly");
+      }));
+
+  it("PUT /admin/roles/{id} – updates a role", () =>
+    provider
+      .addInteraction()
+      .given(`admin role ${roleId} exists`)
+      .uponReceiving(`a request to update admin role ${roleId}`)
+      .withRequest("PUT", `/admin/roles/${roleId}`, (b) => {
+        b.headers(jsonHeaders).jsonBody(
+          like({
+            name: "ReadWrite",
+            permissions: eachLike({ scope: like("contract_data:read:*") }),
+          }),
+        );
+      })
+      .willRespondWith(200, (b) => {
+        b.headers(halJsonResponseHeaders).jsonBody(
+          like(roleBody(roleId, "ReadWrite")),
+        );
+      })
+      .executeTest(async (mockServer) => {
+        const client = await createClient(mockServer.url);
+        const result = await client.updateAdminRole({
+          roleId,
+          name: "ReadWrite",
+          permissions: [{ scope: "contract_data:read:*" }],
+        });
+        expect(result.name).toBe("ReadWrite");
+      }));
+
+  it("DELETE /admin/roles/{id} – deletes a role", () =>
+    provider
+      .addInteraction()
+      .given(`admin role ${roleId} exists`)
+      .uponReceiving(`a request to delete admin role ${roleId}`)
+      .withRequest("DELETE", `/admin/roles/${roleId}`, (b) => {
+        b.headers(authHeader);
+      })
+      .willRespondWith(204)
+      .executeTest(async (mockServer) => {
+        const client = await createClient(mockServer.url);
+        await expect(
+          client.deleteAdminRole({ roleId }),
+        ).resolves.toBeUndefined();
+      }));
+});
+
+describe("Branches & versions – list and update", () => {
+  const versionLinks = {
+    "pb:pacticipant": halLink,
+    "pb:versions": eachLike({ href: "https://example.pactflow.io/versions" }),
+    pacticipant: halLink,
+    self: halLink,
+    versions: eachLike({ href: "https://example.pactflow.io/versions" }),
+  };
+
+  it("GET /pacticipants/{name}/branches – lists branches", () =>
+    provider
+      .addInteraction()
+      .given("pacticipant ServiceA has branch main")
+      .uponReceiving("a request to list branches for ServiceA")
+      .withRequest("GET", "/pacticipants/ServiceA/branches", (b) => {
+        b.headers(authHeader);
+      })
+      .willRespondWith(200, (b) => {
+        b.headers(halJsonResponseHeaders).jsonBody({
+          page: pageBody,
+          _embedded: { branches: eachLike({ name: like("main") }) },
+          _links: {
+            self: halLink,
+            "pb:branches": eachLike({
+              href: "https://example.pactflow.io/branches",
+            }),
+          },
+        });
+      })
+      .executeTest(async (mockServer) => {
+        const client = await createClient(mockServer.url);
+        const result = await client.listBranches({
+          pacticipantName: "ServiceA",
+        });
+        expect(Array.isArray(result._embedded.branches)).toBe(true);
+      }));
+
+  it("GET /pacticipants/{name}/branches/{branch} – retrieves a branch", () =>
+    provider
+      .addInteraction()
+      .given("pacticipant ServiceA has branch main")
+      .uponReceiving("a request to get branch main of ServiceA")
+      .withRequest("GET", "/pacticipants/ServiceA/branches/main", (b) => {
+        b.headers(authHeader);
+      })
+      .willRespondWith(200, (b) => {
+        b.headers(halJsonResponseHeaders).jsonBody(
+          like({
+            name: "main",
+            createdAt: timestamp,
+            _links: { ...selfLink, "pb:latest-version": halLink },
+          }),
+        );
+      })
+      .executeTest(async (mockServer) => {
+        const client = await createClient(mockServer.url);
+        const result = await client.getBranch({
+          pacticipantName: "ServiceA",
+          branchName: "main",
+        });
+        expect(result.name).toBe("main");
+      }));
+
+  it("DELETE /pacticipants/{name}/branches/{branch} – deletes a branch", () =>
+    provider
+      .addInteraction()
+      .given("pacticipant ServiceA has branch feature-x")
+      .uponReceiving("a request to delete branch feature-x of ServiceA")
+      .withRequest(
+        "DELETE",
+        "/pacticipants/ServiceA/branches/feature-x",
+        (b) => {
+          b.headers(authHeader);
+        },
+      )
+      .willRespondWith(204)
+      .executeTest(async (mockServer) => {
+        const client = await createClient(mockServer.url);
+        await expect(
+          client.deleteBranch({
+            pacticipantName: "ServiceA",
+            branchName: "feature-x",
+          }),
+        ).resolves.toBeUndefined();
+      }));
+
+  it("GET /pacticipants/{name}/branches/{branch}/versions – lists versions on a branch", () =>
+    provider
+      .addInteraction()
+      .given("pacticipant ServiceA has branch main with versions")
+      .uponReceiving("a request to list versions on branch main of ServiceA")
+      .withRequest(
+        "GET",
+        "/pacticipants/ServiceA/branches/main/versions",
+        (b) => {
+          b.headers(authHeader);
+        },
+      )
+      .willRespondWith(200, (b) => {
+        b.headers(halJsonResponseHeaders).jsonBody({
+          page: pageBody,
+          _embedded: { versions: eachLike({ number: like("1.0.0") }) },
+          _links: versionLinks,
+        });
+      })
+      .executeTest(async (mockServer) => {
+        const client = await createClient(mockServer.url);
+        const result = await client.getBranchVersions({
+          pacticipantName: "ServiceA",
+          branchName: "main",
+        });
+        expect(Array.isArray(result._embedded.versions)).toBe(true);
+      }));
+
+  it("GET /pacticipants/{name}/versions – lists versions", () =>
+    provider
+      .addInteraction()
+      .given("pacticipant ServiceA has versions")
+      .uponReceiving("a request to list versions of ServiceA")
+      .withRequest("GET", "/pacticipants/ServiceA/versions", (b) => {
+        b.headers(authHeader);
+      })
+      .willRespondWith(200, (b) => {
+        b.headers(halJsonResponseHeaders).jsonBody({
+          page: pageBody,
+          _embedded: { versions: eachLike({ number: like("1.0.0") }) },
+          _links: versionLinks,
+        });
+      })
+      .executeTest(async (mockServer) => {
+        const client = await createClient(mockServer.url);
+        const result = await client.listVersions({
+          pacticipantName: "ServiceA",
+        });
+        expect(Array.isArray(result._embedded.versions)).toBe(true);
+      }));
+
+  it("PUT /pacticipants/{name}/versions/{version} – updates a version", () =>
+    provider
+      .addInteraction()
+      .given("pacticipant ServiceA version 1.0.0 exists")
+      .uponReceiving("a request to update version 1.0.0 of ServiceA")
+      .withRequest("PUT", "/pacticipants/ServiceA/versions/1.0.0", (b) => {
+        b.headers(jsonHeaders).jsonBody(
+          like({ buildUrl: "https://ci.example.com/builds/42" }),
+        );
+      })
+      .willRespondWith(201, (b) => {
+        b.headers(halJsonResponseHeaders).jsonBody(
+          like({
+            number: "1.0.0",
+            buildUrl: "https://ci.example.com/builds/42",
+            createdAt: timestamp,
+            _embedded: {
+              branchVersions: eachLike({ name: "main" }),
+              tags: eachLike({ name: "main" }),
+            },
+            _links: {
+              ...selfLink,
+              "pb:latest-verification-results-where-pacticipant-is-consumer":
+                halLink,
+              "pb:pact-versions": eachLike({
+                href: "https://example.pactflow.io/pact-versions",
+              }),
+              "pb:pacticipant": halLink,
+              "pb:tag": halLink,
+              curies: eachLike({
+                name: "pb",
+                href: "https://example.pactflow.io/doc/{rel}",
+                templated: true,
+              }),
+              "pb:record-deployment": eachLike({
+                href: "https://example.pactflow.io/record-deployment",
+              }),
+              "pb:record-release": eachLike({
+                href: "https://example.pactflow.io/record-release",
+              }),
+            },
+          }),
+        );
+      })
+      .executeTest(async (mockServer) => {
+        const client = await createClient(mockServer.url);
+        const result = await client.updateVersion({
+          pacticipantName: "ServiceA",
+          versionNumber: "1.0.0",
+          buildUrl: "https://ci.example.com/builds/42",
+        });
+        expect(result.number).toBe("1.0.0");
+      }));
+});
+
+describe("Integrations – list", () => {
+  const integrationsBody = {
+    page: pageBody,
+    _embedded: {
+      integrations: eachLike({
+        consumer: { name: like("ConsumerApp") },
+        provider: { name: like("ProviderAPI") },
+      }),
+    },
+    _links: selfLink,
+  };
+
+  it("GET /integrations – lists all integrations", () =>
+    provider
+      .addInteraction()
+      .given("integrations exist")
+      .uponReceiving("a request to list all integrations")
+      .withRequest("GET", "/integrations", (b) => {
+        b.headers(authHeader);
+      })
+      .willRespondWith(200, (b) => {
+        b.headers(halJsonResponseHeaders).jsonBody(integrationsBody);
+      })
+      .executeTest(async (mockServer) => {
+        const client = await createClient(mockServer.url);
+        const result = await client.listIntegrations();
+        expect(Array.isArray(result._embedded.integrations)).toBe(true);
+      }));
+
+  it("GET /integrations/team/{teamId} – lists integrations for a team", () =>
+    provider
+      .addInteraction()
+      .given("admin team 00000000-0000-0000-0000-000000000005 has integrations")
+      .uponReceiving(
+        "a request to list integrations for team 00000000-0000-0000-0000-000000000005",
+      )
+      .withRequest(
+        "GET",
+        "/integrations/team/00000000-0000-0000-0000-000000000005",
+        (b) => {
+          b.headers(authHeader);
+        },
+      )
+      .willRespondWith(200, (b) => {
+        b.headers(halJsonResponseHeaders).jsonBody(integrationsBody);
+      })
+      .executeTest(async (mockServer) => {
+        const client = await createClient(mockServer.url);
+        const result = await client.getIntegrationsByTeam({
+          teamId: "00000000-0000-0000-0000-000000000005",
+        });
+        expect(Array.isArray(result._embedded.integrations)).toBe(true);
+      }));
+});
+
+describe("Admin – Users & Teams (additional)", () => {
+  const teamId = "00000000-0000-0000-0000-000000000005";
+  const userId = "00000000-0000-0000-0000-000000000012";
+
+  it("POST /admin/users/invite-users – invites users", () =>
+    provider
+      .addInteraction()
+      .uponReceiving("a request to invite user invitee@example.com")
+      .withRequest("POST", "/admin/users/invite-users", (b) => {
+        b.headers(jsonHeaders).jsonBody({
+          users: eachLike({
+            email: like("invitee@example.com"),
+            name: like("Invitee"),
+          }),
+        });
+      })
+      .willRespondWith(200, (b) => {
+        b.headers(halJsonResponseHeaders).jsonBody({
+          users: eachLike(
+            userBody(
+              "00000000-0000-0000-0000-000000000013",
+              "invitee@example.com",
+            ),
+          ),
+          _links: selfLink,
+        });
+      })
+      .executeTest(async (mockServer) => {
+        const client = await createClient(mockServer.url);
+        const result = await client.inviteUsers({
+          users: [{ email: "invitee@example.com", name: "Invitee" }],
+        });
+        expect(Array.isArray(result.users)).toBe(true);
+      }));
+
+  it("PATCH /admin/teams/{id}/users – adds a user to a team", () =>
+    provider
+      .addInteraction()
+      .given(`admin team ${teamId} and admin user ${userId} exist`)
+      .uponReceiving(`a request to patch members of admin team ${teamId}`)
+      .withRequest("PATCH", `/admin/teams/${teamId}/users`, (b) => {
+        b.headers(jsonHeaders).jsonBody(
+          eachLike({
+            op: "add",
+            path: "/users",
+            value: { uuid: like(userId) },
+          }),
+        );
+      })
+      .willRespondWith(200, (b) => {
+        b.headers(halJsonResponseHeaders).jsonBody({
+          _embedded: { users: eachLike({ uuid: like(userId) }) },
+          _links: selfLink,
+        });
+      })
+      .executeTest(async (mockServer) => {
+        const client = await createClient(mockServer.url);
+        const result = await client.patchTeamUsers({
+          teamId,
+          operations: [{ op: "add", path: "/users", value: { uuid: userId } }],
+        });
+        expect(Array.isArray(result._embedded.users)).toBe(true);
+      }));
+});
+
+describe("Secrets – create", () => {
+  it("POST /secrets – creates a secret", () =>
+    provider
+      .addInteraction()
+      .uponReceiving("a request to create secret DEPLOY_KEY")
+      .withRequest("POST", "/secrets", (b) => {
+        b.headers(jsonHeaders).jsonBody(
+          like({
+            name: "DEPLOY_KEY",
+            value: "s3cr3t",
+            description: "Deploy key",
+          }),
+        );
+      })
+      .willRespondWith(201, (b) => {
+        b.headers(halJsonResponseHeaders).jsonBody(
+          like({
+            uuid: "sec-uuid-new",
+            name: "DEPLOY_KEY",
+            description: "Deploy key",
+            createdAt: timestamp,
+            _links: selfLink,
+          }),
+        );
+      })
+      .executeTest(async (mockServer) => {
+        const client = await createClient(mockServer.url);
+        const result = await client.createSecret({
+          name: "DEPLOY_KEY",
+          value: "s3cr3t",
+          description: "Deploy key",
+        });
+        expect(result.uuid).toBeDefined();
+      }));
+});
+
+describe("Webhooks – update", () => {
+  it("PUT /webhooks/{id} – updates a webhook", () => {
+    const webhookBody = {
+      description: "Trigger CI build v2",
+      events: [{ name: "contract_published" }],
+      request: {
+        method: "POST" as const,
+        url: "https://ci.example.com/trigger",
+      },
+    };
+    return provider
+      .addInteraction()
+      .given("a webhook with uuid wh-uuid-1 exists")
+      .uponReceiving("a request to update webhook wh-uuid-1")
+      .withRequest("PUT", "/webhooks/wh-uuid-1", (b) => {
+        b.headers(jsonHeaders).jsonBody(like(webhookBody));
+      })
+      .willRespondWith(200, (b) => {
+        b.headers(halJsonResponseHeaders).jsonBody(
+          like({
+            uuid: "wh-uuid-1",
+            ...webhookBody,
+            createdAt: timestamp,
+            _links: {
+              ...selfLink,
+              "pb:execute": halLink,
+              "pb:webhooks": halLink,
+            },
+          }),
+        );
+      })
+      .executeTest(async (mockServer) => {
+        const client = await createClient(mockServer.url);
+        const result = await client.updateWebhook({
+          webhookId: "wh-uuid-1",
+          ...webhookBody,
+        } as any);
+        expect(result.uuid).toBe("wh-uuid-1");
+      });
+  });
+});
+
+describe("BDCT – provider-contract publish", () => {
+  it("POST /provider-contracts/provider/{name}/publish – publishes a provider contract", () => {
+    const publishBody = {
+      providerName: "ProviderAPI",
+      pacticipantVersionNumber: "2.0.0",
+      branch: "main",
+      contract: {
+        content: "b3BlbmFwaTogMy4wLjA=",
+        contentType: "application/yaml" as const,
+        specification: "oas" as const,
+        selfVerificationResults: {
+          success: true,
+          content: "dGVzdHMgcGFzc2Vk",
+          contentType: "text/plain",
+          verifier: "schemathesis",
+        },
+      },
+    };
+    const { providerName, ...requestBody } = publishBody;
+    return provider
+      .addInteraction()
+      .given("a pacticipant named ProviderAPI exists")
+      .uponReceiving("a request to publish a provider contract for ProviderAPI")
+      .withRequest(
+        "POST",
+        "/provider-contracts/provider/ProviderAPI/publish",
+        (b) => {
+          b.headers(jsonHeaders).jsonBody(like(requestBody));
+        },
+      )
+      .willRespondWith(200, (b) => {
+        b.headers(halJsonResponseHeaders).jsonBody(
+          like({
+            notices: eachLike({
+              text: "Provider contract published",
+              type: "info",
+            }),
+            _embedded: {
+              pacticipant: { name: "ProviderAPI", _links: like({}) },
+              version: { number: "2.0.0", _links: like({}) },
+            },
+            _links: {
+              "pf:provider-contract": halLink,
+              "pb:pacticipant": halLink,
+              "pb:pacticipant-version": halLink,
+              "pb:pacticipant-version-tags": eachLike({
+                href: "https://example.pactflow.io/tags",
+              }),
+              "pb:branch-version": halLink,
+            },
+          }),
+        );
+      })
+      .executeTest(async (mockServer) => {
+        const client = await createClient(mockServer.url);
+        const result = await client.publishProviderContract(publishBody);
+        expect(result._embedded).toBeDefined();
+      });
+  });
+});
+
+describe("BDCT – provider-version endpoints (consumer & cross-contract)", () => {
+  const bdctBase =
+    "/contracts/bi-directional/provider/ProviderAPI/version/2.0.0";
+  const input = { providerName: "ProviderAPI", providerVersionNumber: "2.0.0" };
+  const version = (number: string) => ({
+    number,
+    createdAt: timestamp,
+    _embedded: like({}),
+  });
+  const bdctBody = (extraEmbedded: Record<string, unknown>) =>
+    like({
+      verificationStatus: like("success"),
+      _actions: eachLike({
+        name: "pf:publish",
+        title: "Publish",
+        method: "POST",
+        href: "https://example.pactflow.io/publish",
+      }),
+      _embedded: {
+        consumerVersion: version("1.0.0"),
+        providerVersion: version("2.0.0"),
+        crossContractVerificationResults: { success: true },
+        providerContractVerificationResults: { success: true },
+        ...extraEmbedded,
+      },
+      _links: like({}),
+    });
+
+  it("GET …/consumer-contract – retrieves BDCT consumer contract", () =>
+    provider
+      .addInteraction()
+      .given("ProviderAPI version 2.0.0 has consumer contracts")
+      .uponReceiving(
+        "a request to get BDCT consumer contract for ProviderAPI 2.0.0",
+      )
+      .withRequest("GET", `${bdctBase}/consumer-contract`, (b) => {
+        b.headers(authHeader);
+      })
+      .willRespondWith(200, (b) => {
+        b.headers(halJsonResponseHeaders).jsonBody(
+          bdctBody({
+            crossContractVerificationResults: {
+              success: true,
+              results: like({}),
+              verificationDate: timestamp,
+              verifier: "pactflow",
+              verifierVersion: "1.0.0",
+            },
+            consumerContract: { content: like("eyJjb25zdW1lciI6e319") },
+          }),
+        );
+      })
+      .executeTest(async (mockServer) => {
+        const client = await createClient(mockServer.url);
+        const result = await client.getBiDirectionalConsumerContract(input);
+        expect(result._embedded).toBeDefined();
+      }));
+
+  it("GET …/consumer-contract-verification-results – retrieves BDCT consumer verification results", () =>
+    provider
+      .addInteraction()
+      .given(
+        "ProviderAPI version 2.0.0 has consumer contract verification results",
+      )
+      .uponReceiving(
+        "a request to get BDCT consumer verification results for ProviderAPI 2.0.0",
+      )
+      .withRequest(
+        "GET",
+        `${bdctBase}/consumer-contract-verification-results`,
+        (b) => {
+          b.headers(authHeader);
+        },
+      )
+      .willRespondWith(200, (b) => {
+        b.headers(halJsonResponseHeaders).jsonBody(bdctBody({}));
+      })
+      .executeTest(async (mockServer) => {
+        const client = await createClient(mockServer.url);
+        const result =
+          await client.getBiDirectionalConsumerContractVerificationResults(
+            input,
+          );
+        expect(result._embedded).toBeDefined();
+      }));
+
+  it("GET …/cross-contract-verification-results – retrieves BDCT cross-contract results", () =>
+    provider
+      .addInteraction()
+      .given(
+        "ProviderAPI version 2.0.0 has cross-contract verification results",
+      )
+      .uponReceiving(
+        "a request to get BDCT cross-contract verification results for ProviderAPI 2.0.0",
+      )
+      .withRequest(
+        "GET",
+        `${bdctBase}/cross-contract-verification-results`,
+        (b) => {
+          b.headers(authHeader);
+        },
+      )
+      .willRespondWith(200, (b) => {
+        b.headers(halJsonResponseHeaders).jsonBody(
+          bdctBody({
+            crossContractVerificationResults: {
+              success: true,
+              results: like({}),
+              verificationDate: timestamp,
+              verifier: "pactflow",
+              verifierVersion: "1.0.0",
+            },
+          }),
+        );
+      })
+      .executeTest(async (mockServer) => {
+        const client = await createClient(mockServer.url);
+        const result =
+          await client.getBiDirectionalCrossContractVerificationResults(input);
+        expect(result._embedded).toBeDefined();
+      }));
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// Error responses
+//
+// The spec documents these statuses without a response body, so each
+// interaction asserts only the status; the client surfaces it as a ToolError
+// whose message embeds "status: <code>".
+// ════════════════════════════════════════════════════════════════════════════
+
+function expectErrorStatus(opts: {
+  description: string;
+  state?: string;
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+  path: string;
+  query?: Record<string, string>;
+  body?: unknown;
+  status: number;
+  call: (client: PactflowClient) => Promise<unknown>;
+}) {
+  const unconfigured = provider.addInteraction();
+  const interaction = opts.state
+    ? unconfigured.given(opts.state)
+    : unconfigured;
+  return interaction
+    .uponReceiving(opts.description)
+    .withRequest(opts.method, opts.path, (b) => {
+      b.headers(opts.body === undefined ? authHeader : jsonHeaders);
+      if (opts.query) b.query(opts.query);
+      if (opts.body !== undefined) b.jsonBody(opts.body);
+    })
+    .willRespondWith(opts.status)
+    .executeTest(async (mockServer) => {
+      const client = await createClient(mockServer.url);
+      await expect(opts.call(client)).rejects.toThrow(`status: ${opts.status}`);
+    });
+}
+
+describe("Error responses", () => {
+  const teamId = "00000000-0000-0000-0000-000000000005";
+  const userId = "00000000-0000-0000-0000-000000000012";
+  const roleId = "00000000-0000-0000-0000-000000000007";
+  const environmentId = "00000000-0000-0000-0000-000000000002";
+  const invalidScope = { name: "Bad", permissions: [{ scope: "not-a-scope" }] };
+  const invalidWebhook = {
+    description: "Bad webhook",
+    events: [{ name: "not_an_event" }],
+    request: { method: "POST" as const, url: "not-a-url" },
+  };
+  const bdctConsumerBase =
+    "/contracts/bi-directional/provider/ProviderAPI/version/2.0.0/consumer/ConsumerApp/version/1.0.0";
+  const invalidPublish = {
+    pacticipantName: "ConsumerApp",
+    pacticipantVersionNumber: "1.0.0",
+    contracts: [
+      {
+        consumerName: "ConsumerApp",
+        providerName: "ProviderAPI",
+        content: "not-base64",
+        contentType: "application/json" as const,
+        specification: "pact" as const,
+      },
+    ],
+  };
+
+  // ── 400 Bad Request ──────────────────────────────────────────────────────
+
+  it("POST /admin/roles – 400 for an unknown permission scope", () =>
+    expectErrorStatus({
+      description: "a request to create an admin role with an invalid scope",
+      method: "POST",
+      path: "/admin/roles",
+      body: like(invalidScope),
+      status: 400,
+      call: (c) => c.createAdminRole(invalidScope),
+    }));
+
+  it("PUT /admin/roles/{id} – 400 for an unknown permission scope", () =>
+    expectErrorStatus({
+      description: `a request to update admin role ${roleId} with an invalid scope`,
+      state: `admin role ${roleId} exists`,
+      method: "PUT",
+      path: `/admin/roles/${roleId}`,
+      body: like(invalidScope),
+      status: 400,
+      call: (c) => c.updateAdminRole({ roleId, ...invalidScope }),
+    }));
+
+  it("POST /pacticipants – 400 for an invalid pacticipant name", () =>
+    expectErrorStatus({
+      description: "a request to create a pacticipant with an invalid name",
+      method: "POST",
+      path: "/pacticipants",
+      body: like({ name: "invalid/name" }),
+      status: 400,
+      call: (c) => c.createPacticipant({ name: "invalid/name" }),
+    }));
+
+  it("POST /webhooks – 400 for an invalid webhook definition", () =>
+    expectErrorStatus({
+      description: "a request to create a webhook with an invalid definition",
+      method: "POST",
+      path: "/webhooks",
+      body: like(invalidWebhook),
+      status: 400,
+      call: (c) => c.createWebhook(invalidWebhook as any),
+    }));
+
+  it("PUT /webhooks/{id} – 400 for an invalid webhook definition", () =>
+    expectErrorStatus({
+      description: "a request to update webhook wh-uuid-1 with invalid data",
+      state: "a webhook with uuid wh-uuid-1 exists",
+      method: "PUT",
+      path: "/webhooks/wh-uuid-1",
+      body: like(invalidWebhook),
+      status: 400,
+      call: (c) =>
+        c.updateWebhook({ webhookId: "wh-uuid-1", ...invalidWebhook } as any),
+    }));
+
+  it("POST /webhooks/execute – 400 when no webhook request is supplied", () =>
+    expectErrorStatus({
+      description: "a request to execute webhooks without a request definition",
+      method: "POST",
+      path: "/webhooks/execute",
+      body: {},
+      status: 400,
+      call: (c) => c.executeWebhooks(),
+    }));
+
+  it("PUT /admin/teams/{id} – 400 for an invalid team name", () =>
+    expectErrorStatus({
+      description: `a request to update admin team ${teamId} with an empty name`,
+      state: `admin team ${teamId} exists`,
+      method: "PUT",
+      path: `/admin/teams/${teamId}`,
+      body: like({ name: "" }),
+      status: 400,
+      call: (c) => c.updateAdminTeam({ teamId, name: "" }),
+    }));
+
+  it("PATCH /admin/teams/{id}/users – 400 for an invalid patch operation", () =>
+    expectErrorStatus({
+      description: `a request to patch members of admin team ${teamId} with an invalid user`,
+      state: `admin team ${teamId} exists`,
+      method: "PATCH",
+      path: `/admin/teams/${teamId}/users`,
+      body: eachLike({
+        op: "add",
+        path: "/users",
+        value: { uuid: like("not-a-uuid") },
+      }),
+      status: 400,
+      call: (c) =>
+        c.patchTeamUsers({
+          teamId,
+          operations: [
+            { op: "add", path: "/users", value: { uuid: "not-a-uuid" } },
+          ],
+        }),
+    }));
+
+  it("GET /admin/users – 400 for an invalid page number", () =>
+    expectErrorStatus({
+      description: "a request to list admin users with an invalid page number",
+      method: "GET",
+      path: "/admin/users",
+      query: { page: "-1" },
+      status: 400,
+      call: (c) => c.listAdminUsers({ page: -1 }),
+    }));
+
+  it("PUT /admin/users/{id}/roles – 400 for an unknown role", () =>
+    expectErrorStatus({
+      description: `a request to set an unknown role for user ${userId}`,
+      state: `admin user ${userId} exists`,
+      method: "PUT",
+      path: `/admin/users/${userId}/roles`,
+      body: like({ roles: ["not-a-role-uuid"] }),
+      status: 400,
+      call: (c) => c.setUserRoles({ userId, roles: ["not-a-role-uuid"] }),
+    }));
+
+  it("PUT /environments/{uuid} – 400 for an invalid environment", () =>
+    expectErrorStatus({
+      description: `a request to update environment ${environmentId} with an empty name`,
+      state: `an environment with uuid ${environmentId} exists`,
+      method: "PUT",
+      path: `/environments/${environmentId}`,
+      body: like({ name: "", production: false }),
+      status: 400,
+      call: (c) =>
+        c.updateEnvironment({ environmentId, name: "", production: false }),
+    }));
+
+  it("POST /secrets – 400 for an invalid secret", () =>
+    expectErrorStatus({
+      description: "a request to create a secret with an empty name",
+      method: "POST",
+      path: "/secrets",
+      body: like({ name: "", value: "s3cr3t" }),
+      status: 400,
+      call: (c) => c.createSecret({ name: "", value: "s3cr3t" }),
+    }));
+
+  it("POST /contracts/publish – 400 for invalid contract content", () =>
+    expectErrorStatus({
+      description:
+        "a request to publish a consumer contract with invalid content",
+      method: "POST",
+      path: "/contracts/publish",
+      body: like(invalidPublish),
+      status: 400,
+      call: (c) => c.publishContracts(invalidPublish),
+    }));
+
+  it("POST /provider-contracts/provider/{name}/publish – 400 for invalid contract content", () => {
+    const { providerName, ...requestBody } = {
+      providerName: "ProviderAPI",
+      pacticipantVersionNumber: "2.0.0",
+      contract: {
+        content: "not-base64",
+        contentType: "application/yaml" as const,
+        specification: "oas" as const,
+      },
+    };
+    return expectErrorStatus({
+      description:
+        "a request to publish a provider contract with invalid content",
+      method: "POST",
+      path: `/provider-contracts/provider/${providerName}/publish`,
+      body: like(requestBody),
+      status: 400,
+      call: (c) => c.publishProviderContract({ providerName, ...requestBody }),
+    });
+  });
+
+  // ── 404 Not Found ────────────────────────────────────────────────────────
+
+  it("PUT /environments/{uuid} – 404 when the environment does not exist", () =>
+    expectErrorStatus({
+      description:
+        "a request to update environment 00000000-0000-0000-0000-000000000099",
+      state:
+        "no environment with uuid 00000000-0000-0000-0000-000000000099 exists",
+      method: "PUT",
+      path: "/environments/00000000-0000-0000-0000-000000000099",
+      body: like({ name: "staging", production: false }),
+      status: 404,
+      call: (c) =>
+        c.updateEnvironment({
+          environmentId: "00000000-0000-0000-0000-000000000099",
+          name: "staging",
+          production: false,
+        }),
+    }));
+
+  it("GET /pacticipants/{name}/labels/{label} – 404 when the label is missing", () =>
+    expectErrorStatus({
+      description: "a request to get missing label unknown for ServiceA",
+      state: "pacticipant ServiceA does not have label unknown",
+      method: "GET",
+      path: "/pacticipants/ServiceA/labels/unknown",
+      status: 404,
+      call: (c) =>
+        c.getPacticipantLabel({
+          pacticipantName: "ServiceA",
+          labelName: "unknown",
+        }),
+    }));
+
+  it("DELETE /pacticipants/{name}/labels/{label} – 404 when the label is missing", () =>
+    expectErrorStatus({
+      description: "a request to remove missing label unknown from ServiceA",
+      state: "pacticipant ServiceA does not have label unknown",
+      method: "DELETE",
+      path: "/pacticipants/ServiceA/labels/unknown",
+      status: 404,
+      call: (c) =>
+        c.removeLabel({ pacticipantName: "ServiceA", labelName: "unknown" }),
+    }));
+
+  // ── 409 Conflict ─────────────────────────────────────────────────────────
+
+  it("POST /secrets – 409 when a secret with the same name exists", () =>
+    expectErrorStatus({
+      description: "a request to create secret DEPLOY_KEY that already exists",
+      state: "a secret named DEPLOY_KEY already exists",
+      method: "POST",
+      path: "/secrets",
+      body: like({ name: "DEPLOY_KEY", value: "s3cr3t" }),
+      status: 409,
+      call: (c) => c.createSecret({ name: "DEPLOY_KEY", value: "s3cr3t" }),
+    }));
+
+  it("POST /contracts/publish – 409 when the version already has different content", () =>
+    expectErrorStatus({
+      description:
+        "a request to republish changed consumer contract content for ConsumerApp 1.0.0",
+      state: "ConsumerApp version 1.0.0 already has a published contract",
+      method: "POST",
+      path: "/contracts/publish",
+      body: like(invalidPublish),
+      status: 409,
+      call: (c) => c.publishContracts(invalidPublish),
+    }));
+
+  it("POST /provider-contracts/provider/{name}/publish – 409 when the version already has different content", () => {
+    const { providerName, ...requestBody } = {
+      providerName: "ProviderAPI",
+      pacticipantVersionNumber: "2.0.0",
+      contract: {
+        content: "b3BlbmFwaTogMy4wLjA=",
+        contentType: "application/yaml" as const,
+        specification: "oas" as const,
+      },
+    };
+    return expectErrorStatus({
+      description:
+        "a request to republish changed provider contract content for ProviderAPI 2.0.0",
+      state: "ProviderAPI version 2.0.0 already has a provider contract",
+      method: "POST",
+      path: `/provider-contracts/provider/${providerName}/publish`,
+      body: like(requestBody),
+      status: 409,
+      call: (c) => c.publishProviderContract({ providerName, ...requestBody }),
+    });
+  });
+
+  // ── 410 Gone / 422 Unprocessable ─────────────────────────────────────────
+
+  it("GET /admin/users/{id} – 410 when the user has been deleted", () =>
+    expectErrorStatus({
+      description: `a request to get deleted admin user ${userId}`,
+      state: `admin user ${userId} has been deleted`,
+      method: "GET",
+      path: `/admin/users/${userId}`,
+      status: 410,
+      call: (c) => c.getAdminUser({ userId }),
+    }));
+
+  it("DELETE /admin/teams/{id} – 422 when the team cannot be deleted", () =>
+    expectErrorStatus({
+      description: `a request to delete the default admin team ${teamId}`,
+      state: `admin team ${teamId} is the default team`,
+      method: "DELETE",
+      path: `/admin/teams/${teamId}`,
+      status: 422,
+      call: (c) => c.deleteAdminTeam({ teamId }),
+    }));
+
+  it("GET …/consumer/{c}/version/{v}/provider-contract – 422 when the contract cannot be processed", () =>
+    expectErrorStatus({
+      description:
+        "a request to get an unprocessable BDCT provider contract for ConsumerApp 1.0.0 vs ProviderAPI 2.0.0",
+      state:
+        "ProviderAPI 2.0.0 has an unprocessable provider contract for ConsumerApp 1.0.0",
+      method: "GET",
+      path: `${bdctConsumerBase}/provider-contract`,
+      status: 422,
+      call: (c) =>
+        c.getBiDirectionalProviderContractByConsumer({
+          providerName: "ProviderAPI",
+          providerVersionNumber: "2.0.0",
+          consumerName: "ConsumerApp",
+          consumerVersionNumber: "1.0.0",
+        }),
+    }));
+});
+
+describe("Labels – update existing", () => {
+  it("PUT /pacticipants/{name}/labels/{label} – 200 when the label already exists", () =>
+    provider
+      .addInteraction()
+      .given("pacticipant ConsumerApp has label mobile")
+      .uponReceiving("a request to add existing label mobile to ConsumerApp")
+      .withRequest("PUT", "/pacticipants/ConsumerApp/labels/mobile", (b) => {
+        b.headers(jsonHeaders).jsonBody(like({}));
+      })
+      .willRespondWith(200, (b) => {
+        b.headers(halJsonResponseHeaders).jsonBody(
+          like({
+            name: "mobile",
+            createdAt: timestamp,
+            _links: { self: titledLink, pacticipant: titledLink },
+          }),
+        );
+      })
+      .executeTest(async (mockServer) => {
+        const client = await createClient(mockServer.url);
+        const result = await client.addLabel({
+          pacticipantName: "ConsumerApp",
+          labelName: "mobile",
+        });
+        expect(result.name).toBe("mobile");
       }));
 });
