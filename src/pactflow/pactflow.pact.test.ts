@@ -191,7 +191,9 @@ function userBody(uuid: string, email: string, type: 0 | 1 = 0) {
   };
 }
 
-function teamBody(uuid: string, name: string) {
+// `members` is only part of the Team schema (GET); CreatedTeam (POST/PUT)
+// forbids additional `_embedded` properties.
+function teamBody(uuid: string, name: string, includeMembers = true) {
   return {
     uuid,
     name,
@@ -202,7 +204,9 @@ function teamBody(uuid: string, name: string) {
         uuid: "00000000-0000-0000-0000-000000000012",
       }),
       environments: eachLike({ uuid: "00000000-0000-0000-0000-000000000001" }),
-      members: eachLike({ uuid: "00000000-0000-0000-0000-000000000012" }),
+      ...(includeMembers && {
+        members: eachLike({ uuid: "00000000-0000-0000-0000-000000000012" }),
+      }),
       pacticipants: eachLike({ name: "ServiceA" }),
     },
     _links: selfLink,
@@ -683,7 +687,8 @@ describe("Core", () => {
               currentlyDeployedCount: 5,
             }),
             environments: like({ count: 3 }),
-            matrix: like({ count: 100 }),
+            // The spec hardcodes matrix.count to -1 (deprecated).
+            matrix: like({ count: -1 }),
             pactVersions: like({ count: 40 }),
             pactRevisionsPerConsumerVersion: like({
               distribution: like({ "1": 40 }),
@@ -1945,7 +1950,9 @@ describe("Admin – Teams", () => {
       })
       .willRespondWith(201, (b) => {
         b.headers(halJsonResponseHeaders).jsonBody(
-          like(teamBody("00000000-0000-0000-0000-000000000004", "Platform")),
+          like(
+            teamBody("00000000-0000-0000-0000-000000000004", "Platform", false),
+          ),
         );
       })
       .executeTest(async (mockServer) => {
@@ -1970,7 +1977,9 @@ describe("Admin – Teams", () => {
       )
       .willRespondWith(200, (b) => {
         b.headers(halJsonResponseHeaders).jsonBody(
-          like(teamBody("00000000-0000-0000-0000-000000000005", "Infra v2")),
+          like(
+            teamBody("00000000-0000-0000-0000-000000000005", "Infra v2", false),
+          ),
         );
       })
       .executeTest(async (mockServer) => {
