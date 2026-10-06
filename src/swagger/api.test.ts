@@ -2,8 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
 import { SwaggerAPI } from "./client/api";
 import { SwaggerConfiguration } from "./client/configuration";
-import { ApidomValidationOutputSchema } from "./client/registry-types";
 import {
+  ApidomValidationOutputSchema,
   CreateApiFromPromptParamsSchema,
   CreateApiParamsSchema,
 } from "./client/registry-types";
