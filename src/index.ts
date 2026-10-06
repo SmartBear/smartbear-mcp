@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import Bugsnag from "./common/bugsnag";
-import "./common/register-clients"; // Register all available clients
+import "./common/register-clients"; // Load and register enabled clients
 import { installSignalHandlers } from "./common/shutdown";
 import { runHttpMode } from "./common/transport-http";
 import { runStdioMode } from "./common/transport-stdio";
