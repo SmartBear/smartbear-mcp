@@ -67,7 +67,7 @@ class ClientRegistry {
   /**
    * Check if a client is enabled based on client filtering configuration
    */
-  private isClientEnabled(name: string): boolean {
+  isClientEnabled(name: string): boolean {
     if (this.enabledClients.size === 0) {
       return true; // All clients enabled
     }

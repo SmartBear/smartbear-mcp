@@ -12,6 +12,7 @@ function fakeServer() {
     setClientInfo: vi.fn(),
     setMcpClientIdentity: vi.fn(),
     setElicitationSupported: vi.fn(),
+    getAnalyticsSession: vi.fn(),
   } as unknown as SmartBearMcpServer;
 }
 

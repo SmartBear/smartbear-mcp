@@ -7,6 +7,11 @@ import { McpServer, ResourceTemplate } from "@modelcontextprotocol/server";
 import { ZodObject, z } from "zod";
 import Bugsnag, { type BugsnagEvent } from "../common/bugsnag";
 import {
+  type AnalyticsSession,
+  errorTypeOf,
+  trackToolCalled,
+} from "./analytics";
+import {
   CacheService,
   getConfiguredCacheTtlSeconds,
   isCachingEnabled,
@@ -75,6 +80,7 @@ export class SmartBearMcpServer extends McpServer {
   private clients: Client[] = [];
   private enabledToolsets?: string[];
   private mcpClientIdentity?: McpClientIdentity;
+  private analyticsSession?: AnalyticsSession;
 
   constructor(enabledToolsets?: string, era: ProtocolEra = "legacy") {
     super(
@@ -163,6 +169,24 @@ export class SmartBearMcpServer extends McpServer {
     return this.clients;
   }
 
+  /** Toolsets enabled for this instance (normalised), or `undefined` for all. */
+  getEnabledToolsets(): string[] | undefined {
+    return this.enabledToolsets;
+  }
+
+  /**
+   * Attach the usage-analytics state for the HTTP session this instance
+   * serves. Set by the HTTP transport once a session id exists; never set for
+   * stdio or for modern-era (sessionless) requests.
+   */
+  setAnalyticsSession(session: AnalyticsSession | undefined): void {
+    this.analyticsSession = session;
+  }
+
+  getAnalyticsSession(): AnalyticsSession | undefined {
+    return this.analyticsSession;
+  }
+
   /**
    * Record the MCP client identity reported in the `initialize` handshake.
    * Captured once per session by the transport layer.
@@ -244,6 +268,11 @@ export class SmartBearMcpServer extends McpServer {
             annotations: this.getAnnotations(toolTitle, params),
           },
           async (args: any, ctx: any) => {
+            // Usage analytics: outcome only (success flag, error class name,
+            // duration). Arguments and results are never recorded.
+            const startedAt = Date.now();
+            let success = true;
+            let errorType: string | null = null;
             try {
               if (!client.isConfigured()) {
                 throw new ToolError(
@@ -259,6 +288,10 @@ export class SmartBearMcpServer extends McpServer {
               if (result) {
                 this.validateCallbackResult(result, params);
                 this.addStructuredContentAsText(result);
+                if (result.isError) {
+                  success = false;
+                  errorType = "ToolResultError";
+                }
               }
               return result;
             } catch (e) {
@@ -268,6 +301,8 @@ export class SmartBearMcpServer extends McpServer {
               if (e instanceof InputRequiredSignal) {
                 return e.result;
               }
+              success = false;
+              errorType = errorTypeOf(e);
               // ToolErrors should not be reported to BugSnag
               if (e instanceof ToolError) {
                 return {
@@ -287,6 +322,16 @@ export class SmartBearMcpServer extends McpServer {
                 });
               }
               throw e;
+            } finally {
+              trackToolCalled({
+                client,
+                toolName,
+                success,
+                errorType,
+                durationMs: Date.now() - startedAt,
+                mcpClient: this.getMcpClientIdentity(),
+                session: this.analyticsSession,
+              });
             }
           },
         );

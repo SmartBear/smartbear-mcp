@@ -53,9 +53,10 @@
     "bump": "node scripts/bump.js"
   },
   "dependencies": {
+    "@amplitude/analytics-node": "^1.5.71",
     "@bugsnag/js": "^8.8.1",
-    "@modelcontextprotocol/server": "^2.0.0-beta.5",
     "@modelcontextprotocol/node": "^2.0.0-beta.5",
+    "@modelcontextprotocol/server": "^2.0.0-beta.5",
     "@modelcontextprotocol/server-legacy": "^2.0.0-beta.5",
     "js-yaml": "^4.2.0",
     "node-cache": "^5.1.2",
