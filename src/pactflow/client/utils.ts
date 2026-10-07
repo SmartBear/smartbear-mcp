@@ -1,6 +1,4 @@
 import yaml from "js-yaml";
-// @ts-expect-error missing type declarations
-import Swagger from "swagger-client";
 import { ToolError } from "../../common/tools";
 import {
   type OpenAPI,
@@ -30,6 +28,10 @@ export async function resolveOpenAPISpec(
   }
 
   const unresolvedSpec = await getRemoteSpecContents(openAPISchema.data);
+  // Lazy-loaded: swagger-client pulls in ~1,800 module files, which would
+  // otherwise be loaded before the stdio transport connects and delay `initialize`.
+  // @ts-expect-error missing type declarations
+  const { default: Swagger } = await import("swagger-client");
   const resolvedSpec = await Swagger.resolve({ spec: unresolvedSpec });
 
   if (resolvedSpec.errors?.length) {
