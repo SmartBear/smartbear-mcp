@@ -302,6 +302,34 @@ The QMetry client provides the following test management capabilities as listed 
 -   Returns: JSON object containing the automation status details (e.g., PASS, FAIL, IN_PROGRESS, etc.).
 -   Use case: Check and track the processing status of a specific automation results import job.
 
+## AI Agent Tools (Release Readiness)
+
+> **Internal & Remote use only.** These tools are available from QMetry version **8.28.0** onwards.
+
+### `fetch_quality_gate_configuration`
+
+-   Purpose: Fetch the quality gate configuration for a project and AI agent, including assessment scope and gate criteria.
+-   Parameters: Project ID (`projectId`), AI agent identifier (`agentIdentifier`).
+-   Returns: Gate configuration object with assessment scope, gate criteria, and thresholds.
+-   Use case: Retrieve gate criteria and thresholds before generating a quality gate report, inspect assessment scope for release readiness evaluation.
+-   Note: Call this tool before `execute_quality_gate_report` to understand available gates and parameters.
+
+### `execute_quality_gate_report`
+
+-   Purpose: Execute a quality gate report by forwarding the request to the backend analytics engine and returning the results.
+-   Parameters: Report name (`reportName`), gate identifier (`gateIdentifier`), project ID (`projectId`), optional release ID (`releaseId`), optional cycle IDs (`cycleIds`), optional pagination (`page`, `limit`).
+-   Returns: JSON object containing report data, total count, success status, and pagination info.
+-   Use case: Generate a release readiness report for a specific project, release, and cycle; evaluate project health against gate criteria.
+-   Note: Call `fetch_quality_gate_configuration` first to discover available gates and report parameters.
+
+### `export_html_report`
+
+-   Purpose: Export HTML content as a downloadable report file via the backend.
+-   Parameters: HTML content (`htmlContent`), file name without extension (`fileName`).
+-   Returns: Report file generated and returned by the backend.
+-   Use case: Export AI-generated release readiness reports as shareable HTML documents.
+-   Note: Typically called after generating report content from `execute_quality_gate_report` results.
+
 ## Notes
 
 -   Test Run UDFs support in `qmetry_testcase_executions`, `get_testcase_runs_by_testsuite_run`, and `fetch_issue_executions` is available from QMetry version 8.26.0
