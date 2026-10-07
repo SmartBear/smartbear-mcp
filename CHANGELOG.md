@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- [Swagger] Added one-click install buttons for VS Code (GitHub Copilot), Cursor, and Claude Desktop to the Swagger Remote MCP Server setup docs. Reorganized the Kiro section to use the same button-first layout for consistency.
 - [Swagger] Portal product tools (`swagger_create_portal_product`, `swagger_update_portal_product`): added a `visibility` parameter (`visible`, `hidden` or `conditional`). `conditional` shows the product on the portal landing page only to users who have access to it, and is not allowed for public products. Product output now includes `visibility`.
 
 ### Removed
@@ -24,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - [Common] Reduced stdio startup time so the `initialize` response is not delayed by module loading,which could exceed client timeouts on some environment's. `swagger-client` is now loaded only when a Contract Testing tool resolves an OpenAPI document, and products excluded by `MCP_CLIENTS` or `MCP_TOOLSETS` are no longer imported at startup.
+
 
 ### Changed
 
