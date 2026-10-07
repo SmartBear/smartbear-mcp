@@ -181,6 +181,7 @@ export class BugsnagClient implements Client {
   configPrefix = "Bugsnag";
   config = ConfigurationSchema;
   defaultToolsets = ["Projects"];
+  analytics = { appName: "BugSnag", userId: ["sub"] };
 
   async configure(
     _server: SmartBearMcpServer,

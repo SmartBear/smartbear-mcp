@@ -1,7 +1,12 @@
 import { Tool } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { Qtm4jClient } from "../../client";
-import { ENDPOINTS, TOOL_NAMES, TOOLSETS } from "../../config/constants";
+import {
+  DEFAULT_FOLDER_NAMES,
+  ENDPOINTS,
+  TOOL_NAMES,
+  TOOLSETS,
+} from "../../config/constants";
 import { InputField, ResolverKeys } from "../../config/field-resolution.types";
 import {
   CreateTestCycleBody,
@@ -21,13 +26,13 @@ const FIELD_CONFIG: Record<string, string> = {
 /**
  * CreateTestCycle Tool
  *
- * Creates a new test cycle in QTM4J. All cycles are placed in the
- * 'MCP Generated' folder automatically.
+ * Creates a new test cycle in QTM4J. If folderId is not provided, the cycle
+ * is placed in the 'MCP Generated' folder automatically.
  *
  * Resolved fields (driven by FIELD_CONFIG):
  *   - priority → numeric ID via CommonAttribute resolver
  *   - status → numeric ID via TEST_CYCLE_STATUS resolver
- *   - folderId → resolved to 'MCP Generated' folder ID
+ *   - folderId → resolved to 'MCP Generated' folder ID (skipped when the user provides numeric ID)
  *   - labels → numeric IDs via SearchableField resolver
  *   - components → numeric IDs via SearchableField resolver
  *
@@ -81,7 +86,7 @@ export class CreateTestCycle extends Tool<Qtm4jClient> {
     hints: [
       "PREREQUISITE: set_project_context must be called before this tool. NEVER auto-select a project.",
       "If any priority, status, label, or component name cannot be resolved, the cycle is still created but a warning is returned. Suggest the closest available value from the set_project_context response and ask the user to confirm before retrying.",
-      "All cycles are placed in the 'MCP Generated' folder — do not pass folderId.",
+      "FOLDER ID: folderId is optional. If omitted, defaults to the 'MCP Generated' folder. To place in a specific folder, ask the user to right-click the target folder in QTM4J and select 'Copy Folder Id' — never try to look it up.",
       "Date format: 'dd/MMM/yyyy HH:mm' e.g. '10/May/2026 00:00'. Month must be capitalised. plannedStartDate must be ≤ plannedEndDate.",
     ],
     outputDescription:
@@ -94,17 +99,26 @@ export class CreateTestCycle extends Tool<Qtm4jClient> {
     const fieldResolver = this.client.getResolverRegistry();
     const context = fieldResolver.requireProjectContext();
 
-    // Inject projectId and default folderId before resolution.
+    const parsed = CreateTestCycleBody.parse(rawArgs) as Record<
+      string,
+      unknown
+    >;
     const body: Record<string, unknown> = {
-      ...(CreateTestCycleBody.parse(rawArgs) as Record<string, unknown>),
+      ...parsed,
       projectId: context.projectId,
-      folderId: "MCP Generated",
     };
-    const warnings: string[] = [];
 
-    // Resolve all configured fields (priority, status, folderId, labels, components).
+    // Numeric folderId → use as-is, skip resolver. If Absent → default to "MCP Generated".
+    const activeFieldConfig = { ...FIELD_CONFIG };
+    if (typeof body[InputField.FOLDER] === "number") {
+      delete activeFieldConfig[InputField.FOLDER];
+    } else {
+      body[InputField.FOLDER] = DEFAULT_FOLDER_NAMES.MCP_GENERATED;
+    }
+
+    const warnings: string[] = [];
     await Promise.all(
-      Object.entries(FIELD_CONFIG).map(([inputField, resolverKey]) =>
+      Object.entries(activeFieldConfig).map(([inputField, resolverKey]) =>
         fieldResolver
           .getResolver(resolverKey)
           .resolve(inputField, resolverKey, body, context, warnings),

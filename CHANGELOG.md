@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- [Swagger] Added one-click install buttons for VS Code (GitHub Copilot), Cursor, and Claude Desktop to the Swagger Remote MCP Server setup docs. Reorganized the Kiro section to use the same button-first layout for consistency.
+
+## [0.42.0] - 2026-10-07
+
+### Added
+
+- [Common] Usage analytics for the remote (HTTP) server, reported to the shared SmartBear Amplitude project when `MCP_SERVER_AMPLITUDE_API_KEY` is set: `Server Initialized`, `Session Started`, `Session Ended`, `Tool Called` and `Tools Listed` events, each carrying `app_name`, `organization`, `analytics_id` (`sha256(email.toLowerCase())` when the product's OAuth token carries an `email` claim, matching SmartBear ID; otherwise `sha256("<integration>:<user id>")` from the claim the product declares), `source` (`MCP`) and `user_agent`. `Tool Called` and `Tools Listed` also carry `mcp_client_name`, `mcp_client_version` and `protocol_version`, so client adoption and protocol migration are measurable for 2026-07-28 clients, which have no `initialize` handshake or session and therefore produce no lifecycle events. Tool arguments, results, credentials and raw email are never sent. Identity claim locations and `app_name` are declared per product via the new optional `Client.analytics` field; BugSnag ships the reference declaration, other integrations report anonymous events until theirs is added. Products that receive their credential in a product-specific header rather than `Authorization` can name it with `analytics.tokenHeader`, which is tried ahead of `Authorization` while that remains the fallback, the first candidate decoding as a JWT winning; no integration declares one yet. Events are flushed on session end and on SIGTERM; a missing key or an Amplitude outage never affects tool calls. Stdio (local) usage is not tracked.
+
+### Fixed
+
+- [Common] Reduced stdio startup time so the `initialize` response is not delayed by module loading,which could exceed client timeouts on some environment's. `swagger-client` is now loaded only when a Contract Testing tool resolves an OpenAPI document, and products excluded by `MCP_CLIENTS` or `MCP_TOOLSETS` are no longer imported at startup.
+
+
+### Changed
+
+- [Swagger] `create_api_from_prompt` and `create_or_update_api` tools: added an optional `version` parameter to save the API definition under a specific version, instead of relying solely on the definition's `info.version` field (or the fixed `1.0.0` default on create). Accepts `null` as well as omission, since some MCP clients send `null` for an unset optional field.
+
+## [0.41.3] - 2026-09-30
+
+### Added
+
+- [Swagger] Added `swagger_validate_api` tool to validate OpenAPI and AsyncAPI definitions (raw content or an existing registry API). [#723](https://github.com/SmartBear/smartbear-mcp/pull/723)
+- [QTM4J] Added optional `folderId` support to `create_test_case` and `create_test_cycle`. If omitted, the asset is created in the `MCP Generated` folder. [#721](https://github.com/SmartBear/smartbear-mcp/pull/721)
+
+### Fixed
+
+- [QTM4J] Fixed `search_test_cases` folder filtering to use `folderId` instead of `folders`, matching the backend API contract. [#721](https://github.com/SmartBear/smartbear-mcp/pull/721)
+
 ## [0.41.0] - 2026-09-16
 
 ### Added

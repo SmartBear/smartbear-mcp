@@ -323,12 +323,17 @@ Add the following configuration to your `claude_desktop_config.json` to launch t
 }
 ```
 
+### Loading only the products you use
+
+Set `MCP_CLIENTS` to a comma-separated, case-insensitive list of product names (for example `"MCP_CLIENTS": "QMetry"`) to load only those products. This reduces startup time, which helps on clients with a short `initialize` timeout. Valid names are `BearQ`, `BugSnag`, `Collaborator`, `Contract Testing`, `QMetry`, `QTM4J`, `Reflect`, `Swagger` and `Zephyr`. When unset, all products are loaded.
+
 ## Server Configuration (HTTP mode)
 
 | Variable | Default | Purpose |
 |---|---|---|
 | `BASE_URL` | *(derived from request)* | The server's own public URL, e.g. `https://mcp.example.com`. Set this on any deployment behind a proxy or load balancer — otherwise the address advertised for OAuth discovery is derived from the client-supplied `Host` header. |
 | `TRUST_PROXY` | `false` | Set to `true` only when a proxy in front of the server sets `X-Forwarded-Host` and strips any client-supplied value. |
+| `MCP_SERVER_AMPLITUDE_API_KEY` | *(unset — analytics off)* | API key for the shared SmartBear Amplitude project. When set, the server reports `Server Initialized`, `Session Started`, `Session Ended`, `Tool Called` and `Tools Listed` usage events (tool outcome and timing only — never tool arguments, results, credentials or raw email). Unset, nothing is tracked. HTTP mode only. |
 
 ## Documentation
 
