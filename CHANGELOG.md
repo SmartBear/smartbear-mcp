@@ -16,9 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [Common] Reduced stdio startup time so the `initialize` response is not delayed by module loading,which could exceed client timeouts on some environment's. `swagger-client` is now loaded only when a Contract Testing tool resolves an OpenAPI document, and products excluded by `MCP_CLIENTS` or `MCP_TOOLSETS` are no longer imported at startup.
 
+### Removed
+
+- [Swagger] Removed the `hidden` parameter from `swagger_create_portal_product` and `swagger_update_portal_product`, use `visibility` instead. A leftover `hidden` is silently ignored, so when creating a product the portal default applies, which is hidden for most organizations. Send `visibility: "visible"` to make it visible.
+
 ### Changed
 
-- [Swagger] The `hidden` parameter of the portal product tools is deprecated in favor of `visibility`, and is ignored when `visibility` is provided.
 - [Swagger] `create_api_from_prompt` and `create_or_update_api` tools: added an optional `version` parameter to save the API definition under a specific version, instead of relying solely on the definition's `info.version` field (or the fixed `1.0.0` default on create). Accepts `null` as well as omission, since some MCP clients send `null` for an unset optional field.
 
 ## [0.41.3] - 2026-09-30

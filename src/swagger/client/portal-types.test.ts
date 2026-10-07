@@ -40,17 +40,14 @@ describe("product visibility schemas", () => {
     ).toBe(false);
   });
 
-  it("still accepts the deprecated hidden flag", () => {
-    expect(
-      CreateProductArgsSchema.safeParse({ ...createBase, hidden: true })
-        .success,
-    ).toBe(true);
+  it("no longer has the removed hidden flag in the input schemas", () => {
+    expect(CreateProductArgsSchema.shape).not.toHaveProperty("hidden");
+    expect(UpdateProductArgsSchema.shape).not.toHaveProperty("hidden");
   });
 
   it("includes visibility in the product output", () => {
     const parsed = ProductOutputSchema.parse({
       id: "p-1",
-      hidden: false,
       visibility: "conditional",
     });
     expect(parsed.visibility).toBe("conditional");

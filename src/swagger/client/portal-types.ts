@@ -323,14 +323,8 @@ export const CreateProductArgsSchema = PortalArgsSchema.extend({
     .describe(
       "Whether the product is publicly visible to all portal visitors - false means only authenticated users with appropriate roles can access it",
     ),
-  hidden: z
-    .boolean()
-    .optional()
-    .describe(
-      "Deprecated, use 'visibility' instead. Whether the product is hidden from the portal landing page navigation menus. Ignored if 'visibility' is provided",
-    ),
   visibility: ProductVisibilitySchema.optional().describe(
-    "Whether the product is shown on the portal landing page - 'visible' shows it to everyone, 'hidden' hides it from everyone, 'conditional' shows it only to users who have access to the product (not allowed when the product is public). Takes precedence over the deprecated 'hidden'",
+    "Whether the product is shown on the portal landing page - 'visible' shows it to everyone, 'hidden' hides it from everyone, 'conditional' shows it only to users who have access to the product (not allowed when the product is public)",
   ),
 });
 
@@ -359,14 +353,8 @@ export const UpdateProductArgsSchema = ProductArgsSchema.extend({
     .describe(
       "Change product visibility - true makes it publicly accessible to all visitors, false restricts to authenticated users with roles",
     ),
-  hidden: z
-    .boolean()
-    .optional()
-    .describe(
-      "Deprecated, use 'visibility' instead. Change navigation visibility - true hides from portal landing page menus while keeping the product accessible via direct links. Ignored if 'visibility' is provided",
-    ),
   visibility: ProductVisibilitySchema.optional().describe(
-    "Change whether the product is shown on the portal landing page - 'visible' shows it to everyone, 'hidden' hides it from everyone, 'conditional' shows it only to users who have access to the product. Not allowed when the product is public; making a 'conditional' product public without also changing visibility fails with 409. Takes precedence over the deprecated 'hidden'",
+    "Change whether the product is shown on the portal landing page - 'visible' shows it to everyone, 'hidden' hides it from everyone, 'conditional' shows it only to users who have access to the product. Not allowed when the product is public; making a 'conditional' product public without also changing visibility fails with 409",
   ),
 });
 
@@ -728,7 +716,6 @@ export const ProductOutputSchema = z.looseObject({
   portalId: z.string().optional(),
   description: z.string().optional(),
   public: z.boolean().optional(),
-  hidden: z.boolean().optional(),
   visibility: ProductVisibilitySchema.optional(),
   url: z.string().optional(),
 });
