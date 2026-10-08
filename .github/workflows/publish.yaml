@@ -255,26 +255,76 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Publish to npm
+      - name: Check if version already on npm
         if: ${{ env.RUN_PUBLISH_NPM == 'true' }}
+        id: npm_check
+        run: |
+          VERSION="${{ steps.extract_version.outputs.VERSION }}"
+          if [[ -n "$(npm view "@smartbear/mcp@${VERSION}" version 2>/dev/null)" ]]; then
+            echo "::notice::@smartbear/mcp@${VERSION} already on npm, skipping publish"
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish to npm
+        if: ${{ env.RUN_PUBLISH_NPM == 'true' && steps.npm_check.outputs.exists != 'true' }}
         run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: prepare mcp-publisher
+      - name: Check if version already in MCP Registry
         if: ${{ env.RUN_PUBLISH_MCP == 'true' }}
+        id: mcp_check
+        run: |
+          VERSION="${{ steps.extract_version.outputs.VERSION }}"
+          SERVER_NAME=$(jq -r '.name' server.json)
+          ENCODED=$(jq -rn --arg s "$SERVER_NAME" '$s | @uri')
+          CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+            "https://registry.modelcontextprotocol.io/v0/servers/${ENCODED}/versions/${VERSION}")
+          if [[ "$CODE" == "200" ]]; then
+            echo "::notice::${SERVER_NAME}@${VERSION} already in MCP Registry, skipping publish"
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Wait for npm to serve the new version
+        if: ${{ env.RUN_PUBLISH_MCP == 'true' && steps.mcp_check.outputs.exists != 'true' }}
+        run: |
+          VERSION="${{ steps.extract_version.outputs.VERSION }}"
+          for i in $(seq 1 8); do
+            if [[ -n "$(npm view "@smartbear/mcp@${VERSION}" version 2>/dev/null)" ]]; then
+              echo "npm is serving @smartbear/mcp@${VERSION}"
+              exit 0
+            fi
+            echo "Attempt $i: not visible yet, retrying in 15s"
+            sleep 15
+          done
+          echo "::error::@smartbear/mcp@${VERSION} never appeared on npm"
+          exit 1
+
+      - name: prepare mcp-publisher
+        if: ${{ env.RUN_PUBLISH_MCP == 'true' && steps.mcp_check.outputs.exists != 'true' }}
         run: |
           curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
 
       - name: Login
-        if: ${{ env.RUN_PUBLISH_MCP == 'true' }}
+        if: ${{ env.RUN_PUBLISH_MCP == 'true' && steps.mcp_check.outputs.exists != 'true' }}
         run: |
           ./mcp-publisher login github-oidc
           ./mcp-publisher login dns --domain smartbear.com --private-key "${{ secrets.GH_MCP_REGISTRY_KEY }}"
 
       - name: Publish to MCP Registry
-        if: ${{ env.RUN_PUBLISH_MCP == 'true' }}
-        run: ./mcp-publisher publish
+        if: ${{ env.RUN_PUBLISH_MCP == 'true' && steps.mcp_check.outputs.exists != 'true' }}
+        run: |
+          for i in 1 2; do
+            ./mcp-publisher publish && exit 0
+            echo "Attempt $i failed, retrying in 30s"
+            sleep 30
+          done
+          echo "::error::MCP Registry publish failed after 2 attempts"
+          exit 1
 
       - name: Build and pack .mcpb
         if: ${{ env.RUN_PUBLISH_MCPB == 'true' }}

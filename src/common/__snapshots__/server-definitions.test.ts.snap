@@ -8902,7 +8902,7 @@ Expected Output: description updated only. Field IDs auto-resolved from project 
 **Parameters:**
 - summary (string) *required*: Test case summary/title
 - description (string): Test case description
-- folderId (number): Folder ID to place the test case in
+- folderId (number): Numeric folder ID where the test case will be created. If omitted, the test case is created in the 'MCP Generated' folder automatically.
 - priority (string): Priority name (e.g., 'High', 'Medium', 'Low'). Auto-resolved to ID.
 - status (string): Status name (e.g., 'To Do', 'In Progress', 'Done'). Auto-resolved to ID.
 - assignee (string): Assignee account ID
@@ -8971,7 +8971,7 @@ Expected Output: Test case created with resolved priority and status IDs
 \`\`\`
 Expected Output: Test case created with resolved labels/components/priority/status and 3 steps
 
-**Hints:** 1. PREREQUISITE: set_project_context must be called before this tool. NEVER auto-select a project. 2. Priority and status values were returned by set_project_context. Use NLP to map user input (e.g., 'Major' → 'High', 'Critical' → 'Blocker'). 3. If priority or status name is not found, the operation proceeds without that field and a warning is returned. 4. Labels and components are resolved on demand. If a name is not found, it is skipped with a warning. 5. Steps: ALWAYS include all three fields — stepDetails, testData, and expectedResult. Generate reasonable values if not provided. 6. folderId is optional. assignee and reporter accept Jira account IDs.",
+**Hints:** 1. PREREQUISITE: set_project_context must be called before this tool. NEVER auto-select a project. 2. Priority and status values were returned by set_project_context. Use NLP to map user input (e.g., 'Major' → 'High', 'Critical' → 'Blocker'). 3. If priority or status name is not found, the operation proceeds without that field and a warning is returned. 4. Labels and components are resolved on demand. If a name is not found, it is skipped with a warning. 5. Steps: ALWAYS include all three fields — stepDetails, testData, and expectedResult. Generate reasonable values if not provided. 6. FOLDER ID: folderId is optional. If omitted, defaults to the 'MCP Generated' folder. To place in a specific folder, ask the user to right-click the target folder in QTM4J and select 'Copy Folder Id' — never try to look it up.",
     "inputSchema": [
       "assignee",
       "components",
@@ -9000,7 +9000,7 @@ Expected Output: Test case created with resolved labels/components/priority/stat
       "readOnlyHint": false,
       "title": "QTM4J: Create Test Cycle",
     },
-    "description": "Create a new test cycle in a QTM4J project. Supports auto-resolving human-readable names for priority and status. Always creates in the 'MCP Generated' folder. projectId is injected automatically from the active project context.
+    "description": "Create a new test cycle in a QTM4J project. Supports auto-resolving human-readable names for priority and status. projectId is injected automatically from the active project context.
 
 **Toolset:** Test Cycles
 
@@ -9009,6 +9009,7 @@ Expected Output: Test case created with resolved labels/components/priority/stat
 - description (string): Detailed description of the test cycle. Max 65 535 characters.
 - priority (string): Priority name (e.g., 'High', 'Medium', 'Low'). Auto-resolved to ID.
 - status (string): Status name (e.g., 'To Do', 'In Progress', 'Done'). Auto-resolved to ID.
+- folderId (number): Numeric folder ID where the test cycle will be created. If omitted, the cycle is created in the 'MCP Generated' folder automatically.
 - assignee (string): Assignee account ID
 - reporter (string): Reporter account ID
 - labels (array): List of label names (e.g., ['Release_1', 'Sprint 1']). Auto-resolved to IDs.
@@ -9050,11 +9051,12 @@ Expected Output: Test cycle created with key 'SCRUM-TR-xxx'
 \`\`\`
 Expected Output: Test cycle created with resolved priority, status, labels, and components
 
-**Hints:** 1. PREREQUISITE: set_project_context must be called before this tool. NEVER auto-select a project. 2. If any priority, status, label, or component name cannot be resolved, the cycle is still created but a warning is returned. Suggest the closest available value from the set_project_context response and ask the user to confirm before retrying. 3. All cycles are placed in the 'MCP Generated' folder — do not pass folderId. 4. Date format: 'dd/MMM/yyyy HH:mm' e.g. '10/May/2026 00:00'. Month must be capitalised. plannedStartDate must be ≤ plannedEndDate.",
+**Hints:** 1. PREREQUISITE: set_project_context must be called before this tool. NEVER auto-select a project. 2. If any priority, status, label, or component name cannot be resolved, the cycle is still created but a warning is returned. Suggest the closest available value from the set_project_context response and ask the user to confirm before retrying. 3. FOLDER ID: folderId is optional. If omitted, defaults to the 'MCP Generated' folder. To place in a specific folder, ask the user to right-click the target folder in QTM4J and select 'Copy Folder Id' — never try to look it up. 4. Date format: 'dd/MMM/yyyy HH:mm' e.g. '10/May/2026 00:00'. Month must be capitalised. plannedStartDate must be ≤ plannedEndDate.",
     "inputSchema": [
       "assignee",
       "components",
       "description",
+      "folderId",
       "labels",
       "plannedEndDate",
       "plannedStartDate",
@@ -10433,17 +10435,14 @@ Expected Output: Test cases with all available fields explicitly requested
 \`\`\`json
 {
   "filter": {
-    "folders": [
-      123,
-      456
-    ],
+    "folderId": 123,
     "fixVersions": [
       789
     ]
   }
 }
 \`\`\`
-Expected Output: Test cases in the specified folders and fix versions
+Expected Output: Test cases in the specified folder and fix version
 
 11. Complex filter: multiple criteria combined with multi-field sort
 \`\`\`json
@@ -12064,7 +12063,7 @@ None",
       "readOnlyHint": false,
       "title": "Swagger: Create API from Prompt",
     },
-    "description": "Generate and save a new API or a new version of an existing API based on a prompt using SmartBear AI. This tool automatically applies organization governance and standardization rules during API generation. The specType parameter determines the format of the generated definition. Use: 'openapi20' for OpenAPI 2.0, 'openapi30x' for OpenAPI 3.0.x, 'openapi31x' for OpenAPI 3.1.x, 'asyncapi2xx' for AsyncAPI 2.x, 'asyncapi30x' for AsyncAPI 3.0.x. Use this tool when creating APIs that comply with governance policies or when generating APIs from natural language descriptions. Use this tool when users ask to create, generate, or design APIs with governance or standardization requirements. Fails with a conflict error if the API version already exists. Returns API details and SwaggerHub URL.
+    "description": "Generate and save a new API or a new version of an existing API based on a prompt using SmartBear AI. This tool automatically applies organization governance and standardization rules during API generation. The specType parameter determines the format of the generated definition. Use: 'openapi20' for OpenAPI 2.0, 'openapi30x' for OpenAPI 3.0.x, 'openapi31x' for OpenAPI 3.1.x, 'asyncapi2xx' for AsyncAPI 2.x, 'asyncapi30x' for AsyncAPI 3.0.x. Optionally provide 'version' to save the generated definition as a specific version — omitting it uses the version from the generated definition's info.version field. Use this tool when creating APIs that comply with governance policies or when generating APIs from natural language descriptions. Use this tool when users ask to create, generate, or design APIs with governance or standardization requirements. Fails with a conflict error if the API version already exists. Returns API details and SwaggerHub URL.
 
 **Toolset:** Registry API
 
@@ -12072,12 +12071,14 @@ None",
 - owner (string) *required*: API owner (organization or user, case-sensitive)
 - apiName (string) *required*: API name
 - prompt (string) *required*: The prompt describing the desired API functionality (e.g., 'Create a RESTful API for managing a pet store with endpoints for pets, orders, and inventory')
-- specType (enum): Specification type for the generated API definition. Use: 'openapi20' for OpenAPI 2.0, 'openapi30x' for OpenAPI 3.0.x (default), 'openapi31x' for OpenAPI 3.1.x, 'asyncapi2xx' for AsyncAPI 2.x, 'asyncapi30x' for AsyncAPI 3.0.x (default: "openapi30x")",
+- specType (enum): Specification type for the generated API definition. Use: 'openapi20' for OpenAPI 2.0, 'openapi30x' for OpenAPI 3.0.x (default), 'openapi31x' for OpenAPI 3.1.x, 'asyncapi2xx' for AsyncAPI 2.x, 'asyncapi30x' for AsyncAPI 3.0.x (default: "openapi30x")
+- version (string): API version to save the AI-generated definition as (e.g. '1.0.0'). If omitted, the version is taken from the generated definition's info.version field.",
     "inputSchema": [
       "apiName",
       "owner",
       "prompt",
       "specType",
+      "version",
     ],
     "outputSchema": [
       "apiName",
@@ -12138,18 +12139,20 @@ None",
       "readOnlyHint": false,
       "title": "Swagger: Create or Update API",
     },
-    "description": "Create a new API or update an existing API in SwaggerHub Registry for Swagger Studio. The API specification type (OpenAPI, AsyncAPI) is automatically detected from the definition content. APIs are always created with fixed values: version 1.0.0, private visibility, and automock disabled (these values cannot be changed). Returns HTTP 201 for creation, HTTP 200 for update. Response includes 'operation' field indicating whether it was a 'create' or 'update' operation along with API details and SwaggerHub URL.
+    "description": "Create a new API or update an existing API in SwaggerHub Registry for Swagger Studio. The API specification type (OpenAPI, AsyncAPI) is automatically detected from the definition content. On create, private visibility and automock disabled are always used and cannot be changed via this tool. The version is taken from 'version' if provided, otherwise from the definition's info.version field — include a non-empty info.version if you omit 'version', or the request fails with a 400 error. Returns HTTP 201 for creation, HTTP 200 for update. Response includes 'operation' field indicating whether it was a 'create' or 'update' operation along with API details and SwaggerHub URL.
 
 **Toolset:** Registry API
 
 **Parameters:**
 - owner (string) *required*: Organization name (owner of the API)
 - apiName (string) *required*: API name
-- definition (string) *required*: API definition content (OpenAPI/AsyncAPI specification in JSON or YAML format). Format is automatically detected. On create, fixed values are used: version 1.0.0, private visibility, automock disabled, and no project assignment. On update, the API's existing visibility is preserved.",
+- definition (string) *required*: API definition content (OpenAPI/AsyncAPI specification in JSON or YAML format). Format is automatically detected. On create, private visibility, automock disabled, and no project assignment are always used. On update, the API's existing visibility is preserved. The version is taken from the version parameter if provided, otherwise from this definition's info.version field — include a non-empty info.version if you omit the version parameter, or the request fails.
+- version (string): API version to create or update (e.g. '1.0.0'). If omitted, the version is taken from the definition's info.version field, which must then be a non-empty value or the request fails with a 400 error.",
     "inputSchema": [
       "apiName",
       "definition",
       "owner",
+      "version",
     ],
     "outputSchema": [
       "apiName",
@@ -12911,6 +12914,42 @@ None",
       "url",
     ],
     "title": "Swagger: Update Portal Product",
+  },
+  "swagger_validate_api": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "Swagger: Validate API",
+    },
+    "description": "Validate an OpenAPI or AsyncAPI definition using server-side apidom-ls. Returns structured diagnostics with line number, severity, and message for each finding. Supports OpenAPI 2.0, 3.0, 3.1, and AsyncAPI. Provide either the raw definition (JSON or YAML) OR an existing API by owner, apiName, and version. Use this tool when the user asks to validate, lint, or check an API spec for structural errors matching the Studio Validation tab.
+
+**Toolset:** Registry API
+
+**Parameters:**
+- definition (string): API definition content (OpenAPI/AsyncAPI in JSON or YAML). Provide this or owner/apiName/version, not both.
+- owner (string): API owner (organization or user). Use with apiName and version to fetch an existing API from the registry.
+- apiName (string): API name
+- version (string): Version identifier
+- maxProblems (number): Cap on the number of findings returned (default 100, max 1000)
+- uri (string): Optional pseudo-URI hint for the parser (e.g. inmemory://spec.yaml)",
+    "inputSchema": [
+      "apiName",
+      "definition",
+      "maxProblems",
+      "owner",
+      "uri",
+      "version",
+    ],
+    "outputSchema": [
+      "findings",
+      "recognized",
+      "spec",
+      "summary",
+      "valid",
+    ],
+    "title": "Swagger: Validate API",
   },
   "zephyr_create_folder": {
     "annotations": {
@@ -13835,9 +13874,7 @@ Expected Output: The List of test cases linked to Jira issue PROJ-123 with their
       "issueKey",
     ],
     "outputSchema": [
-      "key",
-      "self",
-      "version",
+      "testCases",
     ],
     "title": "Zephyr: Get Issue Link Test Cases",
   },
@@ -14509,8 +14546,7 @@ Expected Output: The List of test cycles linked to Jira issue PROJ-123 with thei
       "issueKey",
     ],
     "outputSchema": [
-      "id",
-      "self",
+      "testCycles",
     ],
     "title": "Zephyr: Get Test Cycles linked to a Jira issue",
   },
@@ -14806,8 +14842,7 @@ Expected Output: The List of test executions linked to Jira issue PROJ-123 with 
       "issueKey",
     ],
     "outputSchema": [
-      "id",
-      "self",
+      "testExecutions",
     ],
     "title": "Zephyr: Get test executions linked to a Jira issue",
   },

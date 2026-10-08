@@ -7,6 +7,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- [Swagger] Added one-click install buttons for VS Code (GitHub Copilot), Cursor, and Claude Desktop to the Swagger Remote MCP Server setup docs. Reorganized the Kiro section to use the same button-first layout for consistency.
+
+## [0.42.0] - 2026-10-07
+
+### Added
+
+- [Common] Usage analytics for the remote (HTTP) server, reported to the shared SmartBear Amplitude project when `MCP_SERVER_AMPLITUDE_API_KEY` is set: `Server Initialized`, `Session Started`, `Session Ended`, `Tool Called` and `Tools Listed` events, each carrying `app_name`, `organization`, `analytics_id` (`sha256(email.toLowerCase())` when the product's OAuth token carries an `email` claim, matching SmartBear ID; otherwise `sha256("<integration>:<user id>")` from the claim the product declares), `source` (`MCP`) and `user_agent`. `Tool Called` and `Tools Listed` also carry `mcp_client_name`, `mcp_client_version` and `protocol_version`, so client adoption and protocol migration are measurable for 2026-07-28 clients, which have no `initialize` handshake or session and therefore produce no lifecycle events. Tool arguments, results, credentials and raw email are never sent. Identity claim locations and `app_name` are declared per product via the new optional `Client.analytics` field; BugSnag ships the reference declaration, other integrations report anonymous events until theirs is added. Products that receive their credential in a product-specific header rather than `Authorization` can name it with `analytics.tokenHeader`, which is tried ahead of `Authorization` while that remains the fallback, the first candidate decoding as a JWT winning; no integration declares one yet. Events are flushed on session end and on SIGTERM; a missing key or an Amplitude outage never affects tool calls. Stdio (local) usage is not tracked.
+
+### Fixed
+
+- [Common] Reduced stdio startup time so the `initialize` response is not delayed by module loading,which could exceed client timeouts on some environment's. `swagger-client` is now loaded only when a Contract Testing tool resolves an OpenAPI document, and products excluded by `MCP_CLIENTS` or `MCP_TOOLSETS` are no longer imported at startup.
+
+
+### Changed
+
+- [Swagger] `create_api_from_prompt` and `create_or_update_api` tools: added an optional `version` parameter to save the API definition under a specific version, instead of relying solely on the definition's `info.version` field (or the fixed `1.0.0` default on create). Accepts `null` as well as omission, since some MCP clients send `null` for an unset optional field.
+
+## [0.41.3] - 2026-09-30
+
+### Added
+
+- [Swagger] Added `swagger_validate_api` tool to validate OpenAPI and AsyncAPI definitions (raw content or an existing registry API). [#723](https://github.com/SmartBear/smartbear-mcp/pull/723)
+- [QTM4J] Added optional `folderId` support to `create_test_case` and `create_test_cycle`. If omitted, the asset is created in the `MCP Generated` folder. [#721](https://github.com/SmartBear/smartbear-mcp/pull/721)
+
+### Fixed
+
+- [QTM4J] Fixed `search_test_cases` folder filtering to use `folderId` instead of `folders`, matching the backend API contract. [#721](https://github.com/SmartBear/smartbear-mcp/pull/721)
+
+## [0.41.0] - 2026-09-16
+
+### Added
+
+- [Swagger] Added Kiro (AWS) setup instructions and one-click install badge for the Swagger Remote MCP Server.
+
+### Changed
+
+- [Common] Rewrote the transport bootstrap to serve both the 2025-11-25 and 2026-07-28 (RC) MCP protocol revisions from a single deployment, on stdio (`serveStdio`, `legacy: "serve"`) and HTTP (per-request routing between the existing sessionful wiring and a new stateless `createMcpHandler` leg). Existing 2025-11-25 clients are unaffected. [#687](https://github.com/SmartBear/smartbear-mcp/pull/687)
+- [Common] Modern-era (2026-07-28) requests now carry client identity: the protocol version, client info and capabilities are extracted from each request's `_meta` envelope into the request context, so error reports are attributed for clients that no longer send an `initialize` handshake, and downstream `User-Agent` attribution follows on stdio. On the HTTP transport the downstream `User-Agent` is still fixed at configuration time and does not yet reflect the per-request client (pre-existing behavior, tracked separately). Legacy per-connection capture is unchanged. [#691](https://github.com/SmartBear/smartbear-mcp/pull/691)
+- [Common] Protocol-compliance fixes for the modern (2026-07-28) era: cacheable list/read results (`tools/list`, `prompts/list`, `resources/list`, `resources/templates/list`, `resources/read`) now carry cache hints (`ttlMs` from `CACHE_TTL`, `cacheScope: private`); `tools/list` output is deterministically ordered (alphabetical by name, both eras); the modern era no longer advertises the deprecated `logging` capability (SEP-2577), while `tools.listChanged` remains advertised on both eras (the SDK's serving entries implement `subscriptions/listen` natively for modern clients); `Mcp-Method` and `Mcp-Name` are allowed through CORS. SEP-2243 param-driven request headers (`Mcp-Param-<Name>`, declared via `x-mcp-header` schema annotations) are validated against tool arguments natively by the SDK; no tool currently declares one, so no additional CORS entries are needed for them. Legacy (2025-11-25) capability declarations and cache-result envelopes are unchanged; resource-not-found errors are now reported as -32602 (Invalid Params) in both eras per the 2026-07-28 spec, and clients should accept both -32602 and the former -32002. [#708](https://github.com/SmartBear/smartbear-mcp/pull/708)
+- [Common] Elicitation on the modern (2026-07-28) era now uses the multi round-trip pattern ([SEP-2322](https://github.com/modelcontextprotocol/modelcontextprotocol/pull/2322)): tools that need user input return an `input_required` result carrying an embedded `elicitation/create` request, and the client's retry supplies the answers via `inputResponses`. Answers from earlier rounds are correlated through a server-minted `requestState`. Modern clients that do not declare the `elicitation` capability, and all legacy (2025-11-25) clients, keep the existing instruction-based fallback. [#705](https://github.com/SmartBear/smartbear-mcp/pull/705)
+- [Zephyr] Change outputSchema for issue link test cases, cycles and executions to be objects instead of arrays. [#706](https://github.com/SmartBear/smartbear-mcp/pull/706)
+
+### Fixed
+
+- [Swagger] Updated and fixed Functional Testing tool descriptions for clarity and LLM usability: added explicit async/polling guidance to `run_test` and `run_suite`, enumerated status values with descriptions for `get_test_status` and `get_suite_status`, added `limit`/`offset` pagination hints and total run count to `get_test_history`, standardized status terminology to `canceled` across all tool descriptions, and restructured the public doc into `Tests` and `Suites` sections with bold field labels and cross-tool references.
+
+- [Common] Security: `WWW-Authenticate` OAuth discovery URLs are no longer derived from the client-supplied `Host` header over a hardcoded `http://`. The header is now built via `getBaseUrl()`, honouring the `BASE_URL` env var and deriving the scheme from `X-Forwarded-Proto`. `X-Forwarded-Host` is now only trusted when the new `TRUST_PROXY` env var is enabled, since it can be forged by clients on deployments without a proxy stripping it. Both variables are documented in the README.
+- [Common] The `Smartbear-Toolsets` header (used to load only specific tool groups, e.g. `qtm4j:testcases`) was missing from the allowed CORS headers, so browsers were blocking it before it reached the server. It's now added to the allow-list and works as expected.
+
 ## [0.40.0] - 2026-09-02
 
 ### Added

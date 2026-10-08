@@ -64,3 +64,6 @@ Watchos
 Webapi
 Wsgi
 teststep
+kiro
+apidom
+vscode

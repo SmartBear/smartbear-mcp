@@ -417,7 +417,7 @@ export const TOOL_NAMES = {
   CREATE_TEST_CYCLE: {
     TITLE: "Create Test Cycle",
     SUMMARY:
-      "Create a new test cycle in a QTM4J project. Supports auto-resolving human-readable names for priority and status. Always creates in the 'MCP Generated' folder. projectId is injected automatically from the active project context.",
+      "Create a new test cycle in a QTM4J project. Supports auto-resolving human-readable names for priority and status. projectId is injected automatically from the active project context.",
   },
 
   /** Update Test Cycle tool */
@@ -799,6 +799,14 @@ export const RESPONSE_FIELDS = {
 export const SORT_DEFAULTS = {
   /** Default sort expression for test cycle search */
   TEST_CYCLES: "key:asc",
+} as const;
+
+/**
+ * Folder Defaults
+ */
+export const DEFAULT_FOLDER_NAMES = {
+  /** Default folder name used when no folderId is supplied by the user */
+  MCP_GENERATED: "MCP Generated",
 } as const;
 
 /**

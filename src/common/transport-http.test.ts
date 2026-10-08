@@ -2,14 +2,18 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { clientRegistry } from "./client-registry";
 import {
+  attachSessionAnalytics,
   drainHttpTransport,
+  endSessionAnalytics,
   getBaseUrl,
   getHeaderName,
   getQueryStringName,
   handleHealthRequest,
   handleReadyRequest,
+  handleSessionMessage,
   handleStreamableHttpRequest,
   newServer,
+  newServerFromWebRequest,
 } from "./transport-http";
 import type { Client } from "./types";
 
@@ -119,10 +123,26 @@ vi.mock("./bugsnag.js", () => ({
   default: { notify: vi.fn() },
 }));
 
+// Mock usage analytics so the session wiring can be asserted without an SDK.
+// Pure helpers (isToolsListRequest) keep their real implementation.
+vi.mock("./analytics", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./analytics")>()),
+  initAnalytics: vi.fn().mockReturnValue(false),
+  flushAnalytics: vi.fn(),
+  createAnalyticsSession: vi.fn(),
+  trackToolsListed: vi.fn(),
+}));
+
+vi.mock("./shutdown", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./shutdown")>()),
+  isDraining: vi.fn().mockReturnValue(false),
+}));
+
 describe("transport-http helpers", () => {
   describe("getBaseUrl", () => {
     afterEach(() => {
       delete process.env.BASE_URL;
+      delete process.env.TRUST_PROXY;
     });
 
     it("should return BASE_URL env var when set", () => {
@@ -131,13 +151,39 @@ describe("transport-http helpers", () => {
       expect(getBaseUrl(req)).toBe("https://override.example.com");
     });
 
-    it("should use x-forwarded-proto and x-forwarded-host when present", () => {
+    it("should use x-forwarded-proto and x-forwarded-host when TRUST_PROXY is enabled", () => {
+      process.env.TRUST_PROXY = "true";
       const req = fakeRequest({
         "x-forwarded-proto": "https",
         "x-forwarded-host": "proxy.example.com",
         host: "localhost:3000",
       });
       expect(getBaseUrl(req)).toBe("https://proxy.example.com");
+    });
+
+    it("should ignore x-forwarded-host when TRUST_PROXY is not enabled", () => {
+      const req = fakeRequest({
+        "x-forwarded-proto": "https",
+        "x-forwarded-host": "attacker.example.com",
+        host: "realhost.example.com",
+      });
+      expect(getBaseUrl(req)).toBe("https://realhost.example.com");
+    });
+
+    it("should normalise an unrecognised x-forwarded-proto to http", () => {
+      const req = fakeRequest({
+        "x-forwarded-proto": "gopher",
+        host: "myhost:8080",
+      });
+      expect(getBaseUrl(req)).toBe("http://myhost:8080");
+    });
+
+    it("should use the client-facing entry of an x-forwarded-proto chain", () => {
+      const req = fakeRequest({
+        "x-forwarded-proto": "https, http",
+        host: "myhost:8080",
+      });
+      expect(getBaseUrl(req)).toBe("https://myhost:8080");
     });
 
     it("should default protocol to http when x-forwarded-proto is absent", () => {
@@ -217,6 +263,8 @@ describe("newServer (OAuth flow)", () => {
   afterEach(() => {
     // Restore clientRegistry.getAll
     clientRegistry.getAll = originalGetAll;
+    delete process.env.BASE_URL;
+    delete process.env.TRUST_PROXY;
   });
 
   it("should return 401 with WWW-Authenticate header when no clients are configured", async () => {
@@ -232,6 +280,91 @@ describe("newServer (OAuth flow)", () => {
     expect(res._status).toBe(401);
     expect(res._headers["WWW-Authenticate"]).toBe(
       'OAuth resource_metadata="http://myserver.example.com:3000/.well-known/oauth-protected-resource"',
+    );
+  });
+
+  it("should build WWW-Authenticate from BASE_URL, ignoring a forged Host", async () => {
+    clientRegistry.getAll = () => [];
+    process.env.BASE_URL = "https://real.example.com";
+
+    const req = fakeRequest({ host: "evil.attacker.com" });
+    const res = fakeResponse();
+
+    await newServer(req, res);
+
+    expect(res._headers["WWW-Authenticate"]).toBe(
+      'OAuth resource_metadata="https://real.example.com/.well-known/oauth-protected-resource"',
+    );
+  });
+
+  it("should not reflect x-forwarded-host into WWW-Authenticate by default", async () => {
+    clientRegistry.getAll = () => [];
+
+    const req = fakeRequest({
+      "x-forwarded-host": "evil.attacker.com",
+      host: "myserver.example.com:3000",
+    });
+    const res = fakeResponse();
+
+    await newServer(req, res);
+
+    expect(res._headers["WWW-Authenticate"]).toBe(
+      'OAuth resource_metadata="http://myserver.example.com:3000/.well-known/oauth-protected-resource"',
+    );
+  });
+
+  it("should use https in WWW-Authenticate when terminating TLS at a proxy", async () => {
+    clientRegistry.getAll = () => [];
+
+    const req = fakeRequest({
+      "x-forwarded-proto": "https",
+      host: "myserver.example.com",
+    });
+    const res = fakeResponse();
+
+    await newServer(req, res);
+
+    expect(res._headers["WWW-Authenticate"]).toBe(
+      'OAuth resource_metadata="https://myserver.example.com/.well-known/oauth-protected-resource"',
+    );
+  });
+
+  it("should build WWW-Authenticate from BASE_URL on the modern (web Request) leg too", async () => {
+    clientRegistry.getAll = () => [];
+    process.env.BASE_URL = "https://real.example.com";
+
+    const request = new Request("http://evil.attacker.com/mcp", {
+      method: "POST",
+      headers: { host: "evil.attacker.com" },
+    });
+    const res = fakeResponse();
+
+    await newServerFromWebRequest(request, res);
+
+    expect(res._status).toBe(401);
+    expect(res._headers["WWW-Authenticate"]).toBe(
+      'OAuth resource_metadata="https://real.example.com/.well-known/oauth-protected-resource"',
+    );
+  });
+
+  it("should derive the scheme from x-forwarded-proto on the modern (web Request) leg", async () => {
+    clientRegistry.getAll = () => [];
+
+    const request = new Request("http://myserver.example.com/mcp", {
+      method: "POST",
+      headers: {
+        host: "myserver.example.com",
+        "x-forwarded-proto": "https",
+        "x-forwarded-host": "evil.attacker.com",
+      },
+    });
+    const res = fakeResponse();
+
+    await newServerFromWebRequest(request, res);
+
+    expect(res._status).toBe(401);
+    expect(res._headers["WWW-Authenticate"]).toBe(
+      'OAuth resource_metadata="https://myserver.example.com/.well-known/oauth-protected-resource"',
     );
   });
 
@@ -741,5 +874,122 @@ describe("handleStreamableHttpRequest (session routing)", () => {
 
     expect(handleRequest).toHaveBeenCalledTimes(1);
     expect(res._status).toBeNull();
+  });
+});
+
+describe("session analytics wiring", () => {
+  it("attachSessionAnalytics hands the session id, transport and enabled integrations to the analytics module", async () => {
+    const { createAnalyticsSession } = await import("./analytics");
+    const session = { id: "analytics-session" };
+    vi.mocked(createAnalyticsSession).mockReturnValueOnce(session as any);
+    clientRegistry.getAll = () => [
+      createTestClient({ name: "Bugsnag" }),
+      createTestClient({ name: "Swagger" }),
+    ];
+    const server = { setAnalyticsSession: vi.fn() } as any;
+
+    attachSessionAnalytics(server, "sess-1", "streamable-http");
+
+    expect(createAnalyticsSession).toHaveBeenCalledWith({
+      sessionId: "sess-1",
+      transport: "streamable-http",
+      server,
+      integrations: ["bugsnag", "swagger"],
+    });
+    expect(server.setAnalyticsSession).toHaveBeenCalledWith(session);
+  });
+
+  it("attachSessionAnalytics attaches nothing when analytics is disabled", async () => {
+    const { createAnalyticsSession } = await import("./analytics");
+    vi.mocked(createAnalyticsSession).mockReturnValueOnce(undefined);
+    const server = { setAnalyticsSession: vi.fn() } as any;
+
+    attachSessionAnalytics(server, "sess-1", "sse");
+
+    expect(server.setAnalyticsSession).toHaveBeenCalledWith(undefined);
+  });
+
+  it("endSessionAnalytics attributes a normal close to the client", () => {
+    const end = vi.fn();
+    endSessionAnalytics({ getAnalyticsSession: () => ({ end }) } as any);
+    expect(end).toHaveBeenCalledWith("client_disconnected");
+  });
+
+  it("endSessionAnalytics attributes a close during drain to shutdown", async () => {
+    const { isDraining } = await import("./shutdown");
+    vi.mocked(isDraining).mockReturnValueOnce(true);
+    const end = vi.fn();
+    endSessionAnalytics({ getAnalyticsSession: () => ({ end }) } as any);
+    expect(end).toHaveBeenCalledWith("server_shutdown");
+  });
+
+  it("endSessionAnalytics is a no-op without an analytics session", () => {
+    expect(() =>
+      endSessionAnalytics({ getAnalyticsSession: () => undefined } as any),
+    ).not.toThrow();
+  });
+});
+
+describe("handleSessionMessage", () => {
+  function fakeSessionServer() {
+    return {
+      setClientInfo: vi.fn(),
+      setMcpClientIdentity: vi.fn(),
+      setElicitationSupported: vi.fn(),
+      getAnalyticsSession: vi.fn(),
+    } as any;
+  }
+
+  it("applies the initialize capture and does not record it as a tools/list", async () => {
+    const { trackToolsListed } = await import("./analytics");
+    vi.mocked(trackToolsListed).mockClear();
+    const server = fakeSessionServer();
+
+    handleSessionMessage(server, {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "initialize",
+      params: {
+        protocolVersion: "2025-11-25",
+        capabilities: {},
+        clientInfo: { name: "cursor", version: "1.0.0" },
+      },
+    });
+
+    expect(server.setMcpClientIdentity).toHaveBeenCalledWith({
+      name: "cursor",
+      version: "1.0.0",
+      protocolVersion: "2025-11-25",
+    });
+    expect(trackToolsListed).not.toHaveBeenCalled();
+  });
+
+  it("records a tools/list request against the session's server", async () => {
+    const { trackToolsListed } = await import("./analytics");
+    vi.mocked(trackToolsListed).mockClear();
+    const server = fakeSessionServer();
+
+    handleSessionMessage(server, {
+      jsonrpc: "2.0",
+      id: 2,
+      method: "tools/list",
+    });
+
+    expect(trackToolsListed).toHaveBeenCalledWith(server);
+    expect(server.setMcpClientIdentity).not.toHaveBeenCalled();
+  });
+
+  it("ignores other messages", async () => {
+    const { trackToolsListed } = await import("./analytics");
+    vi.mocked(trackToolsListed).mockClear();
+    const server = fakeSessionServer();
+
+    handleSessionMessage(server, {
+      jsonrpc: "2.0",
+      id: 3,
+      method: "tools/call",
+    });
+
+    expect(trackToolsListed).not.toHaveBeenCalled();
   });
 });

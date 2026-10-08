@@ -79,6 +79,21 @@ The Swagger Studio client provides comprehensive API and Domain management capab
 | `apiName` | API name (case-sensitive) | string | Yes |
 | `version` | Version identifier | string | Yes |
 
+#### `validate_api`
+
+-   Purpose: Validate the structure of an OpenAPI (2.0, 3.0, 3.1) or AsyncAPI definition using server-side apidom-ls, matching the Validation tab in Swagger Studio.
+-   Returns: `valid`, `recognized`, the detected `spec` (namespace, version, format), a `summary` with error and warning counts, and `findings` with line, column, severity and message. A definition that is not recognized as a supported spec returns `recognized: false` instead of an error.
+-   Use case: Check an API definition for structural errors before saving or publishing it.
+-   Parameters:
+
+| Parameter | Description | Type | Required |
+| --- | --- | --- | --- |
+| `definition` | API definition content (JSON or YAML). Provide this or `owner`/`apiName`/`version`, not both. | string | No |
+| `owner` | API owner, used with `apiName` and `version` to validate an existing API from the registry | string | No |
+| `apiName` | API name | string | No |
+| `version` | Version identifier | string | No |
+| `maxProblems` | Cap on the number of findings returned (default 100, max 1000). The summary still counts all problems. | number | No |
+
 #### `create_api_from_prompt`
 
 -   Purpose: Generate and save a new API or a new version of an existing API from a natural language prompt using SmartBear AI, applying the organization's governance and standardization rules during generation. The specType parameter determines the format of the generated definition. Fails with a conflict error if the API version already exists.
@@ -164,5 +179,5 @@ These variables are optional for cloud-based Swagger Studio users, as the defaul
 1. **API Discovery**: Use `search_apis_and_domains` to find existing APIs in your Swagger Studio.
 2. **API Integration**: Retrieve specific API definitions with `get_api_definition` for development or testing purposes.
 3. **API Creation**: Create new APIs using `create_or_update_api` with custom definitions or `create_api_from_prompt` with natural language descriptions powered by AI.
-4. **API Governance**: Validate API definitions against organization standards using `scan_api_standardization` to ensure compliance with governance policies, then use `standardize_api` to automatically fix any violations.
+4. **API Governance**: Check API definitions for structural errors with `validate_api`, validate them against organization standards using `scan_api_standardization` to ensure compliance with governance policies, then use `standardize_api` to automatically fix any violations.
 5. **AI-Powered API Development**: Leverage `create_api_from_prompt` to rapidly prototype APIs from natural language, then use `standardize_api` to ensure they meet your organization's standards.
