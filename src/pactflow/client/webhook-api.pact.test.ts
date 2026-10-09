@@ -201,15 +201,15 @@ describe("Webhooks – update", () => {
     };
     return provider
       .addInteraction()
-      .given("a webhook with uuid wh-uuid-1 exists")
-      .uponReceiving("a request to update webhook wh-uuid-1")
-      .withRequest("PUT", "/webhooks/wh-uuid-1", (b) => {
+      .given("a webhook with uuid wh-updatable-uuid-0001 exists")
+      .uponReceiving("a request to update webhook wh-updatable-uuid-0001")
+      .withRequest("PUT", "/webhooks/wh-updatable-uuid-0001", (b) => {
         b.headers(jsonHeaders).jsonBody(like(webhookBody));
       })
       .willRespondWith(200, (b) => {
         b.headers(halJsonResponseHeaders).jsonBody(
           like({
-            uuid: "wh-uuid-1",
+            uuid: "wh-updatable-uuid-0001",
             ...webhookBody,
             createdAt: timestamp,
             _links: {
@@ -223,10 +223,10 @@ describe("Webhooks – update", () => {
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
         const result = await client.updateWebhook({
-          webhookId: "wh-uuid-1",
+          webhookId: "wh-updatable-uuid-0001",
           ...webhookBody,
         } as any);
-        expect(result.uuid).toBe("wh-uuid-1");
+        expect(result.uuid).toBe("wh-updatable-uuid-0001");
       });
   });
 });

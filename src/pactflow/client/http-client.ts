@@ -11,15 +11,21 @@ export class HttpClient {
     options?: {
       method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
       body?: unknown;
+      headers?: Record<string, string>;
       errorContext?: string;
     },
   ): Promise<T> {
-    const { method = "GET", body, errorContext = "Request" } = options ?? {};
+    const {
+      method = "GET",
+      body,
+      headers,
+      errorContext = "Request",
+    } = options ?? {};
 
     try {
       const response = await fetch(url, {
         method,
-        headers: this.getHeaders(),
+        headers: { ...this.getHeaders(), ...headers },
         ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
       });
 

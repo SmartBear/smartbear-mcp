@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Swagger] Added one-click install buttons for VS Code (GitHub Copilot), Cursor, and Claude Desktop to the Swagger Remote MCP Server setup docs. Reorganized the Kiro section to use the same button-first layout for consistency.
 - [Swagger] Portal product tools (`swagger_create_portal_product`, `swagger_update_portal_product`): added a `visibility` parameter (`visible`, `hidden` or `conditional`). `conditional` shows the product on the portal landing page only to users who have access to it, and is not allowed for public products. Product output now includes `visibility`.
 
+### Fixed
+
+- [PactFlow] `contract-testing_list_integrations` and `contract-testing_get_integrations_by_team` now send `Accept: application/hal+json`. Without it PactFlow negotiated `text/vnd.graphviz` for `/integrations` and the response could not be parsed as JSON.
+- [PactFlow] `contract-testing_admin_patch_team_users` now sends `Content-Type: application/json-patch+json`, which is the only content type PactFlow accepts for `PATCH /admin/teams/{teamId}/users` (it previously returned 415).
+
 ### Removed
 
 - [Swagger] Removed the `hidden` parameter from `swagger_create_portal_product` and `swagger_update_portal_product`, use `visibility` instead. A leftover `hidden` is silently ignored, so when creating a product the portal default applies, which is hidden for most organizations. Send `visibility: "visible"` to make it visible.
