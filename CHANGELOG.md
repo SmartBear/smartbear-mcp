@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- [Swagger] Added one-click install buttons for VS Code (GitHub Copilot), Cursor, and Claude Desktop to the Swagger Remote MCP Server setup docs. Reorganized the Kiro section to use the same button-first layout for consistency.
+- [Swagger] Portal product tools (`swagger_create_portal_product`, `swagger_update_portal_product`): added a `visibility` parameter (`visible`, `hidden` or `conditional`). `conditional` shows the product on the portal landing page only to users who have access to it, and is not allowed for public products. Product output now includes `visibility`.
+
+### Removed
+
+- [Swagger] Removed the `hidden` parameter from `swagger_create_portal_product` and `swagger_update_portal_product`, use `visibility` instead. A leftover `hidden` is silently ignored, so when creating a product the portal default applies, which is hidden for most organizations. Send `visibility: "visible"` to make it visible.
+
+## [0.42.0] - 2026-10-07
+
+### Added
+
 - [Common] Usage analytics for the remote (HTTP) server, reported to the shared SmartBear Amplitude project when `MCP_SERVER_AMPLITUDE_API_KEY` is set: `Server Initialized`, `Session Started`, `Session Ended`, `Tool Called` and `Tools Listed` events, each carrying `app_name`, `organization`, `analytics_id` (`sha256(email.toLowerCase())` when the product's OAuth token carries an `email` claim, matching SmartBear ID; otherwise `sha256("<integration>:<user id>")` from the claim the product declares), `source` (`MCP`) and `user_agent`. `Tool Called` and `Tools Listed` also carry `mcp_client_name`, `mcp_client_version` and `protocol_version`, so client adoption and protocol migration are measurable for 2026-07-28 clients, which have no `initialize` handshake or session and therefore produce no lifecycle events. Tool arguments, results, credentials and raw email are never sent. Identity claim locations and `app_name` are declared per product via the new optional `Client.analytics` field; BugSnag ships the reference declaration, other integrations report anonymous events until theirs is added. Products that receive their credential in a product-specific header rather than `Authorization` can name it with `analytics.tokenHeader`, which is tried ahead of `Authorization` while that remains the fallback, the first candidate decoding as a JWT winning; no integration declares one yet. Events are flushed on session end and on SIGTERM; a missing key or an Amplitude outage never affects tool calls. Stdio (local) usage is not tracked.
 
 ### Fixed
@@ -16,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Swagger] Fixed `swagger_validate_api` output schema rejecting findings with `information`, `hint` or `unknown` severity and documented `column` as 1-based, matching the `/specs/validate` contract.
 
 - [Common] Reduced stdio startup time so the `initialize` response is not delayed by module loading,which could exceed client timeouts on some environment's. `swagger-client` is now loaded only when a Contract Testing tool resolves an OpenAPI document, and products excluded by `MCP_CLIENTS` or `MCP_TOOLSETS` are no longer imported at startup.
+
 
 ### Changed
 
@@ -45,6 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Common] Protocol-compliance fixes for the modern (2026-07-28) era: cacheable list/read results (`tools/list`, `prompts/list`, `resources/list`, `resources/templates/list`, `resources/read`) now carry cache hints (`ttlMs` from `CACHE_TTL`, `cacheScope: private`); `tools/list` output is deterministically ordered (alphabetical by name, both eras); the modern era no longer advertises the deprecated `logging` capability (SEP-2577), while `tools.listChanged` remains advertised on both eras (the SDK's serving entries implement `subscriptions/listen` natively for modern clients); `Mcp-Method` and `Mcp-Name` are allowed through CORS. SEP-2243 param-driven request headers (`Mcp-Param-<Name>`, declared via `x-mcp-header` schema annotations) are validated against tool arguments natively by the SDK; no tool currently declares one, so no additional CORS entries are needed for them. Legacy (2025-11-25) capability declarations and cache-result envelopes are unchanged; resource-not-found errors are now reported as -32602 (Invalid Params) in both eras per the 2026-07-28 spec, and clients should accept both -32602 and the former -32002. [#708](https://github.com/SmartBear/smartbear-mcp/pull/708)
 - [Common] Elicitation on the modern (2026-07-28) era now uses the multi round-trip pattern ([SEP-2322](https://github.com/modelcontextprotocol/modelcontextprotocol/pull/2322)): tools that need user input return an `input_required` result carrying an embedded `elicitation/create` request, and the client's retry supplies the answers via `inputResponses`. Answers from earlier rounds are correlated through a server-minted `requestState`. Modern clients that do not declare the `elicitation` capability, and all legacy (2025-11-25) clients, keep the existing instruction-based fallback. [#705](https://github.com/SmartBear/smartbear-mcp/pull/705)
 - [Zephyr] Change outputSchema for issue link test cases, cycles and executions to be objects instead of arrays. [#706](https://github.com/SmartBear/smartbear-mcp/pull/706)
+- [PactFlow] Expanded the consumer Pact tests against the PactFlow API (`pactflow-application-saas`) to cover every operation the client calls: added interactions for the previously untested operations (admin roles, branches, version listing and update, integrations, invite users, team user patch, create secret, update webhook, provider contract publish, provider-level BDCT results), the documented error statuses (400, 404, 409, 410, 422), and all required response fields. Pact coverage against the consumer-filtered PactFlow OAS is now 100% for paths, status codes, and required request/response fields, and the pact passes bi-directional contract testing on PactFlow.
 
 ### Fixed
 
