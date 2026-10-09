@@ -487,7 +487,7 @@ describe("Environment – error responses", () => {
       description:
         "a request to update environment 00000000-0000-0000-0000-000000000099",
       state:
-        "no environment with uuid 00000000-0000-0000-0000-000000000099 exists",
+        "an environment with uuid 00000000-0000-0000-0000-000000000001 exists",
       method: "PUT",
       path: "/environments/00000000-0000-0000-0000-000000000099",
       body: like({ name: "staging", production: false }),
