@@ -15,6 +15,8 @@ The following environment variables configure the QTM4J integration:
   - US region (default): `https://qtmcloud.qmetry.com`
   - Australia region: `https://syd-qtmcloud.qmetry.com`
 
+- `QTM4J_API_VERSION` (optional): The API version prefix. Defaults to `/rest/api/latest`. Override to set a specific API version. Note: automation import endpoints (`qtm4j_upload_automation_result` and `qtm4j_get_automation_history`) use a separate unversioned namespace and are not affected by this setting.
+
 - `QTM4J_AUTOMATION_API_KEY` (required for automation tools): A separate API key used exclusively by the automation import tools (`qtm4j_upload_automation_result` and `qtm4j_get_automation_history`). Generate your Automation API key from your QTM4J instance — refer to the [QMetry automation help documentation](https://support.smartbear.com/qmetry-test-management-for-jira-cloud/docs/en/automation/generate-api-key.html) for setup instructions.
 
 ## Prerequisites

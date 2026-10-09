@@ -127,6 +127,8 @@ export QTM4J_AUTOMATION_API_KEY="your-qtm4j-automation-api-key"
 # Optional: Set your QTM4J base URL based on your region
 # US (default): https://qtmcloud.qmetry.com Australia: https://syd-qtmcloud.qmetry.com
 export QTM4J_BASE_URL="https://qtmcloud.qmetry.com"
+# Optional: Set API version prefix (defaults to /rest/api/latest)
+export QTM4J_API_VERSION="/rest/api/latest"
 
 # Required for Swagger Functional Testing tools
 export SWAGGER_FUNCTIONAL_TESTING_API_TOKEN=your-functional-testing-api-token
@@ -172,6 +174,7 @@ Create or edit `.vscode/mcp.json` in your workspace:
         "QTM4J_API_KEY": "${input:qtm4j_api_key}",
         "QTM4J_AUTOMATION_API_KEY": "${input:qtm4j_automation_api_key}",
         "QTM4J_BASE_URL": "${input:qtm4j_base_url}",
+        "QTM4J_API_VERSION": "${input:qtm4j_api_version}",
         "SWAGGER_FUNCTIONAL_TESTING_API_TOKEN": "${input:swagger_functional_testing_api_token}",
         "SWAGGER_FUNCTIONAL_TESTING_BASE_PATH": "${input:swagger_functional_testing_base_path}"
       }
@@ -281,6 +284,12 @@ Create or edit `.vscode/mcp.json` in your workspace:
       "password": false
     },
     {
+      "id": "qtm4j_api_version",
+      "type": "promptString",
+      "description": "QTM4J API version prefix (optional). Defaults to /rest/api/latest.",
+      "password": false
+    },
+    {
       "id": "swagger_functional_testing_api_token",
       "type": "promptString",
       "description": "Swagger Functional Testing API Token",
@@ -327,6 +336,7 @@ Add to your `mcp.json` configuration:
         "QTM4J_API_KEY": "your-qtm4j-api-key",
         "QTM4J_AUTOMATION_API_KEY": "your-qtm4j-automation-api-key",
         "QTM4J_BASE_URL": "https://qtmcloud.qmetry.com",
+        "QTM4J_API_VERSION": "/rest/api/latest",
         "SWAGGER_FUNCTIONAL_TESTING_API_TOKEN": "your-functional-testing-api-token"
       }
     }
@@ -365,6 +375,7 @@ Edit your `claude_desktop_config.json` file:
         "QTM4J_API_KEY": "your-qtm4j-api-key",
         "QTM4J_AUTOMATION_API_KEY": "your-qtm4j-automation-api-key",
         "QTM4J_BASE_URL": "https://qtmcloud.qmetry.com",
+        "QTM4J_API_VERSION": "/rest/api/latest",
         "SWAGGER_FUNCTIONAL_TESTING_API_TOKEN": "your-functional-testing-api-token"
       }
     }
@@ -407,6 +418,7 @@ export PACT_BROKER_TOKEN=your-pact-broker-token
 export QTM4J_API_KEY="your-qtm4j-api-key"
 export QTM4J_AUTOMATION_API_KEY="your-qtm4j-automation-api-key"
 export QTM4J_BASE_URL="https://qtmcloud.qmetry.com"
+export QTM4J_API_VERSION="/rest/api/latest"
 export SWAGGER_FUNCTIONAL_TESTING_API_TOKEN=your-functional-testing-api-token
 ```
 
@@ -469,6 +481,7 @@ To run the built server locally in VS Code, add the following to `.vscode/mcp.js
         "QTM4J_API_KEY": "${input:qtm4j_api_key}",
         "QTM4J_AUTOMATION_API_KEY": "${input:qtm4j_automation_api_key}",
         "QTM4J_BASE_URL": "${input:qtm4j_base_url}",
+        "QTM4J_API_VERSION": "${input:qtm4j_api_version}",
         "SWAGGER_FUNCTIONAL_TESTING_API_TOKEN": "${input:swagger_functional_testing_api_token}",
         "SWAGGER_FUNCTIONAL_TESTING_BASE_PATH": "${input:swagger_functional_testing_base_path}"
       }
@@ -578,6 +591,12 @@ To run the built server locally in VS Code, add the following to `.vscode/mcp.js
       "password": false
     },
     {
+      "id": "qtm4j_api_version",
+      "type": "promptString",
+      "description": "QTM4J API version prefix (optional). Defaults to /rest/api/latest.",
+      "password": false
+    },
+    {
       "id": "swagger_functional_testing_api_token",
       "type": "promptString",
       "description": "Swagger Functional Testing API Token",
@@ -612,6 +631,7 @@ ZEPHYR_BASE_URL=https://api.zephyrscale.smartbear.com/v2 \
 QTM4J_API_KEY=your_qtm4j_key \
 QTM4J_AUTOMATION_API_KEY=your_qtm4j_automation_key \
 QTM4J_BASE_URL=https://qtmcloud.qmetry.com \
+QTM4J_API_VERSION=/rest/api/latest \
 SWAGGER_FUNCTIONAL_TESTING_API_TOKEN=your_functional_testing_token \
 npx @modelcontextprotocol/inspector node dist/index.js
 ```
