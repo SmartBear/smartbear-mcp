@@ -934,7 +934,11 @@ describe("ContractApi", () => {
 
       expect(mockHttp.fetch).toHaveBeenCalledWith(
         "https://test.example.com/integrations",
-        { method: "GET", errorContext: "List Integrations" },
+        {
+          method: "GET",
+          headers: { Accept: "application/hal+json" },
+          errorContext: "List Integrations",
+        },
       );
       expect(result).toEqual(mockResponse);
     });
@@ -1003,7 +1007,11 @@ describe("ContractApi", () => {
 
       expect(mockHttp.fetch).toHaveBeenCalledWith(
         "https://test.example.com/integrations/team/team-uuid-123",
-        { method: "GET", errorContext: "Get Integrations by Team" },
+        {
+          method: "GET",
+          headers: { Accept: "application/hal+json" },
+          errorContext: "Get Integrations by Team",
+        },
       );
       expect(result).toEqual(mockResponse);
     });
@@ -1015,7 +1023,11 @@ describe("ContractApi", () => {
 
       expect(mockHttp.fetch).toHaveBeenCalledWith(
         "https://test.example.com/integrations/team/team%2Fid%20with%20spaces",
-        { method: "GET", errorContext: "Get Integrations by Team" },
+        {
+          method: "GET",
+          headers: { Accept: "application/hal+json" },
+          errorContext: "Get Integrations by Team",
+        },
       );
     });
 

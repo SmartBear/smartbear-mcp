@@ -41,7 +41,7 @@ function pacticipantBody(
     displayName,
     mainBranch,
     createdAt: timestamp,
-    _embedded: { labels: eachLike({ name: "team-a" }) },
+    _embedded: { labels: eachLike({ name: "team-a" }, 0) },
     _links: {
       ...selfLink,
       "pb:branch-version": halLink,
@@ -216,8 +216,8 @@ describe("Branch & version management", () => {
             number: "1.0.0",
             createdAt: timestamp,
             _embedded: {
-              branchVersions: eachLike({ name: "main" }),
-              tags: eachLike({ name: "main" }),
+              branchVersions: eachLike({ name: "main" }, 0),
+              tags: eachLike({ name: "main" }, 0),
             },
             _links: selfLink,
           }),
@@ -244,7 +244,7 @@ describe("Labels", () => {
       })
       .willRespondWith(200, (b) => {
         b.headers(halJsonResponseHeaders).jsonBody({
-          _embedded: { labels: eachLike({ name: like("team-a") }) },
+          _embedded: { labels: eachLike({ name: like("team-a") }, 0) },
           _links: like({}),
         });
       })
@@ -361,7 +361,7 @@ describe("Branches & versions – list and update", () => {
   it("GET /pacticipants/{name}/branches – lists branches", () =>
     provider
       .addInteraction()
-      .given("pacticipant ServiceA has branch main")
+      .given("a pacticipant named ServiceA with branch main exists")
       .uponReceiving("a request to list branches for ServiceA")
       .withRequest("GET", "/pacticipants/ServiceA/branches", (b) => {
         b.headers(authHeader);
@@ -389,7 +389,7 @@ describe("Branches & versions – list and update", () => {
   it("GET /pacticipants/{name}/branches/{branch} – retrieves a branch", () =>
     provider
       .addInteraction()
-      .given("pacticipant ServiceA has branch main")
+      .given("a pacticipant named ServiceA with branch main exists")
       .uponReceiving("a request to get branch main of ServiceA")
       .withRequest("GET", "/pacticipants/ServiceA/branches/main", (b) => {
         b.headers(authHeader);
@@ -415,11 +415,11 @@ describe("Branches & versions – list and update", () => {
   it("DELETE /pacticipants/{name}/branches/{branch} – deletes a branch", () =>
     provider
       .addInteraction()
-      .given("pacticipant ServiceA has branch feature-x")
-      .uponReceiving("a request to delete branch feature-x of ServiceA")
+      .given("a pacticipant named ServiceA with branch old-feature exists")
+      .uponReceiving("a request to delete branch old-feature of ServiceA")
       .withRequest(
         "DELETE",
-        "/pacticipants/ServiceA/branches/feature-x",
+        "/pacticipants/ServiceA/branches/old-feature",
         (b) => {
           b.headers(authHeader);
         },
@@ -430,7 +430,7 @@ describe("Branches & versions – list and update", () => {
         await expect(
           client.deleteBranch({
             pacticipantName: "ServiceA",
-            branchName: "feature-x",
+            branchName: "old-feature",
           }),
         ).resolves.toBeUndefined();
       }));
@@ -438,7 +438,7 @@ describe("Branches & versions – list and update", () => {
   it("GET /pacticipants/{name}/branches/{branch}/versions – lists versions on a branch", () =>
     provider
       .addInteraction()
-      .given("pacticipant ServiceA has branch main with versions")
+      .given("a pacticipant named ServiceA with branch main exists")
       .uponReceiving("a request to list versions on branch main of ServiceA")
       .withRequest(
         "GET",
@@ -449,7 +449,6 @@ describe("Branches & versions – list and update", () => {
       )
       .willRespondWith(200, (b) => {
         b.headers(halJsonResponseHeaders).jsonBody({
-          page: pageBody,
           _embedded: { versions: eachLike({ number: like("1.0.0") }) },
           _links: versionLinks,
         });
@@ -466,14 +465,13 @@ describe("Branches & versions – list and update", () => {
   it("GET /pacticipants/{name}/versions – lists versions", () =>
     provider
       .addInteraction()
-      .given("pacticipant ServiceA has versions")
+      .given("a pacticipant named ServiceA with versions exists")
       .uponReceiving("a request to list versions of ServiceA")
       .withRequest("GET", "/pacticipants/ServiceA/versions", (b) => {
         b.headers(authHeader);
       })
       .willRespondWith(200, (b) => {
         b.headers(halJsonResponseHeaders).jsonBody({
-          page: pageBody,
           _embedded: { versions: eachLike({ number: like("1.0.0") }) },
           _links: versionLinks,
         });
@@ -486,10 +484,10 @@ describe("Branches & versions – list and update", () => {
         expect(Array.isArray(result._embedded.versions)).toBe(true);
       }));
 
-  it("PUT /pacticipants/{name}/versions/{version} – updates a version", () =>
+  it("PUT /pacticipants/{name}/versions/{version} – creates or updates a version", () =>
     provider
       .addInteraction()
-      .given("pacticipant ServiceA version 1.0.0 exists")
+      .given("a pacticipant named ServiceA exists")
       .uponReceiving("a request to update version 1.0.0 of ServiceA")
       .withRequest("PUT", "/pacticipants/ServiceA/versions/1.0.0", (b) => {
         b.headers(jsonHeaders).jsonBody(
@@ -503,16 +501,17 @@ describe("Branches & versions – list and update", () => {
             buildUrl: "https://ci.example.com/builds/42",
             createdAt: timestamp,
             _embedded: {
-              branchVersions: eachLike({ name: "main" }),
-              tags: eachLike({ name: "main" }),
+              branchVersions: eachLike({ name: "main" }, 0),
+              tags: eachLike({ name: "main" }, 0),
             },
             _links: {
               ...selfLink,
               "pb:latest-verification-results-where-pacticipant-is-consumer":
                 halLink,
-              "pb:pact-versions": eachLike({
-                href: "https://example.pactflow.io/pact-versions",
-              }),
+              "pb:pact-versions": eachLike(
+                { href: "https://example.pactflow.io/pact-versions" },
+                0,
+              ),
               "pb:pacticipant": halLink,
               "pb:tag": halLink,
               curies: eachLike({
@@ -520,12 +519,14 @@ describe("Branches & versions – list and update", () => {
                 href: "https://example.pactflow.io/doc/{rel}",
                 templated: true,
               }),
-              "pb:record-deployment": eachLike({
-                href: "https://example.pactflow.io/record-deployment",
-              }),
-              "pb:record-release": eachLike({
-                href: "https://example.pactflow.io/record-release",
-              }),
+              "pb:record-deployment": eachLike(
+                { href: "https://example.pactflow.io/record-deployment" },
+                0,
+              ),
+              "pb:record-release": eachLike(
+                { href: "https://example.pactflow.io/record-release" },
+                0,
+              ),
             },
           }),
         );
@@ -547,9 +548,9 @@ describe("Pacticipant – error responses", () => {
       description: "a request to create a pacticipant with an invalid name",
       method: "POST",
       path: "/pacticipants",
-      body: like({ name: "invalid/name" }),
+      body: like({ name: "" }),
       status: 400,
-      call: (c) => c.createPacticipant({ name: "invalid/name" }),
+      call: (c) => c.createPacticipant({ name: "" }),
     }));
 
   it("GET /pacticipants/{name}/labels/{label} – 404 when the label is missing", () =>

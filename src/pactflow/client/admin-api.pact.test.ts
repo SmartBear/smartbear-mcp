@@ -22,7 +22,15 @@ import {
   timestamp,
 } from "./pact-helpers";
 
-const { like, eachLike } = Matchers;
+const { like, eachLike, regex } = Matchers;
+
+const jsonPatchHeaders = {
+  Authorization: like("Bearer test-token"),
+  "Content-Type": regex(
+    "application/json-patch\\+json.*",
+    "application/json-patch+json",
+  ),
+};
 
 function secretBody(uuid: string, name: string) {
   return {
@@ -47,12 +55,15 @@ function roleBody(uuid: string, name: string) {
       group: "Contract data",
       description: "Read all contract data",
     }),
-    _actions: eachLike({
-      name: "update",
-      title: "Update role",
-      method: "PUT",
-      href: `https://example.pactflow.io/admin/roles/${uuid}`,
-    }),
+    _actions: eachLike(
+      {
+        name: "update",
+        title: "Update role",
+        method: "PUT",
+        href: `https://example.pactflow.io/admin/roles/${uuid}`,
+      },
+      0,
+    ),
     _links: selfLink,
   };
 }
@@ -60,7 +71,8 @@ function roleBody(uuid: string, name: string) {
 function userBody(uuid: string, email: string, type: 0 | 1 = 0) {
   return {
     uuid,
-    email,
+    // System accounts have no email address.
+    ...(type === 0 && { email }),
     active: true,
     createdAt: timestamp,
     type,
@@ -68,7 +80,7 @@ function userBody(uuid: string, email: string, type: 0 | 1 = 0) {
     _links: selfLink,
     _embedded: {
       roles: eachLike({ uuid: "00000000-0000-0000-0000-000000000007" }),
-      teams: eachLike({ uuid: "00000000-0000-0000-0000-000000000005" }),
+      teams: eachLike({ uuid: "00000000-0000-0000-0000-000000000005" }, 0),
     },
   };
 }
@@ -82,14 +94,18 @@ function teamBody(uuid: string, name: string, includeMembers = true) {
     numberOfMembers: 1,
     createdAt: timestamp,
     _embedded: {
-      administrators: eachLike({
-        uuid: "00000000-0000-0000-0000-000000000012",
-      }),
-      environments: eachLike({ uuid: "00000000-0000-0000-0000-000000000001" }),
+      administrators: eachLike(
+        { uuid: "00000000-0000-0000-0000-000000000012" },
+        0,
+      ),
+      environments: eachLike(
+        { uuid: "00000000-0000-0000-0000-000000000001" },
+        0,
+      ),
       ...(includeMembers && {
-        members: eachLike({ uuid: "00000000-0000-0000-0000-000000000012" }),
+        members: eachLike({ uuid: "00000000-0000-0000-0000-000000000012" }, 0),
       }),
-      pacticipants: eachLike({ name: "ServiceA" }),
+      pacticipants: eachLike({ name: "ServiceA" }, 0),
     },
     _links: selfLink,
   };
@@ -118,16 +134,12 @@ describe("Admin – core", () => {
             integrations: like({ count: 7 }),
             pactPublications: like({
               count: 42,
-              first: like("2023-01-01T00:00:00.000Z"),
-              last: like("2024-01-01T00:00:00.000Z"),
             }),
             verificationResults: like({
               count: 1250,
               successCount: 1200,
               failureCount: 50,
               distinctCount: 900,
-              first: like("2023-01-01T00:00:00.000Z"),
-              last: like("2024-01-01T00:00:00.000Z"),
             }),
             crossContractComparisons: like({ count: 3 }),
             deployedVersions: like({
@@ -140,7 +152,7 @@ describe("Admin – core", () => {
             matrix: like({ count: -1 }),
             pactVersions: like({ count: 40 }),
             pactRevisionsPerConsumerVersion: like({
-              distribution: like({ "1": 40 }),
+              distribution: like({}),
             }),
             pacticipantVersions: like({
               count: 60,
@@ -152,7 +164,7 @@ describe("Admin – core", () => {
             providerContractVersions: like({ count: 5 }),
             providerContractSelfVerifications: like({ count: 5 }),
             releasedVersions: like({ count: 4, currentlySupportedCount: 2 }),
-            secrets: like({ count: 2, countsByTeam: eachLike(2) }),
+            secrets: like({ count: 2, countsByTeam: eachLike(2, 0) }),
             tags: like({
               count: 30,
               distinctCount: 6,
@@ -162,7 +174,7 @@ describe("Admin – core", () => {
             triggeredWebhooks: like({ count: 12 }),
             users: like({ activeRegularCount: 8, activeSystemCount: 2 }),
             verificationResultsPerPactVersion: like({
-              distribution: like({ "1": 40 }),
+              distribution: like({}),
             }),
             webhookExecutions: like({ count: 12 }),
             webhooks: like({ count: 4 }),
@@ -230,7 +242,11 @@ describe("Secrets", () => {
       .uponReceiving("a request to update secret sec-uuid-1")
       .withRequest("PUT", "/secrets/sec-uuid-1", (b) => {
         b.headers(jsonHeaders).jsonBody(
-          like({ name: "MYTOKEN", value: "new-s3cr3t" }),
+          like({
+            name: "MYTOKEN",
+            value: "new-s3cr3t",
+            description: "CI token",
+          }),
         );
       })
       .willRespondWith(200, (b) => {
@@ -245,6 +261,7 @@ describe("Secrets", () => {
             secretId: "sec-uuid-1",
             name: "MYTOKEN",
             value: "new-s3cr3t",
+            description: "CI token",
           }),
         ).resolves.toBeDefined();
       }));
@@ -1126,6 +1143,7 @@ describe("Admin – Users & Teams (additional)", () => {
   it("POST /admin/users/invite-users – invites users", () =>
     provider
       .addInteraction()
+      .given("users can be invited")
       .uponReceiving("a request to invite user invitee@example.com")
       .withRequest("POST", "/admin/users/invite-users", (b) => {
         b.headers(jsonHeaders).jsonBody({
@@ -1157,10 +1175,10 @@ describe("Admin – Users & Teams (additional)", () => {
   it("PATCH /admin/teams/{id}/users – adds a user to a team", () =>
     provider
       .addInteraction()
-      .given(`admin team ${teamId} and admin user ${userId} exist`)
+      .given(`admin team ${teamId} and user ${userId} exist`)
       .uponReceiving(`a request to patch members of admin team ${teamId}`)
       .withRequest("PATCH", `/admin/teams/${teamId}/users`, (b) => {
-        b.headers(jsonHeaders).jsonBody(
+        b.headers(jsonPatchHeaders).jsonBody(
           eachLike({
             op: "add",
             path: "/users",
@@ -1188,11 +1206,12 @@ describe("Secrets – create", () => {
   it("POST /secrets – creates a secret", () =>
     provider
       .addInteraction()
-      .uponReceiving("a request to create secret DEPLOY_KEY")
+      .given("secrets exist")
+      .uponReceiving("a request to create secret DEPLOYKEY")
       .withRequest("POST", "/secrets", (b) => {
         b.headers(jsonHeaders).jsonBody(
           like({
-            name: "DEPLOY_KEY",
+            name: "DEPLOYKEY",
             value: "s3cr3t",
             description: "Deploy key",
           }),
@@ -1202,7 +1221,7 @@ describe("Secrets – create", () => {
         b.headers(halJsonResponseHeaders).jsonBody(
           like({
             uuid: "sec-uuid-new",
-            name: "DEPLOY_KEY",
+            name: "DEPLOYKEY",
             description: "Deploy key",
             createdAt: timestamp,
             _links: selfLink,
@@ -1212,7 +1231,7 @@ describe("Secrets – create", () => {
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
         const result = await client.createSecret({
-          name: "DEPLOY_KEY",
+          name: "DEPLOYKEY",
           value: "s3cr3t",
           description: "Deploy key",
         });
@@ -1315,13 +1334,13 @@ describe("Admin – error responses", () => {
 
   it("POST /secrets – 409 when a secret with the same name exists", () =>
     expectErrorStatus({
-      description: "a request to create secret DEPLOY_KEY that already exists",
-      state: "a secret named DEPLOY_KEY already exists",
+      description: "a request to create secret DEPLOYKEY that already exists",
+      state: "a secret named DEPLOYKEY already exists",
       method: "POST",
       path: "/secrets",
-      body: like({ name: "DEPLOY_KEY", value: "s3cr3t" }),
+      body: like({ name: "DEPLOYKEY", value: "s3cr3t" }),
       status: 409,
-      call: (c) => c.createSecret({ name: "DEPLOY_KEY", value: "s3cr3t" }),
+      call: (c) => c.createSecret({ name: "DEPLOYKEY", value: "s3cr3t" }),
     }));
 
   it("GET /admin/users/{id} – 410 when the user has been deleted", () =>

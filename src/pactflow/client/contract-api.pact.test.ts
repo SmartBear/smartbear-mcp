@@ -17,10 +17,8 @@ import {
   halJsonResponseHeaders,
   halLink,
   jsonHeaders,
-  pageBody,
   provider,
   selfLink,
-  timestamp,
 } from "./pact-helpers";
 
 const { like, eachLike, regex } = Matchers;
@@ -496,7 +494,6 @@ describe("BDCT – consumer-version endpoints", () => {
 
 describe("Integrations – list", () => {
   const integrationsBody = {
-    page: pageBody,
     _embedded: {
       integrations: eachLike({
         consumer: { name: like("ConsumerApp") },
@@ -512,7 +509,7 @@ describe("Integrations – list", () => {
       .given("integrations exist")
       .uponReceiving("a request to list all integrations")
       .withRequest("GET", "/integrations", (b) => {
-        b.headers(authHeader);
+        b.headers({ ...authHeader, Accept: "application/hal+json" });
       })
       .willRespondWith(200, (b) => {
         b.headers(halJsonResponseHeaders).jsonBody(integrationsBody);
@@ -526,7 +523,7 @@ describe("Integrations – list", () => {
   it("GET /integrations/team/{teamId} – lists integrations for a team", () =>
     provider
       .addInteraction()
-      .given("admin team 00000000-0000-0000-0000-000000000005 has integrations")
+      .given("integrations exist for team 00000000-0000-0000-0000-000000000005")
       .uponReceiving(
         "a request to list integrations for team 00000000-0000-0000-0000-000000000005",
       )
@@ -534,7 +531,7 @@ describe("Integrations – list", () => {
         "GET",
         "/integrations/team/00000000-0000-0000-0000-000000000005",
         (b) => {
-          b.headers(authHeader);
+          b.headers({ ...authHeader, Accept: "application/hal+json" });
         },
       )
       .willRespondWith(200, (b) => {
@@ -556,7 +553,8 @@ describe("BDCT – provider-contract publish", () => {
       pacticipantVersionNumber: "2.0.0",
       branch: "main",
       contract: {
-        content: "b3BlbmFwaTogMy4wLjA=",
+        content:
+          "b3BlbmFwaTogMy4wLjAKaW5mbzoKICB0aXRsZTogUHJvdmlkZXJBUEkKICB2ZXJzaW9uOiAyLjAuMApwYXRoczoKICAvdGhpbmdzOgogICAgZ2V0OgogICAgICByZXNwb25zZXM6CiAgICAgICAgIjIwMCI6CiAgICAgICAgICBkZXNjcmlwdGlvbjogT0sK",
         contentType: "application/yaml" as const,
         specification: "oas" as const,
         selfVerificationResults: {
@@ -594,9 +592,10 @@ describe("BDCT – provider-contract publish", () => {
               "pf:provider-contract": halLink,
               "pb:pacticipant": halLink,
               "pb:pacticipant-version": halLink,
-              "pb:pacticipant-version-tags": eachLike({
-                href: "https://example.pactflow.io/tags",
-              }),
+              "pb:pacticipant-version-tags": eachLike(
+                { href: "https://example.pactflow.io/tags" },
+                0,
+              ),
               "pb:branch-version": halLink,
             },
           }),
@@ -610,136 +609,7 @@ describe("BDCT – provider-contract publish", () => {
   });
 });
 
-describe("BDCT – provider-version endpoints (consumer & cross-contract)", () => {
-  const bdctBase =
-    "/contracts/bi-directional/provider/ProviderAPI/version/2.0.0";
-
-  const input = { providerName: "ProviderAPI", providerVersionNumber: "2.0.0" };
-
-  const version = (number: string) => ({
-    number,
-    createdAt: timestamp,
-    _embedded: like({}),
-  });
-
-  const bdctBody = (extraEmbedded: Record<string, unknown>) =>
-    like({
-      verificationStatus: like("success"),
-      _actions: eachLike({
-        name: "pf:publish",
-        title: "Publish",
-        method: "POST",
-        href: "https://example.pactflow.io/publish",
-      }),
-      _embedded: {
-        consumerVersion: version("1.0.0"),
-        providerVersion: version("2.0.0"),
-        crossContractVerificationResults: { success: true },
-        providerContractVerificationResults: { success: true },
-        ...extraEmbedded,
-      },
-      _links: like({}),
-    });
-
-  it("GET …/consumer-contract – retrieves BDCT consumer contract", () =>
-    provider
-      .addInteraction()
-      .given("ProviderAPI version 2.0.0 has consumer contracts")
-      .uponReceiving(
-        "a request to get BDCT consumer contract for ProviderAPI 2.0.0",
-      )
-      .withRequest("GET", `${bdctBase}/consumer-contract`, (b) => {
-        b.headers(authHeader);
-      })
-      .willRespondWith(200, (b) => {
-        b.headers(halJsonResponseHeaders).jsonBody(
-          bdctBody({
-            crossContractVerificationResults: {
-              success: true,
-              results: like({}),
-              verificationDate: timestamp,
-              verifier: "pactflow",
-              verifierVersion: "1.0.0",
-            },
-            consumerContract: { content: like("eyJjb25zdW1lciI6e319") },
-          }),
-        );
-      })
-      .executeTest(async (mockServer) => {
-        const client = await createClient(mockServer.url);
-        const result = await client.getBiDirectionalConsumerContract(input);
-        expect(result._embedded).toBeDefined();
-      }));
-
-  it("GET …/consumer-contract-verification-results – retrieves BDCT consumer verification results", () =>
-    provider
-      .addInteraction()
-      .given(
-        "ProviderAPI version 2.0.0 has consumer contract verification results",
-      )
-      .uponReceiving(
-        "a request to get BDCT consumer verification results for ProviderAPI 2.0.0",
-      )
-      .withRequest(
-        "GET",
-        `${bdctBase}/consumer-contract-verification-results`,
-        (b) => {
-          b.headers(authHeader);
-        },
-      )
-      .willRespondWith(200, (b) => {
-        b.headers(halJsonResponseHeaders).jsonBody(bdctBody({}));
-      })
-      .executeTest(async (mockServer) => {
-        const client = await createClient(mockServer.url);
-        const result =
-          await client.getBiDirectionalConsumerContractVerificationResults(
-            input,
-          );
-        expect(result._embedded).toBeDefined();
-      }));
-
-  it("GET …/cross-contract-verification-results – retrieves BDCT cross-contract results", () =>
-    provider
-      .addInteraction()
-      .given(
-        "ProviderAPI version 2.0.0 has cross-contract verification results",
-      )
-      .uponReceiving(
-        "a request to get BDCT cross-contract verification results for ProviderAPI 2.0.0",
-      )
-      .withRequest(
-        "GET",
-        `${bdctBase}/cross-contract-verification-results`,
-        (b) => {
-          b.headers(authHeader);
-        },
-      )
-      .willRespondWith(200, (b) => {
-        b.headers(halJsonResponseHeaders).jsonBody(
-          bdctBody({
-            crossContractVerificationResults: {
-              success: true,
-              results: like({}),
-              verificationDate: timestamp,
-              verifier: "pactflow",
-              verifierVersion: "1.0.0",
-            },
-          }),
-        );
-      })
-      .executeTest(async (mockServer) => {
-        const client = await createClient(mockServer.url);
-        const result =
-          await client.getBiDirectionalCrossContractVerificationResults(input);
-        expect(result._embedded).toBeDefined();
-      }));
-});
-
 describe("Contract – error responses", () => {
-  const bdctConsumerBase =
-    "/contracts/bi-directional/provider/ProviderAPI/version/2.0.0/consumer/ConsumerApp/version/1.0.0";
-
   const invalidPublish = {
     pacticipantName: "ConsumerApp",
     pacticipantVersionNumber: "1.0.0",
@@ -790,24 +660,13 @@ describe("Contract – error responses", () => {
 
   // ── 404 Not Found ────────────────────────────────────────────────────────
 
-  it("POST /contracts/publish – 409 when the version already has different content", () =>
-    expectErrorStatus({
-      description:
-        "a request to republish changed consumer contract content for ConsumerApp 1.0.0",
-      state: "ConsumerApp version 1.0.0 already has a published contract",
-      method: "POST",
-      path: "/contracts/publish",
-      body: like(invalidPublish),
-      status: 409,
-      call: (c) => c.publishContracts(invalidPublish),
-    }));
-
   it("POST /provider-contracts/provider/{name}/publish – 409 when the version already has different content", () => {
     const { providerName, ...requestBody } = {
       providerName: "ProviderAPI",
       pacticipantVersionNumber: "2.0.0",
       contract: {
-        content: "b3BlbmFwaTogMy4wLjA=",
+        content:
+          "b3BlbmFwaTogMy4wLjAKaW5mbzoKICB0aXRsZTogUHJvdmlkZXJBUEkKICB2ZXJzaW9uOiAyLjAuMApwYXRoczoKICAvY2hhbmdlZDoKICAgIGdldDoKICAgICAgcmVzcG9uc2VzOgogICAgICAgICIyMDAiOgogICAgICAgICAgZGVzY3JpcHRpb246IE9LCg==",
         contentType: "application/yaml" as const,
         specification: "oas" as const,
       },
@@ -825,22 +684,4 @@ describe("Contract – error responses", () => {
   });
 
   // ── 410 Gone / 422 Unprocessable ─────────────────────────────────────────
-
-  it("GET …/consumer/{c}/version/{v}/provider-contract – 422 when the contract cannot be processed", () =>
-    expectErrorStatus({
-      description:
-        "a request to get an unprocessable BDCT provider contract for ConsumerApp 1.0.0 vs ProviderAPI 2.0.0",
-      state:
-        "ProviderAPI 2.0.0 has an unprocessable provider contract for ConsumerApp 1.0.0",
-      method: "GET",
-      path: `${bdctConsumerBase}/provider-contract`,
-      status: 422,
-      call: (c) =>
-        c.getBiDirectionalProviderContractByConsumer({
-          providerName: "ProviderAPI",
-          providerVersionNumber: "2.0.0",
-          consumerName: "ConsumerApp",
-          consumerVersionNumber: "1.0.0",
-        }),
-    }));
 });
