@@ -340,7 +340,7 @@ export interface StandardizationScanApiResponse {
 export interface ApidomValidationFinding {
   line: number;
   column?: number;
-  severity: "error" | "warning" | "info";
+  severity: "error" | "warning" | "information" | "hint" | "unknown";
   message: string;
   code?: number | string;
   source?: string;
@@ -360,7 +360,6 @@ export interface ApidomValidationSpecInfo {
 export interface ApidomValidationSummary {
   errors?: number;
   warnings?: number;
-  info?: number;
   total?: number;
   durationMs?: number;
 }
@@ -428,16 +427,21 @@ export const ApidomValidationFindingSchema = z.looseObject({
   column: z
     .number()
     .optional()
-    .describe("Column number where the issue starts (0-based)"),
+    .describe("Column number where the issue starts (1-based)"),
   severity: z
-    .enum(["error", "warning", "info"])
+    .enum(["error", "warning", "information", "hint", "unknown"])
     .describe("Severity of the finding"),
   message: z.string().describe("Human-readable validation message"),
   code: z
     .union([z.number(), z.string()])
     .optional()
     .describe("Rule or lint code (string or number)"),
-  source: z.string().optional().describe("Source of the rule"),
+  source: z
+    .string()
+    .optional()
+    .describe(
+      "Validator that reported the finding (e.g. apilint, syntax, @asyncapi/parser)",
+    ),
 });
 
 export const ApidomValidationOutputSchema = z.looseObject({
@@ -466,7 +470,6 @@ export const ApidomValidationOutputSchema = z.looseObject({
     .looseObject({
       errors: z.number().optional(),
       warnings: z.number().optional(),
-      info: z.number().optional(),
       total: z.number().optional(),
       durationMs: z.number().optional(),
     })
