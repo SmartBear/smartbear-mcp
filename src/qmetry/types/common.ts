@@ -309,12 +309,25 @@ export const CommonFields = {
   filter: z
     .string()
     .optional()
-    .describe("Filter criteria as JSON string (default '[]')")
+    .describe(
+      "System field filter as JSON array string (default '[]'). " +
+        "NO 'udfmID' — that is only for udfFilter. " +
+        "Types: string, list (value=[ids] or '' if empty), numeric, date (requires comparison:'gt'|'lt', value can be ''). " +
+        "Optional comparison:'between' for some list fields (e.g. successRate). " +
+        'Example: \'[{"type":"string","value":"TC-1","field":"entityKeyId"},{"type":"list","value":[1],"field":"owner"},{"type":"numeric","value":2,"field":"linkedRqCount"},{"type":"date","field":"createdDate","comparison":"gt","value":""}]\'',
+    )
     .default("[]"),
   udfFilter: z
     .string()
     .optional()
-    .describe("User-defined field filter as JSON string (default '[]')")
+    .describe(
+      "UDF filter as JSON array string (default '[]'). " +
+        "CRITICAL: Each filter object MUST include 'udfmID' and 'field'. " +
+        "GET udfmID FROM: filterTemplate[].udfmID in the fetch_test_cases list response (where filterTemplate[].isUDF===true). " +
+        "WARNING: Do NOT use fieldID from Fetch UDF Layout — that value is different and will cause 400 errors. " +
+        "Types: list (value=[ids], add isCascading:true for cascading), string (value='text'), date (value='dd-MMM-yyyy', requires comparison:'gt'|'lt'), numeric (value=number). " +
+        'Example: \'[{"type":"list","value":[5232621],"udfmID":2637526,"field":"multiSelect19"},{"type":"string","value":"Test","udfmID":2637427,"field":"str1"},{"type":"date","value":"16-Sep-2026","field":"date19","comparison":"gt","udfmID":2637562},{"type":"numeric","value":2,"udfmID":2637544,"field":"age19"}]\'',
+    )
     .default("[]"),
   tcrUdfFilter: z
     .string()
@@ -804,6 +817,20 @@ export const TestCaseListArgsSchema = z.object({
   folderSortOrder: CommonFields.folderSortOrder,
   filter: CommonFields.filter,
   udfFilter: CommonFields.udfFilter,
+  isParameterized: z
+    .boolean()
+    .optional()
+    .describe(
+      "When true, returns only parameterized test cases. " +
+        "Omit or set false to include all test cases regardless of parameterization.",
+    ),
+  havingSharedTestcases: z
+    .boolean()
+    .optional()
+    .describe(
+      "When true, returns only test cases that contain shared (reusable) test cases. " +
+        "Omit or set false to include all test cases.",
+    ),
 });
 
 export const TestCaseDetailsArgsSchema = z.object({
@@ -1192,6 +1219,10 @@ export const TestSuiteListArgsSchema = z.object({
   limit: CommonFields.limit,
   scope: CommonFields.scope,
   getSubEntities: CommonFields.getSubEntities,
+  hideEmptyFolders: CommonFields.hideEmptyFolders,
+  folderSortColumn: CommonFields.folderSortColumn,
+  folderSortOrder: CommonFields.folderSortOrder,
+  restoreDefaultColumns: CommonFields.restoreDefaultColumns,
   filter: CommonFields.filter,
   udfFilter: CommonFields.udfFilter,
   sort: z
@@ -1317,6 +1348,7 @@ export const TestCaseRunsByTestSuiteRunArgsSchema = z.object({
   udfFilter: CommonFields.udfFilter,
   tcrUdfFilter: CommonFields.tcrUdfFilter,
   showTcWithDefects: CommonFields.showTcWithDefects,
+  getSubEntities: CommonFields.getSubEntities,
 });
 
 export const LinkedIssuesByTestCaseRunArgsSchema = z.object({
@@ -1444,7 +1476,9 @@ export const IssuesListArgsSchema = z.object({
   page: CommonFields.page,
   limit: CommonFields.limit,
   filter: CommonFields.filter,
-  isJiraIntegrated: z
+  udfFilter: CommonFields.udfFilter,
+  restoreDefaultColumns: CommonFields.restoreDefaultColumns,
+  isJiraIntegated: z
     .boolean()
     .optional()
     .describe("Send true if current project is Integrated with Jira")

@@ -1,8 +1,10 @@
 import {
   DEFAULT_FILTER,
+  DEFAULT_FOLDER_OPTIONS,
   DEFAULT_PAGINATION,
   DEFAULT_SORT,
   type FilterPayload,
+  type FolderPayload,
   type PaginationPayload,
   type SortPayload,
 } from "./common";
@@ -48,15 +50,14 @@ export interface FetchTestSuitesForTestCasePayload
 export interface FetchTestSuitesPayload
   extends PaginationPayload,
     FilterPayload,
+    FolderPayload,
     SortPayload {
   viewId: number; // required
   folderPath: string; // required
-  scope?: string; // optional - scope filter
-  getSubEntities?: boolean; // optional - whether to get sub-entities
-  udfFilter?: string; // only this API uses udfFilter
+  udfFilter?: string; // user-defined field filter
   /**
    * Prevents filter persistence in the QMetry web application UI.
-   * Always set to false to ensure filters are not saved when fetching test cases via API.
+   * Always set to false to ensure filters are not saved when fetching test suites via API.
    */
   isFilterSaveRequired: boolean;
 }
@@ -112,6 +113,7 @@ export interface FetchTestCaseRunsByTestSuiteRunPayload
   udfFilter?: string; // optional - test case UDF filter as JSON string (default '[]')
   tcrUdfFilter?: string; // optional - test case run UDF filter as JSON string (default '[]')
   showTcWithDefects?: boolean; // optional - show only test case runs with linked defects
+  getSubEntities?: boolean; // optional - whether to include sub-entities (default false)
 }
 
 export interface LinkedTestCasesToTestSuitePayload {
@@ -136,6 +138,11 @@ export const DEFAULT_FETCH_TESTCASE_RUNS_BY_TESTSUITE_RUN_PAYLOAD: Omit<
   "tsrunID" | "viewId"
 > = {
   ...DEFAULT_PAGINATION,
+  filter: "[]",
+  udfFilter: "[]",
+  tcrUdfFilter: "[]",
+  showTcWithDefects: false,
+  getSubEntities: false,
 };
 
 export interface FetchLinkedIssuesByTestCaseRunPayload
@@ -190,12 +197,13 @@ export const DEFAULT_FETCH_TESTSUITES_PAYLOAD: Omit<
 > = {
   ...DEFAULT_PAGINATION,
   ...DEFAULT_FILTER,
+  ...DEFAULT_FOLDER_OPTIONS,
   ...DEFAULT_SORT,
   udfFilter: "[]",
   scope: "cycle",
   /**
    * Prevents filter persistence in the QMetry web application UI.
-   * Always set to false to ensure filters are not saved when fetching test cases via API.
+   * Always set to false to ensure filters are not saved when fetching test suites via API.
    */
   isFilterSaveRequired: false,
 };

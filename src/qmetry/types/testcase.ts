@@ -51,6 +51,8 @@ export interface FetchTestCasesPayload
   viewId: number; // required
   folderPath: string; // required
   udfFilter?: string; // only this API uses udfFilter
+  isParameterized?: boolean; // filter: only parameterized test cases
+  havingSharedTestcases?: boolean; // filter: only test cases that have shared test cases
   /**
    * Prevents filter persistence in the QMetry web application UI.
    * Always set to false to ensure filters are not saved when fetching test cases via API.
