@@ -13,6 +13,7 @@ export class HttpClient {
       body?: unknown;
       headers?: Record<string, string>;
       errorContext?: string;
+      responseType?: "json" | "text";
     },
   ): Promise<T> {
     const {
@@ -20,6 +21,7 @@ export class HttpClient {
       body,
       headers,
       errorContext = "Request",
+      responseType = "json",
     } = options ?? {};
 
     try {
@@ -40,6 +42,10 @@ export class HttpClient {
 
       if (response.status === 204) {
         return undefined as unknown as T;
+      }
+
+      if (responseType === "text") {
+        return (await response.text()) as T;
       }
 
       return (await response.json()) as T;

@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+:root { --ink: #16212b; --muted: #536270; --line: #d4dde4; --canvas: #f2f6f8; --accent: #067a61; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--canvas); color: var(--ink); font-family: Georgia, "Times New Roman", serif; }
+.workspace { min-height: 100vh; padding: 72px max(28px, calc((100vw - 1120px) / 2)); background-image: linear-gradient(90deg, rgba(6, 122, 97, .05) 1px, transparent 1px), linear-gradient(rgba(6, 122, 97, .05) 1px, transparent 1px); background-size: 28px 28px; }
+.intro { max-width: 690px; }
+.eyebrow { margin: 0 0 12px; color: var(--accent); font-family: ui-sans-serif, system-ui, sans-serif; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
+h1 { max-width: 620px; margin: 0; font-size: 54px; font-weight: 500; line-height: 1; letter-spacing: 0; }
+.intro > p:last-child { max-width: 610px; color: var(--muted); font-family: ui-sans-serif, system-ui, sans-serif; font-size: 17px; line-height: 1.55; }
+.suggestions { display: grid; max-width: 690px; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 32px; font-family: ui-sans-serif, system-ui, sans-serif; }
+.suggestions span { border: 1px solid var(--line); border-left: 3px solid var(--accent); background: rgba(255,255,255,.86); padding: 13px; font-size: 13px; }
+.tool-activity { display: flex; align-items: center; gap: 7px; padding: 10px; border: 1px solid var(--line); background: white; color: var(--muted); font-family: ui-sans-serif, system-ui, sans-serif; font-size: 12px; }
+.tool-activity strong { color: var(--ink); text-transform: capitalize; }
+.tool-dot { width: 8px; height: 8px; border-radius: 50%; background: #bd751b; }.tool-dot.complete { background: var(--accent); }
+@media (max-width: 640px) { .workspace { padding: 48px 20px; } h1 { font-size: 40px; } .suggestions { grid-template-columns: 1fr; } }

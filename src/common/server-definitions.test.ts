@@ -93,15 +93,18 @@ describe("server definitions are not changed unexpectedly", () => {
       "registerResource",
     ).mockImplementation(((
       resourceName: string,
-      template: ResourceTemplate,
+      template: ResourceTemplate | string,
       config: any,
     ) => {
-      registeredResources[resourceName] = {
-        // @ts-expect-error
-        url: template.uriTemplate.template,
-        variables: template.uriTemplate.variableNames,
-        ...config,
-      };
+      registeredResources[resourceName] =
+        typeof template === "string"
+          ? { url: template, ...config }
+          : {
+              // @ts-expect-error
+              url: template.uriTemplate.template,
+              variables: template.uriTemplate.variableNames,
+              ...config,
+            };
     }) as any);
 
     for (const client of clientRegistry.getAll()) {

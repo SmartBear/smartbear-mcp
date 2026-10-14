@@ -34,7 +34,7 @@ import {
   type ProtocolEra,
 } from "./request-context";
 import { ToolError } from "./tools";
-import type { Client, ClientInfo, ToolParams } from "./types";
+import type { Client, ClientInfo, McpAppParams, ToolParams } from "./types";
 import {
   getDefaultValue,
   getReadableTypeName,
@@ -73,6 +73,8 @@ function buildCacheHints(): Partial<
   };
 }
 
+const MCP_APP_MIME_TYPE = "text/html;profile=mcp-app";
+
 export class SmartBearMcpServer extends McpServer {
   private cache: CacheService;
   private elicitationSupported = false;
@@ -81,6 +83,7 @@ export class SmartBearMcpServer extends McpServer {
   private enabledToolsets?: string[];
   private mcpClientIdentity?: McpClientIdentity;
   private analyticsSession?: AnalyticsSession;
+  private registeredAppResources = new Set<string>();
 
   constructor(enabledToolsets?: string, era: ProtocolEra = "legacy") {
     super(
@@ -258,6 +261,9 @@ export class SmartBearMcpServer extends McpServer {
         // `.shape`) preserves z.looseObject()'s additionalProperties:true in the
         // JSON schema sent to clients — otherwise real API responses would fail
         // "additional properties" validation.
+        if (params.app) {
+          this.registerAppResource(client, params.app);
+        }
         return super.registerTool(
           toolName,
           {
@@ -266,6 +272,14 @@ export class SmartBearMcpServer extends McpServer {
             inputSchema: params.inputSchema ?? z.object({}),
             outputSchema: params.outputSchema,
             annotations: this.getAnnotations(toolTitle, params),
+            ...(params.app
+              ? {
+                  _meta: {
+                    ui: { resourceUri: params.app.resourceUri },
+                    "ui/resourceUri": params.app.resourceUri,
+                  },
+                }
+              : {}),
           },
           async (args: any, ctx: any) => {
             // Usage analytics: outcome only (success flag, error class name,
@@ -286,6 +300,8 @@ export class SmartBearMcpServer extends McpServer {
                 cb(args, ctx),
               );
               if (result) {
+                const ct = (result._meta as any)?.contractTesting;
+                if (ct?.tool) ct.tool.name = toolName;
                 this.validateCallbackResult(result, params);
                 this.addStructuredContentAsText(result);
                 if (result.isError) {
@@ -442,6 +458,35 @@ export class SmartBearMcpServer extends McpServer {
       delete registry[key];
     }
     Object.assign(registry, sorted);
+  }
+
+  /**
+   * Register the `ui://` resource backing an MCP App (SEP-1865). Several tools
+   * may share one app, so each URI is registered once.
+   */
+  private registerAppResource(client: Client, app: McpAppParams): void {
+    if (this.registeredAppResources.has(app.resourceUri)) {
+      return;
+    }
+    this.registeredAppResources.add(app.resourceUri);
+    super.registerResource(
+      this.getCapabilityName(client, app.title),
+      app.resourceUri,
+      {
+        title: this.getCapabilityTitle(client, app.title),
+        description: app.description,
+        mimeType: MCP_APP_MIME_TYPE,
+      },
+      async (uri: URL) => ({
+        contents: [
+          {
+            uri: uri.href,
+            mimeType: MCP_APP_MIME_TYPE,
+            text: typeof app.html === "function" ? app.html() : app.html,
+          },
+        ],
+      }),
+    );
   }
 
   private validateCallbackResult(result: CallToolResult, params: ToolParams) {

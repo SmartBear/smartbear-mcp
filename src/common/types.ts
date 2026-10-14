@@ -38,6 +38,17 @@ export interface ToolParams {
   destructive?: boolean;
   idempotent?: boolean;
   openWorld?: boolean;
+  /** MCP App (SEP-1865) that hosts supporting `io.modelcontextprotocol/ui` render the tool result with. */
+  app?: McpAppParams;
+}
+
+export interface McpAppParams {
+  /** Must use the `ui://` scheme. */
+  resourceUri: string;
+  title: string;
+  description?: string;
+  /** Self-contained HTML5 document, generated lazily when the resource is read. */
+  html: string | (() => string);
 }
 
 export interface PromptParams {

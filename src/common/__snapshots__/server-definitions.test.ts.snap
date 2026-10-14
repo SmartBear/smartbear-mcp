@@ -27,6 +27,54 @@ exports[`server definitions are not changed unexpectedly > registered resources 
       "id",
     ],
   },
+  "contract-testing_bdct_verification": {
+    "description": "Interactive status summary for PactFlow bi-directional contract verification.",
+    "mimeType": "text/html;profile=mcp-app",
+    "title": "Contract Testing: BDCT Verification",
+    "url": "ui://contract-testing/bdct-verification",
+  },
+  "contract-testing_branch_bdct_summary": {
+    "description": "Interactive branch-level summary of the latest version and cross-contract verification status.",
+    "mimeType": "text/html;profile=mcp-app",
+    "title": "Contract Testing: Branch BDCT Summary",
+    "url": "ui://contract-testing/branch-bdct-summary",
+  },
+  "contract-testing_deployment_matrix": {
+    "description": "Deployment decision and consumer-provider verification matrix for PactFlow.",
+    "mimeType": "text/html;profile=mcp-app",
+    "title": "Contract Testing: Deployment Matrix",
+    "url": "ui://contract-testing/deployment-matrix",
+  },
+  "contract-testing_environment_inventory": {
+    "description": "Active deployed and supported PactFlow versions for an environment.",
+    "mimeType": "text/html;profile=mcp-app",
+    "title": "Contract Testing: Environment Inventory",
+    "url": "ui://contract-testing/environment-inventory",
+  },
+  "contract-testing_integrations_graph": {
+    "description": "Interactive diagram of consumer-provider integrations rendered from Graphviz DOT.",
+    "mimeType": "text/html;profile=mcp-app",
+    "title": "Contract Testing: Integrations Graph",
+    "url": "ui://contract-testing/integrations-graph",
+  },
+  "contract-testing_pactflow_result_explorer": {
+    "description": "Generic PactFlow result viewer: item tables, detail views and page-by-page navigation.",
+    "mimeType": "text/html;profile=mcp-app",
+    "title": "Contract Testing: PactFlow Result Explorer",
+    "url": "ui://contract-testing/result-explorer",
+  },
+  "contract-testing_pacticipant_network": {
+    "description": "Focused consumer-provider blast radius for a PactFlow service.",
+    "mimeType": "text/html;profile=mcp-app",
+    "title": "Contract Testing: Pacticipant Network",
+    "url": "ui://contract-testing/pacticipant-network",
+  },
+  "contract-testing_provider_states": {
+    "description": "Searchable provider-state coverage by consumer for PactFlow.",
+    "mimeType": "text/html;profile=mcp-app",
+    "title": "Contract Testing: Provider States",
+    "url": "ui://contract-testing/provider-states",
+  },
 }
 `;
 
@@ -1399,6 +1447,12 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     "title": "Collaborator: Update Remote System Configuration Webhook",
   },
   "contract-testing_add_label_to_pacticipant": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": false,
@@ -1421,6 +1475,12 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     "title": "Contract Testing: Add Label to Pacticipant",
   },
   "contract-testing_admin_add_role_to_user": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": false,
@@ -1443,6 +1503,12 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     "title": "Contract Testing: Admin Add Role to User",
   },
   "contract-testing_admin_create_role": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": false,
@@ -1467,6 +1533,12 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     "title": "Contract Testing: Admin Create Role",
   },
   "contract-testing_admin_create_system_account": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": false,
@@ -1487,6 +1559,12 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     "title": "Contract Testing: Admin Create System Account",
   },
   "contract-testing_admin_create_team": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": false,
@@ -1513,6 +1591,12 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     "title": "Contract Testing: Admin Create Team",
   },
   "contract-testing_admin_create_user": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": false,
@@ -1543,6 +1627,12 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     "title": "Contract Testing: Admin Create User",
   },
   "contract-testing_admin_delete_role": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": true,
       "idempotentHint": true,
@@ -1563,6 +1653,12 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     "title": "Contract Testing: Admin Delete Role",
   },
   "contract-testing_admin_delete_team": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": true,
       "idempotentHint": true,
@@ -1583,6 +1679,12 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     "title": "Contract Testing: Admin Delete Team",
   },
   "contract-testing_admin_delete_user": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": true,
       "idempotentHint": true,
@@ -1603,6 +1705,12 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     "title": "Contract Testing: Admin Delete User",
   },
   "contract-testing_admin_get_role": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -1623,6 +1731,12 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     "title": "Contract Testing: Admin Get Role",
   },
   "contract-testing_admin_get_system_account_tokens": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -1647,6 +1761,12 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     "title": "Contract Testing: Admin Get System Account Tokens",
   },
   "contract-testing_admin_get_team": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -1667,6 +1787,12 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     "title": "Contract Testing: Admin Get Team",
   },
   "contract-testing_admin_get_team_user": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -1689,6 +1815,12 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     "title": "Contract Testing: Admin Get Team User",
   },
   "contract-testing_admin_get_user": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -1709,6 +1841,12 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     "title": "Contract Testing: Admin Get User",
   },
   "contract-testing_admin_invite_users": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": false,
@@ -1729,6 +1867,12 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     "title": "Contract Testing: Admin Invite Users",
   },
   "contract-testing_admin_list_permissions": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -1751,6 +1895,12 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     "title": "Contract Testing: Admin List Permissions",
   },
   "contract-testing_admin_list_roles": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -1773,6 +1923,12 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     "title": "Contract Testing: Admin List Roles",
   },
   "contract-testing_admin_list_team_users": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -1797,6 +1953,12 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     "title": "Contract Testing: Admin List Team Users",
   },
   "contract-testing_admin_list_teams": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -1821,6 +1983,12 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     "title": "Contract Testing: Admin List Teams",
   },
   "contract-testing_admin_list_users": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -1849,6 +2017,12 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     "title": "Contract Testing: Admin List Users",
   },
   "contract-testing_admin_patch_team_users": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": false,
@@ -1871,6 +2045,12 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     "title": "Contract Testing: Admin Patch Team Users",
   },
   "contract-testing_admin_remove_role_from_user": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": true,
       "idempotentHint": true,
@@ -1893,6 +2073,12 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     "title": "Contract Testing: Admin Remove Role from User",
   },
   "contract-testing_admin_remove_user_from_team": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": true,
       "idempotentHint": true,
@@ -1915,6 +2101,12 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     "title": "Contract Testing: Admin Remove User from Team",
   },
   "contract-testing_admin_reset_roles": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": true,
       "idempotentHint": true,
@@ -1933,6 +2125,12 @@ None",
     "title": "Contract Testing: Admin Reset Roles",
   },
   "contract-testing_admin_set_team_users": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -1955,6 +2153,12 @@ None",
     "title": "Contract Testing: Admin Set Team Users",
   },
   "contract-testing_admin_set_user_roles": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -1977,6 +2181,12 @@ None",
     "title": "Contract Testing: Admin Set User Roles",
   },
   "contract-testing_admin_update_role": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -2003,6 +2213,12 @@ None",
     "title": "Contract Testing: Admin Update Role",
   },
   "contract-testing_admin_update_team": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -2031,6 +2247,12 @@ None",
     "title": "Contract Testing: Admin Update Team",
   },
   "contract-testing_admin_update_user": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -2061,6 +2283,12 @@ None",
     "title": "Contract Testing: Admin Update User",
   },
   "contract-testing_can_i_deploy": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/deployment-matrix",
+      },
+      "ui/resourceUri": "ui://contract-testing/deployment-matrix",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -2085,6 +2313,12 @@ None",
     "title": "Contract Testing: Can I Deploy",
   },
   "contract-testing_check_pactflow_ai_entitlements": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -2102,6 +2336,12 @@ None",
     "title": "Contract Testing: Check PactFlow AI Entitlements",
   },
   "contract-testing_create_environment": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": false,
@@ -2128,6 +2368,12 @@ None",
     "title": "Contract Testing: Create Environment",
   },
   "contract-testing_create_pacticipant": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": false,
@@ -2158,6 +2404,12 @@ None",
     "title": "Contract Testing: Create Pacticipant",
   },
   "contract-testing_create_secret": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": false,
@@ -2184,6 +2436,12 @@ None",
     "title": "Contract Testing: Create Secret",
   },
   "contract-testing_create_webhook": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": false,
@@ -2216,6 +2474,12 @@ None",
     "title": "Contract Testing: Create Webhook",
   },
   "contract-testing_delete_all_integrations": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": true,
       "idempotentHint": true,
@@ -2234,6 +2498,12 @@ None",
     "title": "Contract Testing: Delete All Integrations",
   },
   "contract-testing_delete_branch": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": true,
       "idempotentHint": true,
@@ -2256,6 +2526,12 @@ None",
     "title": "Contract Testing: Delete Branch",
   },
   "contract-testing_delete_environment": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": true,
       "idempotentHint": true,
@@ -2276,6 +2552,12 @@ None",
     "title": "Contract Testing: Delete Environment",
   },
   "contract-testing_delete_integration": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": true,
       "idempotentHint": true,
@@ -2298,6 +2580,12 @@ None",
     "title": "Contract Testing: Delete Integration",
   },
   "contract-testing_delete_pacticipant": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": true,
       "idempotentHint": true,
@@ -2318,6 +2606,12 @@ None",
     "title": "Contract Testing: Delete Pacticipant",
   },
   "contract-testing_delete_secret": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": true,
       "idempotentHint": true,
@@ -2338,6 +2632,12 @@ None",
     "title": "Contract Testing: Delete Secret",
   },
   "contract-testing_delete_webhook": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": true,
       "idempotentHint": true,
@@ -2358,6 +2658,12 @@ None",
     "title": "Contract Testing: Delete Webhook",
   },
   "contract-testing_execute_webhook": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": false,
@@ -2378,6 +2684,12 @@ None",
     "title": "Contract Testing: Execute Webhook",
   },
   "contract-testing_generate_pact_tests": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -2408,6 +2720,12 @@ None",
     "title": "Contract Testing: Generate Pact Tests",
   },
   "contract-testing_get_audit_log": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -2442,6 +2760,12 @@ None",
     "title": "Contract Testing: Get Audit Log",
   },
   "contract-testing_get_bdct_consumer_by_consumer_version": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -2472,6 +2796,12 @@ None",
     "title": "Contract Testing: Get BDCT Consumer by Consumer Version",
   },
   "contract-testing_get_bdct_consumer_contract_verification_results": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/bdct-verification",
+      },
+      "ui/resourceUri": "ui://contract-testing/bdct-verification",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -2498,6 +2828,12 @@ None",
     "title": "Contract Testing: Get BDCT Consumer Contract Verification Results",
   },
   "contract-testing_get_bdct_consumer_contracts": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -2524,6 +2860,12 @@ None",
     "title": "Contract Testing: Get BDCT Consumer Contracts",
   },
   "contract-testing_get_bdct_consumer_pact_test_results_by_consumer": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/bdct-verification",
+      },
+      "ui/resourceUri": "ui://contract-testing/bdct-verification",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -2554,6 +2896,12 @@ None",
     "title": "Contract Testing: Get BDCT Consumer Pact Test Results by Consumer",
   },
   "contract-testing_get_bdct_cross-contract_verification_results": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/bdct-verification",
+      },
+      "ui/resourceUri": "ui://contract-testing/bdct-verification",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -2580,6 +2928,12 @@ None",
     "title": "Contract Testing: Get BDCT Cross-Contract Verification Results",
   },
   "contract-testing_get_bdct_provider_by_consumer_version": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -2610,6 +2964,12 @@ None",
     "title": "Contract Testing: Get BDCT Provider by Consumer Version",
   },
   "contract-testing_get_bdct_provider_check_results_by_consumer": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/bdct-verification",
+      },
+      "ui/resourceUri": "ui://contract-testing/bdct-verification",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -2640,6 +3000,12 @@ None",
     "title": "Contract Testing: Get BDCT Provider Check Results by Consumer",
   },
   "contract-testing_get_bdct_provider_contract": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -2666,6 +3032,12 @@ None",
     "title": "Contract Testing: Get BDCT Provider Contract",
   },
   "contract-testing_get_bdct_provider_contract_verification_results": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/bdct-verification",
+      },
+      "ui/resourceUri": "ui://contract-testing/bdct-verification",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -2692,6 +3064,12 @@ None",
     "title": "Contract Testing: Get BDCT Provider Contract Verification Results",
   },
   "contract-testing_get_bdct_x-contract_test_results_by_consumer": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/bdct-verification",
+      },
+      "ui/resourceUri": "ui://contract-testing/bdct-verification",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -2722,6 +3100,12 @@ None",
     "title": "Contract Testing: Get BDCT X-Contract Test Results by Consumer",
   },
   "contract-testing_get_branch": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -2743,7 +3127,41 @@ None",
     "outputSchema": undefined,
     "title": "Contract Testing: Get Branch",
   },
+  "contract-testing_get_branch_bdct_summary": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/branch-bdct-summary",
+      },
+      "ui/resourceUri": "ui://contract-testing/branch-bdct-summary",
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "Contract Testing: Get Branch BDCT Summary",
+    },
+    "description": "Show the latest version and cross-contract verification status for a provider's top branches.
+
+**Toolset:** Bi-Directional Contract Testing
+
+**Parameters:**
+- pacticipantName (string) *required*: Name of the provider pacticipant
+- limit (number): Maximum number of branches to include (default: 5)",
+    "inputSchema": [
+      "limit",
+      "pacticipantName",
+    ],
+    "outputSchema": undefined,
+    "title": "Contract Testing: Get Branch BDCT Summary",
+  },
   "contract-testing_get_branch_versions": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -2770,6 +3188,12 @@ None",
     "title": "Contract Testing: Get Branch Versions",
   },
   "contract-testing_get_current_user": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -2788,6 +3212,12 @@ None",
     "title": "Contract Testing: Get Current User",
   },
   "contract-testing_get_currently_deployed_versions": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/environment-inventory",
+      },
+      "ui/resourceUri": "ui://contract-testing/environment-inventory",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -2812,6 +3242,12 @@ None",
     "title": "Contract Testing: Get Currently Deployed Versions",
   },
   "contract-testing_get_currently_supported_versions": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/environment-inventory",
+      },
+      "ui/resourceUri": "ui://contract-testing/environment-inventory",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -2836,6 +3272,12 @@ None",
     "title": "Contract Testing: Get Currently Supported Versions",
   },
   "contract-testing_get_deployed_versions_for_version": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -2864,6 +3306,12 @@ None",
     "title": "Contract Testing: Get Deployed Versions for Version",
   },
   "contract-testing_get_environment": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -2884,6 +3332,12 @@ None",
     "title": "Contract Testing: Get Environment",
   },
   "contract-testing_get_integrations_by_team": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -2908,6 +3362,12 @@ None",
     "title": "Contract Testing: Get Integrations by Team",
   },
   "contract-testing_get_latest_pacticipant_version": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -2930,6 +3390,12 @@ None",
     "title": "Contract Testing: Get Latest Pacticipant Version",
   },
   "contract-testing_get_metrics": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -2948,6 +3414,12 @@ None",
     "title": "Contract Testing: Get Metrics",
   },
   "contract-testing_get_pacticipant": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -2968,6 +3440,12 @@ None",
     "title": "Contract Testing: Get Pacticipant",
   },
   "contract-testing_get_pacticipant_label": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -2990,6 +3468,12 @@ None",
     "title": "Contract Testing: Get Pacticipant Label",
   },
   "contract-testing_get_pacticipant_network": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/pacticipant-network",
+      },
+      "ui/resourceUri": "ui://contract-testing/pacticipant-network",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -3014,6 +3498,12 @@ None",
     "title": "Contract Testing: Get Pacticipant Network",
   },
   "contract-testing_get_pacticipant_version": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -3036,6 +3526,12 @@ None",
     "title": "Contract Testing: Get Pacticipant Version",
   },
   "contract-testing_get_pacts_for_verification": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -3066,6 +3562,12 @@ None",
     "title": "Contract Testing: Get Pacts for Verification",
   },
   "contract-testing_get_provider_states": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/provider-states",
+      },
+      "ui/resourceUri": "ui://contract-testing/provider-states",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -3090,6 +3592,12 @@ None",
     "title": "Contract Testing: Get Provider States",
   },
   "contract-testing_get_released_versions_for_version": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -3118,6 +3626,12 @@ None",
     "title": "Contract Testing: Get Released Versions for Version",
   },
   "contract-testing_get_secret": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -3138,6 +3652,12 @@ None",
     "title": "Contract Testing: Get Secret",
   },
   "contract-testing_get_system_preferences": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -3156,6 +3676,12 @@ None",
     "title": "Contract Testing: Get System Preferences",
   },
   "contract-testing_get_team_metrics": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -3174,6 +3700,12 @@ None",
     "title": "Contract Testing: Get Team Metrics",
   },
   "contract-testing_get_user_preferences": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -3192,6 +3724,12 @@ None",
     "title": "Contract Testing: Get User Preferences",
   },
   "contract-testing_get_webhook": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -3212,6 +3750,12 @@ None",
     "title": "Contract Testing: Get Webhook",
   },
   "contract-testing_list_api_tokens": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -3234,6 +3778,12 @@ None",
     "title": "Contract Testing: List API Tokens",
   },
   "contract-testing_list_branches": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -3260,6 +3810,12 @@ None",
     "title": "Contract Testing: List Branches",
   },
   "contract-testing_list_environments": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -3282,6 +3838,12 @@ None",
     "title": "Contract Testing: List Environments",
   },
   "contract-testing_list_integrations": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -3304,6 +3866,12 @@ None",
     "title": "Contract Testing: List Integrations",
   },
   "contract-testing_list_labels": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -3326,6 +3894,12 @@ None",
     "title": "Contract Testing: List Labels",
   },
   "contract-testing_list_pacticipant_versions": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -3350,6 +3924,12 @@ None",
     "title": "Contract Testing: List Pacticipant Versions",
   },
   "contract-testing_list_pacticipants": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -3372,6 +3952,12 @@ None",
     "title": "Contract Testing: List Pacticipants",
   },
   "contract-testing_list_pacticipants_by_label": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -3396,6 +3982,12 @@ None",
     "title": "Contract Testing: List Pacticipants by Label",
   },
   "contract-testing_list_secrets": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -3418,6 +4010,12 @@ None",
     "title": "Contract Testing: List Secrets",
   },
   "contract-testing_list_webhooks": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -3440,6 +4038,12 @@ None",
     "title": "Contract Testing: List Webhooks",
   },
   "contract-testing_matrix": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/deployment-matrix",
+      },
+      "ui/resourceUri": "ui://contract-testing/deployment-matrix",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -3466,6 +4070,12 @@ None",
     "title": "Contract Testing: Matrix",
   },
   "contract-testing_patch_pacticipant": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": false,
@@ -3496,6 +4106,12 @@ None",
     "title": "Contract Testing: Patch Pacticipant",
   },
   "contract-testing_publish_consumer_contracts": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -3526,6 +4142,12 @@ None",
     "title": "Contract Testing: Publish Consumer Contracts",
   },
   "contract-testing_publish_provider_contract": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -3556,6 +4178,12 @@ None",
     "title": "Contract Testing: Publish Provider Contract",
   },
   "contract-testing_record_deployment": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": false,
@@ -3582,6 +4210,12 @@ None",
     "title": "Contract Testing: Record Deployment",
   },
   "contract-testing_record_release": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": false,
@@ -3606,6 +4240,12 @@ None",
     "title": "Contract Testing: Record Release",
   },
   "contract-testing_regenerate_api_token": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": true,
       "idempotentHint": false,
@@ -3626,6 +4266,12 @@ None",
     "title": "Contract Testing: Regenerate API Token",
   },
   "contract-testing_remove_label_from_pacticipant": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": true,
       "idempotentHint": true,
@@ -3648,6 +4294,12 @@ None",
     "title": "Contract Testing: Remove Label from Pacticipant",
   },
   "contract-testing_review_pact_tests": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -3676,6 +4328,12 @@ None",
     "title": "Contract Testing: Review Pact Tests",
   },
   "contract-testing_test_execute_webhooks": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": false,
@@ -3694,6 +4352,12 @@ None",
     "title": "Contract Testing: Test Execute Webhooks",
   },
   "contract-testing_update_environment": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -3722,6 +4386,12 @@ None",
     "title": "Contract Testing: Update Environment",
   },
   "contract-testing_update_pacticipant": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -3752,6 +4422,12 @@ None",
     "title": "Contract Testing: Update Pacticipant",
   },
   "contract-testing_update_pacticipant_version": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -3776,6 +4452,12 @@ None",
     "title": "Contract Testing: Update Pacticipant Version",
   },
   "contract-testing_update_secret": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -3802,6 +4484,12 @@ None",
     "title": "Contract Testing: Update Secret",
   },
   "contract-testing_update_webhook": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/result-explorer",
+      },
+      "ui/resourceUri": "ui://contract-testing/result-explorer",
+    },
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
@@ -3834,6 +4522,34 @@ None",
     ],
     "outputSchema": undefined,
     "title": "Contract Testing: Update Webhook",
+  },
+  "contract-testing_visualize_integrations": {
+    "_meta": {
+      "ui": {
+        "resourceUri": "ui://contract-testing/integrations-graph",
+      },
+      "ui/resourceUri": "ui://contract-testing/integrations-graph",
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "Contract Testing: Visualize Integrations",
+    },
+    "description": "Render all consumer-provider integrations in the workspace as a network diagram.
+
+**Toolset:** Integrations and Network
+
+**Parameters:**
+- consumer (string): Application (pacticipant) name. Limits the diagram to this application and its direct providers. Omit to show every integration.
+
+**Output Description:** Interactive consumer-provider network grouped by team, with verification status.",
+    "inputSchema": [
+      "consumer",
+    ],
+    "outputSchema": undefined,
+    "title": "Contract Testing: Visualize Integrations",
   },
   "qmetry_bulk_update_test_case_execution_status": {
     "annotations": {

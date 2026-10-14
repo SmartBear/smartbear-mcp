@@ -5,6 +5,7 @@
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -15,6 +16,6 @@
     "allowImportingTsExtensions": true,
     "noEmit": true
   },
-  "include": ["src/**/*.ts", "**/*.test.ts"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "**/*.test.ts"],
   "exclude": ["node_modules"]
 }

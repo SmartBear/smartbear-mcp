@@ -33,6 +33,12 @@ const ConfigurationSchema = z.object({
   password: z.string().optional().describe("Password for Pact Broker"),
 });
 
+function collection(response: any, key: string): any[] {
+  if (Array.isArray(response[key])) return response[key];
+  if (Array.isArray(response._embedded?.[key])) return response._embedded[key];
+  return [];
+}
+
 // biome-ignore lint/suspicious/noUnsafeDeclarationMerging: needed for dynamic handler dispatch via Object.assign in configure()
 export class PactflowClient implements Client {
   name = "Contract Testing";
@@ -90,7 +96,70 @@ export class PactflowClient implements Client {
       ...new AdminApi(this.http).handlers,
       ...new AIApi(this.http, aiBaseUrl).handlers,
     };
+    this.handlerMap.getBranchBdctSummary = this.getBranchBdctSummary.bind(this);
     Object.assign(this as any, this.handlerMap);
+  }
+
+  async getBranchBdctSummary({
+    pacticipantName,
+    limit = 5,
+  }: {
+    pacticipantName: string;
+    limit?: number;
+  }) {
+    const listBranches = this.handlerMap.listBranches;
+    const getBranchVersions = this.handlerMap.getBranchVersions;
+    const getCrossContractResults =
+      this.handlerMap.getBiDirectionalCrossContractVerificationResults;
+    const branchResponse = await listBranches({
+      pacticipantName,
+      pageNumber: 1,
+      pageSize: limit,
+    });
+    const branches = collection(branchResponse, "branches");
+
+    return {
+      pacticipantName,
+      branches: await Promise.all(
+        branches.slice(0, limit).map(async (branch: any) => {
+          const branchName = String(branch.name ?? branch.branchName ?? "");
+          try {
+            const versionsResponse = await getBranchVersions({
+              pacticipantName,
+              branchName,
+              pageNumber: 1,
+              pageSize: 1,
+            });
+            const versions = collection(versionsResponse, "versions");
+            const version = versions[0];
+            const versionNumber = version?.number ?? version?.version;
+            if (!versionNumber) {
+              return {
+                branch,
+                branchName,
+                status: "unknown",
+                reason: "No published versions",
+              };
+            }
+            const bdct = await getCrossContractResults({
+              providerName: pacticipantName,
+              providerVersionNumber: String(versionNumber),
+            });
+            return { branch, branchName, version: versionNumber, bdct };
+          } catch (error) {
+            return {
+              branch,
+              branchName,
+              status: "unknown",
+              error:
+                error instanceof Error
+                  ? error.message
+                  : "Could not load BDCT results",
+            };
+          }
+        }),
+      ),
+    };
   }
 
   isConfigured(): boolean {
@@ -201,11 +270,30 @@ export class PactflowClient implements Client {
         }
 
         if (formatResponse) {
-          return formatResponse(result);
+          const response = formatResponse(result);
+          return {
+            ...response,
+            _meta: {
+              contractTesting: {
+                ...((response._meta as Record<string, unknown> | undefined)
+                  ?.contractTesting as Record<string, unknown>),
+                result,
+                args,
+                tool: { title: tool.title, handler },
+              },
+            },
+          };
         }
 
         return {
           content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+          _meta: {
+            contractTesting: {
+              result,
+              args,
+              tool: { title: tool.title, handler },
+            },
+          },
         };
       });
     }

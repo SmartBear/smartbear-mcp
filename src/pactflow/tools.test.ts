@@ -49,6 +49,139 @@ describe("TOOLS definition for 'Get Metrics'", () => {
   });
 });
 
+describe("PactFlow MCP App coverage", () => {
+  it("attaches an explorer to every PactFlow tool", () => {
+    expect(TOOLS).not.toHaveLength(0);
+    expect(
+      TOOLS.every((tool) =>
+        tool.app?.resourceUri.startsWith("ui://contract-testing/"),
+      ),
+    ).toBe(true);
+  });
+});
+
+describe("TOOLS definition for deployment safety MCP Apps", () => {
+  it.each([
+    ["Can I Deploy", "Deployment safety view rendered: safe to deploy."],
+    ["Matrix", "Contract verification matrix rendered with 1 entries."],
+  ])("renders %s through the shared deployment matrix app", (title, text) => {
+    const tool = TOOLS.find((candidate) => candidate.title === title);
+    const result = tool?.formatResponse?.({
+      matrix: [{}],
+      summary: { deployable: true },
+    });
+
+    expect(tool?.app?.resourceUri).toBe(
+      "ui://contract-testing/deployment-matrix",
+    );
+    expect(result?.content[0]?.text).toContain(text);
+    expect(result?.content[0]?.text).toContain('"deployable": true');
+    expect(result?._meta).toEqual({
+      contractTesting: {
+        deploymentMatrix: {
+          matrix: [{}],
+          summary: { deployable: true },
+        },
+      },
+    });
+  });
+});
+
+describe("TOOLS definition for the provider states MCP App", () => {
+  it("keeps provider state data available to both the app and non-App clients", () => {
+    const tool = TOOLS.find(
+      (candidate) => candidate.title === "Get Provider States",
+    );
+    const result = tool?.formatResponse?.({
+      providerStates: [{ name: "account exists", consumers: ["Storefront"] }],
+    });
+
+    expect(tool?.app?.resourceUri).toBe(
+      "ui://contract-testing/provider-states",
+    );
+    expect(result?.content[0]?.text).toContain(
+      "Provider state coverage rendered for 1 states.",
+    );
+    expect(result?.content[0]?.text).toContain("account exists");
+  });
+});
+
+describe("TOOLS definition for the environment inventory MCP App", () => {
+  it.each([
+    [
+      "Get Currently Deployed Versions",
+      "deployedVersions",
+      "Environment deployment inventory rendered with 1 active versions.",
+    ],
+    [
+      "Get Currently Supported Versions",
+      "releasedVersions",
+      "Environment support inventory rendered with 1 active versions.",
+    ],
+  ])("renders %s through the shared inventory app", (title, collection, text) => {
+    const tool = findTool(title);
+    const result = tool.formatResponse?.({
+      _embedded: { [collection]: [{ version: "1.0.0" }] },
+    });
+
+    expect(tool.app?.resourceUri).toBe(
+      "ui://contract-testing/environment-inventory",
+    );
+    expect(result?.content[0]?.text).toContain(text);
+    expect(result?.content[0]?.text).toContain("1.0.0");
+    expect(result?._meta).toBeDefined();
+  });
+});
+
+describe("TOOLS definition for the pacticipant network MCP App", () => {
+  it("keeps the blast radius network available to both the app and non-App clients", () => {
+    const tool = findTool("Get Pacticipant Network");
+    const result = tool.formatResponse?.({
+      integrations: [{ consumer: "Storefront", provider: "Orders" }],
+    });
+
+    expect(tool.app?.resourceUri).toBe(
+      "ui://contract-testing/pacticipant-network",
+    );
+    expect(result?.content[0]?.text).toContain(
+      "Pacticipant blast radius rendered with 1 integrations.",
+    );
+    expect(result?.content[0]?.text).toContain("Storefront");
+    expect(result?._meta).toEqual({
+      contractTesting: {
+        pacticipantNetwork: {
+          integrations: [{ consumer: "Storefront", provider: "Orders" }],
+        },
+      },
+    });
+  });
+});
+
+describe("TOOLS definition for the BDCT verification MCP App", () => {
+  it.each([
+    "Get BDCT Provider Contract Verification Results",
+    "Get BDCT Consumer Contract Verification Results",
+    "Get BDCT Cross-Contract Verification Results",
+    "Get BDCT Provider Check Results by Consumer",
+    "Get BDCT Consumer Pact Test Results by Consumer",
+    "Get BDCT X-Contract Test Results by Consumer",
+  ])("renders %s through the shared BDCT app", (title) => {
+    const tool = findTool(title);
+    const result = tool.formatResponse?.({ outcome: "passed" });
+
+    expect(tool.app?.resourceUri).toBe(
+      "ui://contract-testing/bdct-verification",
+    );
+    expect(result?.content[0]?.text).toContain(
+      "BDCT verification results rendered in the interactive view.",
+    );
+    expect(result?.content[0]?.text).toContain("passed");
+    expect(result?._meta).toEqual({
+      contractTesting: { bdctVerification: { outcome: "passed" } },
+    });
+  });
+});
+
 describe("TOOLS definition for 'Get Team Metrics'", () => {
   it("defines the team metrics tool with correct metadata", () => {
     const tool = TOOLS.find((t) => t.title === "Get Team Metrics");
@@ -99,6 +232,29 @@ describe("TOOLS definition for 'List Pacticipants'", () => {
       true,
     );
   });
+
+  it("renders a pacticipant directory with the list payload available to the app", () => {
+    const tool = findTool("List Pacticipants");
+    const result = tool.formatResponse?.({
+      _embedded: {
+        pacticipants: [{ name: "Storefront", mainBranch: "main" }],
+      },
+    });
+
+    expect(tool.app?.resourceUri).toBe("ui://contract-testing/result-explorer");
+    expect(result?.content[0]?.text).toContain(
+      "Pacticipant explorer rendered with 1 services.",
+    );
+    expect(result?._meta).toEqual({
+      contractTesting: {
+        pacticipantsExplorer: {
+          _embedded: {
+            pacticipants: [{ name: "Storefront", mainBranch: "main" }],
+          },
+        },
+      },
+    });
+  });
 });
 
 describe("TOOLS definition for 'Get Pacticipant'", () => {
@@ -142,6 +298,52 @@ describe("TOOLS definition for 'List Branches'", () => {
         pageSize: 20,
       }).success,
     ).toBe(true);
+  });
+});
+
+describe("TOOLS definition for 'Get Branch BDCT Summary'", () => {
+  it("composes branch and cross-contract results in its dedicated MCP App", () => {
+    const tool = findTool("Get Branch BDCT Summary");
+    const result = tool.formatResponse?.({
+      pacticipantName: "Storefront",
+      branches: [
+        { branchName: "main", version: "1.2.3", bdct: { outcome: "passed" } },
+      ],
+    });
+
+    expect(tool.handler).toBe("getBranchBdctSummary");
+    expect(tool.app?.resourceUri).toBe(
+      "ui://contract-testing/branch-bdct-summary",
+    );
+    expect(tool.clients).toEqual(["pactflow"]);
+    expect(result?._meta).toEqual({
+      contractTesting: {
+        branchBdctSummary: {
+          pacticipantName: "Storefront",
+          branches: [
+            {
+              branchName: "main",
+              version: "1.2.3",
+              bdct: { outcome: "passed" },
+            },
+          ],
+        },
+      },
+    });
+  });
+
+  it("requires a pacticipant and bounds the branch count", () => {
+    const schema = findTool("Get Branch BDCT Summary")
+      .inputSchema as ZodObject<{
+      [key: string]: ZodTypeAny;
+    }>;
+    expect(schema.safeParse({}).success).toBe(false);
+    expect(
+      schema.safeParse({ pacticipantName: "Storefront", limit: 5 }).success,
+    ).toBe(true);
+    expect(
+      schema.safeParse({ pacticipantName: "Storefront", limit: 26 }).success,
+    ).toBe(false);
   });
 });
 
@@ -381,6 +583,46 @@ describe("TOOLS definition for 'List Integrations'", () => {
     expect(tool.handler).toBe("listIntegrations");
     expect(tool.clients).toContain("pactflow");
     expect(tool.clients).toContain("pact_broker");
+  });
+});
+
+describe("TOOLS definition for 'Visualize Integrations'", () => {
+  it("accepts an optional consumer filter", () => {
+    const tool = findTool("Visualize Integrations");
+    const schema = tool.inputSchema as ZodObject<{
+      [key: string]: ZodTypeAny;
+    }>;
+
+    expect(schema.safeParse({ consumer: "Storefront" }).success).toBe(true);
+  });
+
+  it("renders the enriched network through the integrations graph app", () => {
+    const tool = findTool("Visualize Integrations");
+    const network = {
+      nodes: [],
+      edges: [],
+      summary: {
+        pacticipants: 2,
+        integrations: 1,
+        verified: 0,
+        failed: 1,
+        unverified: 0,
+        groups: [],
+      },
+    };
+    const result = tool.formatResponse?.(network);
+
+    expect(tool.handler).toBe("getIntegrationsNetwork");
+    expect(tool.app?.resourceUri).toBe(
+      "ui://contract-testing/integrations-graph",
+    );
+    expect(result.content[0]?.text).toContain(
+      "2 services, 1 integrations (1 failing, 0 unverified)",
+    );
+    expect(result.structuredContent).toEqual({ integrationsNetwork: network });
+    expect(result._meta).toEqual({
+      contractTesting: { integrationsNetwork: network },
+    });
   });
 });
 

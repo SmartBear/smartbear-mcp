@@ -278,6 +278,30 @@ describe("SmartBearMcpServer", () => {
       expect(vi.mocked(Bugsnag.notify)).not.toHaveBeenCalled();
     });
 
+    it("advertises MCP App resources in both supported metadata formats", async () => {
+      await server.addClient(mockClient);
+      const registerFn = mockClient.registerTools.mock.calls[0][0];
+
+      registerFn(
+        {
+          title: "Interactive Tool",
+          summary: "A tool with an MCP App",
+          app: {
+            resourceUri: "ui://test-product/interactive-tool",
+            title: "Interactive Tool",
+            html: "<!doctype html><html></html>",
+          },
+        },
+        vi.fn(),
+      );
+
+      const toolOptions = superRegisterToolMock.mock.calls[0][1];
+      expect(toolOptions._meta).toEqual({
+        ui: { resourceUri: "ui://test-product/interactive-tool" },
+        "ui/resourceUri": "ui://test-product/interactive-tool",
+      });
+    });
+
     it("should throw error when asked to call non-configured tool", async () => {
       await server.addClient(mockClient);
 

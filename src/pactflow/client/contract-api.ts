@@ -30,6 +30,7 @@ import type {
   PublishProviderContractResponse,
 } from "./base";
 import type { HttpClient } from "./http-client";
+import { fetchIntegrationsNetwork } from "./integrations-network";
 
 export class ContractApi {
   constructor(private readonly http: HttpClient) {}
@@ -352,6 +353,44 @@ export class ContractApi {
   }
 
   /**
+   * Retrieves all integrations as a Graphviz DOT document.
+   */
+  async getIntegrationsGraph({
+    consumer,
+  }: {
+    consumer?: string;
+  } = {}): Promise<string> {
+    const graph = await this.http.fetch<string>(
+      `${this.http.baseUrl}/integrations`,
+      {
+        method: "GET",
+        headers: { Accept: "text/vnd.graphviz" },
+        responseType: "text",
+        errorContext: "Get Integrations Graph",
+      },
+    );
+    if (!consumer) {
+      return graph;
+    }
+
+    return graph
+      .split("\n")
+      .filter((line) => {
+        const match = line.match(/^\s*(?:"([^"]+)"|([A-Za-z0-9_.-]+))\s*->/);
+        return !match || (match[1] ?? match[2]) === consumer;
+      })
+      .join("\n");
+  }
+
+  /**
+   * Retrieves every integration enriched with team groupings and verification
+   * status, ready to render as an interactive network.
+   */
+  async getIntegrationsNetwork(params: { consumer?: string } = {}) {
+    return await fetchIntegrationsNetwork(this.http, params);
+  }
+
+  /**
    * Retrieves the integration network graph for a specific pacticipant.
    */
   async getPacticipantNetwork({
@@ -437,6 +476,8 @@ export class ContractApi {
           this,
         ),
       listIntegrations: this.listIntegrations.bind(this),
+      getIntegrationsGraph: this.getIntegrationsGraph.bind(this),
+      getIntegrationsNetwork: this.getIntegrationsNetwork.bind(this),
       getPacticipantNetwork: this.getPacticipantNetwork.bind(this),
       getIntegrationsByTeam: this.getIntegrationsByTeam.bind(this),
       deleteIntegration: this.deleteIntegration.bind(this),

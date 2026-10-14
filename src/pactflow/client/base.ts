@@ -146,6 +146,18 @@ export const ListBranchesSchema = z.object({
   pageSize: z.number().default(5).optional().describe("Results per page"),
 });
 
+export const BranchBdctSummarySchema = z.object({
+  pacticipantName: z.string().describe("Name of the provider pacticipant"),
+  limit: z
+    .number()
+    .int()
+    .min(1)
+    .max(25)
+    .default(5)
+    .optional()
+    .describe("Maximum number of branches to include"),
+});
+
 export const ListVersionsSchema = z.object({
   pacticipantName: z.string().describe("Name of the pacticipant"),
   pageNumber: z.number().default(1).optional().describe("Page number"),

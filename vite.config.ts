@@ -11,6 +11,7 @@ export default defineConfig({
       fileName: "index",
     },
     outDir: "dist",
+    emptyOutDir: false,
     rollupOptions: {
       external: [
         ...builtinModules,

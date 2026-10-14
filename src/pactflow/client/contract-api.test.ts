@@ -956,6 +956,42 @@ describe("ContractApi", () => {
     });
   });
 
+  describe("getIntegrationsGraph", () => {
+    it("should request Graphviz DOT and return the response text", async () => {
+      const dot = "digraph { Consumer -> Provider }";
+      mockHttp.fetch.mockResolvedValueOnce(dot);
+
+      const result = await api.getIntegrationsGraph();
+
+      expect(mockHttp.fetch).toHaveBeenCalledWith(
+        "https://test.example.com/integrations",
+        {
+          method: "GET",
+          headers: { Accept: "text/vnd.graphviz" },
+          responseType: "text",
+          errorContext: "Get Integrations Graph",
+        },
+      );
+      expect(result).toBe(dot);
+    });
+
+    it("should retain only a consumer's direct provider edges when requested", async () => {
+      const dot = `digraph {
+  Storefront -> Orders
+  Storefront -> Payments
+  Mobile -> Orders
+}`;
+      mockHttp.fetch.mockResolvedValueOnce(dot);
+
+      const result = await api.getIntegrationsGraph({ consumer: "Storefront" });
+
+      expect(result).toBe(`digraph {
+  Storefront -> Orders
+  Storefront -> Payments
+}`);
+    });
+  });
+
   describe("getPacticipantNetwork", () => {
     it("should fetch the pacticipant network", async () => {
       const mockResponse = { nodes: [], links: [] };
@@ -1113,7 +1149,7 @@ describe("ContractApi", () => {
   });
 
   describe("handlers", () => {
-    it("should expose all 21 handler keys", () => {
+    it("should expose all 23 handler keys", () => {
       const handlers = api.handlers;
       const expectedKeys = [
         "getProviderStates",
@@ -1133,6 +1169,8 @@ describe("ContractApi", () => {
         "getBiDirectionalConsumerContractVerificationResultsByConsumer",
         "getBiDirectionalCrossContractVerificationResultsByConsumer",
         "listIntegrations",
+        "getIntegrationsGraph",
+        "getIntegrationsNetwork",
         "getPacticipantNetwork",
         "getIntegrationsByTeam",
         "deleteIntegration",
@@ -1142,7 +1180,7 @@ describe("ContractApi", () => {
       expect(Object.keys(handlers)).toEqual(
         expect.arrayContaining(expectedKeys),
       );
-      expect(Object.keys(handlers).length).toBe(21);
+      expect(Object.keys(handlers).length).toBe(23);
     });
 
     it("should bind handlers to the ContractApi instance", async () => {

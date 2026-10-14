@@ -9,3 +9,7 @@ build/
 /smartbear*.tgz
 pacts/
 .superpowers/
+.agents
+
+# local MCP config (contains credentials)
+.mcp.json
