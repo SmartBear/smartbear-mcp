@@ -1094,6 +1094,7 @@ describe("AdminApi", () => {
         {
           method: "PATCH",
           body: operations,
+          headers: { "Content-Type": "application/json-patch+json" },
           errorContext: "Patch Team Users",
         },
       );
