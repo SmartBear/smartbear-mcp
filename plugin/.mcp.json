@@ -1,0 +1,36 @@
+{
+  "mcpServers": {
+    "smartbear": {
+      "command": "npx",
+      "args": ["-y", "@smartbear/mcp@0.42.0"],
+      "env": {
+        "BEARQ_API_TOKEN": "${user_config.bearq_api_token}",
+        "BEARQ_API_BASE_URL": "${user_config.bearq_api_base_url}",
+        "BUGSNAG_AUTH_TOKEN": "${user_config.bugsnag_auth_token}",
+        "BUGSNAG_ENDPOINT": "${user_config.bugsnag_endpoint}",
+        "BUGSNAG_PROJECT_API_KEY": "${user_config.bugsnag_project_api_key}",
+        "COLLABORATOR_BASE_URL": "${user_config.collaborator_base_url}",
+        "COLLABORATOR_LOGIN_TICKET": "${user_config.collaborator_login_ticket}",
+        "COLLABORATOR_USERNAME": "${user_config.collaborator_username}",
+        "PACT_BROKER_BASE_URL": "${user_config.pact_broker_base_url}",
+        "PACT_BROKER_PASSWORD": "${user_config.pact_broker_password}",
+        "PACT_BROKER_TOKEN": "${user_config.pact_broker_token}",
+        "PACT_BROKER_USERNAME": "${user_config.pact_broker_username}",
+        "QMETRY_API_KEY": "${user_config.qmetry_api_key}",
+        "QMETRY_BASE_URL": "${user_config.qmetry_base_url}",
+        "REFLECT_API_TOKEN": "${user_config.reflect_api_token}",
+        "SWAGGER_API_KEY": "${user_config.swagger_api_key}",
+        "SWAGGER_PORTAL_BASE_PATH": "${user_config.swagger_portal_base_path}",
+        "SWAGGER_REGISTRY_BASE_PATH": "${user_config.swagger_registry_base_path}",
+        "SWAGGER_UI_BASE_PATH": "${user_config.swagger_ui_base_path}",
+        "ZEPHYR_API_TOKEN": "${user_config.zephyr_api_token}",
+        "ZEPHYR_BASE_URL": "${user_config.zephyr_base_url}",
+        "QTM4J_API_KEY": "${user_config.qtm4j_api_key}",
+        "QTM4J_BASE_URL": "${user_config.qtm4j_base_url}",
+        "QTM4J_AUTOMATION_API_KEY": "${user_config.qtm4j_automation_api_key}",
+        "SWAGGER_FUNCTIONAL_TESTING_API_TOKEN": "${user_config.swagger_functional_testing_api_token}",
+        "SWAGGER_FUNCTIONAL_TESTING_BASE_PATH": "${user_config.swagger_functional_testing_base_path}"
+      }
+    }
+  }
+}
