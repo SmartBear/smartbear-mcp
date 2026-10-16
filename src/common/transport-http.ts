@@ -233,6 +233,7 @@ export async function runHttpMode() {
           JSON.stringify({
             resource: `${baseUrl}/mcp`,
             authorization_servers: [authServerUrl],
+            authorization_response_iss_parameter_supported: true,
           }),
         );
         return;
