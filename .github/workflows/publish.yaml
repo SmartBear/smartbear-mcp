@@ -267,11 +267,14 @@ jobs:
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
 
+      # Trusted Publishing (OIDC) requires npm >= 11.5.1; Node 22 bundles npm 10.x
+      - name: Upgrade npm for Trusted Publishing
+        if: ${{ env.RUN_PUBLISH_NPM == 'true' && steps.npm_check.outputs.exists != 'true' }}
+        run: npm install -g npm@^11.5.1
+
       - name: Publish to npm
         if: ${{ env.RUN_PUBLISH_NPM == 'true' && steps.npm_check.outputs.exists != 'true' }}
         run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Check if version already in MCP Registry
         if: ${{ env.RUN_PUBLISH_MCP == 'true' }}
