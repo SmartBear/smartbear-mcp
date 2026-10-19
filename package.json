@@ -19,7 +19,7 @@
   "mcpName": "com.smartbear/smartbear-mcp",
   "repository": {
     "type": "git",
-    "url": "git@github.com:SmartBear/smartbear-mcp.git"
+    "url": "git+https://github.com/SmartBear/smartbear-mcp.git"
   },
   "license": "MIT",
   "type": "module",
