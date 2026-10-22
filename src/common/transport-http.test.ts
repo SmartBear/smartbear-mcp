@@ -8,12 +8,14 @@ import {
   getBaseUrl,
   getHeaderName,
   getQueryStringName,
+  getSessionIdleTimeoutMs,
   handleHealthRequest,
   handleReadyRequest,
   handleSessionMessage,
   handleStreamableHttpRequest,
   newServer,
   newServerFromWebRequest,
+  reapIdleSessions,
 } from "./transport-http";
 import type { Client } from "./types";
 
@@ -30,11 +32,20 @@ function fakeResponse(): ServerResponse & {
   _status: number | null;
   _headers: Record<string, string>;
   _body: string;
+  _close: () => void;
 } {
+  const closeListeners: Array<() => void> = [];
   const res = {
     _status: null as number | null,
     _headers: {} as Record<string, string>,
     _body: "",
+    once(event: string, cb: () => void) {
+      if (event === "close") closeListeners.push(cb);
+      return res;
+    },
+    _close() {
+      for (const cb of closeListeners.splice(0)) cb();
+    },
     writeHead(status: number, headers?: Record<string, string>) {
       res._status = status;
       if (headers) {
@@ -49,6 +60,7 @@ function fakeResponse(): ServerResponse & {
     _status: number | null;
     _headers: Record<string, string>;
     _body: string;
+    _close: () => void;
   };
 }
 
@@ -875,6 +887,39 @@ describe("handleStreamableHttpRequest (session routing)", () => {
     expect(handleRequest).toHaveBeenCalledTimes(1);
     expect(res._status).toBeNull();
   });
+
+  it("holds the session open while the exchange is in flight, then restarts the idle clock", async () => {
+    const transports = new Map<string, any>();
+    const { NodeStreamableHTTPServerTransport: StreamableHTTPServerTransport } =
+      await import("@modelcontextprotocol/node");
+    const fakeTransport = Object.create(
+      StreamableHTTPServerTransport.prototype,
+    );
+    let during: { inFlight?: number } | undefined;
+    fakeTransport.handleRequest = vi.fn(async () => {
+      during = { inFlight: transports.get("s")?.inFlight };
+    });
+    transports.set("s", {
+      server: { getMcpClientIdentity: () => ({ name: undefined }) } as any,
+      transport: fakeTransport,
+      lastActivity: 0,
+    });
+    const req = fakeStreamRequest({
+      method: "GET",
+      headers: { "mcp-session-id": "s" },
+      body: undefined,
+    });
+    const res = fakeResponse();
+
+    await handleStreamableHttpRequest(req, res, transports);
+    expect(during?.inFlight).toBe(1);
+    expect(transports.get("s").inFlight).toBe(1); // stream still open
+    expect(await reapIdleSessions(transports, 1, Date.now() + 10_000)).toBe(0);
+
+    res._close();
+    expect(transports.get("s").inFlight).toBe(0);
+    expect(transports.get("s").lastActivity).toBeGreaterThan(0);
+  });
 });
 
 describe("session analytics wiring", () => {
@@ -991,5 +1036,64 @@ describe("handleSessionMessage", () => {
     });
 
     expect(trackToolsListed).not.toHaveBeenCalled();
+  });
+});
+
+describe("idle session reaping", () => {
+  const entry = (lastActivity: number, close = vi.fn(async () => {})) =>
+    ({ server: {}, transport: { close }, lastActivity }) as any;
+
+  it("closes and removes only sessions idle beyond the threshold", async () => {
+    const stale = vi.fn(async () => {});
+    const fresh = vi.fn(async () => {});
+    const sessions = new Map<string, any>([
+      ["stale", entry(0, stale)],
+      ["fresh", entry(9_000, fresh)],
+    ]);
+    const reaped = await reapIdleSessions(sessions, 5_000, 10_000);
+    expect(reaped).toBe(1);
+    expect(stale).toHaveBeenCalled();
+    expect(fresh).not.toHaveBeenCalled();
+    expect([...sessions.keys()]).toEqual(["fresh"]);
+  });
+
+  it("never reaps a session with an open exchange, however old", async () => {
+    const close = vi.fn(async () => {});
+    const open = { ...entry(0, close), inFlight: 1 };
+    const sessions = new Map<string, any>([["open", open]]);
+    expect(await reapIdleSessions(sessions, 5_000, 1_000_000)).toBe(0);
+    expect(close).not.toHaveBeenCalled();
+    // Once the exchange ends the idle clock restarts, then it can be reaped.
+    open.inFlight = 0;
+    open.lastActivity = 1_000_000;
+    expect(await reapIdleSessions(sessions, 5_000, 1_001_000)).toBe(0);
+    expect(await reapIdleSessions(sessions, 5_000, 1_010_000)).toBe(1);
+  });
+
+  it("still removes the session when close() throws", async () => {
+    const sessions = new Map<string, any>([
+      [
+        "s",
+        entry(
+          0,
+          vi.fn(async () => {
+            throw new Error("boom");
+          }),
+        ),
+      ],
+    ]);
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    await reapIdleSessions(sessions, 1, 10_000);
+    expect(sessions.size).toBe(0);
+  });
+
+  it("reads SESSION_IDLE_TIMEOUT_MS, defaulting to 4 hours", () => {
+    delete process.env.SESSION_IDLE_TIMEOUT_MS;
+    expect(getSessionIdleTimeoutMs()).toBe(4 * 60 * 60 * 1000);
+    process.env.SESSION_IDLE_TIMEOUT_MS = "0";
+    expect(getSessionIdleTimeoutMs()).toBe(0);
+    process.env.SESSION_IDLE_TIMEOUT_MS = "junk";
+    expect(getSessionIdleTimeoutMs()).toBe(4 * 60 * 60 * 1000);
+    delete process.env.SESSION_IDLE_TIMEOUT_MS;
   });
 });

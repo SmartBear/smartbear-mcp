@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- HTTP transport: sessions abandoned by clients (no `DELETE`, SSE stream never closed) were never freed, so memory grew until the process ran out of heap. Sessions idle for longer than `SESSION_IDLE_TIMEOUT_MS` (default 4 hours, `0` disables) are now closed; sessions with an open stream or a request in flight are never reaped. A client returning with a reaped session id receives 404 and must re-initialize. stdio mode is unaffected. Per-server caches no longer run node-cache's sweep timer, which kept each cache reachable after its server was gone.
 - [PactFlow] `contract-testing_list_integrations` and `contract-testing_get_integrations_by_team` now send `Accept: application/hal+json`. Without it PactFlow negotiated `text/vnd.graphviz` for `/integrations` and the response could not be parsed as JSON.
 - [PactFlow] `contract-testing_admin_patch_team_users` now sends `Content-Type: application/json-patch+json`, which is the only content type PactFlow accepts for `PATCH /admin/teams/{teamId}/users` (it previously returned 415).
 

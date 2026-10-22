@@ -118,7 +118,8 @@ export class SmartBearMcpServer extends McpServer {
         ...(isCachingEnabled() ? { cacheHints: buildCacheHints() } : {}),
       },
     );
-    this.cache = new CacheService();
+    // Per-server cache: no sweep timer, so it is collectable with this server.
+    this.cache = new CacheService({ sweepExpired: false });
     if (enabledToolsets) {
       this.enabledToolsets = enabledToolsets
         .split(",")

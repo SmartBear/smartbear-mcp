@@ -40,7 +40,77 @@ import { getTypeDescription, isOptionalType } from "./zod-utils";
 type SessionEntry = {
   server: SmartBearMcpServer;
   transport: NodeStreamableHTTPServerTransport | SSEServerTransport;
+  /** Epoch ms of the last request seen on this session; drives idle reaping. */
+  lastActivity?: number;
+  /**
+   * HTTP exchanges currently open on this session (in-flight requests, SSE
+   * streams). A session with an open exchange is live, however long it has
+   * been since the last request began, so it is never reaped.
+   */
+  inFlight?: number;
 };
+
+/**
+ * Mark an HTTP exchange on `entry` as open until `res` closes, and restart the
+ * idle clock when it ends. Keeps a long tool call or an open server-push
+ * stream from being mistaken for an abandoned session.
+ */
+function trackExchange(entry: SessionEntry, res: ServerResponse): void {
+  entry.inFlight = (entry.inFlight ?? 0) + 1;
+  entry.lastActivity = Date.now();
+  res.once("close", () => {
+    entry.inFlight = Math.max(0, (entry.inFlight ?? 1) - 1);
+    entry.lastActivity = Date.now();
+  });
+}
+
+/** Default idle lifetime of a session before it is reaped: 4 hours. */
+const DEFAULT_SESSION_IDLE_TIMEOUT_MS = 4 * 60 * 60 * 1000;
+
+/**
+ * Idle lifetime for HTTP sessions (SESSION_IDLE_TIMEOUT_MS, default 4 h,
+ * 0 disables). Clients routinely vanish without sending DELETE / closing the
+ * SSE stream, and each leftover session pins a full server instance with its
+ * clients and registered tools, so sessions must be reaped when idle.
+ */
+export function getSessionIdleTimeoutMs(): number {
+  const raw = process.env.SESSION_IDLE_TIMEOUT_MS;
+  if (raw === undefined || raw === "") return DEFAULT_SESSION_IDLE_TIMEOUT_MS;
+  const parsed = Number.parseInt(raw, 10);
+  return Number.isFinite(parsed) && parsed >= 0
+    ? parsed
+    : DEFAULT_SESSION_IDLE_TIMEOUT_MS;
+}
+
+/**
+ * Close every session idle for longer than `idleMs`. Closing the transport
+ * fires the normal onclose / res "close" chain, which removes the session
+ * from the map and runs per-client cleanup.
+ * @returns the number of sessions reaped
+ */
+export async function reapIdleSessions(
+  transports: Map<string, SessionEntry>,
+  idleMs: number,
+  now: number = Date.now(),
+): Promise<number> {
+  const idle = [...transports.entries()].filter(
+    ([, entry]) =>
+      (entry.inFlight ?? 0) === 0 && now - (entry.lastActivity ?? now) > idleMs,
+  );
+  await Promise.all(
+    idle.map(async ([sessionId, entry]) => {
+      console.log(`[MCP] Reaping idle session: ${sessionId}`);
+      try {
+        await entry.transport.close();
+      } catch (err) {
+        console.error("[MCP] Error closing idle session:", err);
+      }
+      // Backstop if the transport's close did not run our cleanup chain.
+      transports.delete(sessionId);
+    }),
+  );
+  return idle.length;
+}
 
 /**
  * Common cache-control headers for probe endpoints.
@@ -283,9 +353,26 @@ export async function runHttpMode() {
     }
   });
 
+  // Reap sessions abandoned without a DELETE / SSE close. unref'd so it never
+  // holds the process open; cleared on shutdown.
+  const idleMs = getSessionIdleTimeoutMs();
+  const reaper =
+    idleMs > 0
+      ? setInterval(
+          () => {
+            reapIdleSessions(transports, idleMs).catch((err) =>
+              console.error("[MCP] Idle session reaper failed:", err),
+            );
+          },
+          Math.min(60_000, Math.max(1_000, Math.floor(idleMs / 2))),
+        )
+      : undefined;
+  reaper?.unref();
+
   // Register graceful shutdown. Tears down active
   // transports before any subsystem registered earlier (e.g. logging).
   registerShutdownHandler("http-transport", async () => {
+    if (reaper) clearInterval(reaper);
     // Tear down the modern leg first: it aborts in-flight modern exchanges and
     // closes their per-request instances. The sessionful legacy transports are
     // drained separately below.
@@ -382,13 +469,7 @@ async function parseRequestBody(req: IncomingMessage): Promise<unknown> {
  */
 function getExistingTransport(
   sessionId: string,
-  transports: Map<
-    string,
-    {
-      server: SmartBearMcpServer;
-      transport: NodeStreamableHTTPServerTransport | SSEServerTransport;
-    }
-  >,
+  transports: Map<string, SessionEntry>,
   res: ServerResponse,
 ): NodeStreamableHTTPServerTransport | null {
   const existing = transports.get(sessionId);
@@ -424,13 +505,7 @@ function getExistingTransport(
 async function createNewTransport(
   req: IncomingMessage,
   res: ServerResponse,
-  transports: Map<
-    string,
-    {
-      server: SmartBearMcpServer;
-      transport: NodeStreamableHTTPServerTransport | SSEServerTransport;
-    }
-  >,
+  transports: Map<string, SessionEntry>,
 ): Promise<NodeStreamableHTTPServerTransport | null> {
   // Create and configure server with headers from the request
   const server = await newServer(req, res);
@@ -444,7 +519,11 @@ async function createNewTransport(
     onsessioninitialized: (newSessionId) => {
       console.log(`[MCP] New session initialized: ${newSessionId}`);
       // Store session so subsequent requests can find it
-      transports.set(newSessionId, { server, transport });
+      transports.set(newSessionId, {
+        server,
+        transport,
+        lastActivity: Date.now(),
+      });
       // The SDK awaits this callback before dispatching the `initialize`
       // message, so the analytics session exists by the time
       // handleInitializeMessage fires `Session Started`.
@@ -667,13 +746,7 @@ function extractModernClientMetaFromBody(
 export async function handleStreamableHttpRequest(
   req: IncomingMessage,
   res: ServerResponse,
-  transports: Map<
-    string,
-    {
-      server: SmartBearMcpServer;
-      transport: NodeStreamableHTTPServerTransport | SSEServerTransport;
-    }
-  >,
+  transports: Map<string, SessionEntry>,
   // Boxed so an explicitly-`undefined` parsed body (e.g. a GET) is still
   // recognised as "already read" — the era router drains the stream to
   // classify, so re-parsing here would yield nothing.
@@ -703,6 +776,9 @@ export async function handleStreamableHttpRequest(
       );
       return;
     }
+
+    const existingEntry = sessionId ? transports.get(sessionId) : undefined;
+    if (existingEntry) trackExchange(existingEntry, res);
 
     const parsedBody = preParsed ? preParsed.body : await parseRequestBody(req);
 
@@ -776,13 +852,7 @@ export async function handleStreamableHttpRequest(
 async function handleLegacySseRequest(
   req: IncomingMessage,
   res: ServerResponse,
-  transports: Map<
-    string,
-    {
-      server: SmartBearMcpServer;
-      transport: NodeStreamableHTTPServerTransport | SSEServerTransport;
-    }
-  >,
+  transports: Map<string, SessionEntry>,
 ) {
   // Create a new server instance for this connection
   const server = await newServer(req, res);
@@ -799,7 +869,14 @@ async function handleLegacySseRequest(
   transport.onmessage = (message) => handleSessionMessage(server, message);
 
   // Store the session so POST /message requests can find it
-  transports.set(transport.sessionId, { server, transport });
+  transports.set(transport.sessionId, {
+    server,
+    transport,
+    lastActivity: Date.now(),
+    // The SSE stream itself is an open exchange; the res "close" handler
+    // below removes the session when it ends.
+    inFlight: 1,
+  });
   attachSessionAnalytics(server, transport.sessionId, "sse");
 
   // Clean up session when connection closes
@@ -827,13 +904,7 @@ async function handleLegacyMessageRequest(
   req: IncomingMessage,
   res: ServerResponse,
   url: URL,
-  transports: Map<
-    string,
-    {
-      server: SmartBearMcpServer;
-      transport: NodeStreamableHTTPServerTransport | SSEServerTransport;
-    }
-  >,
+  transports: Map<string, SessionEntry>,
 ) {
   // Extract session ID from query parameter
   const sessionId = url.searchParams.get("sessionId");
@@ -851,6 +922,8 @@ async function handleLegacyMessageRequest(
     res.end("Session not found");
     return;
   }
+
+  trackExchange(session, res);
 
   // Validate this session is using SSE transport
   if (!(session.transport instanceof SSEServerTransport)) {
