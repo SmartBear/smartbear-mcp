@@ -4937,10 +4937,11 @@ Expected Output: Test suite created with details and metadata. Example uses: par
 - projectId (number) *required*: Numeric project ID for the report scope.
 - releaseId (number): Optional release ID to scope the report to a specific release.
 - cycleIds (array): Optional array of cycle IDs to scope the report to specific cycles.
+- extKeys (array): Optional array of external issue keys (e.g. Jira keys like 'PROJ-123') to scope the report to specific external requirements.
 - page (number): Optional page number for paginated report results.
 - limit (number): Maximum number of records to return per page. Defaults to 100 if not specified. (default: 100)
 
-**Use Cases:** 1. Generate a release readiness report for a specific project, release, and cycle 2. Execute a quality gate assessment to evaluate project health against gate criteria 3. Run a gate report scoped to specific cycles within a release 4. Produce analytics data for quality gate evaluation and decision-making
+**Use Cases:** 1. Generate a release readiness report for a specific project, release, and cycle 2. Execute a quality gate assessment to evaluate project health against gate criteria 3. Run a gate report scoped to specific cycles within a release 4. Run a gate report scoped to specific external (e.g. Jira) issue keys 5. Produce analytics data for quality gate evaluation and decision-making
 
 **Examples:**
 1. Execute a release readiness report for project 45851, release 90698, cycle 129140
@@ -4957,7 +4958,22 @@ Expected Output: Test suite created with details and metadata. Example uses: par
 \`\`\`
 Expected Output: { "data": [...], "total": 0, "success": true, "page": {} }
 
-2. Execute a gate report without release/cycle scoping
+2. Execute a gate report scoped to specific external issue keys
+\`\`\`json
+{
+  "reportName": "RR",
+  "gateIdentifier": "GATE1",
+  "projectId": 45851,
+  "releaseId": 90698,
+  "extKeys": [
+    "PROJ-101",
+    "PROJ-102"
+  ]
+}
+\`\`\`
+Expected Output: { "data": [...], "total": 0, "success": true, "page": {} }
+
+3. Execute a gate report without release/cycle scoping
 \`\`\`json
 {
   "reportName": "RR",
@@ -4967,9 +4983,10 @@ Expected Output: { "data": [...], "total": 0, "success": true, "page": {} }
 \`\`\`
 Expected Output: { "data": [...], "total": 0, "success": true, "page": {} }
 
-**Hints:** 1. REQUIRED: 'reportName' identifies the report type (e.g. 'RR' for Release Readiness). 2. REQUIRED: 'gateIdentifier' identifies which gate to evaluate (e.g. 'GATE1'). 3. REQUIRED: 'projectId' must be a valid numeric project ID. 4. OPTIONAL: 'releaseId' scopes the report to a specific release. 5. OPTIONAL: 'cycleIds' scopes the report to specific test cycles within the release. 6. OPTIONAL: 'page' specifies the page number for paginated report results. 7. OPTIONAL: 'limit' sets the maximum number of records per page (defaults to 100). 8. Call 'Fetch Quality Gate Configuration' first to discover available gates and report parameters. 9. The response is returned exactly as received from the backend — no transformation is applied.",
+**Hints:** 1. REQUIRED: 'reportName' identifies the report type (e.g. 'RR' for Release Readiness). 2. REQUIRED: 'gateIdentifier' identifies which gate to evaluate (e.g. 'GATE1'). 3. REQUIRED: 'projectId' must be a valid numeric project ID. 4. OPTIONAL: 'releaseId' scopes the report to a specific release. 5. OPTIONAL: 'cycleIds' scopes the report to specific test cycles within the release. 6. OPTIONAL: 'extKeys' scopes the report to specific external issue keys (e.g. Jira keys like 'PROJ-123'). 7. OPTIONAL: 'page' specifies the page number for paginated report results. 8. OPTIONAL: 'limit' sets the maximum number of records per page (defaults to 100). 9. Call 'Fetch Quality Gate Configuration' first to discover available gates and report parameters. 10. The response is returned exactly as received from the backend — no transformation is applied.",
     "inputSchema": [
       "cycleIds",
+      "extKeys",
       "gateIdentifier",
       "limit",
       "page",
