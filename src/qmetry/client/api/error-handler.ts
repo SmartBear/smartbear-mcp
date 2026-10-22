@@ -335,11 +335,20 @@ export async function handleQMetryApiError(
   let errorData: any;
   let errorText: string;
 
+  // Read the body once: a failed json() consumes the stream, so a follow-up
+  // text() would throw "Body is unusable" and mask the real error.
+  let rawBody = "";
   try {
-    errorData = await response.json();
+    rawBody = await response.text();
+  } catch {
+    // Body could not be read (e.g. connection dropped); fall back to status
+  }
+
+  try {
+    errorData = JSON.parse(rawBody);
     errorText = JSON.stringify(errorData);
   } catch {
-    errorText = (await response.text()) || `HTTP ${response.status}`;
+    errorText = rawBody || `HTTP ${response.status}`;
   }
 
   const context: QMetryErrorContext = {

@@ -12,9 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Swagger] Added one-click install buttons for VS Code (GitHub Copilot), Cursor, and Claude Desktop to the Swagger Remote MCP Server setup docs. Reorganized the Kiro section to use the same button-first layout for consistency.
 - [Common] Added a Claude plugin bundle in `plugin/` for submission to Anthropic's Claude directory, replacing the deprecated MCPB desktop extension listing. It runs the server with `npx` pinned to the released version and asks for each product's settings through plugin user configuration, with tokens stored as sensitive values. `scripts/bump.js` now updates the plugin's version and pin on each release.
 - [Swagger] Portal product tools (`swagger_create_portal_product`, `swagger_update_portal_product`): added a `visibility` parameter (`visible`, `hidden` or `conditional`). `conditional` shows the product on the portal landing page only to users who have access to it, and is not allowed for public products. Product output now includes `visibility`.
+- [QMetry] Execute Quality Gate Report tool: added an optional `extKeys` parameter (array of external issue keys, e.g. Jira keys like `PROJ-123`) to scope the gate report to specific external requirements.
+- [QMetry] Project info now includes `isApprovalWorkflowEnabled`.
 
 ### Fixed
 
+- [QMetry] API error handling now reads the response body once. Previously a non-JSON error body made the fallback `text()` call throw "Body is unusable", hiding the real error.
 - [PactFlow] `contract-testing_list_integrations` and `contract-testing_get_integrations_by_team` now send `Accept: application/hal+json`. Without it PactFlow negotiated `text/vnd.graphviz` for `/integrations` and the response could not be parsed as JSON.
 - [PactFlow] `contract-testing_admin_patch_team_users` now sends `Content-Type: application/json-patch+json`, which is the only content type PactFlow accepts for `PATCH /admin/teams/{teamId}/users` (it previously returned 415).
 

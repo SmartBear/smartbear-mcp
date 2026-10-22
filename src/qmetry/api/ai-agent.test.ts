@@ -167,6 +167,37 @@ describe("AI Agent API clients", () => {
       expect(body.cycleIds).toEqual([129140, 129141]);
     });
 
+    it("should include optional extKeys in body", async () => {
+      const payload: ExecuteGateReportPayload = {
+        reportName: "RR",
+        gateIdentifier: "GATE1",
+        projectId: 45851,
+        extKeys: ["PROJ-101", "PROJ-102"],
+      };
+
+      globalThis.fetch = vi.fn().mockResolvedValue(mockOk({}));
+
+      await executeGateReport(token, baseUrl, projectKey, payload);
+
+      const body = JSON.parse((globalThis.fetch as any).mock.calls[0][1].body);
+      expect(body.extKeys).toEqual(["PROJ-101", "PROJ-102"]);
+    });
+
+    it("should omit extKeys from body when not provided", async () => {
+      const payload: ExecuteGateReportPayload = {
+        reportName: "RR",
+        gateIdentifier: "GATE1",
+        projectId: 45851,
+      };
+
+      globalThis.fetch = vi.fn().mockResolvedValue(mockOk({}));
+
+      await executeGateReport(token, baseUrl, projectKey, payload);
+
+      const body = JSON.parse((globalThis.fetch as any).mock.calls[0][1].body);
+      expect(body).not.toHaveProperty("extKeys");
+    });
+
     it("should include optional page in body", async () => {
       const payload: ExecuteGateReportPayload = {
         reportName: "RR",

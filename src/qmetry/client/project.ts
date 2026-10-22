@@ -66,7 +66,6 @@ const PROJECT_FIELDS_TO_OMIT = new Set([
   "isTestSuiteApprover",
   "isTestSuiteCloser",
   "isRequirementReviewer",
-  "isApprovalWorkflowEnabled",
   "isPartLevelComplianceEnabled",
   "isAutoApproveTestRunEnabled",
   "isDeriveTCRStatusFromTCSRStatus",

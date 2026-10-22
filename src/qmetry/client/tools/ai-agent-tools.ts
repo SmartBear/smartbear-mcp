@@ -61,6 +61,7 @@ export const AI_AGENT_TOOLS: QMetryToolParams[] = [
       "Generate a release readiness report for a specific project, release, and cycle",
       "Execute a quality gate assessment to evaluate project health against gate criteria",
       "Run a gate report scoped to specific cycles within a release",
+      "Run a gate report scoped to specific external (e.g. Jira) issue keys",
       "Produce analytics data for quality gate evaluation and decision-making",
     ],
     examples: [
@@ -73,6 +74,19 @@ export const AI_AGENT_TOOLS: QMetryToolParams[] = [
           projectId: 45851,
           releaseId: 90698,
           cycleIds: [129140],
+        },
+        expectedOutput:
+          '{ "data": [...], "total": 0, "success": true, "page": {} }',
+      },
+      {
+        description:
+          "Execute a gate report scoped to specific external issue keys",
+        parameters: {
+          reportName: "RR",
+          gateIdentifier: "GATE1",
+          projectId: 45851,
+          releaseId: 90698,
+          extKeys: ["PROJ-101", "PROJ-102"],
         },
         expectedOutput:
           '{ "data": [...], "total": 0, "success": true, "page": {} }',
@@ -94,6 +108,7 @@ export const AI_AGENT_TOOLS: QMetryToolParams[] = [
       "REQUIRED: 'projectId' must be a valid numeric project ID.",
       "OPTIONAL: 'releaseId' scopes the report to a specific release.",
       "OPTIONAL: 'cycleIds' scopes the report to specific test cycles within the release.",
+      "OPTIONAL: 'extKeys' scopes the report to specific external issue keys (e.g. Jira keys like 'PROJ-123').",
       "OPTIONAL: 'page' specifies the page number for paginated report results.",
       "OPTIONAL: 'limit' sets the maximum number of records per page (defaults to 100).",
       "Call 'Fetch Quality Gate Configuration' first to discover available gates and report parameters.",
