@@ -2,6 +2,7 @@ import { type FilterObject, toUrlSearchParams } from "../filters";
 import { type ApiResponse, BaseAPI, getQueryParams } from "./base";
 import {
   type Build,
+  type Collaborator,
   type EventField,
   type Project,
   type ProjectNetworkGroupingRuleset,
@@ -497,5 +498,36 @@ export class ProjectAPI extends BaseAPI {
       localVarFetchArgs.url,
       localVarFetchArgs.options,
     );
+  }
+
+  /**
+   * List the collaborators in a Project
+   * GET /projects/{project_id}/collaborators
+   * @param projectId The project ID
+   * @param collaboratorNameOrId collaborator Name OR Id
+   * @returns A promise that resolves to the list of collaborators
+   */
+  async listProjectCollaborators(
+    projectId: string,
+    collaboratorNameOrId?: string,
+  ): Promise<ApiResponse<Collaborator[]>> {
+    const localVarFetchArgs = ProjectsApiFetchParamCreator(
+      this.configuration,
+    ).listProjectCollaborators(projectId);
+    const collaborators = await this.requestArray<Collaborator>(
+      localVarFetchArgs.url,
+      localVarFetchArgs.options,
+      true,
+    );
+    //filter by name or ID if provided
+    if (collaboratorNameOrId) {
+      const filterValue = collaboratorNameOrId.toLowerCase();
+      collaborators.body = (collaborators.body ?? []).filter(
+        (c) =>
+          c.id === collaboratorNameOrId ||
+          c.name?.toLowerCase().includes(filterValue),
+      );
+    }
+    return collaborators;
   }
 }
