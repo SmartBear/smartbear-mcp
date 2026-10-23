@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Swagger] Portal product tools (`swagger_create_portal_product`, `swagger_update_portal_product`): added a `visibility` parameter (`visible`, `hidden` or `conditional`). `conditional` shows the product on the portal landing page only to users who have access to it, and is not allowed for public products. Product output now includes `visibility`.
 - [QMetry] Execute Quality Gate Report tool: added an optional `extKeys` parameter (array of external issue keys, e.g. Jira keys like `PROJ-123`) to scope the gate report to specific external requirements.
 - [QMetry] Project info now includes `isApprovalWorkflowEnabled`.
+- [BearQ] Added tools to run, list, and monitor BearQ workflows.
 
 ### Fixed
 
