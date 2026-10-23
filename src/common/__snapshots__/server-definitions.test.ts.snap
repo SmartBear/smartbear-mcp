@@ -132,6 +132,26 @@ exports[`server definitions are not changed unexpectedly > registered tools 1`] 
     "outputSchema": undefined,
     "title": "BearQ: Get Task Status",
   },
+  "bearq_get_workflow_run": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "BearQ: Get Workflow Run",
+    },
+    "description": "Retrieves a workflow run's current status, per-step progress, and stats (tasks, tests, discovery, ACUs). Returns immediately with whatever's available — does not block on the run completing.
+
+**Toolset:** Workflows
+
+**Parameters:**
+- runId (number) *required*: BearQ workflow run ID.",
+    "inputSchema": [
+      "runId",
+    ],
+    "outputSchema": undefined,
+    "title": "BearQ: Get Workflow Run",
+  },
   "bearq_list_environments": {
     "annotations": {
       "destructiveHint": false,
@@ -149,6 +169,24 @@ None",
     "inputSchema": [],
     "outputSchema": undefined,
     "title": "BearQ: List Environments",
+  },
+  "bearq_list_workflows": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "BearQ: List Workflows",
+    },
+    "description": "Lists the workflows in the workspace — each with its id, name, description, steps, and last run. Workspaces with more than 100 workflows are truncated; the response's totalCount says how many exist.
+
+**Toolset:** Workflows
+
+**Parameters:**
+None",
+    "inputSchema": [],
+    "outputSchema": undefined,
+    "title": "BearQ: List Workflows",
   },
   "bearq_run_regression_tests": {
     "annotations": {
@@ -214,6 +252,26 @@ None",
     "outputSchema": undefined,
     "title": "BearQ: Run Tests in Functional Areas",
   },
+  "bearq_run_workflow": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "BearQ: Run Workflow",
+    },
+    "description": "Starts a run of a BearQ workflow now and returns the run (id, status, timestamps). If a run of that workflow is already in flight, no new run is started and the in-flight run is returned with started: false. Poll the run's progress with bearq_get_workflow_run.
+
+**Toolset:** Workflows
+
+**Parameters:**
+- workflow (string) *required*: Workflow to run: its name (case-insensitive) or its numeric workflow ID.",
+    "inputSchema": [
+      "workflow",
+    ],
+    "outputSchema": undefined,
+    "title": "BearQ: Run Workflow",
+  },
   "bearq_stop_task": {
     "annotations": {
       "destructiveHint": false,
@@ -222,7 +280,7 @@ None",
       "readOnlyHint": true,
       "title": "BearQ: Stop Task",
     },
-    "description": "Cancels a running task.
+    "description": "Cancels a pending or running task, returning { taskId, stopped: true }. The public API accepts a stop of an already-finished task as a success no-op, so this does not guarantee the task was running — check the task's status separately if that matters.
 
 **Toolset:** Tasks
 
@@ -233,6 +291,26 @@ None",
     ],
     "outputSchema": undefined,
     "title": "BearQ: Stop Task",
+  },
+  "bearq_stop_workflow_run": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "BearQ: Stop Workflow Run",
+    },
+    "description": "Cancels a workflow run that is in flight, returning { runId, cancelled: true }. Fails with an error when the run has already finished or does not exist.
+
+**Toolset:** Workflows
+
+**Parameters:**
+- runId (number) *required*: BearQ workflow run ID to cancel.",
+    "inputSchema": [
+      "runId",
+    ],
+    "outputSchema": undefined,
+    "title": "BearQ: Stop Workflow Run",
   },
   "bearq_wait_for_task": {
     "annotations": {
