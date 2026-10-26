@@ -1,4 +1,5 @@
 import type {
+  CollaboratorApiView,
   OrganizationApiView,
   ProjectApiView,
   ReleaseApiView,
@@ -40,5 +41,9 @@ export interface Build extends ReleaseApiView {
 }
 
 export interface Release extends ReleaseGroup {
+  id: string; // ID is always present
+}
+
+export interface Collaborator extends CollaboratorApiView {
   id: string; // ID is always present
 }
