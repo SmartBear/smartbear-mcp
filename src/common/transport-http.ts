@@ -23,6 +23,7 @@ import {
   trackToolsListed,
 } from "./analytics";
 import { clientRegistry } from "./client-registry";
+import { MCP_SERVER_VERSION } from "./info";
 import { extractModernClientMeta, handleInitializeMessage } from "./initialize";
 import {
   type ModernClientMeta,
@@ -57,7 +58,13 @@ const PROBE_HEADERS = {
 export function handleHealthRequest(res: ServerResponse): void {
   res.writeHead(200, PROBE_HEADERS);
   res.end(
-    JSON.stringify({ status: "ok", timestamp: new Date().toISOString() }),
+    JSON.stringify({
+      status: "ok",
+      timestamp: new Date().toISOString(),
+      version: MCP_SERVER_VERSION,
+      // No regional deployments exist yet; hardcoded until that lands.
+      region: null,
+    }),
   );
 }
 
