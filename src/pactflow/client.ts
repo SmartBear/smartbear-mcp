@@ -18,6 +18,11 @@ import { HttpClient } from "./client/http-client";
 import { PacticipantApi } from "./client/pacticipant-api";
 import { withPagination } from "./client/pagination";
 import { PROMPTS } from "./client/prompts";
+import {
+  advisoryOutputSchema,
+  PACTFLOW_OUTPUT_SCHEMAS,
+  withPaginationOutput,
+} from "./client/schemas/output";
 import { type ClientType, TOOLS } from "./client/tools";
 import { WebhookApi } from "./client/webhook-api";
 
@@ -176,7 +181,12 @@ export class PactflowClient implements Client {
       }
 
       const { handler, clients: _, formatResponse, ...toolParams } = tool;
-      register(toolParams, async (args, _ctx) => {
+      const handlerSchema = PACTFLOW_OUTPUT_SCHEMAS[handler];
+      const outputSchema = advisoryOutputSchema(
+        tool.paginated ? withPaginationOutput(handlerSchema) : handlerSchema,
+        tool.title,
+      );
+      register({ ...toolParams, outputSchema }, async (args, _ctx) => {
         const handler_fn = this.handlerMap[handler];
         if (typeof handler_fn !== "function") {
           throw new Error(`Handler '${handler}' not found on PactClient`);
@@ -200,12 +210,16 @@ export class PactflowClient implements Client {
           result = await handler_fn(args);
         }
 
+        const structuredContent = toStructuredContent(result);
         if (formatResponse) {
-          return formatResponse(result);
+          return { structuredContent, ...formatResponse(result) };
         }
 
         return {
-          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+          content: [
+            { type: "text", text: JSON.stringify(structuredContent, null, 2) },
+          ],
+          structuredContent,
         };
       });
     }
@@ -223,6 +237,19 @@ export class PactflowClient implements Client {
       );
     }
   }
+}
+
+/**
+ * `structuredContent` must be an object. Handlers that return no body (HTTP 204)
+ * report `{ success: true }`; any other non-object result is wrapped.
+ */
+function toStructuredContent(result: unknown): Record<string, unknown> {
+  if (result === undefined) return { success: true };
+  if (result === null) return {};
+  if (typeof result === "object" && !Array.isArray(result)) {
+    return result as Record<string, unknown>;
+  }
+  return { result };
 }
 
 // Declaration merge — allows pact tests to call handler methods directly on the

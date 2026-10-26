@@ -1,3 +1,4 @@
+import type { HttpClient } from "./http-client";
 import type {
   BranchesListResponse,
   BranchResponse,
@@ -24,8 +25,7 @@ import type {
   UpdateVersionInput,
   VersionResponse,
   VersionsListResponse,
-} from "./base";
-import type { HttpClient } from "./http-client";
+} from "./schemas/pacticipant";
 
 export class PacticipantApi {
   constructor(private readonly http: HttpClient) {}

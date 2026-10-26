@@ -1,3 +1,4 @@
+import type { HttpClient } from "./http-client";
 import type {
   CreateWebhookInput,
   UpdateWebhookInput,
@@ -5,8 +6,7 @@ import type {
   WebhookIdInput,
   WebhookResponse,
   WebhooksListResponse,
-} from "./base";
-import type { HttpClient } from "./http-client";
+} from "./schemas/webhook";
 
 export class WebhookApi {
   constructor(private readonly http: HttpClient) {}

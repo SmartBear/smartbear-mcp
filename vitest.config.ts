@@ -34,7 +34,7 @@ export default defineConfig({
         "src/common/types.ts",
         "src/pactflow/client/prompts.ts",
         "src/pactflow/client/ai.ts",
-        "src/pactflow/client/base.ts",
+        "src/pactflow/client/schemas/*.ts",
         "scripts/*.js",
       ],
       // Coverage thresholds for business logic only
