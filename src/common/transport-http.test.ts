@@ -1,6 +1,7 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { clientRegistry } from "./client-registry";
+import { getRequestHeader, withRequestHeaders } from "./request-context";
 import {
   attachSessionAnalytics,
   drainHttpTransport,
@@ -14,6 +15,7 @@ import {
   handleStreamableHttpRequest,
   newServer,
   newServerFromWebRequest,
+  resolveCredentialIdentity,
 } from "./transport-http";
 import type { Client } from "./types";
 
@@ -874,6 +876,154 @@ describe("handleStreamableHttpRequest (session routing)", () => {
 
     expect(handleRequest).toHaveBeenCalledTimes(1);
     expect(res._status).toBeNull();
+  });
+
+  describe("credential enforcement on established sessions", () => {
+    const b64 = (v: unknown) =>
+      Buffer.from(JSON.stringify(v)).toString("base64url");
+    const jwt = (payload: unknown) =>
+      `${b64({ alg: "none" })}.${b64(payload)}.sig`;
+
+    // Resolves the credential the way Bugsnag does: from the request headers only.
+    function headerClient(): Client {
+      const client: any = createTestClient({ name: "Bugsnag" });
+      client.getAuthToken = () => {
+        const value = getRequestHeader("Bugsnag-Auth-Token");
+        if (value) return `token ${value}`;
+        const bearer = getRequestHeader("Authorization");
+        return bearer ? (bearer as string) : null;
+      };
+      client.analytics = { userId: ["sub"] };
+      return client;
+    }
+
+    async function sessionWith(
+      ownerHeaders: Record<string, string>,
+      handleRequest = vi.fn().mockResolvedValue(undefined),
+    ) {
+      const { NodeStreamableHTTPServerTransport } = await import(
+        "@modelcontextprotocol/node"
+      );
+      const transport = Object.create(
+        NodeStreamableHTTPServerTransport.prototype,
+      );
+      transport.handleRequest = handleRequest;
+      const server = {
+        getMcpClientIdentity: () => ({ name: undefined }),
+        getClients: () => [headerClient()],
+      } as any;
+      const identity = withRequestHeaders(ownerHeaders, () =>
+        resolveCredentialIdentity(server),
+      );
+      const transports = new Map<string, any>();
+      transports.set("sess-1", { server, transport, identity });
+      return { transports, handleRequest, identity };
+    }
+
+    it.each([
+      "POST",
+      "GET",
+      "DELETE",
+    ])("rejects a credential-less %s carrying only the session id", async (method) => {
+      const { transports, handleRequest, identity } = await sessionWith({
+        "bugsnag-auth-token": "owner-pat",
+      });
+      expect(identity).toEqual(expect.any(String));
+
+      const req = fakeStreamRequest({
+        method,
+        headers: { "mcp-session-id": "sess-1", host: "localhost:3000" },
+        body: method === "POST" ? { jsonrpc: "2.0", id: 1 } : undefined,
+      });
+      const res = fakeResponse();
+
+      await handleStreamableHttpRequest(req, res, transports);
+
+      expect(res._status).toBe(401);
+      expect(res._headers["WWW-Authenticate"]).toContain(
+        "/.well-known/oauth-protected-resource",
+      );
+      expect(handleRequest).not.toHaveBeenCalled();
+    });
+
+    it("rejects a credential that resolves to a different identity", async () => {
+      const { transports, handleRequest } = await sessionWith({
+        "bugsnag-auth-token": "owner-pat",
+      });
+      const req = fakeStreamRequest({
+        method: "DELETE",
+        headers: {
+          "mcp-session-id": "sess-1",
+          "bugsnag-auth-token": "someone-else",
+        },
+      });
+      const res = fakeResponse();
+
+      await handleStreamableHttpRequest(req, res, transports);
+
+      expect(res._status).toBe(403);
+      expect(handleRequest).not.toHaveBeenCalled();
+    });
+
+    it("accepts the owner's credential", async () => {
+      const { transports, handleRequest } = await sessionWith({
+        "bugsnag-auth-token": "owner-pat",
+      });
+      const req = fakeStreamRequest({
+        method: "POST",
+        headers: {
+          "mcp-session-id": "sess-1",
+          "bugsnag-auth-token": "owner-pat",
+        },
+        body: { jsonrpc: "2.0", method: "tools/list", id: 1 },
+      });
+      const res = fakeResponse();
+
+      await handleStreamableHttpRequest(req, res, transports);
+
+      expect(res._status).toBeNull();
+      expect(handleRequest).toHaveBeenCalledTimes(1);
+    });
+
+    it("accepts a refreshed OAuth token for the same subject", async () => {
+      const { transports, handleRequest } = await sessionWith({
+        authorization: `Bearer ${jwt({ iss: "idp", sub: "u1", jti: "a" })}`,
+      });
+      const req = fakeStreamRequest({
+        method: "POST",
+        headers: {
+          "mcp-session-id": "sess-1",
+          authorization: `Bearer ${jwt({ iss: "idp", sub: "u1", jti: "b" })}`,
+        },
+        body: { jsonrpc: "2.0", method: "tools/list", id: 1 },
+      });
+      const res = fakeResponse();
+
+      await handleStreamableHttpRequest(req, res, transports);
+
+      expect(res._status).toBeNull();
+      expect(handleRequest).toHaveBeenCalledTimes(1);
+    });
+
+    it("rejects an OAuth token for a different subject", async () => {
+      const { transports, handleRequest } = await sessionWith({
+        authorization: `Bearer ${jwt({ iss: "idp", sub: "u1" })}`,
+      });
+      const req = fakeStreamRequest({
+        method: "POST",
+        headers: {
+          "mcp-session-id": "sess-1",
+          authorization: `Bearer ${jwt({ iss: "idp", sub: "u2" })}`,
+        },
+        body: { jsonrpc: "2.0", method: "tools/list", id: 1 },
+      });
+      const res = fakeResponse();
+
+      await handleStreamableHttpRequest(req, res, transports);
+
+      expect(res._status).toBe(403);
+      expect(handleRequest).not.toHaveBeenCalled();
+    });
   });
 });
 
