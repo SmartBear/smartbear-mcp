@@ -253,6 +253,17 @@ export const ListVersionsSchema = z.object({
   pageSize: z.number().default(5).optional().describe("Results per page"),
 });
 
+export const ListDeployedOrReleasedVersionsSchema = z.object({
+  pacticipantName: z.string().describe("Name of the pacticipant"),
+  pageNumber: z.number().default(1).optional().describe("Page number"),
+  pageSize: z.number().default(5).optional().describe("Results per page"),
+});
+
+export const ListEnvironmentVersionsSchema =
+  ListDeployedOrReleasedVersionsSchema.extend({
+    environmentId: z.string().describe("UUID of the environment"),
+  });
+
 export const GetVersionSchema = z.object({
   pacticipantName: z.string().describe("Name of the pacticipant"),
   versionNumber: z.string().describe("Version number to retrieve"),
@@ -373,6 +384,14 @@ export type ListBranchesInput = z.infer<typeof ListBranchesSchema>;
 
 export type ListVersionsInput = z.infer<typeof ListVersionsSchema>;
 
+export type ListDeployedOrReleasedVersionsInput = z.infer<
+  typeof ListDeployedOrReleasedVersionsSchema
+>;
+
+export type ListEnvironmentVersionsInput = z.infer<
+  typeof ListEnvironmentVersionsSchema
+>;
+
 export type GetVersionInput = z.infer<typeof GetVersionSchema>;
 
 export type GetLatestVersionInput = z.infer<typeof GetLatestVersionSchema>;
@@ -383,6 +402,8 @@ export const PACTICIPANT_OUTPUT_SCHEMAS = {
   getPacticipant: PacticipantOutputSchema,
   listBranches: BranchesOutputSchema,
   listVersions: PacticipantVersionsOutputSchema,
+  listDeployedOrReleasedVersions: PacticipantVersionsOutputSchema,
+  listEnvironmentVersions: PacticipantVersionsOutputSchema,
   getVersion: PacticipantVersionOutputSchema,
   getLatestVersion: PacticipantVersionOutputSchema,
   listLabels: LabelsOutputSchema,

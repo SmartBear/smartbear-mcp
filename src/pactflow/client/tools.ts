@@ -75,6 +75,8 @@ import {
   GetVersionSchema,
   LabelByNameSchema,
   ListBranchesSchema,
+  ListDeployedOrReleasedVersionsSchema,
+  ListEnvironmentVersionsSchema,
   ListVersionsSchema,
   ManageLabelSchema,
   UpdatePacticipantSchema,
@@ -300,6 +302,36 @@ export const TOOLS: PactflowToolParams[] = [
     idempotent: true,
     openWorld: false,
     clients: ["pactflow", "pact_broker"],
+  },
+  {
+    title: "List Deployed or Released Versions",
+    toolset: "Environments and Deployments",
+    summary:
+      "Retrieve all versions of a pacticipant that have ever been deployed or released.",
+    purpose:
+      "List every version of a service that has been deployed or released to any environment. Useful for auditing a service's deployment history and finding versions that reached an environment.",
+    inputSchema: ListDeployedOrReleasedVersionsSchema,
+    handler: "listDeployedOrReleasedVersions",
+    readOnly: true,
+    destructive: false,
+    idempotent: true,
+    openWorld: false,
+    clients: ["pactflow"],
+  },
+  {
+    title: "List Environment Versions",
+    toolset: "Environments and Deployments",
+    summary:
+      "Retrieve the versions of a pacticipant associated with a given environment.",
+    purpose:
+      "List the versions of a service that have been deployed or released to a specific environment, identified by its UUID. Use List Environments to find the environment UUID.",
+    inputSchema: ListEnvironmentVersionsSchema,
+    handler: "listEnvironmentVersions",
+    readOnly: true,
+    destructive: false,
+    idempotent: true,
+    openWorld: false,
+    clients: ["pactflow"],
   },
   {
     title: "Get Pacticipant Version",
