@@ -1041,7 +1041,11 @@ describe("handleSessionMessage", () => {
 
 describe("idle session reaping", () => {
   const entry = (lastActivity: number, close = vi.fn(async () => {})) =>
-    ({ server: {}, transport: { close }, lastActivity }) as any;
+    ({
+      server: { getAnalyticsSession: () => undefined, cleanupSession: vi.fn() },
+      transport: { close },
+      lastActivity,
+    }) as any;
 
   it("closes and removes only sessions idle beyond the threshold", async () => {
     const stale = vi.fn(async () => {});
@@ -1070,6 +1074,19 @@ describe("idle session reaping", () => {
     expect(await reapIdleSessions(sessions, 5_000, 1_010_000)).toBe(1);
   });
 
+  it("runs session cleanup in the backstop when close() throws", async () => {
+    const e = entry(
+      0,
+      vi.fn(async () => {
+        throw new Error("boom");
+      }),
+    );
+    const sessions = new Map<string, any>([["s", e]]);
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    await reapIdleSessions(sessions, 1, 10_000);
+    expect(e.server.cleanupSession).toHaveBeenCalledWith("s");
+  });
+
   it("still removes the session when close() throws", async () => {
     const sessions = new Map<string, any>([
       [
@@ -1092,6 +1109,10 @@ describe("idle session reaping", () => {
     expect(getSessionIdleTimeoutMs()).toBe(4 * 60 * 60 * 1000);
     process.env.SESSION_IDLE_TIMEOUT_MS = "0";
     expect(getSessionIdleTimeoutMs()).toBe(0);
+    for (const bad of ["junk", "4h", "1.5", "-5"]) {
+      process.env.SESSION_IDLE_TIMEOUT_MS = bad;
+      expect(getSessionIdleTimeoutMs()).toBe(4 * 60 * 60 * 1000);
+    }
     process.env.SESSION_IDLE_TIMEOUT_MS = "junk";
     expect(getSessionIdleTimeoutMs()).toBe(4 * 60 * 60 * 1000);
     delete process.env.SESSION_IDLE_TIMEOUT_MS;

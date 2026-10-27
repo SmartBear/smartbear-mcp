@@ -76,8 +76,9 @@ const DEFAULT_SESSION_IDLE_TIMEOUT_MS = 4 * 60 * 60 * 1000;
 export function getSessionIdleTimeoutMs(): number {
   const raw = process.env.SESSION_IDLE_TIMEOUT_MS;
   if (raw === undefined || raw === "") return DEFAULT_SESSION_IDLE_TIMEOUT_MS;
-  const parsed = Number.parseInt(raw, 10);
-  return Number.isFinite(parsed) && parsed >= 0
+  // Number(), not parseInt: "4h" must be rejected, not read as 4 ms.
+  const parsed = Number(raw);
+  return Number.isInteger(parsed) && parsed >= 0
     ? parsed
     : DEFAULT_SESSION_IDLE_TIMEOUT_MS;
 }
@@ -99,6 +100,8 @@ export async function reapIdleSessions(
   );
   await Promise.all(
     idle.map(async ([sessionId, entry]) => {
+      // Re-check: a request may have arrived while earlier closes were awaited.
+      if ((entry.inFlight ?? 0) > 0) return;
       console.log(`[MCP] Reaping idle session: ${sessionId}`);
       try {
         await entry.transport.close();
@@ -106,7 +109,10 @@ export async function reapIdleSessions(
         console.error("[MCP] Error closing idle session:", err);
       }
       // Backstop if the transport's close did not run our cleanup chain.
-      transports.delete(sessionId);
+      if (transports.delete(sessionId)) {
+        endSessionAnalytics(entry.server);
+        entry.server.cleanupSession(sessionId);
+      }
     }),
   );
   return idle.length;
