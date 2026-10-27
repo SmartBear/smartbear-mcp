@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [QMetry] Project info now includes `isApprovalWorkflowEnabled`.
 - [PactFlow] All PactFlow tools now declare an `outputSchema` and return `structuredContent`. Schemas follow the PactFlow OpenAPI description but are lenient (every property optional, extra fields allowed) so OSS Pact Broker responses validate. Tools whose API returns no body (deletes, setting a user's roles) return `{ "success": true }`. Paginated tools also report `pagination`.
 - [BearQ] Added tools to run, list, and monitor BearQ workflows.
+- [PactFlow] Added `contract-testing_list_deployed_or_released_versions` (all versions of a pacticipant that have ever been deployed or released) and `contract-testing_list_environment_versions` (versions of a pacticipant associated with an environment). Both support `pageNumber`/`pageSize` and are available on PactFlow only.
 
 ### Fixed
 

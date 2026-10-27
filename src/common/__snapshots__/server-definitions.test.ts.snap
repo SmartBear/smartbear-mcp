@@ -3848,6 +3848,64 @@ None",
     ],
     "title": "Contract Testing: List Branches",
   },
+  "contract-testing_list_deployed_or_released_versions": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "Contract Testing: List Deployed or Released Versions",
+    },
+    "description": "Retrieve all versions of a pacticipant that have ever been deployed or released.
+
+**Toolset:** Environments and Deployments
+
+**Parameters:**
+- pacticipantName (string) *required*: Name of the pacticipant
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)",
+    "inputSchema": [
+      "pacticipantName",
+      "pageNumber",
+      "pageSize",
+    ],
+    "outputSchema": [
+      "_embedded",
+      "_links",
+      "page",
+    ],
+    "title": "Contract Testing: List Deployed or Released Versions",
+  },
+  "contract-testing_list_environment_versions": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "Contract Testing: List Environment Versions",
+    },
+    "description": "Retrieve the versions of a pacticipant associated with a given environment.
+
+**Toolset:** Environments and Deployments
+
+**Parameters:**
+- pacticipantName (string) *required*: Name of the pacticipant
+- pageNumber (number): Page number (default: 1)
+- pageSize (number): Results per page (default: 5)
+- environmentId (string) *required*: UUID of the environment",
+    "inputSchema": [
+      "environmentId",
+      "pacticipantName",
+      "pageNumber",
+      "pageSize",
+    ],
+    "outputSchema": [
+      "_embedded",
+      "_links",
+      "page",
+    ],
+    "title": "Contract Testing: List Environment Versions",
+  },
   "contract-testing_list_environments": {
     "annotations": {
       "destructiveHint": false,
