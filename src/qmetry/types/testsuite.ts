@@ -75,6 +75,13 @@ export interface FetchTestCasesByTestSuitePayload
     FilterPayload {
   tsID: number; // required - Test Suite ID
   getLinked?: boolean; // optional - True to get linked test cases, false for unlinked (default: true)
+  getSubEntities?: boolean; // optional - whether to include sub-entities
+  getColumns?: boolean; // optional - whether to get column information in response
+  restoreDefaultColumns?: boolean; // optional - whether to restore default columns
+  udfFilter?: string; // optional - user-defined field filter as JSON string
+  tcFolderPath?: string; // optional - folder path for test cases
+  viewId?: number; // optional - saved layout/view ID for this test suite's linked-test-case tab
+  isForTsTestCaseTab?: boolean; // always true for this endpoint's usage - not exposed to callers
 }
 
 export const DEFAULT_FETCH_TESTCASES_BY_TESTSUITE_PAYLOAD: Omit<
@@ -84,6 +91,8 @@ export const DEFAULT_FETCH_TESTCASES_BY_TESTSUITE_PAYLOAD: Omit<
   ...DEFAULT_PAGINATION,
   ...DEFAULT_FILTER,
   getLinked: true,
+  getColumns: true,
+  isForTsTestCaseTab: true,
 };
 
 export interface FetchExecutionsByTestSuitePayload
@@ -218,7 +227,15 @@ export interface BulkUpdateExecutionStatusPayload {
   password?: string; // optional - For Part 11 Compliance
   qmRunObj?: string; // optional - Internal run object
   type?: "TCR" | "TCSR"; // optional - For backwards compatibility
+  viewId?: number; // optional - TE view ID, used to read current Test Run UDF values
+  udfValuesByRun?: Record<string, Record<string, TestRunUdfInputValue>>; // optional - per-run UDF values applied before status update
+  scopeId?: number; // optional - injected scope header
+  orgCode?: string; // optional - injected orgcode header
 }
+
+export type TestRunUdfInputValue = Omit<UdfFieldValue, "fieldID"> & {
+  fieldID?: number;
+};
 
 export const DEFAULT_BULK_UPDATE_EXECUTION_STATUS_PAYLOAD: Omit<
   BulkUpdateExecutionStatusPayload,

@@ -256,6 +256,35 @@ export async function getPlatforms(
 }
 
 /**
+ * Fetches the hourly and daily Open API call quota status for the account.
+ * Calls to this endpoint do not count toward the quota.
+ */
+export async function getApiQuotaStatus(
+  token: string,
+  baseUrl: string,
+  project: string | undefined,
+  _payload: Record<string, unknown> = {},
+) {
+  const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
+    baseUrl,
+    project,
+  );
+
+  return qmetryRequest({
+    method: "GET",
+    path: QMETRY_PATHS.PROJECT.GET_API_QUOTA_STATUS,
+    token,
+    baseUrl: resolvedBaseUrl,
+    project: resolvedProject,
+    // The quota endpoint expects the literal "default" scope, not a numeric project scope.
+    extraHeaders: {
+      scope: "default",
+      "Content-Type": "application/json",
+    },
+  });
+}
+
+/**
  * Creates a new release in QMetry with optional cycle
  *
  * @param token - QMetry API authentication token

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createCycle,
   createRelease,
+  getApiQuotaStatus,
   getBuilds,
   getPlatforms,
   getProjectInfo,
@@ -499,6 +500,71 @@ describe("getBuilds", () => {
     });
 
     expect(result).toEqual(mockResponse);
+  });
+});
+
+describe("getApiQuotaStatus", () => {
+  const token = "fake-token";
+  const baseUrl = "https://qmetry.example";
+  const projectKey = "TEST_PROJECT";
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it("should GET the quota status with scope 'default' header and no body", async () => {
+    const mockResponse = {
+      limitEnabled: true,
+      hourly: {
+        limit: 1000,
+        consumed: 0,
+        remaining: 1000,
+        resetsAt: "2026-10-14T16:00:00Z",
+      },
+      daily: {
+        limit: 10000,
+        consumed: 128,
+        remaining: 9872,
+        resetsAt: "2026-10-15T00:00:00Z",
+      },
+      serverTime: "2026-10-14T15:09:47.857786253Z",
+    };
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => mockResponse,
+    });
+
+    const result = await getApiQuotaStatus(token, baseUrl, projectKey, {});
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      `${baseUrl}/rest/admin/apiquota/status`,
+      expect.objectContaining({
+        method: "GET",
+        headers: expect.objectContaining({
+          apikey: token,
+          scope: "default",
+          "Content-Type": "application/json",
+          "User-Agent": expect.stringMatching(/SmartBear MCP Server/),
+        }),
+      }),
+    );
+    const fetchCall = (global.fetch as any).mock.calls[0];
+    expect(fetchCall[1].body).toBeUndefined();
+    expect(result).toEqual(mockResponse);
+  });
+
+  it("should propagate API errors", async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      statusText: "Unauthorized",
+      json: async () => ({ message: "Invalid API key" }),
+      text: async () => "Invalid API key",
+    });
+
+    await expect(
+      getApiQuotaStatus(token, baseUrl, projectKey, {}),
+    ).rejects.toThrow();
   });
 });
 

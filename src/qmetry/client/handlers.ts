@@ -17,6 +17,7 @@ import {
 import {
   createCycle,
   createRelease,
+  getApiQuotaStatus,
   getBuilds,
   getPlatforms,
   getProjectInfo,
@@ -90,6 +91,7 @@ export const QMETRY_HANDLER_MAP: Record<string, QMetryHandler> = {
   [QMetryToolsHandlers.FETCH_RELEASES_CYCLES]: getReleasesCycles,
   [QMetryToolsHandlers.FETCH_BUILDS]: getBuilds,
   [QMetryToolsHandlers.FETCH_PLATFORMS]: getPlatforms,
+  [QMetryToolsHandlers.FETCH_API_QUOTA_STATUS]: getApiQuotaStatus,
   [QMetryToolsHandlers.CREATE_RELEASE]: createRelease,
   [QMetryToolsHandlers.CREATE_CYCLE]: createCycle,
   [QMetryToolsHandlers.UPDATE_CYCLE]: updateCycle,

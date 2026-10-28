@@ -69,6 +69,11 @@ export const AUTO_RESOLVE_MODULES: ModuleAutoResolveConfig[] = [
     moduleName: "Test Run UDF Values",
   },
   {
+    handler: QMetryToolsHandlers.BULK_UPDATE_EXECUTION_STATUS,
+    viewIdPath: "latestViews.TE.viewId",
+    moduleName: "Bulk Update Test Case Execution Status",
+  },
+  {
     handler: QMetryToolsHandlers.FETCH_EXECUTIONS_BY_TESTSUITE,
     viewIdPath: "latestViews.TEL.viewId",
     moduleName: "Executions By Test Suites",
@@ -97,6 +102,11 @@ export const AUTO_RESOLVE_MODULES: ModuleAutoResolveConfig[] = [
     handler: QMetryToolsHandlers.FETCH_ISSUES,
     viewIdPath: "latestViews.IS.viewId",
     moduleName: "Issues",
+  },
+  {
+    handler: QMetryToolsHandlers.FETCH_TESTCASES_BY_TESTSUITE,
+    viewIdPath: "latestViews.TC.viewId",
+    moduleName: "Test Cases Linked to Test Suite",
   },
 ];
 

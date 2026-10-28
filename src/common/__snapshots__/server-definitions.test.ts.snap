@@ -4639,7 +4639,7 @@ None",
       "readOnlyHint": false,
       "title": "QMetry: Bulk Update Test Case Execution Status",
     },
-    "description": "Update execution status for individual or multiple test case runs in bulk
+    "description": "Update execution status for individual or multiple test case runs in bulk, enforcing mandatory Test Run UDFs
 
 **Toolset:** Test Suites
 
@@ -4657,10 +4657,12 @@ None",
 - password (string): If Part 11 Compliance is active then required for authentication
 - qmRunObj (string): Internal QMetry run object (optional, usually empty string)
 - type (enum): Type of Entity - same as entityType (for backwards compatibility)
+- viewId (number): ViewId for test execution - SYSTEM AUTOMATICALLY RESOLVES THIS. Leave empty unless you have a specific viewId. System will fetch project info using the projectKey and extract latestViews.TE.viewId automatically.
+- udfValuesByRun (record<string, record<string, object>>): Optional Test Run UDF values to set BEFORE the status is updated, keyed per Test Case Run. Outer key: tcRunID (must be one of entityIDs). Inner key: UDF field 'name' (e.g. 'test_env' — NOT the 'FLD.' fieldKey). Inner value: { value, fieldID?, multiSelectAction? }. Use this to fill mandatory Test Run UDFs reported by a MANDATORY_TEST_RUN_UDF_MISSING response. Example: { "66095069": { "test_env": { "value": "QA" } }, "66095075": { "test_env": { "value": "UAT" } } }
 
-**Output Description:** JSON object with success status, updated execution details, and confirmation message
+**Output Description:** On success: { success: true, udfUpdates: [{ tcRunIDs, response }], statusUpdate: <API response> }. When mandatory Test Run UDFs are missing: { success: false, code: 'MANDATORY_TEST_RUN_UDF_MISSING', statusUpdated: false, runsMissingFields, lookupOptions?, _note }.
 
-**Use Cases:** 1. Update single test case run status to Pass, Fail, Blocked, or Not Run 2. Bulk update multiple test case run statuses in a single operation 3. Mark all selected test case runs as Not Run for re-execution 4. Update execution status after manual test execution 5. Set execution status based on automated test results 6. Update test execution status across different test environments 7. Track test execution progress and completion 8. Manage test execution status for compliance and reporting
+**Use Cases:** 1. Update single test case run status to Pass, Fail, Blocked, or Not Run 2. Bulk update multiple test case run statuses in a single operation 3. Mark all selected test case runs as Not Run for re-execution 4. Update execution status after manual test execution 5. Set execution status based on automated test results 6. Update test execution status across different test environments 7. Track test execution progress and completion 8. Manage test execution status for compliance and reporting 9. Fill mandatory Test Run UDFs per run and update the execution status in one call
 
 **Examples:**
 1. Update single test case run status to Failed (single execution)
@@ -4753,7 +4755,31 @@ Expected Output: Test case run status updated with Part 11 Compliance authentica
 \`\`\`
 Expected Output: Execution 1/4 updated. The MCP Agent will automatically repeat this operation for executions 2733205, 2733306, and 2733407 using their corresponding entityIDs.
 
-**Hints:** 1. CRITICAL: entityIDs, entityType, qmTsRunId, and runStatusID are REQUIRED parameters 2.  3. CRITICAL - ALWAYS FETCH STATUS IDs FROM PROJECT INFO: 4. NEVER use hardcoded or memorized status IDs. Status IDs are PROJECT-SPECIFIC and must be fetched dynamically. 5. MANDATORY WORKFLOW BEFORE USING runStatusID: 6. 1. Call mcp_smartbear_qmetry_fetch_qmetry_project_info with the current projectKey 7. 2. Extract the 'allstatus' array from the response 8. 3. Match the desired status NAME to find its corresponding ID 9. 4. Use the fetched ID in the runStatusID parameter 10.  11. EXAMPLE STATUS ID RESOLUTION: 12. User says: 'Update status to Failed' 13. Step 1: Call FETCH_PROJECT_INFO → Get allstatus array 14. Step 2: Find status where name='Failed' → Extract its id property 15. Step 3: Use that id as runStatusID (e.g., 123269 for 'Failed') 16.  17. COMMON STATUS NAMES (IDs vary by project - MUST VALIDATE): 18. - 'Passed' / 'Pass' - Test case executed successfully 19. - 'Failed' / 'Fail' - Test case failed with errors 20. - 'Blocked' - Test case cannot be executed due to blockers 21. - 'Not Run' - Test case not yet executed or needs re-execution 22. - 'WIP' / 'Work In Progress' - Test case execution in progress 23. - 'Not Applicable' - Test case not applicable for this execution 24.  25. WHY THIS IS CRITICAL: 26. - Status IDs are assigned per QMetry project and are NOT universal 27. - Using wrong status ID will update tests with incorrect status 28. - Example: ID 123268 might be 'Blocked' in one project but 'Passed' in another 29. - The allstatus array is the AUTHORITATIVE source for all status mappings 30.  31. HOW TO GET entityIDs (Test Case Run IDs): 32. 1. Call API 'Execution/Fetch Testcase Run ID' (FETCH_TESTCASE_RUNS_BY_TESTSUITE_RUN tool) 33. 2. From the response, get value of following attribute -> data[<index>].tcRunID 34. 3. Example: Single ID '66095087' or Multiple IDs '66095069,66095075,66095081' 35. 4. For bulk operations, provide comma-separated IDs without spaces 36. HOW TO GET qmTsRunId (Test Suite Run ID): 37. 1. Call API 'Execution/Fetch Executions' (FETCH_EXECUTIONS_BY_TESTSUITE tool) 38. 2. From the response, get value of following attribute -> data[<index>].tsRunID 39. 3. Example: Test Suite Run ID might be '2720260' 40. HOW TO GET runStatusID (Execution Status ID) - DETAILED PROCESS: 41. 1. Call API 'Admin/Get info Service' (FETCH_PROJECT_INFO tool) with projectKey 42. 2. From the response, locate the 'allstatus' array 43. 3. Search for the status object where name matches your desired status (case-insensitive) 44. 4. Extract the 'id' property from the matching status object 45. 5. NEVER use example IDs from documentation - they are project-specific 46.  47. EXAMPLE allstatus ARRAY STRUCTURE: 48. allstatus: [ 49.   { name: 'Passed', defaultName: 'passed', id: 123266, color: '#14892C|#FFFFFF' }, 50.   { name: 'Failed', defaultName: 'failed', id: 123269, color: '#FF6666|#FFFFFF' }, 51.   { name: 'Blocked', defaultName: 'blocked', id: 123268, color: '#CCCCCC|#FFFFFF' }, 52.   { name: 'Not Run', defaultName: 'notrun', id: 123270, color: '#205081|#FFFFFF', isdefault: true }, 53.   { name: 'Not Applicable', defaultName: 'empty', id: 123267, color: '#59AFE1|#FFFFFF' } 54. ] 55. Note: Above IDs are EXAMPLES ONLY - fetch actual IDs from your project 56. HOW TO GET dropID (Build/Drop ID) - OPTIONAL: 57. 1. Call API 'Build/List' (FETCH_BUILDS tool) 58. 2. From the response, get value of following attribute -> data[<index>].dropID 59. 3. Example: Build/Drop ID might be 947 60. ENTITY TYPES: 61. - 'TCR' = Test Case Run (most common use case) 62. - 'TCSR' = Test Case Step Run (for step-level execution updates) 63. BULK OPERATION FLAG: 64. - isBulkOperation=false: Single test case run update (one entityID) 65. - isBulkOperation=true: Multiple test case runs update (comma-separated entityIDs) 66. - Auto-detected: If entityIDs contains comma, defaults to true; otherwise false 67. AUTOMATION FLAG (isAutoExecuted) - OPTIONAL: 68. - '1' = Automated execution (test run by automation framework) 69. - '0' = Manual execution (test run by human tester) 70. - Used for execution tracking and reporting purposes 71. PART 11 COMPLIANCE (username & password) - CONDITIONAL: 72. - Required ONLY if Part 11 Compliance is active in your QMetry instance 73. - Used for regulatory compliance and audit trail purposes 74. - Not needed for standard QMetry installations 75. COMMENTS FIELD - OPTIONAL: 76. - Add execution notes, failure reasons, or status change context 77. - Useful for tracking why status was changed 78. - Appears in execution history and audit logs 79. COMMON EXECUTION STATUS NAMES: 80. - Pass: Test case executed successfully 81. - Fail: Test case failed with errors 82. - Blocked: Test case cannot be executed due to blockers 83. - Not Run: Test case not yet executed or needs re-execution 84. - WIP: Work In Progress - test case execution in progress 85. WORKFLOW FOR USER PROMPTS: 86. 1. If user says 'execute test case run by id to failed' or 'update status to fail': 87.    - Fetch test case runs to get tcRunID (entityIDs) 88.    - Fetch project info to get 'Fail' status ID (runStatusID) 89.    - Set isBulkOperation=false for single ID 90. 2. If user says 'bulk update test case run status to pass' or 'update all to passed': 91.    - Fetch test case runs to get multiple tcRunIDs 92.    - Fetch project info to get 'Pass' status ID 93.    - Set isBulkOperation=true 94.    - Join multiple IDs with commas (no spaces) 95. 3. If user says 'execute status to not run of given test case run ids': 96.    - Use provided IDs or fetch if needed 97.    - Fetch project info to get 'Not Run' status ID 98.    - Set isBulkOperation based on ID count 99. 4. If the user requests updating status for ALL executions of a test suite, the agent must: 100.    1. Call FETCH_EXECUTIONS_BY_TESTSUITE to get all qmTsRunIds. 101.    2. For each qmTsRunId: 102.       - Call FETCH_TESTCASE_RUNS_BY_TESTSUITE_RUN to get tcRunID (entityIDs) 103.       - Fetch project info to get 'Fail' status ID (runStatusID) 104.       - Call BULK_UPDATE_EXECUTION_STATUS with the corresponding qmTsRunId + tcRunID + desired runStatusID 105.    3. Repeat until all executions are updated. 106.    This tool is intended to be invoked multiple times in sequence for multi-execution updates. 107. FIELD MAPPING CRITICAL NOTES: 108. - entityIDs must be comma-separated STRING (e.g., '66095069,66095075') 109. - qmTsRunId must be STRING format (e.g., '2720260') 110. - runStatusID must be NUMERIC (e.g., 123268) 111. - dropID can be numeric or string (flexible) 112. API ENDPOINT: PUT /rest/execution/runstatus/bulkupdate 113. This tool is essential for test execution management and status tracking 114. Critical for maintaining accurate test execution records and reporting 115. Use for manual test execution updates and automated test result integration 116. Essential for test execution audit trails and compliance requirements",
+8. Retry after MANDATORY_TEST_RUN_UDF_MISSING: fill mandatory Test Run UDF 'test_env' per run, then mark both runs Passed
+\`\`\`json
+{
+  "entityIDs": "66095069,66095075",
+  "entityType": "TCR",
+  "qmTsRunId": "2720260",
+  "runStatusID": 123268,
+  "isBulkOperation": true,
+  "udfValuesByRun": {
+    "66095069": {
+      "test_env": {
+        "value": "QA"
+      }
+    },
+    "66095075": {
+      "test_env": {
+        "value": "UAT"
+      }
+    }
+  }
+}
+\`\`\`
+Expected Output: { success: true, udfUpdates: [{ tcRunIDs: [66095069], ... }, { tcRunIDs: [66095075], ... }], statusUpdate: {...} }
+
+**Hints:** 1. CRITICAL: entityIDs, entityType, qmTsRunId, and runStatusID are REQUIRED parameters 2.  3. MANDATORY TEST RUN UDF GATE (entityType 'TCR', applies to EVERY target status including Not Run): 4. - Before updating, the tool checks each run's Test Run UDFs; fields with allowBlank=false are mandatory. 5. - If ANY run is missing a mandatory value, NOTHING is updated and the tool returns code 'MANDATORY_TEST_RUN_UDF_MISSING' with runsMissingFields[{ tcRunID, entityKey, missingFields[{ name, label, fieldID, fieldType, listName? }] }]. 6. - On that response: show the missing fields per run to the user, ask for the values (never invent them), then call this tool again with the same arguments plus 'udfValuesByRun'. 7. - 'udfValuesByRun' format: { '<tcRunID>': { '<udf name>': { value } } }. Keys are tcRunIDs from entityIDs; inner keys are the UDF 'name' (not the 'FLD.' fieldKey). fieldID is optional (auto-filled). 8. - Value formats: DATETIMEPICKER 'MM-DD-YYYY'; LOOKUPLIST option id (from lookupOptions[listName][].id); MULTILOOKUPLIST array of ids; CASCADINGLIST { parent, child }. 9. - Supplied UDF values are written first (Bulk Update Test Run UDFs), then the status is updated. Non-mandatory UDFs can also be set this way. 10. - entityType 'TCSR' (step runs) skips the gate; 'udfValuesByRun' is rejected for TCSR. 11. - viewId is auto-resolved (latestViews.TE.viewId); do not pass it unless you have a specific one. 12.  13. CRITICAL - ALWAYS FETCH STATUS IDs FROM PROJECT INFO: 14. NEVER use hardcoded or memorized status IDs. Status IDs are PROJECT-SPECIFIC and must be fetched dynamically. 15. MANDATORY WORKFLOW BEFORE USING runStatusID: 16. 1. Call mcp_smartbear_qmetry_fetch_qmetry_project_info with the current projectKey 17. 2. Extract the 'allstatus' array from the response 18. 3. Match the desired status NAME to find its corresponding ID 19. 4. Use the fetched ID in the runStatusID parameter 20.  21. EXAMPLE STATUS ID RESOLUTION: 22. User says: 'Update status to Failed' 23. Step 1: Call FETCH_PROJECT_INFO → Get allstatus array 24. Step 2: Find status where name='Failed' → Extract its id property 25. Step 3: Use that id as runStatusID (e.g., 123269 for 'Failed') 26.  27. COMMON STATUS NAMES (IDs vary by project - MUST VALIDATE): 28. - 'Passed' / 'Pass' - Test case executed successfully 29. - 'Failed' / 'Fail' - Test case failed with errors 30. - 'Blocked' - Test case cannot be executed due to blockers 31. - 'Not Run' - Test case not yet executed or needs re-execution 32. - 'WIP' / 'Work In Progress' - Test case execution in progress 33. - 'Not Applicable' - Test case not applicable for this execution 34.  35. WHY THIS IS CRITICAL: 36. - Status IDs are assigned per QMetry project and are NOT universal 37. - Using wrong status ID will update tests with incorrect status 38. - Example: ID 123268 might be 'Blocked' in one project but 'Passed' in another 39. - The allstatus array is the AUTHORITATIVE source for all status mappings 40.  41. HOW TO GET entityIDs (Test Case Run IDs): 42. 1. Call API 'Execution/Fetch Testcase Run ID' (FETCH_TESTCASE_RUNS_BY_TESTSUITE_RUN tool) 43. 2. From the response, get value of following attribute -> data[<index>].tcRunID 44. 3. Example: Single ID '66095087' or Multiple IDs '66095069,66095075,66095081' 45. 4. For bulk operations, provide comma-separated IDs without spaces 46. HOW TO GET qmTsRunId (Test Suite Run ID): 47. 1. Call API 'Execution/Fetch Executions' (FETCH_EXECUTIONS_BY_TESTSUITE tool) 48. 2. From the response, get value of following attribute -> data[<index>].tsRunID 49. 3. Example: Test Suite Run ID might be '2720260' 50. HOW TO GET runStatusID (Execution Status ID) - DETAILED PROCESS: 51. 1. Call API 'Admin/Get info Service' (FETCH_PROJECT_INFO tool) with projectKey 52. 2. From the response, locate the 'allstatus' array 53. 3. Search for the status object where name matches your desired status (case-insensitive) 54. 4. Extract the 'id' property from the matching status object 55. 5. NEVER use example IDs from documentation - they are project-specific 56.  57. EXAMPLE allstatus ARRAY STRUCTURE: 58. allstatus: [ 59.   { name: 'Passed', defaultName: 'passed', id: 123266, color: '#14892C|#FFFFFF' }, 60.   { name: 'Failed', defaultName: 'failed', id: 123269, color: '#FF6666|#FFFFFF' }, 61.   { name: 'Blocked', defaultName: 'blocked', id: 123268, color: '#CCCCCC|#FFFFFF' }, 62.   { name: 'Not Run', defaultName: 'notrun', id: 123270, color: '#205081|#FFFFFF', isdefault: true }, 63.   { name: 'Not Applicable', defaultName: 'empty', id: 123267, color: '#59AFE1|#FFFFFF' } 64. ] 65. Note: Above IDs are EXAMPLES ONLY - fetch actual IDs from your project 66. HOW TO GET dropID (Build/Drop ID) - OPTIONAL: 67. 1. Call API 'Build/List' (FETCH_BUILDS tool) 68. 2. From the response, get value of following attribute -> data[<index>].dropID 69. 3. Example: Build/Drop ID might be 947 70. ENTITY TYPES: 71. - 'TCR' = Test Case Run (most common use case) 72. - 'TCSR' = Test Case Step Run (for step-level execution updates) 73. BULK OPERATION FLAG: 74. - isBulkOperation=false: Single test case run update (one entityID) 75. - isBulkOperation=true: Multiple test case runs update (comma-separated entityIDs) 76. - Auto-detected: If entityIDs contains comma, defaults to true; otherwise false 77. AUTOMATION FLAG (isAutoExecuted) - OPTIONAL: 78. - '1' = Automated execution (test run by automation framework) 79. - '0' = Manual execution (test run by human tester) 80. - Used for execution tracking and reporting purposes 81. PART 11 COMPLIANCE (username & password) - CONDITIONAL: 82. - Required ONLY if Part 11 Compliance is active in your QMetry instance 83. - Used for regulatory compliance and audit trail purposes 84. - Not needed for standard QMetry installations 85. COMMENTS FIELD - OPTIONAL: 86. - Add execution notes, failure reasons, or status change context 87. - Useful for tracking why status was changed 88. - Appears in execution history and audit logs 89. COMMON EXECUTION STATUS NAMES: 90. - Pass: Test case executed successfully 91. - Fail: Test case failed with errors 92. - Blocked: Test case cannot be executed due to blockers 93. - Not Run: Test case not yet executed or needs re-execution 94. - WIP: Work In Progress - test case execution in progress 95. WORKFLOW FOR USER PROMPTS: 96. 1. If user says 'execute test case run by id to failed' or 'update status to fail': 97.    - Fetch test case runs to get tcRunID (entityIDs) 98.    - Fetch project info to get 'Fail' status ID (runStatusID) 99.    - Set isBulkOperation=false for single ID 100. 2. If user says 'bulk update test case run status to pass' or 'update all to passed': 101.    - Fetch test case runs to get multiple tcRunIDs 102.    - Fetch project info to get 'Pass' status ID 103.    - Set isBulkOperation=true 104.    - Join multiple IDs with commas (no spaces) 105. 3. If user says 'execute status to not run of given test case run ids': 106.    - Use provided IDs or fetch if needed 107.    - Fetch project info to get 'Not Run' status ID 108.    - Set isBulkOperation based on ID count 109. 4. If the user requests updating status for ALL executions of a test suite, the agent must: 110.    1. Call FETCH_EXECUTIONS_BY_TESTSUITE to get all qmTsRunIds. 111.    2. For each qmTsRunId: 112.       - Call FETCH_TESTCASE_RUNS_BY_TESTSUITE_RUN to get tcRunID (entityIDs) 113.       - Fetch project info to get 'Fail' status ID (runStatusID) 114.       - Call BULK_UPDATE_EXECUTION_STATUS with the corresponding qmTsRunId + tcRunID + desired runStatusID 115.    3. Repeat until all executions are updated. 116.    This tool is intended to be invoked multiple times in sequence for multi-execution updates. 117. FIELD MAPPING CRITICAL NOTES: 118. - entityIDs must be comma-separated STRING (e.g., '66095069,66095075') 119. - qmTsRunId must be STRING format (e.g., '2720260') 120. - runStatusID must be NUMERIC (e.g., 123268) 121. - dropID can be numeric or string (flexible) 122. API ENDPOINT: PUT /rest/execution/runstatus/bulkupdate 123. This tool is essential for test execution management and status tracking 124. Critical for maintaining accurate test execution records and reporting 125. Use for manual test execution updates and automated test result integration 126. Essential for test execution audit trails and compliance requirements",
     "inputSchema": [
       "comments",
       "dropID",
@@ -4767,7 +4793,9 @@ Expected Output: Execution 1/4 updated. The MCP Agent will automatically repeat 
       "qmTsRunId",
       "runStatusID",
       "type",
+      "udfValuesByRun",
       "username",
+      "viewId",
     ],
     "outputSchema": undefined,
     "title": "QMetry: Bulk Update Test Case Execution Status",
@@ -5831,6 +5859,39 @@ Expected Output: Report file generated and returned by the backend.
     ],
     "outputSchema": undefined,
     "title": "QMetry: Export HTML Report",
+  },
+  "qmetry_fetch_api_call_quota": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "QMetry: Fetch API Call Quota",
+    },
+    "description": "Fetch the hourly and daily QMetry Open API call limits, calls consumed, calls remaining, and reset times
+
+**Toolset:** Projects
+
+**Parameters:**
+- projectKey (string): Project key - unique identifier for the project (default: "default")
+
+**Output Description:** JSON object: limitEnabled (boolean), hourly and daily objects each with limit, consumed, remaining (numbers) and resetsAt (UTC timestamp), and serverTime (UTC timestamp)
+
+**Use Cases:** 1. Check how many API calls remain before running a large batch of operations 2. Diagnose rate-limit or quota-exceeded errors returned by other QMetry tools 3. Find out when the hourly or daily quota will reset 4. Confirm whether API call limits are enabled for the instance
+
+**Examples:**
+1. Check the current API call quota
+\`\`\`json
+{}
+\`\`\`
+Expected Output: limitEnabled flag, hourly and daily { limit, consumed, remaining, resetsAt }, and serverTime
+
+**Hints:** 1. No parameters are needed — the quota belongs to the account/API key, not to a project 2. Calling this tool is free: it does not consume hourly or daily quota 3. If limitEnabled is false, no API call limits are enforced and the counts are informational only 4. resetsAt and serverTime are UTC ISO-8601 timestamps — compare resetsAt with serverTime, not with local time, to compute time until reset 5. Before a large batch of create/update/link calls, check hourly.remaining and daily.remaining and warn the user if the batch would exceed them 6. If another QMetry tool fails with a rate-limit or quota error, call this tool to report remaining calls and the reset time",
+    "inputSchema": [
+      "projectKey",
+    ],
+    "outputSchema": undefined,
+    "title": "QMetry: Fetch API Call Quota",
   },
   "qmetry_fetch_automation_status": {
     "annotations": {
@@ -8049,6 +8110,12 @@ Expected Output: Active, high priority, automated test cases linked to requireme
 - page (number): Page number to return (starts from 1) (default: 1)
 - limit (number): Number of records (default 10). (default: 10)
 - filter (string): Filter criteria as JSON string (default '[]') (default: "[]")
+- getSubEntities (boolean): Whether to include sub-entities.
+- getColumns (boolean): Whether to get column information in response. (default: true)
+- restoreDefaultColumns (boolean): Whether to restore default columns (default 'false')
+- udfFilter (string): User-defined field filter as JSON string (default '[]') (default: "[]")
+- tcFolderPath (string): Folder path for test cases - SYSTEM AUTOMATICALLY SETS TO ROOT. Leave empty unless you want specific folder. System will automatically use empty string "" (root directory). Only specify if user wants specific folder like "Automation/Regression". (default: "")
+- viewId (number): ViewId for test cases - SYSTEM AUTOMATICALLY RESOLVES THIS. Leave empty unless you have a specific viewId. System will fetch project info using the projectKey and extract latestViews.TC.viewId automatically.
 
 **Output Description:** JSON object with test cases array containing test case details, properties, and suite linkage information
 
@@ -8114,12 +8181,18 @@ Expected Output: Active test cases linked to the test suite
 **Hints:** 1. CRITICAL: tsID parameter is REQUIRED - this is the Test Suite numeric ID 2. getLinked parameter is OPTIONAL - defaults to true if not provided 3. HOW TO GET tsID: 4. 1. Call API 'Testsuite/Fetch Testsuite' to get available test suites 5. 2. From the response, get value of following attribute -> data[<index>].id 6. 3. Example: Test Suite 'Regression Suite' might have ID 1497291 7. tsID is NOT the same as tsFolderID - tsID refers to a specific test suite, not a folder 8. getLinked=true (default): Returns test cases that ARE linked to the test suite 9. getLinked=false: Returns test cases that are NOT linked to the test suite (useful for gap analysis) 10. If getLinked is not specified, it defaults to true (linked test cases) 11. FILTER CAPABILITIES: Support filtering by test case properties 12. FILTER FIELDS: priorityAlias (list), testCaseStateAlias (list), testingTypeAlias (list), testCaseTypeAlias (list), componentAlias (list), owner (list) 13. PRIORITY IDs: Typically 1=High, 2=Medium, 3=Low (verify with your QMetry instance) 14. STATUS IDs: Typically 1=Active, 2=Review, 3=Deprecated (verify with your QMetry instance) 15. TESTING TYPE IDs: Typically 1=Manual, 2=Automated (verify with your QMetry instance) 16. TYPE IDs: Typically 1=Functional, 2=Integration, 3=System (verify with your QMetry instance) 17. Multiple filter conditions are combined with AND logic 18. Use pagination for large result sets (start, page, limit parameters) 19. This tool is essential for test suite management and execution planning 20. Helps verify test suite composition before test runs 21. Critical for understanding test coverage within specific suites 22. Use for test suite analysis and optimization",
     "inputSchema": [
       "filter",
+      "getColumns",
       "getLinked",
+      "getSubEntities",
       "limit",
       "page",
       "projectKey",
+      "restoreDefaultColumns",
       "start",
+      "tcFolderPath",
       "tsID",
+      "udfFilter",
+      "viewId",
     ],
     "outputSchema": undefined,
     "title": "QMetry: Fetch Test Cases Linked to Test Suite",
