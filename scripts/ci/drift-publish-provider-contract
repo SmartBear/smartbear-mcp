@@ -31,7 +31,7 @@ results_dir="${DRIFT_RESULTS_DIR:-drift-results}"
 results_file="$(find "${results_dir}/results" -name 'verification.*.result' 2>/dev/null | sort | tail -n 1)"
 [ -n "${results_file}" ] || { echo "No Drift result file under ${results_dir}/results; run drift with --generate-result" >&2; exit 1; }
 
-pactflow publish-provider-contract src/pactflow/drift/pactflow.mcp.yaml \
+pact pactflow publish-provider-contract src/pactflow/drift/pactflow.mcp.yaml \
   --provider smartbear-mcp \
   --provider-app-version "${GITHUB_SHA}" \
   --branch "${GITHUB_REF_NAME}" \
