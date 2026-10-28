@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- [PactFlow] Consumer pact tests for `contract-testing_list_deployed_or_released_versions` and `contract-testing_list_environment_versions` now use a provider state that exists on the PactFlow provider (`pacticipant ServiceA version 1.0.0 is deployed to environment 00000000-0000-0000-0000-000000000002`). The previous states were unknown to the provider, which made the CDCT verification fail with an empty list and a 404.
 - [QMetry] API error handling now reads the response body once. Previously a non-JSON error body made the fallback `text()` call throw "Body is unusable", hiding the real error.
 - [PactFlow] `contract-testing_list_integrations` and `contract-testing_get_integrations_by_team` now send `Accept: application/hal+json`. Without it PactFlow negotiated `text/vnd.graphviz` for `/integrations` and the response could not be parsed as JSON.
 - [PactFlow] `contract-testing_admin_patch_team_users` now sends `Content-Type: application/json-patch+json`, which is the only content type PactFlow accepts for `PATCH /admin/teams/{teamId}/users` (it previously returned 415).
