@@ -19,6 +19,7 @@ npm install -g @pactflow/drift
 drift component install mcp   # the MCP plugin is optional and in beta
 
 npm run build
+export PACT_BROKER_BASE_URL=... PACT_BROKER_TOKEN=...   # Drift authenticates with PactFlow
 npm run test:drift
 ```
 
@@ -78,7 +79,9 @@ against the tool's `outputSchema` automatically.
   behaviour and say so.
 
 - Drift cannot authenticate to an MCP server, so tests use the stdio transport and give the
-  server its PactFlow settings through its own environment only (Drift itself reads
-  `PACT_BROKER_*`, so they must not be set for the Drift process).
+  server its settings (pointing at the mock) through its own environment only.
+- Drift itself authenticates with PactFlow on every run: set `PACT_BROKER_BASE_URL` and
+  `PACT_BROKER_TOKEN` (CI uses the repository secrets) or run `drift auth login` once.
+  Without either it stops with "Could not initialise the authentication config".
 - The PactFlow AI tools are advertised only when PactFlow's AI entitlement check succeeds;
   the mock enables it so the definition covers the full surface.

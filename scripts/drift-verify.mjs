@@ -19,8 +19,10 @@ import { startMock } from "../drift/mock-pactflow.mjs";
 const root = fileURLToPath(new URL("..", import.meta.url));
 const { server, port } = await startMock();
 
-// The server's credentials are set for its process only (via `env`): Drift
-// itself reads PACT_BROKER_* and would try to authenticate with PactFlow.
+// The server's settings point at the mock and are set for its process only
+// (via `env`). Drift itself authenticates with PactFlow on every run, using
+// the caller's PACT_BROKER_* (or a cached `drift auth login`), so those must
+// not be overridden for the Drift process.
 const serverUrl = `stdio:///env?${[
   `PACT_BROKER_BASE_URL=http://127.0.0.1:${port}`,
   "PACT_BROKER_TOKEN=drift",

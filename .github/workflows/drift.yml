@@ -20,6 +20,9 @@ jobs:
   drift-mcp-tests:
     name: PactFlow MCP tools (Drift MCP plugin)
     runs-on: ubuntu-latest
+    # Drift authenticates with PactFlow on every run, and publishing needs the
+    # secrets too, which forks and Dependabot do not get.
+    if: github.actor != 'dependabot[bot]' && github.event.pull_request.head.repo.fork != true
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -47,14 +50,18 @@ jobs:
         id: drift
         continue-on-error: true
         run: npm run test:drift -- --output-dir drift-results --generate-result
+        env:
+          # Used by Drift itself to authenticate; the server under test gets
+          # its own settings from the mock (see scripts/drift-verify.mjs).
+          PACT_BROKER_BASE_URL: ${{ secrets.PACT_BROKER_BASE_URL }}
+          PACT_BROKER_TOKEN: ${{ secrets.PACT_BROKER_TOKEN }}
 
-      # PactFlow secrets are not available to forks or Dependabot.
       - name: Install pact CLI tools
-        if: ${{ !cancelled() && steps.drift.outcome != 'skipped' && github.actor != 'dependabot[bot]' && github.event.pull_request.head.repo.fork != true }}
+        if: ${{ !cancelled() && steps.drift.outcome != 'skipped' }}
         run: ./scripts/ci/pact-install-cli
 
       - name: Publish MCP definition and Drift results to PactFlow
-        if: ${{ !cancelled() && steps.drift.outcome != 'skipped' && github.actor != 'dependabot[bot]' && github.event.pull_request.head.repo.fork != true }}
+        if: ${{ !cancelled() && steps.drift.outcome != 'skipped' }}
         run: ./scripts/ci/drift-publish-provider-contract
         env:
           PACT_BROKER_BASE_URL: ${{ secrets.PACT_BROKER_BASE_URL }}
