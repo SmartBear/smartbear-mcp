@@ -1,0 +1,75 @@
+name: Drift MCP Tests
+
+on:
+  push:
+    branches: [main, integration/*]
+  pull_request:
+    branches: [main, integration/*]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FORCE_COLOR: '1'
+  CLICOLOR: '1'
+  STABLE_NODE_VERSION: '22'
+  DRIFT_VERSION: '2610.0.0'
+
+jobs:
+  drift-mcp-tests:
+    name: PactFlow MCP tools (Drift MCP plugin)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Setup Node.js ${{ env.STABLE_NODE_VERSION }}
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: ${{ env.STABLE_NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Install Drift and its MCP plugin
+        run: |
+          npm install -g "@pactflow/drift@${DRIFT_VERSION}"
+          drift component install mcp --yes
+
+      # Don't stop on failure: the results still need publishing, and the job
+      # is failed explicitly at the end.
+      - name: Run Drift MCP tests
+        id: drift
+        continue-on-error: true
+        run: npm run test:drift -- --output-dir drift-results --generate-result
+
+      # PactFlow secrets are not available to forks or Dependabot.
+      - name: Install pact CLI tools
+        if: ${{ !cancelled() && steps.drift.outcome != 'skipped' && github.actor != 'dependabot[bot]' && github.event.pull_request.head.repo.fork != true }}
+        run: ./scripts/ci/pact-install-cli
+
+      - name: Publish MCP definition and Drift results to PactFlow
+        if: ${{ !cancelled() && steps.drift.outcome != 'skipped' && github.actor != 'dependabot[bot]' && github.event.pull_request.head.repo.fork != true }}
+        run: ./scripts/ci/drift-publish-provider-contract
+        env:
+          PACT_BROKER_BASE_URL: ${{ secrets.PACT_BROKER_BASE_URL }}
+          PACT_BROKER_TOKEN: ${{ secrets.PACT_BROKER_TOKEN }}
+          DRIFT_EXIT_CODE: ${{ steps.drift.outcome == 'success' && '0' || '1' }}
+          GITHUB_REF_NAME: ${{ github.head_ref || github.ref_name }}
+
+      - name: Upload Drift results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: drift-results
+          path: drift-results
+          if-no-files-found: ignore
+
+      - name: Fail if the Drift tests failed
+        if: ${{ steps.drift.outcome == 'failure' }}
+        run: exit 1

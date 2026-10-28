@@ -1,0 +1,122 @@
+# yaml-language-server: $schema=https://download.pactflow.io/drift/schemas/drift.testcases.v1.schema.json
+drift-testcase-file: v1
+title: "PactFlow MCP tools"
+sources:
+  - name: pactflow
+    path: ./pactflow.mcp.yaml
+plugins:
+  - name: mcp
+  - name: json
+operations:
+  discover:
+    target: pactflow:drift/discover
+    description: "The server starts, responds to discovery and negotiates a protocol era"
+    sequence: -100
+
+  drift_capabilities:
+    target: pactflow:drift/capabilities
+    description: "Advertised capabilities match the surface actually served"
+
+  drift_surface:
+    target: pactflow:drift/all
+    description: "The PactFlow tools the server advertises match the definition"
+
+  listEnvironments_Success:
+    target: pactflow:tool/contract-testing_list_environments
+    description: "Lists the environments returned by PactFlow"
+    expected:
+      result:
+        structuredContent:
+          _embedded:
+            environments:
+              - name: "production"
+
+  getEnvironment_Success:
+    target: pactflow:tool/contract-testing_get_environment
+    parameters:
+      arguments:
+        environmentId: "00000000-0000-0000-0000-000000000002"
+    expected:
+      result:
+        structuredContent:
+          name: "test"
+
+  getEnvironment_NotFound:
+    target: pactflow:tool/contract-testing_get_environment
+    description: "A PactFlow 404 is reported as a tool error"
+    parameters:
+      arguments:
+        environmentId: "00000000-0000-0000-0000-000000000099"
+    expected:
+      result:
+        isError: true
+
+  listPacticipants_Success:
+    target: pactflow:tool/contract-testing_list_pacticipants
+    expected:
+      result:
+        structuredContent:
+          _embedded:
+            pacticipants:
+              - name: "smartbear-mcp"
+
+  getPacticipant_Success:
+    target: pactflow:tool/contract-testing_get_pacticipant
+    parameters:
+      arguments:
+        pacticipantName: "smartbear-mcp"
+    expected:
+      result:
+        structuredContent:
+          name: "smartbear-mcp"
+
+  getPacticipant_NotFound:
+    target: pactflow:tool/contract-testing_get_pacticipant
+    parameters:
+      arguments:
+        pacticipantName: "unknown-service"
+    expected:
+      result:
+        isError: true
+
+  canIDeploy_Success:
+    target: pactflow:tool/contract-testing_can_i_deploy
+    parameters:
+      arguments:
+        pacticipant: "smartbear-mcp"
+        version: "1.0.0"
+        environment: "production"
+    expected:
+      result:
+        structuredContent:
+          summary:
+            deployable: true
+
+  canIDeploy_MissingArguments:
+    target: pactflow:tool/contract-testing_can_i_deploy
+    # Observed behaviour, not the MCP specification: invalid arguments are a
+    # schema violation detected before the tool runs, which belongs in the
+    # JSON-RPC error channel (code -32602). The server returns it as a tool
+    # error (isError: true) instead. Change this to `expected.error.code: -32602`
+    # once the server follows the specification.
+    description: "Missing required arguments are rejected (as a tool error; the specification says -32602)"
+    parameters:
+      arguments: {}
+    expected:
+      result:
+        isError: true
+
+  getPrompt_MatcherRecommendations:
+    target: pactflow:prompt/contract-testing_openapi_matcher_recommendations
+    # Drift 2610.0.0 / MCP plugin 0.1.0 does not enforce `expected` on prompt
+    # results (a wrong `messages` or `role` expectation still passes), so this
+    # only checks that prompts/get succeeds with the declared argument.
+    description: "The matcher recommendation prompt can be fetched with an OpenAPI document"
+    parameters:
+      arguments:
+        openAPI: |
+          openapi: 3.0.0
+          info:
+            title: Example
+            version: 1.0.0
+          paths: {}
