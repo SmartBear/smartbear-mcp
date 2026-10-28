@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# Publish the MCP definition and Drift results to PactFlow
+#
+# Publishes src/pactflow/drift/pactflow.mcp.yaml as a provider contract (specification
+# "mcp") for smartbear-mcp, with the Drift MCP plugin run as its
+# self-verification results (Bi-Directional Contract Testing).
+#
+# Usage:
+#   npm run test:drift -- --output-dir drift-results --generate-result
+#   DRIFT_EXIT_CODE=$? scripts/ci/drift-publish-provider-contract
+#
+# Environment:
+#   PACT_BROKER_BASE_URL - PactFlow base URL
+#   PACT_BROKER_TOKEN    - PactFlow API token
+#   GITHUB_SHA           - Provider version (git commit SHA)
+#   GITHUB_REF_NAME      - Provider branch name
+#   DRIFT_EXIT_CODE      - Exit code of the Drift run (must match the real result)
+#   DRIFT_RESULTS_DIR    - Drift --output-dir (default: drift-results)
+#
+set -euo pipefail
+
+: "${PACT_BROKER_BASE_URL:?need PACT_BROKER_BASE_URL}"
+: "${PACT_BROKER_TOKEN:?need PACT_BROKER_TOKEN}"
+: "${GITHUB_SHA:?need GITHUB_SHA}"
+: "${GITHUB_REF_NAME:?need GITHUB_REF_NAME}"
+: "${DRIFT_EXIT_CODE:?need DRIFT_EXIT_CODE}"
+
+results_dir="${DRIFT_RESULTS_DIR:-drift-results}"
+
+# Each Drift run writes results/verification.<timestamp>.result; use the latest.
+results_file="$(find "${results_dir}/results" -name 'verification.*.result' 2>/dev/null | sort | tail -n 1)"
+[ -n "${results_file}" ] || { echo "No Drift result file under ${results_dir}/results; run drift with --generate-result" >&2; exit 1; }
+
+pact pactflow publish-provider-contract src/pactflow/drift/pactflow.mcp.yaml \
+  --provider smartbear-mcp \
+  --provider-app-version "${GITHUB_SHA}" \
+  --branch "${GITHUB_REF_NAME}" \
+  --specification mcp \
+  --content-type application/yaml \
+  --verification-exit-code "${DRIFT_EXIT_CODE}" \
+  --verification-results "${results_file}" \
+  --verification-results-content-type application/vnd.smartbear.drift.result \
+  --verifier drift \
+  --verifier-version "$(drift --version 2>/dev/null | tail -n 1)"
