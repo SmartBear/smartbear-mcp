@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 /**
  * Generates, from the tools the built server advertises:
- *  - drift/pactflow.mcp.yaml: the MCP definition (SmartBear Studio format) of
+ *  - src/pactflow/drift/pactflow.mcp.yaml: the MCP definition (SmartBear Studio format) of
  *    the PactFlow tools and prompt, the contract the Drift MCP plugin verifies
  *    the server against;
- *  - drift/pactflow.tools.testcases.yaml: one tool call per tool, with
+ *  - src/pactflow/drift/pactflow.tools.testcases.yaml: one tool call per tool, with
  *    arguments built from its input schema, for every tool that the
- *    hand-written drift/pactflow.testcases.yaml does not already call.
+ *    hand-written src/pactflow/drift/pactflow.testcases.yaml does not already call.
  *
  * Regenerate both whenever the PactFlow tools change:
  *
@@ -16,17 +16,20 @@ import { spawn } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import yaml from "js-yaml";
-import { startMock } from "../drift/mock-pactflow.mjs";
+import { startMock } from "../src/pactflow/drift/mock-pactflow.mjs";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const output = fileURLToPath(
-  new URL("../drift/pactflow.mcp.yaml", import.meta.url),
+  new URL("../src/pactflow/drift/pactflow.mcp.yaml", import.meta.url),
 );
 const curatedFile = fileURLToPath(
-  new URL("../drift/pactflow.testcases.yaml", import.meta.url),
+  new URL("../src/pactflow/drift/pactflow.testcases.yaml", import.meta.url),
 );
 const generatedFile = fileURLToPath(
-  new URL("../drift/pactflow.tools.testcases.yaml", import.meta.url),
+  new URL(
+    "../src/pactflow/drift/pactflow.tools.testcases.yaml",
+    import.meta.url,
+  ),
 );
 
 const HEADER =

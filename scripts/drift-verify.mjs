@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Runs the Drift MCP plugin tests in drift/ against the built server.
+ * Runs the Drift MCP plugin tests in src/pactflow/drift/ against the built server.
  *
  * Starts the mock PactFlow API, launches `node dist/index.js` over stdio
  * pointed at it, and runs `drift verify`. Extra arguments (for example
@@ -10,13 +10,58 @@
  *   npm install -g @pactflow/drift && drift component install mcp
  */
 import { spawn } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdtempSync,
+  realpathSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { startMock } from "../drift/mock-pactflow.mjs";
+import { startMock } from "../src/pactflow/drift/mock-pactflow.mjs";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
+
+/**
+ * The directory holding the installed `mcp.plugin`. Where `drift component
+ * install mcp` puts it depends on the machine: `~/.drift/plugins` when that
+ * directory exists, otherwise next to the Drift executable (e.g. a global npm
+ * install, as on CI), so look in each place rather than assuming one.
+ */
+function findPluginDir() {
+  const candidates = [process.env.DRIFT_PLUGIN_DIR];
+  for (const dir of (process.env.PATH ?? "").split(path.delimiter)) {
+    const executable = path.join(dir, "drift");
+    if (!dir || !existsSync(executable)) continue;
+    const bin = path.dirname(realpathSync(executable));
+    // npm package (bin/drift.js -> bin/dist/plugins), or a standalone binary.
+    candidates.push(
+      path.join(bin, "dist", "plugins"),
+      path.join(bin, "plugins"),
+    );
+    break;
+  }
+  candidates.push(
+    path.join(
+      process.env.DRIFT_HOME_DIR ?? path.join(homedir(), ".drift"),
+      "plugins",
+    ),
+  );
+  return candidates.find(
+    (dir) => dir && existsSync(path.join(dir, "mcp.plugin")),
+  );
+}
+
+const pluginDir = findPluginDir();
+if (!pluginDir) {
+  console.error(
+    "The Drift MCP plugin was not found. Install the Drift CLI and the plugin with: npm install -g @pactflow/drift && drift component install mcp (or set DRIFT_PLUGIN_DIR)",
+  );
+  process.exit(1);
+}
+
 const { server, port } = await startMock();
 
 // The server's settings point at the mock and are set for its process only
@@ -36,13 +81,7 @@ const serverUrl = `stdio:///env?${[
 // descriptions no longer match the definition; regenerate it with
 // `npm run drift:generate`. The MCP plugin reads these from the config file in
 // the Drift home directory (--plugin-value never reaches the plugin: PACT-7530), so use a temporary home
-// that points back at the installed plugins.
-const pluginDir =
-  process.env.DRIFT_PLUGIN_DIR ??
-  path.join(
-    process.env.DRIFT_HOME_DIR ?? path.join(homedir(), ".drift"),
-    "plugins",
-  );
+// that points back at the plugin directory found above.
 const homeDir = mkdtempSync(path.join(tmpdir(), "drift-home-"));
 writeFileSync(
   path.join(homeDir, "drift.config.toml"),
@@ -67,9 +106,9 @@ const drift = spawn(
     "--server-url",
     serverUrl,
     "--test-files",
-    "drift/pactflow.testcases.yaml",
+    "src/pactflow/drift/pactflow.testcases.yaml",
     "--test-files",
-    "drift/pactflow.tools.testcases.yaml",
+    "src/pactflow/drift/pactflow.tools.testcases.yaml",
     "--drift-home-dir",
     homeDir,
     ...process.argv.slice(2),
