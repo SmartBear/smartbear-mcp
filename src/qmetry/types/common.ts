@@ -390,6 +390,10 @@ export const ProjectArgsSchema = z.object({
   projectKey: CommonFields.projectKey,
 });
 
+export const ApiQuotaStatusArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+});
+
 export const ReleasesCyclesArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
   showArchive: CommonFields.showArchive,
@@ -1290,6 +1294,12 @@ export const TestCasesByTestSuiteArgsSchema = z.object({
   page: CommonFields.page,
   limit: CommonFields.limit,
   filter: CommonFields.filter,
+  getSubEntities: CommonFields.getSubEntities,
+  getColumns: CommonFields.getColumns,
+  restoreDefaultColumns: CommonFields.restoreDefaultColumns,
+  udfFilter: CommonFields.udfFilter,
+  tcFolderPath: CommonFields.tcFolderPath,
+  viewId: CommonFields.tcViewId,
 });
 
 export const ExecutionsByTestSuiteArgsSchema = z.object({
@@ -1521,6 +1531,47 @@ export const LinkPlatformsToTestSuiteArgsSchema = z.object({
     ),
 });
 
+// Shared by Bulk Update Test Run UDFs and Bulk Update Test Case Execution Status
+export const UdfFieldValueSchema = z.object({
+  fieldID: z
+    .number()
+    .int()
+    .positive()
+    .describe(
+      "Numeric ID of the UDF field to update. " +
+        "Get this from the UDF field definition in QMetry admin or from the field's metadata.",
+    ),
+  value: z
+    .union([
+      z.string(),
+      z.number(),
+      z.array(z.number().int()),
+      z.object({
+        parent: z.number().int().describe("Parent item ID for cascading list."),
+        child: z.number().int().describe("Child item ID for cascading list."),
+      }),
+    ])
+    .describe(
+      "Value to set for this UDF field. Type depends on field type:\n" +
+        "STRING: plain string, e.g. 'test value'\n" +
+        "NUMBER: number, e.g. 3\n" +
+        "DATETIMEPICKER: date string in MM-DD-YYYY format, e.g. '06-20-2026'\n" +
+        "LOOKUPLIST (single): numeric item ID, e.g. 5108697\n" +
+        "MULTILOOKUPLIST (multi-select): array of item IDs, e.g. [5158524, 5158525]\n" +
+        "CASCADINGLIST: object with parent and child IDs, e.g. {parent: 5126498, child: 5126499}",
+    ),
+  multiSelectAction: z
+    .enum(["append", "replace"])
+    .optional()
+    .default("append")
+    .describe(
+      "Action for MULTILOOKUPLIST fields only. " +
+        "'append' adds the new values to existing selections (default). " +
+        "'replace' clears existing selections and sets only the new values. " +
+        "Omit or use 'append' if user does not specify — never assume 'replace'.",
+    ),
+});
+
 // Export for Bulk Update Test Case Execution Status tool
 export const BulkUpdateExecutionStatusArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
@@ -1597,6 +1648,29 @@ export const BulkUpdateExecutionStatusArgsSchema = z.object({
     .optional()
     .describe(
       "Type of Entity - same as entityType (for backwards compatibility)",
+    ),
+  viewId: CommonFields.teViewId,
+  udfValuesByRun: z
+    .record(
+      z.string(),
+      z.record(
+        z.string(),
+        UdfFieldValueSchema.extend({
+          fieldID: UdfFieldValueSchema.shape.fieldID
+            .optional()
+            .describe(
+              "Optional projectUserFieldID of the Test Run UDF. Auto-filled from Test Run UDF metadata when omitted.",
+            ),
+        }),
+      ),
+    )
+    .optional()
+    .describe(
+      "Optional Test Run UDF values to set BEFORE the status is updated, keyed per Test Case Run. " +
+        "Outer key: tcRunID (must be one of entityIDs). Inner key: UDF field 'name' (e.g. 'test_env' — NOT the 'FLD.' fieldKey). " +
+        "Inner value: { value, fieldID?, multiSelectAction? }. " +
+        "Use this to fill mandatory Test Run UDFs reported by a MANDATORY_TEST_RUN_UDF_MISSING response. " +
+        'Example: { "66095069": { "test_env": { "value": "QA" } }, "66095075": { "test_env": { "value": "UAT" } } }',
     ),
 });
 

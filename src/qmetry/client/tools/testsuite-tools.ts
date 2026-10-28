@@ -1424,14 +1424,16 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
     title: "Bulk Update Test Case Execution Status",
     toolset: "Test Suites",
     summary:
-      "Update execution status for individual or multiple test case runs in bulk",
+      "Update execution status for individual or multiple test case runs in bulk, enforcing mandatory Test Run UDFs",
     handler: QMetryToolsHandlers.BULK_UPDATE_EXECUTION_STATUS,
     inputSchema: BulkUpdateExecutionStatusArgsSchema,
     purpose:
       "Update the execution status (Pass, Fail, Blocked, Not Run, WIP, etc.) for one or more test case runs. " +
       "This tool enables both single and bulk status updates for test executions, providing flexibility for " +
       "manual test execution management, automated test result updates, and test execution tracking. " +
-      "Essential for maintaining accurate test execution records and execution status reporting.",
+      "Essential for maintaining accurate test execution records and execution status reporting. " +
+      "For TCR updates, the status is only changed when every target run has all mandatory Test Run UDFs populated; " +
+      "missing values can be supplied per run via 'udfValuesByRun' and are written before the status update.",
     useCases: [
       "Update single test case run status to Pass, Fail, Blocked, or Not Run",
       "Bulk update multiple test case run statuses in a single operation",
@@ -1441,6 +1443,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       "Update test execution status across different test environments",
       "Track test execution progress and completion",
       "Manage test execution status for compliance and reporting",
+      "Fill mandatory Test Run UDFs per run and update the execution status in one call",
     ],
     examples: [
       {
@@ -1540,9 +1543,36 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         expectedOutput:
           "Execution 1/4 updated. The MCP Agent will automatically repeat this operation for executions 2733205, 2733306, and 2733407 using their corresponding entityIDs.",
       },
+      {
+        description:
+          "Retry after MANDATORY_TEST_RUN_UDF_MISSING: fill mandatory Test Run UDF 'test_env' per run, then mark both runs Passed",
+        parameters: {
+          entityIDs: "66095069,66095075",
+          entityType: "TCR",
+          qmTsRunId: "2720260",
+          runStatusID: 123268,
+          isBulkOperation: true,
+          udfValuesByRun: {
+            "66095069": { test_env: { value: "QA" } },
+            "66095075": { test_env: { value: "UAT" } },
+          },
+        },
+        expectedOutput:
+          "{ success: true, udfUpdates: [{ tcRunIDs: [66095069], ... }, { tcRunIDs: [66095075], ... }], statusUpdate: {...} }",
+      },
     ],
     hints: [
       "CRITICAL: entityIDs, entityType, qmTsRunId, and runStatusID are REQUIRED parameters",
+      "",
+      "MANDATORY TEST RUN UDF GATE (entityType 'TCR', applies to EVERY target status including Not Run):",
+      "- Before updating, the tool checks each run's Test Run UDFs; fields with allowBlank=false are mandatory.",
+      "- If ANY run is missing a mandatory value, NOTHING is updated and the tool returns code 'MANDATORY_TEST_RUN_UDF_MISSING' with runsMissingFields[{ tcRunID, entityKey, missingFields[{ name, label, fieldID, fieldType, listName? }] }].",
+      "- On that response: show the missing fields per run to the user, ask for the values (never invent them), then call this tool again with the same arguments plus 'udfValuesByRun'.",
+      "- 'udfValuesByRun' format: { '<tcRunID>': { '<udf name>': { value } } }. Keys are tcRunIDs from entityIDs; inner keys are the UDF 'name' (not the 'FLD.' fieldKey). fieldID is optional (auto-filled).",
+      "- Value formats: DATETIMEPICKER 'MM-DD-YYYY'; LOOKUPLIST option id (from lookupOptions[listName][].id); MULTILOOKUPLIST array of ids; CASCADINGLIST { parent, child }.",
+      "- Supplied UDF values are written first (Bulk Update Test Run UDFs), then the status is updated. Non-mandatory UDFs can also be set this way.",
+      "- entityType 'TCSR' (step runs) skips the gate; 'udfValuesByRun' is rejected for TCSR.",
+      "- viewId is auto-resolved (latestViews.TE.viewId); do not pass it unless you have a specific one.",
       "",
       "CRITICAL - ALWAYS FETCH STATUS IDs FROM PROJECT INFO:",
       "NEVER use hardcoded or memorized status IDs. Status IDs are PROJECT-SPECIFIC and must be fetched dynamically.",
@@ -1660,7 +1690,8 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       "Essential for test execution audit trails and compliance requirements",
     ],
     outputDescription:
-      "JSON object with success status, updated execution details, and confirmation message",
+      "On success: { success: true, udfUpdates: [{ tcRunIDs, response }], statusUpdate: <API response> }. " +
+      "When mandatory Test Run UDFs are missing: { success: false, code: 'MANDATORY_TEST_RUN_UDF_MISSING', statusUpdated: false, runsMissingFields, lookupOptions?, _note }.",
     readOnly: false,
     idempotent: false,
   },

@@ -108,7 +108,9 @@ function formatTableValue(value: unknown): string {
   return String(value);
 }
 
-function parseRawUdfs(row: Record<string, any>): Record<string, unknown> {
+export function parseRawUdfs(
+  row: Record<string, any>,
+): Record<string, unknown> {
   if (Array.isArray(row.testRunUdfs)) {
     return Object.fromEntries(
       row.testRunUdfs.map((udf: any) => [udf.name, udf.value]),
