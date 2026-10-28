@@ -487,7 +487,9 @@ describe("Branches & versions – list and update", () => {
   it("GET /pacticipants/{name}/deployed-or-released/versions – lists deployed or released versions", () =>
     provider
       .addInteraction()
-      .given("a pacticipant named ServiceA with deployed versions exists")
+      .given(
+        "pacticipant ServiceA version 1.0.0 is deployed to environment 00000000-0000-0000-0000-000000000002",
+      )
       .uponReceiving(
         "a request to list deployed or released versions of ServiceA",
       )
@@ -516,12 +518,12 @@ describe("Branches & versions – list and update", () => {
     provider
       .addInteraction()
       .given(
-        "a pacticipant named ServiceA with a version deployed to environment 5c6bd4fb-3c2f-4e0c-a2e4-0e1bd2f1a0a1 exists",
+        "pacticipant ServiceA version 1.0.0 is deployed to environment 00000000-0000-0000-0000-000000000002",
       )
       .uponReceiving("a request to list versions of ServiceA in an environment")
       .withRequest(
         "GET",
-        "/pacticipants/ServiceA/environments/5c6bd4fb-3c2f-4e0c-a2e4-0e1bd2f1a0a1/versions",
+        "/pacticipants/ServiceA/environments/00000000-0000-0000-0000-000000000002/versions",
         (b) => {
           b.headers(authHeader);
         },
@@ -536,7 +538,7 @@ describe("Branches & versions – list and update", () => {
         const client = await createClient(mockServer.url);
         const result = await client.listEnvironmentVersions({
           pacticipantName: "ServiceA",
-          environmentId: "5c6bd4fb-3c2f-4e0c-a2e4-0e1bd2f1a0a1",
+          environmentId: "00000000-0000-0000-0000-000000000002",
         });
         expect(Array.isArray(result._embedded?.versions)).toBe(true);
       }));
