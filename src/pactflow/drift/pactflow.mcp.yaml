@@ -186,7 +186,6 @@ tools:
             uuid:
               type: string
           additionalProperties: {}
-          id: Permission
         Action:
           type: object
           properties:
@@ -199,7 +198,6 @@ tools:
             href:
               type: string
           additionalProperties: {}
-          id: Action
         EmbeddedLink:
           type: object
           properties:
@@ -212,7 +210,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
     annotations:
       title: 'Contract Testing: Admin Create Role'
       readOnlyHint: false
@@ -316,7 +313,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         UserRole:
           type: object
           properties:
@@ -335,7 +331,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: UserRole
         Permission:
           type: object
           properties:
@@ -350,7 +345,6 @@ tools:
             uuid:
               type: string
           additionalProperties: {}
-          id: Permission
         UserTeam:
           type: object
           properties:
@@ -369,7 +363,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: UserTeam
     annotations:
       title: 'Contract Testing: Admin Create System Account'
       readOnlyHint: false
@@ -480,7 +473,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedUser
         EmbeddedLink:
           type: object
           properties:
@@ -493,7 +485,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         EmbeddedEnvironment:
           type: object
           properties:
@@ -516,7 +507,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedEnvironment
         EmbeddedNamed:
           type: object
           properties:
@@ -529,7 +519,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedNamed
     annotations:
       title: 'Contract Testing: Admin Create Team'
       readOnlyHint: false
@@ -653,7 +642,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         UserRole:
           type: object
           properties:
@@ -672,7 +660,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: UserRole
         Permission:
           type: object
           properties:
@@ -687,7 +674,6 @@ tools:
             uuid:
               type: string
           additionalProperties: {}
-          id: Permission
         UserTeam:
           type: object
           properties:
@@ -706,7 +692,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: UserTeam
     annotations:
       title: 'Contract Testing: Admin Create User'
       readOnlyHint: false
@@ -884,7 +869,6 @@ tools:
             uuid:
               type: string
           additionalProperties: {}
-          id: Permission
         Action:
           type: object
           properties:
@@ -897,7 +881,6 @@ tools:
             href:
               type: string
           additionalProperties: {}
-          id: Action
         EmbeddedLink:
           type: object
           properties:
@@ -910,7 +893,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
     annotations:
       title: 'Contract Testing: Admin Get Role'
       readOnlyHint: true
@@ -1006,7 +988,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: Token
         EmbeddedLink:
           type: object
           properties:
@@ -1019,7 +1000,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
     annotations:
       title: 'Contract Testing: Admin Get System Account Tokens'
       readOnlyHint: true
@@ -1112,7 +1092,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedUser
         EmbeddedLink:
           type: object
           properties:
@@ -1125,7 +1104,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         EmbeddedEnvironment:
           type: object
           properties:
@@ -1148,7 +1126,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedEnvironment
         EmbeddedTeamUser:
           type: object
           properties:
@@ -1181,7 +1158,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeamUser
         EmbeddedNamed:
           type: object
           properties:
@@ -1194,7 +1170,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedNamed
     annotations:
       title: 'Contract Testing: Admin Get Team'
       readOnlyHint: true
@@ -1306,7 +1281,6 @@ tools:
                     $ref: '#/$defs/UserTeam'
               additionalProperties: {}
           additionalProperties: {}
-          id: User
         EmbeddedLink:
           type: object
           properties:
@@ -1319,7 +1293,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         UserRole:
           type: object
           properties:
@@ -1338,7 +1311,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: UserRole
         Permission:
           type: object
           properties:
@@ -1353,7 +1325,6 @@ tools:
             uuid:
               type: string
           additionalProperties: {}
-          id: Permission
         UserTeam:
           type: object
           properties:
@@ -1372,7 +1343,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: UserTeam
     annotations:
       title: 'Contract Testing: Admin Get Team User'
       readOnlyHint: true
@@ -1475,7 +1445,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         UserRole:
           type: object
           properties:
@@ -1494,7 +1463,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: UserRole
         Permission:
           type: object
           properties:
@@ -1509,7 +1477,6 @@ tools:
             uuid:
               type: string
           additionalProperties: {}
-          id: Permission
         UserTeam:
           type: object
           properties:
@@ -1528,7 +1495,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: UserTeam
     annotations:
       title: 'Contract Testing: Admin Get User'
       readOnlyHint: true
@@ -1647,7 +1613,6 @@ tools:
                     $ref: '#/$defs/UserTeam'
               additionalProperties: {}
           additionalProperties: {}
-          id: User
         EmbeddedLink:
           type: object
           properties:
@@ -1660,7 +1625,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         UserRole:
           type: object
           properties:
@@ -1679,7 +1643,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: UserRole
         Permission:
           type: object
           properties:
@@ -1694,7 +1657,6 @@ tools:
             uuid:
               type: string
           additionalProperties: {}
-          id: Permission
         UserTeam:
           type: object
           properties:
@@ -1713,7 +1675,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: UserTeam
     annotations:
       title: 'Contract Testing: Admin Invite Users'
       readOnlyHint: false
@@ -1789,7 +1750,6 @@ tools:
             uuid:
               type: string
           additionalProperties: {}
-          id: Permission
         EmbeddedLink:
           type: object
           properties:
@@ -1802,7 +1762,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
     annotations:
       title: 'Contract Testing: Admin List Permissions'
       readOnlyHint: true
@@ -1902,7 +1861,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: Role
         Permission:
           type: object
           properties:
@@ -1917,7 +1875,6 @@ tools:
             uuid:
               type: string
           additionalProperties: {}
-          id: Permission
         Action:
           type: object
           properties:
@@ -1930,7 +1887,6 @@ tools:
             href:
               type: string
           additionalProperties: {}
-          id: Action
         EmbeddedLink:
           type: object
           properties:
@@ -1943,7 +1899,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
     annotations:
       title: 'Contract Testing: Admin List Roles'
       readOnlyHint: true
@@ -2047,7 +2002,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeamUser
         EmbeddedLink:
           type: object
           properties:
@@ -2060,7 +2014,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
     annotations:
       title: 'Contract Testing: Admin List Team Users'
       readOnlyHint: true
@@ -2127,7 +2080,6 @@ tools:
             totalPages:
               type: number
           additionalProperties: {}
-          id: Page
         TeamInCollection:
           type: object
           properties:
@@ -2150,7 +2102,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: TeamInCollection
         EmbeddedLink:
           type: object
           properties:
@@ -2163,7 +2114,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
     annotations:
       title: 'Contract Testing: Admin List Teams'
       readOnlyHint: true
@@ -2240,7 +2190,6 @@ tools:
             totalPages:
               type: number
           additionalProperties: {}
-          id: Page
         User:
           type: object
           properties:
@@ -2305,7 +2254,6 @@ tools:
                     $ref: '#/$defs/UserTeam'
               additionalProperties: {}
           additionalProperties: {}
-          id: User
         EmbeddedLink:
           type: object
           properties:
@@ -2318,7 +2266,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         UserRole:
           type: object
           properties:
@@ -2337,7 +2284,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: UserRole
         Permission:
           type: object
           properties:
@@ -2352,7 +2298,6 @@ tools:
             uuid:
               type: string
           additionalProperties: {}
-          id: Permission
         UserTeam:
           type: object
           properties:
@@ -2371,7 +2316,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: UserTeam
     annotations:
       title: 'Contract Testing: Admin List Users'
       readOnlyHint: true
@@ -2480,7 +2424,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeamUser
         EmbeddedLink:
           type: object
           properties:
@@ -2493,7 +2436,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
     annotations:
       title: 'Contract Testing: Admin Patch Team Users'
       readOnlyHint: false
@@ -2647,7 +2589,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: Role
         Permission:
           type: object
           properties:
@@ -2662,7 +2603,6 @@ tools:
             uuid:
               type: string
           additionalProperties: {}
-          id: Permission
         Action:
           type: object
           properties:
@@ -2675,7 +2615,6 @@ tools:
             href:
               type: string
           additionalProperties: {}
-          id: Action
         EmbeddedLink:
           type: object
           properties:
@@ -2688,7 +2627,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
     annotations:
       title: 'Contract Testing: Admin Reset Roles'
       readOnlyHint: false
@@ -2774,7 +2712,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeamUser
         EmbeddedLink:
           type: object
           properties:
@@ -2787,7 +2724,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
     annotations:
       title: 'Contract Testing: Admin Set Team Users'
       readOnlyHint: false
@@ -2925,7 +2861,6 @@ tools:
             uuid:
               type: string
           additionalProperties: {}
-          id: Permission
         Action:
           type: object
           properties:
@@ -2938,7 +2873,6 @@ tools:
             href:
               type: string
           additionalProperties: {}
-          id: Action
         EmbeddedLink:
           type: object
           properties:
@@ -2951,7 +2885,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
     annotations:
       title: 'Contract Testing: Admin Update Role'
       readOnlyHint: false
@@ -3067,7 +3000,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedUser
         EmbeddedLink:
           type: object
           properties:
@@ -3080,7 +3012,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         EmbeddedEnvironment:
           type: object
           properties:
@@ -3103,7 +3034,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedEnvironment
         EmbeddedNamed:
           type: object
           properties:
@@ -3116,7 +3046,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedNamed
     annotations:
       title: 'Contract Testing: Admin Update Team'
       readOnlyHint: false
@@ -3239,7 +3168,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         UserRole:
           type: object
           properties:
@@ -3258,7 +3186,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: UserRole
         Permission:
           type: object
           properties:
@@ -3273,7 +3200,6 @@ tools:
             uuid:
               type: string
           additionalProperties: {}
-          id: Permission
         UserTeam:
           type: object
           properties:
@@ -3292,7 +3218,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: UserTeam
     annotations:
       title: 'Contract Testing: Admin Update User'
       readOnlyHint: false
@@ -3381,10 +3306,10 @@ tools:
           type: object
           properties:
             deployable:
-              anyOf:
-                - type: boolean
-                - type: 'null'
               description: The property that indicates whether or not the pacticipant version is safe to deploy.
+              type:
+                - boolean
+                - 'null'
             failed:
               type: number
             reason:
@@ -3411,7 +3336,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: MatrixPacticipant
         MatrixPacticipantVersion:
           type: object
           properties:
@@ -3455,7 +3379,6 @@ tools:
                     additionalProperties: {}
                 additionalProperties: {}
           additionalProperties: {}
-          id: MatrixPacticipantVersion
         EmbeddedBranchVersion:
           type: object
           properties:
@@ -3470,7 +3393,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedBranchVersion
         EmbeddedLink:
           type: object
           properties:
@@ -3483,7 +3405,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         EmbeddedEnvironment:
           type: object
           properties:
@@ -3506,7 +3427,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedEnvironment
         Notice:
           type: object
           properties:
@@ -3527,7 +3447,6 @@ tools:
                 - type: string
                   const: error
           additionalProperties: {}
-          id: Notice
     annotations:
       title: 'Contract Testing: Can I Deploy'
       readOnlyHint: true
@@ -3661,7 +3580,6 @@ tools:
               properties: {}
               additionalProperties: {}
           additionalProperties: {}
-          id: Contact
         EmbeddedTeam:
           type: object
           properties:
@@ -3678,7 +3596,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeam
         EmbeddedLink:
           type: object
           properties:
@@ -3691,7 +3608,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
     annotations:
       title: 'Contract Testing: Create Environment'
       readOnlyHint: false
@@ -3842,7 +3758,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedNamed
         EmbeddedLink:
           type: object
           properties:
@@ -3855,7 +3770,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         EmbeddedTeam:
           type: object
           properties:
@@ -3872,7 +3786,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeam
     annotations:
       title: 'Contract Testing: Create Pacticipant'
       readOnlyHint: false
@@ -3905,9 +3818,9 @@ tools:
           description: Value of the secret
         description:
           description: Description of the secret
-          anyOf:
-            - type: string
-            - type: 'null'
+          type:
+            - string
+            - 'null'
         teamUuid:
           description: UUID of the owning team (cannot be changed after creation)
           type: string
@@ -3923,16 +3836,16 @@ tools:
         createdAt:
           type: string
         description:
-          anyOf:
-            - type: string
-            - type: 'null'
+          type:
+            - string
+            - 'null'
         name:
           type: string
         teamUuid:
-          anyOf:
-            - type: string
-            - type: 'null'
           description: Where no team is provided, the secret is not attached to a team and can only be modified by users with the "secret:manage:*" permission.
+          type:
+            - string
+            - 'null'
         updatedAt:
           type: string
         uuid:
@@ -3993,7 +3906,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: Team
         EmbeddedUser:
           type: object
           properties:
@@ -4018,7 +3930,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedUser
         EmbeddedLink:
           type: object
           properties:
@@ -4031,7 +3942,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         EmbeddedEnvironment:
           type: object
           properties:
@@ -4054,7 +3964,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedEnvironment
         EmbeddedTeamUser:
           type: object
           properties:
@@ -4087,7 +3996,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeamUser
         EmbeddedNamed:
           type: object
           properties:
@@ -4100,7 +4008,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedNamed
     annotations:
       title: 'Contract Testing: Create Secret'
       readOnlyHint: false
@@ -4249,9 +4156,9 @@ tools:
               type: string
           additionalProperties: {}
         teamUuid:
-          anyOf:
-            - type: string
-            - type: 'null'
+          type:
+            - string
+            - 'null'
         createdAt:
           type: string
         updatedAt:
@@ -4298,7 +4205,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeam
         EmbeddedLink:
           type: object
           properties:
@@ -4311,7 +4217,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
     annotations:
       title: 'Contract Testing: Create Webhook'
       readOnlyHint: false
@@ -4640,7 +4545,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
     annotations:
       title: 'Contract Testing: Execute Webhook'
       readOnlyHint: false
@@ -4791,9 +4695,9 @@ tools:
                   description: Response status codes to include (e.g., [200, '2XX', 404]). Use 'X' as wildcard (e.g., '2XX' for 200-299). Defaults to successful codes (2XX)
                   type: array
                   items:
-                    anyOf:
-                      - type: number
-                      - type: string
+                    type:
+                      - number
+                      - string
                 operationId:
                   description: OpenAPI operation ID to match (e.g., 'getUserById', 'get*'). Supports glob patterns
                   type: string
@@ -4836,9 +4740,9 @@ tools:
       type: object
       properties:
         id:
-          anyOf:
-            - type: string
-            - type: 'null'
+          type:
+            - string
+            - 'null'
         code:
           type: string
         language:
@@ -4986,7 +4890,6 @@ tools:
             uuid:
               type: string
           additionalProperties: {}
-          id: HttpAuditEvent
         HttpRequestPayload:
           type: object
           properties:
@@ -4997,13 +4900,13 @@ tools:
             queryString:
               type: string
             referer:
-              anyOf:
-                - type: string
-                - type: 'null'
+              type:
+                - string
+                - 'null'
             remoteHost:
-              anyOf:
-                - type: string
-                - type: 'null'
+              type:
+                - string
+                - 'null'
             remoteAddress:
               type: string
             requestId:
@@ -5011,14 +4914,12 @@ tools:
             userAgent:
               type: string
           additionalProperties: {}
-          id: HttpRequestPayload
         HttpAuditResponse:
           type: object
           properties:
             status:
               type: number
           additionalProperties: {}
-          id: HttpAuditResponse
         AuthFailureEvent:
           type: object
           properties:
@@ -5039,7 +4940,6 @@ tools:
             uuid:
               type: string
           additionalProperties: {}
-          id: AuthFailureEvent
         CustomEvent:
           type: object
           properties:
@@ -5060,14 +4960,12 @@ tools:
             uuid:
               type: string
           additionalProperties: {}
-          id: CustomEvent
         CustomPayload:
           type: object
           properties:
             identityProviderId:
               type: string
           additionalProperties: {}
-          id: CustomPayload
         EmbeddedLink:
           type: object
           properties:
@@ -5080,7 +4978,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
     annotations:
       title: 'Contract Testing: Get Audit Log'
       readOnlyHint: true
@@ -5191,7 +5088,6 @@ tools:
             href:
               type: string
           additionalProperties: {}
-          id: Action
         PacticipantVersionWithoutLinks:
           type: object
           properties:
@@ -5225,7 +5121,6 @@ tools:
                     $ref: '#/$defs/EmbeddedReleasedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: PacticipantVersionWithoutLinks
         EmbeddedBranchVersion:
           type: object
           properties:
@@ -5240,7 +5135,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedBranchVersion
         EmbeddedLink:
           type: object
           properties:
@@ -5253,7 +5147,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         EmbeddedNamed:
           type: object
           properties:
@@ -5266,7 +5159,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedNamed
         EmbeddedDeployedVersion:
           type: object
           properties:
@@ -5297,7 +5189,6 @@ tools:
                   $ref: '#/$defs/EmbeddedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedDeployedVersion
         Environment:
           type: object
           properties:
@@ -5344,7 +5235,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: Environment
         Contact:
           type: object
           properties:
@@ -5355,7 +5245,6 @@ tools:
               properties: {}
               additionalProperties: {}
           additionalProperties: {}
-          id: Contact
         EmbeddedTeam:
           type: object
           properties:
@@ -5372,7 +5261,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeam
         EmbeddedVersion:
           type: object
           properties:
@@ -5385,7 +5273,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedVersion
         EmbeddedReleasedVersion:
           type: object
           properties:
@@ -5412,7 +5299,6 @@ tools:
                   $ref: '#/$defs/EmbeddedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedReleasedVersion
         CrossContractVerificationResultsInConsumerContract:
           type: object
           properties:
@@ -5429,21 +5315,18 @@ tools:
             verifierVersion:
               type: string
           additionalProperties: {}
-          id: CrossContractVerificationResultsInConsumerContract
         VerificationSuccess:
           type: object
           properties:
             success:
               type: boolean
           additionalProperties: {}
-          id: VerificationSuccess
         ConsumerContract:
           type: object
           properties:
             content:
               type: string
           additionalProperties: {}
-          id: ConsumerContract
     annotations:
       title: 'Contract Testing: Get BDCT Consumer by Consumer Version'
       readOnlyHint: true
@@ -5542,7 +5425,6 @@ tools:
             href:
               type: string
           additionalProperties: {}
-          id: Action
         PacticipantVersionWithoutLinks:
           type: object
           properties:
@@ -5576,7 +5458,6 @@ tools:
                     $ref: '#/$defs/EmbeddedReleasedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: PacticipantVersionWithoutLinks
         EmbeddedBranchVersion:
           type: object
           properties:
@@ -5591,7 +5472,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedBranchVersion
         EmbeddedLink:
           type: object
           properties:
@@ -5604,7 +5484,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         EmbeddedNamed:
           type: object
           properties:
@@ -5617,7 +5496,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedNamed
         EmbeddedDeployedVersion:
           type: object
           properties:
@@ -5648,7 +5526,6 @@ tools:
                   $ref: '#/$defs/EmbeddedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedDeployedVersion
         Environment:
           type: object
           properties:
@@ -5695,7 +5572,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: Environment
         Contact:
           type: object
           properties:
@@ -5706,7 +5582,6 @@ tools:
               properties: {}
               additionalProperties: {}
           additionalProperties: {}
-          id: Contact
         EmbeddedTeam:
           type: object
           properties:
@@ -5723,7 +5598,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeam
         EmbeddedVersion:
           type: object
           properties:
@@ -5736,7 +5610,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedVersion
         EmbeddedReleasedVersion:
           type: object
           properties:
@@ -5763,14 +5636,12 @@ tools:
                   $ref: '#/$defs/EmbeddedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedReleasedVersion
         VerificationSuccess:
           type: object
           properties:
             success:
               type: boolean
           additionalProperties: {}
-          id: VerificationSuccess
     annotations:
       title: 'Contract Testing: Get BDCT Consumer Contract Verification Results'
       readOnlyHint: true
@@ -5871,7 +5742,6 @@ tools:
             href:
               type: string
           additionalProperties: {}
-          id: Action
         PacticipantVersionWithoutLinks:
           type: object
           properties:
@@ -5905,7 +5775,6 @@ tools:
                     $ref: '#/$defs/EmbeddedReleasedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: PacticipantVersionWithoutLinks
         EmbeddedBranchVersion:
           type: object
           properties:
@@ -5920,7 +5789,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedBranchVersion
         EmbeddedLink:
           type: object
           properties:
@@ -5933,7 +5801,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         EmbeddedNamed:
           type: object
           properties:
@@ -5946,7 +5813,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedNamed
         EmbeddedDeployedVersion:
           type: object
           properties:
@@ -5977,7 +5843,6 @@ tools:
                   $ref: '#/$defs/EmbeddedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedDeployedVersion
         Environment:
           type: object
           properties:
@@ -6024,7 +5889,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: Environment
         Contact:
           type: object
           properties:
@@ -6035,7 +5899,6 @@ tools:
               properties: {}
               additionalProperties: {}
           additionalProperties: {}
-          id: Contact
         EmbeddedTeam:
           type: object
           properties:
@@ -6052,7 +5915,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeam
         EmbeddedVersion:
           type: object
           properties:
@@ -6065,7 +5927,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedVersion
         EmbeddedReleasedVersion:
           type: object
           properties:
@@ -6092,7 +5953,6 @@ tools:
                   $ref: '#/$defs/EmbeddedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedReleasedVersion
         CrossContractVerificationResultsInConsumerContract:
           type: object
           properties:
@@ -6109,21 +5969,18 @@ tools:
             verifierVersion:
               type: string
           additionalProperties: {}
-          id: CrossContractVerificationResultsInConsumerContract
         VerificationSuccess:
           type: object
           properties:
             success:
               type: boolean
           additionalProperties: {}
-          id: VerificationSuccess
         ConsumerContract:
           type: object
           properties:
             content:
               type: string
           additionalProperties: {}
-          id: ConsumerContract
     annotations:
       title: 'Contract Testing: Get BDCT Consumer Contracts'
       readOnlyHint: true
@@ -6232,7 +6089,6 @@ tools:
             href:
               type: string
           additionalProperties: {}
-          id: Action
         PacticipantVersionWithoutLinks:
           type: object
           properties:
@@ -6266,7 +6122,6 @@ tools:
                     $ref: '#/$defs/EmbeddedReleasedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: PacticipantVersionWithoutLinks
         EmbeddedBranchVersion:
           type: object
           properties:
@@ -6281,7 +6136,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedBranchVersion
         EmbeddedLink:
           type: object
           properties:
@@ -6294,7 +6148,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         EmbeddedNamed:
           type: object
           properties:
@@ -6307,7 +6160,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedNamed
         EmbeddedDeployedVersion:
           type: object
           properties:
@@ -6338,7 +6190,6 @@ tools:
                   $ref: '#/$defs/EmbeddedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedDeployedVersion
         Environment:
           type: object
           properties:
@@ -6385,7 +6236,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: Environment
         Contact:
           type: object
           properties:
@@ -6396,7 +6246,6 @@ tools:
               properties: {}
               additionalProperties: {}
           additionalProperties: {}
-          id: Contact
         EmbeddedTeam:
           type: object
           properties:
@@ -6413,7 +6262,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeam
         EmbeddedVersion:
           type: object
           properties:
@@ -6426,7 +6274,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedVersion
         EmbeddedReleasedVersion:
           type: object
           properties:
@@ -6453,14 +6300,12 @@ tools:
                   $ref: '#/$defs/EmbeddedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedReleasedVersion
         VerificationSuccess:
           type: object
           properties:
             success:
               type: boolean
           additionalProperties: {}
-          id: VerificationSuccess
     annotations:
       title: 'Contract Testing: Get BDCT Consumer Pact Test Results by Consumer'
       readOnlyHint: true
@@ -6559,7 +6404,6 @@ tools:
             href:
               type: string
           additionalProperties: {}
-          id: Action
         PacticipantVersionWithoutLinks:
           type: object
           properties:
@@ -6593,7 +6437,6 @@ tools:
                     $ref: '#/$defs/EmbeddedReleasedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: PacticipantVersionWithoutLinks
         EmbeddedBranchVersion:
           type: object
           properties:
@@ -6608,7 +6451,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedBranchVersion
         EmbeddedLink:
           type: object
           properties:
@@ -6621,7 +6463,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         EmbeddedNamed:
           type: object
           properties:
@@ -6634,7 +6475,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedNamed
         EmbeddedDeployedVersion:
           type: object
           properties:
@@ -6665,7 +6505,6 @@ tools:
                   $ref: '#/$defs/EmbeddedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedDeployedVersion
         Environment:
           type: object
           properties:
@@ -6712,7 +6551,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: Environment
         Contact:
           type: object
           properties:
@@ -6723,7 +6561,6 @@ tools:
               properties: {}
               additionalProperties: {}
           additionalProperties: {}
-          id: Contact
         EmbeddedTeam:
           type: object
           properties:
@@ -6740,7 +6577,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeam
         EmbeddedVersion:
           type: object
           properties:
@@ -6753,7 +6589,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedVersion
         EmbeddedReleasedVersion:
           type: object
           properties:
@@ -6780,7 +6615,6 @@ tools:
                   $ref: '#/$defs/EmbeddedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedReleasedVersion
         CrossContractVerificationResultsInConsumerContract:
           type: object
           properties:
@@ -6797,14 +6631,12 @@ tools:
             verifierVersion:
               type: string
           additionalProperties: {}
-          id: CrossContractVerificationResultsInConsumerContract
         VerificationSuccess:
           type: object
           properties:
             success:
               type: boolean
           additionalProperties: {}
-          id: VerificationSuccess
     annotations:
       title: 'Contract Testing: Get BDCT Cross-Contract Verification Results'
       readOnlyHint: true
@@ -6915,7 +6747,6 @@ tools:
             href:
               type: string
           additionalProperties: {}
-          id: Action
         PacticipantVersionWithoutLinks:
           type: object
           properties:
@@ -6949,7 +6780,6 @@ tools:
                     $ref: '#/$defs/EmbeddedReleasedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: PacticipantVersionWithoutLinks
         EmbeddedBranchVersion:
           type: object
           properties:
@@ -6964,7 +6794,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedBranchVersion
         EmbeddedLink:
           type: object
           properties:
@@ -6977,7 +6806,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         EmbeddedNamed:
           type: object
           properties:
@@ -6990,7 +6818,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedNamed
         EmbeddedDeployedVersion:
           type: object
           properties:
@@ -7021,7 +6848,6 @@ tools:
                   $ref: '#/$defs/EmbeddedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedDeployedVersion
         Environment:
           type: object
           properties:
@@ -7068,7 +6894,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: Environment
         Contact:
           type: object
           properties:
@@ -7079,7 +6904,6 @@ tools:
               properties: {}
               additionalProperties: {}
           additionalProperties: {}
-          id: Contact
         EmbeddedTeam:
           type: object
           properties:
@@ -7096,7 +6920,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeam
         EmbeddedVersion:
           type: object
           properties:
@@ -7109,7 +6932,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedVersion
         EmbeddedReleasedVersion:
           type: object
           properties:
@@ -7136,14 +6958,12 @@ tools:
                   $ref: '#/$defs/EmbeddedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedReleasedVersion
         VerificationSuccess:
           type: object
           properties:
             success:
               type: boolean
           additionalProperties: {}
-          id: VerificationSuccess
         ProviderContractVerificationResultsInProviderContract:
           type: object
           properties:
@@ -7156,7 +6976,6 @@ tools:
             verifier:
               type: string
           additionalProperties: {}
-          id: ProviderContractVerificationResultsInProviderContract
         ProviderContract:
           type: object
           properties:
@@ -7169,7 +6988,6 @@ tools:
             createdAt:
               type: string
           additionalProperties: {}
-          id: ProviderContract
     annotations:
       title: 'Contract Testing: Get BDCT Provider by Consumer Version'
       readOnlyHint: true
@@ -7278,7 +7096,6 @@ tools:
             href:
               type: string
           additionalProperties: {}
-          id: Action
         PacticipantVersionWithoutLinks:
           type: object
           properties:
@@ -7312,7 +7129,6 @@ tools:
                     $ref: '#/$defs/EmbeddedReleasedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: PacticipantVersionWithoutLinks
         EmbeddedBranchVersion:
           type: object
           properties:
@@ -7327,7 +7143,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedBranchVersion
         EmbeddedLink:
           type: object
           properties:
@@ -7340,7 +7155,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         EmbeddedNamed:
           type: object
           properties:
@@ -7353,7 +7167,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedNamed
         EmbeddedDeployedVersion:
           type: object
           properties:
@@ -7384,7 +7197,6 @@ tools:
                   $ref: '#/$defs/EmbeddedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedDeployedVersion
         Environment:
           type: object
           properties:
@@ -7431,7 +7243,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: Environment
         Contact:
           type: object
           properties:
@@ -7442,7 +7253,6 @@ tools:
               properties: {}
               additionalProperties: {}
           additionalProperties: {}
-          id: Contact
         EmbeddedTeam:
           type: object
           properties:
@@ -7459,7 +7269,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeam
         EmbeddedVersion:
           type: object
           properties:
@@ -7472,7 +7281,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedVersion
         EmbeddedReleasedVersion:
           type: object
           properties:
@@ -7499,14 +7307,12 @@ tools:
                   $ref: '#/$defs/EmbeddedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedReleasedVersion
         VerificationSuccess:
           type: object
           properties:
             success:
               type: boolean
           additionalProperties: {}
-          id: VerificationSuccess
         ProviderContractVerificationResultsInProviderContract:
           type: object
           properties:
@@ -7519,7 +7325,6 @@ tools:
             verifier:
               type: string
           additionalProperties: {}
-          id: ProviderContractVerificationResultsInProviderContract
     annotations:
       title: 'Contract Testing: Get BDCT Provider Check Results by Consumer'
       readOnlyHint: true
@@ -7620,7 +7425,6 @@ tools:
             href:
               type: string
           additionalProperties: {}
-          id: Action
         PacticipantVersionWithoutLinks:
           type: object
           properties:
@@ -7654,7 +7458,6 @@ tools:
                     $ref: '#/$defs/EmbeddedReleasedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: PacticipantVersionWithoutLinks
         EmbeddedBranchVersion:
           type: object
           properties:
@@ -7669,7 +7472,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedBranchVersion
         EmbeddedLink:
           type: object
           properties:
@@ -7682,7 +7484,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         EmbeddedNamed:
           type: object
           properties:
@@ -7695,7 +7496,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedNamed
         EmbeddedDeployedVersion:
           type: object
           properties:
@@ -7726,7 +7526,6 @@ tools:
                   $ref: '#/$defs/EmbeddedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedDeployedVersion
         Environment:
           type: object
           properties:
@@ -7773,7 +7572,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: Environment
         Contact:
           type: object
           properties:
@@ -7784,7 +7582,6 @@ tools:
               properties: {}
               additionalProperties: {}
           additionalProperties: {}
-          id: Contact
         EmbeddedTeam:
           type: object
           properties:
@@ -7801,7 +7598,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeam
         EmbeddedVersion:
           type: object
           properties:
@@ -7814,7 +7610,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedVersion
         EmbeddedReleasedVersion:
           type: object
           properties:
@@ -7841,14 +7636,12 @@ tools:
                   $ref: '#/$defs/EmbeddedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedReleasedVersion
         VerificationSuccess:
           type: object
           properties:
             success:
               type: boolean
           additionalProperties: {}
-          id: VerificationSuccess
         ProviderContractVerificationResultsInProviderContract:
           type: object
           properties:
@@ -7861,7 +7654,6 @@ tools:
             verifier:
               type: string
           additionalProperties: {}
-          id: ProviderContractVerificationResultsInProviderContract
         ProviderContract:
           type: object
           properties:
@@ -7874,7 +7666,6 @@ tools:
             createdAt:
               type: string
           additionalProperties: {}
-          id: ProviderContract
     annotations:
       title: 'Contract Testing: Get BDCT Provider Contract'
       readOnlyHint: true
@@ -7973,7 +7764,6 @@ tools:
             href:
               type: string
           additionalProperties: {}
-          id: Action
         PacticipantVersionWithoutLinks:
           type: object
           properties:
@@ -8007,7 +7797,6 @@ tools:
                     $ref: '#/$defs/EmbeddedReleasedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: PacticipantVersionWithoutLinks
         EmbeddedBranchVersion:
           type: object
           properties:
@@ -8022,7 +7811,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedBranchVersion
         EmbeddedLink:
           type: object
           properties:
@@ -8035,7 +7823,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         EmbeddedNamed:
           type: object
           properties:
@@ -8048,7 +7835,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedNamed
         EmbeddedDeployedVersion:
           type: object
           properties:
@@ -8079,7 +7865,6 @@ tools:
                   $ref: '#/$defs/EmbeddedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedDeployedVersion
         Environment:
           type: object
           properties:
@@ -8126,7 +7911,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: Environment
         Contact:
           type: object
           properties:
@@ -8137,7 +7921,6 @@ tools:
               properties: {}
               additionalProperties: {}
           additionalProperties: {}
-          id: Contact
         EmbeddedTeam:
           type: object
           properties:
@@ -8154,7 +7937,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeam
         EmbeddedVersion:
           type: object
           properties:
@@ -8167,7 +7949,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedVersion
         EmbeddedReleasedVersion:
           type: object
           properties:
@@ -8194,14 +7975,12 @@ tools:
                   $ref: '#/$defs/EmbeddedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedReleasedVersion
         VerificationSuccess:
           type: object
           properties:
             success:
               type: boolean
           additionalProperties: {}
-          id: VerificationSuccess
         ProviderContractVerificationResultsInProviderContract:
           type: object
           properties:
@@ -8214,7 +7993,6 @@ tools:
             verifier:
               type: string
           additionalProperties: {}
-          id: ProviderContractVerificationResultsInProviderContract
     annotations:
       title: 'Contract Testing: Get BDCT Provider Contract Verification Results'
       readOnlyHint: true
@@ -8323,7 +8101,6 @@ tools:
             href:
               type: string
           additionalProperties: {}
-          id: Action
         PacticipantVersionWithoutLinks:
           type: object
           properties:
@@ -8357,7 +8134,6 @@ tools:
                     $ref: '#/$defs/EmbeddedReleasedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: PacticipantVersionWithoutLinks
         EmbeddedBranchVersion:
           type: object
           properties:
@@ -8372,7 +8148,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedBranchVersion
         EmbeddedLink:
           type: object
           properties:
@@ -8385,7 +8160,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         EmbeddedNamed:
           type: object
           properties:
@@ -8398,7 +8172,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedNamed
         EmbeddedDeployedVersion:
           type: object
           properties:
@@ -8429,7 +8202,6 @@ tools:
                   $ref: '#/$defs/EmbeddedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedDeployedVersion
         Environment:
           type: object
           properties:
@@ -8476,7 +8248,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: Environment
         Contact:
           type: object
           properties:
@@ -8487,7 +8258,6 @@ tools:
               properties: {}
               additionalProperties: {}
           additionalProperties: {}
-          id: Contact
         EmbeddedTeam:
           type: object
           properties:
@@ -8504,7 +8274,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeam
         EmbeddedVersion:
           type: object
           properties:
@@ -8517,7 +8286,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedVersion
         EmbeddedReleasedVersion:
           type: object
           properties:
@@ -8544,7 +8312,6 @@ tools:
                   $ref: '#/$defs/EmbeddedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedReleasedVersion
         CrossContractVerificationResultsInConsumerContract:
           type: object
           properties:
@@ -8561,14 +8328,12 @@ tools:
             verifierVersion:
               type: string
           additionalProperties: {}
-          id: CrossContractVerificationResultsInConsumerContract
         VerificationSuccess:
           type: object
           properties:
             success:
               type: boolean
           additionalProperties: {}
-          id: VerificationSuccess
     annotations:
       title: 'Contract Testing: Get BDCT X-Contract Test Results by Consumer'
       readOnlyHint: true
@@ -8628,7 +8393,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
     annotations:
       title: 'Contract Testing: Get Branch'
       readOnlyHint: true
@@ -8719,7 +8483,6 @@ tools:
             totalPages:
               type: number
           additionalProperties: {}
-          id: Page
         PacticipantVersionInCollection:
           type: object
           properties:
@@ -8773,7 +8536,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: PacticipantVersionInCollection
         EmbeddedBranchVersion:
           type: object
           properties:
@@ -8788,7 +8550,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedBranchVersion
         EmbeddedLink:
           type: object
           properties:
@@ -8801,7 +8562,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         EmbeddedNamed:
           type: object
           properties:
@@ -8814,7 +8574,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedNamed
         EmbeddedDeployedVersion:
           type: object
           properties:
@@ -8845,7 +8604,6 @@ tools:
                   $ref: '#/$defs/EmbeddedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedDeployedVersion
         Environment:
           type: object
           properties:
@@ -8892,7 +8650,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: Environment
         Contact:
           type: object
           properties:
@@ -8903,7 +8660,6 @@ tools:
               properties: {}
               additionalProperties: {}
           additionalProperties: {}
-          id: Contact
         EmbeddedTeam:
           type: object
           properties:
@@ -8920,7 +8676,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeam
         EmbeddedVersion:
           type: object
           properties:
@@ -8933,7 +8688,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedVersion
         EmbeddedReleasedVersion:
           type: object
           properties:
@@ -8960,7 +8714,6 @@ tools:
                   $ref: '#/$defs/EmbeddedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedReleasedVersion
     annotations:
       title: 'Contract Testing: Get Branch Versions'
       readOnlyHint: true
@@ -9058,7 +8811,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         UserRole:
           type: object
           properties:
@@ -9077,7 +8829,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: UserRole
         Permission:
           type: object
           properties:
@@ -9092,7 +8843,6 @@ tools:
             uuid:
               type: string
           additionalProperties: {}
-          id: Permission
         UserTeam:
           type: object
           properties:
@@ -9111,7 +8861,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: UserTeam
     annotations:
       title: 'Contract Testing: Get Current User'
       readOnlyHint: true
@@ -9213,7 +8962,6 @@ tools:
                   $ref: '#/$defs/EmbeddedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedDeployedVersion
         EmbeddedLink:
           type: object
           properties:
@@ -9226,7 +8974,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         Environment:
           type: object
           properties:
@@ -9273,7 +9020,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: Environment
         Contact:
           type: object
           properties:
@@ -9284,7 +9030,6 @@ tools:
               properties: {}
               additionalProperties: {}
           additionalProperties: {}
-          id: Contact
         EmbeddedTeam:
           type: object
           properties:
@@ -9301,7 +9046,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeam
         EmbeddedNamed:
           type: object
           properties:
@@ -9314,7 +9058,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedNamed
         EmbeddedVersion:
           type: object
           properties:
@@ -9327,7 +9070,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedVersion
     annotations:
       title: 'Contract Testing: Get Currently Deployed Versions'
       readOnlyHint: true
@@ -9425,7 +9167,6 @@ tools:
                   $ref: '#/$defs/EmbeddedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedReleasedVersion
         EmbeddedLink:
           type: object
           properties:
@@ -9438,7 +9179,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         Environment:
           type: object
           properties:
@@ -9485,7 +9225,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: Environment
         Contact:
           type: object
           properties:
@@ -9496,7 +9235,6 @@ tools:
               properties: {}
               additionalProperties: {}
           additionalProperties: {}
-          id: Contact
         EmbeddedTeam:
           type: object
           properties:
@@ -9513,7 +9251,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeam
         EmbeddedNamed:
           type: object
           properties:
@@ -9526,7 +9263,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedNamed
         EmbeddedVersion:
           type: object
           properties:
@@ -9539,7 +9275,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedVersion
     annotations:
       title: 'Contract Testing: Get Currently Supported Versions'
       readOnlyHint: true
@@ -9651,7 +9386,6 @@ tools:
                   $ref: '#/$defs/EmbeddedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedDeployedVersion
         EmbeddedLink:
           type: object
           properties:
@@ -9664,7 +9398,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         Environment:
           type: object
           properties:
@@ -9711,7 +9444,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: Environment
         Contact:
           type: object
           properties:
@@ -9722,7 +9454,6 @@ tools:
               properties: {}
               additionalProperties: {}
           additionalProperties: {}
-          id: Contact
         EmbeddedTeam:
           type: object
           properties:
@@ -9739,7 +9470,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeam
         EmbeddedNamed:
           type: object
           properties:
@@ -9752,7 +9482,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedNamed
         EmbeddedVersion:
           type: object
           properties:
@@ -9765,7 +9494,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedVersion
     annotations:
       title: 'Contract Testing: Get Deployed Versions for Version'
       readOnlyHint: true
@@ -9848,7 +9576,6 @@ tools:
               properties: {}
               additionalProperties: {}
           additionalProperties: {}
-          id: Contact
         EmbeddedTeam:
           type: object
           properties:
@@ -9865,7 +9592,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeam
         EmbeddedLink:
           type: object
           properties:
@@ -9878,7 +9604,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
     annotations:
       title: 'Contract Testing: Get Environment'
       readOnlyHint: true
@@ -9964,7 +9689,6 @@ tools:
             totalPages:
               type: number
           additionalProperties: {}
-          id: Page
         Integration:
           type: object
           properties:
@@ -10001,7 +9725,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: Integration
         EmbeddedLink:
           type: object
           properties:
@@ -10014,7 +9737,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
     annotations:
       title: 'Contract Testing: Get Integrations by Team'
       readOnlyHint: true
@@ -10120,7 +9842,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedBranchVersion
         EmbeddedLink:
           type: object
           properties:
@@ -10133,7 +9854,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         EmbeddedNamed:
           type: object
           properties:
@@ -10146,7 +9866,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedNamed
         EmbeddedDeployedVersion:
           type: object
           properties:
@@ -10177,7 +9896,6 @@ tools:
                   $ref: '#/$defs/EmbeddedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedDeployedVersion
         Environment:
           type: object
           properties:
@@ -10224,7 +9942,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: Environment
         Contact:
           type: object
           properties:
@@ -10235,7 +9952,6 @@ tools:
               properties: {}
               additionalProperties: {}
           additionalProperties: {}
-          id: Contact
         EmbeddedTeam:
           type: object
           properties:
@@ -10252,7 +9968,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeam
         EmbeddedVersion:
           type: object
           properties:
@@ -10265,7 +9980,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedVersion
         EmbeddedReleasedVersion:
           type: object
           properties:
@@ -10292,7 +10006,6 @@ tools:
                   $ref: '#/$defs/EmbeddedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedReleasedVersion
     annotations:
       title: 'Contract Testing: Get Latest Pacticipant Version'
       readOnlyHint: true
@@ -10367,13 +10080,13 @@ tools:
             count:
               type: number
             first:
-              anyOf:
-                - type: string
-                - type: 'null'
+              type:
+                - string
+                - 'null'
             last:
-              anyOf:
-                - type: string
-                - type: 'null'
+              type:
+                - string
+                - 'null'
           additionalProperties: {}
         pactVersions:
           type: object
@@ -10487,13 +10200,13 @@ tools:
             distinctCount:
               type: number
             first:
-              anyOf:
-                - type: string
-                - type: 'null'
+              type:
+                - string
+                - 'null'
             last:
-              anyOf:
-                - type: string
-                - type: 'null'
+              type:
+                - string
+                - 'null'
           additionalProperties: {}
         verificationResultsPerPactVersion:
           type: object
@@ -10645,7 +10358,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedNamed
         EmbeddedLink:
           type: object
           properties:
@@ -10658,7 +10370,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         EmbeddedTeam:
           type: object
           properties:
@@ -10675,7 +10386,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeam
     annotations:
       title: 'Contract Testing: Get Pacticipant'
       readOnlyHint: true
@@ -10831,7 +10541,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
     annotations:
       title: 'Contract Testing: Get Pacticipant Network'
       readOnlyHint: true
@@ -10938,7 +10647,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedBranchVersion
         EmbeddedLink:
           type: object
           properties:
@@ -10951,7 +10659,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         EmbeddedNamed:
           type: object
           properties:
@@ -10964,7 +10671,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedNamed
         EmbeddedDeployedVersion:
           type: object
           properties:
@@ -10995,7 +10701,6 @@ tools:
                   $ref: '#/$defs/EmbeddedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedDeployedVersion
         Environment:
           type: object
           properties:
@@ -11042,7 +10747,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: Environment
         Contact:
           type: object
           properties:
@@ -11053,7 +10757,6 @@ tools:
               properties: {}
               additionalProperties: {}
           additionalProperties: {}
-          id: Contact
         EmbeddedTeam:
           type: object
           properties:
@@ -11070,7 +10773,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeam
         EmbeddedVersion:
           type: object
           properties:
@@ -11083,7 +10785,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedVersion
         EmbeddedReleasedVersion:
           type: object
           properties:
@@ -11110,7 +10811,6 @@ tools:
                   $ref: '#/$defs/EmbeddedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedReleasedVersion
     annotations:
       title: 'Contract Testing: Get Pacticipant Version'
       readOnlyHint: true
@@ -11243,7 +10943,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: VerifiablePact
         EmbeddedLink:
           type: object
           properties:
@@ -11256,7 +10955,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
     annotations:
       title: 'Contract Testing: Get Pacts for Verification'
       readOnlyHint: true
@@ -11444,7 +11142,6 @@ tools:
                   $ref: '#/$defs/EmbeddedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedReleasedVersion
         EmbeddedLink:
           type: object
           properties:
@@ -11457,7 +11154,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         Environment:
           type: object
           properties:
@@ -11504,7 +11200,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: Environment
         Contact:
           type: object
           properties:
@@ -11515,7 +11210,6 @@ tools:
               properties: {}
               additionalProperties: {}
           additionalProperties: {}
-          id: Contact
         EmbeddedTeam:
           type: object
           properties:
@@ -11532,7 +11226,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeam
         EmbeddedNamed:
           type: object
           properties:
@@ -11545,7 +11238,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedNamed
         EmbeddedVersion:
           type: object
           properties:
@@ -11558,7 +11250,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedVersion
     annotations:
       title: 'Contract Testing: Get Released Versions for Version'
       readOnlyHint: true
@@ -11590,16 +11281,16 @@ tools:
         createdAt:
           type: string
         description:
-          anyOf:
-            - type: string
-            - type: 'null'
+          type:
+            - string
+            - 'null'
         name:
           type: string
         teamUuid:
-          anyOf:
-            - type: string
-            - type: 'null'
           description: Where no team is provided, the secret is not attached to a team and can only be modified by users with the "secret:manage:*" permission.
+          type:
+            - string
+            - 'null'
         updatedAt:
           type: string
         uuid:
@@ -11660,7 +11351,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: Team
         EmbeddedUser:
           type: object
           properties:
@@ -11685,7 +11375,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedUser
         EmbeddedLink:
           type: object
           properties:
@@ -11698,7 +11387,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         EmbeddedEnvironment:
           type: object
           properties:
@@ -11721,7 +11409,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedEnvironment
         EmbeddedTeamUser:
           type: object
           properties:
@@ -11754,7 +11441,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeamUser
         EmbeddedNamed:
           type: object
           properties:
@@ -11767,7 +11453,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedNamed
     annotations:
       title: 'Contract Testing: Get Secret'
       readOnlyHint: true
@@ -11822,7 +11507,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: Preference
         EmbeddedLink:
           type: object
           properties:
@@ -11835,7 +11519,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
     annotations:
       title: 'Contract Testing: Get System Preferences'
       readOnlyHint: true
@@ -11895,13 +11578,13 @@ tools:
                       count:
                         type: number
                       first:
-                        anyOf:
-                          - type: string
-                          - type: 'null'
+                        type:
+                          - string
+                          - 'null'
                       last:
-                        anyOf:
-                          - type: string
-                          - type: 'null'
+                        type:
+                          - string
+                          - 'null'
                     additionalProperties: {}
                   pactVersions:
                     type: object
@@ -11919,13 +11602,13 @@ tools:
                       failureCount:
                         type: number
                       first:
-                        anyOf:
-                          - type: string
-                          - type: 'null'
+                        type:
+                          - string
+                          - 'null'
                       last:
-                        anyOf:
-                          - type: string
-                          - type: 'null'
+                        type:
+                          - string
+                          - 'null'
                     additionalProperties: {}
                   users:
                     type: object
@@ -12021,7 +11704,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
     annotations:
       title: 'Contract Testing: Get Team Metrics'
       readOnlyHint: true
@@ -12076,7 +11758,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: Preference
         EmbeddedLink:
           type: object
           properties:
@@ -12089,7 +11770,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
     annotations:
       title: 'Contract Testing: Get User Preferences'
       readOnlyHint: true
@@ -12161,9 +11841,9 @@ tools:
               type: string
           additionalProperties: {}
         teamUuid:
-          anyOf:
-            - type: string
-            - type: 'null'
+          type:
+            - string
+            - 'null'
         createdAt:
           type: string
         updatedAt:
@@ -12210,7 +11890,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeam
         EmbeddedLink:
           type: object
           properties:
@@ -12223,7 +11902,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
     annotations:
       title: 'Contract Testing: Get Webhook'
       readOnlyHint: true
@@ -12313,7 +11991,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: Token
         EmbeddedLink:
           type: object
           properties:
@@ -12326,7 +12003,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
     annotations:
       title: 'Contract Testing: List API Tokens'
       readOnlyHint: true
@@ -12407,7 +12083,6 @@ tools:
             totalPages:
               type: number
           additionalProperties: {}
-          id: Page
         Branch:
           type: object
           properties:
@@ -12424,7 +12099,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: Branch
         EmbeddedLink:
           type: object
           properties:
@@ -12437,7 +12111,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
     annotations:
       title: 'Contract Testing: List Branches'
       readOnlyHint: true
@@ -12523,7 +12196,6 @@ tools:
             totalPages:
               type: number
           additionalProperties: {}
-          id: Page
         PacticipantVersionInCollection:
           type: object
           properties:
@@ -12577,7 +12249,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: PacticipantVersionInCollection
         EmbeddedBranchVersion:
           type: object
           properties:
@@ -12592,7 +12263,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedBranchVersion
         EmbeddedLink:
           type: object
           properties:
@@ -12605,7 +12275,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         EmbeddedNamed:
           type: object
           properties:
@@ -12618,7 +12287,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedNamed
         EmbeddedDeployedVersion:
           type: object
           properties:
@@ -12649,7 +12317,6 @@ tools:
                   $ref: '#/$defs/EmbeddedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedDeployedVersion
         Environment:
           type: object
           properties:
@@ -12696,7 +12363,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: Environment
         Contact:
           type: object
           properties:
@@ -12707,7 +12373,6 @@ tools:
               properties: {}
               additionalProperties: {}
           additionalProperties: {}
-          id: Contact
         EmbeddedTeam:
           type: object
           properties:
@@ -12724,7 +12389,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeam
         EmbeddedVersion:
           type: object
           properties:
@@ -12737,7 +12401,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedVersion
         EmbeddedReleasedVersion:
           type: object
           properties:
@@ -12764,7 +12427,6 @@ tools:
                   $ref: '#/$defs/EmbeddedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedReleasedVersion
     annotations:
       title: 'Contract Testing: List Deployed or Released Versions'
       readOnlyHint: true
@@ -12855,7 +12517,6 @@ tools:
             totalPages:
               type: number
           additionalProperties: {}
-          id: Page
         PacticipantVersionInCollection:
           type: object
           properties:
@@ -12909,7 +12570,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: PacticipantVersionInCollection
         EmbeddedBranchVersion:
           type: object
           properties:
@@ -12924,7 +12584,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedBranchVersion
         EmbeddedLink:
           type: object
           properties:
@@ -12937,7 +12596,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         EmbeddedNamed:
           type: object
           properties:
@@ -12950,7 +12608,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedNamed
         EmbeddedDeployedVersion:
           type: object
           properties:
@@ -12981,7 +12638,6 @@ tools:
                   $ref: '#/$defs/EmbeddedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedDeployedVersion
         Environment:
           type: object
           properties:
@@ -13028,7 +12684,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: Environment
         Contact:
           type: object
           properties:
@@ -13039,7 +12694,6 @@ tools:
               properties: {}
               additionalProperties: {}
           additionalProperties: {}
-          id: Contact
         EmbeddedTeam:
           type: object
           properties:
@@ -13056,7 +12710,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeam
         EmbeddedVersion:
           type: object
           properties:
@@ -13069,7 +12722,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedVersion
         EmbeddedReleasedVersion:
           type: object
           properties:
@@ -13096,7 +12748,6 @@ tools:
                   $ref: '#/$defs/EmbeddedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedReleasedVersion
     annotations:
       title: 'Contract Testing: List Environment Versions'
       readOnlyHint: true
@@ -13212,7 +12863,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: Environment
         Contact:
           type: object
           properties:
@@ -13223,7 +12873,6 @@ tools:
               properties: {}
               additionalProperties: {}
           additionalProperties: {}
-          id: Contact
         EmbeddedTeam:
           type: object
           properties:
@@ -13240,7 +12889,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeam
         EmbeddedLink:
           type: object
           properties:
@@ -13253,7 +12901,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
     annotations:
       title: 'Contract Testing: List Environments'
       readOnlyHint: true
@@ -13333,7 +12980,6 @@ tools:
             totalPages:
               type: number
           additionalProperties: {}
-          id: Page
         Integration:
           type: object
           properties:
@@ -13370,7 +13016,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: Integration
         EmbeddedLink:
           type: object
           properties:
@@ -13383,7 +13028,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
     annotations:
       title: 'Contract Testing: List Integrations'
       readOnlyHint: true
@@ -13450,14 +13094,12 @@ tools:
             totalPages:
               type: number
           additionalProperties: {}
-          id: Page
         Label:
           type: object
           properties:
             name:
               type: string
           additionalProperties: {}
-          id: Label
         EmbeddedLink:
           type: object
           properties:
@@ -13470,7 +13112,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
     annotations:
       title: 'Contract Testing: List Labels'
       readOnlyHint: true
@@ -13556,7 +13197,6 @@ tools:
             totalPages:
               type: number
           additionalProperties: {}
-          id: Page
         PacticipantVersionInCollection:
           type: object
           properties:
@@ -13610,7 +13250,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: PacticipantVersionInCollection
         EmbeddedBranchVersion:
           type: object
           properties:
@@ -13625,7 +13264,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedBranchVersion
         EmbeddedLink:
           type: object
           properties:
@@ -13638,7 +13276,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         EmbeddedNamed:
           type: object
           properties:
@@ -13651,7 +13288,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedNamed
         EmbeddedDeployedVersion:
           type: object
           properties:
@@ -13682,7 +13318,6 @@ tools:
                   $ref: '#/$defs/EmbeddedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedDeployedVersion
         Environment:
           type: object
           properties:
@@ -13729,7 +13364,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: Environment
         Contact:
           type: object
           properties:
@@ -13740,7 +13374,6 @@ tools:
               properties: {}
               additionalProperties: {}
           additionalProperties: {}
-          id: Contact
         EmbeddedTeam:
           type: object
           properties:
@@ -13757,7 +13390,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeam
         EmbeddedVersion:
           type: object
           properties:
@@ -13770,7 +13402,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedVersion
         EmbeddedReleasedVersion:
           type: object
           properties:
@@ -13797,7 +13428,6 @@ tools:
                   $ref: '#/$defs/EmbeddedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedReleasedVersion
     annotations:
       title: 'Contract Testing: List Pacticipant Versions'
       readOnlyHint: true
@@ -13878,7 +13508,6 @@ tools:
             totalPages:
               type: number
           additionalProperties: {}
-          id: Page
         Pacticipant:
           type: object
           properties:
@@ -13970,7 +13599,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: Pacticipant
         EmbeddedNamed:
           type: object
           properties:
@@ -13983,7 +13611,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedNamed
         EmbeddedLink:
           type: object
           properties:
@@ -13996,7 +13623,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         EmbeddedTeam:
           type: object
           properties:
@@ -14013,7 +13639,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeam
     annotations:
       title: 'Contract Testing: List Pacticipants'
       readOnlyHint: true
@@ -14117,7 +13742,6 @@ tools:
             totalPages:
               type: number
           additionalProperties: {}
-          id: Page
         Pacticipant:
           type: object
           properties:
@@ -14209,7 +13833,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: Pacticipant
         EmbeddedNamed:
           type: object
           properties:
@@ -14222,7 +13845,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedNamed
         EmbeddedLink:
           type: object
           properties:
@@ -14235,7 +13857,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         EmbeddedTeam:
           type: object
           properties:
@@ -14252,7 +13873,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeam
     annotations:
       title: 'Contract Testing: List Pacticipants by Label'
       readOnlyHint: true
@@ -14324,16 +13944,16 @@ tools:
             createdAt:
               type: string
             description:
-              anyOf:
-                - type: string
-                - type: 'null'
+              type:
+                - string
+                - 'null'
             name:
               type: string
             teamUuid:
-              anyOf:
-                - type: string
-                - type: 'null'
               description: Where no team is provided, the secret is not attached to a team and can only be modified by users with the "secret:manage:*" permission.
+              type:
+                - string
+                - 'null'
             updatedAt:
               type: string
             uuid:
@@ -14351,7 +13971,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: Secret
         Team:
           type: object
           properties:
@@ -14394,7 +14013,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: Team
         EmbeddedUser:
           type: object
           properties:
@@ -14419,7 +14037,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedUser
         EmbeddedLink:
           type: object
           properties:
@@ -14432,7 +14049,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         EmbeddedEnvironment:
           type: object
           properties:
@@ -14455,7 +14071,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedEnvironment
         EmbeddedTeamUser:
           type: object
           properties:
@@ -14488,7 +14103,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeamUser
         EmbeddedNamed:
           type: object
           properties:
@@ -14501,7 +14115,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedNamed
     annotations:
       title: 'Contract Testing: List Secrets'
       readOnlyHint: true
@@ -14605,7 +14218,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedWebhook
         EmbeddedTeam:
           type: object
           properties:
@@ -14622,7 +14234,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeam
         EmbeddedLink:
           type: object
           properties:
@@ -14635,7 +14246,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
     annotations:
       title: 'Contract Testing: List Webhooks'
       readOnlyHint: true
@@ -14754,10 +14364,10 @@ tools:
           type: object
           properties:
             deployable:
-              anyOf:
-                - type: boolean
-                - type: 'null'
               description: The property that indicates whether or not the pacticipant version is safe to deploy.
+              type:
+                - boolean
+                - 'null'
             failed:
               type: number
             reason:
@@ -14784,7 +14394,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: MatrixPacticipant
         MatrixPacticipantVersion:
           type: object
           properties:
@@ -14828,7 +14437,6 @@ tools:
                     additionalProperties: {}
                 additionalProperties: {}
           additionalProperties: {}
-          id: MatrixPacticipantVersion
         EmbeddedBranchVersion:
           type: object
           properties:
@@ -14843,7 +14451,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedBranchVersion
         EmbeddedLink:
           type: object
           properties:
@@ -14856,7 +14463,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         EmbeddedEnvironment:
           type: object
           properties:
@@ -14879,7 +14485,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedEnvironment
         Notice:
           type: object
           properties:
@@ -14900,7 +14505,6 @@ tools:
                 - type: string
                   const: error
           additionalProperties: {}
-          id: Notice
     annotations:
       title: 'Contract Testing: Matrix'
       readOnlyHint: true
@@ -15050,7 +14654,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedNamed
         EmbeddedLink:
           type: object
           properties:
@@ -15063,7 +14666,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         EmbeddedTeam:
           type: object
           properties:
@@ -15080,7 +14682,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeam
     annotations:
       title: 'Contract Testing: Patch Pacticipant'
       readOnlyHint: false
@@ -15211,7 +14812,6 @@ tools:
                 - type: string
                   const: error
           additionalProperties: {}
-          id: Notice
         EmbeddedNamed:
           type: object
           properties:
@@ -15224,7 +14824,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedNamed
         EmbeddedLink:
           type: object
           properties:
@@ -15237,7 +14836,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         EmbeddedVersion:
           type: object
           properties:
@@ -15250,7 +14848,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedVersion
     annotations:
       title: 'Contract Testing: Publish Consumer Contracts'
       readOnlyHint: false
@@ -15401,7 +14998,6 @@ tools:
                 - type: string
                   const: error
           additionalProperties: {}
-          id: Notice
         EmbeddedNamed:
           type: object
           properties:
@@ -15414,7 +15010,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedNamed
         EmbeddedLink:
           type: object
           properties:
@@ -15427,7 +15022,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         EmbeddedVersion:
           type: object
           properties:
@@ -15440,7 +15034,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedVersion
     annotations:
       title: 'Contract Testing: Publish Provider Contract'
       readOnlyHint: false
@@ -15523,7 +15116,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         Environment:
           type: object
           properties:
@@ -15570,7 +15162,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: Environment
         Contact:
           type: object
           properties:
@@ -15581,7 +15172,6 @@ tools:
               properties: {}
               additionalProperties: {}
           additionalProperties: {}
-          id: Contact
         EmbeddedTeam:
           type: object
           properties:
@@ -15598,7 +15188,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeam
         EmbeddedNamed:
           type: object
           properties:
@@ -15611,7 +15200,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedNamed
         EmbeddedVersion:
           type: object
           properties:
@@ -15624,7 +15212,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedVersion
     annotations:
       title: 'Contract Testing: Record Deployment'
       readOnlyHint: false
@@ -15699,7 +15286,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         Environment:
           type: object
           properties:
@@ -15746,7 +15332,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: Environment
         Contact:
           type: object
           properties:
@@ -15757,7 +15342,6 @@ tools:
               properties: {}
               additionalProperties: {}
           additionalProperties: {}
-          id: Contact
         EmbeddedTeam:
           type: object
           properties:
@@ -15774,7 +15358,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeam
         EmbeddedNamed:
           type: object
           properties:
@@ -15787,7 +15370,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedNamed
         EmbeddedVersion:
           type: object
           properties:
@@ -15800,7 +15382,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedVersion
     annotations:
       title: 'Contract Testing: Record Release'
       readOnlyHint: false
@@ -15863,7 +15444,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
     annotations:
       title: 'Contract Testing: Regenerate API Token'
       readOnlyHint: false
@@ -16028,9 +15608,9 @@ tools:
                   description: Response status codes to include (e.g., [200, '2XX', 404]). Use 'X' as wildcard (e.g., '2XX' for 200-299). Defaults to successful codes (2XX)
                   type: array
                   items:
-                    anyOf:
-                      - type: number
-                      - type: string
+                    type:
+                      - number
+                      - string
                 operationId:
                   description: OpenAPI operation ID to match (e.g., 'getUserById', 'get*'). Supports glob patterns
                   type: string
@@ -16064,13 +15644,13 @@ tools:
               recommendation:
                 type: string
               diff:
-                anyOf:
-                  - type: string
-                  - type: 'null'
+                type:
+                  - string
+                  - 'null'
               confidence:
-                anyOf:
-                  - type: number
-                  - type: 'null'
+                type:
+                  - number
+                  - 'null'
             required:
               - recommendation
             additionalProperties: {}
@@ -16153,7 +15733,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
     annotations:
       title: 'Contract Testing: Test Execute Webhooks'
       readOnlyHint: false
@@ -16259,7 +15838,6 @@ tools:
               properties: {}
               additionalProperties: {}
           additionalProperties: {}
-          id: Contact
         EmbeddedTeam:
           type: object
           properties:
@@ -16276,7 +15854,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeam
         EmbeddedLink:
           type: object
           properties:
@@ -16289,7 +15866,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
     annotations:
       title: 'Contract Testing: Update Environment'
       readOnlyHint: false
@@ -16439,7 +16015,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedNamed
         EmbeddedLink:
           type: object
           properties:
@@ -16452,7 +16027,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         EmbeddedTeam:
           type: object
           properties:
@@ -16469,7 +16043,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeam
     annotations:
       title: 'Contract Testing: Update Pacticipant'
       readOnlyHint: false
@@ -16580,7 +16153,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedBranchVersion
         EmbeddedLink:
           type: object
           properties:
@@ -16593,7 +16165,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         EmbeddedNamed:
           type: object
           properties:
@@ -16606,7 +16177,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedNamed
         EmbeddedDeployedVersion:
           type: object
           properties:
@@ -16637,7 +16207,6 @@ tools:
                   $ref: '#/$defs/EmbeddedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedDeployedVersion
         Environment:
           type: object
           properties:
@@ -16684,7 +16253,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: Environment
         Contact:
           type: object
           properties:
@@ -16695,7 +16263,6 @@ tools:
               properties: {}
               additionalProperties: {}
           additionalProperties: {}
-          id: Contact
         EmbeddedTeam:
           type: object
           properties:
@@ -16712,7 +16279,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeam
         EmbeddedVersion:
           type: object
           properties:
@@ -16725,7 +16291,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedVersion
         EmbeddedReleasedVersion:
           type: object
           properties:
@@ -16752,7 +16317,6 @@ tools:
                   $ref: '#/$defs/EmbeddedVersion'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedReleasedVersion
     annotations:
       title: 'Contract Testing: Update Pacticipant Version'
       readOnlyHint: false
@@ -16786,9 +16350,9 @@ tools:
           type: string
         description:
           description: New description
-          anyOf:
-            - type: string
-            - type: 'null'
+          type:
+            - string
+            - 'null'
       required:
         - secretId
     outputSchema:
@@ -16798,16 +16362,16 @@ tools:
         createdAt:
           type: string
         description:
-          anyOf:
-            - type: string
-            - type: 'null'
+          type:
+            - string
+            - 'null'
         name:
           type: string
         teamUuid:
-          anyOf:
-            - type: string
-            - type: 'null'
           description: Where no team is provided, the secret is not attached to a team and can only be modified by users with the "secret:manage:*" permission.
+          type:
+            - string
+            - 'null'
         updatedAt:
           type: string
         uuid:
@@ -16868,7 +16432,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: Team
         EmbeddedUser:
           type: object
           properties:
@@ -16893,7 +16456,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedUser
         EmbeddedLink:
           type: object
           properties:
@@ -16906,7 +16468,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
         EmbeddedEnvironment:
           type: object
           properties:
@@ -16929,7 +16490,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedEnvironment
         EmbeddedTeamUser:
           type: object
           properties:
@@ -16962,7 +16522,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeamUser
         EmbeddedNamed:
           type: object
           properties:
@@ -16975,7 +16534,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedNamed
     annotations:
       title: 'Contract Testing: Update Secret'
       readOnlyHint: false
@@ -17128,9 +16686,9 @@ tools:
               type: string
           additionalProperties: {}
         teamUuid:
-          anyOf:
-            - type: string
-            - type: 'null'
+          type:
+            - string
+            - 'null'
         createdAt:
           type: string
         updatedAt:
@@ -17177,7 +16735,6 @@ tools:
                   $ref: '#/$defs/EmbeddedLink'
               additionalProperties: {}
           additionalProperties: {}
-          id: EmbeddedTeam
         EmbeddedLink:
           type: object
           properties:
@@ -17190,7 +16747,6 @@ tools:
             title:
               type: string
           additionalProperties: {}
-          id: EmbeddedLink
     annotations:
       title: 'Contract Testing: Update Webhook'
       readOnlyHint: false

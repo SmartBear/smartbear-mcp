@@ -52,6 +52,9 @@ Rebuild and regenerate the definition and the generated calls, then review the d
 npm run build && npm run drift:generate
 ```
 
+Generate it from a clean `npm ci` install: the advertised JSON Schema depends on the installed
+`zod` and MCP SDK versions (a stale `node_modules` once produced a definition that failed in CI).
+
 ## Adding a test
 
 Every tool already gets a generated call. To assert more about one, add an operation to
