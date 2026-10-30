@@ -1,7 +1,10 @@
 import { createHmac } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { USER_AGENT } from "../common/info.js";
-import { withRequestContext } from "../common/request-context";
+import {
+  requestContextStorage,
+  withRequestContext,
+} from "../common/request-context";
 import { ToolError } from "../common/tools.js";
 import type {
   ErrorApiView,
@@ -566,14 +569,8 @@ describe("BugsnagClient", () => {
           expect(result).toBe(customEndpoint);
         });
 
-        it("should preserve HTTP protocol for custom domains", async () => {
-          const customEndpoint = "http://localhost:3000";
-          const result = client.getEndpoint("api", "00000key", customEndpoint);
-          expect(result).toBe(customEndpoint);
-        });
-
         it("should preserve custom domain with ports and paths", async () => {
-          const customEndpoint = "https://192.168.1.100:8080/api/v1";
+          const customEndpoint = "https://bugsnag.example-corp.com:8443/api/v1";
           const result = client.getEndpoint("api", "00000key", customEndpoint);
           expect(result).toBe(customEndpoint);
         });
@@ -588,6 +585,141 @@ describe("BugsnagClient", () => {
           const customEndpoint = "https://custom.domain.com/api#section";
           const result = client.getEndpoint("api", "00000key", customEndpoint);
           expect(result).toBe(customEndpoint);
+        });
+      });
+
+      // Regression coverage for HackerOne #4047802: a custom `endpoint`
+      // (the Bugsnag-Endpoint header) was previously used verbatim as the
+      // outbound request's base URL, letting a caller redirect server
+      // requests to internal/cloud-metadata addresses.
+      describe("SSRF protection on custom endpoints", () => {
+        // These exercise the only path the reported exploit used: an HTTP
+        // request supplying `endpoint` (e.g. via the Bugsnag-Endpoint
+        // header), where `getRequestContext()` is active. See the "outside
+        // a request context" tests below for the local/stdio case.
+        describe("over HTTP (per-request, untrusted)", () => {
+          const withHttpRequest = <T>(fn: () => T): T =>
+            requestContextStorage.run({ headers: {} }, fn);
+
+          it("should reject the cloud metadata address", () => {
+            expect(() =>
+              withHttpRequest(() =>
+                client.getEndpoint(
+                  "api",
+                  "00000key",
+                  "https://169.254.169.254/latest/meta-data",
+                ),
+              ),
+            ).toThrow(/loopback, link-local or metadata address/);
+          });
+
+          it("should reject loopback addresses", () => {
+            expect(() =>
+              withHttpRequest(() =>
+                client.getEndpoint("api", "00000key", "https://127.0.0.1:3000"),
+              ),
+            ).toThrow(/loopback, link-local or metadata address/);
+            expect(() =>
+              withHttpRequest(() =>
+                client.getEndpoint("api", "00000key", "https://[::1]:3000"),
+              ),
+            ).toThrow(/loopback or link-local address/);
+            expect(() =>
+              withHttpRequest(() =>
+                client.getEndpoint("api", "00000key", "https://localhost:3000"),
+              ),
+            ).toThrow(/localhost is not allowed/);
+          });
+
+          it("should reject Kubernetes-internal hostnames", () => {
+            expect(() =>
+              withHttpRequest(() =>
+                client.getEndpoint(
+                  "api",
+                  "00000key",
+                  "https://kubernetes.default.svc",
+                ),
+              ),
+            ).toThrow(/not an allowed destination/);
+            expect(() =>
+              withHttpRequest(() =>
+                client.getEndpoint(
+                  "api",
+                  "00000key",
+                  "https://some-service.namespace.svc.cluster.local",
+                ),
+              ),
+            ).toThrow(/not an allowed destination/);
+          });
+
+          // On-premise Bugsnag installations can legitimately sit on a
+          // private address or behind plain HTTP internally — this client
+          // has no way to distinguish that from an internal pivot target,
+          // so (unlike the addresses above) these are intentionally still
+          // allowed. Operators who want to lock a deployment down to a
+          // specific endpoint can use MCP_ALLOWED_ENDPOINTS (client-registry.ts).
+          it("should still allow RFC1918 private addresses (on-premise installs)", () => {
+            expect(
+              withHttpRequest(() =>
+                client.getEndpoint(
+                  "api",
+                  "00000key",
+                  "https://192.168.1.100:8080",
+                ),
+              ),
+            ).toBe("https://192.168.1.100:8080");
+            expect(
+              withHttpRequest(() =>
+                client.getEndpoint("api", "00000key", "https://10.0.5.20"),
+              ),
+            ).toBe("https://10.0.5.20");
+          });
+
+          it("should still allow plain HTTP on a public custom domain (on-premise installs)", () => {
+            expect(
+              withHttpRequest(() =>
+                client.getEndpoint(
+                  "api",
+                  "00000key",
+                  "http://bugsnag.example-corp.com",
+                ),
+              ),
+            ).toBe("http://bugsnag.example-corp.com");
+          });
+        });
+
+        // Outside a request context — stdio transport (local Claude
+        // Desktop/VS Code/Claude Code usage), or an HTTP server's one-time
+        // startup configuration from its own env vars — `endpoint` can only
+        // come from the operator's own configuration, never a per-request
+        // caller. There is no untrusted party to defend against here, so
+        // none of the HTTP-path restrictions apply: a developer pointing
+        // BUGSNAG_ENDPOINT at a local or internal Bugsnag instance keeps
+        // working exactly as before this change.
+        describe("outside a request context (local/stdio development)", () => {
+          it("allows loopback endpoints", () => {
+            expect(
+              client.getEndpoint("api", "00000key", "http://localhost:3000"),
+            ).toBe("http://localhost:3000");
+            expect(
+              client.getEndpoint("api", "00000key", "http://127.0.0.1:4000"),
+            ).toBe("http://127.0.0.1:4000");
+          });
+
+          it("allows the cloud metadata address and Kubernetes-internal hostnames too", () => {
+            // Nothing stops an operator's own env var from naming these;
+            // only the untrusted per-request path is restricted.
+            expect(
+              client.getEndpoint("api", "00000key", "https://169.254.169.254/"),
+            ).toBe("https://169.254.169.254/");
+            expect(
+              client.getEndpoint(
+                "api",
+                "00000key",
+                "https://kubernetes.default.svc",
+              ),
+            ).toBe("https://kubernetes.default.svc");
+          });
         });
       });
 

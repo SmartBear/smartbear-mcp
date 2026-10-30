@@ -2,7 +2,7 @@ import { createHmac } from "node:crypto";
 import { z } from "zod";
 import { CacheService } from "../common/cache";
 import { getUserAgent } from "../common/info";
-import { getRequestHeader } from "../common/request-context";
+import { getRequestContext, getRequestHeader } from "../common/request-context";
 import type { SmartBearMcpServer } from "../common/server";
 import { ToolError } from "../common/tools";
 import type {
@@ -48,6 +48,105 @@ const HUB_PREFIX = "00000";
 const DEFAULT_DOMAIN = "bugsnag.com";
 const HUB_DOMAIN = "bugsnag.smartbear.com";
 const BUGSNAG_CACHE_TTL_SECONDS = 60;
+
+// Hostnames that can never be a real Bugsnag deployment (on-premise or
+// otherwise): Kubernetes' own internal service-discovery DNS. No legitimate
+// `endpoint` configuration would ever name one of these — they only show up
+// when something is being used to reach the cluster's internal API, as in
+// the reported exploit.
+function isKubernetesInternalHostname(hostname: string): boolean {
+  const h = hostname.toLowerCase();
+  if (h === "kubernetes" || h.startsWith("kubernetes.")) return true;
+  if (h === "svc" || h.endsWith(".svc")) return true;
+  if (h.endsWith(".cluster.local")) return true;
+  return false;
+}
+
+function isIPv4Literal(hostname: string): boolean {
+  return /^\d{1,3}(\.\d{1,3}){3}$/.test(hostname);
+}
+
+// Addresses that are never a legitimate remote API target for anyone,
+// on-premise customers included: loopback, the 169.254.0.0/16 link-local
+// block cloud providers use for instance metadata (e.g. 169.254.169.254 —
+// the exact target used in the reported exploit), and the "this network"
+// block. Deliberately NOT blocking RFC1918 private ranges (10/8, 172.16/12,
+// 192.168/16): on-premise Bugsnag installations can legitimately sit on a
+// private address reachable from wherever this server runs, and we have no
+// way to distinguish that from an internal pivot target from the endpoint
+// value alone.
+function isForbiddenIPv4(hostname: string): boolean {
+  const octets = hostname.split(".").map(Number);
+  if (
+    octets.length !== 4 ||
+    octets.some((o) => !Number.isInteger(o) || o < 0 || o > 255)
+  ) {
+    return true; // malformed literal: refuse rather than guess
+  }
+  const [a, b] = octets;
+  if (a === 127) return true; // loopback
+  if (a === 169 && b === 254) return true; // link-local / cloud metadata
+  if (a === 0) return true; // "this" network
+  return false;
+}
+
+// IPv6 equivalents of the IPv4 checks above: loopback and link-local, plus
+// IPv4-mapped addresses (checked against the IPv4 ranges above).
+function isForbiddenIPv6(hostname: string): boolean {
+  // URL.hostname keeps the [brackets] for IPv6 literals.
+  const h = hostname.toLowerCase().replace(/^\[|\]$/g, "");
+  if (h === "::1") return true; // loopback
+  if (/^fe[89ab][0-9a-f]:/.test(h)) return true; // fe80::/10 link-local
+  if (h.startsWith("::ffff:")) {
+    const mapped = h.slice("::ffff:".length);
+    if (isIPv4Literal(mapped)) return isForbiddenIPv4(mapped);
+  }
+  return false;
+}
+
+// Only called when `endpoint` could have come from an untrusted per-request
+// source (see call site). Without this check it becomes an SSRF primitive:
+// the server would issue authenticated requests to whatever host/IP the
+// caller names, including cloud metadata services and cluster-internal
+// APIs, as demonstrated in the reported exploit.
+//
+// Scope is deliberately narrow — only addresses/hostnames that could never
+// be a legitimate on-premise Bugsnag deployment — to avoid breaking existing
+// on-premise configurations we have no visibility into (this client is used
+// by many customers). It is also a hostname/IP-literal check, not a
+// DNS-resolving one: it does not protect against a public hostname that
+// resolves (now or via later DNS rebinding) to a private address. Closing
+// either gap further should go through `MCP_ALLOWED_ENDPOINTS`
+// (src/common/client-registry.ts), the existing opt-in allowlist already
+// used for this purpose by other clients, rather than a broader hard block
+// here.
+function assertSafeCustomEndpoint(endpoint: string): void {
+  const hostname = new URL(endpoint).hostname;
+  if (isIPv4Literal(hostname)) {
+    if (isForbiddenIPv4(hostname)) {
+      throw new ToolError(
+        `Unsafe Bugsnag endpoint: ${hostname} is a loopback, link-local or metadata address`,
+      );
+    }
+    return;
+  }
+  if (hostname.includes(":")) {
+    if (isForbiddenIPv6(hostname)) {
+      throw new ToolError(
+        `Unsafe Bugsnag endpoint: ${hostname} is a loopback or link-local address`,
+      );
+    }
+    return;
+  }
+  if (hostname.toLowerCase() === "localhost") {
+    throw new ToolError("Unsafe Bugsnag endpoint: localhost is not allowed");
+  }
+  if (isKubernetesInternalHostname(hostname)) {
+    throw new ToolError(
+      `Unsafe Bugsnag endpoint: ${hostname} is not an allowed destination`,
+    );
+  }
+}
 
 const cacheKeys = {
   ORG: "bugsnag_org",
@@ -334,7 +433,19 @@ export class BugsnagClient implements Client {
           subDomainEndpoint = `https://${subdomain}.${DEFAULT_DOMAIN}`;
         }
       } else {
-        // For custom domains, use the endpoint exactly as provided
+        // For custom domains, use the endpoint exactly as provided. Only
+        // validate it against loopback/metadata/cluster-internal addresses
+        // when there's an active request context — i.e. this call could be
+        // serving an HTTP request, where `endpoint` may have come from a
+        // per-request, caller-controlled header (the reported exploit's
+        // vector). Outside a request context (stdio transport, or HTTP
+        // configured once at startup from an operator's own env var) there
+        // is no untrusted caller to defend against, and operators running
+        // this locally or against an on-premise instance on a loopback/
+        // internal address should not be blocked from doing so.
+        if (getRequestContext()) {
+          assertSafeCustomEndpoint(endpoint);
+        }
         subDomainEndpoint = endpoint;
       }
     }

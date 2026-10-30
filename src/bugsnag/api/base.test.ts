@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   BaseAPI,
+  buildPaginatedUrl,
   ensureFullUrl,
   getNextUrlPathFromHeader,
   getQueryParams,
@@ -283,6 +284,71 @@ describe("base.ts", () => {
       const url = "/path";
       const basePath = "http://base.com/";
       expect(ensureFullUrl(url, basePath)).toBe("http://base.com//path");
+    });
+  });
+
+  // Regression coverage for HackerOne #4048125: `nextUrl` is tool input, and
+  // `new URL(nextUrl, basePath)` ignores `basePath` whenever `nextUrl` is
+  // already absolute, letting a caller redirect the request to any host.
+  describe("buildPaginatedUrl", () => {
+    const basePath = "https://api.bugsnag.com";
+    const fallbackUrl = "/projects/123/errors";
+
+    it("builds from the fallback URL when nextUrl is absent", () => {
+      const url = buildPaginatedUrl(undefined, fallbackUrl, basePath);
+      expect(url.toString()).toBe(
+        "https://api.bugsnag.com/projects/123/errors",
+      );
+    });
+
+    it("accepts a nextUrl on the configured API origin", () => {
+      const nextUrl = "https://api.bugsnag.com/projects/123/errors?offset=10";
+      const url = buildPaginatedUrl(nextUrl, fallbackUrl, basePath);
+      expect(url.toString()).toBe(nextUrl);
+    });
+
+    it("accepts a relative nextUrl, resolved against basePath", () => {
+      const url = buildPaginatedUrl(
+        "/projects/123/errors?offset=10",
+        fallbackUrl,
+        basePath,
+      );
+      expect(url.toString()).toBe(
+        "https://api.bugsnag.com/projects/123/errors?offset=10",
+      );
+    });
+
+    it("keeps pagination working when the API's own Link header uses a different host (reverse proxy/CDN)", () => {
+      // basePath is what the operator configured; the backend's Link header
+      // can legitimately point at a different externally-visible host. The
+      // path/query should still be honoured, against the configured host.
+      const url = buildPaginatedUrl(
+        "https://internal-bugsnag-api.example.net/projects/123/errors?offset=10",
+        fallbackUrl,
+        basePath,
+      );
+      expect(url.toString()).toBe(
+        "https://api.bugsnag.com/projects/123/errors?offset=10",
+      );
+    });
+
+    it("never lets a nextUrl pointing at a different host (SSRF) escape the configured origin", () => {
+      const url = buildPaginatedUrl(
+        "http://127.0.0.1:3000/admin",
+        fallbackUrl,
+        basePath,
+      );
+      expect(url.origin).toBe("https://api.bugsnag.com");
+      expect(url.toString()).toBe("https://api.bugsnag.com/admin");
+    });
+
+    it("never lets a nextUrl pointing at the cloud metadata address escape the configured origin", () => {
+      const url = buildPaginatedUrl(
+        "http://169.254.169.254/latest/meta-data",
+        fallbackUrl,
+        basePath,
+      );
+      expect(url.origin).toBe("https://api.bugsnag.com");
     });
   });
 

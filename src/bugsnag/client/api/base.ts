@@ -55,6 +55,32 @@ export function ensureFullUrl(url: string, basePath: string) {
   return url.startsWith("http") ? url : `${basePath}${url}`;
 }
 
+// Build the URL for a (possibly paginated) request.
+//
+// `nextUrl` is tool input: a caller can pass any absolute URL, and
+// `new URL(nextUrl, basePath)` ignores `basePath` whenever `nextUrl` is
+// already absolute. Without this check a caller could redirect the server's
+// outbound request to an arbitrary host (SSRF), including internal/cloud
+// metadata addresses.
+//
+// Only `nextUrl`'s path and query are ever used; the origin always comes
+// from the configured `basePath`. This makes the result immune to SSRF
+// regardless of what host `nextUrl` names, while still following the API's
+// own pagination links normally — including when the API sits behind a
+// reverse proxy/CDN whose externally-visible host differs from `basePath`,
+// which would otherwise make a same-origin check reject legitimate links.
+export function buildPaginatedUrl(
+  nextUrl: string | undefined,
+  fallbackUrl: string,
+  basePath: string,
+): URL {
+  if (!nextUrl) {
+    return new URL(fallbackUrl, basePath);
+  }
+  const parsed = new URL(nextUrl, basePath);
+  return new URL(parsed.pathname + parsed.search, basePath);
+}
+
 // Merge nextUrl query parameters with options query parameters (usually filters)
 export function getQueryParams(
   nextUrl?: string | null,
