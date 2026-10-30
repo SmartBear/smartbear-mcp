@@ -1,3 +1,4 @@
+import type { HttpClient } from "./http-client";
 import type {
   BranchesListResponse,
   BranchResponse,
@@ -15,6 +16,8 @@ import type {
   LabelResponse,
   LabelsListResponse,
   ListBranchesInput,
+  ListDeployedOrReleasedVersionsInput,
+  ListEnvironmentVersionsInput,
   ListVersionsInput,
   ManageLabelInput,
   PacticipantResponse,
@@ -24,8 +27,7 @@ import type {
   UpdateVersionInput,
   VersionResponse,
   VersionsListResponse,
-} from "./base";
-import type { HttpClient } from "./http-client";
+} from "./schemas/pacticipant";
 
 export class PacticipantApi {
   constructor(private readonly http: HttpClient) {}
@@ -95,6 +97,43 @@ export class PacticipantApi {
     return await this.http.fetch<VersionsListResponse>(
       `${this.http.baseUrl}/pacticipants/${encodeURIComponent(pacticipantName)}/versions${qs ? `?${qs}` : ""}`,
       { method: "GET", errorContext: "List Versions" },
+    );
+  }
+
+  /**
+   * Retrieves all versions of a pacticipant that have ever been deployed or released, with optional pagination.
+   */
+  async listDeployedOrReleasedVersions({
+    pacticipantName,
+    pageNumber,
+    pageSize,
+  }: ListDeployedOrReleasedVersionsInput): Promise<VersionsListResponse> {
+    const queryParams = new URLSearchParams();
+    if (pageNumber) queryParams.set("page", String(pageNumber));
+    if (pageSize) queryParams.set("size", String(pageSize));
+    const qs = queryParams.toString();
+    return await this.http.fetch<VersionsListResponse>(
+      `${this.http.baseUrl}/pacticipants/${encodeURIComponent(pacticipantName)}/deployed-or-released/versions${qs ? `?${qs}` : ""}`,
+      { method: "GET", errorContext: "List Deployed or Released Versions" },
+    );
+  }
+
+  /**
+   * Retrieves the versions of a pacticipant associated with an environment, with optional pagination.
+   */
+  async listEnvironmentVersions({
+    pacticipantName,
+    environmentId,
+    pageNumber,
+    pageSize,
+  }: ListEnvironmentVersionsInput): Promise<VersionsListResponse> {
+    const queryParams = new URLSearchParams();
+    if (pageNumber) queryParams.set("page", String(pageNumber));
+    if (pageSize) queryParams.set("size", String(pageSize));
+    const qs = queryParams.toString();
+    return await this.http.fetch<VersionsListResponse>(
+      `${this.http.baseUrl}/pacticipants/${encodeURIComponent(pacticipantName)}/environments/${encodeURIComponent(environmentId)}/versions${qs ? `?${qs}` : ""}`,
+      { method: "GET", errorContext: "List Environment Versions" },
     );
   }
 
@@ -320,6 +359,9 @@ export class PacticipantApi {
       getPacticipant: this.getPacticipant.bind(this),
       listBranches: this.listBranches.bind(this),
       listVersions: this.listVersions.bind(this),
+      listDeployedOrReleasedVersions:
+        this.listDeployedOrReleasedVersions.bind(this),
+      listEnvironmentVersions: this.listEnvironmentVersions.bind(this),
       getVersion: this.getVersion.bind(this),
       getLatestVersion: this.getLatestVersion.bind(this),
       updatePacticipant: this.updatePacticipant.bind(this),

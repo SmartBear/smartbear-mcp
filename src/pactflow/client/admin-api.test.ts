@@ -676,8 +676,7 @@ describe("AdminApi", () => {
 
   describe("setUserRoles", () => {
     it("should set user roles", async () => {
-      const mockResponse = { uuid: "u1", roles: [{ uuid: "r1" }] };
-      mockHttp.fetch.mockResolvedValueOnce(mockResponse);
+      mockHttp.fetch.mockResolvedValueOnce(undefined);
 
       const result = await api.setUserRoles({ userId: "u1", roles: ["r1"] });
 
@@ -689,7 +688,7 @@ describe("AdminApi", () => {
           errorContext: "Set User Roles",
         },
       );
-      expect(result).toEqual(mockResponse);
+      expect(result).toBeUndefined();
     });
 
     it("should URL-encode user ID with special characters", async () => {
@@ -716,8 +715,7 @@ describe("AdminApi", () => {
 
   describe("addRoleToUser", () => {
     it("should add a role to a user", async () => {
-      const mockResponse = { uuid: "u1", roles: [{ uuid: "r1" }] };
-      mockHttp.fetch.mockResolvedValueOnce(mockResponse);
+      mockHttp.fetch.mockResolvedValueOnce(undefined);
 
       const result = await api.addRoleToUser({ userId: "u1", roleId: "r1" });
 
@@ -725,7 +723,7 @@ describe("AdminApi", () => {
         "https://test.example.com/admin/users/u1/roles/r1",
         { method: "PUT", body: {}, errorContext: "Add Role to User" },
       );
-      expect(result).toEqual(mockResponse);
+      expect(result).toBeUndefined();
     });
 
     it("should URL-encode IDs with special characters", async () => {

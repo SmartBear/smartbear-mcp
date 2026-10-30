@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { Tool, ToolError, type ToolHandler } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
+import { problemSuffix } from "../../api";
 import type { BearQClient } from "../../client";
 
 const inputSchema = z.object({
@@ -11,7 +12,8 @@ export class StopTask extends Tool<BearQClient> {
   specification: ToolParams = {
     title: "Stop Task",
     toolset: "Tasks",
-    summary: "Cancels a running task.",
+    summary:
+      "Cancels a pending or running task, returning { taskId, stopped: true }. The public API accepts a stop of an already-finished task as a success no-op, so this does not guarantee the task was running — check the task's status separately if that matters.",
     inputSchema,
   };
 
@@ -23,10 +25,13 @@ export class StopTask extends Tool<BearQClient> {
     });
     if (!res.ok)
       throw new ToolError(
-        `DELETE /tasks/${taskId} failed: ${res.status} ${res.statusText}`,
+        `DELETE /tasks/${taskId} failed: ${res.status} ${res.statusText}` +
+          (await problemSuffix(res)),
       );
     return {
-      content: [{ type: "text", text: JSON.stringify(await res.json()) }],
+      content: [
+        { type: "text", text: JSON.stringify({ taskId, stopped: true }) },
+      ],
     };
   };
 }
