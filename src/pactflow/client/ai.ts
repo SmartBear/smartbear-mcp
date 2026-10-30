@@ -278,3 +278,40 @@ export type GenerationInput = z.infer<typeof GenerationInputSchema>;
 export type RequestResponsePair = z.infer<typeof RequestResponsePairSchema>;
 export type RemoteOpenAPIDocument = z.infer<typeof RemoteOpenAPIDocumentSchema>;
 export type Entitlement = z.infer<typeof EntitlementsSchema>;
+
+// output schemas (lenient, see output-schemas.ts)
+export const GenerationOutputSchema = z.looseObject({
+  id: z.string().nullish(),
+  code: z.string().optional(),
+  language: z.string().optional(),
+  requiresPromptExecution: z.literal(true).optional(),
+  prompt: z.string().optional(),
+  instructions: z.string().optional(),
+});
+
+export const RefineOutputSchema = z.looseObject({
+  recommendations: z
+    .array(
+      z.looseObject({
+        recommendation: z.string(),
+        diff: z.string().nullish(),
+        confidence: z.number().nullish(),
+      }),
+    )
+    .optional(),
+  requiresPromptExecution: z.literal(true).optional(),
+  prompt: z.string().optional(),
+  instructions: z.string().optional(),
+});
+
+export const EntitlementsOutputSchema = z.looseObject({
+  aiEnabled: z.boolean().optional(),
+  organizationEntitlements: z.looseObject({}).optional(),
+  userEntitlements: z.looseObject({}).optional(),
+});
+
+export const AI_OUTPUT_SCHEMAS = {
+  generate: GenerationOutputSchema,
+  review: RefineOutputSchema,
+  checkAIEntitlements: EntitlementsOutputSchema,
+};

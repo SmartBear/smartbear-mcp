@@ -176,6 +176,95 @@ describe("PacticipantApi", () => {
     });
   });
 
+  describe("listDeployedOrReleasedVersions", () => {
+    it("should retrieve deployed or released versions", async () => {
+      const mockResponse = { _embedded: { versions: [{ number: "1.0.0" }] } };
+      mockHttp.fetch.mockResolvedValueOnce(mockResponse);
+
+      const result = await api.listDeployedOrReleasedVersions({
+        pacticipantName: "Service A",
+      });
+
+      expect(mockHttp.fetch).toHaveBeenCalledWith(
+        "https://test.example.com/pacticipants/Service%20A/deployed-or-released/versions",
+        { method: "GET", errorContext: "List Deployed or Released Versions" },
+      );
+      expect(result).toEqual(mockResponse);
+    });
+
+    it("should append pagination query params", async () => {
+      mockHttp.fetch.mockResolvedValueOnce({ _embedded: { versions: [] } });
+
+      await api.listDeployedOrReleasedVersions({
+        pacticipantName: "ServiceA",
+        pageNumber: 2,
+        pageSize: 50,
+      });
+
+      expect(mockHttp.fetch).toHaveBeenCalledWith(
+        "https://test.example.com/pacticipants/ServiceA/deployed-or-released/versions?page=2&size=50",
+        { method: "GET", errorContext: "List Deployed or Released Versions" },
+      );
+    });
+
+    it("should propagate HTTP errors", async () => {
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError("List Deployed or Released Versions Failed"),
+      );
+
+      await expect(
+        api.listDeployedOrReleasedVersions({ pacticipantName: "ServiceA" }),
+      ).rejects.toThrow("List Deployed or Released Versions Failed");
+    });
+  });
+
+  describe("listEnvironmentVersions", () => {
+    it("should retrieve versions for a pacticipant in an environment", async () => {
+      const mockResponse = { _embedded: { versions: [{ number: "1.0.0" }] } };
+      mockHttp.fetch.mockResolvedValueOnce(mockResponse);
+
+      const result = await api.listEnvironmentVersions({
+        pacticipantName: "Service A",
+        environmentId: "env-uuid",
+      });
+
+      expect(mockHttp.fetch).toHaveBeenCalledWith(
+        "https://test.example.com/pacticipants/Service%20A/environments/env-uuid/versions",
+        { method: "GET", errorContext: "List Environment Versions" },
+      );
+      expect(result).toEqual(mockResponse);
+    });
+
+    it("should append pagination query params", async () => {
+      mockHttp.fetch.mockResolvedValueOnce({ _embedded: { versions: [] } });
+
+      await api.listEnvironmentVersions({
+        pacticipantName: "ServiceA",
+        environmentId: "env-uuid",
+        pageNumber: 3,
+        pageSize: 10,
+      });
+
+      expect(mockHttp.fetch).toHaveBeenCalledWith(
+        "https://test.example.com/pacticipants/ServiceA/environments/env-uuid/versions?page=3&size=10",
+        { method: "GET", errorContext: "List Environment Versions" },
+      );
+    });
+
+    it("should propagate HTTP errors", async () => {
+      mockHttp.fetch.mockRejectedValueOnce(
+        new ToolError("List Environment Versions Failed"),
+      );
+
+      await expect(
+        api.listEnvironmentVersions({
+          pacticipantName: "ServiceA",
+          environmentId: "env-uuid",
+        }),
+      ).rejects.toThrow("List Environment Versions Failed");
+    });
+  });
+
   describe("getVersion", () => {
     it("should retrieve a specific version", async () => {
       const mockResponse = { number: "1.0.0", branch: "main" };
@@ -757,13 +846,15 @@ describe("PacticipantApi", () => {
   });
 
   describe("handlers", () => {
-    it("should expose all 19 handler keys with correct names", () => {
+    it("should expose all 21 handler keys with correct names", () => {
       const handlers = api.handlers;
       const expectedKeys = [
         "listPacticipants",
         "getPacticipant",
         "listBranches",
         "listVersions",
+        "listDeployedOrReleasedVersions",
+        "listEnvironmentVersions",
         "getVersion",
         "getLatestVersion",
         "updatePacticipant",

@@ -14,9 +14,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Swagger] Portal product tools (`swagger_create_portal_product`, `swagger_update_portal_product`): added a `visibility` parameter (`visible`, `hidden` or `conditional`). `conditional` shows the product on the portal landing page only to users who have access to it, and is not allowed for public products. Product output now includes `visibility`.
 - [QMetry] Execute Quality Gate Report tool: added an optional `extKeys` parameter (array of external issue keys, e.g. Jira keys like `PROJ-123`) to scope the gate report to specific external requirements.
 - [QMetry] Project info now includes `isApprovalWorkflowEnabled`.
+- [PactFlow] All PactFlow tools now declare an `outputSchema` and return `structuredContent`. Schemas follow the PactFlow OpenAPI description but are lenient (every property optional, extra fields allowed) so OSS Pact Broker responses validate. Tools whose API returns no body (deletes, setting a user's roles) return `{ "success": true }`. Paginated tools also report `pagination`.
+- [BearQ] Added tools to run, list, and monitor BearQ workflows.
+- [PactFlow] Added `contract-testing_list_deployed_or_released_versions` (all versions of a pacticipant that have ever been deployed or released) and `contract-testing_list_environment_versions` (versions of a pacticipant associated with an environment). Both support `pageNumber`/`pageSize` and are available on PactFlow only.
 
 ### Fixed
 
+- [PactFlow] Consumer pact tests for `contract-testing_list_deployed_or_released_versions` and `contract-testing_list_environment_versions` now use a provider state that exists on the PactFlow provider (`pacticipant ServiceA version 1.0.0 is deployed to environment 00000000-0000-0000-0000-000000000002`). The previous states were unknown to the provider, which made the CDCT verification fail with an empty list and a 404.
 - [QMetry] API error handling now reads the response body once. Previously a non-JSON error body made the fallback `text()` call throw "Body is unusable", hiding the real error.
 - [PactFlow] `contract-testing_list_integrations` and `contract-testing_get_integrations_by_team` now send `Accept: application/hal+json`. Without it PactFlow negotiated `text/vnd.graphviz` for `/integrations` and the response could not be parsed as JSON.
 - [PactFlow] `contract-testing_admin_patch_team_users` now sends `Content-Type: application/json-patch+json`, which is the only content type PactFlow accepts for `PATCH /admin/teams/{teamId}/users` (it previously returned 415).

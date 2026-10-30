@@ -21,6 +21,10 @@ import { RunTestCases } from "./tool/tasks/run-test-cases";
 import { RunTestsInFunctionalAreas } from "./tool/tasks/run-tests-in-functional-areas";
 import { StopTask } from "./tool/tasks/stop-task";
 import { WaitForTask } from "./tool/tasks/wait-for-task";
+import { GetWorkflowRun } from "./tool/workflows/get-workflow-run";
+import { ListWorkflows } from "./tool/workflows/list-workflows";
+import { RunWorkflow } from "./tool/workflows/run-workflow";
+import { StopWorkflowRun } from "./tool/workflows/stop-workflow-run";
 
 const ConfigurationSchema = z.object({
   api_token: z.string().describe("BearQ workspace API token (Bearer)."),
@@ -95,6 +99,10 @@ export class BearQClient implements Client {
       new StopTask(this),
       new WaitForTask(this),
       new ListEnvironments(this),
+      new ListWorkflows(this),
+      new RunWorkflow(this),
+      new GetWorkflowRun(this),
+      new StopWorkflowRun(this),
     ];
     for (const tool of tools) {
       register(tool.specification, tool.handle);

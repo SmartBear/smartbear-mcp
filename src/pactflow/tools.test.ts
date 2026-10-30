@@ -533,6 +533,14 @@ describe("Group A pagination defaults", () => {
     { title: "List Branches", base: { pacticipantName: "p" } },
     { title: "List Pacticipant Versions", base: { pacticipantName: "p" } },
     {
+      title: "List Deployed or Released Versions",
+      base: { pacticipantName: "p" },
+    },
+    {
+      title: "List Environment Versions",
+      base: { pacticipantName: "p", environmentId: "e" },
+    },
+    {
       title: "Get Branch Versions",
       base: { pacticipantName: "p", branchName: "b" },
     },

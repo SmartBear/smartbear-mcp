@@ -25,8 +25,8 @@ describe("StopTask", () => {
     expect(instance.specification.title).toBe("Stop Task");
   });
 
-  it("should DELETE /tasks/{id} with correct method and headers", async () => {
-    fetchMock.mockResponseOnce(JSON.stringify({ cancelled: true }));
+  it("should DELETE /tasks/{id} and report stopped: true", async () => {
+    fetchMock.mockResponseOnce(JSON.stringify({}));
 
     const result = await instance.handle({ taskId: 33 }, {} as any);
 
@@ -41,11 +41,23 @@ describe("StopTask", () => {
     );
 
     const parsed = JSON.parse((result.content[0] as any).text);
-    expect(parsed.cancelled).toBe(true);
+    expect(parsed).toEqual({ taskId: 33, stopped: true });
   });
 
-  it("should throw ToolError with taskId in message on non-2xx response", async () => {
+  it("should include the problem detail in the error on non-2xx response", async () => {
+    fetchMock.mockResponseOnce(
+      JSON.stringify({ title: "Conflict", detail: "Task is locked" }),
+      { status: 409, statusText: "Conflict" },
+    );
+
+    await expect(instance.handle({ taskId: 33 }, {} as any)).rejects.toThrow(
+      "DELETE /tasks/33 failed: 409 Conflict — Task is locked",
+    );
+  });
+
+  it("should fall back to a bare status line when the error body has no detail", async () => {
     fetchMock.mockResponseOnce("Not Found", { status: 404 });
+
     await expect(instance.handle({ taskId: 33 }, {} as any)).rejects.toThrow(
       "DELETE /tasks/33 failed: 404",
     );
