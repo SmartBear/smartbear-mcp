@@ -293,6 +293,66 @@ describe("BugsnagClient", () => {
       expect(result).toBe("token my-configured-pat");
     });
 
+    describe("credentials presented while opening an HTTP session", () => {
+      const configureInRequest = async (
+        headers: Record<string, string>,
+        authToken: string,
+      ) => {
+        const { requestContextStorage } = await import(
+          "../common/request-context.js"
+        );
+        const client = new BugsnagClient();
+        await requestContextStorage.run({ headers }, () =>
+          client.configure({ getCache: () => mockCache } as any, {
+            auth_token: authToken,
+          }),
+        );
+        return { client, requestContextStorage };
+      };
+
+      afterEach(() => {
+        vi.unstubAllEnvs();
+      });
+
+      it("should not be reused by a later request that carries no credential", async () => {
+        const { client, requestContextStorage } = await configureInRequest(
+          { "Bugsnag-Auth-Token": "session-owner-pat" },
+          "session-owner-pat",
+        );
+
+        const result = requestContextStorage.run({ headers: {} }, () =>
+          client.getAuthToken(),
+        );
+        expect(result).toBeNull();
+      });
+
+      it("should still serve a later request that presents its own credential", async () => {
+        const { client, requestContextStorage } = await configureInRequest(
+          { "Bugsnag-Auth-Token": "session-owner-pat" },
+          "session-owner-pat",
+        );
+
+        const result = requestContextStorage.run(
+          { headers: { "Bugsnag-Auth-Token": "session-owner-pat" } },
+          () => client.getAuthToken(),
+        );
+        expect(result).toBe("token session-owner-pat");
+      });
+
+      it("should keep serving the operator's BUGSNAG_AUTH_TOKEN env token", async () => {
+        vi.stubEnv("BUGSNAG_AUTH_TOKEN", "operator-pat");
+        const { client, requestContextStorage } = await configureInRequest(
+          {},
+          "operator-pat",
+        );
+
+        const result = requestContextStorage.run({ headers: {} }, () =>
+          client.getAuthToken(),
+        );
+        expect(result).toBe("token operator-pat");
+      });
+    });
+
     it("should return null when no auth is available", async () => {
       const client = new BugsnagClient();
       const mockServer = { getCache: () => mockCache } as any;
