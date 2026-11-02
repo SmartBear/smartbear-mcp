@@ -32,6 +32,7 @@ import {
   bulkUpdateTestRunUdfs,
   fetchTestRunUdfMetadata,
   parseRawUdfs,
+  stripHtml,
 } from "./udf";
 import { resolveDefaults } from "./utils";
 
@@ -628,11 +629,13 @@ type MandatoryTestRunUdfGateResult =
   | { blocked: Record<string, unknown>; udfUpdates?: undefined }
   | { blocked?: undefined; udfUpdates: TestRunUdfUpdateResult[] };
 
+// Rich-text (LARGETEXT) values are HTML, so blank editor markup such as
+// "<p><br></p>" or "<p>&nbsp;</p>" must count as empty.
 function isEmptyUdfValue(value: unknown): boolean {
   return (
     value === null ||
     value === undefined ||
-    (typeof value === "string" && value.trim().length === 0) ||
+    (typeof value === "string" && stripHtml(value).trim().length === 0) ||
     (Array.isArray(value) && value.length === 0)
   );
 }
@@ -685,6 +688,19 @@ async function applyMandatoryTestRunUdfGate(
       throw new Error(
         `[bulkUpdateExecutionStatus] 'udfValuesByRun.${tcRunID}' contains unknown Test Run UDF field names: ${unknownFields.join(", ")}. ` +
           `Valid names: ${[...fieldsByName.keys()].join(", ") || "(none)"}.`,
+      );
+    }
+    // The gate validates by field name, so a supplied fieldID must point at that same field.
+    const mismatchedIDs = Object.entries(udfs).flatMap(([name, entry]) => {
+      const expected = fieldsByName.get(name)?.fieldID;
+      return entry.fieldID !== undefined && entry.fieldID !== expected
+        ? [`${name} (got ${entry.fieldID}, expected ${expected})`]
+        : [];
+    });
+    if (mismatchedIDs.length > 0) {
+      throw new Error(
+        `[bulkUpdateExecutionStatus] 'udfValuesByRun.${tcRunID}' contains fieldIDs that do not match the Test Run UDF metadata: ${mismatchedIDs.join(", ")}. ` +
+          "Omit fieldID to have it filled in automatically.",
       );
     }
   }
@@ -774,7 +790,7 @@ async function applyMandatoryTestRunUdfGate(
     for (const name of names) {
       const entry = udfs[name];
       UDF[name] = {
-        fieldID: entry.fieldID ?? (fieldsByName.get(name)?.fieldID as number),
+        fieldID: fieldsByName.get(name)?.fieldID as number,
         value: entry.value,
         ...(entry.multiSelectAction
           ? { multiSelectAction: entry.multiSelectAction }

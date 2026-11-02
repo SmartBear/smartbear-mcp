@@ -1653,7 +1653,7 @@ export const BulkUpdateExecutionStatusArgsSchema = z.object({
           fieldID: UdfFieldValueSchema.shape.fieldID
             .optional()
             .describe(
-              "Optional projectUserFieldID of the Test Run UDF. Auto-filled from Test Run UDF metadata when omitted.",
+              "Optional projectUserFieldID of the Test Run UDF. Auto-filled from Test Run UDF metadata when omitted; if given, it must match the metadata ID for this field name.",
             ),
         }),
       ),

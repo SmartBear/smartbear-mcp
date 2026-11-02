@@ -379,6 +379,104 @@ describe("testsuite bulk update execution status API", () => {
       ).rejects.toThrow("not in 'entityIDs': 999");
     });
 
+    it("should treat blank rich-text values on the run as missing", async () => {
+      mockQmetry({
+        metadata: MANDATORY_METADATA,
+        runPages: [
+          {
+            total: 2,
+            data: [
+              runRow(66095069, { test_env: "<p><br></p>" }),
+              runRow(66095075, { test_env: "<p>&nbsp;</p>" }),
+            ],
+          },
+        ],
+      });
+
+      const result: any = await bulkUpdateExecutionStatus(
+        token,
+        baseUrl,
+        projectKey,
+        basePayload,
+      );
+
+      expect(result.code).toBe("MANDATORY_TEST_RUN_UDF_MISSING");
+      expect(result.runsMissingFields.map((r: any) => r.tcRunID)).toEqual([
+        66095069, 66095075,
+      ]);
+      expect(calls().map((c: any) => c.url)).not.toContain(STATUS_URL);
+    });
+
+    it("should treat blank rich-text supplied values as missing", async () => {
+      mockQmetry({
+        metadata: MANDATORY_METADATA,
+        runPages: [{ total: 2, data: [runRow(66095069), runRow(66095075)] }],
+      });
+
+      const result: any = await bulkUpdateExecutionStatus(
+        token,
+        baseUrl,
+        projectKey,
+        {
+          ...basePayload,
+          udfValuesByRun: {
+            "66095069": { test_env: { value: "<p><br></p>" } },
+            "66095075": { test_env: { value: "<p>QA</p>" } },
+          },
+        },
+      );
+
+      expect(result.code).toBe("MANDATORY_TEST_RUN_UDF_MISSING");
+      expect(result.runsMissingFields.map((r: any) => r.tcRunID)).toEqual([
+        66095069,
+      ]);
+      const urls = calls().map((c: any) => c.url);
+      expect(urls).not.toContain(UDF_URL);
+      expect(urls).not.toContain(STATUS_URL);
+    });
+
+    it("should throw when a supplied fieldID does not match the UDF metadata", async () => {
+      mockQmetry({ metadata: MANDATORY_METADATA });
+
+      await expect(
+        bulkUpdateExecutionStatus(token, baseUrl, projectKey, {
+          ...basePayload,
+          udfValuesByRun: {
+            "66095069": { test_env: { value: "QA", fieldID: 11 } },
+          },
+        }),
+      ).rejects.toThrow("test_env (got 11, expected 101)");
+      const urls = calls().map((c: any) => c.url);
+      expect(urls).not.toContain(UDF_URL);
+      expect(urls).not.toContain(STATUS_URL);
+    });
+
+    it("should accept a supplied fieldID that matches the UDF metadata", async () => {
+      mockQmetry({
+        metadata: MANDATORY_METADATA,
+        runPages: [{ total: 2, data: [runRow(66095069), runRow(66095075)] }],
+      });
+
+      const result: any = await bulkUpdateExecutionStatus(
+        token,
+        baseUrl,
+        projectKey,
+        {
+          ...basePayload,
+          udfValuesByRun: {
+            "66095069": { test_env: { value: "QA", fieldID: 101 } },
+            "66095075": { test_env: { value: "QA" } },
+          },
+        },
+      );
+
+      expect(result.success).toBe(true);
+      const udfCall = calls().find((c: any) => c.url === UDF_URL);
+      expect(udfCall.body.UDF).toEqual({
+        test_env: { fieldID: 101, value: "QA" },
+      });
+    });
+
     it("should throw on unknown UDF field names", async () => {
       mockQmetry({ metadata: MANDATORY_METADATA });
 
