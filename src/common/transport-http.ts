@@ -25,7 +25,6 @@ import {
 import { clientRegistry } from "./client-registry";
 import { MCP_SERVER_VERSION } from "./info";
 import { extractModernClientMeta, handleInitializeMessage } from "./initialize";
-import { decodeJwtClaims, firstClaim, getClaim } from "./jwt";
 import {
   type ModernClientMeta,
   type ProtocolEra,
@@ -51,26 +50,13 @@ type SessionEntry = {
 
 const IDENTITY_KEY = randomBytes(32);
 
-/** Identity of one client's credential: the JWT subject if it has one, else the token itself. */
-function credentialIdentity(
-  client: { analytics?: { userId?: string[] } },
-  token: string,
-): string {
-  if (token.startsWith("Bearer ")) {
-    const claims = decodeJwtClaims(token.substring(7));
-    const subject = firstClaim(claims, client.analytics?.userId ?? ["sub"]);
-    if (subject) {
-      return `sub:${getClaim(claims, "iss") ?? ""}|${subject}`;
-    }
-  }
-  return `token:${token}`;
-}
-
 /**
  * Opaque identity the current request's credentials resolve to, or null when
  * none of the clients find a credential. Must run inside the request context.
- * Subject claims are read unverified; the product API still authenticates the
- * token on every call, so this only has to tell callers apart.
+ *
+ * Bound to the exact token rather than to unverified JWT claims, which anyone
+ * can forge. A refreshed OAuth token therefore no longer matches its session;
+ * the mismatch is answered as an unknown session, so the client re-initializes.
  */
 export function resolveCredentialIdentity(
   server: SmartBearMcpServer,
@@ -79,8 +65,9 @@ export function resolveCredentialIdentity(
   for (const client of server.getClients()) {
     const token = client.getAuthToken?.();
     if (token) {
+      // Clients differ on whether getAuthToken() keeps the `Bearer ` prefix.
       parts.push(
-        `${client.capabilityPrefix}:${credentialIdentity(client, token)}`,
+        `${client.capabilityPrefix}:${token.replace(/^Bearer\s+/i, "")}`,
       );
     }
   }
@@ -99,15 +86,37 @@ function requestIdentity(
   return withRequestContext(req, () => resolveCredentialIdentity(server));
 }
 
+/** Streamable HTTP's unknown-session response, which tells clients to re-initialize. */
+function writeSessionNotFound(res: ServerResponse): void {
+  res.writeHead(404, { "Content-Type": "application/json" });
+  res.end(
+    JSON.stringify({
+      jsonrpc: "2.0",
+      error: {
+        code: -32001,
+        message: "Session not found",
+      },
+      id: null,
+    }),
+  );
+}
+
 /**
  * Require every request on an established session to carry a credential that
  * resolves to the identity that opened it. The session id only correlates
- * requests. Writes the 401/403 response and returns false on failure.
+ * requests. Writes the response and returns false on failure.
+ *
+ * No credential gets a 401 with the OAuth challenge. A credential for another
+ * identity gets the same 404 as an unknown session: the client re-initializes
+ * on its own (e.g. after an OAuth token refresh), and a caller holding someone
+ * else's session id learns nothing about whether it exists. The session itself
+ * is left alone so a mismatched request cannot tear down the owner's session.
  */
 export function authorizeSessionRequest(
   req: IncomingMessage,
   res: ServerResponse,
   entry: SessionEntry,
+  notFound: (res: ServerResponse) => void = writeSessionNotFound,
 ): boolean {
   if (!entry.identity) {
     return true;
@@ -122,8 +131,7 @@ export function authorizeSessionRequest(
     res.writeHead(401, unauthorizedHeaders(req.headers, req.headers.host));
     res.end("Unauthorized: credentials are required on every request");
   } else {
-    res.writeHead(403, { "Content-Type": "text/plain" });
-    res.end("Forbidden: credentials do not match the session");
+    notFound(res);
   }
   return false;
 }
@@ -775,17 +783,7 @@ export async function handleStreamableHttpRequest(
     const sessionEntry = sessionId ? transports.get(sessionId) : undefined;
     if (sessionId && !sessionEntry) {
       req.resume();
-      res.writeHead(404, { "Content-Type": "application/json" });
-      res.end(
-        JSON.stringify({
-          jsonrpc: "2.0",
-          error: {
-            code: -32001,
-            message: "Session not found",
-          },
-          id: null,
-        }),
-      );
+      writeSessionNotFound(res);
       return;
     }
 
@@ -898,6 +896,12 @@ async function handleLegacySseRequest(
   await server.connect(transport);
 }
 
+/** Legacy `POST /message` unknown-session response. */
+function writeLegacySessionNotFound(res: ServerResponse): void {
+  res.writeHead(404, { "Content-Type": "text/plain" });
+  res.end("Session not found");
+}
+
 /**
  * Handle legacy POST message requests (POST /message?sessionId=xxx)
  *
@@ -926,8 +930,7 @@ async function handleLegacyMessageRequest(
   // Find the session created by the SSE connection
   const session = transports.get(sessionId);
   if (!session) {
-    res.writeHead(404, { "Content-Type": "text/plain" });
-    res.end("Session not found");
+    writeLegacySessionNotFound(res);
     return;
   }
 
@@ -938,7 +941,7 @@ async function handleLegacyMessageRequest(
     return;
   }
 
-  if (!authorizeSessionRequest(req, res, session)) {
+  if (!authorizeSessionRequest(req, res, session, writeLegacySessionNotFound)) {
     return;
   }
 

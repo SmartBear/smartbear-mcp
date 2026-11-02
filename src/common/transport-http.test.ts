@@ -899,9 +899,23 @@ describe("handleStreamableHttpRequest (session routing)", () => {
       return client;
     }
 
+    // Strips the `Bearer ` prefix like Swagger, Reflect and BearQ, but reads only
+    // the request headers; their stored-token fallback is covered by the
+    // "falls back to its configured token" tests below.
+    function strippingClient(): Client {
+      const client: any = createTestClient({ name: "Swagger" });
+      client.getAuthToken = () => {
+        const value = getRequestHeader("Authorization") as string | undefined;
+        if (!value) return null;
+        return value.startsWith("Bearer ") ? value.substring(7) : value;
+      };
+      return client;
+    }
+
     async function sessionWith(
       ownerHeaders: Record<string, string>,
       handleRequest = vi.fn().mockResolvedValue(undefined),
+      clients: () => Client[] = () => [headerClient()],
     ) {
       const { NodeStreamableHTTPServerTransport } = await import(
         "@modelcontextprotocol/node"
@@ -912,7 +926,7 @@ describe("handleStreamableHttpRequest (session routing)", () => {
       transport.handleRequest = handleRequest;
       const server = {
         getMcpClientIdentity: () => ({ name: undefined }),
-        getClients: () => [headerClient()],
+        getClients: clients,
       } as any;
       const identity = withRequestHeaders(ownerHeaders, () =>
         resolveCredentialIdentity(server),
@@ -948,23 +962,74 @@ describe("handleStreamableHttpRequest (session routing)", () => {
       expect(handleRequest).not.toHaveBeenCalled();
     });
 
-    it("rejects a credential that resolves to a different identity", async () => {
+    it("answers a credential for a different identity as an unknown session", async () => {
       const { transports, handleRequest } = await sessionWith({
         "bugsnag-auth-token": "owner-pat",
       });
-      const req = fakeStreamRequest({
-        method: "DELETE",
-        headers: {
-          "mcp-session-id": "sess-1",
-          "bugsnag-auth-token": "someone-else",
-        },
-      });
-      const res = fakeResponse();
+      const mismatched = fakeResponse();
+      await handleStreamableHttpRequest(
+        fakeStreamRequest({
+          method: "DELETE",
+          headers: {
+            "mcp-session-id": "sess-1",
+            "bugsnag-auth-token": "someone-else",
+          },
+        }),
+        mismatched,
+        transports,
+      );
+      const unknown = fakeResponse();
+      await handleStreamableHttpRequest(
+        fakeStreamRequest({
+          method: "DELETE",
+          headers: {
+            "mcp-session-id": "no-such-session",
+            "bugsnag-auth-token": "someone-else",
+          },
+        }),
+        unknown,
+        transports,
+      );
 
-      await handleStreamableHttpRequest(req, res, transports);
-
-      expect(res._status).toBe(403);
+      expect(mismatched._status).toBe(404);
+      expect(mismatched._headers).toEqual(unknown._headers);
+      expect(mismatched._body).toBe(unknown._body);
       expect(handleRequest).not.toHaveBeenCalled();
+    });
+
+    it("leaves the owner's session in place after a mismatched request", async () => {
+      const { transports, handleRequest } = await sessionWith({
+        "bugsnag-auth-token": "owner-pat",
+      });
+      await handleStreamableHttpRequest(
+        fakeStreamRequest({
+          method: "DELETE",
+          headers: {
+            "mcp-session-id": "sess-1",
+            "bugsnag-auth-token": "someone-else",
+          },
+        }),
+        fakeResponse(),
+        transports,
+      );
+      expect(transports.has("sess-1")).toBe(true);
+
+      const res = fakeResponse();
+      await handleStreamableHttpRequest(
+        fakeStreamRequest({
+          method: "POST",
+          headers: {
+            "mcp-session-id": "sess-1",
+            "bugsnag-auth-token": "owner-pat",
+          },
+          body: { jsonrpc: "2.0", method: "tools/list", id: 1 },
+        }),
+        res,
+        transports,
+      );
+
+      expect(res._status).toBeNull();
+      expect(handleRequest).toHaveBeenCalledTimes(1);
     });
 
     it("accepts the owner's credential", async () => {
@@ -987,44 +1052,169 @@ describe("handleStreamableHttpRequest (session routing)", () => {
       expect(handleRequest).toHaveBeenCalledTimes(1);
     });
 
-    it("accepts a refreshed OAuth token for the same subject", async () => {
-      const { transports, handleRequest } = await sessionWith({
-        authorization: `Bearer ${jwt({ iss: "idp", sub: "u1", jti: "a" })}`,
-      });
-      const req = fakeStreamRequest({
-        method: "POST",
-        headers: {
-          "mcp-session-id": "sess-1",
-          authorization: `Bearer ${jwt({ iss: "idp", sub: "u1", jti: "b" })}`,
-        },
-        body: { jsonrpc: "2.0", method: "tools/list", id: 1 },
-      });
+    async function expectUnknownSession(
+      transports: Map<string, any>,
+      headers: Record<string, string>,
+    ) {
       const res = fakeResponse();
+      await handleStreamableHttpRequest(
+        fakeStreamRequest({
+          method: "POST",
+          headers: { "mcp-session-id": "sess-1", ...headers },
+          body: { jsonrpc: "2.0", method: "tools/list", id: 1 },
+        }),
+        res,
+        transports,
+      );
+      const unknown = fakeResponse();
+      await handleStreamableHttpRequest(
+        fakeStreamRequest({
+          method: "POST",
+          headers: { "mcp-session-id": "no-such-session", ...headers },
+          body: { jsonrpc: "2.0", method: "tools/list", id: 1 },
+        }),
+        unknown,
+        transports,
+      );
+      expect(res._status).toBe(404);
+      expect(res._body).toBe(unknown._body);
+    }
 
-      await handleStreamableHttpRequest(req, res, transports);
+    it.each([
+      ["keeps the Bearer prefix", () => [headerClient()]],
+      ["strips the Bearer prefix", () => [strippingClient()]],
+      ["is one of several clients", () => [headerClient(), strippingClient()]],
+    ])("sends a client that %s back to initialize after an OAuth token refresh", async (_, clients) => {
+      const { transports, handleRequest } = await sessionWith(
+        {
+          authorization: `Bearer ${jwt({ iss: "idp", sub: "u1", jti: "a" })}`,
+        },
+        undefined,
+        clients,
+      );
 
-      expect(res._status).toBeNull();
-      expect(handleRequest).toHaveBeenCalledTimes(1);
+      await expectUnknownSession(transports, {
+        authorization: `Bearer ${jwt({ iss: "idp", sub: "u1", jti: "b" })}`,
+      });
+      expect(handleRequest).not.toHaveBeenCalled();
+      expect(transports.has("sess-1")).toBe(true);
     });
 
-    it("rejects an OAuth token for a different subject", async () => {
+    it("rejects a forged JWT that copies the owner's subject", async () => {
       const { transports, handleRequest } = await sessionWith({
+        authorization: `Bearer ${jwt({ iss: "idp", sub: "u1" })}.real-signature`,
+      });
+
+      await expectUnknownSession(transports, {
         authorization: `Bearer ${jwt({ iss: "idp", sub: "u1" })}`,
       });
-      const req = fakeStreamRequest({
-        method: "POST",
-        headers: {
-          "mcp-session-id": "sess-1",
-          authorization: `Bearer ${jwt({ iss: "idp", sub: "u2" })}`,
-        },
-        body: { jsonrpc: "2.0", method: "tools/list", id: 1 },
-      });
-      const res = fakeResponse();
-
-      await handleStreamableHttpRequest(req, res, transports);
-
-      expect(res._status).toBe(403);
       expect(handleRequest).not.toHaveBeenCalled();
+    });
+
+    it("binds a bearer token by exact value whether or not the prefix is kept", () => {
+      const server = {
+        getClients: () => [headerClient(), strippingClient()],
+      } as any;
+      const identity = (token: string) =>
+        withRequestHeaders({ authorization: `Bearer ${token}` }, () =>
+          resolveCredentialIdentity(server),
+        );
+
+      expect(identity("opaque-1")).toBe(identity("opaque-1"));
+      expect(identity("opaque-1")).not.toBe(identity("opaque-2"));
+    });
+
+    describe("with a client that falls back to its configured token", () => {
+      // Resolves the credential the way Swagger does: the Swagger-Api-Key or
+      // Authorization header (prefix stripped), else the api_key it stored at
+      // configure time, which for an HTTP session came from the opener's headers.
+      function storedTokenClient(apiKey?: string): Client {
+        const client: any = createTestClient({ name: "Swagger" });
+        client.getAuthToken = () => {
+          const value = (getRequestHeader("Swagger-Api-Key") ||
+            getRequestHeader("Authorization")) as string | undefined;
+          if (value) {
+            return value.startsWith("Bearer ") ? value.substring(7) : value;
+          }
+          return apiKey || null;
+        };
+        return client;
+      }
+
+      async function swaggerSessionWith(
+        ownerHeaders: Record<string, string>,
+        config: { api_key?: string } = {},
+      ) {
+        const swagger = storedTokenClient(config.api_key);
+        return sessionWith(ownerHeaders, undefined, () => [swagger]);
+      }
+
+      async function send(
+        transports: Map<string, any>,
+        headers: Record<string, string>,
+      ) {
+        const res = fakeResponse();
+        await handleStreamableHttpRequest(
+          fakeStreamRequest({
+            method: "POST",
+            headers: { "mcp-session-id": "sess-1", ...headers },
+            body: { jsonrpc: "2.0", method: "tools/list", id: 1 },
+          }),
+          res,
+          transports,
+        );
+        return res;
+      }
+
+      it("accepts the owner's API key", async () => {
+        const { transports, handleRequest } = await swaggerSessionWith(
+          { "swagger-api-key": "alice-key" },
+          { api_key: "alice-key" },
+        );
+
+        const res = await send(transports, { "swagger-api-key": "alice-key" });
+
+        expect(res._status).toBeNull();
+        expect(handleRequest).toHaveBeenCalledTimes(1);
+      });
+
+      it("answers a different API key as an unknown session", async () => {
+        const { transports, handleRequest } = await swaggerSessionWith(
+          { "swagger-api-key": "alice-key" },
+          { api_key: "alice-key" },
+        );
+
+        await expectUnknownSession(transports, {
+          "swagger-api-key": "mallory-key",
+        });
+        expect(handleRequest).not.toHaveBeenCalled();
+      });
+
+      it("rejects a credential-less request on an OAuth session", async () => {
+        const { transports, handleRequest } = await swaggerSessionWith({
+          authorization: `Bearer ${jwt({ iss: "idp", sub: "u1" })}`,
+        });
+
+        const res = await send(transports, {});
+
+        expect(res._status).toBe(401);
+        expect(handleRequest).not.toHaveBeenCalled();
+      });
+
+      // Like SwaggerClient, the client still falls back to the key it stored at
+      // configure time, so a request carrying only the session id resolves to
+      // the owner. Flip to `it` once header tokens are no longer kept per session.
+      it.fails("rejects a credential-less request on an API key session", async () => {
+        const { transports, handleRequest } = await swaggerSessionWith(
+          { "swagger-api-key": "alice-key" },
+          { api_key: "alice-key" },
+        );
+
+        const res = await send(transports, {});
+
+        expect(res._status).toBe(401);
+        expect(handleRequest).not.toHaveBeenCalled();
+      });
     });
   });
 });
