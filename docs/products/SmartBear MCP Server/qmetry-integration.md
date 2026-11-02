@@ -54,6 +54,12 @@ The QMetry client provides the following test management capabilities as listed 
 -   Returns: List of available platforms for cross-platform testing.
 -   Use case: Retrieve all platforms.
 
+### `fetch_api_call_quota`
+
+-   Purpose: Fetch the QMetry Open API call quota for the account behind the configured API key. Calls to this tool do not count toward the quota.
+-   Returns: Whether limits are enforced (`limitEnabled`), hourly and daily `limit`, `consumed`, `remaining` and `resetsAt` (UTC), and `serverTime`.
+-   Use case: Check remaining calls before a large batch of operations, diagnose rate-limit or quota-exceeded errors, find out when the quota resets.
+
 ### `create_requirement`
 
 -   Purpose: Create a new requirement in QMetry with metadata and release/cycle mapping.
@@ -234,9 +240,9 @@ The QMetry client provides the following test management capabilities as listed 
 ### `update_testcase_execution_status`
 
 -   Purpose: Update the execution status of test cases within a specific test suite run in QMetry.
--   Parameters: Test Suite Run identifier (`qmTsRunId`), Test Case Run identifiers (`entityIDs`), Execution Status ID (`runStatusID`), Type of entity('TCR'/'TCSR') to execute (`entityType`).
--   Returns: JSON object with update status and details.
--   Use case: Update execution status for one or more test cases within a test suite run.
+-   Parameters: Test Suite Run identifier (`qmTsRunId`), Test Case Run identifiers (`entityIDs`), Execution Status ID (`runStatusID`), Type of entity('TCR'/'TCSR') to execute (`entityType`), optional per-run Test Run UDF values (`udfValuesByRun`, keyed by Test Case Run ID and UDF field name; `TCR` only).
+-   Returns: On success, `{ success, udfUpdates, statusUpdate }`. If any target run is missing a mandatory Test Run UDF, nothing is updated and the tool returns code `MANDATORY_TEST_RUN_UDF_MISSING` with the missing fields per run.
+-   Use case: Update execution status for one or more test cases within a test suite run. For `TCR` updates, mandatory Test Run UDFs must be populated first; missing values can be supplied through `udfValuesByRun` and are written before the status is changed.
 
 ### `create_issue`
 

@@ -218,7 +218,15 @@ export interface BulkUpdateExecutionStatusPayload {
   password?: string; // optional - For Part 11 Compliance
   qmRunObj?: string; // optional - Internal run object
   type?: "TCR" | "TCSR"; // optional - For backwards compatibility
+  viewId?: number; // optional - TE view ID, used to read current Test Run UDF values
+  udfValuesByRun?: Record<string, Record<string, TestRunUdfInputValue>>; // optional - per-run UDF values applied before status update
+  scopeId?: number; // optional - injected scope header
+  orgCode?: string; // optional - injected orgcode header
 }
+
+export type TestRunUdfInputValue = Omit<UdfFieldValue, "fieldID"> & {
+  fieldID?: number;
+};
 
 export const DEFAULT_BULK_UPDATE_EXECUTION_STATUS_PAYLOAD: Omit<
   BulkUpdateExecutionStatusPayload,
