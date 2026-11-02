@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.43.0] - 2026-11-02
+
 ### Added
 
 - [QMetry] Added `qmetry_fetch_api_call_quota` tool to fetch the hourly and daily Open API call limits, calls consumed, calls remaining and reset times. Calls to this tool do not count toward the quota.
