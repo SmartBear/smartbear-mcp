@@ -197,7 +197,7 @@ describe("testsuite bulk update execution status API", () => {
         viewId: 555,
         start: 0,
         page: 1,
-        limit: 100,
+        limit: 10,
       });
       expect(result.success).toBe(true);
     });

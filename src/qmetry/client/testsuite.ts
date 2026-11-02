@@ -1,4 +1,5 @@
 import { QMETRY_PATHS } from "../config/rest-endpoints";
+import { DEFAULT_PAGINATION } from "../types/common";
 import {
   type BulkUpdateExecutionStatusPayload,
   type CreateTestSuitePayload,
@@ -621,7 +622,7 @@ export async function bulkUpdateExecutionStatus(
   return { success: true, udfUpdates, statusUpdate };
 }
 
-const TEST_RUN_UDF_GATE_PAGE_SIZE = 100;
+const TEST_RUN_UDF_GATE_PAGE_SIZE = DEFAULT_PAGINATION.limit;
 
 type TestRunUdfUpdateResult = { tcRunIDs: number[]; response: unknown };
 
