@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [PactFlow] All PactFlow tools now declare an `outputSchema` and return `structuredContent`. Schemas follow the PactFlow OpenAPI description but are lenient (every property optional, extra fields allowed) so OSS Pact Broker responses validate. Tools whose API returns no body (deletes, setting a user's roles) return `{ "success": true }`. Paginated tools also report `pagination`.
 - [BearQ] Added tools to run, list, and monitor BearQ workflows.
 - [PactFlow] Added `contract-testing_list_deployed_or_released_versions` (all versions of a pacticipant that have ever been deployed or released) and `contract-testing_list_environment_versions` (versions of a pacticipant associated with an environment). Both support `pageNumber`/`pageSize` and are available on PactFlow only.
+- [Common] `/health` now returns `version` (read from the root `package.json`, not `process.env.npm_package_version`, since the Docker entrypoint runs `node dist/index.js` directly) and `region` (currently hardcoded to `null` - No regional Zephyr deployment exists yet). `/ready` is unchanged.
+- [PactFlow] Expanded the consumer Pact tests against the PactFlow API (`pactflow-application-saas`) to cover every operation the client calls: added interactions for the previously untested operations (admin roles, branches, version listing and update, integrations, invite users, team user patch, create secret, update webhook, provider contract publish, provider-level BDCT results), the documented error statuses (400, 404, 409, 410, 422), and all required response fields. Pact coverage against the consumer-filtered PactFlow OAS is now 100% for paths, status codes, and required request/response fields, and the pact passes bi-directional contract testing on PactFlow.
 
 ### Fixed
 
@@ -26,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [QMetry] API error handling now reads the response body once. Previously a non-JSON error body made the fallback `text()` call throw "Body is unusable", hiding the real error.
 - [PactFlow] `contract-testing_list_integrations` and `contract-testing_get_integrations_by_team` now send `Accept: application/hal+json`. Without it PactFlow negotiated `text/vnd.graphviz` for `/integrations` and the response could not be parsed as JSON.
 - [PactFlow] `contract-testing_admin_patch_team_users` now sends `Content-Type: application/json-patch+json`, which is the only content type PactFlow accepts for `PATCH /admin/teams/{teamId}/users` (it previously returned 415).
+- [Swagger] Fixed `swagger_validate_api` output schema rejecting findings with `information`, `hint` or `unknown` severity and documented `column` as 1-based, matching the `/specs/validate` contract.
 
 ### Removed
 
@@ -39,7 +42,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- [Swagger] Fixed `swagger_validate_api` output schema rejecting findings with `information`, `hint` or `unknown` severity and documented `column` as 1-based, matching the `/specs/validate` contract.
 
 - [Common] Reduced stdio startup time so the `initialize` response is not delayed by module loading,which could exceed client timeouts on some environment's. `swagger-client` is now loaded only when a Contract Testing tool resolves an OpenAPI document, and products excluded by `MCP_CLIENTS` or `MCP_TOOLSETS` are no longer imported at startup.
 
@@ -54,7 +56,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [Swagger] Added `swagger_validate_api` tool to validate OpenAPI and AsyncAPI definitions (raw content or an existing registry API). [#723](https://github.com/SmartBear/smartbear-mcp/pull/723)
 - [QTM4J] Added optional `folderId` support to `create_test_case` and `create_test_cycle`. If omitted, the asset is created in the `MCP Generated` folder. [#721](https://github.com/SmartBear/smartbear-mcp/pull/721)
-- [Common] `/health` now returns `version` (read from the root `package.json`, not `process.env.npm_package_version`, since the Docker entrypoint runs `node dist/index.js` directly) and `region` (currently hardcoded to `null` - No regional Zephyr deployment exists yet). `/ready` is unchanged.
 
 ### Fixed
 
@@ -73,7 +74,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Common] Protocol-compliance fixes for the modern (2026-07-28) era: cacheable list/read results (`tools/list`, `prompts/list`, `resources/list`, `resources/templates/list`, `resources/read`) now carry cache hints (`ttlMs` from `CACHE_TTL`, `cacheScope: private`); `tools/list` output is deterministically ordered (alphabetical by name, both eras); the modern era no longer advertises the deprecated `logging` capability (SEP-2577), while `tools.listChanged` remains advertised on both eras (the SDK's serving entries implement `subscriptions/listen` natively for modern clients); `Mcp-Method` and `Mcp-Name` are allowed through CORS. SEP-2243 param-driven request headers (`Mcp-Param-<Name>`, declared via `x-mcp-header` schema annotations) are validated against tool arguments natively by the SDK; no tool currently declares one, so no additional CORS entries are needed for them. Legacy (2025-11-25) capability declarations and cache-result envelopes are unchanged; resource-not-found errors are now reported as -32602 (Invalid Params) in both eras per the 2026-07-28 spec, and clients should accept both -32602 and the former -32002. [#708](https://github.com/SmartBear/smartbear-mcp/pull/708)
 - [Common] Elicitation on the modern (2026-07-28) era now uses the multi round-trip pattern ([SEP-2322](https://github.com/modelcontextprotocol/modelcontextprotocol/pull/2322)): tools that need user input return an `input_required` result carrying an embedded `elicitation/create` request, and the client's retry supplies the answers via `inputResponses`. Answers from earlier rounds are correlated through a server-minted `requestState`. Modern clients that do not declare the `elicitation` capability, and all legacy (2025-11-25) clients, keep the existing instruction-based fallback. [#705](https://github.com/SmartBear/smartbear-mcp/pull/705)
 - [Zephyr] Change outputSchema for issue link test cases, cycles and executions to be objects instead of arrays. [#706](https://github.com/SmartBear/smartbear-mcp/pull/706)
-- [PactFlow] Expanded the consumer Pact tests against the PactFlow API (`pactflow-application-saas`) to cover every operation the client calls: added interactions for the previously untested operations (admin roles, branches, version listing and update, integrations, invite users, team user patch, create secret, update webhook, provider contract publish, provider-level BDCT results), the documented error statuses (400, 404, 409, 410, 422), and all required response fields. Pact coverage against the consumer-filtered PactFlow OAS is now 100% for paths, status codes, and required request/response fields, and the pact passes bi-directional contract testing on PactFlow.
 
 ### Fixed
 
