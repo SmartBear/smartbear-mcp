@@ -5,25 +5,6 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
-
-## [0.43.0] - 2026-11-02
-
-### Added
-
-- [QMetry] Added `qmetry_fetch_api_call_quota` tool to fetch the hourly and daily Open API call limits, calls consumed, calls remaining and reset times. Calls to this tool do not count toward the quota.
-- [QMetry] Bulk Update Test Case Execution Status tool now enforces mandatory Test Run UDFs for `TCR` updates: if any target run is missing a mandatory value, nothing is updated and the tool returns `MANDATORY_TEST_RUN_UDF_MISSING` with the missing fields per run. A new optional `udfValuesByRun` parameter supplies Test Run UDF values per run, which are written before the status update. `viewId` is auto-resolved from project info.
-
-### Changed
-
-- [QMetry] Test suite execution tools now report linked defects as two separate counts: `linkedDfCount` (defects linked to the test execution) and `linkedStepDfCount` (defects linked to its test step executions).
-- [QMetry] Condensed the Update Test Case tool hints to reduce context size.
-
-### Fixed
-
-- [QMetry] Update Test Case tool now sends the owner as `testcaseOwner`, the field name the QMetry API expects (was `owner`).
-- [QMetry] Update Issue tool now accepts `affectedCycles` as an array of cycle IDs (was a single number).
-
 ## [0.43.0] - 2026-11-02
 
 ### Added
@@ -38,6 +19,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [PactFlow] Added `contract-testing_list_deployed_or_released_versions` (all versions of a pacticipant that have ever been deployed or released) and `contract-testing_list_environment_versions` (versions of a pacticipant associated with an environment). Both support `pageNumber`/`pageSize` and are available on PactFlow only.
 - [Common] `/health` now returns `version` (read from the root `package.json`, not `process.env.npm_package_version`, since the Docker entrypoint runs `node dist/index.js` directly) and `region` (currently hardcoded to `null` - No regional Zephyr deployment exists yet). `/ready` is unchanged.
 - [PactFlow] Expanded the consumer Pact tests against the PactFlow API (`pactflow-application-saas`) to cover every operation the client calls: added interactions for the previously untested operations (admin roles, branches, version listing and update, integrations, invite users, team user patch, create secret, update webhook, provider contract publish, provider-level BDCT results), the documented error statuses (400, 404, 409, 410, 422), and all required response fields. Pact coverage against the consumer-filtered PactFlow OAS is now 100% for paths, status codes, and required request/response fields, and the pact passes bi-directional contract testing on PactFlow.
+- [QMetry] Added `qmetry_fetch_api_call_quota` tool to fetch the hourly and daily Open API call limits, calls consumed, calls remaining and reset times. Calls to this tool do not count toward the quota.
+- [QMetry] Bulk Update Test Case Execution Status tool now enforces mandatory Test Run UDFs for `TCR` updates: if any target run is missing a mandatory value, nothing is updated and the tool returns `MANDATORY_TEST_RUN_UDF_MISSING` with the missing fields per run. A new optional `udfValuesByRun` parameter supplies Test Run UDF values per run, which are written before the status update. `viewId` is auto-resolved from project info.
+
+### Changed
+
+- [QMetry] Test suite execution tools now report linked defects as two separate counts: `linkedDfCount` (defects linked to the test execution) and `linkedStepDfCount` (defects linked to its test step executions).
+- [QMetry] Condensed the Update Test Case tool hints to reduce context size.
 
 ### Fixed
 
@@ -46,6 +34,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [PactFlow] `contract-testing_list_integrations` and `contract-testing_get_integrations_by_team` now send `Accept: application/hal+json`. Without it PactFlow negotiated `text/vnd.graphviz` for `/integrations` and the response could not be parsed as JSON.
 - [PactFlow] `contract-testing_admin_patch_team_users` now sends `Content-Type: application/json-patch+json`, which is the only content type PactFlow accepts for `PATCH /admin/teams/{teamId}/users` (it previously returned 415).
 - [Swagger] Fixed `swagger_validate_api` output schema rejecting findings with `information`, `hint` or `unknown` severity and documented `column` as 1-based, matching the `/specs/validate` contract.
+- [QMetry] Update Test Case tool now sends the owner as `testcaseOwner`, the field name the QMetry API expects (was `owner`).
+- [QMetry] Update Issue tool now accepts `affectedCycles` as an array of cycle IDs (was a single number).
+
 
 ### Removed
 
