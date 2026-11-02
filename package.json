@@ -49,6 +49,8 @@
     "test:coverage:ci": "vitest --coverage --reporter=verbose",
     "test:run": "vitest run",
     "test:pact": "vitest run --config vitest.pact.config.ts",
+    "test:drift": "node scripts/drift-verify.mjs",
+    "drift:generate": "node scripts/drift-generate-definition.mjs",
     "coverage:check": "vitest --coverage --reporter=verbose",
     "bump": "node scripts/bump.js"
   },
