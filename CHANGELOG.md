@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- [QMetry] Added `qmetry_fetch_api_call_quota` tool to fetch the hourly and daily Open API call limits, calls consumed, calls remaining and reset times. Calls to this tool do not count toward the quota.
+- [QMetry] Bulk Update Test Case Execution Status tool now enforces mandatory Test Run UDFs for `TCR` updates: if any target run is missing a mandatory value, nothing is updated and the tool returns `MANDATORY_TEST_RUN_UDF_MISSING` with the missing fields per run. A new optional `udfValuesByRun` parameter supplies Test Run UDF values per run, which are written before the status update. `viewId` is auto-resolved from project info.
+
+### Changed
+
+- [QMetry] Test suite execution tools now report linked defects as two separate counts: `linkedDfCount` (defects linked to the test execution) and `linkedStepDfCount` (defects linked to its test step executions).
+- [QMetry] Condensed the Update Test Case tool hints to reduce context size.
+
+### Fixed
+
+- [QMetry] Update Test Case tool now sends the owner as `testcaseOwner`, the field name the QMetry API expects (was `owner`).
+- [QMetry] Update Issue tool now accepts `affectedCycles` as an array of cycle IDs (was a single number).
+
 ## [0.43.0] - 2026-11-02
 
 ### Added

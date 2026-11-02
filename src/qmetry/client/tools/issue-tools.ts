@@ -306,8 +306,13 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       },
       {
         description: "Update affected release and affected cycles",
-        parameters: { DefectId: 118150, affectedRelease: 3730, "affectedCycles":[1168] },
-        expectedOutput: "Affected release and affected cycles updated successfully.",
+        parameters: {
+          DefectId: 118150,
+          affectedRelease: 3730,
+          affectedCycles: [1168],
+        },
+        expectedOutput:
+          "Affected release and affected cycles updated successfully.",
       },
     ],
     hints: [

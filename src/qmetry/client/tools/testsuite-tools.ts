@@ -915,10 +915,10 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       "Critical for monitoring test suite performance and execution trends",
       "Use for compliance reporting and execution audit trails",
       "Essential for test execution planning and resource optimization",
-      "LINKED DEFECTS/ISSUES: Each execution record can expose TWO separate defect counts - "
-        + "'linkedDfCount' is the count of defects/issues linked to the TEST EXECUTION itself, "
-        + "and 'linkedStepDfCount' is the count of defects/issues linked to that execution's TEST STEP executions. "
-        + "Whenever asked about linked defects/issues for an execution, report BOTH counts (linkedDfCount and linkedStepDfCount) - do not report only one.",
+      "LINKED DEFECTS/ISSUES: Each execution record can expose TWO separate defect counts - " +
+        "'linkedDfCount' is the count of defects/issues linked to the TEST EXECUTION itself, " +
+        "and 'linkedStepDfCount' is the count of defects/issues linked to that execution's TEST STEP executions. " +
+        "Whenever asked about linked defects/issues for an execution, report BOTH counts (linkedDfCount and linkedStepDfCount) - do not report only one.",
     ],
     outputDescription:
       "JSON object with executions array containing execution details, status, platforms, releases, and execution metadata. " +
