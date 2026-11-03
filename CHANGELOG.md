@@ -20,23 +20,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- [QMetry] Added `qmetry_fetch_api_call_quota` tool to fetch the hourly and daily Open API call limits, calls consumed, calls remaining and reset times. Calls to this tool do not count toward the quota.
-- [QMetry] Bulk Update Test Case Execution Status tool now enforces mandatory Test Run UDFs for `TCR` updates: if any target run is missing a mandatory value, nothing is updated and the tool returns `MANDATORY_TEST_RUN_UDF_MISSING` with the missing fields per run. A new optional `udfValuesByRun` parameter supplies Test Run UDF values per run, which are written before the status update. `viewId` is auto-resolved from project info.
-
-### Changed
-
-- [QMetry] Test suite execution tools now report linked defects as two separate counts: `linkedDfCount` (defects linked to the test execution) and `linkedStepDfCount` (defects linked to its test step executions).
-- [QMetry] Condensed the Update Test Case tool hints to reduce context size.
-
-### Fixed
-
-- [QMetry] Update Test Case tool now sends the owner as `testcaseOwner`, the field name the QMetry API expects (was `owner`).
-- [QMetry] Update Issue tool now accepts `affectedCycles` as an array of cycle IDs (was a single number).
-
-## [0.43.0] - 2026-11-02
-
-### Added
-
 - [Swagger] Added one-click install buttons for VS Code (GitHub Copilot), Cursor, and Claude Desktop to the Swagger Remote MCP Server setup docs. Reorganized the Kiro section to use the same button-first layout for consistency.
 - [Common] Added a Claude plugin bundle in `plugin/` for submission to Anthropic's Claude directory, replacing the deprecated MCPB desktop extension listing. It runs the server with `npx` pinned to the released version and asks for each product's settings through plugin user configuration, with tokens stored as sensitive values. `scripts/bump.js` now updates the plugin's version and pin on each release.
 - [Swagger] Portal product tools (`swagger_create_portal_product`, `swagger_update_portal_product`): added a `visibility` parameter (`visible`, `hidden` or `conditional`). `conditional` shows the product on the portal landing page only to users who have access to it, and is not allowed for public products. Product output now includes `visibility`.
