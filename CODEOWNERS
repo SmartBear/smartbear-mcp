@@ -1,6 +1,6 @@
 /*.ts                            @SmartBear/bugsnag-dev
 /*.json                          @SmartBear/bugsnag-dev
-/src/common                      @SmartBear/bugsnag-dev @SmartBear/pactflow
+/src/common                      @SmartBear/bugsnag-dev
 /src/bugsnag                     @SmartBear/bugsnag-dev
 /src/pactflow                    @SmartBear/pactflow
 /src/swagger                     @SmartBear/mcp-swagger-maintainers

@@ -7,16 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- [BugSnag] `Pentest - MCP Session ID Acts as a Bearer Token Due to Cached-Credential Fallback` Now The session id no longer grants any authority on the Bugsnag path.
+- [Common] Pentest: an MCP session id alone no longer acts as the session owner's credential on the HTTP transport. Every `POST`, `GET` (event stream) and `DELETE` on `/mcp`, and every legacy `POST /message`, must now carry a credential for the identity that opened the session.
+- [Common] HTTP transport: sessions abandoned by clients (no `DELETE`, SSE stream never closed) were never freed, so memory grew until the process ran out of heap. Sessions idle for longer than `SESSION_IDLE_TIMEOUT_MS` (default 4 hours, `0` disables) are now closed; sessions with an open stream or a request in flight are never reaped. A client returning with a reaped session id receives 404 and must re-initialize. stdio mode is unaffected. Per-server caches no longer run node-cache's sweep timer, which kept each cache reachable after its server was gone.
+
+### Changed
+
+- [Common] HTTP sessions are now bound to the exact credential that opened them, for every product. A refreshed OAuth access token no longer matches its existing session, so the client starts a new session with the new token. Clients that follow the MCP Streamable HTTP spec do this automatically, without the user logging in again. Session-scoped state, such as an open Reflect recording, does not carry over to the new session.
+
+## [0.43.0] - 2026-11-02
+
 ### Added
 
 - [Swagger] Added one-click install buttons for VS Code (GitHub Copilot), Cursor, and Claude Desktop to the Swagger Remote MCP Server setup docs. Reorganized the Kiro section to use the same button-first layout for consistency.
+- [Common] Added a Claude plugin bundle in `plugin/` for submission to Anthropic's Claude directory, replacing the deprecated MCPB desktop extension listing. It runs the server with `npx` pinned to the released version and asks for each product's settings through plugin user configuration, with tokens stored as sensitive values. `scripts/bump.js` now updates the plugin's version and pin on each release.
 - [Swagger] Portal product tools (`swagger_create_portal_product`, `swagger_update_portal_product`): added a `visibility` parameter (`visible`, `hidden` or `conditional`). `conditional` shows the product on the portal landing page only to users who have access to it, and is not allowed for public products. Product output now includes `visibility`.
+- [QMetry] Execute Quality Gate Report tool: added an optional `extKeys` parameter (array of external issue keys, e.g. Jira keys like `PROJ-123`) to scope the gate report to specific external requirements.
+- [QMetry] Project info now includes `isApprovalWorkflowEnabled`.
+- [PactFlow] All PactFlow tools now declare an `outputSchema` and return `structuredContent`. Schemas follow the PactFlow OpenAPI description but are lenient (every property optional, extra fields allowed) so OSS Pact Broker responses validate. Tools whose API returns no body (deletes, setting a user's roles) return `{ "success": true }`. Paginated tools also report `pagination`.
+- [BearQ] Added tools to run, list, and monitor BearQ workflows.
+- [PactFlow] Added `contract-testing_list_deployed_or_released_versions` (all versions of a pacticipant that have ever been deployed or released) and `contract-testing_list_environment_versions` (versions of a pacticipant associated with an environment). Both support `pageNumber`/`pageSize` and are available on PactFlow only.
+- [Common] `/health` now returns `version` (read from the root `package.json`, not `process.env.npm_package_version`, since the Docker entrypoint runs `node dist/index.js` directly) and `region` (currently hardcoded to `null` - No regional Zephyr deployment exists yet). `/ready` is unchanged.
+- [PactFlow] Expanded the consumer Pact tests against the PactFlow API (`pactflow-application-saas`) to cover every operation the client calls: added interactions for the previously untested operations (admin roles, branches, version listing and update, integrations, invite users, team user patch, create secret, update webhook, provider contract publish, provider-level BDCT results), the documented error statuses (400, 404, 409, 410, 422), and all required response fields. Pact coverage against the consumer-filtered PactFlow OAS is now 100% for paths, status codes, and required request/response fields, and the pact passes bi-directional contract testing on PactFlow.
+- [QMetry] Added `qmetry_fetch_api_call_quota` tool to fetch the hourly and daily Open API call limits, calls consumed, calls remaining and reset times. Calls to this tool do not count toward the quota.
+- [QMetry] Bulk Update Test Case Execution Status tool now enforces mandatory Test Run UDFs for `TCR` updates: if any target run is missing a mandatory value, nothing is updated and the tool returns `MANDATORY_TEST_RUN_UDF_MISSING` with the missing fields per run. A new optional `udfValuesByRun` parameter supplies Test Run UDF values per run, which are written before the status update. `viewId` is auto-resolved from project info.
+
+### Changed
+
+- [QMetry] Test suite execution tools now report linked defects as two separate counts: `linkedDfCount` (defects linked to the test execution) and `linkedStepDfCount` (defects linked to its test step executions).
+- [QMetry] Condensed the Update Test Case tool hints to reduce context size.
 
 ### Fixed
 
-- HTTP transport: sessions abandoned by clients (no `DELETE`, SSE stream never closed) were never freed, so memory grew until the process ran out of heap. Sessions idle for longer than `SESSION_IDLE_TIMEOUT_MS` (default 4 hours, `0` disables) are now closed; sessions with an open stream or a request in flight are never reaped. A client returning with a reaped session id receives 404 and must re-initialize. stdio mode is unaffected. Per-server caches no longer run node-cache's sweep timer, which kept each cache reachable after its server was gone.
+- [PactFlow] Consumer pact tests for `contract-testing_list_deployed_or_released_versions` and `contract-testing_list_environment_versions` now use a provider state that exists on the PactFlow provider (`pacticipant ServiceA version 1.0.0 is deployed to environment 00000000-0000-0000-0000-000000000002`). The previous states were unknown to the provider, which made the CDCT verification fail with an empty list and a 404.
+- [QMetry] API error handling now reads the response body once. Previously a non-JSON error body made the fallback `text()` call throw "Body is unusable", hiding the real error.
 - [PactFlow] `contract-testing_list_integrations` and `contract-testing_get_integrations_by_team` now send `Accept: application/hal+json`. Without it PactFlow negotiated `text/vnd.graphviz` for `/integrations` and the response could not be parsed as JSON.
 - [PactFlow] `contract-testing_admin_patch_team_users` now sends `Content-Type: application/json-patch+json`, which is the only content type PactFlow accepts for `PATCH /admin/teams/{teamId}/users` (it previously returned 415).
+- [Swagger] Fixed `swagger_validate_api` output schema rejecting findings with `information`, `hint` or `unknown` severity and documented `column` as 1-based, matching the `/specs/validate` contract.
+- [QMetry] Update Test Case tool now sends the owner as `testcaseOwner`, the field name the QMetry API expects (was `owner`).
+- [QMetry] Update Issue tool now accepts `affectedCycles` as an array of cycle IDs (was a single number).
+
 
 ### Removed
 

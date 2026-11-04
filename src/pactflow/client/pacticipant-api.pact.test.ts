@@ -484,6 +484,65 @@ describe("Branches & versions – list and update", () => {
         expect(Array.isArray(result._embedded.versions)).toBe(true);
       }));
 
+  it("GET /pacticipants/{name}/deployed-or-released/versions – lists deployed or released versions", () =>
+    provider
+      .addInteraction()
+      .given(
+        "pacticipant ServiceA version 1.0.0 is deployed to environment 00000000-0000-0000-0000-000000000002",
+      )
+      .uponReceiving(
+        "a request to list deployed or released versions of ServiceA",
+      )
+      .withRequest(
+        "GET",
+        "/pacticipants/ServiceA/deployed-or-released/versions",
+        (b) => {
+          b.headers(authHeader);
+        },
+      )
+      .willRespondWith(200, (b) => {
+        b.headers(halJsonResponseHeaders).jsonBody({
+          _embedded: { versions: eachLike({ number: like("1.0.0") }) },
+          _links: versionLinks,
+        });
+      })
+      .executeTest(async (mockServer) => {
+        const client = await createClient(mockServer.url);
+        const result = await client.listDeployedOrReleasedVersions({
+          pacticipantName: "ServiceA",
+        });
+        expect(Array.isArray(result._embedded?.versions)).toBe(true);
+      }));
+
+  it("GET /pacticipants/{name}/environments/{id}/versions – lists environment versions", () =>
+    provider
+      .addInteraction()
+      .given(
+        "pacticipant ServiceA version 1.0.0 is deployed to environment 00000000-0000-0000-0000-000000000002",
+      )
+      .uponReceiving("a request to list versions of ServiceA in an environment")
+      .withRequest(
+        "GET",
+        "/pacticipants/ServiceA/environments/00000000-0000-0000-0000-000000000002/versions",
+        (b) => {
+          b.headers(authHeader);
+        },
+      )
+      .willRespondWith(200, (b) => {
+        b.headers(halJsonResponseHeaders).jsonBody({
+          _embedded: { versions: eachLike({ number: like("1.0.0") }) },
+          _links: versionLinks,
+        });
+      })
+      .executeTest(async (mockServer) => {
+        const client = await createClient(mockServer.url);
+        const result = await client.listEnvironmentVersions({
+          pacticipantName: "ServiceA",
+          environmentId: "00000000-0000-0000-0000-000000000002",
+        });
+        expect(Array.isArray(result._embedded?.versions)).toBe(true);
+      }));
+
   it("PUT /pacticipants/{name}/versions/{version} – creates or updates a version", () =>
     provider
       .addInteraction()

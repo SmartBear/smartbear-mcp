@@ -421,6 +421,30 @@ Read more on PactFlow [Docs](https://docs.pactflow.io/).
   - Check which mobile app or library versions are still actively in use.
   - Understand the range of versions that need to remain contract-compatible.
 
+#### List Deployed or Released Versions
+
+- Purpose: Retrieve all versions of a pacticipant that have ever been deployed or released.
+- Parameters:
+  - **`pacticipantName`** (required): Name of the pacticipant
+  - **`pageNumber`** (optional): Page number
+  - **`pageSize`** (optional): Results per page
+- Availability: Cloud
+- **Use Cases:**
+  - Audit the deployment and release history of a service across all environments.
+  - Find which versions of a service have ever reached an environment.
+
+#### List Environment Versions
+
+- Purpose: Retrieve the versions of a pacticipant associated with a given environment.
+- Parameters:
+  - **`pacticipantName`** (required): Name of the pacticipant
+  - **`environmentId`** (required): UUID of the environment
+  - **`pageNumber`** (optional): Page number
+  - **`pageSize`** (optional): Results per page
+- Availability: Cloud
+- **Use Cases:**
+  - See which versions of a service have been deployed or released to a specific environment.
+
 #### Get Released Versions for Version
 
 - Purpose: Retrieve release records for a specific pacticipant version in a specific environment.

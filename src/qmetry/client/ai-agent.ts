@@ -87,6 +87,10 @@ export async function executeGateReport(
     body.cycleIds = payload.cycleIds;
   }
 
+  if (payload.extKeys !== undefined) {
+    body.extKeys = payload.extKeys;
+  }
+
   if (payload.page !== undefined) {
     body.page = payload.page;
   }

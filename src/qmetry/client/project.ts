@@ -66,7 +66,6 @@ const PROJECT_FIELDS_TO_OMIT = new Set([
   "isTestSuiteApprover",
   "isTestSuiteCloser",
   "isRequirementReviewer",
-  "isApprovalWorkflowEnabled",
   "isPartLevelComplianceEnabled",
   "isAutoApproveTestRunEnabled",
   "isDeriveTCRStatusFromTCSRStatus",
@@ -253,6 +252,35 @@ export async function getPlatforms(
     baseUrl: baseUrl || QMETRY_DEFAULTS.BASE_URL,
     project: project || QMETRY_DEFAULTS.PROJECT_KEY,
     body,
+  });
+}
+
+/**
+ * Fetches the hourly and daily Open API call quota status for the account.
+ * Calls to this endpoint do not count toward the quota.
+ */
+export async function getApiQuotaStatus(
+  token: string,
+  baseUrl: string,
+  project: string | undefined,
+  _payload: Record<string, unknown> = {},
+) {
+  const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
+    baseUrl,
+    project,
+  );
+
+  return qmetryRequest({
+    method: "GET",
+    path: QMETRY_PATHS.PROJECT.GET_API_QUOTA_STATUS,
+    token,
+    baseUrl: resolvedBaseUrl,
+    project: resolvedProject,
+    // The quota endpoint expects the literal "default" scope, not a numeric project scope.
+    extraHeaders: {
+      scope: "default",
+      "Content-Type": "application/json",
+    },
   });
 }
 

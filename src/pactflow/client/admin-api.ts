@@ -1,3 +1,4 @@
+import type { HttpClient } from "./http-client";
 import type {
   AdminPermissionsListResponse,
   AdminRoleIdInput,
@@ -45,9 +46,7 @@ import type {
   UpdateSecretInput,
   UpdateTeamInput,
   UserRoleInput,
-  UserRolesResponse,
-} from "./base";
-import type { HttpClient } from "./http-client";
+} from "./schemas/admin";
 
 export class AdminApi {
   constructor(private readonly http: HttpClient) {}
@@ -276,11 +275,8 @@ export class AdminApi {
   /**
    * Fully replaces the roles assigned to a user (admin).
    */
-  async setUserRoles({
-    userId,
-    roles,
-  }: SetUserRolesInput): Promise<UserRolesResponse> {
-    return await this.http.fetch<UserRolesResponse>(
+  async setUserRoles({ userId, roles }: SetUserRolesInput): Promise<void> {
+    return await this.http.fetch<void>(
       `${this.http.baseUrl}/admin/users/${encodeURIComponent(userId)}/roles`,
       { method: "PUT", body: { roles }, errorContext: "Set User Roles" },
     );
@@ -289,11 +285,8 @@ export class AdminApi {
   /**
    * Grants a single additional role to a user without affecting their existing roles (admin).
    */
-  async addRoleToUser({
-    userId,
-    roleId,
-  }: UserRoleInput): Promise<UserRolesResponse> {
-    return await this.http.fetch<UserRolesResponse>(
+  async addRoleToUser({ userId, roleId }: UserRoleInput): Promise<void> {
+    return await this.http.fetch<void>(
       `${this.http.baseUrl}/admin/users/${encodeURIComponent(userId)}/roles/${encodeURIComponent(roleId)}`,
       { method: "PUT", body: {}, errorContext: "Add Role to User" },
     );

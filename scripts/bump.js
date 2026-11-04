@@ -12,6 +12,11 @@ const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.resolve(__dirname, "..");
 const PACKAGE_JSON_PATH = path.join(ROOT_DIR, "package.json");
 const CHANGELOG_PATH = path.join(ROOT_DIR, "CHANGELOG.md");
+const PLUGIN_JSON_PATH = path.join(
+  ROOT_DIR,
+  "plugin/.claude-plugin/plugin.json",
+);
+const PLUGIN_MCP_JSON_PATH = path.join(ROOT_DIR, "plugin/.mcp.json");
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -73,6 +78,24 @@ const updateChangelog = (newVersion) => {
   console.log(`Updated CHANGELOG.md`);
 };
 
+// The Claude plugin is read straight from the repository, so its version and
+// the npm package it runs must be pinned in the committed files.
+const updatePlugin = (newVersion) => {
+  const pluginJson = JSON.parse(fs.readFileSync(PLUGIN_JSON_PATH, "utf-8"));
+  pluginJson.version = newVersion;
+  fs.writeFileSync(
+    PLUGIN_JSON_PATH,
+    `${JSON.stringify(pluginJson, null, 2)}\n`,
+  );
+
+  const mcpJson = fs.readFileSync(PLUGIN_MCP_JSON_PATH, "utf-8");
+  fs.writeFileSync(
+    PLUGIN_MCP_JSON_PATH,
+    mcpJson.replace(/@smartbear\/mcp@[^"]+/, `@smartbear/mcp@${newVersion}`),
+  );
+  console.log(`Updated Claude plugin version`);
+};
+
 const main = async () => {
   console.log("🚀 Starting Release Process...");
 
@@ -127,10 +150,13 @@ const main = async () => {
 
   // 4. Update Changelog
   updateChangelog(newVersion);
+  updatePlugin(newVersion);
 
   // 5. Commit Changes
   console.log("Committing changes...");
-  runCommand("git add package.json package-lock.json CHANGELOG.md");
+  runCommand(
+    "git add package.json package-lock.json CHANGELOG.md plugin/.claude-plugin/plugin.json plugin/.mcp.json",
+  );
   runCommand(`git commit -m "release: v${newVersion}"`);
 
   // 6. Push branch

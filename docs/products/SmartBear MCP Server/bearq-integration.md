@@ -82,6 +82,38 @@ The BearQ client provides AI-powered QA test management and execution capabiliti
 
 ---
 
+### Workflows
+
+#### `bearq_list_workflows`
+
+- Purpose: Lists the workflows in the workspace.
+- Parameters: None.
+- Returns: `{ workflows }` — each with `id`, `name`, `description`, `source` (`custom` or `default`), `steps`, `lastRun`, and timestamps. Workspaces with more than 100 workflows are truncated; `totalCount` says how many exist.
+- Use case: Discover workflow names and IDs.
+
+#### `bearq_run_workflow`
+
+- Purpose: Starts a run of a workflow now.
+- Parameters: `workflow` — workflow name (case-insensitive) or numeric workflow ID.
+- Returns: `{ run, started }` — the run (`id`, `status`, timestamps) and whether a new run was started. If a run of that workflow was already in flight, no new run is started (`started: false`) and the in-flight run is returned.
+- Use case: Kick off a saved workflow (e.g. a regression pass or coverage expansion) on demand. Poll its progress with `bearq_get_workflow_run`.
+
+#### `bearq_get_workflow_run`
+
+- Purpose: Retrieves a workflow run's current status, per-step progress, and stats.
+- Parameters: `runId` — workflow run ID.
+- Returns: The run with `status`, `steps` (per-step status, fail reason, and stats), `stats` (tasks, tests, discovery, ACUs), and the full step `definition` the run executes. Returns immediately — does not block on the run completing; poll again while the status is `pending` or `running`.
+- Use case: Check the progress or final outcome of a workflow run started with `bearq_run_workflow`.
+
+#### `bearq_stop_workflow_run`
+
+- Purpose: Cancels a workflow run that is in flight.
+- Parameters: `runId` — workflow run ID.
+- Returns: `{ runId, cancelled: true }` on success. Fails with an error (including the API's reason) when the run has already finished or does not exist.
+- Use case: Cancel a long-running workflow run that is no longer needed.
+
+---
+
 ### Task Management
 
 #### `bearq_get_task`
@@ -100,9 +132,9 @@ The BearQ client provides AI-powered QA test management and execution capabiliti
 
 #### `bearq_stop_task`
 
-- Purpose: Cancels a running task.
+- Purpose: Cancels a pending or running task.
 - Parameters: `taskId` — BearQ task ID.
-- Returns: Empty response on success.
+- Returns: `{ taskId, stopped: true }`.
 - Use case: Cancel a long-running test run that is no longer needed.
 
 #### `bearq_wait_for_task`

@@ -68,6 +68,7 @@ export const QMetryToolsHandlers = {
   FETCH_RELEASES_CYCLES: "getReleasesCycles",
   FETCH_BUILDS: "getBuilds",
   FETCH_PLATFORMS: "getPlatforms",
+  FETCH_API_QUOTA_STATUS: "getApiQuotaStatus",
   CREATE_TEST_CASE: "createTestCases",
   UPDATE_TEST_CASE: "updateTestCase",
   FETCH_TEST_CASES: "getTestCases",
