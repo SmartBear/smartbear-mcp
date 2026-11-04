@@ -2,6 +2,7 @@ import { type FilterObject, toUrlSearchParams } from "../filters";
 import { type ApiResponse, BaseAPI, getQueryParams } from "./base";
 import {
   type Build,
+  type Collaborator,
   type EventField,
   type Project,
   type ProjectNetworkGroupingRuleset,
@@ -54,6 +55,19 @@ export class ProjectAPI extends BaseAPI {
     "accumulative_daily_users_seen",
     "accumulative_daily_users_with_unhandled",
   ];
+  // Excludes account-security fields such as 2FA state, recovery codes and
+  // password change dates, which collaborator records also carry.
+  static collaboratorFields: (keyof Collaborator)[] = [
+    "id",
+    "name",
+    "email",
+    "is_admin",
+    "pending_invitation",
+    "last_request_at",
+  ];
+  // Largest page the Data Access API serves, so fetching every collaborator
+  // takes as few round trips as possible.
+  static collaboratorsPerPage = 100;
 
   /**
    * List the Event Fields for a Project
@@ -497,5 +511,38 @@ export class ProjectAPI extends BaseAPI {
       localVarFetchArgs.url,
       localVarFetchArgs.options,
     );
+  }
+
+  /**
+   * List the collaborators in a Project
+   * GET /projects/{project_id}/collaborators
+   * @param projectId The project ID
+   * @param collaboratorNameOrEmailOrId Optional filter: an exact collaborator ID,
+   *   or part of a name or email address (case-insensitive)
+   * @returns A promise that resolves to the list of collaborators
+   */
+  async listProjectCollaborators(
+    projectId: string,
+    collaboratorNameOrEmailOrId?: string,
+  ): Promise<ApiResponse<Collaborator[]>> {
+    const localVarFetchArgs = ProjectsApiFetchParamCreator(
+      this.configuration,
+    ).listProjectCollaborators(projectId, ProjectAPI.collaboratorsPerPage);
+    const collaborators = await this.requestArray<Collaborator>(
+      localVarFetchArgs.url,
+      localVarFetchArgs.options,
+      true,
+      ProjectAPI.collaboratorFields,
+    );
+    if (collaboratorNameOrEmailOrId) {
+      const filterValue = collaboratorNameOrEmailOrId.toLowerCase();
+      collaborators.body = (collaborators.body ?? []).filter(
+        (c) =>
+          c.id === collaboratorNameOrEmailOrId ||
+          c.name?.toLowerCase().includes(filterValue) ||
+          c.email?.toLowerCase().includes(filterValue),
+      );
+    }
+    return collaborators;
   }
 }
