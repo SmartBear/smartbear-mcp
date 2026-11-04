@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- [BugSnag] `Pentest - MCP Session ID Acts as a Bearer Token Due to Cached-Credential Fallback` Now The session id no longer grants any authority on the Bugsnag path.
+- [Common] Pentest: an MCP session id alone no longer acts as the session owner's credential on the HTTP transport. Every `POST`, `GET` (event stream) and `DELETE` on `/mcp`, and every legacy `POST /message`, must now carry a credential for the identity that opened the session.
+
+### Changed
+
+- [Common] HTTP sessions are now bound to the exact credential that opened them, for every product. A refreshed OAuth access token no longer matches its existing session, so the client starts a new session with the new token. Clients that follow the MCP Streamable HTTP spec do this automatically, without the user logging in again. Session-scoped state, such as an open Reflect recording, does not carry over to the new session.
+
 ## [0.43.0] - 2026-11-02
 
 ### Added
