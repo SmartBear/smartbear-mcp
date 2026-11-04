@@ -8,14 +8,120 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 - [Bugsnag] Added new tool to list project collaborators.
 
+### Fixed
+
+- [BugSnag] `Pentest - MCP Session ID Acts as a Bearer Token Due to Cached-Credential Fallback` Now The session id no longer grants any authority on the Bugsnag path.
+- [Common] Pentest: an MCP session id alone no longer acts as the session owner's credential on the HTTP transport. Every `POST`, `GET` (event stream) and `DELETE` on `/mcp`, and every legacy `POST /message`, must now carry a credential for the identity that opened the session.
+
 ### Changed
 
-- [QMetry] Security: Removed `Qmetry-Token` and `apikey` header fallbacks from `getToken()` to prevent OAuth bypass on HTTP transport. [#697](https://github.com/SmartBear/smartbear-mcp/pull/697)
-- [QMetry] Security: Added input validation (`.max(255)`, `.regex()`, `..` guard) on `fileName` in `ExportHtmlReportArgsSchema` [#697](https://github.com/SmartBear/smartbear-mcp/pull/697)
+- [Common] HTTP sessions are now bound to the exact credential that opened them, for every product. A refreshed OAuth access token no longer matches its existing session, so the client starts a new session with the new token. Clients that follow the MCP Streamable HTTP spec do this automatically, without the user logging in again. Session-scoped state, such as an open Reflect recording, does not carry over to the new session.
+
+## [0.43.0] - 2026-11-02
 
 ### Added
 
+- [Swagger] Added one-click install buttons for VS Code (GitHub Copilot), Cursor, and Claude Desktop to the Swagger Remote MCP Server setup docs. Reorganized the Kiro section to use the same button-first layout for consistency.
+- [Common] Added a Claude plugin bundle in `plugin/` for submission to Anthropic's Claude directory, replacing the deprecated MCPB desktop extension listing. It runs the server with `npx` pinned to the released version and asks for each product's settings through plugin user configuration, with tokens stored as sensitive values. `scripts/bump.js` now updates the plugin's version and pin on each release.
+- [Swagger] Portal product tools (`swagger_create_portal_product`, `swagger_update_portal_product`): added a `visibility` parameter (`visible`, `hidden` or `conditional`). `conditional` shows the product on the portal landing page only to users who have access to it, and is not allowed for public products. Product output now includes `visibility`.
+- [QMetry] Execute Quality Gate Report tool: added an optional `extKeys` parameter (array of external issue keys, e.g. Jira keys like `PROJ-123`) to scope the gate report to specific external requirements.
+- [QMetry] Project info now includes `isApprovalWorkflowEnabled`.
+- [PactFlow] All PactFlow tools now declare an `outputSchema` and return `structuredContent`. Schemas follow the PactFlow OpenAPI description but are lenient (every property optional, extra fields allowed) so OSS Pact Broker responses validate. Tools whose API returns no body (deletes, setting a user's roles) return `{ "success": true }`. Paginated tools also report `pagination`.
+- [BearQ] Added tools to run, list, and monitor BearQ workflows.
+- [PactFlow] Added `contract-testing_list_deployed_or_released_versions` (all versions of a pacticipant that have ever been deployed or released) and `contract-testing_list_environment_versions` (versions of a pacticipant associated with an environment). Both support `pageNumber`/`pageSize` and are available on PactFlow only.
+- [Common] `/health` now returns `version` (read from the root `package.json`, not `process.env.npm_package_version`, since the Docker entrypoint runs `node dist/index.js` directly) and `region` (currently hardcoded to `null` - No regional Zephyr deployment exists yet). `/ready` is unchanged.
+- [PactFlow] Expanded the consumer Pact tests against the PactFlow API (`pactflow-application-saas`) to cover every operation the client calls: added interactions for the previously untested operations (admin roles, branches, version listing and update, integrations, invite users, team user patch, create secret, update webhook, provider contract publish, provider-level BDCT results), the documented error statuses (400, 404, 409, 410, 422), and all required response fields. Pact coverage against the consumer-filtered PactFlow OAS is now 100% for paths, status codes, and required request/response fields, and the pact passes bi-directional contract testing on PactFlow.
+- [QMetry] Added `qmetry_fetch_api_call_quota` tool to fetch the hourly and daily Open API call limits, calls consumed, calls remaining and reset times. Calls to this tool do not count toward the quota.
+- [QMetry] Bulk Update Test Case Execution Status tool now enforces mandatory Test Run UDFs for `TCR` updates: if any target run is missing a mandatory value, nothing is updated and the tool returns `MANDATORY_TEST_RUN_UDF_MISSING` with the missing fields per run. A new optional `udfValuesByRun` parameter supplies Test Run UDF values per run, which are written before the status update. `viewId` is auto-resolved from project info.
+
+### Changed
+
+- [QMetry] Test suite execution tools now report linked defects as two separate counts: `linkedDfCount` (defects linked to the test execution) and `linkedStepDfCount` (defects linked to its test step executions).
+- [QMetry] Condensed the Update Test Case tool hints to reduce context size.
+
+### Fixed
+
+- [PactFlow] Consumer pact tests for `contract-testing_list_deployed_or_released_versions` and `contract-testing_list_environment_versions` now use a provider state that exists on the PactFlow provider (`pacticipant ServiceA version 1.0.0 is deployed to environment 00000000-0000-0000-0000-000000000002`). The previous states were unknown to the provider, which made the CDCT verification fail with an empty list and a 404.
+- [QMetry] API error handling now reads the response body once. Previously a non-JSON error body made the fallback `text()` call throw "Body is unusable", hiding the real error.
+- [PactFlow] `contract-testing_list_integrations` and `contract-testing_get_integrations_by_team` now send `Accept: application/hal+json`. Without it PactFlow negotiated `text/vnd.graphviz` for `/integrations` and the response could not be parsed as JSON.
+- [PactFlow] `contract-testing_admin_patch_team_users` now sends `Content-Type: application/json-patch+json`, which is the only content type PactFlow accepts for `PATCH /admin/teams/{teamId}/users` (it previously returned 415).
+- [Swagger] Fixed `swagger_validate_api` output schema rejecting findings with `information`, `hint` or `unknown` severity and documented `column` as 1-based, matching the `/specs/validate` contract.
+- [QMetry] Update Test Case tool now sends the owner as `testcaseOwner`, the field name the QMetry API expects (was `owner`).
+- [QMetry] Update Issue tool now accepts `affectedCycles` as an array of cycle IDs (was a single number).
+
+
+### Removed
+
+- [Swagger] Removed the `hidden` parameter from `swagger_create_portal_product` and `swagger_update_portal_product`, use `visibility` instead. A leftover `hidden` is silently ignored, so when creating a product the portal default applies, which is hidden for most organizations. Send `visibility: "visible"` to make it visible.
+
+## [0.42.0] - 2026-10-07
+
+### Added
+
+- [Common] Usage analytics for the remote (HTTP) server, reported to the shared SmartBear Amplitude project when `MCP_SERVER_AMPLITUDE_API_KEY` is set: `Server Initialized`, `Session Started`, `Session Ended`, `Tool Called` and `Tools Listed` events, each carrying `app_name`, `organization`, `analytics_id` (`sha256(email.toLowerCase())` when the product's OAuth token carries an `email` claim, matching SmartBear ID; otherwise `sha256("<integration>:<user id>")` from the claim the product declares), `source` (`MCP`) and `user_agent`. `Tool Called` and `Tools Listed` also carry `mcp_client_name`, `mcp_client_version` and `protocol_version`, so client adoption and protocol migration are measurable for 2026-07-28 clients, which have no `initialize` handshake or session and therefore produce no lifecycle events. Tool arguments, results, credentials and raw email are never sent. Identity claim locations and `app_name` are declared per product via the new optional `Client.analytics` field; BugSnag ships the reference declaration, other integrations report anonymous events until theirs is added. Products that receive their credential in a product-specific header rather than `Authorization` can name it with `analytics.tokenHeader`, which is tried ahead of `Authorization` while that remains the fallback, the first candidate decoding as a JWT winning; no integration declares one yet. Events are flushed on session end and on SIGTERM; a missing key or an Amplitude outage never affects tool calls. Stdio (local) usage is not tracked.
+
+### Fixed
+
+
+- [Common] Reduced stdio startup time so the `initialize` response is not delayed by module loading,which could exceed client timeouts on some environment's. `swagger-client` is now loaded only when a Contract Testing tool resolves an OpenAPI document, and products excluded by `MCP_CLIENTS` or `MCP_TOOLSETS` are no longer imported at startup.
+
+
+### Changed
+
+- [Swagger] `create_api_from_prompt` and `create_or_update_api` tools: added an optional `version` parameter to save the API definition under a specific version, instead of relying solely on the definition's `info.version` field (or the fixed `1.0.0` default on create). Accepts `null` as well as omission, since some MCP clients send `null` for an unset optional field.
+
+## [0.41.3] - 2026-09-30
+
+### Added
+
+- [Swagger] Added `swagger_validate_api` tool to validate OpenAPI and AsyncAPI definitions (raw content or an existing registry API). [#723](https://github.com/SmartBear/smartbear-mcp/pull/723)
+- [QTM4J] Added optional `folderId` support to `create_test_case` and `create_test_cycle`. If omitted, the asset is created in the `MCP Generated` folder. [#721](https://github.com/SmartBear/smartbear-mcp/pull/721)
+
+### Fixed
+
+- [QTM4J] Fixed `search_test_cases` folder filtering to use `folderId` instead of `folders`, matching the backend API contract. [#721](https://github.com/SmartBear/smartbear-mcp/pull/721)
+
+## [0.41.0] - 2026-09-16
+
+### Added
+
+- [Swagger] Added Kiro (AWS) setup instructions and one-click install badge for the Swagger Remote MCP Server.
+
+### Changed
+
+- [Common] Rewrote the transport bootstrap to serve both the 2025-11-25 and 2026-07-28 (RC) MCP protocol revisions from a single deployment, on stdio (`serveStdio`, `legacy: "serve"`) and HTTP (per-request routing between the existing sessionful wiring and a new stateless `createMcpHandler` leg). Existing 2025-11-25 clients are unaffected. [#687](https://github.com/SmartBear/smartbear-mcp/pull/687)
+- [Common] Modern-era (2026-07-28) requests now carry client identity: the protocol version, client info and capabilities are extracted from each request's `_meta` envelope into the request context, so error reports are attributed for clients that no longer send an `initialize` handshake, and downstream `User-Agent` attribution follows on stdio. On the HTTP transport the downstream `User-Agent` is still fixed at configuration time and does not yet reflect the per-request client (pre-existing behavior, tracked separately). Legacy per-connection capture is unchanged. [#691](https://github.com/SmartBear/smartbear-mcp/pull/691)
+- [Common] Protocol-compliance fixes for the modern (2026-07-28) era: cacheable list/read results (`tools/list`, `prompts/list`, `resources/list`, `resources/templates/list`, `resources/read`) now carry cache hints (`ttlMs` from `CACHE_TTL`, `cacheScope: private`); `tools/list` output is deterministically ordered (alphabetical by name, both eras); the modern era no longer advertises the deprecated `logging` capability (SEP-2577), while `tools.listChanged` remains advertised on both eras (the SDK's serving entries implement `subscriptions/listen` natively for modern clients); `Mcp-Method` and `Mcp-Name` are allowed through CORS. SEP-2243 param-driven request headers (`Mcp-Param-<Name>`, declared via `x-mcp-header` schema annotations) are validated against tool arguments natively by the SDK; no tool currently declares one, so no additional CORS entries are needed for them. Legacy (2025-11-25) capability declarations and cache-result envelopes are unchanged; resource-not-found errors are now reported as -32602 (Invalid Params) in both eras per the 2026-07-28 spec, and clients should accept both -32602 and the former -32002. [#708](https://github.com/SmartBear/smartbear-mcp/pull/708)
+- [Common] Elicitation on the modern (2026-07-28) era now uses the multi round-trip pattern ([SEP-2322](https://github.com/modelcontextprotocol/modelcontextprotocol/pull/2322)): tools that need user input return an `input_required` result carrying an embedded `elicitation/create` request, and the client's retry supplies the answers via `inputResponses`. Answers from earlier rounds are correlated through a server-minted `requestState`. Modern clients that do not declare the `elicitation` capability, and all legacy (2025-11-25) clients, keep the existing instruction-based fallback. [#705](https://github.com/SmartBear/smartbear-mcp/pull/705)
+- [Zephyr] Change outputSchema for issue link test cases, cycles and executions to be objects instead of arrays. [#706](https://github.com/SmartBear/smartbear-mcp/pull/706)
+
+### Fixed
+
+- [Swagger] Updated and fixed Functional Testing tool descriptions for clarity and LLM usability: added explicit async/polling guidance to `run_test` and `run_suite`, enumerated status values with descriptions for `get_test_status` and `get_suite_status`, added `limit`/`offset` pagination hints and total run count to `get_test_history`, standardized status terminology to `canceled` across all tool descriptions, and restructured the public doc into `Tests` and `Suites` sections with bold field labels and cross-tool references.
+
+- [Common] Security: `WWW-Authenticate` OAuth discovery URLs are no longer derived from the client-supplied `Host` header over a hardcoded `http://`. The header is now built via `getBaseUrl()`, honouring the `BASE_URL` env var and deriving the scheme from `X-Forwarded-Proto`. `X-Forwarded-Host` is now only trusted when the new `TRUST_PROXY` env var is enabled, since it can be forged by clients on deployments without a proxy stripping it. Both variables are documented in the README.
+- [Common] The `Smartbear-Toolsets` header (used to load only specific tool groups, e.g. `qtm4j:testcases`) was missing from the allowed CORS headers, so browsers were blocking it before it reached the server. It's now added to the allow-list and works as expected.
+
+## [0.40.0] - 2026-09-02
+
+### Added
+
+- [QMetry] Added `Create Requirement` and `Update Requirement` tools for creating and modifying requirements, with automatic root-folder resolution, sync-gate protection, and UDF support (including DATETIMEPICKER normalization). [#699](https://github.com/SmartBear/smartbear-mcp/pull/699)
+- [QMetry] Added `Link Test Case to Issues` tool for associating defects/issues with a test case. [#699](https://github.com/SmartBear/smartbear-mcp/pull/699)
+- [QMetry] `Create Test Case` now auto-generates 2–5 steps from context when the user does not provide them, and automatically applies `stepDefaultValues` from the UDF layout to every step's UDF fields. [#699](https://github.com/SmartBear/smartbear-mcp/pull/699)
 - [Swagger] Extended the `create_test` Functional Testing tool with a step-level `baseUrl`/`apiName` and a definition-level `parameters` array. Every step must now set `baseUrl` to its server/common URL; it is extracted into a generated `baseURL<ApiName>` parameter (falling back to `baseURL<Host>` when `apiName` is not set) and templated into the step's `url`. OAS-style `{pathParam}` placeholders in every step's `url` are always converted to `${var(pathParam)}` references with matching generated parameters, and a `{pathParam}` shared by more than one step must be defined in `parameters` so its value stays in sync across steps. `parameters` only accepts these path/base-URL parameters, not request body parameters.
+- [Zephyr] Added `Get Folders` tool to retrieve Folders available within a Zephyr account, with optional filtering by project key and folder type.
+
+### Changed
+
+- [Swagger] `create_api_from_prompt` tool: now create-only - fails with a conflict error instead of overwriting when the generated API version already exists. Marked as non-destructive.
+- [QMetry] Security: Removed `Qmetry-Token` and `apikey` header fallbacks from `getToken()` to prevent OAuth bypass on HTTP transport. [#697](https://github.com/SmartBear/smartbear-mcp/pull/697)
+- [QMetry] Security: Added input validation (`.max(255)`, `.regex()`, `..` guard) on `fileName` in `ExportHtmlReportArgsSchema`. [#697](https://github.com/SmartBear/smartbear-mcp/pull/697)
+- [QMetry] Trimmed noisy fields from test suite list, issue list, and project info API responses to reduce token usage. [#699](https://github.com/SmartBear/smartbear-mcp/pull/699)
+
+### Fixed
+
+- [Swagger] `create_or_update_api` tool: no longer forces private visibility when updating an existing API. Visibility is now set to private only on creation; updates preserve the API's current visibility.
 
 ## [0.39.0] - 2026-08-31
 

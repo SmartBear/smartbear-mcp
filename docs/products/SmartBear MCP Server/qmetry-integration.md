@@ -54,6 +54,28 @@ The QMetry client provides the following test management capabilities as listed 
 -   Returns: List of available platforms for cross-platform testing.
 -   Use case: Retrieve all platforms.
 
+### `fetch_api_call_quota`
+
+-   Purpose: Fetch the QMetry Open API call quota for the account behind the configured API key. Calls to this tool do not count toward the quota.
+-   Returns: Whether limits are enforced (`limitEnabled`), hourly and daily `limit`, `consumed`, `remaining` and `resetsAt` (UTC), and `serverTime`.
+-   Use case: Check remaining calls before a large batch of operations, diagnose rate-limit or quota-exceeded errors, find out when the quota resets.
+
+### `create_requirement`
+
+-   Purpose: Create a new requirement in QMetry with metadata and release/cycle mapping.
+-   Parameters: Requirement name (`name`), optional folder ID (`rqFolderId`), priority, component array, owner (`requirementOwner`), state (`requirementState`), description, release/cycle mapping (`associateRelCyc`, `releaseCycleMapping`), and custom fields (`udfFields`).
+-   Returns: JSON object containing the new requirement ID, summary, and creation metadata.
+-   Use case: Create requirements with detailed metadata and custom fields (UDFs), set priority/owner/state using valid IDs from project info, associate with release/cycle for planning, create requirements in a specific folder.
+-   Note: If the project's Requirement module is integrated with Jira or Azure, this tool will refuse to create the requirement in QMetry — requirements must be created directly in the external system (Jira or Azure) and synced into QMetry.
+
+### `update_requirement`
+
+-   Purpose: Update an existing QMetry requirement by requirement ID and version ID.
+-   Parameters: Requirement ID (`rqId`), version ID (`rqVersionId`), optional flag to create a new version (`updateWithVersion`), and optional fields to update including name, description, priority, owner (`requirementOwner`), state (`requirementState`), component array, attachments, and custom fields (`udfFields`, `UDF`).
+-   Returns: JSON object containing the updated requirement ID, summary, and update metadata.
+-   Use case: Update requirement metadata or custom fields (UDFs), change priority/owner/state, modify description, create a new requirement version while updating, bulk update using entity key auto-resolution.
+-   Note: If the project's Requirement module is integrated with Jira or Azure, this tool will refuse to update the requirement in QMetry — requirements must be updated directly in the external system (Jira or Azure) and synced into QMetry.
+
 ### `list_qmetry_requirements`
 
 -   Purpose: Fetch QMetry requirements from the current project.
@@ -138,6 +160,13 @@ The QMetry client provides the following test management capabilities as listed 
 -   Returns: Complete list of test case executions.
 -   Use case: Retrieve available test case execution records including Test Run UDFs.
 
+### `link_test_case_to_issues`
+
+-   Purpose: Link one or more defects/issues to a QMetry test case.
+-   Parameters: Test case entity key (`tcID`), array of numeric issue/defect IDs (`dfIDs`).
+-   Returns: JSON object with success status and linkage details.
+-   Use case: Link single or multiple defects/issues directly to a test case for traceability, automate defect coverage mapping, maintain issue-test case relationships.
+
 ### `create_test_suite`
 
 -   Purpose: Create a new test suite in QMetry with metadata and release/cycle mapping.
@@ -211,9 +240,9 @@ The QMetry client provides the following test management capabilities as listed 
 ### `update_testcase_execution_status`
 
 -   Purpose: Update the execution status of test cases within a specific test suite run in QMetry.
--   Parameters: Test Suite Run identifier (`qmTsRunId`), Test Case Run identifiers (`entityIDs`), Execution Status ID (`runStatusID`), Type of entity('TCR'/'TCSR') to execute (`entityType`).
--   Returns: JSON object with update status and details.
--   Use case: Update execution status for one or more test cases within a test suite run.
+-   Parameters: Test Suite Run identifier (`qmTsRunId`), Test Case Run identifiers (`entityIDs`), Execution Status ID (`runStatusID`), Type of entity('TCR'/'TCSR') to execute (`entityType`), optional per-run Test Run UDF values (`udfValuesByRun`, keyed by Test Case Run ID and UDF field name; `TCR` only).
+-   Returns: On success, `{ success, udfUpdates, statusUpdate }`. If any target run is missing a mandatory Test Run UDF, nothing is updated and the tool returns code `MANDATORY_TEST_RUN_UDF_MISSING` with the missing fields per run.
+-   Use case: Update execution status for one or more test cases within a test suite run. For `TCR` updates, mandatory Test Run UDFs must be populated first; missing values can be supplied through `udfValuesByRun` and are written before the status is changed.
 
 ### `create_issue`
 

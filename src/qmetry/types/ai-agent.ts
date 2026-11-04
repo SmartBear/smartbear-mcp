@@ -44,6 +44,12 @@ export const ExecuteGateReportArgsSchema = z.object({
     .describe(
       "Optional array of cycle IDs to scope the report to specific cycles.",
     ),
+  extKeys: z
+    .array(z.string())
+    .optional()
+    .describe(
+      "Optional array of external issue keys (e.g. Jira keys like 'PROJ-123') to scope the report to specific external requirements.",
+    ),
   page: z.coerce
     .number()
     .optional()
@@ -63,6 +69,7 @@ export interface ExecuteGateReportPayload {
   projectId: number;
   releaseId?: number;
   cycleIds?: number[];
+  extKeys?: string[];
   page?: number;
   limit?: number;
 }

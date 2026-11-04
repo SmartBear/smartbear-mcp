@@ -25,6 +25,7 @@ type UdfFieldDefinition = {
 type DisplayColumn = {
   header: string;
   fields: string[];
+  defaultValue?: unknown;
 };
 
 const TEST_RUN_UDF_DISPLAY_COLUMNS: Record<
@@ -41,6 +42,16 @@ const TEST_RUN_UDF_DISPLAY_COLUMNS: Record<
     {
       header: "Execution Status",
       fields: ["runStatus", "runStatusName", "executionStatus"],
+    },
+    {
+      header: "Linked Defects (Execution)",
+      fields: ["linkedDfCount"],
+      defaultValue: 0,
+    },
+    {
+      header: "Linked Defects (Steps)",
+      fields: ["linkedStepDfCount"],
+      defaultValue: 0,
     },
     {
       header: "Tested By",
@@ -68,7 +79,7 @@ const TEST_RUN_UDF_DISPLAY_COLUMNS: Record<
   ],
 };
 
-function stripHtml(value: string) {
+export function stripHtml(value: string) {
   if (!/<[^>]+>/.test(value)) return value;
   return value
     .replace(/<[^>]*>/g, " ")
@@ -108,7 +119,9 @@ function formatTableValue(value: unknown): string {
   return String(value);
 }
 
-function parseRawUdfs(row: Record<string, any>): Record<string, unknown> {
+export function parseRawUdfs(
+  row: Record<string, any>,
+): Record<string, unknown> {
   if (Array.isArray(row.testRunUdfs)) {
     return Object.fromEntries(
       row.testRunUdfs.map((udf: any) => [udf.name, udf.value]),
@@ -213,7 +226,7 @@ function buildUnifiedTableRows(
 
     for (const column of contextColumns) {
       tableRow[column.header] = formatTableValue(
-        readFirstAvailable(row, column.fields),
+        readFirstAvailable(row, column.fields) ?? column.defaultValue,
       );
     }
 
@@ -379,7 +392,7 @@ export async function fetchUdfModules() {
 }
 
 /**
- * Fetches UDF field definitions for TC, TS, or IS entities from the newlayout endpoint.
+ * Fetches UDF field definitions for TC, TS, IS, or RQ entities from the newlayout endpoint.
  * pageName "ADD" → create operation field list (no fieldID needed).
  * pageName "DETAIL" → update operation field list (includes fieldID/projectUserFieldID required by UDF update wrapper).
  * Returns normalized fields array + step fields (TC only) + list options for lookup fields.
@@ -395,9 +408,12 @@ export async function fetchUdfLayout(
     project,
   );
 
-  if (!payload.entityType || !["TC", "TS", "IS"].includes(payload.entityType)) {
+  if (
+    !payload.entityType ||
+    !["TC", "TS", "IS", "RQ"].includes(payload.entityType)
+  ) {
     throw new Error(
-      "[fetchUdfLayout] Missing or invalid required parameter: 'entityType'. Must be 'TC', 'TS', or 'IS'.",
+      "[fetchUdfLayout] Missing or invalid required parameter: 'entityType'. Must be 'TC', 'TS', 'IS', or 'RQ'.",
     );
   }
 

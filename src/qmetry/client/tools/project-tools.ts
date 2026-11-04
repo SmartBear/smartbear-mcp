@@ -1,5 +1,6 @@
 import { QMetryToolsHandlers } from "../../config/constants";
 import {
+  ApiQuotaStatusArgsSchema,
   BuildArgsSchema,
   CreateCycleArgsSchema,
   CreateReleaseArgsSchema,
@@ -86,7 +87,8 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
       "Filter parameter should be a JSON string with filter criteria",
       "Common filter fields: 'name' (string), 'projectKey' (string)",
     ],
-    outputDescription: "JSON object containing list of projects details",
+    outputDescription:
+      "JSON object containing list of projects details, including Version, Build Number(if greater than or equal to 1), Project ID, name, Project Key and Date Format",
     readOnly: true,
     idempotent: true,
   },
@@ -134,7 +136,8 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
       "The project context persists for the current session until changed again",
     ],
     outputDescription:
-      "JSON object containing project configuration details, confirmation of project switch, and available project metadata",
+      "JSON object containing project configuration details, confirmation of project switch, and available project metadata," +
+      "including Version, Build Number(if greater than or equal to 1), Project ID, name, Project Key and Date Format",
     readOnly: false,
     idempotent: true,
   },
@@ -399,6 +402,45 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
     ],
     outputDescription:
       "JSON object with platforms list and pagination metadata",
+    readOnly: true,
+    idempotent: true,
+    openWorld: false,
+  },
+  {
+    title: "Fetch API Call Quota",
+    toolset: "Projects",
+    summary:
+      "Fetch the hourly and daily QMetry Open API call limits, calls consumed, calls remaining, and reset times",
+    handler: QMetryToolsHandlers.FETCH_API_QUOTA_STATUS,
+    inputSchema: ApiQuotaStatusArgsSchema,
+    purpose:
+      "Check the Open API call quota for the QMetry account behind the configured API key. " +
+      "Returns whether limits are enforced, plus the hourly and daily limit, consumed and remaining counts, " +
+      "and when each window resets. Calls to this tool do not count toward the quota.",
+    useCases: [
+      "Check how many API calls remain before running a large batch of operations",
+      "Diagnose rate-limit or quota-exceeded errors returned by other QMetry tools",
+      "Find out when the hourly or daily quota will reset",
+      "Confirm whether API call limits are enabled for the instance",
+    ],
+    examples: [
+      {
+        description: "Check the current API call quota",
+        parameters: {},
+        expectedOutput:
+          "limitEnabled flag, hourly and daily { limit, consumed, remaining, resetsAt }, and serverTime",
+      },
+    ],
+    hints: [
+      "No parameters are needed — the quota belongs to the account/API key, not to a project",
+      "Calling this tool is free: it does not consume hourly or daily quota",
+      "If limitEnabled is false, no API call limits are enforced and the counts are informational only",
+      "resetsAt and serverTime are UTC ISO-8601 timestamps — compare resetsAt with serverTime, not with local time, to compute time until reset",
+      "Before a large batch of create/update/link calls, check hourly.remaining and daily.remaining and warn the user if the batch would exceed them",
+      "If another QMetry tool fails with a rate-limit or quota error, call this tool to report remaining calls and the reset time",
+    ],
+    outputDescription:
+      "JSON object: limitEnabled (boolean), hourly and daily objects each with limit, consumed, remaining (numbers) and resetsAt (UTC timestamp), and serverTime (UTC timestamp)",
     readOnly: true,
     idempotent: true,
     openWorld: false,

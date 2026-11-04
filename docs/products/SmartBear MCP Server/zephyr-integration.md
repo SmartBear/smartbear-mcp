@@ -480,6 +480,19 @@ The following environment variables configure the Zephyr integration:
 
 ## Folders
 
+### Retrieval Operations
+
+#### Get Folders
+
+- **Purpose**: Retrieve Folders available within your Zephyr account.
+- **Parameters**:
+  - optional Project key (`projectKey`)
+  - optional Folder type (`folderType`)
+  - optional max results to return (`maxResults`)
+  - optional starting position for pagination (`startAt`)
+- **Returns**: A list of Folders along with their properties.
+- **Use case**: Retrieve Folders, filterable by Project Key and Folder Type.
+
 ### Creation Operations
 
 #### Create Folder

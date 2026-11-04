@@ -27,6 +27,21 @@
 - Check your MCP client configuration syntax and file paths.
 - Verify that the `dist/index.js` file exists and is executable.
 
+### Slow startup or `initialize` timeouts
+
+By default the local server loads every product integration at startup. On some machines, especially Machines/Environments with real-time antivirus scanning, this can delay the `initialize` response long enough for the MCP client to time out.
+
+Set `MCP_CLIENTS` to the products you use so that only those are loaded. Names are comma-separated and case-insensitive:
+
+```json
+"env": {
+  "MCP_CLIENTS": "QMetry",
+  "QMETRY_API_KEY": "your_qmetry_api_key"
+}
+```
+
+Valid names are `BearQ`, `BugSnag`, `Collaborator`, `Contract Testing`, `QMetry`, `QTM4J`, `Reflect`, `Swagger` and `Zephyr`. An unrecognized name loads no tools for that product.
+
 ### Npx cache issues for local MCP server
 
 Github issue link - [4108](https://github.com/npm/cli/issues/4108).

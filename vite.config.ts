@@ -16,6 +16,7 @@ export default defineConfig({
         ...builtinModules,
         ...builtinModules.map((m) => `node:${m}`),
         "@modelcontextprotocol/sdk",
+        "@amplitude/analytics-node",
         "@bugsnag/js",
         "node-cache",
         "swagger-client",

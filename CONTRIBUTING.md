@@ -11,6 +11,7 @@ Thank you for your contributing to SmartBear MCP!
   - [Testing Guidelines](#testing-guidelines)
     - [Test Requirements](#test-requirements)
     - [Running Tests](#running-tests)
+  - [Usage Analytics (remote server)](#usage-analytics-remote-server)
   - [Documentation](#documentation)
     - [Previewing docs](#previewing-docs)
   - [Releases](#releases)
@@ -131,6 +132,36 @@ npm run test:watch
 # Run tests with coverage
 npm run test:coverage
 ```
+
+## Usage Analytics (remote server)
+
+In HTTP mode, with `MCP_SERVER_AMPLITUDE_API_KEY` set, the server reports `Server Initialized`, `Session Started`, `Session Ended`, `Tool Called` and `Tools Listed` events to the shared SmartBear Amplitude project (see `src/common/analytics.ts`). Every event carries `app_name`, `organization`, `analytics_id`, `source` and `user_agent`. All logic lives in the shared module; a product only declares, on its `Client`, where things live in its OAuth bearer JWT:
+
+```ts
+analytics = { appName: "BugSnag", userId: ["sub"] };
+```
+
+- `appName` — the product's `app_name`, registered in the shared Amplitude project (currently: Platform, Portal, Test, Explore, Design, Contract Test, BugSnag). Leave it unset until registered; the server then omits it.
+- `userId` — claim paths holding a stable user id, tried in order. Dot paths (`context.user.accountId`) and numeric claims work.
+- `organizationId` — claim paths holding the organization id, optional.
+- `tokenHeader` — the request header carrying the product's credential, for products that receive it in their own header instead of `Authorization`. See below.
+
+### Products whose token is not in `Authorization`
+
+By default the shared module reads claims from the request's `Authorization: Bearer` token. A product that receives its credential in a product-specific header instead declares that header, and identity then resolves the same way as for any other product:
+
+```ts
+analytics = { appName: "Acme", tokenHeader: "Product-Api-Token", userId: ["sub"] };
+```
+
+- The declared header is tried **first**; `Authorization` remains the fallback, so a deployment using either still works.
+- Whichever candidate **decodes as a JWT first** wins. An opaque API key sitting in the product header therefore never masks a usable OAuth token in `Authorization`.
+- A `Bearer ` prefix is stripped from either header, and a repeated header uses its first value.
+- Declaring `Authorization` (in any casing) is harmless — the header is not read twice.
+
+The credential must be a **JWT** for this to produce identity. An opaque API key or personal access token has no claims to read, so the product stays anonymous (`analytics_id` omitted) no matter which header it arrives in — the events are still sent, just without a user. Identity also still requires the usual claims: an `email` claim identifies the caller with no further declaration, otherwise a `userId` claim path must be declared, and a claim that was not declared is never used.
+
+`analytics_id` is always computed centrally: `sha256(email.toLowerCase())` when the token has an `email` claim (matches SmartBear ID, so it joins with other SmartBear systems), otherwise `sha256("<integration>:<user id>")` from the declared claim (unique within MCP only). Whatever is missing is omitted from the event; nothing is guessed. Raw emails, ids, credentials, tool arguments and results are never sent.
 
 ## Documentation
 

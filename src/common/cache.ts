@@ -1,5 +1,32 @@
 import NodeCache from "node-cache";
 
+/** Default cache lifetime in seconds when CACHE_TTL is not set: 24 hours. */
+const DEFAULT_CACHE_TTL_SECONDS = 86400;
+
+/**
+ * The configured cache lifetime in seconds (CACHE_TTL, default 24 hours).
+ * Shared by the in-process {@link CacheService} and the protocol-level cache
+ * hints stamped onto modern-era (2026-07-28) list/read results, so both
+ * caching layers honor the same operator-configured lifetime.
+ */
+export function getConfiguredCacheTtlSeconds(): number {
+  const parsed = process.env.CACHE_TTL
+    ? Number.parseInt(process.env.CACHE_TTL, 10)
+    : DEFAULT_CACHE_TTL_SECONDS;
+  return Number.isFinite(parsed) && parsed >= 0
+    ? parsed
+    : DEFAULT_CACHE_TTL_SECONDS;
+}
+
+/**
+ * Whether caching is enabled (CACHE_ENABLED, default on). Also gates the
+ * protocol-level cache hints: with caching disabled the modern-era results
+ * keep the SDK default of `ttlMs: 0` (do not cache).
+ */
+export function isCachingEnabled(): boolean {
+  return process.env.CACHE_ENABLED !== "false";
+}
+
 /**
  * Common cache service that can be shared across all clients.
  * Wraps NodeCache and provides a way to disable caching entirely.
@@ -11,10 +38,8 @@ export class CacheService {
 
   constructor() {
     // Read configuration from environment variables
-    this.enabled = process.env.CACHE_ENABLED !== "false";
-    const ttl = process.env.CACHE_TTL
-      ? Number.parseInt(process.env.CACHE_TTL, 10)
-      : 86400; // Default 24 hours
+    this.enabled = isCachingEnabled();
+    const ttl = getConfiguredCacheTtlSeconds();
 
     this.cache = this.enabled
       ? new NodeCache({

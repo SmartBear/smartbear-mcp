@@ -1,3 +1,4 @@
+import type { HttpClient } from "./http-client";
 import type {
   BiDirectionalConsumerContractByConsumerResponse,
   BiDirectionalConsumerContractResponse,
@@ -28,8 +29,7 @@ import type {
   PublishContractsResponse,
   PublishProviderContractInput,
   PublishProviderContractResponse,
-} from "./base";
-import type { HttpClient } from "./http-client";
+} from "./schemas/contract";
 
 export class ContractApi {
   constructor(private readonly http: HttpClient) {}
@@ -345,6 +345,7 @@ export class ContractApi {
       `${this.http.baseUrl}/integrations`,
       {
         method: "GET",
+        headers: { Accept: "application/hal+json" },
         errorContext: "List Integrations",
       },
     );
@@ -372,6 +373,7 @@ export class ContractApi {
       `${this.http.baseUrl}/integrations/team/${encodeURIComponent(teamId)}`,
       {
         method: "GET",
+        headers: { Accept: "application/hal+json" },
         errorContext: "Get Integrations by Team",
       },
     );

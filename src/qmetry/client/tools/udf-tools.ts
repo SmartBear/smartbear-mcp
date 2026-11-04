@@ -13,13 +13,13 @@ export const UDF_TOOLS: QMetryToolParams[] = [
     title: "Fetch UDF Layout",
     toolset: "UDF",
     summary:
-      "Fetch UDF (User Defined Field) definitions for Test Case, Test Suite, or Issue entities. " +
+      "Fetch UDF (User Defined Field) definitions for Test Case, Test Suite, Issue, or Requirement entities. " +
       "Returns field names, types, fieldIDs, and lookup option IDs. " +
       "Call this BEFORE creating or updating an entity with UDF values.",
     handler: QMetryToolsHandlers.FETCH_UDF_LAYOUT,
     inputSchema: FetchUdfLayoutArgsSchema,
     purpose:
-      "Discovers the UDF fields configured for a given entity type (TC/TS/IS) in the current QMetry project. " +
+      "Discovers the UDF fields configured for a given entity type (TC/TS/IS/RQ) in the current QMetry project. " +
       "For 'ADD' (create): returns field names, types, and list option IDs — no fieldID needed. " +
       "For 'DETAIL' (update): returns fieldID (projectUserFieldID) required in the UDF update wrapper. " +
       "Also returns step UDF definitions for Test Cases (stepFields). " +
@@ -32,6 +32,7 @@ export const UDF_TOOLS: QMetryToolParams[] = [
       "Identify mandatory UDF fields before creating an Issue",
       "List all step-level UDF fields available for Test Case steps",
       "Get CASCADINGLIST parent option IDs before fetching child values",
+      "Discover UDF fields before creating or updating a Requirement",
     ],
     examples: [
       {
@@ -55,9 +56,22 @@ export const UDF_TOOLS: QMetryToolParams[] = [
         expectedOutput:
           "{ fields: [{ name: 'TCR_STR', label: 'String Field', fieldTypeName: 'STRING', fieldID: null }, ...], listOptions: {} }",
       },
+      {
+        description: "Get UDF field definitions for creating a Requirement",
+        parameters: { entityType: "RQ", pageName: "ADD" },
+        expectedOutput:
+          "{ fields: [{ name: 'rq_custom_field', label: 'Custom Field', fieldTypeName: 'STRING', fieldID: null, isMandatory: false }, ...], listOptions: {} }",
+      },
+      {
+        description: "Get UDF fieldIDs for updating a Requirement",
+        parameters: { entityType: "RQ", pageName: "DETAIL" },
+        expectedOutput:
+          "{ fields: [{ name: 'rq_dropdown_field', label: 'Dropdown', fieldTypeName: 'LOOKUPLIST', fieldID: 3002, isMandatory: false, listName: 'myListKey' }, ...], " +
+          "listOptions: { myListKey: [{ id: 101, name: 'Option A' }] } }",
+      },
     ],
     hints: [
-      "CALL THIS TOOL FIRST: Before creating or updating TC/TS/IS entities, always call this tool with pageName='ADD' to discover mandatory fields, defaults, field names, types, and valid option IDs.",
+      "CALL THIS TOOL FIRST: Before creating or updating TC/TS/IS/RQ entities with UDF values, always call this tool to discover field names, types, and valid option IDs.",
       "pageName='ADD': Use before CREATE operations — returns field names + types + list options. fieldID is null (not needed on create).",
       "pageName='DETAIL': Use before UPDATE operations — returns fieldID (projectUserFieldID) required in the UDF wrapper.",
       "WORKFLOW FOR CREATE with UDFs:",

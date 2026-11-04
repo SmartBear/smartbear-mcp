@@ -305,9 +305,14 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
         expectedOutput: "Issue type updated successfully.",
       },
       {
-        description: "Update affected release",
-        parameters: { DefectId: 118150, affectedRelease: 3730 },
-        expectedOutput: "Affected release updated successfully.",
+        description: "Update affected release and affected cycles",
+        parameters: {
+          DefectId: 118150,
+          affectedRelease: 3730,
+          affectedCycles: [1168],
+        },
+        expectedOutput:
+          "Affected release and affected cycles updated successfully.",
       },
     ],
     hints: [
@@ -368,7 +373,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
     handler: QMetryToolsHandlers.FETCH_ISSUES,
     inputSchema: IssuesListArgsSchema,
     purpose:
-      "Get defects or issues from QMetry. System automatically gets correct viewId from project info if not provided.",
+      "Get defects or issues from QMetry. System automatically gets correct viewId from project.",
     useCases: [
       "List all issues in a project",
       "Search for specific issues using filters",
@@ -388,22 +393,6 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
         parameters: { projectKey: "UT" },
         expectedOutput:
           "List of issues from UT project using UT's specific IS viewId",
-      },
-      {
-        description: "Get issues with manual viewId (skip auto-resolution)",
-        parameters: { projectKey: "MAC", viewId: 166065 }, // This is an example viewId, must be resolved per project IS viewId
-        expectedOutput: "Issues using manually specified viewId 166065",
-      },
-      {
-        description:
-          "List issues from specific project (ex: project key can be anything (VT, UT, PROJ1, TEST9)",
-        parameters: {
-          projectKey: "use specific given project key",
-          viewId:
-            "fetch specific project given projectKey defects or issues ViewId",
-        },
-        expectedOutput:
-          "Issues using manually specified viewId 103097 or projectKey",
       },
       {
         description: "Get issues by release/cycle filter",

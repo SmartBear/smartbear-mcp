@@ -190,6 +190,95 @@ describe("PactFlowClient", () => {
       expect(page1Body._embedded.webhooks).toEqual([{ id: "a" }]);
       expect(page2Body._embedded.webhooks).toEqual([{ id: "b" }]);
     });
+
+    describe("structured output", () => {
+      const fakeTool = (handler: string, extra: Record<string, unknown> = {}) =>
+        ({
+          title: handler,
+          toolset: "t",
+          summary: "summary",
+          purpose: "purpose",
+          inputSchema: undefined,
+          handler,
+          clients: ["pactflow"],
+          ...extra,
+        }) as any;
+
+      const registerFake = async (tool: any, body: string | null) => {
+        vi.spyOn(toolsModule, "TOOLS", "get").mockReturnValue([tool]);
+        const client = await createConfiguredClient({ token: "token" });
+        fetchMock.mockImplementation(
+          async () => new Response(body, { status: body === null ? 204 : 200 }),
+        );
+        const registered: Array<{ params: any; callback: any }> = [];
+        const register = vi.fn((params, callback) =>
+          registered.push({ params, callback }),
+        );
+        await client.registerTools(register as any, vi.fn());
+        return registered[0];
+      };
+
+      it("returns the handler result as structuredContent", async () => {
+        const { params, callback } = await registerFake(
+          fakeTool("getMetrics"),
+          JSON.stringify({ matrix: { count: -1 } }),
+        );
+        const result = await callback({}, {});
+
+        expect(params.outputSchema).toBeDefined();
+        expect(result.structuredContent).toEqual({ matrix: { count: -1 } });
+        expect(JSON.parse(result.content[0].text)).toEqual(
+          result.structuredContent,
+        );
+      });
+
+      it("reports success for tools whose API returns no body", async () => {
+        const { callback } = await registerFake(
+          fakeTool("deletePacticipant"),
+          null,
+        );
+        const result = await callback({ pacticipantName: "x" }, {});
+
+        expect(result.structuredContent).toEqual({ success: true });
+      });
+
+      it("advertises pagination on paginated tools only", async () => {
+        const paginated = await registerFake(
+          fakeTool("listWebhooks", { paginated: true }),
+          JSON.stringify({ _embedded: { webhooks: [] } }),
+        );
+        expect(
+          paginated.params.outputSchema.safeParse({
+            pagination: { pageNumber: "one" },
+          }).success,
+        ).toBe(false);
+
+        const plain = await registerFake(
+          fakeTool("listEnvironments"),
+          JSON.stringify({}),
+        );
+        expect(
+          plain.params.outputSchema.safeParse({
+            pagination: { pageNumber: "one" },
+          }).success,
+        ).toBe(true);
+      });
+
+      it("keeps structuredContent when a tool uses formatResponse", async () => {
+        const { callback } = await registerFake(
+          fakeTool("getMetrics", {
+            formatResponse: () => ({
+              content: [{ type: "text", text: "custom" }],
+            }),
+          }),
+          JSON.stringify({ matrix: { count: -1 } }),
+        );
+        const result = await callback({}, {});
+
+        expect(result.content[0].text).toBe("custom");
+        expect(result.structuredContent).toEqual({ matrix: { count: -1 } });
+      });
+    });
   });
 
   describe("registerPrompts", () => {

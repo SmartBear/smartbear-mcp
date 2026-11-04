@@ -16,6 +16,93 @@ import {
 import { qmetryRequest } from "./api/client-api";
 import { resolveDefaults } from "./utils";
 
+const PROJECT_LIST_FIELDS_TO_OMIT = new Set([
+  "userDefault",
+  "isRichText",
+  "isAutoAddValue",
+  "isSyncTCMailSend",
+  "isPartLevelComplianceEnabled",
+  "isBuildSelectionMandatory",
+  "isDeriveTCRStatusFromTCSRStatus",
+  "isDefineTestCaseDependency",
+  "isAutoSyncNewTcVersionEnabled",
+  "isTCSRPartLevelComplianceDisabled",
+]);
+
+// Fields returned by GET_INFO/SEt_INFO that we don't want to expose to LLM.
+const PROJECT_FIELDS_TO_OMIT = new Set([
+  "clientData",
+  "disabledRoleRights",
+  "automationFrameworks",
+  "currentUserRoleRights",
+  "userRoleRights",
+  "licenseDetail",
+  "bddRepos",
+  "atgTCFields",
+  "allowEditRecordData",
+  "allowEditPublicView",
+  "logiServerUrl",
+  "dynamicWebhookEnabled",
+  "isLocked",
+  "isBuildLOcked",
+  "isReleaseLocked",
+  "isProjectLocked",
+  "cicdRequestTimeoutInSeconds",
+  "thumbnailCreated",
+  "qisearchBearerToken",
+  "openAISecretKey",
+  "openAISalt",
+  "qmetrySamlUrl",
+  "qmetrySAMLContext",
+  "BDD_MQ_NAME",
+  "riskBasedAnalysisEnabled",
+  "riskBasedAtRQLevel",
+  "riskBasedAtTCLevel",
+  "isDropMandatory",
+  "isPlatformScopeFeatureEnabled",
+  "isSyncAcrossDomainEnabled",
+  "isTestDataEnabled",
+  "isTestCaseApprover",
+  "isTestSuiteApprover",
+  "isTestSuiteCloser",
+  "isRequirementReviewer",
+  "isPartLevelComplianceEnabled",
+  "isAutoApproveTestRunEnabled",
+  "isDeriveTCRStatusFromTCSRStatus",
+  "isDefineTestCaseDependency",
+  "isAutoSyncNewTcVersionEnabled",
+  "isBddConfigured",
+  "isMFAMandatory",
+  "part11ComplianceAuthType",
+  "userPreferredAutoActivatePrediction",
+  "isQIEnabled",
+  "isReflectEnabled",
+  "isAskMeAnythingEnabledAI",
+  "isDocLinkConfigForProjectAI",
+  "isNetSearchConfigForProjectAI",
+  "isAutoGenerateTcTcStepsAI",
+  "isGenerateNewTcInExistingTcAI",
+  "isEditTcStepsInExistingTcAI",
+  "isGenerateNewTcForStoryAI",
+  "isFlakyScoreEnabled",
+  "isSuccessRateEnabled",
+  "isQueryAssistanceEnabledClient",
+  "isQueryAssistanceEnabledUser",
+  "isDocSearchEnabled",
+  "isTestingTypeVisible",
+  "isMatrixViewEnabled",
+  "isTCSRPartLevelComplianceDisabled",
+  "isProjectLogoCustomization",
+  "alEvents",
+  "alModules",
+  "isScimEnabled",
+  "atgJiraFields",
+  "nomenclature",
+  "nomenclatureInfo",
+  "refreshContent",
+  "packages",
+]);
+
 /**
  * Retrieves project information from QMetry
  *
@@ -36,13 +123,17 @@ export async function getProjectInfo(
   baseUrl: string,
   project?: string,
 ) {
-  return qmetryRequest({
+  const result = await qmetryRequest<Record<string, unknown>>({
     method: "GET",
     path: QMETRY_PATHS.PROJECT.GET_INFO,
     token,
     baseUrl: baseUrl || QMETRY_DEFAULTS.BASE_URL,
     project: project || QMETRY_DEFAULTS.PROJECT_KEY,
   });
+
+  return Object.fromEntries(
+    Object.entries(result).filter(([key]) => !PROJECT_FIELDS_TO_OMIT.has(key)),
+  );
 }
 
 /**
@@ -59,7 +150,10 @@ export async function getProjects(
     ...payload,
   };
 
-  return qmetryRequest<unknown>({
+  const result = await qmetryRequest<{
+    data: Record<string, unknown>[];
+    total: number;
+  }>({
     method: "POST",
     path: QMETRY_PATHS.PROJECT.GET_PROJECTS,
     token,
@@ -67,6 +161,21 @@ export async function getProjects(
     project: project || QMETRY_DEFAULTS.PROJECT_KEY,
     body,
   });
+
+  if (result && Array.isArray(result.data)) {
+    return {
+      ...result,
+      data: result.data.map((item) =>
+        Object.fromEntries(
+          Object.entries(item).filter(
+            ([key]) => !PROJECT_LIST_FIELDS_TO_OMIT.has(key),
+          ),
+        ),
+      ),
+    };
+  }
+
+  return result;
 }
 
 export async function getReleasesCycles(
@@ -143,6 +252,35 @@ export async function getPlatforms(
     baseUrl: baseUrl || QMETRY_DEFAULTS.BASE_URL,
     project: project || QMETRY_DEFAULTS.PROJECT_KEY,
     body,
+  });
+}
+
+/**
+ * Fetches the hourly and daily Open API call quota status for the account.
+ * Calls to this endpoint do not count toward the quota.
+ */
+export async function getApiQuotaStatus(
+  token: string,
+  baseUrl: string,
+  project: string | undefined,
+  _payload: Record<string, unknown> = {},
+) {
+  const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
+    baseUrl,
+    project,
+  );
+
+  return qmetryRequest({
+    method: "GET",
+    path: QMETRY_PATHS.PROJECT.GET_API_QUOTA_STATUS,
+    token,
+    baseUrl: resolvedBaseUrl,
+    project: resolvedProject,
+    // The quota endpoint expects the literal "default" scope, not a numeric project scope.
+    extraHeaders: {
+      scope: "default",
+      "Content-Type": "application/json",
+    },
   });
 }
 

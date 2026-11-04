@@ -333,23 +333,6 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
           "List of test suites from UT project using UT's specific TS viewId",
       },
       {
-        description:
-          "Get test suites with manual viewId (skip auto-resolution)",
-        parameters: { projectKey: "MAC", viewId: 103097, folderPath: "" }, // This is an example viewId, must be resolved per project TS viewId
-        expectedOutput: "Test suites using manually specified viewId 103097", // This is an example viewId, must be resolved per project TS viewId
-      },
-      {
-        description:
-          "List test suites from specific project (ex: project key can be anything (VT, UT, PROJ1, TEST9)",
-        parameters: {
-          projectKey: "use specific given project key",
-          viewId: "fetch specific project given projectKey Test Suite ViewId", // auto-resolved
-          folderPath: "",
-        },
-        expectedOutput:
-          "Test suites using manually specified viewId 103097 or projectKey", // This is an example viewId, must be resolved per project TS viewId
-      },
-      {
         description: "Get test suites by release/cycle filter",
         parameters: {
           projectKey: "MAC",
@@ -523,7 +506,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       "3. Example: latestViews.TSFS.viewId = 104316 (MAC project TSFS view)", // This is an example viewId, must be resolved per project TSFS viewId
       "4. Manual viewId only needed if you want to override the automatic resolution",
       "WORKFLOW: System automatically handles project info if tsFolderID or viewId is not provided",
-      "PROJECT INFO STRUCTURE: clientData.rootFolders.TS.id contains the root test suite folder ID",
+      "PROJECT INFO STRUCTURE: rootFolders.TS.id contains the root test suite folder ID",
       "PROJECT INFO STRUCTURE: latestViews.TSFS.viewId contains the test suite folder view ID",
       "For sub-folders: Use specific folder IDs if you know them, or call folder listing APIs",
       "FILTER CAPABILITIES: Same as other QMetry list operations",
@@ -932,9 +915,15 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       "Critical for monitoring test suite performance and execution trends",
       "Use for compliance reporting and execution audit trails",
       "Essential for test execution planning and resource optimization",
+      "LINKED DEFECTS/ISSUES: Each execution record can expose TWO separate defect counts - " +
+        "'linkedDfCount' is the count of defects/issues linked to the TEST EXECUTION itself, " +
+        "and 'linkedStepDfCount' is the count of defects/issues linked to that execution's TEST STEP executions. " +
+        "Whenever asked about linked defects/issues for an execution, report BOTH counts (linkedDfCount and linkedStepDfCount) - do not report only one.",
     ],
     outputDescription:
-      "JSON object with executions array containing execution details, status, platforms, releases, and execution metadata",
+      "JSON object with executions array containing execution details, status, platforms, releases, and execution metadata. " +
+      "Each execution entry may include 'linkedDfCount' (defects linked to the test execution) and " +
+      "'linkedStepDfCount' (defects linked to the test step executions) - report both when linked defects are asked about.",
     readOnly: true,
     idempotent: true,
   },
@@ -943,8 +932,9 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
     toolset: "Test Suites",
     summary:
       "Get test case runs under a specific test suite run execution in QMetry, including Test Run UDF values. " +
-      "ALWAYS present results as a unified table: Test Case Key | Test Case Summary | Executed Version | Execution Status | <UDF Label columns…>. " +
-      "NEVER show a separate type+value breakdown — always combine identification fields and UDF values in one table per run.",
+      "ALWAYS present results as a unified table: Test Case Key | Test Case Summary | Executed Version | Execution Status | Linked Defects (Execution) | Linked Defects (Steps) | <UDF Label columns…>. " +
+      "NEVER show a separate type+value breakdown — always combine identification fields and UDF values in one table per run. " +
+      "Linked defects are TWO separate counts, never combine them into one 'Issues Linked' column.",
     handler: QMetryToolsHandlers.FETCH_TESTCASE_RUNS_BY_TESTSUITE_RUN,
     inputSchema: TestCaseRunsByTestSuiteRunArgsSchema,
     formatResponse: (result: any) => {
@@ -1001,7 +991,10 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       "Essential for detailed execution analysis, test run reporting, UDF value inspection, and execution audit trails. " +
       "IMPORTANT: Every response row contains key identification fields — Test Case Key (entityKey), " +
       "Test Case Summary (summary), Executed Version (latestVersion), Execution Status (runStatus), and Test Run UDF values (testRunUdfs). " +
-      "These MUST always be shown in the response so users can identify which test case run each record represents.",
+      "These MUST always be shown in the response so users can identify which test case run each record represents. " +
+      "IMPORTANT — LINKED DEFECTS ARE TWO SEPARATE COUNTS: 'linkedDfCount' (defects/issues linked to the test case run/execution itself) " +
+      "and 'linkedStepDfCount' (defects/issues linked to that run's test step executions). " +
+      "Whenever the user asks for linked defects/issues, ALWAYS report BOTH counts separately — never merge them into a single 'Issues Linked' value.",
     useCases: [
       "Get all test case runs under a specific test suite run execution",
       "Fetch Test Run UDF values for all test case executions in a test suite run — always show Test Case Key, Summary, and Execution Status alongside UDFs",
@@ -1203,18 +1196,21 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       "  ❌ Do NOT show raw UDF field keys (e.g. 'TRString', '8260LUP') as column headers — use human-readable labels",
       "",
       "REQUIRED OUTPUT — ONE unified table, all runs as rows:",
-      "| Test Case Key | Test Case Summary | Executed Version | Execution Status | <UDF Label 1> | <UDF Label 2> | ... |",
-      "|---------------|-------------------|------------------|------------------|---------------|---------------|-----|",
-      "| VKMCP-TC-1    | Login test        | v1               | Not Run          | varis         | chrome, edge  | ... |",
-      "| VKMCP-TC-2    | Invalid password  | v2               | Not Run          | john          | firefox       | ... |",
+      "| Test Case Key | Test Case Summary | Executed Version | Execution Status | Linked Defects (Execution) | Linked Defects (Steps) | <UDF Label 1> | <UDF Label 2> | ... |",
+      "|---------------|-------------------|------------------|------------------|-----------------------------|-------------------------|---------------|---------------|-----|",
+      "| VKMCP-TC-1    | Login test        | v1               | Not Run          | 1                           | 0                       | varis         | chrome, edge  | ... |",
+      "| VKMCP-TC-2    | Invalid password  | v2               | Not Run          | 0                           | 2                       | john          | firefox       | ... |",
       "",
       "MANDATORY COLUMNS (always first, in this order):",
-      "  1. Test Case Key     → entityKey     (e.g. 'VKMCP-TC-1')",
-      "  2. Test Case Summary → summary       (test case name)",
-      "  3. Executed Version  → latestVersion (e.g. 'v1', 'v2')",
-      "  4. Execution Status  → runStatus     (e.g. 'Not Run', 'Passed', 'Failed')",
-      "  5. Tested By         → testedBy/executedBy when present",
-      "  6+. One column per UDF field — use the human-readable label as header, the value as the cell.",
+      "  1. Test Case Key            → entityKey        (e.g. 'VKMCP-TC-1')",
+      "  2. Test Case Summary        → summary          (test case name)",
+      "  3. Executed Version         → latestVersion    (e.g. 'v1', 'v2')",
+      "  4. Execution Status         → runStatus        (e.g. 'Not Run', 'Passed', 'Failed')",
+      "  5. Linked Defects (Execution) → linkedDfCount  (defects/issues linked to the test case run itself)",
+      "  6. Linked Defects (Steps)   → linkedStepDfCount (defects/issues linked to that run's test step executions)",
+      "  7. Tested By                → testedBy/executedBy when present",
+      "  8+. One column per UDF field — use the human-readable label as header, the value as the cell.",
+      "  NEVER combine columns 5 and 6 into a single 'Issues Linked' count — they are always reported separately, defaulting to 0 when absent.",
       "",
       "Null UDF values → show as '-' in the cell.",
       "If testRunUdfs is empty or hasTcRunUdf is false, still show columns 1-5.",
@@ -1416,6 +1412,8 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       "'latestVersion' (Executed Version, e.g. 'v1', 'v2'), " +
       "'runStatus' (Execution Status label, e.g. 'Passed', 'Failed', 'Not Run'), 'runStatusID' (numeric status ID), " +
       "'tcRunID' (numeric Test Run ID), " +
+      "'linkedDfCount' (defects/issues linked to the test case run itself) and 'linkedStepDfCount' (defects/issues linked to that run's test step executions) — " +
+      "these are TWO SEPARATE counts and must always be reported separately when linked defects are asked about, " +
       "and 'testRunUdfs' (object with Test Run UDF field keys mapped to their values, parsed from the raw 'udfjson' field; HTML stripped from rich text). " +
       "UDF values can also be fetched in enriched form via FETCH_TEST_RUN_UDF_VALUES or field metadata via FETCH_TEST_RUN_UDF_METADATA. " +
       "The top-level response includes 'hasTcRunUdf' (boolean), 'total' (count), and pagination metadata.",
@@ -1426,14 +1424,16 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
     title: "Bulk Update Test Case Execution Status",
     toolset: "Test Suites",
     summary:
-      "Update execution status for individual or multiple test case runs in bulk",
+      "Update execution status for individual or multiple test case runs in bulk, enforcing mandatory Test Run UDFs",
     handler: QMetryToolsHandlers.BULK_UPDATE_EXECUTION_STATUS,
     inputSchema: BulkUpdateExecutionStatusArgsSchema,
     purpose:
       "Update the execution status (Pass, Fail, Blocked, Not Run, WIP, etc.) for one or more test case runs. " +
       "This tool enables both single and bulk status updates for test executions, providing flexibility for " +
       "manual test execution management, automated test result updates, and test execution tracking. " +
-      "Essential for maintaining accurate test execution records and execution status reporting.",
+      "Essential for maintaining accurate test execution records and execution status reporting. " +
+      "For TCR updates, the status is only changed when every target run has all mandatory Test Run UDFs populated; " +
+      "missing values can be supplied per run via 'udfValuesByRun' and are written before the status update.",
     useCases: [
       "Update single test case run status to Pass, Fail, Blocked, or Not Run",
       "Bulk update multiple test case run statuses in a single operation",
@@ -1443,6 +1443,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       "Update test execution status across different test environments",
       "Track test execution progress and completion",
       "Manage test execution status for compliance and reporting",
+      "Fill mandatory Test Run UDFs per run and update the execution status in one call",
     ],
     examples: [
       {
@@ -1542,9 +1543,36 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         expectedOutput:
           "Execution 1/4 updated. The MCP Agent will automatically repeat this operation for executions 2733205, 2733306, and 2733407 using their corresponding entityIDs.",
       },
+      {
+        description:
+          "Retry after MANDATORY_TEST_RUN_UDF_MISSING: fill mandatory Test Run UDF 'test_env' per run, then mark both runs Passed",
+        parameters: {
+          entityIDs: "66095069,66095075",
+          entityType: "TCR",
+          qmTsRunId: "2720260",
+          runStatusID: 123268,
+          isBulkOperation: true,
+          udfValuesByRun: {
+            "66095069": { test_env: { value: "QA" } },
+            "66095075": { test_env: { value: "UAT" } },
+          },
+        },
+        expectedOutput:
+          "{ success: true, udfUpdates: [{ tcRunIDs: [66095069], ... }, { tcRunIDs: [66095075], ... }], statusUpdate: {...} }",
+      },
     ],
     hints: [
       "CRITICAL: entityIDs, entityType, qmTsRunId, and runStatusID are REQUIRED parameters",
+      "",
+      "MANDATORY TEST RUN UDF GATE (entityType 'TCR', applies to EVERY target status including Not Run):",
+      "- Before updating, the tool checks each run's Test Run UDFs; fields with allowBlank=false are mandatory.",
+      "- If ANY run is missing a mandatory value, NOTHING is updated and the tool returns code 'MANDATORY_TEST_RUN_UDF_MISSING' with runsMissingFields[{ tcRunID, entityKey, missingFields[{ name, label, fieldID, fieldType, listName? }] }].",
+      "- On that response: show the missing fields per run to the user, ask for the values (never invent them), then call this tool again with the same arguments plus 'udfValuesByRun'.",
+      "- 'udfValuesByRun' format: { '<tcRunID>': { '<udf name>': { value } } }. Keys are tcRunIDs from entityIDs; inner keys are the UDF 'name' (not the 'FLD.' fieldKey). fieldID is optional (auto-filled).",
+      "- Value formats: DATETIMEPICKER 'MM-DD-YYYY'; LOOKUPLIST option id (from lookupOptions[listName][].id); MULTILOOKUPLIST array of ids; CASCADINGLIST { parent, child }.",
+      "- Supplied UDF values are written first (Bulk Update Test Run UDFs), then the status is updated. Non-mandatory UDFs can also be set this way.",
+      "- entityType 'TCSR' (step runs) skips the gate; 'udfValuesByRun' is rejected for TCSR.",
+      "- viewId is auto-resolved (latestViews.TE.viewId); do not pass it unless you have a specific one.",
       "",
       "CRITICAL - ALWAYS FETCH STATUS IDs FROM PROJECT INFO:",
       "NEVER use hardcoded or memorized status IDs. Status IDs are PROJECT-SPECIFIC and must be fetched dynamically.",
@@ -1662,7 +1690,8 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       "Essential for test execution audit trails and compliance requirements",
     ],
     outputDescription:
-      "JSON object with success status, updated execution details, and confirmation message",
+      "On success: { success: true, udfUpdates: [{ tcRunIDs, response }], statusUpdate: <API response> }. " +
+      "When mandatory Test Run UDFs are missing: { success: false, code: 'MANDATORY_TEST_RUN_UDF_MISSING', statusUpdated: false, runsMissingFields, lookupOptions?, _note }.",
     readOnly: false,
     idempotent: false,
   },

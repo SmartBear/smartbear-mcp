@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { CommonFields } from "./common";
+import { CommonFields, UdfFieldValueSchema } from "./common";
 
 // Reused across TC / TS / IS UDF update wrappers
 export type UdfValue =
@@ -54,46 +54,6 @@ export interface BulkUpdateTestRunUdfsPayload {
   scopeId?: number;
   orgCode?: string;
 }
-
-const UdfFieldValueSchema = z.object({
-  fieldID: z
-    .number()
-    .int()
-    .positive()
-    .describe(
-      "Numeric ID of the UDF field to update. " +
-        "Get this from the UDF field definition in QMetry admin or from the field's metadata.",
-    ),
-  value: z
-    .union([
-      z.string(),
-      z.number(),
-      z.array(z.number().int()),
-      z.object({
-        parent: z.number().int().describe("Parent item ID for cascading list."),
-        child: z.number().int().describe("Child item ID for cascading list."),
-      }),
-    ])
-    .describe(
-      "Value to set for this UDF field. Type depends on field type:\n" +
-        "STRING: plain string, e.g. 'test value'\n" +
-        "NUMBER: number, e.g. 3\n" +
-        "DATETIMEPICKER: date string in MM-DD-YYYY format, e.g. '06-20-2026'\n" +
-        "LOOKUPLIST (single): numeric item ID, e.g. 5108697\n" +
-        "MULTILOOKUPLIST (multi-select): array of item IDs, e.g. [5158524, 5158525]\n" +
-        "CASCADINGLIST: object with parent and child IDs, e.g. {parent: 5126498, child: 5126499}",
-    ),
-  multiSelectAction: z
-    .enum(["append", "replace"])
-    .optional()
-    .default("append")
-    .describe(
-      "Action for MULTILOOKUPLIST fields only. " +
-        "'append' adds the new values to existing selections (default). " +
-        "'replace' clears existing selections and sets only the new values. " +
-        "Omit or use 'append' if user does not specify — never assume 'replace'.",
-    ),
-});
 
 export const BulkUpdateTestRunUdfsArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
@@ -178,11 +138,11 @@ export const FetchCascadeChildValuesArgsSchema = z.object({
 });
 
 // ---------------------------------------------------------------------------
-// Fetch UDF Layout (field definitions for TC / TS / IS)
+// Fetch UDF Layout (field definitions for TC / TS / IS / RQ)
 // ---------------------------------------------------------------------------
 
 export interface FetchUdfLayoutPayload {
-  entityType: "TC" | "TS" | "IS";
+  entityType: "TC" | "TS" | "IS" | "RQ";
   pageName?: "ADD" | "DETAIL";
   scopeId?: number;
   orgCode?: string;
@@ -191,12 +151,13 @@ export interface FetchUdfLayoutPayload {
 export const FetchUdfLayoutArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
   entityType: z
-    .enum(["TC", "TS", "IS"])
+    .enum(["TC", "TS", "IS", "RQ"])
     .describe(
       "Entity type to fetch UDF field definitions for. " +
         "'TC' = Test Case (also returns step UDFs in stepFields), " +
         "'TS' = Test Suite, " +
-        "'IS' = Issue.",
+        "'IS' = Issue, " +
+        "'RQ' = Requirement.",
     ),
   pageName: z
     .enum(["ADD", "DETAIL"])

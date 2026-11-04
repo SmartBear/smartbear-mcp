@@ -47,6 +47,13 @@ export const AUTO_RESOLVE_MODULES: ModuleAutoResolveConfig[] = [
     moduleName: "Requirements",
   },
   {
+    handler: QMetryToolsHandlers.CREATE_REQUIREMENT,
+    folderIdPath: "rootFolders.RQ.id",
+    folderIdField: "rqFolderId",
+    folderIdAsString: true,
+    moduleName: "Requirements",
+  },
+  {
     handler: QMetryToolsHandlers.FETCH_TEST_SUITES,
     viewIdPath: "latestViews.TS.viewId",
     moduleName: "Test Suites",
@@ -60,6 +67,11 @@ export const AUTO_RESOLVE_MODULES: ModuleAutoResolveConfig[] = [
     handler: QMetryToolsHandlers.FETCH_TEST_RUN_UDF_VALUES,
     viewIdPath: "latestViews.TE.viewId",
     moduleName: "Test Run UDF Values",
+  },
+  {
+    handler: QMetryToolsHandlers.BULK_UPDATE_EXECUTION_STATUS,
+    viewIdPath: "latestViews.TE.viewId",
+    moduleName: "Bulk Update Test Case Execution Status",
   },
   {
     handler: QMetryToolsHandlers.FETCH_EXECUTIONS_BY_TESTSUITE,

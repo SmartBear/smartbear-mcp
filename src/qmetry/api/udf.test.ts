@@ -343,6 +343,21 @@ describe("UDF API clients", () => {
       gis: { customList: {} },
     };
 
+    const mockRqLayoutResponse = {
+      qmUDF: {
+        RQ: {
+          "FLD.rq_str": {
+            name: "rq_str",
+            label: "RQ String",
+            fieldTypeName: "STRING",
+            projectUserFieldID: 3001,
+            isMandatory: false,
+          },
+        },
+      },
+      gis: { customList: {} },
+    };
+
     it("should POST to GET_LAYOUT endpoint with entityType and pageName", async () => {
       global.fetch = vi.fn().mockResolvedValue(mockOk(mockTcLayoutResponse));
 
@@ -417,6 +432,20 @@ describe("UDF API clients", () => {
         pageName: "ADD",
       })) as any;
 
+      expect(result.stepFields).toBeUndefined();
+    });
+
+    it("should accept entityType RQ and NOT include stepFields", async () => {
+      global.fetch = vi.fn().mockResolvedValue(mockOk(mockRqLayoutResponse));
+
+      const result = (await fetchUdfLayout(token, baseUrl, projectKey, {
+        entityType: "RQ",
+        pageName: "ADD",
+      })) as any;
+
+      expect(result.entityType).toBe("RQ");
+      expect(result.fields).toHaveLength(1);
+      expect(result.fields[0].name).toBe("rq_str");
       expect(result.stepFields).toBeUndefined();
     });
 
@@ -636,6 +665,49 @@ describe("UDF API clients", () => {
           viewId: undefined as any,
         }),
       ).rejects.toThrow("viewId");
+    });
+
+    it("should include both linked defect counts in unifiedTableRows, defaulting to 0", async () => {
+      global.fetch = vi
+        .fn()
+        .mockResolvedValueOnce(
+          mockOk({
+            ...mockRunsResponse,
+            total: 2,
+            data: [
+              {
+                ...mockRunsResponse.data[0],
+                linkedDfCount: 2,
+                linkedStepDfCount: 1,
+              },
+              { ...mockRunsResponse.data[0], tcRunID: 41667466 },
+            ],
+          }),
+        )
+        .mockResolvedValueOnce(mockOk(mockMetaResponse));
+
+      const result = (await fetchTestRunUdfValues(token, baseUrl, projectKey, {
+        tsrunID: "731600",
+        viewId: 87039,
+      })) as any;
+
+      expect(result.defaultColumns).toEqual([
+        "Test Case Key",
+        "Test Case Summary",
+        "Executed Version",
+        "Execution Status",
+        "Linked Defects (Execution)",
+        "Linked Defects (Steps)",
+        "Tested By",
+      ]);
+      expect(result.unifiedTableRows[0]).toMatchObject({
+        "Linked Defects (Execution)": "2",
+        "Linked Defects (Steps)": "1",
+      });
+      expect(result.unifiedTableRows[1]).toMatchObject({
+        "Linked Defects (Execution)": "0",
+        "Linked Defects (Steps)": "0",
+      });
     });
 
     it("should include availableUdfFields in response", async () => {
