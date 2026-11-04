@@ -15,7 +15,7 @@ const inputSchema = z.object({
     .string()
     .optional()
     .describe(
-      "Optional: filter by collaborator name or ID (partial match on name)",
+      "Optional: filter by exact collaborator ID, or by part of a collaborator's name or email address (case-insensitive)",
     ),
 });
 
@@ -25,7 +25,7 @@ export class ListProjectCollaborators extends Tool<BugsnagClient> {
     title: "List Project Collaborators",
     summary: "List all collaborators with access to a specific Bugsnag project",
     purpose:
-      "Retrieve the list of team members and collaborators assigned to a project, optionally filtered by name or ID.",
+      "Retrieve the list of team members and collaborators assigned to a project, optionally filtered by name, email or ID.",
     useCases: [
       "Find all team members with access to a project",
       "Locate a specific collaborator to assign errors or tasks",
@@ -35,14 +35,15 @@ export class ListProjectCollaborators extends Tool<BugsnagClient> {
     ],
     inputSchema,
     hints: [
-      "Use collaboratorNameOrId to filter results by partial name match or exact ID",
+      "Use collaboratorNameOrId to filter by exact ID, or by partial name or email match",
     ],
   };
 
   handle: ToolHandler = async (args, _extra) => {
     const params = inputSchema.parse(args);
+    // Resolved outside the try so its own "not found" errors reach the caller unwrapped.
+    const project = await this.client.getInputProject(params.projectId);
     try {
-      const project = await this.client.getInputProject(params.projectId);
       const collaborators = (
         await this.client.projectApi.listProjectCollaborators(
           project.id,
@@ -64,7 +65,7 @@ export class ListProjectCollaborators extends Tool<BugsnagClient> {
     } catch (error) {
       console.warn("Failed to fetch project collaborators:", error);
       throw new ToolError(
-        `Failed to list collaborators for project ${params.projectId}: ${
+        `Failed to list collaborators for project ${project.id}: ${
           error instanceof Error ? error.message : String(error)
         }`,
       );

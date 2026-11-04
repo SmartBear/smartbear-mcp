@@ -55,6 +55,19 @@ export class ProjectAPI extends BaseAPI {
     "accumulative_daily_users_seen",
     "accumulative_daily_users_with_unhandled",
   ];
+  // Excludes account-security fields such as 2FA state, recovery codes and
+  // password change dates, which collaborator records also carry.
+  static collaboratorFields: (keyof Collaborator)[] = [
+    "id",
+    "name",
+    "email",
+    "is_admin",
+    "pending_invitation",
+    "last_request_at",
+  ];
+  // Largest page the Data Access API serves, so fetching every collaborator
+  // takes as few round trips as possible.
+  static collaboratorsPerPage = 100;
 
   /**
    * List the Event Fields for a Project
@@ -504,28 +517,30 @@ export class ProjectAPI extends BaseAPI {
    * List the collaborators in a Project
    * GET /projects/{project_id}/collaborators
    * @param projectId The project ID
-   * @param collaboratorNameOrId collaborator Name OR Id
+   * @param collaboratorNameOrEmailOrId Optional filter: an exact collaborator ID,
+   *   or part of a name or email address (case-insensitive)
    * @returns A promise that resolves to the list of collaborators
    */
   async listProjectCollaborators(
     projectId: string,
-    collaboratorNameOrId?: string,
+    collaboratorNameOrEmailOrId?: string,
   ): Promise<ApiResponse<Collaborator[]>> {
     const localVarFetchArgs = ProjectsApiFetchParamCreator(
       this.configuration,
-    ).listProjectCollaborators(projectId);
+    ).listProjectCollaborators(projectId, ProjectAPI.collaboratorsPerPage);
     const collaborators = await this.requestArray<Collaborator>(
       localVarFetchArgs.url,
       localVarFetchArgs.options,
       true,
+      ProjectAPI.collaboratorFields,
     );
-    //filter by name or ID if provided
-    if (collaboratorNameOrId) {
-      const filterValue = collaboratorNameOrId.toLowerCase();
+    if (collaboratorNameOrEmailOrId) {
+      const filterValue = collaboratorNameOrEmailOrId.toLowerCase();
       collaborators.body = (collaborators.body ?? []).filter(
         (c) =>
-          c.id === collaboratorNameOrId ||
-          c.name?.toLowerCase().includes(filterValue),
+          c.id === collaboratorNameOrEmailOrId ||
+          c.name?.toLowerCase().includes(filterValue) ||
+          c.email?.toLowerCase().includes(filterValue),
       );
     }
     return collaborators;

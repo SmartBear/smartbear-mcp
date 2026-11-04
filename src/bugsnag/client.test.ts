@@ -3391,6 +3391,9 @@ describe("BugsnagClient", () => {
           body: mockCollaborators,
         });
 
+        mockCache.get.mockReturnValueOnce([
+          getMockProject("proj-1", "Project 1"),
+        ]);
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "List Project Collaborators",
@@ -3419,6 +3422,9 @@ describe("BugsnagClient", () => {
           body: mockCollaborators,
         });
 
+        mockCache.get.mockReturnValueOnce([
+          getMockProject("proj-1", "Project 1"),
+        ]);
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "List Project Collaborators",
@@ -3450,6 +3456,9 @@ describe("BugsnagClient", () => {
           body: mockCollaborators,
         });
 
+        mockCache.get.mockReturnValueOnce([
+          getMockProject("proj-1", "Project 1"),
+        ]);
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "List Project Collaborators",
@@ -3477,6 +3486,9 @@ describe("BugsnagClient", () => {
           body: [],
         });
 
+        mockCache.get.mockReturnValueOnce([
+          getMockProject("proj-1", "Project 1"),
+        ]);
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "List Project Collaborators",
@@ -3501,6 +3513,9 @@ describe("BugsnagClient", () => {
           body: [],
         });
 
+        mockCache.get.mockReturnValueOnce([
+          getMockProject("proj-1", "Project 1"),
+        ]);
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "List Project Collaborators",
@@ -3528,6 +3543,9 @@ describe("BugsnagClient", () => {
           new Error("API request failed"),
         );
 
+        mockCache.get.mockReturnValueOnce([
+          getMockProject("proj-1", "Project 1"),
+        ]);
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "List Project Collaborators",
@@ -3543,6 +3561,9 @@ describe("BugsnagClient", () => {
           body: null,
         });
 
+        mockCache.get.mockReturnValueOnce([
+          getMockProject("proj-1", "Project 1"),
+        ]);
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "List Project Collaborators",
@@ -3556,6 +3577,54 @@ describe("BugsnagClient", () => {
           filtered: false,
         };
         expect(result.content[0].text).toBe(JSON.stringify(expectedResult));
+      });
+
+      it("should name the current project when the API fails without a projectId", async () => {
+        mockCache.get.mockReturnValueOnce(
+          configuredProjects({ id: "proj-current", name: "Current" }),
+        );
+        mockProjectAPI.listProjectCollaborators.mockRejectedValue(
+          new Error("Request failed with status 403"),
+        );
+
+        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        const toolHandler = registerToolsSpy.mock.calls.find(
+          (call: any) => call[0].title === "List Project Collaborators",
+        )?.[1];
+
+        await expect(toolHandler({})).rejects.toThrow(
+          "Failed to list collaborators for project proj-current: Request failed with status 403",
+        );
+      });
+
+      it("should surface an unknown projectId without wrapping it as a fetch failure", async () => {
+        mockCache.get.mockReturnValueOnce([
+          getMockProject("proj-1", "Project 1"),
+        ]);
+
+        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        const toolHandler = registerToolsSpy.mock.calls.find(
+          (call: any) => call[0].title === "List Project Collaborators",
+        )?.[1];
+
+        const call = toolHandler({ projectId: "bad-id" });
+        await expect(call).rejects.toThrow("Project with ID bad-id not found.");
+        await expect(call).rejects.not.toThrow("Failed to list collaborators");
+        expect(mockProjectAPI.listProjectCollaborators).not.toHaveBeenCalled();
+      });
+
+      it("should surface a missing current project without wrapping it", async () => {
+        clientWithNoApiKey.registerTools(registerToolsSpy, getInputFunctionSpy);
+        const toolHandler = registerToolsSpy.mock.calls.find(
+          (call: any) => call[0].title === "List Project Collaborators",
+        )?.[1];
+        mockCache.get.mockReturnValueOnce(null);
+
+        const call = toolHandler({});
+        await expect(call).rejects.toThrow(
+          "No current project found. Please provide a projectId or configure a project API key.",
+        );
+        await expect(call).rejects.not.toThrow("Failed to list collaborators");
       });
 
       it("should validate required projectId parameter", async () => {
@@ -3580,6 +3649,9 @@ describe("BugsnagClient", () => {
           body: manyCollaborators,
         });
 
+        mockCache.get.mockReturnValueOnce([
+          getMockProject("proj-1", "Project 1"),
+        ]);
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "List Project Collaborators",
