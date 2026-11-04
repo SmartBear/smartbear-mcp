@@ -298,10 +298,25 @@ export class BugsnagClient implements Client {
       config.endpoint,
     );
     this._projectApiKey = config.project_api_key;
-    this._authToken = config.auth_token;
+    this._authToken = this.isOperatorToken(config.auth_token)
+      ? config.auth_token
+      : undefined;
 
     // Initialize APIs even if auth_token is missing, to allow request-level auth
     await this.initializeApis(config);
+  }
+
+  // A session identifier is not a credential, so a token a caller presented while
+  // opening an HTTP session must not outlive that request. Only a process-level
+  // token (stdio, or the operator's env var) may serve later requests.
+  private isOperatorToken(token: string | undefined): token is string {
+    if (!token) {
+      return false;
+    }
+    if (!getRequestContext()) {
+      return true;
+    }
+    return token === process.env.BUGSNAG_AUTH_TOKEN;
   }
 
   getProjectApiKey(): string | undefined {
@@ -348,7 +363,7 @@ export class BugsnagClient implements Client {
       return bearerToken;
     }
 
-    // Fall back to configured token (needs prefix for Authorization header)
+    // Fall back to the process-level token (needs prefix for Authorization header)
     if (this._authToken) {
       return `token ${this._authToken}`;
     }

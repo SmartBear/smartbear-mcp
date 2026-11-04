@@ -1055,6 +1055,67 @@ describe("QmetryClient tools", () => {
     });
   });
 
+  describe("Bulk Update Test Case Execution Status", () => {
+    it("should auto-resolve TE viewId and inject scope/orgcode from project info", async () => {
+      (project.getProjectInfo as any).mockResolvedValue({
+        latestViews: { TE: { viewId: 777 } },
+        currentProjectId: 42,
+        clientCode: "ORG1",
+      });
+      (testsuite.bulkUpdateExecutionStatus as any).mockResolvedValue({
+        success: true,
+      });
+
+      const handler = getHandler("Bulk Update Test Case Execution Status");
+      await handler({
+        entityIDs: "66095069",
+        entityType: "TCR",
+        qmTsRunId: "2720260",
+        runStatusID: 123268,
+        udfValuesByRun: { "66095069": { test_env: { value: "QA" } } },
+      });
+
+      expect(project.getProjectInfo).toHaveBeenCalled();
+      expect(testsuite.bulkUpdateExecutionStatus).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          entityIDs: "66095069",
+          viewId: 777,
+          scopeId: 42,
+          orgCode: "ORG1",
+          udfValuesByRun: { "66095069": { test_env: { value: "QA" } } },
+        }),
+      );
+    });
+
+    it("should keep a caller-supplied viewId", async () => {
+      (project.getProjectInfo as any).mockResolvedValue({
+        latestViews: { TE: { viewId: 777 } },
+      });
+      (testsuite.bulkUpdateExecutionStatus as any).mockResolvedValue({
+        success: true,
+      });
+
+      const handler = getHandler("Bulk Update Test Case Execution Status");
+      await handler({
+        entityIDs: "66095069",
+        entityType: "TCR",
+        qmTsRunId: "2720260",
+        runStatusID: 123268,
+        viewId: 999,
+      });
+
+      expect(testsuite.bulkUpdateExecutionStatus).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({ viewId: 999 }),
+      );
+    });
+  });
+
   describe("Fetch Executions by Test Suite", () => {
     it("should fetch executions by test suite with required tsID", async () => {
       (testsuite.fetchExecutionsByTestSuite as any).mockResolvedValue({
@@ -1767,6 +1828,46 @@ describe("QmetryClient tools", () => {
       );
 
       expect(result.content[0].text).toContain("Safari");
+    });
+  });
+
+  describe("Fetch API Call Quota", () => {
+    it("should fetch quota status with default baseUrl and project", async () => {
+      (project.getApiQuotaStatus as any).mockResolvedValue({
+        limitEnabled: true,
+        hourly: { limit: 1000, consumed: 0, remaining: 1000 },
+        daily: { limit: 10000, consumed: 128, remaining: 9872 },
+      });
+
+      const handler = getHandler("Fetch API Call Quota");
+      const result = await handler({});
+
+      expect(project.getApiQuotaStatus).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({}),
+      );
+
+      expect(result.content[0].text).toContain("9872");
+    });
+
+    it("should handle API errors gracefully", async () => {
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+
+      (project.getApiQuotaStatus as any).mockRejectedValue(
+        new Error("Invalid API key"),
+      );
+
+      const handler = getHandler("Fetch API Call Quota");
+      const result = await handler({});
+
+      expect(result.content[0].success).toBe(false);
+      expect(result.content[0].text).toContain("Invalid API key");
+
+      consoleSpy.mockRestore();
     });
   });
 

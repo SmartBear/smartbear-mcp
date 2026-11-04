@@ -8,6 +8,7 @@ export const QMETRY_PATHS = {
     CREATE_RELEASE: "/rest/admin/release",
     CREATE_CYCLE: "/rest/admin/cycle",
     UPDATE_CYCLE: "/rest/admin/cycle",
+    GET_API_QUOTA_STATUS: "/rest/admin/apiquota/status",
   },
   TESTCASE: {
     GET_TC_LIST: "/rest/testcases/list/viewColumns",

@@ -1,5 +1,5 @@
 import { AsyncLocalStorage } from "node:async_hooks";
-import { randomUUID } from "node:crypto";
+import { createHmac, randomBytes, randomUUID } from "node:crypto";
 import type { IncomingMessage, Server, ServerResponse } from "node:http";
 import { createServer } from "node:http";
 import querystring from "node:querystring";
@@ -41,7 +41,100 @@ import { getTypeDescription, isOptionalType } from "./zod-utils";
 type SessionEntry = {
   server: SmartBearMcpServer;
   transport: NodeStreamableHTTPServerTransport | SSEServerTransport;
+  /**
+   * Identity the opening credential resolved to. Unset when no client resolves
+   * a per-request credential, in which case there is nothing to bind.
+   */
+  identity?: string;
 };
+
+const IDENTITY_KEY = randomBytes(32);
+
+/**
+ * Opaque identity the current request's credentials resolve to, or null when
+ * none of the clients find a credential. Must run inside the request context.
+ *
+ * Bound to the exact token rather than to unverified JWT claims, which anyone
+ * can forge. A refreshed OAuth token therefore no longer matches its session;
+ * the mismatch is answered as an unknown session, so the client re-initializes.
+ */
+export function resolveCredentialIdentity(
+  server: SmartBearMcpServer,
+): string | null {
+  const parts: string[] = [];
+  for (const client of server.getClients()) {
+    const token = client.getAuthToken?.();
+    if (token) {
+      // Clients differ on whether getAuthToken() keeps the `Bearer ` prefix.
+      parts.push(
+        `${client.capabilityPrefix}:${token.replace(/^Bearer\s+/i, "")}`,
+      );
+    }
+  }
+  if (parts.length === 0) {
+    return null;
+  }
+  return createHmac("sha256", IDENTITY_KEY)
+    .update(parts.join("\0"))
+    .digest("hex");
+}
+
+function requestIdentity(
+  req: IncomingMessage,
+  server: SmartBearMcpServer,
+): string | null {
+  return withRequestContext(req, () => resolveCredentialIdentity(server));
+}
+
+/** Streamable HTTP's unknown-session response, which tells clients to re-initialize. */
+function writeSessionNotFound(res: ServerResponse): void {
+  res.writeHead(404, { "Content-Type": "application/json" });
+  res.end(
+    JSON.stringify({
+      jsonrpc: "2.0",
+      error: {
+        code: -32001,
+        message: "Session not found",
+      },
+      id: null,
+    }),
+  );
+}
+
+/**
+ * Require every request on an established session to carry a credential that
+ * resolves to the identity that opened it. The session id only correlates
+ * requests. Writes the response and returns false on failure.
+ *
+ * No credential gets a 401 with the OAuth challenge. A credential for another
+ * identity gets the same 404 as an unknown session: the client re-initializes
+ * on its own (e.g. after an OAuth token refresh), and a caller holding someone
+ * else's session id learns nothing about whether it exists. The session itself
+ * is left alone so a mismatched request cannot tear down the owner's session.
+ */
+export function authorizeSessionRequest(
+  req: IncomingMessage,
+  res: ServerResponse,
+  entry: SessionEntry,
+  notFound: (res: ServerResponse) => void = writeSessionNotFound,
+): boolean {
+  if (!entry.identity) {
+    return true;
+  }
+  const current = requestIdentity(req, entry.server);
+  if (current === entry.identity) {
+    return true;
+  }
+  // Drain so keep-alive sockets aren't left half-read.
+  req.resume();
+  if (current === null) {
+    res.writeHead(401, unauthorizedHeaders(req.headers, req.headers.host));
+    res.end("Unauthorized: credentials are required on every request");
+  } else {
+    notFound(res);
+  }
+  return false;
+}
 
 /**
  * Common cache-control headers for probe endpoints.
@@ -389,13 +482,7 @@ async function parseRequestBody(req: IncomingMessage): Promise<unknown> {
  */
 function getExistingTransport(
   sessionId: string,
-  transports: Map<
-    string,
-    {
-      server: SmartBearMcpServer;
-      transport: NodeStreamableHTTPServerTransport | SSEServerTransport;
-    }
-  >,
+  transports: Map<string, SessionEntry>,
   res: ServerResponse,
 ): NodeStreamableHTTPServerTransport | null {
   const existing = transports.get(sessionId);
@@ -431,27 +518,24 @@ function getExistingTransport(
 async function createNewTransport(
   req: IncomingMessage,
   res: ServerResponse,
-  transports: Map<
-    string,
-    {
-      server: SmartBearMcpServer;
-      transport: NodeStreamableHTTPServerTransport | SSEServerTransport;
-    }
-  >,
+  transports: Map<string, SessionEntry>,
 ): Promise<NodeStreamableHTTPServerTransport | null> {
   // Create and configure server with headers from the request
   const server = await newServer(req, res);
   if (!server) {
     return null;
   }
+  const identity = requestIdentity(req, server) ?? undefined;
 
   // Create transport with session management
   const transport = new NodeStreamableHTTPServerTransport({
     sessionIdGenerator: () => randomUUID(),
     onsessioninitialized: (newSessionId) => {
-      console.log(`[MCP] New session initialized: ${newSessionId}`);
+      console.log(
+        `[MCP] New session initialized: ${redactSessionId(newSessionId)}`,
+      );
       // Store session so subsequent requests can find it
-      transports.set(newSessionId, { server, transport });
+      transports.set(newSessionId, { server, transport, identity });
       // The SDK awaits this callback before dispatching the `initialize`
       // message, so the analytics session exists by the time
       // handleInitializeMessage fires `Session Started`.
@@ -463,7 +547,9 @@ async function createNewTransport(
   // Clean up session on close
   transport.onclose = () => {
     if (transport.sessionId) {
-      console.log(`[MCP] Session closed: ${transport.sessionId}`);
+      console.log(
+        `[MCP] Session closed: ${redactSessionId(transport.sessionId)}`,
+      );
       transports.delete(transport.sessionId);
       endSessionAnalytics(server);
       server.cleanupSession(transport.sessionId);
@@ -473,6 +559,11 @@ async function createNewTransport(
   // Connect server to transport to start handling messages
   await server.connect(transport);
   return transport;
+}
+
+/** Log-safe session reference: enough to correlate lines, not enough to replay. */
+function redactSessionId(sessionId: string): string {
+  return `${sessionId.slice(0, 8)}...`;
 }
 
 /**
@@ -674,13 +765,7 @@ function extractModernClientMetaFromBody(
 export async function handleStreamableHttpRequest(
   req: IncomingMessage,
   res: ServerResponse,
-  transports: Map<
-    string,
-    {
-      server: SmartBearMcpServer;
-      transport: NodeStreamableHTTPServerTransport | SSEServerTransport;
-    }
-  >,
+  transports: Map<string, SessionEntry>,
   // Boxed so an explicitly-`undefined` parsed body (e.g. a GET) is still
   // recognised as "already read" — the era router drains the stream to
   // classify, so re-parsing here would yield nothing.
@@ -695,19 +780,15 @@ export async function handleStreamableHttpRequest(
     // Reject before buffering the body so a junk session id can't force JSON
     // parsing of an arbitrary payload; drain the stream so keep-alive sockets
     // aren't left half-read.
-    if (sessionId && !transports.has(sessionId)) {
+    const sessionEntry = sessionId ? transports.get(sessionId) : undefined;
+    if (sessionId && !sessionEntry) {
       req.resume();
-      res.writeHead(404, { "Content-Type": "application/json" });
-      res.end(
-        JSON.stringify({
-          jsonrpc: "2.0",
-          error: {
-            code: -32001,
-            message: "Session not found",
-          },
-          id: null,
-        }),
-      );
+      writeSessionNotFound(res);
+      return;
+    }
+
+    // Applies to POST, GET (event stream) and DELETE (teardown) alike.
+    if (sessionEntry && !authorizeSessionRequest(req, res, sessionEntry)) {
       return;
     }
 
@@ -783,19 +864,14 @@ export async function handleStreamableHttpRequest(
 async function handleLegacySseRequest(
   req: IncomingMessage,
   res: ServerResponse,
-  transports: Map<
-    string,
-    {
-      server: SmartBearMcpServer;
-      transport: NodeStreamableHTTPServerTransport | SSEServerTransport;
-    }
-  >,
+  transports: Map<string, SessionEntry>,
 ) {
   // Create a new server instance for this connection
   const server = await newServer(req, res);
   if (!server) {
     return;
   }
+  const identity = requestIdentity(req, server) ?? undefined;
 
   // SSE transport keeps the connection open and sends events to the client
   const transport = new SSEServerTransport("/message", res);
@@ -806,7 +882,7 @@ async function handleLegacySseRequest(
   transport.onmessage = (message) => handleSessionMessage(server, message);
 
   // Store the session so POST /message requests can find it
-  transports.set(transport.sessionId, { server, transport });
+  transports.set(transport.sessionId, { server, transport, identity });
   attachSessionAnalytics(server, transport.sessionId, "sse");
 
   // Clean up session when connection closes
@@ -818,6 +894,12 @@ async function handleLegacySseRequest(
 
   // Connect server to transport (this also starts the transport automatically)
   await server.connect(transport);
+}
+
+/** Legacy `POST /message` unknown-session response. */
+function writeLegacySessionNotFound(res: ServerResponse): void {
+  res.writeHead(404, { "Content-Type": "text/plain" });
+  res.end("Session not found");
 }
 
 /**
@@ -834,13 +916,7 @@ async function handleLegacyMessageRequest(
   req: IncomingMessage,
   res: ServerResponse,
   url: URL,
-  transports: Map<
-    string,
-    {
-      server: SmartBearMcpServer;
-      transport: NodeStreamableHTTPServerTransport | SSEServerTransport;
-    }
-  >,
+  transports: Map<string, SessionEntry>,
 ) {
   // Extract session ID from query parameter
   const sessionId = url.searchParams.get("sessionId");
@@ -854,8 +930,7 @@ async function handleLegacyMessageRequest(
   // Find the session created by the SSE connection
   const session = transports.get(sessionId);
   if (!session) {
-    res.writeHead(404, { "Content-Type": "text/plain" });
-    res.end("Session not found");
+    writeLegacySessionNotFound(res);
     return;
   }
 
@@ -863,6 +938,10 @@ async function handleLegacyMessageRequest(
   if (!(session.transport instanceof SSEServerTransport)) {
     res.writeHead(400, { "Content-Type": "text/plain" });
     res.end("Invalid transport for this endpoint");
+    return;
+  }
+
+  if (!authorizeSessionRequest(req, res, session, writeLegacySessionNotFound)) {
     return;
   }
 
@@ -1032,25 +1111,32 @@ async function buildConfiguredServer(
         ? `Configuration error: ${error instanceof Error ? error.message : String(error)}. Please provide valid headers:\n${headerHelp.join("\n")}`
         : "No clients support HTTP header configuration.";
 
-    const responseHeaders: Record<string, string> = {
-      "Content-Type": "text/plain",
-    };
-
-    // Add WWW-Authenticate header to support OAuth discovery flow
-    // This points the client to the Protected Resource Metadata endpoint.
-    // Built via getBaseUrlFromHeaders so it honours BASE_URL and matches the
-    // deployment's scheme, rather than echoing the Host header over a hardcoded
-    // http://. Shared by both HTTP eras, so the modern leg is covered too.
-    if (process.env.BASE_URL || host) {
-      responseHeaders["WWW-Authenticate"] =
-        `OAuth resource_metadata="${getBaseUrlFromHeaders(headers)}/.well-known/oauth-protected-resource"`;
-    }
-
-    res.writeHead(401, responseHeaders);
+    res.writeHead(401, unauthorizedHeaders(headers, host));
     res.end(errorMessage);
     return null;
   }
   return server;
+}
+
+/**
+ * Response headers for a 401, including the WWW-Authenticate OAuth discovery
+ * challenge that points the client to the Protected Resource Metadata endpoint.
+ * Built via getBaseUrlFromHeaders so it honours BASE_URL and matches the
+ * deployment's scheme, rather than echoing the Host header over a hardcoded
+ * http://. Shared by both HTTP eras, so the modern leg is covered too.
+ */
+function unauthorizedHeaders(
+  headers: HeaderRecord,
+  host: string | undefined,
+): Record<string, string> {
+  const responseHeaders: Record<string, string> = {
+    "Content-Type": "text/plain",
+  };
+  if (process.env.BASE_URL || host) {
+    responseHeaders["WWW-Authenticate"] =
+      `OAuth resource_metadata="${getBaseUrlFromHeaders(headers)}/.well-known/oauth-protected-resource"`;
+  }
+  return responseHeaders;
 }
 
 /**
