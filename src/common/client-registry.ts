@@ -1,5 +1,4 @@
 import { type ZodType, ZodURL } from "zod";
-import { matchAllowedEndpoints } from "./allowed-endpoints";
 import type { SmartBearMcpServer } from "./server";
 import type { Client } from "./types";
 import { fullyUnwrapZodType, isOptionalType } from "./zod-utils";
@@ -84,7 +83,34 @@ class ClientRegistry {
    */
   private validateAllowedEndpoint(zodType: ZodType, value: string): void {
     if (fullyUnwrapZodType(zodType) instanceof ZodURL) {
-      if (matchAllowedEndpoints(value) === false) {
+      const allowedEndpoints = process.env.MCP_ALLOWED_ENDPOINTS?.split(",");
+      if (allowedEndpoints) {
+        for (const endpoint of allowedEndpoints) {
+          const trimmedEndpoint = endpoint.trim();
+
+          // Check if this is a regex pattern (wrapped in /)
+          if (
+            trimmedEndpoint.startsWith("/") &&
+            trimmedEndpoint.endsWith("/")
+          ) {
+            try {
+              const pattern = trimmedEndpoint.slice(1, -1); // Remove leading/trailing /
+              const regex = new RegExp(pattern);
+              if (regex.test(value)) {
+                return;
+              }
+            } catch (error) {
+              console.warn(
+                `Invalid regex pattern in MCP_ALLOWED_ENDPOINTS: ${trimmedEndpoint}, error: ${error}`,
+              );
+            }
+          } else {
+            // Exact match
+            if (value === trimmedEndpoint) {
+              return;
+            }
+          }
+        }
         throw new Error(`URL ${value} is not allowed`);
       }
     }
