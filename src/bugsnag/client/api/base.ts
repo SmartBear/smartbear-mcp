@@ -78,7 +78,10 @@ export function buildPaginatedUrl(
     return new URL(fallbackUrl, basePath);
   }
   const parsed = new URL(nextUrl, basePath);
-  return new URL(parsed.pathname + parsed.search, basePath);
+  const safeUrl = new URL(basePath);
+  safeUrl.pathname = parsed.pathname;
+  safeUrl.search = parsed.search;
+  return safeUrl;
 }
 
 // Merge nextUrl query parameters with options query parameters (usually filters)

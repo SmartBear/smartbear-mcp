@@ -55,7 +55,9 @@ const BUGSNAG_CACHE_TTL_SECONDS = 60;
 // when something is being used to reach the cluster's internal API, as in
 // the reported exploit.
 function isKubernetesInternalHostname(hostname: string): boolean {
-  const h = hostname.toLowerCase();
+  const h = hostname.toLowerCase().replace(/\.$/, "");
+  if (h === "localhost" || h.endsWith(".localhost")) return true;
+  if (h === "metadata.google.internal" || h.endsWith(".internal")) return true;
   if (h === "kubernetes" || h.startsWith("kubernetes.")) return true;
   if (h === "svc" || h.endsWith(".svc")) return true;
   if (h.endsWith(".cluster.local")) return true;
@@ -87,6 +89,9 @@ function isForbiddenIPv4(hostname: string): boolean {
   if (a === 127) return true; // loopback
   if (a === 169 && b === 254) return true; // link-local / cloud metadata
   if (a === 0) return true; // "this" network
+  if (a === 100 && b === 100 && octets[2] === 100 && octets[3] === 200)
+    return true; // Alibaba metadata
+  if (a === 192 && b === 0 && octets[2] === 0 && octets[3] === 192) return true; // Oracle metadata
   return false;
 }
 
@@ -95,11 +100,21 @@ function isForbiddenIPv4(hostname: string): boolean {
 function isForbiddenIPv6(hostname: string): boolean {
   // URL.hostname keeps the [brackets] for IPv6 literals.
   const h = hostname.toLowerCase().replace(/^\[|\]$/g, "");
-  if (h === "::1") return true; // loopback
+  if (h === "::1" || h === "::") return true; // loopback / unspecified
   if (/^fe[89ab][0-9a-f]:/.test(h)) return true; // fe80::/10 link-local
+  if (/^f[cd][0-9a-f]{2}:/.test(h)) return true; // fc00::/7 ULA (e.g. AWS fd00:ec2::254)
   if (h.startsWith("::ffff:")) {
-    const mapped = h.slice("::ffff:".length);
-    if (isIPv4Literal(mapped)) return isForbiddenIPv4(mapped);
+    // URL normalises ::ffff:a.b.c.d to ::ffff:hhhh:hhhh
+    const mapped = h.slice("::ffff:".length).split(":");
+    if (
+      mapped.length === 2 &&
+      mapped.every((part) => /^[0-9a-f]{1,4}$/.test(part))
+    ) {
+      const [high, low] = mapped.map((part) => Number.parseInt(part, 16));
+      return isForbiddenIPv4(
+        `${high >> 8}.${high & 255}.${low >> 8}.${low & 255}`,
+      );
+    }
   }
   return false;
 }
@@ -138,7 +153,8 @@ function assertSafeCustomEndpoint(endpoint: string): void {
     }
     return;
   }
-  if (hostname.toLowerCase() === "localhost") {
+  const bare = hostname.toLowerCase().replace(/\.$/, "");
+  if (bare === "localhost" || bare.endsWith(".localhost")) {
     throw new ToolError("Unsafe Bugsnag endpoint: localhost is not allowed");
   }
   if (isKubernetesInternalHostname(hostname)) {

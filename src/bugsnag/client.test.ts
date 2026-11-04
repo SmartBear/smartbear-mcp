@@ -661,6 +661,26 @@ describe("BugsnagClient", () => {
           const withHttpRequest = <T>(fn: () => T): T =>
             requestContextStorage.run({ headers: {} }, fn);
 
+          it.each([
+            "https://[::ffff:127.0.0.1]",
+            "https://[::ffff:169.254.169.254]",
+            "https://[fd00:ec2::254]",
+            "https://[::]",
+            "https://localhost./",
+            "https://foo.localhost",
+            "https://kubernetes.default.svc.",
+            "https://a.svc.",
+            "https://metadata.google.internal",
+            "https://100.100.100.200",
+            "https://2130706433",
+          ])("should reject bypass form %s", (endpoint) => {
+            expect(() =>
+              withHttpRequest(() =>
+                client.getEndpoint("api", "00000key", endpoint),
+              ),
+            ).toThrow(/Unsafe Bugsnag endpoint/);
+          });
+
           it("should reject the cloud metadata address", () => {
             expect(() =>
               withHttpRequest(() =>

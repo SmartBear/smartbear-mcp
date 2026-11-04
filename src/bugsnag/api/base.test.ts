@@ -291,6 +291,16 @@ describe("base.ts", () => {
   // `new URL(nextUrl, basePath)` ignores `basePath` whenever `nextUrl` is
   // already absolute, letting a caller redirect the request to any host.
   describe("buildPaginatedUrl", () => {
+    it("should not allow a double-slash path to switch host", () => {
+      const url = buildPaginatedUrl(
+        "http://a//evil.com/x?page=2",
+        "/fallback",
+        "https://api.bugsnag.com",
+      );
+      expect(url.host).toBe("api.bugsnag.com");
+      expect(url.search).toBe("?page=2");
+    });
+
     const basePath = "https://api.bugsnag.com";
     const fallbackUrl = "/projects/123/errors";
 

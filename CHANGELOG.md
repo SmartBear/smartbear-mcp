@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- [BugSnag] Fixed two SSRF vulnerabilities. A caller-supplied `endpoint` (the `Bugsnag-Endpoint` header) can no longer point the client at loopback, link-local/cloud metadata (including IPv4-mapped IPv6, ULA and `*.internal` forms), `*.localhost` or Kubernetes-internal hosts on HTTP requests; on-premise and local setups, including `BUGSNAG_ENDPOINT` outside a request, are unaffected. The `nextUrl` pagination argument now only contributes its path and query to the configured API base URL, so it can no longer redirect requests to another host.
 - [BugSnag] `Pentest - MCP Session ID Acts as a Bearer Token Due to Cached-Credential Fallback` Now The session id no longer grants any authority on the Bugsnag path.
 - [Common] Pentest: an MCP session id alone no longer acts as the session owner's credential on the HTTP transport. Every `POST`, `GET` (event stream) and `DELETE` on `/mcp`, and every legacy `POST /message`, must now carry a credential for the identity that opened the session.
 
