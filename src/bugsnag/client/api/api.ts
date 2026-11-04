@@ -732,10 +732,10 @@ export interface CollaboratorApiView {
   pending_invitation: boolean;
   /**
    * The last time the user interacted with the Bugsnag dashboard or related APIs. Null if the user has not interacted with the dashboard before.
-   * @type {string}
+   * @type {string | null}
    * @memberof CollaboratorApiView
    */
-  last_request_at?: string;
+  last_request_at?: string | null;
   /**
    * Deprecated field that returns the ids of all projects the user has access to within the current organization. Consider using `project_roles` instead.
    * @type {Array<string>}

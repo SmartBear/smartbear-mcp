@@ -81,6 +81,18 @@ describe("ProjectAPI.listProjectCollaborators", () => {
     );
   });
 
+  it("keeps a null last_request_at for a collaborator who never used the dashboard", async () => {
+    respondWith([
+      getMockCollaborator("collab-4", "New User", "new@example.com", {
+        last_request_at: null,
+      }),
+    ]);
+
+    const result = await api.listProjectCollaborators("proj-1");
+
+    expect(result.body?.[0]).toHaveProperty("last_request_at", null);
+  });
+
   it("collects every page before filtering", async () => {
     const fetchMock = respondWith([collaborators[0]], [collaborators[1]]);
 
