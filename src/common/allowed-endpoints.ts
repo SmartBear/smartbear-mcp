@@ -8,19 +8,32 @@
  */
 export function matchAllowedEndpoints(value: string): boolean | undefined {
   const allowedEndpoints = process.env.MCP_ALLOWED_ENDPOINTS?.split(",");
-  if (!allowedEndpoints) return undefined;
-  for (const endpoint of allowedEndpoints) {
-    const trimmed = endpoint.trim();
-    if (trimmed.startsWith("/") && trimmed.endsWith("/")) {
-      try {
-        if (new RegExp(trimmed.slice(1, -1)).test(value)) return true;
-      } catch (error) {
-        console.warn(
-          `Invalid regex pattern in MCP_ALLOWED_ENDPOINTS: ${trimmed}, error: ${error}`,
-        );
+  if (allowedEndpoints) {
+    for (const endpoint of allowedEndpoints) {
+      const trimmedEndpoint = endpoint.trim();
+
+      // Check if this is a regex pattern (wrapped in /)
+      if (
+        trimmedEndpoint.startsWith("/") &&
+        trimmedEndpoint.endsWith("/")
+      ) {
+        try {
+          const pattern = trimmedEndpoint.slice(1, -1); // Remove leading/trailing /
+          const regex = new RegExp(pattern);
+          if (regex.test(value)) {
+            return true; 
+          }
+        } catch (error) {
+          console.warn(
+            `Invalid regex pattern in MCP_ALLOWED_ENDPOINTS: ${trimmedEndpoint}, error: ${error}`,
+          );
+        }
+      } else {
+        // Exact match
+        if (value === trimmedEndpoint) {
+          return true;
+        }
       }
-    } else if (value === trimmed) {
-      return true;
     }
   }
   return false;
