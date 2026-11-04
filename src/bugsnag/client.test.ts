@@ -732,39 +732,76 @@ describe("BugsnagClient", () => {
             ).toThrow(/not an allowed destination/);
           });
 
-          // On-premise Bugsnag installations can legitimately sit on a
-          // private address or behind plain HTTP internally — this client
-          // has no way to distinguish that from an internal pivot target,
-          // so (unlike the addresses above) these are intentionally still
-          // allowed. Operators who want to lock a deployment down to a
-          // specific endpoint can use MCP_ALLOWED_ENDPOINTS (client-registry.ts).
-          it("should still allow RFC1918 private addresses (on-premise installs)", () => {
-            expect(
-              withHttpRequest(() =>
-                client.getEndpoint(
-                  "api",
-                  "00000key",
-                  "https://192.168.1.100:8080",
+          // Default-deny: on-premise installs (private IPs, plain HTTP) are
+          // supported only when the operator approves them via
+          // BUGSNAG_ENDPOINT or MCP_ALLOWED_ENDPOINTS.
+          it("should reject unapproved public hosts (credential exfiltration)", () => {
+            for (const endpoint of [
+              "https://attacker.example",
+              "http://bugsnag.example-corp.com",
+              "https://192.168.1.100:8080",
+              "https://10.0.5.20",
+            ]) {
+              expect(() =>
+                withHttpRequest(() =>
+                  client.getEndpoint("api", "00000key", endpoint),
                 ),
-              ),
-            ).toBe("https://192.168.1.100:8080");
-            expect(
-              withHttpRequest(() =>
-                client.getEndpoint("api", "00000key", "https://10.0.5.20"),
-              ),
-            ).toBe("https://10.0.5.20");
+              ).toThrow(/must be approved by the server operator/);
+            }
           });
 
-          it("should still allow plain HTTP on a public custom domain (on-premise installs)", () => {
-            expect(
-              withHttpRequest(() =>
-                client.getEndpoint(
-                  "api",
-                  "00000key",
-                  "http://bugsnag.example-corp.com",
+          describe("operator-approved endpoints", () => {
+            afterEach(() => {
+              vi.unstubAllEnvs();
+            });
+
+            it("allows the endpoint configured as BUGSNAG_ENDPOINT (incl. private/HTTP on-premise)", () => {
+              vi.stubEnv("BUGSNAG_ENDPOINT", "http://10.0.5.20:8080/");
+              expect(
+                withHttpRequest(() =>
+                  client.getEndpoint(
+                    "api",
+                    "00000key",
+                    "http://10.0.5.20:8080",
+                  ),
                 ),
-              ),
-            ).toBe("http://bugsnag.example-corp.com");
+              ).toBe("http://10.0.5.20:8080");
+              expect(() =>
+                withHttpRequest(() =>
+                  client.getEndpoint(
+                    "api",
+                    "00000key",
+                    "https://attacker.example",
+                  ),
+                ),
+              ).toThrow(/must be approved/);
+            });
+
+            it("allows endpoints matching MCP_ALLOWED_ENDPOINTS (exact and regex)", () => {
+              vi.stubEnv(
+                "MCP_ALLOWED_ENDPOINTS",
+                "https://bugsnag.corp.example,/^https:\\/\\/[a-z]+\\.onprem\\.example$/",
+              );
+              for (const ok of [
+                "https://bugsnag.corp.example",
+                "https://api.onprem.example",
+              ]) {
+                expect(
+                  withHttpRequest(() =>
+                    client.getEndpoint("api", "00000key", ok),
+                  ),
+                ).toBe(ok);
+              }
+              expect(() =>
+                withHttpRequest(() =>
+                  client.getEndpoint(
+                    "api",
+                    "00000key",
+                    "https://attacker.example",
+                  ),
+                ),
+              ).toThrow(/must be approved/);
+            });
           });
         });
 

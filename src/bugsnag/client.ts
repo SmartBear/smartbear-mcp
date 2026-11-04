@@ -1,5 +1,6 @@
 import { createHmac } from "node:crypto";
 import { z } from "zod";
+import { matchAllowedEndpoints } from "../common/allowed-endpoints";
 import { CacheService } from "../common/cache";
 import { getUserAgent } from "../common/info";
 import { getRequestContext, getRequestHeader } from "../common/request-context";
@@ -136,6 +137,37 @@ function isForbiddenIPv6(hostname: string): boolean {
 // used for this purpose by other clients, rather than a broader hard block
 // here.
 function assertSafeCustomEndpoint(endpoint: string): void {
+  // Default-deny: a per-request endpoint is only honoured if the operator has
+  // approved it, either by configuring it as BUGSNAG_ENDPOINT or by listing
+  // it in MCP_ALLOWED_ENDPOINTS. Otherwise any caller could make the server
+  // send the configured Bugsnag token to a host of their choosing.
+  if (isOperatorApprovedEndpoint(endpoint)) return;
+  assertNotInternalEndpoint(endpoint);
+  throw new ToolError(
+    "Unsafe Bugsnag endpoint: custom endpoints supplied per request must be approved by the server operator (set BUGSNAG_ENDPOINT or MCP_ALLOWED_ENDPOINTS)",
+  );
+}
+
+function normalizeEndpoint(endpoint: string): string | undefined {
+  try {
+    return new URL(endpoint).href.replace(/\/+$/, "");
+  } catch {
+    return undefined;
+  }
+}
+
+function isOperatorApprovedEndpoint(endpoint: string): boolean {
+  const configured = process.env.BUGSNAG_ENDPOINT;
+  if (configured) {
+    const a = normalizeEndpoint(configured);
+    if (a && a === normalizeEndpoint(endpoint)) return true;
+  }
+  return matchAllowedEndpoints(endpoint) === true;
+}
+
+// Defence in depth: gives a specific error for loopback/metadata/cluster
+// targets before falling through to the generic "not approved" error.
+function assertNotInternalEndpoint(endpoint: string): void {
   const hostname = new URL(endpoint).hostname;
   if (isIPv4Literal(hostname)) {
     if (isForbiddenIPv4(hostname)) {
