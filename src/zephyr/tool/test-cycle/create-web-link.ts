@@ -68,10 +68,10 @@ export class CreateTestCycleWebLink extends Tool<ZephyrClient> {
     const parsed = CreateTestCycleWebLinkParams.and(
       CreateTestCycleWebLinkBody,
     ).parse(args);
-    const { testCycleIdOrKey, description, ...rest } = parsed;
+    const { testCycleIdOrKey, description, url } = parsed;
     const body = {
-      ...rest,
-      description: description?.trim() ? description : rest.url,
+      url,
+      description: description?.trim() ? description : url,
     };
     const response = await this.client
       .getApiClient()

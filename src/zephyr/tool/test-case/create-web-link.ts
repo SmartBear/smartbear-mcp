@@ -58,10 +58,10 @@ export class CreateTestCaseWebLink extends Tool<ZephyrClient> {
       testCaseKey: CreateTestCaseWebLinkParams.shape.testCaseKey,
     });
     const parsed = fullInputSchema.parse(args);
-    const { testCaseKey, description, ...rest } = parsed;
+    const { testCaseKey, description, url } = parsed;
     const body = {
-      ...rest,
-      description: description?.trim() ? description : rest.url,
+      url,
+      description: description?.trim() ? description : url,
     };
     const response = await this.client
       .getApiClient()
