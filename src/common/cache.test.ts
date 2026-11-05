@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   CacheService,
   getConfiguredCacheTtlSeconds,
@@ -65,5 +65,27 @@ describe("CacheService", () => {
     const cache = new CacheService();
     cache.set("key3", "value3", 60);
     expect(cache.get("key3")).toBeUndefined();
+  });
+});
+
+describe("CacheService sweep timer", () => {
+  it("does not arm a sweep timer when sweepExpired is false", () => {
+    const spy = vi.spyOn(globalThis, "setTimeout");
+    const before = spy.mock.calls.length;
+    const cache = new CacheService({ sweepExpired: false });
+    cache.set("k", 1);
+    expect(spy.mock.calls.length).toBe(before);
+    expect(cache.get("k")).toBe(1);
+    spy.mockRestore();
+  });
+
+  it("arms a sweep timer by default and close() stops it", () => {
+    const spy = vi.spyOn(globalThis, "setTimeout");
+    const before = spy.mock.calls.length;
+    const cache = new CacheService();
+    cache.set("k", 1);
+    expect(spy.mock.calls.length).toBeGreaterThan(before);
+    cache.close();
+    spy.mockRestore();
   });
 });

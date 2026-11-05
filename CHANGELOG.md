@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [BugSnag] `Pentest - MCP Session ID Acts as a Bearer Token Due to Cached-Credential Fallback` Now The session id no longer grants any authority on the Bugsnag path.
 - [Common] Pentest: an MCP session id alone no longer acts as the session owner's credential on the HTTP transport. Every `POST`, `GET` (event stream) and `DELETE` on `/mcp`, and every legacy `POST /message`, must now carry a credential for the identity that opened the session.
+- [Common] HTTP transport: sessions abandoned by clients (no `DELETE`, SSE stream never closed) were never freed, so memory grew until the process ran out of heap. Sessions idle for longer than `SESSION_IDLE_TIMEOUT_MS` (default 4 hours, `0` disables) are now closed; sessions with an open stream or a request in flight are never reaped. A client returning with a reaped session id receives 404 and must re-initialize. stdio mode is unaffected. Per-server caches no longer run node-cache's sweep timer, which kept each cache reachable after its server was gone.
 
 ### Changed
 
