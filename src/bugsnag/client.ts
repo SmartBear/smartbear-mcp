@@ -57,7 +57,7 @@ const BUGSNAG_CACHE_TTL_SECONDS = 60;
 function isKubernetesInternalHostname(hostname: string): boolean {
   const h = hostname.toLowerCase().replace(/\.$/, "");
   if (h === "localhost" || h.endsWith(".localhost")) return true;
-  if (h === "metadata.google.internal" || h.endsWith(".internal")) return true;
+  if (h === "metadata.google.internal") return true;
   if (h === "kubernetes" || h.startsWith("kubernetes.")) return true;
   if (h === "svc" || h.endsWith(".svc")) return true;
   if (h.endsWith(".cluster.local")) return true;
@@ -95,28 +95,77 @@ function isForbiddenIPv4(hostname: string): boolean {
   return false;
 }
 
-// IPv6 equivalents of the IPv4 checks above: loopback and link-local, plus
-// IPv4-mapped addresses (checked against the IPv4 ranges above).
-function isForbiddenIPv6(hostname: string): boolean {
-  // URL.hostname keeps the [brackets] for IPv6 literals.
-  const h = hostname.toLowerCase().replace(/^\[|\]$/g, "");
-  if (h === "::1" || h === "::") return true; // loopback / unspecified
-  if (/^fe[89ab][0-9a-f]:/.test(h)) return true; // fe80::/10 link-local
-  if (/^f[cd][0-9a-f]{2}:/.test(h)) return true; // fc00::/7 ULA (e.g. AWS fd00:ec2::254)
-  if (h.startsWith("::ffff:")) {
-    // URL normalises ::ffff:a.b.c.d to ::ffff:hhhh:hhhh
-    const mapped = h.slice("::ffff:".length).split(":");
-    if (
-      mapped.length === 2 &&
-      mapped.every((part) => /^[0-9a-f]{1,4}$/.test(part))
-    ) {
-      const [high, low] = mapped.map((part) => Number.parseInt(part, 16));
-      return isForbiddenIPv4(
-        `${high >> 8}.${high & 255}.${low >> 8}.${low & 255}`,
-      );
-    }
+// Expand an IPv6 literal into its eight 16-bit groups. Works on the canonical
+// form produced by WHATWG URL (which already rewrites any embedded dotted
+// IPv4 tail, e.g. `::ffff:127.0.0.1` -> `::ffff:7f00:1`), but also accepts a
+// trailing dotted quad defensively. Returns undefined for anything malformed.
+function parseIPv6Groups(address: string): number[] | undefined {
+  let addr = address;
+  const dotted = /^(.*:)(\d{1,3}(?:\.\d{1,3}){3})$/.exec(addr);
+  if (dotted) {
+    const octets = dotted[2].split(".").map(Number);
+    if (octets.some((o) => o > 255)) return undefined;
+    addr =
+      dotted[1] +
+      `${((octets[0] << 8) | octets[1]).toString(16)}:` +
+      `${((octets[2] << 8) | octets[3]).toString(16)}`;
   }
-  return false;
+
+  const halves = addr.split("::");
+  if (halves.length > 2) return undefined;
+  const toGroups = (s: string): string[] => (s === "" ? [] : s.split(":"));
+  const head = toGroups(halves[0]);
+  const tail = halves.length === 2 ? toGroups(halves[1]) : [];
+  const missing = 8 - head.length - tail.length;
+  if (halves.length === 2 ? missing < 1 : missing !== 0) return undefined;
+
+  const groups = [...head, ...Array(missing).fill("0"), ...tail];
+  if (!groups.every((g) => /^[0-9a-f]{1,4}$/.test(g))) return undefined;
+  return groups.map((g) => Number.parseInt(g, 16));
+}
+
+// If the IPv6 address embeds an IPv4 address that the network stack (or a
+// translator) will actually deliver to, return it in dotted form so the IPv4
+// rules above can be applied. Covers:
+//   ::ffff:0:0/96      IPv4-mapped        (::ffff:7f00:1)
+//   ::ffff:0:0:0/96    IPv4-translated    (::ffff:0:7f00:1, RFC 2765)
+//   ::/96              IPv4-compatible    (::7f00:1, deprecated)
+//   64:ff9b::/96       NAT64 well-known   (64:ff9b::a9fe:a9fe, RFC 6052)
+//   64:ff9b:1::/48     NAT64 local-use    (RFC 8215)
+function embeddedIPv4(groups: number[]): string | undefined {
+  const zeros = (from: number, to: number) =>
+    groups.slice(from, to).every((g) => g === 0);
+  const isMapped = zeros(0, 5) && groups[5] === 0xffff;
+  const isTranslated = zeros(0, 4) && groups[4] === 0xffff && groups[5] === 0;
+  const isCompatible = zeros(0, 6);
+  const isNat64 =
+    groups[0] === 0x64 &&
+    groups[1] === 0xff9b &&
+    (zeros(2, 6) || groups[2] === 1);
+  if (!(isMapped || isTranslated || isCompatible || isNat64)) return undefined;
+  const [high, low] = [groups[6], groups[7]];
+  return `${high >> 8}.${high & 255}.${low >> 8}.${low & 255}`;
+}
+
+// IPv6 equivalents of the IPv4 checks above: loopback, unspecified,
+// link-local and ULA, plus any IPv6 form that embeds an IPv4 address
+// (checked against the IPv4 ranges above).
+function isForbiddenIPv6(hostname: string): boolean {
+  // URL.hostname keeps the [brackets] for IPv6 literals; drop any zone id.
+  const h = hostname
+    .toLowerCase()
+    .replace(/^\[|\]$/g, "")
+    .replace(/%.*$/, "");
+  const groups = parseIPv6Groups(h);
+  if (!groups) return true; // malformed literal: refuse rather than guess
+
+  const allZeroUpTo = (n: number) => groups.slice(0, n).every((g) => g === 0);
+  if (allZeroUpTo(7) && (groups[7] === 0 || groups[7] === 1)) return true; // :: / ::1
+  if ((groups[0] & 0xffc0) === 0xfe80) return true; // fe80::/10 link-local
+  if ((groups[0] & 0xfe00) === 0xfc00) return true; // fc00::/7 ULA (e.g. AWS fd00:ec2::254)
+
+  const v4 = embeddedIPv4(groups);
+  return v4 !== undefined && isForbiddenIPv4(v4);
 }
 
 // Only called when `endpoint` could have come from an untrusted per-request
@@ -422,6 +471,14 @@ export class BugsnagClient implements Client {
         "Content-Type": "application/json",
         "X-Bugsnag-API": "true",
         "X-Version": "2",
+      },
+      // Applied to every redirect hop in BaseAPI. Same trust model as the
+      // initial endpoint check in getEndpoint(): only enforced while serving
+      // an HTTP request, where the endpoint may be caller-controlled.
+      validateRequestUrl: (url: URL) => {
+        if (getRequestContext()) {
+          assertSafeCustomEndpoint(url.toString());
+        }
       },
       basePath: this.getEndpoint(
         "api",

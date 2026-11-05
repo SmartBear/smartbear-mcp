@@ -664,6 +664,18 @@ describe("BugsnagClient", () => {
           it.each([
             "https://[::ffff:127.0.0.1]",
             "https://[::ffff:169.254.169.254]",
+            "https://[::ffff:7f00:1]",
+            "https://[::ffff:a9fe:a9fe]",
+            "https://[0:0:0:0:0:ffff:7f00:1]",
+            "https://[::ffff:0:127.0.0.1]",
+            "https://[::127.0.0.1]",
+            "https://[::7f00:1]",
+            "https://[64:ff9b::169.254.169.254]",
+            "https://[64:ff9b:1::a9fe:a9fe]",
+            "https://[::ffff:100.100.100.200]",
+            "https://[::ffff:0.0.0.0]",
+            "https://[0:0:0:0:0:0:0:1]",
+            "https://[fe80::1]",
             "https://[fd00:ec2::254]",
             "https://[::]",
             "https://localhost./",
@@ -753,6 +765,18 @@ describe("BugsnagClient", () => {
                 client.getEndpoint("api", "00000key", "https://10.0.5.20"),
               ),
             ).toBe("https://10.0.5.20");
+          });
+
+          it.each([
+            "https://[2001:db8::1]",
+            "https://[::ffff:10.0.5.20]",
+            "https://[64:ff9b::8.8.8.8]",
+          ])("should still allow non-loopback/non-metadata IPv6 %s", (endpoint) => {
+            expect(
+              withHttpRequest(() =>
+                client.getEndpoint("api", "00000key", endpoint),
+              ),
+            ).toBe(endpoint);
           });
 
           it("should still allow plain HTTP on a public custom domain (on-premise installs)", () => {
@@ -943,6 +967,35 @@ describe("BugsnagClient", () => {
       expect(MockedCurrentUserAPI).toHaveBeenCalledOnce();
       expect(MockedErrorAPI).toHaveBeenCalledOnce();
       expect(MockedProjectAPI).toHaveBeenCalledOnce();
+    });
+
+    it("passes a redirect validator that blocks unsafe hops only during HTTP requests", async () => {
+      const { Configuration } = await import("./client/api/index.js");
+      const MockedConfiguration = vi.mocked(Configuration);
+      MockedConfiguration.mockClear();
+
+      await createConfiguredClient("test-token");
+
+      const validateRequestUrl = MockedConfiguration.mock.calls[0][0]
+        .validateRequestUrl as (url: URL) => void;
+      expect(validateRequestUrl).toBeTypeOf("function");
+
+      const metadata = new URL("http://169.254.169.254/latest/meta-data");
+      const loopback = new URL("http://[::ffff:7f00:1]/");
+      const publicHost = new URL("https://bugsnag.example-corp.com/x");
+
+      requestContextStorage.run({ headers: {} }, () => {
+        expect(() => validateRequestUrl(metadata)).toThrow(
+          /Unsafe Bugsnag endpoint/,
+        );
+        expect(() => validateRequestUrl(loopback)).toThrow(
+          /Unsafe Bugsnag endpoint/,
+        );
+        expect(() => validateRequestUrl(publicHost)).not.toThrow();
+      });
+
+      // Outside a request context (stdio / operator config) nothing is enforced.
+      expect(() => validateRequestUrl(loopback)).not.toThrow();
     });
 
     it("uses the shared cache, namespaced by the caller's identity", async () => {
