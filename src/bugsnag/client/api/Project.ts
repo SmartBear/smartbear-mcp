@@ -1,5 +1,10 @@
 import { type FilterObject, toUrlSearchParams } from "../filters";
-import { type ApiResponse, BaseAPI, getQueryParams } from "./base";
+import {
+  type ApiResponse,
+  BaseAPI,
+  buildPaginatedUrl,
+  getQueryParams,
+} from "./base";
 import {
   type Build,
   type EventField,
@@ -131,8 +136,9 @@ export class ProjectAPI extends BaseAPI {
       undefined,
     );
 
-    const url = new URL(
-      nextUrl ?? localVarFetchArgs.url,
+    const url = buildPaginatedUrl(
+      nextUrl,
+      localVarFetchArgs.url,
       this.configuration.basePath,
     );
     if (perPage) {
@@ -226,8 +232,9 @@ export class ProjectAPI extends BaseAPI {
       starredOnly,
       undefined,
     );
-    const url = new URL(
-      nextUrl ?? localVarFetchArgs.url,
+    const url = buildPaginatedUrl(
+      nextUrl,
+      localVarFetchArgs.url,
       this.configuration.basePath,
     );
     if (perPage) {
@@ -378,8 +385,9 @@ export class ProjectAPI extends BaseAPI {
       undefined,
     );
 
-    const url = new URL(
-      nextUrl ?? localVarFetchArgs.url,
+    const url = buildPaginatedUrl(
+      nextUrl,
+      localVarFetchArgs.url,
       this.configuration.basePath,
     );
     if (perPage) {

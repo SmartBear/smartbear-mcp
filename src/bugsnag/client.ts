@@ -49,6 +49,170 @@ const DEFAULT_DOMAIN = "bugsnag.com";
 const HUB_DOMAIN = "bugsnag.smartbear.com";
 const BUGSNAG_CACHE_TTL_SECONDS = 60;
 
+// Hostnames that can never be a real Bugsnag deployment (on-premise or
+// otherwise): Kubernetes' own internal service-discovery DNS. No legitimate
+// `endpoint` configuration would ever name one of these — they only show up
+// when something is being used to reach the cluster's internal API, as in
+// the reported exploit.
+function isKubernetesInternalHostname(hostname: string): boolean {
+  const h = hostname.toLowerCase().replace(/\.$/, "");
+  if (h === "localhost" || h.endsWith(".localhost")) return true;
+  if (h === "metadata.google.internal") return true;
+  if (h === "kubernetes" || h.startsWith("kubernetes.")) return true;
+  if (h === "svc" || h.endsWith(".svc")) return true;
+  if (h.endsWith(".cluster.local")) return true;
+  return false;
+}
+
+function isIPv4Literal(hostname: string): boolean {
+  return /^\d{1,3}(\.\d{1,3}){3}$/.test(hostname);
+}
+
+// Addresses that are never a legitimate remote API target for anyone,
+// on-premise customers included: loopback, the 169.254.0.0/16 link-local
+// block cloud providers use for instance metadata (e.g. 169.254.169.254 —
+// the exact target used in the reported exploit), and the "this network"
+// block. Deliberately NOT blocking RFC1918 private ranges (10/8, 172.16/12,
+// 192.168/16): on-premise Bugsnag installations can legitimately sit on a
+// private address reachable from wherever this server runs, and we have no
+// way to distinguish that from an internal pivot target from the endpoint
+// value alone.
+function isForbiddenIPv4(hostname: string): boolean {
+  const octets = hostname.split(".").map(Number);
+  if (
+    octets.length !== 4 ||
+    octets.some((o) => !Number.isInteger(o) || o < 0 || o > 255)
+  ) {
+    return true; // malformed literal: refuse rather than guess
+  }
+  const [a, b] = octets;
+  if (a === 127) return true; // loopback
+  if (a === 169 && b === 254) return true; // link-local / cloud metadata
+  if (a === 0) return true; // "this" network
+  if (a === 100 && b === 100 && octets[2] === 100 && octets[3] === 200)
+    return true; // Alibaba metadata
+  if (a === 192 && b === 0 && octets[2] === 0 && octets[3] === 192) return true; // Oracle metadata
+  return false;
+}
+
+// Expand an IPv6 literal into its eight 16-bit groups. Works on the canonical
+// form produced by WHATWG URL (which already rewrites any embedded dotted
+// IPv4 tail, e.g. `::ffff:127.0.0.1` -> `::ffff:7f00:1`), but also accepts a
+// trailing dotted quad defensively. Returns undefined for anything malformed.
+function parseIPv6Groups(address: string): number[] | undefined {
+  let addr = address;
+  const dotted = /^(.*:)(\d{1,3}(?:\.\d{1,3}){3})$/.exec(addr);
+  if (dotted) {
+    const octets = dotted[2].split(".").map(Number);
+    if (octets.some((o) => o > 255)) return undefined;
+    addr =
+      dotted[1] +
+      `${((octets[0] << 8) | octets[1]).toString(16)}:` +
+      `${((octets[2] << 8) | octets[3]).toString(16)}`;
+  }
+
+  const halves = addr.split("::");
+  if (halves.length > 2) return undefined;
+  const toGroups = (s: string): string[] => (s === "" ? [] : s.split(":"));
+  const head = toGroups(halves[0]);
+  const tail = halves.length === 2 ? toGroups(halves[1]) : [];
+  const missing = 8 - head.length - tail.length;
+  if (halves.length === 2 ? missing < 1 : missing !== 0) return undefined;
+
+  const groups = [...head, ...Array(missing).fill("0"), ...tail];
+  if (!groups.every((g) => /^[0-9a-f]{1,4}$/.test(g))) return undefined;
+  return groups.map((g) => Number.parseInt(g, 16));
+}
+
+// If the IPv6 address embeds an IPv4 address that the network stack (or a
+// translator) will actually deliver to, return it in dotted form so the IPv4
+// rules above can be applied. Covers:
+//   ::ffff:0:0/96      IPv4-mapped        (::ffff:7f00:1)
+//   ::ffff:0:0:0/96    IPv4-translated    (::ffff:0:7f00:1, RFC 2765)
+//   ::/96              IPv4-compatible    (::7f00:1, deprecated)
+//   64:ff9b::/96       NAT64 well-known   (64:ff9b::a9fe:a9fe, RFC 6052)
+//   64:ff9b:1::/48     NAT64 local-use    (RFC 8215)
+function embeddedIPv4(groups: number[]): string | undefined {
+  const zeros = (from: number, to: number) =>
+    groups.slice(from, to).every((g) => g === 0);
+  const isMapped = zeros(0, 5) && groups[5] === 0xffff;
+  const isTranslated = zeros(0, 4) && groups[4] === 0xffff && groups[5] === 0;
+  const isCompatible = zeros(0, 6);
+  const isNat64 =
+    groups[0] === 0x64 &&
+    groups[1] === 0xff9b &&
+    (zeros(2, 6) || groups[2] === 1);
+  if (!(isMapped || isTranslated || isCompatible || isNat64)) return undefined;
+  const [high, low] = [groups[6], groups[7]];
+  return `${high >> 8}.${high & 255}.${low >> 8}.${low & 255}`;
+}
+
+// IPv6 equivalents of the IPv4 checks above: loopback, unspecified,
+// link-local and ULA, plus any IPv6 form that embeds an IPv4 address
+// (checked against the IPv4 ranges above).
+function isForbiddenIPv6(hostname: string): boolean {
+  // URL.hostname keeps the [brackets] for IPv6 literals; drop any zone id.
+  const h = hostname
+    .toLowerCase()
+    .replace(/^\[|\]$/g, "")
+    .replace(/%.*$/, "");
+  const groups = parseIPv6Groups(h);
+  if (!groups) return true; // malformed literal: refuse rather than guess
+
+  const allZeroUpTo = (n: number) => groups.slice(0, n).every((g) => g === 0);
+  if (allZeroUpTo(7) && (groups[7] === 0 || groups[7] === 1)) return true; // :: / ::1
+  if ((groups[0] & 0xffc0) === 0xfe80) return true; // fe80::/10 link-local
+  if ((groups[0] & 0xfe00) === 0xfc00) return true; // fc00::/7 ULA (e.g. AWS fd00:ec2::254)
+
+  const v4 = embeddedIPv4(groups);
+  return v4 !== undefined && isForbiddenIPv4(v4);
+}
+
+// Only called when `endpoint` could have come from an untrusted per-request
+// source (see call site). Without this check it becomes an SSRF primitive:
+// the server would issue authenticated requests to whatever host/IP the
+// caller names, including cloud metadata services and cluster-internal
+// APIs, as demonstrated in the reported exploit.
+//
+// Scope is deliberately narrow — only addresses/hostnames that could never
+// be a legitimate on-premise Bugsnag deployment — to avoid breaking existing
+// on-premise configurations we have no visibility into (this client is used
+// by many customers). It is also a hostname/IP-literal check, not a
+// DNS-resolving one: it does not protect against a public hostname that
+// resolves (now or via later DNS rebinding) to a private address. Closing
+// either gap further should go through `MCP_ALLOWED_ENDPOINTS`
+// (src/common/client-registry.ts), the existing opt-in allowlist already
+// used for this purpose by other clients, rather than a broader hard block
+// here.
+function assertSafeCustomEndpoint(endpoint: string): void {
+  const hostname = new URL(endpoint).hostname;
+  if (isIPv4Literal(hostname)) {
+    if (isForbiddenIPv4(hostname)) {
+      throw new ToolError(
+        `Unsafe Bugsnag endpoint: ${hostname} is a loopback, link-local or metadata address`,
+      );
+    }
+    return;
+  }
+  if (hostname.includes(":")) {
+    if (isForbiddenIPv6(hostname)) {
+      throw new ToolError(
+        `Unsafe Bugsnag endpoint: ${hostname} is a loopback or link-local address`,
+      );
+    }
+    return;
+  }
+  const bare = hostname.toLowerCase().replace(/\.$/, "");
+  if (bare === "localhost" || bare.endsWith(".localhost")) {
+    throw new ToolError("Unsafe Bugsnag endpoint: localhost is not allowed");
+  }
+  if (isKubernetesInternalHostname(hostname)) {
+    throw new ToolError(
+      `Unsafe Bugsnag endpoint: ${hostname} is not an allowed destination`,
+    );
+  }
+}
+
 const cacheKeys = {
   ORG: "bugsnag_org",
   PROJECTS: "bugsnag_projects",
@@ -308,6 +472,14 @@ export class BugsnagClient implements Client {
         "X-Bugsnag-API": "true",
         "X-Version": "2",
       },
+      // Applied to every redirect hop in BaseAPI. Same trust model as the
+      // initial endpoint check in getEndpoint(): only enforced while serving
+      // an HTTP request, where the endpoint may be caller-controlled.
+      validateRequestUrl: (url: URL) => {
+        if (getRequestContext()) {
+          assertSafeCustomEndpoint(url.toString());
+        }
+      },
       basePath: this.getEndpoint(
         "api",
         config.project_api_key,
@@ -349,7 +521,19 @@ export class BugsnagClient implements Client {
           subDomainEndpoint = `https://${subdomain}.${DEFAULT_DOMAIN}`;
         }
       } else {
-        // For custom domains, use the endpoint exactly as provided
+        // For custom domains, use the endpoint exactly as provided. Only
+        // validate it against loopback/metadata/cluster-internal addresses
+        // when there's an active request context — i.e. this call could be
+        // serving an HTTP request, where `endpoint` may have come from a
+        // per-request, caller-controlled header (the reported exploit's
+        // vector). Outside a request context (stdio transport, or HTTP
+        // configured once at startup from an operator's own env var) there
+        // is no untrusted caller to defend against, and operators running
+        // this locally or against an on-premise instance on a loopback/
+        // internal address should not be blocked from doing so.
+        if (getRequestContext()) {
+          assertSafeCustomEndpoint(endpoint);
+        }
         subDomainEndpoint = endpoint;
       }
     }
