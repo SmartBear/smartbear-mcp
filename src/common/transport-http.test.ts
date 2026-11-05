@@ -2,6 +2,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { clientRegistry } from "./client-registry";
 import { getRequestHeader, withRequestHeaders } from "./request-context";
+import { registerShutdownHandler } from "./shutdown";
 import {
   attachSessionAnalytics,
   drainHttpTransport,
@@ -16,8 +17,9 @@ import {
   handleStreamableHttpRequest,
   newServer,
   newServerFromWebRequest,
-  resolveCredentialIdentity,
   reapIdleSessions,
+  resolveCredentialIdentity,
+  runHttpMode,
 } from "./transport-http";
 import type { Client } from "./types";
 
@@ -150,6 +152,7 @@ vi.mock("./analytics", async (importOriginal) => ({
 vi.mock("./shutdown", async (importOriginal) => ({
   ...(await importOriginal<typeof import("./shutdown")>()),
   isDraining: vi.fn().mockReturnValue(false),
+  registerShutdownHandler: vi.fn(),
 }));
 
 describe("transport-http helpers", () => {
@@ -1458,5 +1461,39 @@ describe("idle session reaping", () => {
     process.env.SESSION_IDLE_TIMEOUT_MS = "junk";
     expect(getSessionIdleTimeoutMs()).toBe(4 * 60 * 60 * 1000);
     delete process.env.SESSION_IDLE_TIMEOUT_MS;
+  });
+});
+
+describe("runHttpMode idle reaper wiring", () => {
+  afterEach(() => {
+    delete process.env.PORT;
+    delete process.env.SESSION_IDLE_TIMEOUT_MS;
+    vi.mocked(registerShutdownHandler).mockClear();
+    vi.restoreAllMocks();
+  });
+
+  async function startAndStop(idleMs: string) {
+    process.env.PORT = "0";
+    process.env.SESSION_IDLE_TIMEOUT_MS = idleMs;
+    const setIntervalSpy = vi.spyOn(globalThis, "setInterval");
+    const clearIntervalSpy = vi.spyOn(globalThis, "clearInterval");
+    await runHttpMode();
+    const shutdown = vi
+      .mocked(registerShutdownHandler)
+      .mock.calls.find(([name]) => name === "http-transport")?.[1];
+    expect(shutdown).toBeDefined();
+    await shutdown?.();
+    return { setIntervalSpy, clearIntervalSpy };
+  }
+
+  it("starts the reaper at half the idle timeout and clears it on shutdown", async () => {
+    const { setIntervalSpy, clearIntervalSpy } = await startAndStop("4000");
+    expect(setIntervalSpy.mock.calls.some(([, ms]) => ms === 2000)).toBe(true);
+    expect(clearIntervalSpy).toHaveBeenCalled();
+  });
+
+  it("does not start the reaper when SESSION_IDLE_TIMEOUT_MS is 0", async () => {
+    const { setIntervalSpy } = await startAndStop("0");
+    expect(setIntervalSpy.mock.calls.some(([, ms]) => ms === 2000)).toBe(false);
   });
 });

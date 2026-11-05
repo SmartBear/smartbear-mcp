@@ -108,7 +108,7 @@ export async function reapIdleSessions(
     idle.map(async ([sessionId, entry]) => {
       // Re-check: a request may have arrived while earlier closes were awaited.
       if ((entry.inFlight ?? 0) > 0) return;
-      console.log(`[MCP] Reaping idle session: ${sessionId}`);
+      console.log(`[MCP] Reaping idle session: ${redactSessionId(sessionId)}`);
       try {
         await entry.transport.close();
       } catch (err) {
@@ -459,9 +459,26 @@ export async function runHttpMode() {
     }
   });
 
+  // Reap sessions abandoned without a DELETE / SSE close. unref'd so it never
+  // holds the process open; cleared on shutdown.
+  const idleMs = getSessionIdleTimeoutMs();
+  const reaper =
+    idleMs > 0
+      ? setInterval(
+          () => {
+            reapIdleSessions(transports, idleMs).catch((err) =>
+              console.error("[MCP] Idle session reaper failed:", err),
+            );
+          },
+          Math.min(60_000, Math.max(1_000, Math.floor(idleMs / 2))),
+        )
+      : undefined;
+  reaper?.unref();
+
   // Register graceful shutdown. Tears down active
   // transports before any subsystem registered earlier (e.g. logging).
   registerShutdownHandler("http-transport", async () => {
+    if (reaper) clearInterval(reaper);
     // Tear down the modern leg first: it aborts in-flight modern exchanges and
     // closes their per-request instances. The sessionful legacy transports are
     // drained separately below.
@@ -973,7 +990,7 @@ async function handleLegacySseRequest(
     // The SSE stream itself is an open exchange; the res "close" handler
     // below removes the session when it ends.
     inFlight: 1,
-    identity
+    identity,
   });
   attachSessionAnalytics(server, transport.sessionId, "sse");
 
