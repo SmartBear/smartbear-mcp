@@ -103,6 +103,30 @@ describe("CreateTestCycleWebLink", () => {
     expect(result.structuredContent).toBe(responseMock);
   });
 
+  it.each([
+    ["omitted", undefined],
+    ["empty", ""],
+    ["whitespace-only", "   "],
+  ])("should default description to the url when it is %s", async (_label, description) => {
+    mockClient.getApiClient().post.mockResolvedValueOnce({ id: 54 });
+
+    const args: Record<string, unknown> = {
+      testCycleIdOrKey: "SA-R1",
+      url: "https://example.com",
+    };
+    if (description !== undefined) args.description = description;
+
+    await instance.handle(args, EXTRA_REQUEST_HANDLER);
+
+    expect(mockClient.getApiClient().post).toHaveBeenCalledWith(
+      "/testcycles/SA-R1/links/weblinks",
+      {
+        url: "https://example.com",
+        description: "https://example.com",
+      },
+    );
+  });
+
   it("should throw error when extra parameters not in the schema", async () => {
     const args = {
       testCycleIdOrKey: "SA-R1",
