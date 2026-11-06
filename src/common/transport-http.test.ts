@@ -1372,6 +1372,11 @@ describe("expired bearer tokens", () => {
       ["a non-numeric exp claim", `Bearer ${jwt({ exp: "soon" })}`, false],
       ["an opaque bearer token", "Bearer opaque-token", false],
       ["a payload that is not JSON", "Bearer aaa.bm90LWpzb24.ccc", false],
+      ["a lowercase bearer scheme", `bearer ${expired}`, true],
+      ["a mixed-case bearer scheme", `BeArEr ${expired}`, true],
+      ["a scheme followed by several spaces", `Bearer   ${expired}`, true],
+      ["a scheme with no token", "Bearer ", false],
+      ["a scheme without a separating space", `Bearer${expired}`, false],
       ["a non-Bearer scheme", `token ${expired}`, false],
       ["no Authorization header", undefined, false],
     ])("returns %s -> %s", (_, authorization, result) => {
@@ -1505,6 +1510,20 @@ describe("expired bearer tokens", () => {
 
       expectInvalidToken(res);
       expect(SmartBearMcpServer).not.toHaveBeenCalled();
+    });
+
+    it("rejects an expired token sent with a lowercase bearer scheme", async () => {
+      const modern = vi.fn();
+      const req = fakeStreamRequest({
+        headers: { authorization: `bearer ${expired}`, host: "localhost" },
+        body: { jsonrpc: "2.0", id: 1, method: "tools/list" },
+      });
+      const res = fakeResponse();
+
+      await handleMcpEndpoint(req, res, new Map(), modern as any);
+
+      expectInvalidToken(res);
+      expect(modern).not.toHaveBeenCalled();
     });
 
     it("rejects a legacy POST /message before the session lookup", async () => {

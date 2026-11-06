@@ -244,9 +244,11 @@ export function hasExpiredBearerJwt(
 ): boolean {
   const header = req.headers.authorization;
   const value = Array.isArray(header) ? header[0] : header;
-  if (!value?.startsWith("Bearer ")) return false;
+  // The auth scheme is case-insensitive (RFC 9110 §11.1).
+  const token = value?.match(/^Bearer\s+(\S+)/i)?.[1];
+  if (!token) return false;
 
-  const parts = value.substring(7).split(".");
+  const parts = token.split(".");
   if (parts.length !== 3) return false;
 
   try {
