@@ -10,11 +10,16 @@ import {
   getHeaderName,
   getQueryStringName,
   handleHealthRequest,
+  handleLegacyMessageRequest,
+  handleLegacySseRequest,
+  handleMcpEndpoint,
   handleReadyRequest,
   handleSessionMessage,
   handleStreamableHttpRequest,
+  hasExpiredBearerJwt,
   newServer,
   newServerFromWebRequest,
+  rejectExpiredBearerToken,
   resolveCredentialIdentity,
 } from "./transport-http";
 import type { Client } from "./types";
@@ -1333,5 +1338,204 @@ describe("handleSessionMessage", () => {
     });
 
     expect(trackToolsListed).not.toHaveBeenCalled();
+  });
+});
+
+describe("expired bearer tokens", () => {
+  const NOW = Date.UTC(2026, 10, 5, 12, 0, 0);
+  const b64 = (v: unknown) =>
+    Buffer.from(JSON.stringify(v)).toString("base64url");
+  const jwt = (payload: unknown) =>
+    `${b64({ alg: "RS256" })}.${b64(payload)}.signature`;
+  const expired = jwt({ sub: "u1", exp: NOW / 1000 - 60 });
+  const valid = jwt({ sub: "u1", exp: NOW / 1000 + 3600 });
+
+  beforeEach(() => {
+    vi.useFakeTimers({ now: NOW, toFake: ["Date"] });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    delete process.env.BASE_URL;
+  });
+
+  describe("hasExpiredBearerJwt", () => {
+    it.each([
+      ["a JWT whose exp has passed", `Bearer ${expired}`, true],
+      [
+        "a JWT expiring exactly now",
+        `Bearer ${jwt({ exp: NOW / 1000 })}`,
+        true,
+      ],
+      ["a JWT that has not expired", `Bearer ${valid}`, false],
+      ["a JWT without an exp claim", `Bearer ${jwt({ sub: "u1" })}`, false],
+      ["a non-numeric exp claim", `Bearer ${jwt({ exp: "soon" })}`, false],
+      ["an opaque bearer token", "Bearer opaque-token", false],
+      ["a payload that is not JSON", "Bearer aaa.bm90LWpzb24.ccc", false],
+      ["a non-Bearer scheme", `token ${expired}`, false],
+      ["no Authorization header", undefined, false],
+    ])("returns %s -> %s", (_, authorization, result) => {
+      expect(hasExpiredBearerJwt(fakeRequest({ authorization }))).toBe(result);
+    });
+
+    it("reads the first value when the header is repeated", () => {
+      const req = fakeRequest({
+        authorization: [`Bearer ${expired}`, `Bearer ${valid}`],
+      });
+      expect(hasExpiredBearerJwt(req)).toBe(true);
+    });
+
+    it("takes the current time as a parameter", () => {
+      const req = fakeRequest({ authorization: `Bearer ${valid}` });
+      expect(hasExpiredBearerJwt(req, NOW + 7200 * 1000)).toBe(true);
+    });
+  });
+
+  describe("rejectExpiredBearerToken", () => {
+    it("sends a 401 with an RFC 6750 invalid_token challenge", () => {
+      process.env.BASE_URL = "https://mcp.example.com";
+      const req = fakeStreamRequest({
+        headers: { authorization: `Bearer ${expired}` },
+      });
+      const resume = vi.spyOn(req, "resume");
+      const res = fakeResponse();
+
+      expect(rejectExpiredBearerToken(req, res)).toBe(true);
+
+      expect(res._status).toBe(401);
+      expect(res._headers["Content-Type"]).toBe("application/json");
+      expect(res._headers["WWW-Authenticate"]).toBe(
+        'Bearer error="invalid_token", error_description="The access token expired", resource_metadata="https://mcp.example.com/.well-known/oauth-protected-resource"',
+      );
+      expect(JSON.parse(res._body)).toEqual({
+        error: "invalid_token",
+        error_description: "The access token expired",
+      });
+      expect(resume).toHaveBeenCalled();
+    });
+
+    it("leaves a request with a valid token alone", () => {
+      const req = fakeStreamRequest({
+        headers: { authorization: `Bearer ${valid}` },
+      });
+      const res = fakeResponse();
+
+      expect(rejectExpiredBearerToken(req, res)).toBe(false);
+      expect(res._status).toBeNull();
+    });
+  });
+
+  describe("route handlers", () => {
+    const expectInvalidToken = (res: ReturnType<typeof fakeResponse>) => {
+      expect(res._status).toBe(401);
+      expect(res._headers["WWW-Authenticate"]).toContain(
+        'error="invalid_token"',
+      );
+    };
+
+    it("rejects a sessionless 2026-07-28 request before the modern handler runs", async () => {
+      const modern = vi.fn();
+      const req = fakeStreamRequest({
+        headers: { authorization: `Bearer ${expired}`, host: "localhost" },
+        body: {
+          jsonrpc: "2.0",
+          id: 1,
+          method: "tools/list",
+          params: {
+            _meta: {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+            },
+          },
+        },
+      });
+      const res = fakeResponse();
+
+      await handleMcpEndpoint(req, res, new Map(), modern as any);
+
+      expectInvalidToken(res);
+      expect(modern).not.toHaveBeenCalled();
+    });
+
+    it("rejects a request on an established session before the session lookup", async () => {
+      const handleRequest = vi.fn();
+      const transports = new Map<string, any>([
+        ["sess-1", { server: {}, transport: { handleRequest } }],
+      ]);
+      const req = fakeStreamRequest({
+        headers: {
+          authorization: `Bearer ${expired}`,
+          "mcp-session-id": "sess-1",
+          host: "localhost",
+        },
+        body: { jsonrpc: "2.0", id: 1, method: "tools/list" },
+      });
+      const res = fakeResponse();
+
+      await handleMcpEndpoint(req, res, transports, vi.fn() as any);
+
+      expectInvalidToken(res);
+      expect(handleRequest).not.toHaveBeenCalled();
+    });
+
+    it("rejects before reporting an unknown session, so the client refreshes first", async () => {
+      const req = fakeStreamRequest({
+        headers: {
+          authorization: `Bearer ${expired}`,
+          "mcp-session-id": "no-such-session",
+          host: "localhost",
+        },
+      });
+      const res = fakeResponse();
+
+      await handleStreamableHttpRequest(req, res, new Map());
+
+      expectInvalidToken(res);
+    });
+
+    it("rejects a legacy SSE connection before creating a server", async () => {
+      const { SmartBearMcpServer } = await import("./server.js");
+      vi.mocked(SmartBearMcpServer).mockClear();
+      const req = fakeStreamRequest({
+        method: "GET",
+        headers: { authorization: `Bearer ${expired}`, host: "localhost" },
+      });
+      const res = fakeResponse();
+
+      await handleLegacySseRequest(req, res, new Map());
+
+      expectInvalidToken(res);
+      expect(SmartBearMcpServer).not.toHaveBeenCalled();
+    });
+
+    it("rejects a legacy POST /message before the session lookup", async () => {
+      const req = fakeStreamRequest({
+        headers: { authorization: `Bearer ${expired}`, host: "localhost" },
+        body: { jsonrpc: "2.0", id: 1, method: "tools/list" },
+      });
+      const res = fakeResponse();
+
+      await handleLegacyMessageRequest(
+        req,
+        res,
+        new URL("http://localhost/message?sessionId=no-such-session"),
+        new Map(),
+      );
+
+      expectInvalidToken(res);
+    });
+
+    it("lets a valid token through to normal routing", async () => {
+      const req = fakeStreamRequest({
+        headers: {
+          authorization: `Bearer ${valid}`,
+          "mcp-session-id": "no-such-session",
+        },
+      });
+      const res = fakeResponse();
+
+      await handleMcpEndpoint(req, res, new Map(), vi.fn() as any);
+
+      expect(res._status).toBe(404);
+    });
   });
 });
