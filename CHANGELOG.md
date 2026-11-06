@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [BugSnag] `Pentest - MCP Session ID Acts as a Bearer Token Due to Cached-Credential Fallback` Now The session id no longer grants any authority on the Bugsnag path.
 - [Common] Pentest: an MCP session id alone no longer acts as the session owner's credential on the HTTP transport. Every `POST`, `GET` (event stream) and `DELETE` on `/mcp`, and every legacy `POST /message`, must now carry a credential for the identity that opened the session.
+- [Common] The HTTP transport now rejects a request whose `Authorization` bearer JWT has expired with `401` and an RFC 6750 challenge (`WWW-Authenticate: Bearer error="invalid_token"`, with `resource_metadata` pointing to the Protected Resource Metadata endpoint). Previously the expired token only failed inside the tool call and reached the client as a tool error in an HTTP `200`, so OAuth clients never used their refresh token. The check covers `/mcp` for both the 2025-11-25 and 2026-07-28 protocol revisions, the legacy `GET /sse` and `POST /message`, and runs before session lookup, so the client refreshes its token before starting a new session. Opaque tokens and tokens sent in product-specific headers are not checked. [PLAT-17333](https://smartbear.atlassian.net/browse/PLAT-17333)
 
 ### Changed
 

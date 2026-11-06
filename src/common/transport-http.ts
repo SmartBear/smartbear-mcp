@@ -235,6 +235,59 @@ export function getBaseUrl(req: IncomingMessage): string {
 }
 
 /**
+ * True when the request carries a Bearer JWT whose `exp` claim has passed.
+ * The signature is not verified here; the upstream API does that.
+ */
+export function hasExpiredBearerJwt(
+  req: IncomingMessage,
+  now: number = Date.now(),
+): boolean {
+  const header = req.headers.authorization;
+  const value = Array.isArray(header) ? header[0] : header;
+  // The auth scheme is case-insensitive (RFC 9110 §11.1).
+  const token = value?.match(/^Bearer\s+(\S+)/i)?.[1];
+  if (!token) return false;
+
+  const parts = token.split(".");
+  if (parts.length !== 3) return false;
+
+  try {
+    const { exp } = JSON.parse(
+      Buffer.from(parts[1], "base64url").toString("utf8"),
+    );
+    return typeof exp === "number" && exp * 1000 <= now;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Responds 401 with an RFC 6750 challenge if the Bearer token has expired.
+ * Without this, the expired token only fails inside the tool call, which reaches
+ * the client as a tool error in an HTTP 200, so OAuth clients never refresh.
+ * @returns true if a 401 response was sent
+ */
+export function rejectExpiredBearerToken(
+  req: IncomingMessage,
+  res: ServerResponse,
+): boolean {
+  if (!hasExpiredBearerJwt(req)) return false;
+
+  req.resume();
+  res.writeHead(401, {
+    "Content-Type": "application/json",
+    "WWW-Authenticate": `Bearer error="invalid_token", error_description="The access token expired", resource_metadata="${getBaseUrl(req)}/.well-known/oauth-protected-resource"`,
+  });
+  res.end(
+    JSON.stringify({
+      error: "invalid_token",
+      error_description: "The access token expired",
+    }),
+  );
+  return true;
+}
+
+/**
  * Run server in HTTP mode with Streamable HTTP transport
  * Supports both SSE (legacy) and StreamableHTTP transports for backwards compatibility
  */
@@ -671,13 +724,18 @@ function createModernHandler() {
  *   predicate — the same code `createMcpHandler` runs internally — so a
  *   claim-less `initialize` still opens a legacy session, while envelope-
  *   carrying requests are served by the modern handler.
+ *
+ * An expired bearer token is rejected first, for both eras: the modern leg
+ * never reaches {@link handleStreamableHttpRequest}, which has its own check.
  */
-async function handleMcpEndpoint(
+export async function handleMcpEndpoint(
   req: IncomingMessage,
   res: ServerResponse,
   transports: Map<string, SessionEntry>,
   modern: ReturnType<typeof toNodeHandler>,
 ) {
+  if (rejectExpiredBearerToken(req, res)) return;
+
   if (req.headers["mcp-session-id"]) {
     await handleStreamableHttpRequest(req, res, transports);
     return;
@@ -772,6 +830,8 @@ export async function handleStreamableHttpRequest(
   preParsed?: { body: unknown },
 ) {
   try {
+    if (rejectExpiredBearerToken(req, res)) return;
+
     const sessionId = req.headers["mcp-session-id"] as string | undefined;
 
     // Case 1: Unknown session - per MCP Streamable HTTP spec, return 404 so
@@ -861,11 +921,13 @@ export async function handleStreamableHttpRequest(
  * This is kept for backwards compatibility with older MCP clients.
  * New integrations should use the modern StreamableHTTP transport (/mcp).
  */
-async function handleLegacySseRequest(
+export async function handleLegacySseRequest(
   req: IncomingMessage,
   res: ServerResponse,
   transports: Map<string, SessionEntry>,
 ) {
+  if (rejectExpiredBearerToken(req, res)) return;
+
   // Create a new server instance for this connection
   const server = await newServer(req, res);
   if (!server) {
@@ -912,12 +974,14 @@ function writeLegacySessionNotFound(res: ServerResponse): void {
  *
  * New integrations should use the modern StreamableHTTP transport (/mcp).
  */
-async function handleLegacyMessageRequest(
+export async function handleLegacyMessageRequest(
   req: IncomingMessage,
   res: ServerResponse,
   url: URL,
   transports: Map<string, SessionEntry>,
 ) {
+  if (rejectExpiredBearerToken(req, res)) return;
+
   // Extract session ID from query parameter
   const sessionId = url.searchParams.get("sessionId");
 
