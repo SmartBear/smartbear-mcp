@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [BugSnag] `Pentest - MCP Session ID Acts as a Bearer Token Due to Cached-Credential Fallback` Now The session id no longer grants any authority on the Bugsnag path.
 - [Common] Pentest: an MCP session id alone no longer acts as the session owner's credential on the HTTP transport. Every `POST`, `GET` (event stream) and `DELETE` on `/mcp`, and every legacy `POST /message`, must now carry a credential for the identity that opened the session.
+- [Zephyr] Default weblink description if not provided is set to url value.
 
 ### Changed
 
