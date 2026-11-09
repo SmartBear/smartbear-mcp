@@ -1449,6 +1449,36 @@ describe("idle session reaping", () => {
     expect(sessions.size).toBe(0);
   });
 
+  it("unregisters the session before close() so new requests get a 404", async () => {
+    let presentDuringClose: boolean | undefined;
+    const sessions = new Map<string, any>();
+    sessions.set(
+      "s",
+      entry(
+        0,
+        vi.fn(async () => {
+          presentDuringClose = sessions.has("s");
+        }),
+      ),
+    );
+    await reapIdleSessions(sessions, 1, 10_000);
+    expect(presentDuringClose).toBe(false);
+  });
+
+  it("cleans up once when overlapping runs target the same session", async () => {
+    const close = vi.fn(async () => {
+      await new Promise((r) => setTimeout(r, 10));
+    });
+    const e = entry(0, close);
+    const sessions = new Map<string, any>([["s", e]]);
+    await Promise.all([
+      reapIdleSessions(sessions, 1, 10_000),
+      reapIdleSessions(sessions, 1, 10_000),
+    ]);
+    expect(close).toHaveBeenCalledTimes(1);
+    expect(e.server.cleanupSession).toHaveBeenCalledTimes(1);
+  });
+
   it("reads SESSION_IDLE_TIMEOUT_MS, defaulting to 4 hours", () => {
     delete process.env.SESSION_IDLE_TIMEOUT_MS;
     expect(getSessionIdleTimeoutMs()).toBe(4 * 60 * 60 * 1000);

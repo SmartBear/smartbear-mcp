@@ -90,9 +90,8 @@ export function getSessionIdleTimeoutMs(): number {
 }
 
 /**
- * Close every session idle for longer than `idleMs`. Closing the transport
- * fires the normal onclose / res "close" chain, which removes the session
- * from the map and runs per-client cleanup.
+ * Close every session idle for longer than `idleMs`. Each is removed from the
+ * map before its transport is closed, then per-client cleanup runs.
  * @returns the number of sessions reaped
  */
 export async function reapIdleSessions(
@@ -108,17 +107,19 @@ export async function reapIdleSessions(
     idle.map(async ([sessionId, entry]) => {
       // Re-check: a request may have arrived while earlier closes were awaited.
       if ((entry.inFlight ?? 0) > 0) return;
+      // Unregister first: new requests then get a clean 404 (client
+      // re-initializes) instead of hitting a closing transport, and an
+      // overlapping reaper run cannot pick the same session. Since the entry is
+      // already gone, onclose skips its cleanup, so it is done here.
+      if (!transports.delete(sessionId)) return;
       console.log(`[MCP] Reaping idle session: ${redactSessionId(sessionId)}`);
       try {
         await entry.transport.close();
       } catch (err) {
         console.error("[MCP] Error closing idle session:", err);
       }
-      // Backstop if the transport's close did not run our cleanup chain.
-      if (transports.delete(sessionId)) {
-        endSessionAnalytics(entry.server);
-        entry.server.cleanupSession(sessionId);
-      }
+      endSessionAnalytics(entry.server);
+      entry.server.cleanupSession(sessionId);
     }),
   );
   return idle.length;
