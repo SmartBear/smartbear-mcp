@@ -885,9 +885,7 @@
         "details": {}
       }
     ],
-    "teamUuids": [
-      "teamUuids"
-    ],
+    "teamUuids": ["teamUuids"],
     "_embedded": {
       "teams": [
         {
@@ -2227,9 +2225,7 @@
     },
     "secrets": {
       "count": 1,
-      "countsByTeam": [
-        1
-      ]
+      "countsByTeam": [1]
     },
     "tags": {
       "count": 1,
@@ -2429,9 +2425,7 @@
       {
         "name": "drift-example",
         "params": {},
-        "consumers": [
-          "consumers"
-        ]
+        "consumers": ["consumers"]
       }
     ],
     "pagination": {
@@ -3491,9 +3485,7 @@
         "updatedAt": "updatedAt",
         "uuid": "uuid",
         "contacts": [],
-        "teamUuids": [
-          "teamUuids"
-        ],
+        "teamUuids": ["teamUuids"],
         "_embedded": {
           "teams": []
         },
@@ -3531,9 +3523,7 @@
         "updatedAt": "updatedAt",
         "uuid": "uuid",
         "contacts": [],
-        "teamUuids": [
-          "teamUuids"
-        ],
+        "teamUuids": ["teamUuids"],
         "_embedded": {
           "teams": []
         },
@@ -3611,9 +3601,7 @@
         "details": {}
       }
     ],
-    "teamUuids": [
-      "teamUuids"
-    ],
+    "teamUuids": ["teamUuids"],
     "_embedded": {
       "teams": [
         {
