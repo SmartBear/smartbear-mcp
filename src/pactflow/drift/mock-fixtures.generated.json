@@ -1,0 +1,3975 @@
+{
+  "PUT /pacticipants/smartbear-mcp/labels/frontend": {
+    "name": "drift-example",
+    "createdAt": "createdAt",
+    "_links": {
+      "self": {
+        "title": "title",
+        "name": "drift-example",
+        "href": "href"
+      },
+      "pacticipant": {
+        "title": "title",
+        "name": "drift-example",
+        "href": "href"
+      }
+    }
+  },
+  "PUT /admin/users/00000000-0000-4000-8000-000000000001/roles/00000000-0000-4000-8000-000000000001": {
+    "success": true
+  },
+  "POST /admin/roles": {
+    "created": "created",
+    "description": "Created by a Drift test",
+    "name": "drift-example",
+    "permissions": [
+      {
+        "description": "Created by a Drift test",
+        "group": "group",
+        "label": "label",
+        "scope": "scope",
+        "uuid": "uuid"
+      }
+    ],
+    "systemDefined": true,
+    "createdAt": "createdAt",
+    "updatedAt": "updatedAt",
+    "uuid": "uuid",
+    "_actions": [
+      {
+        "name": "drift-example",
+        "title": "title",
+        "method": "method",
+        "href": "href"
+      }
+    ],
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    }
+  },
+  "POST /admin/system-accounts": {
+    "active": true,
+    "authenticationSource": "authenticationSource",
+    "createdAt": "createdAt",
+    "email": "drift@example.com",
+    "externalId": "00000000-0000-4000-8000-000000000001",
+    "externalIdpId": "00000000-0000-4000-8000-000000000001",
+    "externalIdpUsername": "externalIdpUsername",
+    "firstName": "Drift",
+    "identityProviderId": "00000000-0000-4000-8000-000000000001",
+    "lastLogin": "lastLogin",
+    "lastName": "Example",
+    "lastTimeTokenAccessed": "lastTimeTokenAccessed",
+    "name": "drift-example",
+    "seatType": "seatType",
+    "type": 0,
+    "typeDescription": "typeDescription",
+    "updatedAt": "updatedAt",
+    "uuid": "uuid",
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pf:tokens": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    },
+    "_embedded": {
+      "roles": [
+        {
+          "name": "drift-example",
+          "permissions": [],
+          "uuid": "uuid",
+          "_links": {}
+        }
+      ],
+      "teams": [
+        {
+          "name": "drift-example",
+          "uuid": "uuid",
+          "_links": {}
+        }
+      ]
+    }
+  },
+  "POST /admin/teams": {
+    "createdAt": "createdAt",
+    "name": "drift-example",
+    "numberOfMembers": 1,
+    "updatedAt": "updatedAt",
+    "uuid": "uuid",
+    "_embedded": {
+      "administrators": [
+        {
+          "active": true,
+          "email": "drift@example.com",
+          "firstName": "Drift",
+          "identityProviderId": "00000000-0000-4000-8000-000000000001",
+          "lastName": "Example",
+          "name": "drift-example",
+          "uuid": "uuid",
+          "_links": {}
+        }
+      ],
+      "environments": [
+        {
+          "displayName": "Drift Example",
+          "name": "drift-example",
+          "production": true,
+          "uuid": "uuid",
+          "createdAt": "createdAt",
+          "updatedAt": "updatedAt",
+          "_links": {}
+        }
+      ],
+      "pacticipants": [
+        {
+          "name": "drift-example",
+          "_links": {}
+        }
+      ]
+    },
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    }
+  },
+  "POST /admin/users": {
+    "active": true,
+    "authenticationSource": "authenticationSource",
+    "createdAt": "createdAt",
+    "email": "drift@example.com",
+    "externalId": "00000000-0000-4000-8000-000000000001",
+    "externalIdpId": "00000000-0000-4000-8000-000000000001",
+    "externalIdpUsername": "externalIdpUsername",
+    "firstName": "Drift",
+    "identityProviderId": "00000000-0000-4000-8000-000000000001",
+    "lastLogin": "lastLogin",
+    "lastName": "Example",
+    "lastTimeTokenAccessed": "lastTimeTokenAccessed",
+    "name": "drift-example",
+    "seatType": "seatType",
+    "type": 0,
+    "typeDescription": "typeDescription",
+    "updatedAt": "updatedAt",
+    "uuid": "uuid",
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pf:tokens": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    },
+    "_embedded": {
+      "roles": [
+        {
+          "name": "drift-example",
+          "permissions": [],
+          "uuid": "uuid",
+          "_links": {}
+        }
+      ],
+      "teams": [
+        {
+          "name": "drift-example",
+          "uuid": "uuid",
+          "_links": {}
+        }
+      ]
+    }
+  },
+  "DELETE /admin/roles/00000000-0000-4000-8000-000000000001": {
+    "success": true
+  },
+  "DELETE /admin/teams/00000000-0000-4000-8000-000000000001": {
+    "success": true
+  },
+  "DELETE /admin/users/00000000-0000-4000-8000-000000000001": {
+    "success": true
+  },
+  "GET /admin/roles/00000000-0000-4000-8000-000000000001": {
+    "created": "created",
+    "description": "Created by a Drift test",
+    "name": "drift-example",
+    "permissions": [
+      {
+        "description": "Created by a Drift test",
+        "group": "group",
+        "label": "label",
+        "scope": "scope",
+        "uuid": "uuid"
+      }
+    ],
+    "systemDefined": true,
+    "createdAt": "createdAt",
+    "updatedAt": "updatedAt",
+    "uuid": "uuid",
+    "_actions": [
+      {
+        "name": "drift-example",
+        "title": "title",
+        "method": "method",
+        "href": "href"
+      }
+    ],
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    }
+  },
+  "GET /admin/system-accounts/00000000-0000-4000-8000-000000000001/tokens": {
+    "_embedded": {
+      "items": [
+        {
+          "description": "Created by a Drift test",
+          "expires": "expires",
+          "lastUsed": "lastUsed",
+          "readOnly": true,
+          "uuid": "uuid",
+          "value": "drift-secret-value",
+          "_links": {}
+        }
+      ]
+    },
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    },
+    "pagination": {
+      "pageNumber": 1,
+      "pageSize": 10,
+      "totalItems": 1,
+      "totalPages": 1
+    }
+  },
+  "GET /admin/teams/00000000-0000-4000-8000-000000000001": {
+    "createdAt": "createdAt",
+    "name": "drift-example",
+    "numberOfMembers": 1,
+    "updatedAt": "updatedAt",
+    "uuid": "uuid",
+    "isDefault": true,
+    "_embedded": {
+      "administrators": [
+        {
+          "active": true,
+          "email": "drift@example.com",
+          "firstName": "Drift",
+          "identityProviderId": "00000000-0000-4000-8000-000000000001",
+          "lastName": "Example",
+          "name": "drift-example",
+          "uuid": "uuid",
+          "_links": {}
+        }
+      ],
+      "environments": [
+        {
+          "displayName": "Drift Example",
+          "name": "drift-example",
+          "production": true,
+          "uuid": "uuid",
+          "createdAt": "createdAt",
+          "updatedAt": "updatedAt",
+          "_links": {}
+        }
+      ],
+      "members": [
+        {
+          "active": true,
+          "email": "drift@example.com",
+          "firstName": "Drift",
+          "identityProviderId": "00000000-0000-4000-8000-000000000001",
+          "lastName": "Example",
+          "name": "drift-example",
+          "uuid": "uuid",
+          "type": 0,
+          "typeDescription": "typeDescription",
+          "_links": {}
+        }
+      ],
+      "pacticipants": [
+        {
+          "name": "drift-example",
+          "_links": {}
+        }
+      ]
+    },
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    }
+  },
+  "GET /admin/teams/00000000-0000-4000-8000-000000000001/users/00000000-0000-4000-8000-000000000001": {
+    "_embedded": {
+      "user": {
+        "active": true,
+        "authenticationSource": "authenticationSource",
+        "createdAt": "createdAt",
+        "email": "drift@example.com",
+        "externalId": "00000000-0000-4000-8000-000000000001",
+        "externalIdpId": "00000000-0000-4000-8000-000000000001",
+        "externalIdpUsername": "externalIdpUsername",
+        "firstName": "Drift",
+        "identityProviderId": "00000000-0000-4000-8000-000000000001",
+        "lastLogin": "lastLogin",
+        "lastName": "Example",
+        "lastTimeTokenAccessed": "lastTimeTokenAccessed",
+        "name": "drift-example",
+        "seatType": "seatType",
+        "type": 0,
+        "typeDescription": "typeDescription",
+        "updatedAt": "updatedAt",
+        "uuid": "uuid",
+        "_links": {},
+        "_embedded": {
+          "roles": [],
+          "teams": []
+        }
+      }
+    },
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    }
+  },
+  "GET /admin/users/00000000-0000-4000-8000-000000000001": {
+    "active": true,
+    "authenticationSource": "authenticationSource",
+    "createdAt": "createdAt",
+    "email": "drift@example.com",
+    "externalId": "00000000-0000-4000-8000-000000000001",
+    "externalIdpId": "00000000-0000-4000-8000-000000000001",
+    "externalIdpUsername": "externalIdpUsername",
+    "firstName": "Drift",
+    "identityProviderId": "00000000-0000-4000-8000-000000000001",
+    "lastLogin": "lastLogin",
+    "lastName": "Example",
+    "lastTimeTokenAccessed": "lastTimeTokenAccessed",
+    "name": "drift-example",
+    "seatType": "seatType",
+    "type": 0,
+    "typeDescription": "typeDescription",
+    "updatedAt": "updatedAt",
+    "uuid": "uuid",
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pf:tokens": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    },
+    "_embedded": {
+      "roles": [
+        {
+          "name": "drift-example",
+          "permissions": [],
+          "uuid": "uuid",
+          "_links": {}
+        }
+      ],
+      "teams": [
+        {
+          "name": "drift-example",
+          "uuid": "uuid",
+          "_links": {}
+        }
+      ]
+    }
+  },
+  "POST /admin/users/invite-users": {
+    "users": [
+      {
+        "active": true,
+        "authenticationSource": "authenticationSource",
+        "createdAt": "createdAt",
+        "email": "drift@example.com",
+        "externalId": "00000000-0000-4000-8000-000000000001",
+        "externalIdpId": "00000000-0000-4000-8000-000000000001",
+        "externalIdpUsername": "externalIdpUsername",
+        "firstName": "Drift",
+        "identityProviderId": "00000000-0000-4000-8000-000000000001",
+        "lastLogin": "lastLogin",
+        "lastName": "Example",
+        "lastTimeTokenAccessed": "lastTimeTokenAccessed",
+        "name": "drift-example",
+        "seatType": "seatType",
+        "type": 0,
+        "typeDescription": "typeDescription",
+        "updatedAt": "updatedAt",
+        "uuid": "uuid",
+        "_links": {},
+        "_embedded": {
+          "roles": [],
+          "teams": []
+        }
+      }
+    ],
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    }
+  },
+  "GET /admin/permissions": {
+    "permissions": [
+      {
+        "description": "Created by a Drift test",
+        "group": "group",
+        "label": "label",
+        "scope": "scope",
+        "uuid": "uuid"
+      }
+    ],
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    },
+    "pagination": {
+      "pageNumber": 1,
+      "pageSize": 10,
+      "totalItems": 1,
+      "totalPages": 1
+    }
+  },
+  "GET /admin/roles": {
+    "_embedded": {
+      "roles": [
+        {
+          "created": "created",
+          "description": "Created by a Drift test",
+          "name": "drift-example",
+          "permissions": [],
+          "systemDefined": true,
+          "createdAt": "createdAt",
+          "updatedAt": "updatedAt",
+          "uuid": "uuid",
+          "_actions": [],
+          "_links": {}
+        }
+      ]
+    },
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pf:reset": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    },
+    "pagination": {
+      "pageNumber": 1,
+      "pageSize": 10,
+      "totalItems": 1,
+      "totalPages": 1
+    }
+  },
+  "GET /admin/teams/00000000-0000-4000-8000-000000000001/users": {
+    "_embedded": {
+      "users": [
+        {
+          "active": true,
+          "email": "drift@example.com",
+          "firstName": "Drift",
+          "identityProviderId": "00000000-0000-4000-8000-000000000001",
+          "lastName": "Example",
+          "name": "drift-example",
+          "uuid": "uuid",
+          "type": 0,
+          "typeDescription": "typeDescription",
+          "_links": {}
+        }
+      ]
+    },
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    },
+    "pagination": {
+      "pageNumber": 1,
+      "pageSize": 10,
+      "totalItems": 1,
+      "totalPages": 1
+    }
+  },
+  "GET /admin/teams": {
+    "page": {
+      "number": 1,
+      "size": 10,
+      "totalElements": 1,
+      "totalPages": 1
+    },
+    "teams": [
+      {
+        "createdAt": "createdAt",
+        "name": "drift-example",
+        "numberOfMembers": 1,
+        "updatedAt": "updatedAt",
+        "uuid": "uuid",
+        "isDefault": true,
+        "_links": {}
+      }
+    ],
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "next": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "previous": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    }
+  },
+  "GET /admin/users": {
+    "page": {
+      "number": 1,
+      "size": 10,
+      "totalElements": 1,
+      "totalPages": 1
+    },
+    "users": [
+      {
+        "active": true,
+        "authenticationSource": "authenticationSource",
+        "createdAt": "createdAt",
+        "email": "drift@example.com",
+        "externalId": "00000000-0000-4000-8000-000000000001",
+        "externalIdpId": "00000000-0000-4000-8000-000000000001",
+        "externalIdpUsername": "externalIdpUsername",
+        "firstName": "Drift",
+        "identityProviderId": "00000000-0000-4000-8000-000000000001",
+        "lastLogin": "lastLogin",
+        "lastName": "Example",
+        "lastTimeTokenAccessed": "lastTimeTokenAccessed",
+        "name": "drift-example",
+        "seatType": "seatType",
+        "type": 0,
+        "typeDescription": "typeDescription",
+        "updatedAt": "updatedAt",
+        "uuid": "uuid",
+        "_links": {},
+        "_embedded": {
+          "roles": [],
+          "teams": []
+        }
+      }
+    ],
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "next": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "previous": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    }
+  },
+  "PATCH /admin/teams/00000000-0000-4000-8000-000000000001/users": {
+    "_embedded": {
+      "users": [
+        {
+          "active": true,
+          "email": "drift@example.com",
+          "firstName": "Drift",
+          "identityProviderId": "00000000-0000-4000-8000-000000000001",
+          "lastName": "Example",
+          "name": "drift-example",
+          "uuid": "uuid",
+          "type": 0,
+          "typeDescription": "typeDescription",
+          "_links": {}
+        }
+      ]
+    },
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    }
+  },
+  "DELETE /admin/users/00000000-0000-4000-8000-000000000001/roles/00000000-0000-4000-8000-000000000001": {
+    "success": true
+  },
+  "DELETE /admin/teams/00000000-0000-4000-8000-000000000001/users/00000000-0000-4000-8000-000000000001": {
+    "success": true
+  },
+  "POST /admin/roles/reset": {
+    "_embedded": {
+      "roles": [
+        {
+          "created": "created",
+          "description": "Created by a Drift test",
+          "name": "drift-example",
+          "permissions": [],
+          "systemDefined": true,
+          "createdAt": "createdAt",
+          "updatedAt": "updatedAt",
+          "uuid": "uuid",
+          "_actions": [],
+          "_links": {}
+        }
+      ]
+    },
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pf:reset": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    }
+  },
+  "PUT /admin/teams/00000000-0000-4000-8000-000000000001/users": {
+    "_embedded": {
+      "users": [
+        {
+          "active": true,
+          "email": "drift@example.com",
+          "firstName": "Drift",
+          "identityProviderId": "00000000-0000-4000-8000-000000000001",
+          "lastName": "Example",
+          "name": "drift-example",
+          "uuid": "uuid",
+          "type": 0,
+          "typeDescription": "typeDescription",
+          "_links": {}
+        }
+      ]
+    },
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    }
+  },
+  "PUT /admin/users/00000000-0000-4000-8000-000000000001/roles": {
+    "success": true
+  },
+  "PUT /admin/roles/00000000-0000-4000-8000-000000000001": {
+    "created": "created",
+    "description": "Created by a Drift test",
+    "name": "drift-example",
+    "permissions": [
+      {
+        "description": "Created by a Drift test",
+        "group": "group",
+        "label": "label",
+        "scope": "scope",
+        "uuid": "uuid"
+      }
+    ],
+    "systemDefined": true,
+    "createdAt": "createdAt",
+    "updatedAt": "updatedAt",
+    "uuid": "uuid",
+    "_actions": [
+      {
+        "name": "drift-example",
+        "title": "title",
+        "method": "method",
+        "href": "href"
+      }
+    ],
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    }
+  },
+  "PUT /admin/teams/00000000-0000-4000-8000-000000000001": {
+    "createdAt": "createdAt",
+    "name": "drift-example",
+    "numberOfMembers": 1,
+    "updatedAt": "updatedAt",
+    "uuid": "uuid",
+    "_embedded": {
+      "administrators": [
+        {
+          "active": true,
+          "email": "drift@example.com",
+          "firstName": "Drift",
+          "identityProviderId": "00000000-0000-4000-8000-000000000001",
+          "lastName": "Example",
+          "name": "drift-example",
+          "uuid": "uuid",
+          "_links": {}
+        }
+      ],
+      "environments": [
+        {
+          "displayName": "Drift Example",
+          "name": "drift-example",
+          "production": true,
+          "uuid": "uuid",
+          "createdAt": "createdAt",
+          "updatedAt": "updatedAt",
+          "_links": {}
+        }
+      ],
+      "pacticipants": [
+        {
+          "name": "drift-example",
+          "_links": {}
+        }
+      ]
+    },
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    }
+  },
+  "PUT /admin/users/00000000-0000-4000-8000-000000000001": {
+    "active": true,
+    "authenticationSource": "authenticationSource",
+    "createdAt": "createdAt",
+    "email": "drift@example.com",
+    "externalId": "00000000-0000-4000-8000-000000000001",
+    "externalIdpId": "00000000-0000-4000-8000-000000000001",
+    "externalIdpUsername": "externalIdpUsername",
+    "firstName": "Drift",
+    "identityProviderId": "00000000-0000-4000-8000-000000000001",
+    "lastLogin": "lastLogin",
+    "lastName": "Example",
+    "lastTimeTokenAccessed": "lastTimeTokenAccessed",
+    "name": "drift-example",
+    "seatType": "seatType",
+    "type": 0,
+    "typeDescription": "typeDescription",
+    "updatedAt": "updatedAt",
+    "uuid": "uuid",
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pf:tokens": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    },
+    "_embedded": {
+      "roles": [
+        {
+          "name": "drift-example",
+          "permissions": [],
+          "uuid": "uuid",
+          "_links": {}
+        }
+      ],
+      "teams": [
+        {
+          "name": "drift-example",
+          "uuid": "uuid",
+          "_links": {}
+        }
+      ]
+    }
+  },
+  "POST /environments": {
+    "createdAt": "createdAt",
+    "displayName": "Drift Example",
+    "isDefault": true,
+    "name": "drift-example",
+    "production": true,
+    "updatedAt": "updatedAt",
+    "uuid": "uuid",
+    "contacts": [
+      {
+        "name": "drift-example",
+        "details": {}
+      }
+    ],
+    "teamUuids": [
+      "teamUuids"
+    ],
+    "_embedded": {
+      "teams": [
+        {
+          "isDefault": true,
+          "name": "drift-example",
+          "uuid": "uuid",
+          "_links": {}
+        }
+      ]
+    },
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:currently-deployed-deployed-versions": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:currently-supported-released-versions": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:environments": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    }
+  },
+  "POST /pacticipants": {
+    "createdAt": "createdAt",
+    "displayName": "Drift Example",
+    "mainBranch": "mainBranch",
+    "name": "drift-example",
+    "repositoryName": "repositoryName",
+    "repositoryNamespace": "repositoryNamespace",
+    "repositoryUrl": "repositoryUrl",
+    "updatedAt": "updatedAt",
+    "title": "title",
+    "_embedded": {
+      "latest-version": {
+        "number": "number",
+        "title": "title",
+        "name": "drift-example"
+      },
+      "labels": [
+        {
+          "name": "drift-example",
+          "_links": {}
+        }
+      ],
+      "latestVersion": {
+        "number": "number",
+        "_links": {
+          "self": {}
+        }
+      },
+      "teams": [
+        {
+          "isDefault": true,
+          "name": "drift-example",
+          "uuid": "uuid",
+          "_links": {}
+        }
+      ]
+    },
+    "_links": {
+      "pb:branch-version": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:branches": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:can-i-deploy-badge": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:can-i-deploy-branch-to-environment-badge": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:label": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:teams": [
+        {
+          "href": "href",
+          "name": "drift-example",
+          "templated": true,
+          "title": "title"
+        }
+      ],
+      "pb:version": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:version-tag": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:versions": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "curies": [
+        {
+          "href": "href",
+          "name": "drift-example",
+          "templated": true,
+          "title": "title"
+        }
+      ],
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "versions": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    }
+  },
+  "POST /secrets": {
+    "createdAt": "createdAt",
+    "description": "description",
+    "name": "drift-example",
+    "teamUuid": "00000000-0000-4000-8000-000000000001",
+    "updatedAt": "updatedAt",
+    "uuid": "uuid",
+    "_embedded": {
+      "team": {
+        "createdAt": "createdAt",
+        "name": "drift-example",
+        "numberOfMembers": 1,
+        "updatedAt": "updatedAt",
+        "uuid": "uuid",
+        "isDefault": true,
+        "_embedded": {
+          "administrators": [],
+          "environments": [],
+          "members": [],
+          "pacticipants": []
+        },
+        "_links": {}
+      }
+    },
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    }
+  },
+  "POST /webhooks": {
+    "consumer": {
+      "name": "drift-example"
+    },
+    "description": "Created by a Drift test",
+    "enabled": true,
+    "events": [
+      {
+        "name": "drift-example"
+      }
+    ],
+    "provider": {
+      "name": "drift-example"
+    },
+    "request": {
+      "body": "body",
+      "headers": {},
+      "method": "method",
+      "password": "password",
+      "url": "url",
+      "username": "username"
+    },
+    "teamUuid": "00000000-0000-4000-8000-000000000001",
+    "createdAt": "createdAt",
+    "updatedAt": "updatedAt",
+    "uuid": "uuid",
+    "_embedded": {
+      "team": {
+        "isDefault": true,
+        "name": "drift-example",
+        "uuid": "uuid",
+        "_links": {}
+      }
+    },
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:execute": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:consumer": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:provider": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:pact-webhooks": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:webhooks": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    }
+  },
+  "DELETE /integrations": {
+    "success": true
+  },
+  "DELETE /pacticipants/smartbear-mcp/branches/main": {
+    "success": true
+  },
+  "DELETE /environments/00000000-0000-0000-0000-000000000002": {
+    "success": true
+  },
+  "DELETE /integrations/provider/pactflow-api/consumer/smartbear-mcp": {
+    "success": true
+  },
+  "DELETE /pacticipants/smartbear-mcp": {
+    "success": true
+  },
+  "DELETE /secrets/00000000-0000-4000-8000-000000000001": {
+    "success": true
+  },
+  "DELETE /webhooks/00000000-0000-4000-8000-000000000001": {
+    "success": true
+  },
+  "POST /webhooks/00000000-0000-4000-8000-000000000001/execute": {
+    "logs": "logs",
+    "message": "message",
+    "request": {
+      "headers": {},
+      "url": "url",
+      "body": "body"
+    },
+    "response": {
+      "headers": {},
+      "status": 1,
+      "body": "body"
+    },
+    "success": true,
+    "_links": {
+      "try-again": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "webhook": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    }
+  },
+  "GET /audit": {
+    "events": [
+      {
+        "name": "drift-example",
+        "payload": {},
+        "response": {},
+        "timestamp": "timestamp",
+        "tokenUuid": "00000000-0000-4000-8000-000000000001",
+        "type": "type",
+        "username": "username",
+        "userEmail": "userEmail",
+        "userUuid": "00000000-0000-4000-8000-000000000001",
+        "uuid": "uuid"
+      }
+    ],
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "next": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "previous": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    },
+    "page": {
+      "number": 1,
+      "size": 10,
+      "totalElements": 1,
+      "totalPages": 1
+    }
+  },
+  "GET /contracts/bi-directional/provider/pactflow-api/version/1.0.0/consumer/smartbear-mcp/version/1.0.0/consumer-contract": {
+    "verificationStatus": "verificationStatus",
+    "_actions": [
+      {
+        "name": "drift-example",
+        "title": "title",
+        "method": "method",
+        "href": "href"
+      }
+    ],
+    "_embedded": {
+      "consumerVersion": {
+        "createdAt": "createdAt",
+        "number": "number",
+        "buildUrl": "buildUrl",
+        "updatedAt": "updatedAt",
+        "_embedded": {
+          "branchVersions": [],
+          "tags": [],
+          "deployedVersions": [],
+          "releasedVersions": []
+        }
+      },
+      "providerVersion": {
+        "createdAt": "createdAt",
+        "number": "number",
+        "buildUrl": "buildUrl",
+        "updatedAt": "updatedAt",
+        "_embedded": {
+          "branchVersions": [],
+          "tags": [],
+          "deployedVersions": [],
+          "releasedVersions": []
+        }
+      },
+      "crossContractVerificationResults": {
+        "success": true,
+        "results": {},
+        "verificationDate": "verificationDate",
+        "verifier": "verifier",
+        "verifierVersion": "verifierVersion"
+      },
+      "providerContractVerificationResults": {
+        "success": true
+      },
+      "consumerContractVerificationResults": {
+        "success": true
+      },
+      "consumerContract": {
+        "content": "content"
+      }
+    },
+    "_links": {},
+    "pagination": {
+      "pageNumber": 1,
+      "pageSize": 10,
+      "totalItems": 1,
+      "totalPages": 1
+    }
+  },
+  "GET /contracts/bi-directional/provider/pactflow-api/version/1.0.0/consumer-contract-verification-results": {
+    "verificationStatus": "verificationStatus",
+    "_actions": [
+      {
+        "name": "drift-example",
+        "title": "title",
+        "method": "method",
+        "href": "href"
+      }
+    ],
+    "_embedded": {
+      "consumerVersion": {
+        "createdAt": "createdAt",
+        "number": "number",
+        "buildUrl": "buildUrl",
+        "updatedAt": "updatedAt",
+        "_embedded": {
+          "branchVersions": [],
+          "tags": [],
+          "deployedVersions": [],
+          "releasedVersions": []
+        }
+      },
+      "providerVersion": {
+        "createdAt": "createdAt",
+        "number": "number",
+        "buildUrl": "buildUrl",
+        "updatedAt": "updatedAt",
+        "_embedded": {
+          "branchVersions": [],
+          "tags": [],
+          "deployedVersions": [],
+          "releasedVersions": []
+        }
+      },
+      "crossContractVerificationResults": {
+        "success": true
+      },
+      "providerContractVerificationResults": {
+        "success": true
+      },
+      "consumerContractVerificationResults": {
+        "success": true
+      }
+    },
+    "_links": {},
+    "pagination": {
+      "pageNumber": 1,
+      "pageSize": 10,
+      "totalItems": 1,
+      "totalPages": 1
+    }
+  },
+  "GET /contracts/bi-directional/provider/pactflow-api/version/1.0.0/consumer-contract": {
+    "verificationStatus": "verificationStatus",
+    "_actions": [
+      {
+        "name": "drift-example",
+        "title": "title",
+        "method": "method",
+        "href": "href"
+      }
+    ],
+    "_embedded": {
+      "consumerVersion": {
+        "createdAt": "createdAt",
+        "number": "number",
+        "buildUrl": "buildUrl",
+        "updatedAt": "updatedAt",
+        "_embedded": {
+          "branchVersions": [],
+          "tags": [],
+          "deployedVersions": [],
+          "releasedVersions": []
+        }
+      },
+      "providerVersion": {
+        "createdAt": "createdAt",
+        "number": "number",
+        "buildUrl": "buildUrl",
+        "updatedAt": "updatedAt",
+        "_embedded": {
+          "branchVersions": [],
+          "tags": [],
+          "deployedVersions": [],
+          "releasedVersions": []
+        }
+      },
+      "crossContractVerificationResults": {
+        "success": true,
+        "results": {},
+        "verificationDate": "verificationDate",
+        "verifier": "verifier",
+        "verifierVersion": "verifierVersion"
+      },
+      "providerContractVerificationResults": {
+        "success": true
+      },
+      "consumerContractVerificationResults": {
+        "success": true
+      },
+      "consumerContract": {
+        "content": "content"
+      }
+    },
+    "_links": {},
+    "pagination": {
+      "pageNumber": 1,
+      "pageSize": 10,
+      "totalItems": 1,
+      "totalPages": 1
+    }
+  },
+  "GET /contracts/bi-directional/provider/pactflow-api/version/1.0.0/consumer/smartbear-mcp/version/1.0.0/consumer-contract-verification-results": {
+    "verificationStatus": "verificationStatus",
+    "_actions": [
+      {
+        "name": "drift-example",
+        "title": "title",
+        "method": "method",
+        "href": "href"
+      }
+    ],
+    "_embedded": {
+      "consumerVersion": {
+        "createdAt": "createdAt",
+        "number": "number",
+        "buildUrl": "buildUrl",
+        "updatedAt": "updatedAt",
+        "_embedded": {
+          "branchVersions": [],
+          "tags": [],
+          "deployedVersions": [],
+          "releasedVersions": []
+        }
+      },
+      "providerVersion": {
+        "createdAt": "createdAt",
+        "number": "number",
+        "buildUrl": "buildUrl",
+        "updatedAt": "updatedAt",
+        "_embedded": {
+          "branchVersions": [],
+          "tags": [],
+          "deployedVersions": [],
+          "releasedVersions": []
+        }
+      },
+      "crossContractVerificationResults": {
+        "success": true
+      },
+      "providerContractVerificationResults": {
+        "success": true
+      },
+      "consumerContractVerificationResults": {
+        "success": true
+      }
+    },
+    "_links": {},
+    "pagination": {
+      "pageNumber": 1,
+      "pageSize": 10,
+      "totalItems": 1,
+      "totalPages": 1
+    }
+  },
+  "GET /contracts/bi-directional/provider/pactflow-api/version/1.0.0/cross-contract-verification-results": {
+    "verificationStatus": "verificationStatus",
+    "_actions": [
+      {
+        "name": "drift-example",
+        "title": "title",
+        "method": "method",
+        "href": "href"
+      }
+    ],
+    "_embedded": {
+      "consumerVersion": {
+        "createdAt": "createdAt",
+        "number": "number",
+        "buildUrl": "buildUrl",
+        "updatedAt": "updatedAt",
+        "_embedded": {
+          "branchVersions": [],
+          "tags": [],
+          "deployedVersions": [],
+          "releasedVersions": []
+        }
+      },
+      "providerVersion": {
+        "createdAt": "createdAt",
+        "number": "number",
+        "buildUrl": "buildUrl",
+        "updatedAt": "updatedAt",
+        "_embedded": {
+          "branchVersions": [],
+          "tags": [],
+          "deployedVersions": [],
+          "releasedVersions": []
+        }
+      },
+      "crossContractVerificationResults": {
+        "success": true,
+        "results": {},
+        "verificationDate": "verificationDate",
+        "verifier": "verifier",
+        "verifierVersion": "verifierVersion"
+      },
+      "providerContractVerificationResults": {
+        "success": true
+      },
+      "consumerContractVerificationResults": {
+        "success": true
+      }
+    },
+    "_links": {},
+    "pagination": {
+      "pageNumber": 1,
+      "pageSize": 10,
+      "totalItems": 1,
+      "totalPages": 1
+    }
+  },
+  "GET /contracts/bi-directional/provider/pactflow-api/version/1.0.0/consumer/smartbear-mcp/version/1.0.0/provider-contract": {
+    "verificationStatus": "verificationStatus",
+    "_actions": [
+      {
+        "name": "drift-example",
+        "title": "title",
+        "method": "method",
+        "href": "href"
+      }
+    ],
+    "_embedded": {
+      "consumerVersion": {
+        "createdAt": "createdAt",
+        "number": "number",
+        "buildUrl": "buildUrl",
+        "updatedAt": "updatedAt",
+        "_embedded": {
+          "branchVersions": [],
+          "tags": [],
+          "deployedVersions": [],
+          "releasedVersions": []
+        }
+      },
+      "providerVersion": {
+        "createdAt": "createdAt",
+        "number": "number",
+        "buildUrl": "buildUrl",
+        "updatedAt": "updatedAt",
+        "_embedded": {
+          "branchVersions": [],
+          "tags": [],
+          "deployedVersions": [],
+          "releasedVersions": []
+        }
+      },
+      "crossContractVerificationResults": {
+        "success": true
+      },
+      "providerContractVerificationResults": {
+        "success": true,
+        "content": "content",
+        "contentType": "contentType",
+        "verifier": "verifier"
+      },
+      "consumerContractVerificationResults": {
+        "success": true
+      },
+      "providerContract": {
+        "content": "content",
+        "contentType": "contentType",
+        "contractType": "contractType",
+        "createdAt": "createdAt"
+      }
+    },
+    "_links": {},
+    "pagination": {
+      "pageNumber": 1,
+      "pageSize": 10,
+      "totalItems": 1,
+      "totalPages": 1
+    }
+  },
+  "GET /contracts/bi-directional/provider/pactflow-api/version/1.0.0/consumer/smartbear-mcp/version/1.0.0/provider-contract-verification-results": {
+    "verificationStatus": "verificationStatus",
+    "_actions": [
+      {
+        "name": "drift-example",
+        "title": "title",
+        "method": "method",
+        "href": "href"
+      }
+    ],
+    "_embedded": {
+      "consumerVersion": {
+        "createdAt": "createdAt",
+        "number": "number",
+        "buildUrl": "buildUrl",
+        "updatedAt": "updatedAt",
+        "_embedded": {
+          "branchVersions": [],
+          "tags": [],
+          "deployedVersions": [],
+          "releasedVersions": []
+        }
+      },
+      "providerVersion": {
+        "createdAt": "createdAt",
+        "number": "number",
+        "buildUrl": "buildUrl",
+        "updatedAt": "updatedAt",
+        "_embedded": {
+          "branchVersions": [],
+          "tags": [],
+          "deployedVersions": [],
+          "releasedVersions": []
+        }
+      },
+      "crossContractVerificationResults": {
+        "success": true
+      },
+      "providerContractVerificationResults": {
+        "success": true,
+        "content": "content",
+        "contentType": "contentType",
+        "verifier": "verifier"
+      },
+      "consumerContractVerificationResults": {
+        "success": true
+      }
+    },
+    "_links": {},
+    "pagination": {
+      "pageNumber": 1,
+      "pageSize": 10,
+      "totalItems": 1,
+      "totalPages": 1
+    }
+  },
+  "GET /contracts/bi-directional/provider/pactflow-api/version/1.0.0/provider-contract": {
+    "verificationStatus": "verificationStatus",
+    "_actions": [
+      {
+        "name": "drift-example",
+        "title": "title",
+        "method": "method",
+        "href": "href"
+      }
+    ],
+    "_embedded": {
+      "consumerVersion": {
+        "createdAt": "createdAt",
+        "number": "number",
+        "buildUrl": "buildUrl",
+        "updatedAt": "updatedAt",
+        "_embedded": {
+          "branchVersions": [],
+          "tags": [],
+          "deployedVersions": [],
+          "releasedVersions": []
+        }
+      },
+      "providerVersion": {
+        "createdAt": "createdAt",
+        "number": "number",
+        "buildUrl": "buildUrl",
+        "updatedAt": "updatedAt",
+        "_embedded": {
+          "branchVersions": [],
+          "tags": [],
+          "deployedVersions": [],
+          "releasedVersions": []
+        }
+      },
+      "crossContractVerificationResults": {
+        "success": true
+      },
+      "providerContractVerificationResults": {
+        "success": true,
+        "content": "content",
+        "contentType": "contentType",
+        "verifier": "verifier"
+      },
+      "consumerContractVerificationResults": {
+        "success": true
+      },
+      "providerContract": {
+        "content": "content",
+        "contentType": "contentType",
+        "contractType": "contractType",
+        "createdAt": "createdAt"
+      }
+    },
+    "_links": {},
+    "pagination": {
+      "pageNumber": 1,
+      "pageSize": 10,
+      "totalItems": 1,
+      "totalPages": 1
+    }
+  },
+  "GET /contracts/bi-directional/provider/pactflow-api/version/1.0.0/provider-contract-verification-results": {
+    "verificationStatus": "verificationStatus",
+    "_actions": [
+      {
+        "name": "drift-example",
+        "title": "title",
+        "method": "method",
+        "href": "href"
+      }
+    ],
+    "_embedded": {
+      "consumerVersion": {
+        "createdAt": "createdAt",
+        "number": "number",
+        "buildUrl": "buildUrl",
+        "updatedAt": "updatedAt",
+        "_embedded": {
+          "branchVersions": [],
+          "tags": [],
+          "deployedVersions": [],
+          "releasedVersions": []
+        }
+      },
+      "providerVersion": {
+        "createdAt": "createdAt",
+        "number": "number",
+        "buildUrl": "buildUrl",
+        "updatedAt": "updatedAt",
+        "_embedded": {
+          "branchVersions": [],
+          "tags": [],
+          "deployedVersions": [],
+          "releasedVersions": []
+        }
+      },
+      "crossContractVerificationResults": {
+        "success": true
+      },
+      "providerContractVerificationResults": {
+        "success": true,
+        "content": "content",
+        "contentType": "contentType",
+        "verifier": "verifier"
+      },
+      "consumerContractVerificationResults": {
+        "success": true
+      }
+    },
+    "_links": {},
+    "pagination": {
+      "pageNumber": 1,
+      "pageSize": 10,
+      "totalItems": 1,
+      "totalPages": 1
+    }
+  },
+  "GET /contracts/bi-directional/provider/pactflow-api/version/1.0.0/consumer/smartbear-mcp/version/1.0.0/cross-contract-verification-results": {
+    "verificationStatus": "verificationStatus",
+    "_actions": [
+      {
+        "name": "drift-example",
+        "title": "title",
+        "method": "method",
+        "href": "href"
+      }
+    ],
+    "_embedded": {
+      "consumerVersion": {
+        "createdAt": "createdAt",
+        "number": "number",
+        "buildUrl": "buildUrl",
+        "updatedAt": "updatedAt",
+        "_embedded": {
+          "branchVersions": [],
+          "tags": [],
+          "deployedVersions": [],
+          "releasedVersions": []
+        }
+      },
+      "providerVersion": {
+        "createdAt": "createdAt",
+        "number": "number",
+        "buildUrl": "buildUrl",
+        "updatedAt": "updatedAt",
+        "_embedded": {
+          "branchVersions": [],
+          "tags": [],
+          "deployedVersions": [],
+          "releasedVersions": []
+        }
+      },
+      "crossContractVerificationResults": {
+        "success": true,
+        "results": {},
+        "verificationDate": "verificationDate",
+        "verifier": "verifier",
+        "verifierVersion": "verifierVersion"
+      },
+      "providerContractVerificationResults": {
+        "success": true
+      },
+      "consumerContractVerificationResults": {
+        "success": true
+      }
+    },
+    "_links": {},
+    "pagination": {
+      "pageNumber": 1,
+      "pageSize": 10,
+      "totalItems": 1,
+      "totalPages": 1
+    }
+  },
+  "GET /pacticipants/smartbear-mcp/branches/main": {
+    "name": "drift-example",
+    "createdAt": "createdAt",
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:latest-version": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    }
+  },
+  "GET /pacticipants/smartbear-mcp/branches/main/versions": {
+    "page": {
+      "number": 1,
+      "size": 10,
+      "totalElements": 1,
+      "totalPages": 1
+    },
+    "_embedded": {
+      "versions": [
+        {
+          "createdAt": "createdAt",
+          "number": "number",
+          "buildUrl": "buildUrl",
+          "updatedAt": "updatedAt",
+          "_embedded": {},
+          "_links": {}
+        }
+      ]
+    },
+    "_links": {
+      "pb:pacticipant": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:versions": [
+        {
+          "href": "href",
+          "name": "drift-example",
+          "templated": true,
+          "title": "title"
+        }
+      ],
+      "next": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pacticipant": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "previous": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "versions": [
+        {
+          "href": "href",
+          "name": "drift-example",
+          "templated": true,
+          "title": "title"
+        }
+      ]
+    }
+  },
+  "GET /user": {
+    "active": true,
+    "authenticationSource": "authenticationSource",
+    "createdAt": "createdAt",
+    "email": "drift@example.com",
+    "externalId": "00000000-0000-4000-8000-000000000001",
+    "externalIdpId": "00000000-0000-4000-8000-000000000001",
+    "externalIdpUsername": "externalIdpUsername",
+    "firstName": "Drift",
+    "identityProviderId": "00000000-0000-4000-8000-000000000001",
+    "lastLogin": "lastLogin",
+    "lastName": "Example",
+    "lastTimeTokenAccessed": "lastTimeTokenAccessed",
+    "name": "drift-example",
+    "seatType": "seatType",
+    "type": 0,
+    "typeDescription": "typeDescription",
+    "updatedAt": "updatedAt",
+    "uuid": "uuid",
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pf:tokens": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    },
+    "_embedded": {
+      "roles": [
+        {
+          "name": "drift-example",
+          "permissions": [],
+          "uuid": "uuid",
+          "_links": {}
+        }
+      ],
+      "teams": [
+        {
+          "name": "drift-example",
+          "uuid": "uuid",
+          "_links": {}
+        }
+      ]
+    }
+  },
+  "GET /environments/00000000-0000-0000-0000-000000000002/deployed-versions/currently-deployed": {
+    "_embedded": {
+      "deployedVersions": [
+        {
+          "uuid": "uuid",
+          "target": "target",
+          "createdAt": "createdAt",
+          "currentlyDeployed": true,
+          "applicationInstance": "applicationInstance",
+          "_links": {},
+          "_embedded": {}
+        }
+      ]
+    },
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    },
+    "pagination": {
+      "pageNumber": 1,
+      "pageSize": 10,
+      "totalItems": 1,
+      "totalPages": 1
+    }
+  },
+  "GET /environments/00000000-0000-0000-0000-000000000002/released-versions/currently-supported": {
+    "_embedded": {
+      "releasedVersions": [
+        {
+          "uuid": "uuid",
+          "createdAt": "createdAt",
+          "currentlySupported": true,
+          "_links": {},
+          "_embedded": {}
+        }
+      ]
+    },
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    },
+    "pagination": {
+      "pageNumber": 1,
+      "pageSize": 10,
+      "totalItems": 1,
+      "totalPages": 1
+    }
+  },
+  "GET /pacticipants/smartbear-mcp/versions/1.0.0/deployed-versions/environment/00000000-0000-0000-0000-000000000002": {
+    "_embedded": {
+      "deployedVersions": [
+        {
+          "uuid": "uuid",
+          "target": "target",
+          "createdAt": "createdAt",
+          "currentlyDeployed": true,
+          "applicationInstance": "applicationInstance",
+          "_links": {},
+          "_embedded": {}
+        }
+      ]
+    },
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    },
+    "pagination": {
+      "pageNumber": 1,
+      "pageSize": 10,
+      "totalItems": 1,
+      "totalPages": 1
+    }
+  },
+  "GET /integrations/team/00000000-0000-4000-8000-000000000001": {
+    "page": {
+      "number": 1,
+      "size": 10,
+      "totalElements": 1,
+      "totalPages": 1
+    },
+    "_embedded": {
+      "integrations": [
+        {
+          "consumer": {},
+          "provider": {},
+          "verificationModes": [],
+          "_links": {}
+        }
+      ]
+    },
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    },
+    "pagination": {
+      "pageNumber": 1,
+      "pageSize": 10,
+      "totalItems": 1,
+      "totalPages": 1
+    }
+  },
+  "GET /pacticipants/smartbear-mcp/latest-version": {
+    "createdAt": "createdAt",
+    "number": "number",
+    "buildUrl": "buildUrl",
+    "updatedAt": "updatedAt",
+    "_embedded": {
+      "branchVersions": [
+        {
+          "name": "drift-example",
+          "latest": true,
+          "_links": {}
+        }
+      ],
+      "tags": [
+        {
+          "name": "drift-example",
+          "_links": {}
+        }
+      ],
+      "deployedVersions": [
+        {
+          "uuid": "uuid",
+          "target": "target",
+          "createdAt": "createdAt",
+          "currentlyDeployed": true,
+          "applicationInstance": "applicationInstance",
+          "_links": {},
+          "_embedded": {}
+        }
+      ],
+      "releasedVersions": [
+        {
+          "uuid": "uuid",
+          "createdAt": "createdAt",
+          "currentlySupported": true,
+          "_links": {},
+          "_embedded": {}
+        }
+      ]
+    },
+    "_links": {
+      "pb:latest-verification-results-where-pacticipant-is-consumer": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:pact-versions": [
+        {
+          "href": "href",
+          "name": "drift-example",
+          "templated": true,
+          "title": "title"
+        }
+      ],
+      "pb:pacticipant": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:tag": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "curies": [
+        {
+          "href": "href",
+          "name": "drift-example",
+          "templated": true,
+          "title": "title"
+        }
+      ],
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:record-deployment": [
+        {
+          "href": "href",
+          "name": "drift-example",
+          "templated": true,
+          "title": "title"
+        }
+      ],
+      "pb:record-release": [
+        {
+          "href": "href",
+          "name": "drift-example",
+          "templated": true,
+          "title": "title"
+        }
+      ]
+    }
+  },
+  "GET /metrics": {
+    "crossContractComparisons": {
+      "count": 1
+    },
+    "deployedVersions": {
+      "count": 1,
+      "userCreatedCount": 1,
+      "currentlyDeployedCount": 1
+    },
+    "environments": {
+      "count": 1
+    },
+    "interactions": {
+      "latestInteractionsAndMessagesCount": 1,
+      "latestInteractionsCount": 1,
+      "latestMessagesCount": 1
+    },
+    "integrations": {
+      "count": 1
+    },
+    "matrix": {
+      "count": 1
+    },
+    "pactPublications": {
+      "count": 1,
+      "first": "first",
+      "last": "last"
+    },
+    "pactVersions": {
+      "count": 1
+    },
+    "pactRevisionsPerConsumerVersion": {
+      "distribution": {}
+    },
+    "pacticipants": {
+      "count": 1,
+      "withMainBranchSetCount": 1
+    },
+    "pacticipantVersions": {
+      "count": 1,
+      "withUserCreatedBranchCount": 1,
+      "withBranchCount": 1,
+      "withBranchSetCount": 1
+    },
+    "providerContractPublications": {
+      "count": 1
+    },
+    "providerContractVersions": {
+      "count": 1
+    },
+    "providerContractSelfVerifications": {
+      "count": 1
+    },
+    "releasedVersions": {
+      "count": 1,
+      "currentlySupportedCount": 1
+    },
+    "secrets": {
+      "count": 1,
+      "countsByTeam": [
+        1
+      ]
+    },
+    "tags": {
+      "count": 1,
+      "distinctCount": 1,
+      "distinctWithPacticipantCount": 1
+    },
+    "teams": {
+      "count": 1
+    },
+    "triggeredWebhooks": {
+      "count": 1
+    },
+    "users": {
+      "activeRegularCount": 1,
+      "activeSystemCount": 1
+    },
+    "verificationResults": {
+      "count": 1,
+      "successCount": 1,
+      "failureCount": 1,
+      "distinctCount": 1,
+      "first": "first",
+      "last": "last"
+    },
+    "verificationResultsPerPactVersion": {
+      "distribution": {}
+    },
+    "webhookExecutions": {
+      "count": 1
+    },
+    "webhooks": {
+      "count": 1
+    }
+  },
+  "GET /pacticipants/smartbear-mcp/labels/frontend": {
+    "name": "drift-example",
+    "createdAt": "createdAt",
+    "_links": {
+      "self": {
+        "title": "title",
+        "name": "drift-example",
+        "href": "href"
+      },
+      "pacticipant": {
+        "title": "title",
+        "name": "drift-example",
+        "href": "href"
+      }
+    }
+  },
+  "GET /pacticipant/smartbear-mcp/network": {
+    "integrations": [
+      {
+        "consumer": {
+          "name": "drift-example"
+        },
+        "provider": {
+          "name": "drift-example"
+        }
+      }
+    ],
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    },
+    "pagination": {
+      "pageNumber": 1,
+      "pageSize": 10,
+      "totalItems": 1,
+      "totalPages": 1
+    }
+  },
+  "GET /pacticipants/smartbear-mcp/versions/1.0.0": {
+    "createdAt": "createdAt",
+    "number": "number",
+    "buildUrl": "buildUrl",
+    "updatedAt": "updatedAt",
+    "_embedded": {
+      "branchVersions": [
+        {
+          "name": "drift-example",
+          "latest": true,
+          "_links": {}
+        }
+      ],
+      "tags": [
+        {
+          "name": "drift-example",
+          "_links": {}
+        }
+      ],
+      "deployedVersions": [
+        {
+          "uuid": "uuid",
+          "target": "target",
+          "createdAt": "createdAt",
+          "currentlyDeployed": true,
+          "applicationInstance": "applicationInstance",
+          "_links": {},
+          "_embedded": {}
+        }
+      ],
+      "releasedVersions": [
+        {
+          "uuid": "uuid",
+          "createdAt": "createdAt",
+          "currentlySupported": true,
+          "_links": {},
+          "_embedded": {}
+        }
+      ]
+    },
+    "_links": {
+      "pb:latest-verification-results-where-pacticipant-is-consumer": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:pact-versions": [
+        {
+          "href": "href",
+          "name": "drift-example",
+          "templated": true,
+          "title": "title"
+        }
+      ],
+      "pb:pacticipant": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:tag": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "curies": [
+        {
+          "href": "href",
+          "name": "drift-example",
+          "templated": true,
+          "title": "title"
+        }
+      ],
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:record-deployment": [
+        {
+          "href": "href",
+          "name": "drift-example",
+          "templated": true,
+          "title": "title"
+        }
+      ],
+      "pb:record-release": [
+        {
+          "href": "href",
+          "name": "drift-example",
+          "templated": true,
+          "title": "title"
+        }
+      ]
+    }
+  },
+  "POST /pacts/provider/pactflow-api/for-verification": {
+    "_embedded": {
+      "pacts": [
+        {
+          "shortDescription": "shortDescription",
+          "verificationProperties": {},
+          "_links": {}
+        }
+      ]
+    },
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    }
+  },
+  "GET /pacts/provider/pactflow-api/provider-states": {
+    "providerStates": [
+      {
+        "name": "drift-example",
+        "params": {},
+        "consumers": [
+          "consumers"
+        ]
+      }
+    ],
+    "pagination": {
+      "pageNumber": 1,
+      "pageSize": 10,
+      "totalItems": 1,
+      "totalPages": 1
+    }
+  },
+  "GET /pacticipants/smartbear-mcp/versions/1.0.0/released-versions/environment/00000000-0000-0000-0000-000000000002": {
+    "_embedded": {
+      "releasedVersions": [
+        {
+          "uuid": "uuid",
+          "createdAt": "createdAt",
+          "currentlySupported": true,
+          "_links": {},
+          "_embedded": {}
+        }
+      ]
+    },
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    },
+    "pagination": {
+      "pageNumber": 1,
+      "pageSize": 10,
+      "totalItems": 1,
+      "totalPages": 1
+    }
+  },
+  "GET /secrets/00000000-0000-4000-8000-000000000001": {
+    "createdAt": "createdAt",
+    "description": "description",
+    "name": "drift-example",
+    "teamUuid": "00000000-0000-4000-8000-000000000001",
+    "updatedAt": "updatedAt",
+    "uuid": "uuid",
+    "_embedded": {
+      "team": {
+        "createdAt": "createdAt",
+        "name": "drift-example",
+        "numberOfMembers": 1,
+        "updatedAt": "updatedAt",
+        "uuid": "uuid",
+        "isDefault": true,
+        "_embedded": {
+          "administrators": [],
+          "environments": [],
+          "members": [],
+          "pacticipants": []
+        },
+        "_links": {}
+      }
+    },
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    }
+  },
+  "GET /preferences/system": {
+    "_embedded": {
+      "preferences": [
+        {
+          "name": "drift-example",
+          "uuid": "uuid",
+          "value": "drift-secret-value",
+          "_links": {}
+        }
+      ]
+    },
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    }
+  },
+  "GET /metrics/teams": {
+    "teams": [
+      {
+        "name": "drift-example",
+        "metrics": {
+          "interactions": {
+            "latestInteractionsCount": 1,
+            "latestMessagesCount": 1
+          },
+          "pacticipants": {
+            "count": 1
+          },
+          "integrations": {
+            "count": 1
+          },
+          "pactPublications": {
+            "count": 1,
+            "first": "first",
+            "last": "last"
+          },
+          "pactVersions": {
+            "count": 1
+          },
+          "verificationResults": {
+            "count": 1,
+            "successCount": 1,
+            "failureCount": 1,
+            "first": "first",
+            "last": "last"
+          },
+          "users": {
+            "activeRegularCount": 1,
+            "activeSystemCount": 1
+          },
+          "webhooks": {
+            "count": 1
+          },
+          "webhookExecutions": {
+            "count": 1
+          },
+          "triggeredWebhooks": {
+            "count": 1
+          },
+          "secrets": {
+            "count": 1
+          },
+          "environments": {
+            "count": 1
+          },
+          "providerContractPublications": {
+            "count": 1
+          },
+          "providerContractVersions": {
+            "count": 1
+          },
+          "providerContractSelfVerifications": {
+            "count": 1
+          },
+          "deployedVersions": {
+            "count": 1,
+            "currentlyDeployedCount": 1
+          },
+          "releasedVersions": {
+            "count": 1,
+            "currentlySupportedCount": 1
+          }
+        }
+      }
+    ],
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    }
+  },
+  "GET /preferences/current-user": {
+    "_embedded": {
+      "preferences": [
+        {
+          "name": "drift-example",
+          "uuid": "uuid",
+          "value": "drift-secret-value",
+          "_links": {}
+        }
+      ]
+    },
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    }
+  },
+  "GET /webhooks/00000000-0000-4000-8000-000000000001": {
+    "consumer": {
+      "name": "drift-example"
+    },
+    "description": "Created by a Drift test",
+    "enabled": true,
+    "events": [
+      {
+        "name": "drift-example"
+      }
+    ],
+    "provider": {
+      "name": "drift-example"
+    },
+    "request": {
+      "body": "body",
+      "headers": {},
+      "method": "method",
+      "password": "password",
+      "url": "url",
+      "username": "username"
+    },
+    "teamUuid": "00000000-0000-4000-8000-000000000001",
+    "createdAt": "createdAt",
+    "updatedAt": "updatedAt",
+    "uuid": "uuid",
+    "_embedded": {
+      "team": {
+        "isDefault": true,
+        "name": "drift-example",
+        "uuid": "uuid",
+        "_links": {}
+      }
+    },
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:execute": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:consumer": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:provider": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:pact-webhooks": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:webhooks": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    }
+  },
+  "GET /settings/tokens": {
+    "_embedded": {
+      "items": [
+        {
+          "description": "Created by a Drift test",
+          "expires": "expires",
+          "lastUsed": "lastUsed",
+          "readOnly": true,
+          "uuid": "uuid",
+          "value": "drift-secret-value",
+          "_links": {}
+        }
+      ]
+    },
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    },
+    "pagination": {
+      "pageNumber": 1,
+      "pageSize": 10,
+      "totalItems": 1,
+      "totalPages": 1
+    }
+  },
+  "GET /pacticipants/smartbear-mcp/branches": {
+    "page": {
+      "number": 1,
+      "size": 10,
+      "totalElements": 1,
+      "totalPages": 1
+    },
+    "_embedded": {
+      "branches": [
+        {
+          "name": "drift-example",
+          "createdAt": "createdAt",
+          "_links": {}
+        }
+      ]
+    },
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:branches": [
+        {
+          "href": "href",
+          "name": "drift-example",
+          "templated": true,
+          "title": "title"
+        }
+      ],
+      "next": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "previous": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    }
+  },
+  "GET /pacticipants/smartbear-mcp/deployed-or-released/versions": {
+    "page": {
+      "number": 1,
+      "size": 10,
+      "totalElements": 1,
+      "totalPages": 1
+    },
+    "_embedded": {
+      "versions": [
+        {
+          "createdAt": "createdAt",
+          "number": "number",
+          "buildUrl": "buildUrl",
+          "updatedAt": "updatedAt",
+          "_embedded": {},
+          "_links": {}
+        }
+      ]
+    },
+    "_links": {
+      "pb:pacticipant": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:versions": [
+        {
+          "href": "href",
+          "name": "drift-example",
+          "templated": true,
+          "title": "title"
+        }
+      ],
+      "next": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pacticipant": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "previous": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "versions": [
+        {
+          "href": "href",
+          "name": "drift-example",
+          "templated": true,
+          "title": "title"
+        }
+      ]
+    }
+  },
+  "GET /pacticipants/smartbear-mcp/environments/00000000-0000-0000-0000-000000000002/versions": {
+    "page": {
+      "number": 1,
+      "size": 10,
+      "totalElements": 1,
+      "totalPages": 1
+    },
+    "_embedded": {
+      "versions": [
+        {
+          "createdAt": "createdAt",
+          "number": "number",
+          "buildUrl": "buildUrl",
+          "updatedAt": "updatedAt",
+          "_embedded": {},
+          "_links": {}
+        }
+      ]
+    },
+    "_links": {
+      "pb:pacticipant": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:versions": [
+        {
+          "href": "href",
+          "name": "drift-example",
+          "templated": true,
+          "title": "title"
+        }
+      ],
+      "next": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pacticipant": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "previous": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "versions": [
+        {
+          "href": "href",
+          "name": "drift-example",
+          "templated": true,
+          "title": "title"
+        }
+      ]
+    }
+  },
+  "GET /integrations": {
+    "page": {
+      "number": 1,
+      "size": 10,
+      "totalElements": 1,
+      "totalPages": 1
+    },
+    "_embedded": {
+      "integrations": [
+        {
+          "consumer": {},
+          "provider": {},
+          "verificationModes": [],
+          "_links": {}
+        }
+      ]
+    },
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    },
+    "pagination": {
+      "pageNumber": 1,
+      "pageSize": 10,
+      "totalItems": 1,
+      "totalPages": 1
+    }
+  },
+  "GET /labels": {
+    "page": {
+      "number": 1,
+      "size": 10,
+      "totalElements": 1,
+      "totalPages": 1
+    },
+    "_embedded": {
+      "labels": [
+        {
+          "name": "drift-example"
+        }
+      ]
+    },
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "next": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "previous": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    }
+  },
+  "GET /pacticipants/smartbear-mcp/versions": {
+    "page": {
+      "number": 1,
+      "size": 10,
+      "totalElements": 1,
+      "totalPages": 1
+    },
+    "_embedded": {
+      "versions": [
+        {
+          "createdAt": "createdAt",
+          "number": "number",
+          "buildUrl": "buildUrl",
+          "updatedAt": "updatedAt",
+          "_embedded": {},
+          "_links": {}
+        }
+      ]
+    },
+    "_links": {
+      "pb:pacticipant": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:versions": [
+        {
+          "href": "href",
+          "name": "drift-example",
+          "templated": true,
+          "title": "title"
+        }
+      ],
+      "next": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pacticipant": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "previous": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "versions": [
+        {
+          "href": "href",
+          "name": "drift-example",
+          "templated": true,
+          "title": "title"
+        }
+      ]
+    }
+  },
+  "GET /pacticipants/label/frontend": {
+    "page": {
+      "number": 1,
+      "size": 10,
+      "totalElements": 1,
+      "totalPages": 1
+    },
+    "pacticipants": [
+      {
+        "createdAt": "createdAt",
+        "displayName": "Drift Example",
+        "mainBranch": "mainBranch",
+        "name": "drift-example",
+        "repositoryName": "repositoryName",
+        "repositoryNamespace": "repositoryNamespace",
+        "repositoryUrl": "repositoryUrl",
+        "updatedAt": "updatedAt",
+        "title": "title",
+        "_embedded": {
+          "latest-version": {},
+          "labels": [],
+          "latestVersion": {},
+          "teams": []
+        },
+        "_links": {
+          "pb:teams": [],
+          "curies": []
+        }
+      }
+    ],
+    "_embedded": {
+      "pacticipants": [
+        {
+          "createdAt": "createdAt",
+          "displayName": "Drift Example",
+          "mainBranch": "mainBranch",
+          "name": "drift-example",
+          "repositoryName": "repositoryName",
+          "repositoryNamespace": "repositoryNamespace",
+          "repositoryUrl": "repositoryUrl",
+          "updatedAt": "updatedAt",
+          "title": "title",
+          "_embedded": {},
+          "_links": {}
+        }
+      ]
+    },
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "next": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "previous": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:pacticipants-with-label": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:pacticipants": [
+        {
+          "href": "href",
+          "name": "drift-example",
+          "templated": true,
+          "title": "title"
+        }
+      ],
+      "pacticipants": [
+        {
+          "href": "href",
+          "name": "drift-example",
+          "templated": true,
+          "title": "title"
+        }
+      ]
+    },
+    "pagination": {
+      "pageNumber": 1,
+      "pageSize": 10,
+      "totalItems": 1,
+      "totalPages": 1
+    }
+  },
+  "GET /secrets": {
+    "_embedded": {
+      "secrets": [
+        {
+          "createdAt": "createdAt",
+          "description": "description",
+          "name": "drift-example",
+          "teamUuid": "00000000-0000-4000-8000-000000000001",
+          "updatedAt": "updatedAt",
+          "uuid": "uuid",
+          "_embedded": {},
+          "_links": {}
+        }
+      ]
+    },
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    },
+    "pagination": {
+      "pageNumber": 1,
+      "pageSize": 10,
+      "totalItems": 1,
+      "totalPages": 1
+    }
+  },
+  "GET /webhooks": {
+    "_embedded": {
+      "webhooks": [
+        {
+          "consumerName": "smartbear-mcp",
+          "description": "Created by a Drift test",
+          "enabled": true,
+          "providerName": "pactflow-api",
+          "teamUuid": "00000000-0000-4000-8000-000000000001",
+          "uuid": "uuid",
+          "_embedded": {},
+          "_links": {}
+        }
+      ]
+    },
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:create": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:webhooks": [
+        {
+          "href": "href",
+          "name": "drift-example",
+          "templated": true,
+          "title": "title"
+        }
+      ],
+      "curies": [
+        {
+          "href": "href",
+          "name": "drift-example",
+          "templated": true,
+          "title": "title"
+        }
+      ]
+    },
+    "pagination": {
+      "pageNumber": 1,
+      "pageSize": 10,
+      "totalItems": 1,
+      "totalPages": 1
+    }
+  },
+  "GET /matrix": {
+    "matrix": [
+      {
+        "consumer": {
+          "name": "drift-example",
+          "_links": {}
+        },
+        "pact": {
+          "createdAt": "createdAt",
+          "_links": {}
+        },
+        "provider": {
+          "name": "drift-example",
+          "_links": {}
+        },
+        "verificationResult": {
+          "success": true,
+          "verifiedAt": "verifiedAt",
+          "_links": {}
+        }
+      }
+    ],
+    "notices": [
+      {
+        "text": "text",
+        "type": "info"
+      }
+    ],
+    "summary": {
+      "deployable": true,
+      "failed": 1,
+      "reason": "reason",
+      "success": 1,
+      "unknown": 1
+    }
+  },
+  "PATCH /pacticipants/smartbear-mcp": {
+    "createdAt": "createdAt",
+    "displayName": "Drift Example",
+    "mainBranch": "mainBranch",
+    "name": "drift-example",
+    "repositoryName": "repositoryName",
+    "repositoryNamespace": "repositoryNamespace",
+    "repositoryUrl": "repositoryUrl",
+    "updatedAt": "updatedAt",
+    "title": "title",
+    "_embedded": {
+      "latest-version": {
+        "number": "number",
+        "title": "title",
+        "name": "drift-example"
+      },
+      "labels": [
+        {
+          "name": "drift-example",
+          "_links": {}
+        }
+      ],
+      "latestVersion": {
+        "number": "number",
+        "_links": {
+          "self": {}
+        }
+      },
+      "teams": [
+        {
+          "isDefault": true,
+          "name": "drift-example",
+          "uuid": "uuid",
+          "_links": {}
+        }
+      ]
+    },
+    "_links": {
+      "pb:branch-version": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:branches": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:can-i-deploy-badge": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:can-i-deploy-branch-to-environment-badge": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:label": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:teams": [
+        {
+          "href": "href",
+          "name": "drift-example",
+          "templated": true,
+          "title": "title"
+        }
+      ],
+      "pb:version": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:version-tag": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:versions": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "curies": [
+        {
+          "href": "href",
+          "name": "drift-example",
+          "templated": true,
+          "title": "title"
+        }
+      ],
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "versions": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    }
+  },
+  "POST /contracts/publish": {
+    "notices": [
+      {
+        "text": "text",
+        "type": "info"
+      }
+    ],
+    "_embedded": {
+      "pacticipant": {
+        "name": "drift-example",
+        "_links": {}
+      },
+      "version": {
+        "number": "number",
+        "_links": {}
+      }
+    },
+    "_links": {
+      "pb:pacticipant": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:pacticipant-version": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:pacticipant-version-tags": [
+        {
+          "href": "href",
+          "name": "drift-example",
+          "templated": true,
+          "title": "title"
+        }
+      ],
+      "pb:contracts": [
+        {
+          "href": "href",
+          "name": "drift-example",
+          "templated": true,
+          "title": "title"
+        }
+      ]
+    }
+  },
+  "POST /provider-contracts/provider/pactflow-api/publish": {
+    "notices": [
+      {
+        "text": "text",
+        "type": "info"
+      }
+    ],
+    "_embedded": {
+      "pacticipant": {
+        "name": "drift-example",
+        "_links": {}
+      },
+      "version": {
+        "number": "number",
+        "_links": {}
+      }
+    },
+    "_links": {
+      "pf:provider-contract": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:pacticipant": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:pacticipant-version": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:pacticipant-version-tags": [
+        {
+          "href": "href",
+          "name": "drift-example",
+          "templated": true,
+          "title": "title"
+        }
+      ],
+      "pb:branch-version": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    }
+  },
+  "POST /pacticipants/smartbear-mcp/versions/1.0.0/deployed-versions/environment/00000000-0000-0000-0000-000000000002": {
+    "uuid": "uuid",
+    "target": "target",
+    "createdAt": "createdAt",
+    "currentlyDeployed": true,
+    "applicationInstance": "applicationInstance",
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    },
+    "_embedded": {
+      "environment": {
+        "createdAt": "createdAt",
+        "displayName": "Drift Example",
+        "isDefault": true,
+        "name": "drift-example",
+        "production": true,
+        "updatedAt": "updatedAt",
+        "uuid": "uuid",
+        "contacts": [],
+        "teamUuids": [
+          "teamUuids"
+        ],
+        "_embedded": {
+          "teams": []
+        },
+        "_links": {}
+      },
+      "pacticipant": {
+        "name": "drift-example",
+        "_links": {}
+      },
+      "version": {
+        "number": "number",
+        "_links": {}
+      }
+    }
+  },
+  "POST /pacticipants/smartbear-mcp/versions/1.0.0/released-versions/environment/00000000-0000-0000-0000-000000000002": {
+    "uuid": "uuid",
+    "createdAt": "createdAt",
+    "currentlySupported": true,
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    },
+    "_embedded": {
+      "environment": {
+        "createdAt": "createdAt",
+        "displayName": "Drift Example",
+        "isDefault": true,
+        "name": "drift-example",
+        "production": true,
+        "updatedAt": "updatedAt",
+        "uuid": "uuid",
+        "contacts": [],
+        "teamUuids": [
+          "teamUuids"
+        ],
+        "_embedded": {
+          "teams": []
+        },
+        "_links": {}
+      },
+      "pacticipant": {
+        "name": "drift-example",
+        "_links": {}
+      },
+      "version": {
+        "number": "number",
+        "_links": {}
+      }
+    }
+  },
+  "POST /settings/tokens/00000000-0000-4000-8000-000000000001/regenerate": {
+    "description": "Created by a Drift test",
+    "expires": "expires",
+    "lastUsed": "lastUsed",
+    "readOnly": true,
+    "uuid": "uuid",
+    "value": "drift-secret-value",
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:regenerate": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    }
+  },
+  "DELETE /pacticipants/smartbear-mcp/labels/frontend": {
+    "success": true
+  },
+  "POST /webhooks/execute": {
+    "logs": "logs",
+    "message": "message",
+    "request": {
+      "headers": {},
+      "url": "url",
+      "body": "body"
+    },
+    "response": {
+      "headers": {},
+      "status": 1,
+      "body": "body"
+    },
+    "success": true,
+    "_links": {
+      "try-again": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    }
+  },
+  "PUT /environments/00000000-0000-0000-0000-000000000002": {
+    "createdAt": "createdAt",
+    "displayName": "Drift Example",
+    "isDefault": true,
+    "name": "drift-example",
+    "production": true,
+    "updatedAt": "updatedAt",
+    "uuid": "uuid",
+    "contacts": [
+      {
+        "name": "drift-example",
+        "details": {}
+      }
+    ],
+    "teamUuids": [
+      "teamUuids"
+    ],
+    "_embedded": {
+      "teams": [
+        {
+          "isDefault": true,
+          "name": "drift-example",
+          "uuid": "uuid",
+          "_links": {}
+        }
+      ]
+    },
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:currently-deployed-deployed-versions": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:currently-supported-released-versions": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:environments": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    }
+  },
+  "PUT /pacticipants/smartbear-mcp": {
+    "createdAt": "createdAt",
+    "displayName": "Drift Example",
+    "mainBranch": "mainBranch",
+    "name": "drift-example",
+    "repositoryName": "repositoryName",
+    "repositoryNamespace": "repositoryNamespace",
+    "repositoryUrl": "repositoryUrl",
+    "updatedAt": "updatedAt",
+    "title": "title",
+    "_embedded": {
+      "latest-version": {
+        "number": "number",
+        "title": "title",
+        "name": "drift-example"
+      },
+      "labels": [
+        {
+          "name": "drift-example",
+          "_links": {}
+        }
+      ],
+      "latestVersion": {
+        "number": "number",
+        "_links": {
+          "self": {}
+        }
+      },
+      "teams": [
+        {
+          "isDefault": true,
+          "name": "drift-example",
+          "uuid": "uuid",
+          "_links": {}
+        }
+      ]
+    },
+    "_links": {
+      "pb:branch-version": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:branches": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:can-i-deploy-badge": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:can-i-deploy-branch-to-environment-badge": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:label": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:teams": [
+        {
+          "href": "href",
+          "name": "drift-example",
+          "templated": true,
+          "title": "title"
+        }
+      ],
+      "pb:version": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:version-tag": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:versions": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "curies": [
+        {
+          "href": "href",
+          "name": "drift-example",
+          "templated": true,
+          "title": "title"
+        }
+      ],
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "versions": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    }
+  },
+  "PUT /pacticipants/smartbear-mcp/versions/1.0.0": {
+    "createdAt": "createdAt",
+    "number": "number",
+    "buildUrl": "buildUrl",
+    "updatedAt": "updatedAt",
+    "_embedded": {
+      "branchVersions": [
+        {
+          "name": "drift-example",
+          "latest": true,
+          "_links": {}
+        }
+      ],
+      "tags": [
+        {
+          "name": "drift-example",
+          "_links": {}
+        }
+      ],
+      "deployedVersions": [
+        {
+          "uuid": "uuid",
+          "target": "target",
+          "createdAt": "createdAt",
+          "currentlyDeployed": true,
+          "applicationInstance": "applicationInstance",
+          "_links": {},
+          "_embedded": {}
+        }
+      ],
+      "releasedVersions": [
+        {
+          "uuid": "uuid",
+          "createdAt": "createdAt",
+          "currentlySupported": true,
+          "_links": {},
+          "_embedded": {}
+        }
+      ]
+    },
+    "_links": {
+      "pb:latest-verification-results-where-pacticipant-is-consumer": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:pact-versions": [
+        {
+          "href": "href",
+          "name": "drift-example",
+          "templated": true,
+          "title": "title"
+        }
+      ],
+      "pb:pacticipant": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:tag": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "curies": [
+        {
+          "href": "href",
+          "name": "drift-example",
+          "templated": true,
+          "title": "title"
+        }
+      ],
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:record-deployment": [
+        {
+          "href": "href",
+          "name": "drift-example",
+          "templated": true,
+          "title": "title"
+        }
+      ],
+      "pb:record-release": [
+        {
+          "href": "href",
+          "name": "drift-example",
+          "templated": true,
+          "title": "title"
+        }
+      ]
+    }
+  },
+  "PUT /secrets/00000000-0000-4000-8000-000000000001": {
+    "createdAt": "createdAt",
+    "description": "description",
+    "name": "drift-example",
+    "teamUuid": "00000000-0000-4000-8000-000000000001",
+    "updatedAt": "updatedAt",
+    "uuid": "uuid",
+    "_embedded": {
+      "team": {
+        "createdAt": "createdAt",
+        "name": "drift-example",
+        "numberOfMembers": 1,
+        "updatedAt": "updatedAt",
+        "uuid": "uuid",
+        "isDefault": true,
+        "_embedded": {
+          "administrators": [],
+          "environments": [],
+          "members": [],
+          "pacticipants": []
+        },
+        "_links": {}
+      }
+    },
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    }
+  },
+  "PUT /webhooks/00000000-0000-4000-8000-000000000001": {
+    "consumer": {
+      "name": "drift-example"
+    },
+    "description": "Created by a Drift test",
+    "enabled": true,
+    "events": [
+      {
+        "name": "drift-example"
+      }
+    ],
+    "provider": {
+      "name": "drift-example"
+    },
+    "request": {
+      "body": "body",
+      "headers": {},
+      "method": "method",
+      "password": "password",
+      "url": "url",
+      "username": "username"
+    },
+    "teamUuid": "00000000-0000-4000-8000-000000000001",
+    "createdAt": "createdAt",
+    "updatedAt": "updatedAt",
+    "uuid": "uuid",
+    "_embedded": {
+      "team": {
+        "isDefault": true,
+        "name": "drift-example",
+        "uuid": "uuid",
+        "_links": {}
+      }
+    },
+    "_links": {
+      "self": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:execute": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:consumer": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:provider": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:pact-webhooks": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      },
+      "pb:webhooks": {
+        "href": "href",
+        "name": "drift-example",
+        "templated": true,
+        "title": "title"
+      }
+    }
+  }
+}

@@ -11,6 +11,7 @@ server's calls to PactFlow APIs; these cover what the server offers to MCP clien
 | `pactflow.testcases.yaml` | Hand-written Drift test cases: the surface check (`drift/all`) and tool calls with content, tool-error and invalid-argument assertions. |
 | `pactflow.tools.testcases.yaml` | **Generated**, do not edit. One call per remaining tool, with arguments built from its input schema, so every PactFlow tool is invoked and its result validated against its `outputSchema`. |
 | `mock-pactflow.mjs` | Minimal mock of the PactFlow API the tools call. |
+| `mock-fixtures.generated.json` | **Generated**, do not edit. Mock response bodies the generated calls assert on. |
 
 ## Running
 
@@ -57,7 +58,7 @@ Generate it from a clean `npm ci` install: the advertised JSON Schema depends on
 
 ## Adding a test
 
-Every tool already gets a generated call. To assert more about one, add an operation to
+Every tool already gets a generated call that asserts the response content (the mock bodies in `mock-fixtures.generated.json` are built from each tool's `outputSchema`). To assert more about one, add an operation to
 `pactflow.testcases.yaml` (the generator then skips that tool) targeting `pactflow:tool/<tool name>`,
 with inputs under `parameters.arguments`, and add any endpoint it needs to
 `mock-pactflow.mjs` (unknown routes get an empty `200 {}`, so only tools that need
