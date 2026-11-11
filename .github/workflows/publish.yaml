@@ -364,3 +364,96 @@ jobs:
           gh release upload "${{ steps.get_tag.outputs.tag }}" \
             "${{ steps.pack.outputs.mcpb_file }}" \
             --clobber
+
+  # The Claude plugin installs the server from plugin/package-lock.json, which
+  # records the published tarball's integrity hash, so it can only be pinned
+  # once the new version is on npm. Opens a PR against main with the update.
+  update-plugin:
+    name: Pin Claude plugin to released version
+    needs: publish
+    if: |
+      always() &&
+      needs.publish.result == 'success' &&
+      (github.event_name != 'workflow_dispatch' || inputs.publish_npm)
+    runs-on: ubuntu-24.04
+    environment: Production
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      TAG: ${{ inputs.tag || github.event.release.tag_name }}
+    steps:
+      # Don't leave the write token in .git/config for the npm steps; only the
+      # pull request step gets it.
+      - name: Checkout main
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: '22'
+
+      - name: Resolve version
+        id: version
+        run: |
+          VERSION="${TAG#v}"
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Cannot derive a version from tag '$TAG'"
+            exit 1
+          fi
+          CURRENT=$(node -p "require('./plugin/package.json').version")
+          if [[ "$(printf '%s\n%s\n' "$CURRENT" "$VERSION" | sort -V | tail -1)" != "$VERSION" ]]; then
+            echo "::notice::Plugin already pins $CURRENT (newer than $VERSION), skipping"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Wait for npm to serve the new version
+        if: steps.version.outputs.skip != 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          for i in $(seq 1 8); do
+            if [[ -n "$(npm view "@smartbear/mcp@${VERSION}" version 2>/dev/null)" ]]; then
+              exit 0
+            fi
+            echo "Attempt $i: not visible yet, retrying in 15s"
+            sleep 15
+          done
+          echo "::error::@smartbear/mcp@${VERSION} never appeared on npm"
+          exit 1
+
+      - name: Pin plugin and regenerate lockfile
+        if: steps.version.outputs.skip != 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          node scripts/update-plugin.js "$VERSION"
+          (cd plugin && npm ci --ignore-scripts --dry-run --no-audit --no-fund)
+
+      - name: Open pull request
+        if: steps.version.outputs.skip != 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if git diff --quiet -- plugin; then
+            echo "::notice::Plugin already pins @smartbear/mcp@${VERSION}"
+            exit 0
+          fi
+          BRANCH="chore/plugin-v${VERSION}"
+          gh auth setup-git
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$BRANCH"
+          git add plugin
+          git commit -m "chore(plugin): pin @smartbear/mcp@${VERSION}"
+          git push --force -u origin "$BRANCH"
+          if [[ -z "$(gh pr list --head "$BRANCH" --state open --json number --jq '.[].number')" ]]; then
+            gh pr create --base main --head "$BRANCH" \
+              --title "chore(plugin): pin @smartbear/mcp@${VERSION}" \
+              --body "Pins the Claude plugin to \`@smartbear/mcp@${VERSION}\` and regenerates \`plugin/package-lock.json\` from the published package. Merge before submitting the plugin version to the Anthropic directory."
+          fi
