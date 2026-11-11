@@ -6,6 +6,7 @@ import {
 } from "@modelcontextprotocol/server/stdio";
 import { setProcessClientIdentity, toClientIdentity } from "./client-identity";
 import { clientRegistry } from "./client-registry";
+import { getEnvVarName } from "./config-names";
 import { USER_AGENT } from "./info";
 import { extractModernClientMeta, handleInitializeMessage } from "./initialize";
 import type { ProtocolEra } from "./request-context";
@@ -60,10 +61,8 @@ export async function buildStdioServer(
         ? `No clients configured. Please provide valid environment variables for at least one client:\n${message.join("\n")}`
         : "No clients support environment variable configuration.",
     );
-    // Add non-configured clients to server to allow listing available tools
-    for (const entry of clientRegistry.getAll()) {
-      await server.addClient(entry);
-    }
+    // Nothing else is registered: only smartbear_list_integrations exists,
+    // which tells the assistant what each product needs.
   }
 
   return server;
@@ -208,6 +207,4 @@ export async function runStdioMode() {
   });
 }
 
-export function getEnvVarName(clientPrefix: string, key: string): string {
-  return `${clientPrefix.toUpperCase().replace(/-/g, "_")}_${key.toUpperCase()}`;
-}
+export { getEnvVarName };

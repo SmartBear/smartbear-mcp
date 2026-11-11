@@ -16753,6 +16753,19 @@ tools:
       destructiveHint: false
       idempotentHint: true
       openWorldHint: false
+  - name: smartbear_list_integrations
+    title: 'SmartBear: List Integrations'
+    description: Lists every SmartBear product this server supports, whether it is configured for this connection, and for unconfigured products the environment variable or HTTP header each setting needs. Only products allowed by the server's MCP_CLIENTS setting are listed. Products that accept per-request OAuth tokens (BearQ, Reflect, QMetry) always show as configured. Takes no parameters.
+    inputSchema:
+      type: object
+      $schema: https://json-schema.org/draft/2020-12/schema
+      properties: {}
+    annotations:
+      title: 'SmartBear: List Integrations'
+      readOnlyHint: true
+      destructiveHint: false
+      idempotentHint: true
+      openWorldHint: false
 prompts:
   - name: contract-testing_openapi_matcher_recommendations
     title: 'Contract Testing: OpenAPI Matcher recommendations'

@@ -3217,3 +3217,10 @@ operations:
               name: drift-example
               templated: true
               title: title
+  smartbear_list_integrations_Success:
+    target: pactflow:tool/smartbear_list_integrations
+    parameters:
+      arguments: {}
+    expected:
+      result:
+        isError: false

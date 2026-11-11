@@ -6,6 +6,8 @@ import {
 
 export const MCP_SERVER_NAME = packageJson.config.mcpServerName;
 export const MCP_SERVER_VERSION = packageJson.version;
+export const MCP_SERVER_INSTRUCTIONS =
+  "SmartBear MCP Server: debugging and monitoring (BugSnag), API design and contract testing (Swagger, PactFlow), test management and execution (QMetry, QTM4J, Zephyr, Reflect, BearQ), and code review (Collaborator). Only tools for products with valid, configured credentials are registered. Call smartbear_list_integrations to see what's active and what each unconfigured product needs.";
 export const MCP_TRANSPORT =
   process.env.MCP_TRANSPORT?.toLowerCase().trim() || "stdio";
 export const USER_AGENT = `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION} ${MCP_TRANSPORT}`;
