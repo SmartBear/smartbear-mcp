@@ -2,6 +2,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { clientRegistry } from "./client-registry";
 import { getRequestHeader, withRequestHeaders } from "./request-context";
+import { registerShutdownHandler } from "./shutdown";
 import {
   attachSessionAnalytics,
   drainHttpTransport,
@@ -9,13 +10,16 @@ import {
   getBaseUrl,
   getHeaderName,
   getQueryStringName,
+  getSessionIdleTimeoutMs,
   handleHealthRequest,
   handleReadyRequest,
   handleSessionMessage,
   handleStreamableHttpRequest,
   newServer,
   newServerFromWebRequest,
+  reapIdleSessions,
   resolveCredentialIdentity,
+  runHttpMode,
 } from "./transport-http";
 import type { Client } from "./types";
 
@@ -32,11 +36,20 @@ function fakeResponse(): ServerResponse & {
   _status: number | null;
   _headers: Record<string, string>;
   _body: string;
+  _close: () => void;
 } {
+  const closeListeners: Array<() => void> = [];
   const res = {
     _status: null as number | null,
     _headers: {} as Record<string, string>,
     _body: "",
+    once(event: string, cb: () => void) {
+      if (event === "close") closeListeners.push(cb);
+      return res;
+    },
+    _close() {
+      for (const cb of closeListeners.splice(0)) cb();
+    },
     writeHead(status: number, headers?: Record<string, string>) {
       res._status = status;
       if (headers) {
@@ -51,6 +64,7 @@ function fakeResponse(): ServerResponse & {
     _status: number | null;
     _headers: Record<string, string>;
     _body: string;
+    _close: () => void;
   };
 }
 
@@ -138,6 +152,7 @@ vi.mock("./analytics", async (importOriginal) => ({
 vi.mock("./shutdown", async (importOriginal) => ({
   ...(await importOriginal<typeof import("./shutdown")>()),
   isDraining: vi.fn().mockReturnValue(false),
+  registerShutdownHandler: vi.fn(),
 }));
 
 describe("transport-http helpers", () => {
@@ -1217,6 +1232,39 @@ describe("handleStreamableHttpRequest (session routing)", () => {
       });
     });
   });
+
+  it("holds the session open while the exchange is in flight, then restarts the idle clock", async () => {
+    const transports = new Map<string, any>();
+    const { NodeStreamableHTTPServerTransport: StreamableHTTPServerTransport } =
+      await import("@modelcontextprotocol/node");
+    const fakeTransport = Object.create(
+      StreamableHTTPServerTransport.prototype,
+    );
+    let during: { inFlight?: number } | undefined;
+    fakeTransport.handleRequest = vi.fn(async () => {
+      during = { inFlight: transports.get("s")?.inFlight };
+    });
+    transports.set("s", {
+      server: { getMcpClientIdentity: () => ({ name: undefined }) } as any,
+      transport: fakeTransport,
+      lastActivity: 0,
+    });
+    const req = fakeStreamRequest({
+      method: "GET",
+      headers: { "mcp-session-id": "s" },
+      body: undefined,
+    });
+    const res = fakeResponse();
+
+    await handleStreamableHttpRequest(req, res, transports);
+    expect(during?.inFlight).toBe(1);
+    expect(transports.get("s").inFlight).toBe(1); // stream still open
+    expect(await reapIdleSessions(transports, 1, Date.now() + 10_000)).toBe(0);
+
+    res._close();
+    expect(transports.get("s").inFlight).toBe(0);
+    expect(transports.get("s").lastActivity).toBeGreaterThan(0);
+  });
 });
 
 describe("session analytics wiring", () => {
@@ -1333,5 +1381,149 @@ describe("handleSessionMessage", () => {
     });
 
     expect(trackToolsListed).not.toHaveBeenCalled();
+  });
+});
+
+describe("idle session reaping", () => {
+  const entry = (lastActivity: number, close = vi.fn(async () => {})) =>
+    ({
+      server: { getAnalyticsSession: () => undefined, cleanupSession: vi.fn() },
+      transport: { close },
+      lastActivity,
+    }) as any;
+
+  it("closes and removes only sessions idle beyond the threshold", async () => {
+    const stale = vi.fn(async () => {});
+    const fresh = vi.fn(async () => {});
+    const sessions = new Map<string, any>([
+      ["stale", entry(0, stale)],
+      ["fresh", entry(9_000, fresh)],
+    ]);
+    const reaped = await reapIdleSessions(sessions, 5_000, 10_000);
+    expect(reaped).toBe(1);
+    expect(stale).toHaveBeenCalled();
+    expect(fresh).not.toHaveBeenCalled();
+    expect([...sessions.keys()]).toEqual(["fresh"]);
+  });
+
+  it("never reaps a session with an open exchange, however old", async () => {
+    const close = vi.fn(async () => {});
+    const open = { ...entry(0, close), inFlight: 1 };
+    const sessions = new Map<string, any>([["open", open]]);
+    expect(await reapIdleSessions(sessions, 5_000, 1_000_000)).toBe(0);
+    expect(close).not.toHaveBeenCalled();
+    // Once the exchange ends the idle clock restarts, then it can be reaped.
+    open.inFlight = 0;
+    open.lastActivity = 1_000_000;
+    expect(await reapIdleSessions(sessions, 5_000, 1_001_000)).toBe(0);
+    expect(await reapIdleSessions(sessions, 5_000, 1_010_000)).toBe(1);
+  });
+
+  it("runs session cleanup in the backstop when close() throws", async () => {
+    const e = entry(
+      0,
+      vi.fn(async () => {
+        throw new Error("boom");
+      }),
+    );
+    const sessions = new Map<string, any>([["s", e]]);
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    await reapIdleSessions(sessions, 1, 10_000);
+    expect(e.server.cleanupSession).toHaveBeenCalledWith("s");
+  });
+
+  it("still removes the session when close() throws", async () => {
+    const sessions = new Map<string, any>([
+      [
+        "s",
+        entry(
+          0,
+          vi.fn(async () => {
+            throw new Error("boom");
+          }),
+        ),
+      ],
+    ]);
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    await reapIdleSessions(sessions, 1, 10_000);
+    expect(sessions.size).toBe(0);
+  });
+
+  it("unregisters the session before close() so new requests get a 404", async () => {
+    let presentDuringClose: boolean | undefined;
+    const sessions = new Map<string, any>();
+    sessions.set(
+      "s",
+      entry(
+        0,
+        vi.fn(async () => {
+          presentDuringClose = sessions.has("s");
+        }),
+      ),
+    );
+    await reapIdleSessions(sessions, 1, 10_000);
+    expect(presentDuringClose).toBe(false);
+  });
+
+  it("cleans up once when overlapping runs target the same session", async () => {
+    const close = vi.fn(async () => {
+      await new Promise((r) => setTimeout(r, 10));
+    });
+    const e = entry(0, close);
+    const sessions = new Map<string, any>([["s", e]]);
+    await Promise.all([
+      reapIdleSessions(sessions, 1, 10_000),
+      reapIdleSessions(sessions, 1, 10_000),
+    ]);
+    expect(close).toHaveBeenCalledTimes(1);
+    expect(e.server.cleanupSession).toHaveBeenCalledTimes(1);
+  });
+
+  it("reads SESSION_IDLE_TIMEOUT_MS, defaulting to 4 hours", () => {
+    delete process.env.SESSION_IDLE_TIMEOUT_MS;
+    expect(getSessionIdleTimeoutMs()).toBe(4 * 60 * 60 * 1000);
+    process.env.SESSION_IDLE_TIMEOUT_MS = "0";
+    expect(getSessionIdleTimeoutMs()).toBe(0);
+    for (const bad of ["junk", "4h", "1.5", "-5"]) {
+      process.env.SESSION_IDLE_TIMEOUT_MS = bad;
+      expect(getSessionIdleTimeoutMs()).toBe(4 * 60 * 60 * 1000);
+    }
+    process.env.SESSION_IDLE_TIMEOUT_MS = "junk";
+    expect(getSessionIdleTimeoutMs()).toBe(4 * 60 * 60 * 1000);
+    delete process.env.SESSION_IDLE_TIMEOUT_MS;
+  });
+});
+
+describe("runHttpMode idle reaper wiring", () => {
+  afterEach(() => {
+    delete process.env.PORT;
+    delete process.env.SESSION_IDLE_TIMEOUT_MS;
+    vi.mocked(registerShutdownHandler).mockClear();
+    vi.restoreAllMocks();
+  });
+
+  async function startAndStop(idleMs: string) {
+    process.env.PORT = "0";
+    process.env.SESSION_IDLE_TIMEOUT_MS = idleMs;
+    const setIntervalSpy = vi.spyOn(globalThis, "setInterval");
+    const clearIntervalSpy = vi.spyOn(globalThis, "clearInterval");
+    await runHttpMode();
+    const shutdown = vi
+      .mocked(registerShutdownHandler)
+      .mock.calls.find(([name]) => name === "http-transport")?.[1];
+    expect(shutdown).toBeDefined();
+    await shutdown?.();
+    return { setIntervalSpy, clearIntervalSpy };
+  }
+
+  it("starts the reaper at half the idle timeout and clears it on shutdown", async () => {
+    const { setIntervalSpy, clearIntervalSpy } = await startAndStop("4000");
+    expect(setIntervalSpy.mock.calls.some(([, ms]) => ms === 2000)).toBe(true);
+    expect(clearIntervalSpy).toHaveBeenCalled();
+  });
+
+  it("does not start the reaper when SESSION_IDLE_TIMEOUT_MS is 0", async () => {
+    const { setIntervalSpy } = await startAndStop("0");
+    expect(setIntervalSpy.mock.calls.some(([, ms]) => ms === 2000)).toBe(false);
   });
 });
