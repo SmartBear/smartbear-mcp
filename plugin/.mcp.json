@@ -2,9 +2,7 @@
   "mcpServers": {
     "smartbear": {
       "command": "node",
-      "args": [
-        "${CLAUDE_PLUGIN_ROOT}/node_modules/@smartbear/mcp/dist/index.js"
-      ],
+      "args": ["${CLAUDE_PLUGIN_ROOT}/server.mjs"],
       "env": {
         "BEARQ_API_TOKEN": "${user_config.bearq_api_token}",
         "BEARQ_API_BASE_URL": "${user_config.bearq_api_base_url}",
