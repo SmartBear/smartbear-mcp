@@ -27,7 +27,7 @@ In Claude Code you can change these settings later with `/plugin configure smart
 
 ## What the plugin runs and where data goes
 
-- **What runs:** a local MCP server, started with `npx` from the public npm package `@smartbear/mcp`, pinned to the exact version in this plugin's `.mcp.json`. Node.js 22 or later must be installed. npm downloads the package and its dependencies from the public npm registry the first time the server starts.
+- **What runs:** a local MCP server from the public npm package `@smartbear/mcp`, started with `node`. When you install or update the plugin, Claude Code installs that package and its dependencies from the public npm registry, at the exact versions in this plugin's `package-lock.json`, without running install scripts. Node.js 22 or later and npm must be installed.
 - **What it connects to:** only the SmartBear product APIs you configure, at their default endpoints or at the base URLs you enter. Each request uses the credentials you entered for that product.
 - **Telemetry:** the plugin doesn't turn on any usage analytics or error reporting. The server sends neither unless its own analytics or error-reporting keys are set, and this plugin doesn't set them.
 

@@ -86,9 +86,10 @@ jobs:
         with:
           node-version: ${{ env.STABLE_NODE_VERSION }}
 
-      # plugin.json, the npx pin in .mcp.json, plugin/package.json and
-      # plugin/package-lock.json must name the same @smartbear/mcp version, or
-      # the Anthropic directory reports the server's launcher as unlocked.
+      # plugin.json, plugin/package.json and plugin/package-lock.json must name
+      # the same @smartbear/mcp version, and .mcp.json must run the server with
+      # node from the plugin's node_modules (an npx launch is held by the
+      # Anthropic directory).
       - name: Check plugin files agree
         run: node scripts/update-plugin.js --check
 

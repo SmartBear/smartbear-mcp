@@ -2,7 +2,7 @@
   "name": "smartbear-claude-plugin",
   "version": "0.43.0",
   "private": true,
-  "description": "Locks the full dependency tree of the SmartBear MCP server that this plugin runs with npx, as required by the Anthropic plugin directory. Update with `npm run plugin:update` in the repository root.",
+  "description": "Locks the full dependency tree of the SmartBear MCP server. Claude Code installs it into the plugin's node_modules, and .mcp.json runs it from there with node. Update with `npm run plugin:update` in the repository root.",
   "license": "MIT",
   "dependencies": {
     "@smartbear/mcp": "0.43.0"
