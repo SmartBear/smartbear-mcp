@@ -50,8 +50,7 @@
     "test:run": "vitest run",
     "test:pact": "vitest run --config vitest.pact.config.ts",
     "coverage:check": "vitest --coverage --reporter=verbose",
-    "bump": "node scripts/bump.js",
-    "plugin:update": "node scripts/update-plugin.js"
+    "bump": "node scripts/bump.js"
   },
   "dependencies": {
     "@amplitude/analytics-node": "^1.5.71",
