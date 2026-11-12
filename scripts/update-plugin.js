@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 
 // Pins the Claude plugin to a published @smartbear/mcp version: the plugin
-// version, the `npx` pin in plugin/.mcp.json, and plugin/package.json with a
-// regenerated plugin/package-lock.json.
+// version and plugin/package.json with a regenerated plugin/package-lock.json.
 //
-// The Anthropic plugin directory requires a package.json + package-lock.json in
-// the plugin folder that locks the server's full dependency tree. The lockfile
+// The Anthropic plugin directory holds plugins that launch a package with npx,
+// so Claude Code installs the server from plugin/package-lock.json into the
+// plugin's node_modules, and plugin/.mcp.json runs it from there with node. The
+// version lives only in package.json and the lockfile. The lockfile
 // records the registry tarball's integrity hash, so this can only run once the
 // version is on npm: the publish workflow runs it after `npm publish` and opens
 // a PR with the result.
@@ -32,6 +33,9 @@ const PLUGIN_MANIFEST = path.join(PLUGIN_DIR, ".claude-plugin/plugin.json");
 const PLUGIN_MCP_JSON = path.join(PLUGIN_DIR, ".mcp.json");
 const PACKAGE = "@smartbear/mcp";
 const REGISTRY = "https://registry.npmjs.org/";
+// Where .mcp.json starts the server: the copy Claude Code installs from the
+// plugin lockfile. Launching through npx instead is held by the directory.
+const SERVER_ENTRY = `\${CLAUDE_PLUGIN_ROOT}/node_modules/${PACKAGE}/dist/index.js`;
 
 const readJson = (file) => JSON.parse(fs.readFileSync(file, "utf-8"));
 const writeJson = (file, value) =>
@@ -78,9 +82,12 @@ const findProblems = (version) => {
     );
   }
   for (const [name, server] of Object.entries(mcpServers)) {
-    if (!server.args?.includes(`${PACKAGE}@${version}`)) {
+    if (
+      server.command !== "node" ||
+      JSON.stringify(server.args) !== JSON.stringify([SERVER_ENTRY])
+    ) {
       problems.push(
-        `.mcp.json server "${name}" does not run ${PACKAGE}@${version}`,
+        `.mcp.json server "${name}" must run "node" with args ["${SERVER_ENTRY}"]`,
       );
     }
   }
@@ -171,12 +178,6 @@ writeJson(PLUGIN_PACKAGE_JSON, pluginPackage);
 const manifest = readJson(PLUGIN_MANIFEST);
 manifest.version = version;
 writeJson(PLUGIN_MANIFEST, manifest);
-
-const mcpJson = fs.readFileSync(PLUGIN_MCP_JSON, "utf-8");
-fs.writeFileSync(
-  PLUGIN_MCP_JSON,
-  mcpJson.replace(/@smartbear\/mcp@[^"]+/g, `${PACKAGE}@${version}`),
-);
 
 // Regenerate from scratch so the whole tree resolves against the public
 // registry, whatever registry the local npm config points at.
