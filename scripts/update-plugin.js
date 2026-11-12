@@ -5,7 +5,8 @@
 //
 // The Anthropic plugin directory holds plugins that launch a package with npx,
 // so Claude Code installs the server from plugin/package-lock.json into the
-// plugin's node_modules, and plugin/.mcp.json runs it from there with node. The
+// plugin's node_modules, and plugin/.mcp.json runs plugin/server.mjs, which
+// imports it. The
 // version lives only in package.json and the lockfile. The lockfile
 // records the registry tarball's integrity hash, so this can only run once the
 // version is on npm: the publish workflow runs it after `npm publish` and opens
@@ -33,9 +34,12 @@ const PLUGIN_MANIFEST = path.join(PLUGIN_DIR, ".claude-plugin/plugin.json");
 const PLUGIN_MCP_JSON = path.join(PLUGIN_DIR, ".mcp.json");
 const PACKAGE = "@smartbear/mcp";
 const REGISTRY = "https://registry.npmjs.org/";
-// Where .mcp.json starts the server: the copy Claude Code installs from the
-// plugin lockfile. Launching through npx instead is held by the directory.
-const SERVER_ENTRY = `\${CLAUDE_PLUGIN_ROOT}/node_modules/${PACKAGE}/dist/index.js`;
+// Where .mcp.json starts the server: a launcher in the plugin that imports the
+// copy Claude Code installs from the plugin lockfile. The directory holds an
+// npx launch and refuses a .mcp.json that points into node_modules.
+// biome-ignore lint/suspicious/noTemplateCurlyInString: Claude Code substitutes this placeholder, not JavaScript
+const SERVER_ENTRY = "${CLAUDE_PLUGIN_ROOT}/server.mjs";
+const PLUGIN_LAUNCHER = path.join(PLUGIN_DIR, "server.mjs");
 
 const readJson = (file) => JSON.parse(fs.readFileSync(file, "utf-8"));
 const writeJson = (file, value) =>
@@ -90,6 +94,12 @@ const findProblems = (version) => {
         `.mcp.json server "${name}" must run "node" with args ["${SERVER_ENTRY}"]`,
       );
     }
+  }
+  const launcher = fs.existsSync(PLUGIN_LAUNCHER)
+    ? fs.readFileSync(PLUGIN_LAUNCHER, "utf-8")
+    : "";
+  if (!launcher.includes(`import "${PACKAGE}/dist/index.js";`)) {
+    problems.push(`plugin/server.mjs must import "${PACKAGE}/dist/index.js"`);
   }
 
   if (![2, 3].includes(lock.lockfileVersion)) {
