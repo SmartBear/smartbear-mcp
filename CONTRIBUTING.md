@@ -198,8 +198,6 @@ Please follow these steps to create a new release:
 3. **Post-Release**
     - Check the publish action to make sure all deployments succeeded
     - Check https://developer.smartbear.com/smartbear-mcp/ to ensure the docs have been updated correctly
-    - Update the Claude plugin: after npm publish, the publish workflow opens a `chore/plugin-vX.Y.Z` PR that pins `plugin/` to the new version and regenerates `plugin/package-lock.json` from the published package. Workflow-created PRs don't trigger CI, so run `npm run plugin:update -- --check` locally or re-run the checks, then get approval and merge it. If the PR wasn't opened, run `npm run plugin:update X.Y.Z` yourself (the version must already be on npm) and open the PR
-    - Submit the new plugin version to the Anthropic plugin directory after that PR is merged
 
 Please ensure you update internal ticketing systems accordingly.
 
