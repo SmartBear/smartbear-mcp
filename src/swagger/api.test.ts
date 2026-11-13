@@ -3,6 +3,7 @@ import createFetchMock from "vitest-fetch-mock";
 import { SwaggerAPI } from "./client/api";
 import { SwaggerConfiguration } from "./client/configuration";
 import {
+  ApidomValidationOutputSchema,
   CreateApiFromPromptParamsSchema,
   CreateApiParamsSchema,
 } from "./client/registry-types";
@@ -181,6 +182,26 @@ describe("SwaggerAPI", () => {
       );
       expect(result).toEqual(mockResponse);
     });
+
+    it("should forward visibility when creating a product", async () => {
+      const mockResponse = { id: "prod-new", visibility: "conditional" };
+      const createData = {
+        type: "new",
+        name: "New Product",
+        slug: "new-product",
+        public: false,
+        visibility: "conditional" as const,
+      };
+
+      fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+      await api.createPortalProduct("portal-123", createData);
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${config.portalBasePath}/portals/portal-123/products`,
+        expect.objectContaining({ body: JSON.stringify(createData) }),
+      );
+    });
   });
 
   describe("getPortalProduct", () => {
@@ -226,6 +247,24 @@ describe("SwaggerAPI", () => {
   });
 
   describe("updatePortalProduct", () => {
+    it("should forward visibility when updating a product", async () => {
+      const updateData = { visibility: "conditional" as const };
+
+      fetchMock.mockResponseOnce(JSON.stringify({ message: "ok" }), {
+        headers: { "content-type": "application/json" },
+      });
+
+      await api.updatePortalProduct("prod-123", updateData);
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${config.portalBasePath}/products/prod-123`,
+        expect.objectContaining({
+          method: "PATCH",
+          body: JSON.stringify(updateData),
+        }),
+      );
+    });
+
     it("should update product with patch data and return URL", async () => {
       const mockProductResponse = {
         id: "prod-123",
@@ -685,6 +724,32 @@ describe("SwaggerAPI", () => {
       });
 
       expect(result).toEqual(unrecognizedResult);
+    });
+
+    it("should accept every finding severity of the /specs/validate contract in the output schema", async () => {
+      const asyncApiResult = {
+        valid: false,
+        recognized: true,
+        spec: { namespace: "asyncapi", version: "2.6.0", format: "YAML" },
+        findings: ["error", "warning", "information", "hint", "unknown"].map(
+          (severity) => ({
+            line: 1,
+            column: 1,
+            severity,
+            message: 'Object must have required property "info"',
+            code: "asyncapi-document-resolved",
+            source: "@asyncapi/parser",
+          }),
+        ),
+        summary: { errors: 1, warnings: 1, total: 5, durationMs: 1 },
+      };
+      fetchMock.mockResponseOnce(JSON.stringify(asyncApiResult), {
+        headers: { "content-type": "application/json" },
+      });
+
+      const result = await api.validateApi({ definition: "asyncapi: 2.6.0" });
+
+      expect(ApidomValidationOutputSchema.safeParse(result).success).toBe(true);
     });
   });
 

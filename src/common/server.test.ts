@@ -2,6 +2,7 @@ import { ResourceTemplate } from "@modelcontextprotocol/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import z from "zod";
 import Bugsnag from "./bugsnag";
+import { MCP_SERVER_INSTRUCTIONS } from "./info";
 import { setModernRequestClient, withRequestHeaders } from "./request-context";
 import { SmartBearMcpServer } from "./server";
 import { ToolError } from "./tools";
@@ -170,6 +171,21 @@ describe("SmartBearMcpServer", () => {
     });
   });
 
+  describe("instructions", () => {
+    it.each([
+      "legacy",
+      "modern",
+    ] as const)("returns the same static instructions on the %s era", (era) => {
+      const instructed = new SmartBearMcpServer(undefined, era);
+      // The SDK has no public getter; this is the value it sends in the
+      // `initialize` result.
+      const text = (instructed.server as unknown as { _instructions?: string })
+        ._instructions;
+      expect(text).toBe(MCP_SERVER_INSTRUCTIONS);
+      expect(text).toContain("smartbear_list_integrations");
+    });
+  });
+
   describe("deterministic tool ordering", () => {
     it("lists tools alphabetically by name regardless of registration order", async () => {
       // The suite-wide registerTool mock would keep the registry empty; this
@@ -201,7 +217,7 @@ describe("SmartBearMcpServer", () => {
       const names = Object.keys(
         (server as unknown as { _registeredTools: Record<string, unknown> })
           ._registeredTools,
-      );
+      ).filter((name) => name !== "smartbear_list_integrations");
       expect(names).toEqual([
         "test_product_alpha_tool",
         "test_product_monkey_tool",

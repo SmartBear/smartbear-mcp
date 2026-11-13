@@ -667,6 +667,49 @@ describe("UDF API clients", () => {
       ).rejects.toThrow("viewId");
     });
 
+    it("should include both linked defect counts in unifiedTableRows, defaulting to 0", async () => {
+      global.fetch = vi
+        .fn()
+        .mockResolvedValueOnce(
+          mockOk({
+            ...mockRunsResponse,
+            total: 2,
+            data: [
+              {
+                ...mockRunsResponse.data[0],
+                linkedDfCount: 2,
+                linkedStepDfCount: 1,
+              },
+              { ...mockRunsResponse.data[0], tcRunID: 41667466 },
+            ],
+          }),
+        )
+        .mockResolvedValueOnce(mockOk(mockMetaResponse));
+
+      const result = (await fetchTestRunUdfValues(token, baseUrl, projectKey, {
+        tsrunID: "731600",
+        viewId: 87039,
+      })) as any;
+
+      expect(result.defaultColumns).toEqual([
+        "Test Case Key",
+        "Test Case Summary",
+        "Executed Version",
+        "Execution Status",
+        "Linked Defects (Execution)",
+        "Linked Defects (Steps)",
+        "Tested By",
+      ]);
+      expect(result.unifiedTableRows[0]).toMatchObject({
+        "Linked Defects (Execution)": "2",
+        "Linked Defects (Steps)": "1",
+      });
+      expect(result.unifiedTableRows[1]).toMatchObject({
+        "Linked Defects (Execution)": "0",
+        "Linked Defects (Steps)": "0",
+      });
+    });
+
     it("should include availableUdfFields in response", async () => {
       global.fetch = vi
         .fn()
