@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- [Common] The server now sends a short instructions text when an assistant connects(stdio and HTTP). It says that only tools for configured products are registered and points to `smartbear_list_integrations`.
+- [Common] Added the `smartbear_list_integrations` tool. It is always available, takes no input and needs no credentials. It lists every product with a short description and whether it is configured. For configured products it shows the tool count and which toolsets are enabled. For products that are not configured it shows the environment variable and HTTP header each setting needs. Only products allowed by `MCP_CLIENTS` are listed, and BearQ, Reflect and QMetry always show as configured because they accept per-request OAuth tokens.
+
+### Changed
+
+- [Common] With the stdio transport and no product configured, the server no longer registers every product's tools. Only `smartbear_list_integrations` is available, and it tells the assistant what each product needs. Set the credentials for at least one product to get its tools.
+
 ## [0.44.0] - 2026-11-13
 
 ### Added
