@@ -26,3 +26,4 @@ The SmartBear MCP Server is available in two deployment modes: **remote hosted s
 
 - [Set up a Remote MCP Server](/smartbear-mcp/docs/remote-mcp-servers) — zero-install, OAuth, individual products
 - [Set up the Local MCP Server](/smartbear-mcp/docs/local-server) — npm-based, all products, environment variables
+- [Install on-premises](/smartbear-mcp/docs/on-prem-server) — host one shared HTTP server for your team, for any product
