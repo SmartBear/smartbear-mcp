@@ -39,10 +39,17 @@ const inputSchema = z.object({
       "http_response_5xx_percentage",
     ])
     .optional()
-    .describe("Field to sort by"),
+    .describe(
+      "Field to sort by, e.g. duration_p95 or duration_p99 for the slowest operations, total_spans for the most frequently used, last_seen for the most recent",
+    ),
   direction: toolInputParameters.direction,
   perPage: toolInputParameters.perPage,
-  starredOnly: z.boolean().optional().describe("Show only starred span groups"),
+  starredOnly: z
+    .boolean()
+    .optional()
+    .describe(
+      "If true, only include span groups that have been starred as important in the dashboard",
+    ),
   nextUrl: toolInputParameters.nextUrl,
   filters: toolInputParameters.performanceFilters,
 });
@@ -85,7 +92,7 @@ export class ListSpanGroups extends Tool<BugsnagClient> {
     hints: [
       "Span groups represent different operation types (page loads, API calls, etc.)",
       "Use sort by duration_p95 or duration_p99 to find the slowest operations",
-      "Star important span groups for quick access",
+      "Only span groups with spans in the filtered time window are returned (last 7 days by default) - pass span.since in filters to look further back",
       "Use nextUrl for pagination",
     ],
   };

@@ -21,7 +21,7 @@ export class GetCurrentProject extends Tool<BugsnagClient> {
     hints: [
       "If a project is returned, it can be assumed that the user expects interactions with BugSnag tools to refer to this project",
       "If this tool returns no current project then other BugSnag tools will require an explicit project ID parameter",
-      "Call the List Projects tool to see all projects that the user has access to. Get the project ID from this list either by asking the user for the project name or slug",
+      "Call the List Projects tool to see all projects that the user has access to. Find the project in this list by the name or slug the user gives you, then use its 'id' field (not the name or slug) as the projectId parameter",
       "You might find a BugSnag API key in the user's code where they configure the BugSnag SDK that can be matched to a project 'apiKey' field from the project list",
     ],
   };
@@ -30,7 +30,7 @@ export class GetCurrentProject extends Tool<BugsnagClient> {
     const project = await this.client.getCurrentProject();
     if (!project) {
       throw new ToolError(
-        "No current project is configured in the MCP server - use List Projects to see the available projects and use the project ID as a parameter to other BugSnag tools. You can ask the user to select the project based on the name or slug, or use the apiKey field and see if there's a BugSnag API key set in the user's code when they configure the BugSnag SDK",
+        "No current project is configured in the MCP server - use List Projects to see the available projects and use the project ID as a parameter to other BugSnag tools. You can ask the user to select the project by name or slug and then use that project's 'id' from the list as projectId, or use the apiKey field and see if there's a BugSnag API key set in the user's code when they configure the BugSnag SDK",
       );
     }
     return {

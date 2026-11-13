@@ -345,8 +345,8 @@ None",
 **Toolset:** Releases
 
 **Parameters:**
-- projectId (string): Unique identifier of the project. This is optional if a current project is set and is used to set the current project for BugSnag tools.
-- buildId (string) *required*: Unique identifier of the app build
+- projectId (string): The BugSnag project ID: an opaque 24-character hex string such as '515fb9337c1074f6fd000003'. This is NOT the project name or slug (the 'my-project' part of a dashboard URL). Get it from the 'id' field returned by List Projects. Optional if a current project is configured (see Get Current Project). When no project is configured, the project provided here becomes the current project for subsequent calls.
+- buildId (string) *required*: ID of the app build. Get it from the 'builds' list returned by Get Release.
 
 **Output Description:** JSON object containing build details along with stability metrics such as user and session stability, and whether it meets project targets
 
@@ -361,7 +361,7 @@ None",
 \`\`\`
 Expected Output: JSON object with build details including version, source control info, error counts and stability data.
 
-**Hints:** 1. Build IDs can be found using the List builds tool",
+**Hints:** 1. Build IDs can be found in the list of builds returned by the Get Release tool 2. user_stability and session_stability are fractions between 0 and 1; meets_target_stability and meets_critical_stability compare them with the project's stability targets",
     "inputSchema": [
       "buildId",
       "projectId",
@@ -386,7 +386,7 @@ None
 
 **Use Cases:** 1. Understand if a current project has been set
 
-**Hints:** 1. If a project is returned, it can be assumed that the user expects interactions with BugSnag tools to refer to this project 2. If this tool returns no current project then other BugSnag tools will require an explicit project ID parameter 3. Call the List Projects tool to see all projects that the user has access to. Get the project ID from this list either by asking the user for the project name or slug 4. You might find a BugSnag API key in the user's code where they configure the BugSnag SDK that can be matched to a project 'apiKey' field from the project list",
+**Hints:** 1. If a project is returned, it can be assumed that the user expects interactions with BugSnag tools to refer to this project 2. If this tool returns no current project then other BugSnag tools will require an explicit project ID parameter 3. Call the List Projects tool to see all projects that the user has access to. Find the project in this list by the name or slug the user gives you, then use its 'id' field (not the name or slug) as the projectId parameter 4. You might find a BugSnag API key in the user's code where they configure the BugSnag SDK that can be matched to a project 'apiKey' field from the project list",
     "inputSchema": [],
     "outputSchema": undefined,
     "title": "BugSnag: Get Current Project",
@@ -399,14 +399,14 @@ None
       "readOnlyHint": true,
       "title": "BugSnag: Get Error",
     },
-    "description": "Get full details on an error, including aggregated and summarized data across all events (occurrences) and details of the latest event (occurrence), such as breadcrumbs, metadata and the stacktrace. Use the filters parameter to narrow down the summaries further.
+    "description": "Get full details on an error: aggregated data across its events (occurrences), the latest event (with stacktrace, breadcrumbs and metadata) and pivot summaries. Use the filters parameter to restrict which events are considered.
 
 **Toolset:** Errors
 
 **Parameters:**
-- projectId (string): Unique identifier of the project. This is optional if a current project is set and is used to set the current project for BugSnag tools.
+- projectId (string): The BugSnag project ID: an opaque 24-character hex string such as '515fb9337c1074f6fd000003'. This is NOT the project name or slug (the 'my-project' part of a dashboard URL). Get it from the 'id' field returned by List Projects. Optional if a current project is configured (see Get Current Project). When no project is configured, the project provided here becomes the current project for subsequent calls.
 - errorId (string) *required*: Unique identifier of the error to retrieve
-- filters (record<string, array>): Apply filters to narrow down the error list. Use the List Project Event Filters tool to discover available filter fields. Time filters support extended ISO 8601 format (e.g. 2018-05-20T00:00:00Z) or relative format (e.g. 7d, 24h). (default: {"event.since":[{"type":"eq","value":"30d"}],"error.status":[{"type":"eq","value":"open"}]})
+- filters (record<string, array>): Optional filters that restrict which events of this error are used for the latest event and the pivot summaries, as an object keyed by field name where each value is an array of { type: 'eq' | 'ne' | 'empty', value }. Use the List Project Event Filters tool to discover available filter fields. Time filters (event.since, event.before) support extended ISO 8601 format (e.g. 2018-05-20T00:00:00Z) or relative format (e.g. 7d, 24h). No filters are applied by default, so events of any age are considered. (default: {})
 
 **Output Description:** JSON object containing:  - error_details: Aggregated data about the error, including first and last seen occurrence - latest_event: Detailed information about the most recent occurrence of the error, including stacktrace, breadcrumbs, user and context - pivots: List of pivots (summaries) for the error, which can be used to analyze patterns in occurrences - url: A link to the error in the dashboard - this should be shown to the user for them to perform further analysis
 
@@ -421,7 +421,7 @@ None
 \`\`\`
 Expected Output: JSON object with error details including message, stack trace, occurrence count, and metadata
 
-**Hints:** 1. Error IDs can be found using the List Project Errors tool 2. Use this after filtering errors to get detailed information about specific errors 3. Use Get Event Details tool if you need detailed information about a specific event (occurrence) rather than the aggregated error 4. If you used a filter to get this error, you can pass the same filters here to restrict the results or apply further filters 5. The URL provided in the response points should be shown to the user in all cases as it allows them to view the error in the dashboard and perform further analysis",
+**Hints:** 1. Error IDs can be found using the List Project Errors tool 2. Use this after filtering errors to get detailed information about specific errors 3. Use Get Event Details tool if you need detailed information about a specific event (occurrence) rather than the aggregated error 4. If you used filters to find this error, you can pass the same filters here to restrict the latest event and pivots to the same events 5. To list more than the latest event, use the Get Events on an Error tool 6. The URL provided in the response points should be shown to the user in all cases as it allows them to view the error in the dashboard and perform further analysis",
     "inputSchema": [
       "errorId",
       "filters",
@@ -443,8 +443,8 @@ Expected Output: JSON object with error details including message, stack trace, 
 **Toolset:** Events
 
 **Parameters:**
-- projectId (string): Unique identifier of the project. This is optional if a current project is set and is used to set the current project for BugSnag tools.
-- eventId (string) *required*: Unique identifier of the event
+- projectId (string): The BugSnag project ID: an opaque 24-character hex string such as '515fb9337c1074f6fd000003'. This is NOT the project name or slug (the 'my-project' part of a dashboard URL). Get it from the 'id' field returned by List Projects. Optional if a current project is configured (see Get Current Project). When no project is configured, the project provided here becomes the current project for subsequent calls.
+- eventId (string) *required*: ID of a single event (one occurrence of an error). Get it from Get Events on an Error, or from the 'event_id' parameter of a dashboard URL.
 
 **Use Cases:** 1. Get the full details of an event, including any thread stack traces
 
@@ -455,7 +455,9 @@ Expected Output: JSON object with error details including message, stack trace, 
   "eventId": "6863e2af012caf1d5c320000"
 }
 \`\`\`
-Expected Output: JSON object with complete event details including stack trace (error trace and other threads, if present), metadata, and context",
+Expected Output: JSON object with complete event details including stack trace (error trace and other threads, if present), metadata, and context
+
+**Hints:** 1. Event IDs can be found using the Get Events on an Error tool, or in the 'event_id' parameter of a dashboard URL 2. If you only have a dashboard URL, use the Get Event Details From Dashboard URL tool instead",
     "inputSchema": [
       "eventId",
       "projectId",
@@ -476,7 +478,7 @@ Expected Output: JSON object with complete event details including stack trace (
 **Toolset:** Events
 
 **Parameters:**
-- link (string) *required*: Full URL to the event details page in the BugSnag dashboard (web interface), containing project slug and event_id parameter.
+- link (string) *required*: Full URL of an event in the BugSnag dashboard (web interface), e.g. https://app.bugsnag.com/<org-slug>/<project-slug>/errors/<errorId>?event_id=<eventId>. It must contain the project slug in the path and the event_id query parameter.
 
 **Use Cases:** 1. Get event details when given a dashboard URL from a user or notification 2. Extract event information from shared links or browser URLs 3. Quick lookup of event details without needing separate project and event IDs
 
@@ -489,7 +491,7 @@ Expected Output: JSON object with complete event details including stack trace (
 \`\`\`
 Expected Output: JSON object with complete event details including stack trace, metadata, and context
 
-**Hints:** 1. The URL must contain both project slug in the path and event_id in query parameters 2. This is useful when users share BugSnag dashboard URLs and you need to extract the event data",
+**Hints:** 1. The URL must contain both project slug in the path and event_id in query parameters 2. This is useful when users share BugSnag dashboard URLs and you need to extract the event data 3. The project slug in the URL is resolved to a project for you - you do not need to look up the project ID first",
     "inputSchema": [
       "link",
     ],
@@ -504,15 +506,15 @@ Expected Output: JSON object with complete event details including stack trace, 
       "readOnlyHint": true,
       "title": "BugSnag: Get Events on an Error",
     },
-    "description": "Gets a list of events that have grouped into the specified error
+    "description": "List the individual events (occurrences) of one error, newest first by default
 
 **Toolset:** Events
 
 **Parameters:**
-- projectId (string): Unique identifier of the project. This is optional if a current project is set and is used to set the current project for BugSnag tools.
-- errorId (string) *required*: Unique identifier of the error
-- filters (record<string, array>): Apply filters to narrow down the event list. Use the List Project Event Filters tool to discover available filter fields. Time filters support extended ISO 8601 format (e.g. 2018-05-20T00:00:00Z) or relative format (e.g. 7d, 24h). (default: {"event.since":[{"type":"eq","value":"30d"}],"error.status":[{"type":"eq","value":"open"}]})
-- direction (enum): Sort direction for ordering results (default: "desc")
+- projectId (string): The BugSnag project ID: an opaque 24-character hex string such as '515fb9337c1074f6fd000003'. This is NOT the project name or slug (the 'my-project' part of a dashboard URL). Get it from the 'id' field returned by List Projects. Optional if a current project is configured (see Get Current Project). When no project is configured, the project provided here becomes the current project for subsequent calls.
+- errorId (string) *required*: ID of the error (a group of similar events). Get it from List Project Errors.
+- filters (record<string, array>): Optional filters on event fields, as an object keyed by field name, where each value is an array of { type: 'eq' | 'ne' | 'empty', value }. Multiple filters are combined with AND. Use the List Project Event Filters tool to discover available filter fields. Time filters (event.since, event.before) support extended ISO 8601 format (e.g. 2018-05-20T00:00:00Z) or relative format (e.g. 7d, 24h). No filters are applied by default, so events of any age are included. (default: {})
+- direction (enum): Sort direction: 'desc' (default) returns the highest/newest values first, 'asc' the lowest/oldest first (default: "desc")
 - perPage (number): How many results to return per page. (default: 30)
 - nextUrl (string): URL for retrieving the next page of results. Use the value in the previous response to get the next page when more results are available. Only values provided in the output from this tool can be used. Do not attempt to construct it manually.
 
@@ -526,7 +528,25 @@ Expected Output: JSON object with complete event details including stack trace, 
   "errorId": "6863e2af012caf1d5c320000"
 }
 \`\`\`
-Expected Output: A list of events, ordered by timestamp, with complete details including stack trace, breadcrumbs, metadata, and context",
+Expected Output: A list of events, ordered by timestamp, with complete details including stack trace, breadcrumbs, metadata, and context
+
+2. Get events of an error from the last 7 days only
+\`\`\`json
+{
+  "errorId": "6863e2af012caf1d5c320000",
+  "filters": {
+    "event.since": [
+      {
+        "type": "eq",
+        "value": "7d"
+      }
+    ]
+  }
+}
+\`\`\`
+Expected Output: A list of events that occurred in the last 7 days
+
+**Hints:** 1. No time filter is applied by default, so events of any age are returned. Use 'event.since' / 'event.before' in filters to restrict the time range 2. Event stack traces and metadata are included, so keep perPage small when you only need a few events 3. Use the 'id' of an event with the Get Event tool if you need to look at one event on its own 4. This tool returns paged results - if the output contains a 'next_url' value, call this tool again with it as the nextUrl parameter to get more events",
     "inputSchema": [
       "direction",
       "errorId",
@@ -551,7 +571,7 @@ Expected Output: A list of events, ordered by timestamp, with complete details i
 **Toolset:** Performance
 
 **Parameters:**
-- projectId (string): Unique identifier of the project. This is optional if a current project is set and is used to set the current project for BugSnag tools.
+- projectId (string): The BugSnag project ID: an opaque 24-character hex string such as '515fb9337c1074f6fd000003'. This is NOT the project name or slug (the 'my-project' part of a dashboard URL). Get it from the 'id' field returned by List Projects. Optional if a current project is configured (see Get Current Project). When no project is configured, the project provided here becomes the current project for subsequent calls.
 
 **Use Cases:** 1. View current network endpoint grouping configuration 2. Understand how network requests are being grouped in performance monitoring 3. Check grouping patterns before making updates
 
@@ -582,8 +602,8 @@ Expected Output: Array of endpoint URL patterns
 **Toolset:** Releases
 
 **Parameters:**
-- projectId (string): Unique identifier of the project. This is optional if a current project is set and is used to set the current project for BugSnag tools.
-- releaseId (string) *required*: Unique identifier of the app release
+- projectId (string): The BugSnag project ID: an opaque 24-character hex string such as '515fb9337c1074f6fd000003'. This is NOT the project name or slug (the 'my-project' part of a dashboard URL). Get it from the 'id' field returned by List Projects. Optional if a current project is configured (see Get Current Project). When no project is configured, the project provided here becomes the current project for subsequent calls.
+- releaseId (string) *required*: ID of the release (release group). Get it from List Releases.
 
 **Output Description:** JSON object containing release details along with stability metrics such as user and session stability, and whether it meets project targets
 
@@ -598,7 +618,7 @@ Expected Output: Array of endpoint URL patterns
 \`\`\`
 Expected Output: JSON object with release details including version, source control info, error counts and stability data.
 
-**Hints:** 1. Release IDs can be found using the List releases tool",
+**Hints:** 1. Release IDs can be found using the List Releases tool 2. user_stability and session_stability are fractions between 0 and 1; meets_target_stability and meets_critical_stability compare them with the project's stability targets",
     "inputSchema": [
       "projectId",
       "releaseId",
@@ -619,9 +639,9 @@ Expected Output: JSON object with release details including version, source cont
 **Toolset:** Performance
 
 **Parameters:**
-- projectId (string): Unique identifier of the project. This is optional if a current project is set and is used to set the current project for BugSnag tools.
-- spanGroupId (string) *required*: ID of the span group
-- filters (record<string, array>): Apply filters to narrow down the span group list. Use the List Trace Fields tool to discover available filter fields. Time filters support extended ISO 8601 format (e.g. 2018-05-20T00:00:00Z) or relative format (e.g. 7d, 24h). (default: {"span.since":[{"type":"eq","value":"7d"}]})
+- projectId (string): The BugSnag project ID: an opaque 24-character hex string such as '515fb9337c1074f6fd000003'. This is NOT the project name or slug (the 'my-project' part of a dashboard URL). Get it from the 'id' field returned by List Projects. Optional if a current project is configured (see Get Current Project). When no project is configured, the project provided here becomes the current project for subsequent calls.
+- spanGroupId (string) *required*: ID of the span group, e.g. '[HttpClient]GET-api.example.com'. Get it from List Span Groups and pass it as returned (do not URL-encode it).
+- filters (record<string, array>): Filters for spans, as an object keyed by field name, where each value is an array of { type: 'eq' | 'ne' | 'empty', value }. Multiple filters are combined with AND. Use the List Trace Fields tool to discover available filter fields. Time filters support extended ISO 8601 format (e.g. 2018-05-20T00:00:00Z) or relative format (e.g. 7d, 24h). If omitted this defaults to span.since=7d, so older spans are excluded - pass 'span.since' (e.g. 30d) to look further back. (default: {"span.since":[{"type":"eq","value":"7d"}]})
 
 **Use Cases:** 1. View detailed statistics (p50, p75, p90, p95, p99) for an operation 2. Check if performance targets are configured 3. Monitor span count to understand operation volume
 
@@ -650,7 +670,7 @@ Expected Output: Statistics, category, and performance target info
 \`\`\`
 Expected Output: Statistics filtered for Chrome browser only
 
-**Hints:** 1. Use List Span Groups first to discover available span group IDs 2. IDs are automatically URL-encoded - provide the raw ID 3. Statistics include p50, p75, p90, p95, p99 percentiles",
+**Hints:** 1. Use List Span Groups first to discover available span group IDs 2. Statistics only cover the filtered time window (last 7 days by default) - pass span.since in filters to change it 3. IDs are automatically URL-encoded - provide the raw ID 4. Statistics include p50, p75, p90, p95, p99 percentiles",
     "inputSchema": [
       "filters",
       "projectId",
@@ -672,11 +692,11 @@ Expected Output: Statistics filtered for Chrome browser only
 **Toolset:** Performance
 
 **Parameters:**
-- projectId (string): Unique identifier of the project. This is optional if a current project is set and is used to set the current project for BugSnag tools.
-- traceId (string) *required*: Trace ID
-- from (string) *required*: Start time (ISO 8601 format)
-- to (string) *required*: End time (ISO 8601 format)
-- targetSpanId (string): Optional target span ID to focus on
+- projectId (string): The BugSnag project ID: an opaque 24-character hex string such as '515fb9337c1074f6fd000003'. This is NOT the project name or slug (the 'my-project' part of a dashboard URL). Get it from the 'id' field returned by List Projects. Optional if a current project is configured (see Get Current Project). When no project is configured, the project provided here becomes the current project for subsequent calls.
+- traceId (string) *required*: ID of the trace, from the trace ID of a span returned by List Spans
+- from (string) *required*: Start of the time window to search, ISO 8601 UTC (e.g. 2024-01-01T00:00:00Z). Must be before the time the trace occurred
+- to (string) *required*: End of the time window to search, ISO 8601 UTC. Must be after the time the trace occurred - use the span timestamp plus a few minutes
+- targetSpanId (string): Optional ID of a span in the trace; results are focused around this span
 - perPage (number): How many results to return per page. (default: 30)
 - nextUrl (string): URL for retrieving the next page of results. Use the value in the previous response to get the next page when more results are available. Only values provided in the output from this tool can be used. Do not attempt to construct it manually.
 
@@ -705,7 +725,7 @@ Expected Output: Array of all spans in the trace with timing and hierarchy
 \`\`\`
 Expected Output: Array of up to 50 spans focused around the target span
 
-**Hints:** 1. Traces show the complete execution path of a request 2. Use from/to parameters to narrow the time window 3. targetSpanId can be used to focus on a specific span in the trace",
+**Hints:** 1. Traces show the complete execution path of a request 2. The from/to window must contain the trace - take the timestamp of a span from List Spans and use a window around it 3. targetSpanId can be used to focus on a specific span in the trace",
     "inputSchema": [
       "from",
       "nextUrl",
@@ -731,10 +751,10 @@ Expected Output: Array of up to 50 spans focused around the target span
 **Toolset:** Errors
 
 **Parameters:**
-- projectId (string): Unique identifier of the project. This is optional if a current project is set and is used to set the current project for BugSnag tools.
-- filters (record<string, array>): Apply filters to narrow down the error list. Use the List Project Event Filters tool to discover available filter fields. Time filters support extended ISO 8601 format (e.g. 2018-05-20T00:00:00Z) or relative format (e.g. 7d, 24h). (default: {"event.since":[{"type":"eq","value":"30d"}],"error.status":[{"type":"eq","value":"open"}]})
-- sort (enum): Field to sort the errors by (default: "last_seen")
-- direction (enum): Sort direction for ordering results (default: "desc")
+- projectId (string): The BugSnag project ID: an opaque 24-character hex string such as '515fb9337c1074f6fd000003'. This is NOT the project name or slug (the 'my-project' part of a dashboard URL). Get it from the 'id' field returned by List Projects. Optional if a current project is configured (see Get Current Project). When no project is configured, the project provided here becomes the current project for subsequent calls.
+- filters (record<string, array>): Filters that narrow down the error list, as an object keyed by field name where each value is an array of { type: 'eq' | 'ne' | 'empty', value }. Multiple filters are combined with AND. Use the List Project Event Filters tool to discover available filter fields. Time filters (event.since, event.before) support extended ISO 8601 format (e.g. 2018-05-20T00:00:00Z) or relative format (e.g. 7d, 24h). Defaults: 'event.since' is 30d and 'error.status' is 'open' unless you specify them, so errors that are fixed, ignored or snoozed, or have no events in the last 30 days, are excluded by default. (default: {"event.since":[{"type":"eq","value":"30d"}],"error.status":[{"type":"eq","value":"open"}]})
+- sort (enum): Field to sort errors by: 'last_seen' (default), 'first_seen', 'events' (number of events), 'users' (number of users affected) or 'unsorted' (default: "last_seen")
+- direction (enum): Sort direction: 'desc' (default) returns the highest/newest values first, 'asc' the lowest/oldest first (default: "desc")
 - perPage (number): How many results to return per page. (default: 30)
 - nextUrl (string): URL for retrieving the next page of results. Use the value in the previous response to get the next page when more results are available. Only values provided in the output from this tool can be used. Do not attempt to construct it manually.
 
@@ -760,7 +780,7 @@ Expected Output: Array of up to 50 spans focused around the target span
   }
 }
 \`\`\`
-Expected Output: JSON object with a list of errors in the 'data' field, a count of the current page of results in the 'count' field, and a total count of all results in the 'total' field
+Expected Output: JSON object with a list of errors in the 'data' field, a count of the current page of results in the 'data_count' field, and a total count of all results in the 'total_count' field
 
 2. Get the 10 open errors with the most users affected in the last 30 days
 \`\`\`json
@@ -784,7 +804,7 @@ Expected Output: JSON object with a list of errors in the 'data' field, a count 
   "perPage": 10
 }
 \`\`\`
-Expected Output: JSON object with a list of errors in the 'data' field, a count of the current page of results in the 'count' field, and a total count of all results in the 'total' field
+Expected Output: JSON object with a list of errors in the 'data' field, a count of the current page of results in the 'data_count' field, and a total count of all results in the 'total_count' field
 
 3. Get the next 50 results
 \`\`\`json
@@ -795,7 +815,7 @@ Expected Output: JSON object with a list of errors in the 'data' field, a count 
 \`\`\`
 Expected Output: JSON object with a list of errors, with a URL to the next page if more results are available and a total count of all errors matched
 
-**Hints:** 1. Use List Project Event Filters tool first to discover valid filter field names for your project 2. Combine multiple filters to narrow results - filters are applied with AND logic 3. For time filters: use relative format (7d, 24h) for recent periods or ISO 8601 UTC format (2018-05-20T00:00:00Z) for specific dates 4. Common time filters: event.since (from this time), event.before (until this time) 5. The 'event.since' filter and 'error.status' filters are always applied and if not specified are set to '30d' and 'open' respectively 6. There may not be any errors matching the filters - this is not a problem with the tool, in fact it might be a good thing that the user's application had no errors 7. This tool returns paged results. The 'page_error_count' field indicates the number of results returned in the current page, and the 'total_error_count' field indicates the total number of results across all pages. 8. If the output contains a 'next_url' value, there are more results available - call this tool again supplying the next URL as a parameter to retrieve the next page. 9. Do not modify the next URL as this can cause incorrect results. The only other parameter that can be used with 'next' is 'per_page' to control the page size.",
+**Hints:** 1. Use List Project Event Filters tool first to discover valid filter field names for your project 2. Combine multiple filters to narrow results - filters are applied with AND logic 3. For time filters: use relative format (7d, 24h) for recent periods or ISO 8601 UTC format (2018-05-20T00:00:00Z) for specific dates 4. Common time filters: event.since (from this time), event.before (until this time) 5. The 'event.since' filter and 'error.status' filters are always applied and if not specified are set to '30d' and 'open' respectively. To see errors that are fixed, ignored or snoozed, or older errors, set these filters explicitly (e.g. 'event.since' of '365d') 6. If no errors are returned, the default 30d/open filters may be excluding them - try widening 'event.since' or changing 'error.status' before concluding there are none 7. Use the 'id' of an error with Get Error or Get Events on an Error to investigate it further 8. There may not be any errors matching the filters - this is not a problem with the tool, in fact it might be a good thing that the user's application had no errors 9. This tool returns paged results. The 'data_count' field indicates the number of results returned in the current page, and the 'total_count' field indicates the total number of results across all pages. 10. If the output contains a 'next_url' value, there are more results available - call this tool again supplying the next URL as a parameter to retrieve the next page. 11. Do not modify the next URL as this can cause incorrect results. The only other parameter that can be used with 'next' is 'per_page' to control the page size.",
     "inputSchema": [
       "direction",
       "filters",
@@ -820,7 +840,7 @@ Expected Output: JSON object with a list of errors, with a URL to the next page 
 **Toolset:** Projects
 
 **Parameters:**
-- projectId (string): Unique identifier of the project. This is optional if a current project is set and is used to set the current project for BugSnag tools.
+- projectId (string): The BugSnag project ID: an opaque 24-character hex string such as '515fb9337c1074f6fd000003'. This is NOT the project name or slug (the 'my-project' part of a dashboard URL). Get it from the 'id' field returned by List Projects. Optional if a current project is configured (see Get Current Project). When no project is configured, the project provided here becomes the current project for subsequent calls.
 
 **Use Cases:** 1. Discover what filter fields are available before searching for errors 2. Find the correct field names for filtering by user, environment, or custom metadata 3. Understand filter options and data types for building complex queries
 
@@ -831,7 +851,7 @@ Expected Output: JSON object with a list of errors, with a URL to the next page 
 \`\`\`
 Expected Output: JSON array of EventField objects containing display_id, custom flag, and filter/pivot options
 
-**Hints:** 1. Use this tool before the List Errors or Get Error tools to understand available filters 2. Look for display_id field in the response - these are the field names to use in filters",
+**Hints:** 1. Use this tool before the List Project Errors, Get Error or Get Events on an Error tools to understand available filters 2. Look for display_id field in the response - these are the field names to use as keys in the filters parameter (e.g. 'error.status', 'event.since', 'user.email')",
     "inputSchema": [
       "projectId",
     ],
@@ -846,16 +866,16 @@ Expected Output: JSON array of EventField objects containing display_id, custom 
       "readOnlyHint": true,
       "title": "BugSnag: List Projects",
     },
-    "description": "List all projects in the organization that the current user has access to, or find a project matching an API key.
+    "description": "List the projects the current user has access to, or find the project matching an API key. Each project includes its 'id', 'name', 'slug' and 'api_key'.
 
 **Toolset:** Projects
 
 **Parameters:**
-- apiKey (string): The API key of the BugSnag project, if known.
+- apiKey (string): The notifier API key of the BugSnag project (found where the BugSnag SDK is configured in the user's code). If provided, only the project with this key is returned.
 
 **Use Cases:** 1. Get an overview of all projects in the organization 2. Locate a project by its API key if known from the user's code
 
-**Hints:** 1. Project IDs from this list can be used with other tools when no project API key is configured",
+**Hints:** 1. Use the 'id' field (not the name or slug) as the projectId parameter of other BugSnag tools when no current project is configured 2. To find a project the user refers to by name or slug, look it up in this list and use its 'id'",
     "inputSchema": [
       "apiKey",
     ],
@@ -870,14 +890,14 @@ Expected Output: JSON array of EventField objects containing display_id, custom 
       "readOnlyHint": true,
       "title": "BugSnag: List Releases",
     },
-    "description": "List releases for a project
+    "description": "List release groups (versions of the app) for a project, with stability metrics
 
 **Toolset:** Releases
 
 **Parameters:**
-- projectId (string): Unique identifier of the project. This is optional if a current project is set and is used to set the current project for BugSnag tools.
-- releaseStage (string): Filter releases by this stage (e.g. production, staging), defaults to 'production' (default: "production")
-- visibleOnly (boolean): Whether to only include releases that are marked as visible in the dashboard (default: false)
+- projectId (string): The BugSnag project ID: an opaque 24-character hex string such as '515fb9337c1074f6fd000003'. This is NOT the project name or slug (the 'my-project' part of a dashboard URL). Get it from the 'id' field returned by List Projects. Optional if a current project is configured (see Get Current Project). When no project is configured, the project provided here becomes the current project for subsequent calls.
+- releaseStage (string): Only include releases from this release stage (e.g. production, staging, development). Defaults to 'production' (default: "production")
+- visibleOnly (boolean): If true, excludes releases that have been hidden in the dashboard. Defaults to false (include all) (default: false)
 - perPage (number): How many results to return per page. (default: 30)
 - nextUrl (string): URL for retrieving the next page of results. Use the value in the previous response to get the next page when more results are available. Only values provided in the output from this tool can be used. Do not attempt to construct it manually.
 
@@ -888,7 +908,9 @@ Expected Output: JSON array of EventField objects containing display_id, custom 
 **Examples:**
 1. List production releases for a project
 \`\`\`json
-{}
+{
+  "projectId": "515fb9337c1074f6fd000003"
+}
 \`\`\`
 Expected Output: JSON array of release objects in the production stage
 
@@ -908,7 +930,7 @@ Expected Output: JSON array of release objects in the staging stage
 \`\`\`
 Expected Output: JSON array of release objects with metadata from the next page
 
-**Hints:** 1. Use the Get Release tool to get more details on a specific release, including the builds it contains 2. The release stage defaults to 'production' if not specified 3. Use visibleOnly to filter out releases that have been marked as hidden in the dashboard",
+**Hints:** 1. Use the Get Release tool with a release's id to get more details, including the builds it contains 2. Only the production stage is listed by default - set releaseStage to list releases from another stage 3. The release stage defaults to 'production' if not specified 4. Use visibleOnly to filter out releases that have been marked as hidden in the dashboard",
     "inputSchema": [
       "nextUrl",
       "perPage",
@@ -932,13 +954,13 @@ Expected Output: JSON array of release objects with metadata from the next page
 **Toolset:** Performance
 
 **Parameters:**
-- projectId (string): Unique identifier of the project. This is optional if a current project is set and is used to set the current project for BugSnag tools.
-- sort (enum): Field to sort by
-- direction (enum): Sort direction for ordering results (default: "desc")
+- projectId (string): The BugSnag project ID: an opaque 24-character hex string such as '515fb9337c1074f6fd000003'. This is NOT the project name or slug (the 'my-project' part of a dashboard URL). Get it from the 'id' field returned by List Projects. Optional if a current project is configured (see Get Current Project). When no project is configured, the project provided here becomes the current project for subsequent calls.
+- sort (enum): Field to sort by, e.g. duration_p95 or duration_p99 for the slowest operations, total_spans for the most frequently used, last_seen for the most recent
+- direction (enum): Sort direction: 'desc' (default) returns the highest/newest values first, 'asc' the lowest/oldest first (default: "desc")
 - perPage (number): How many results to return per page. (default: 30)
-- starredOnly (boolean): Show only starred span groups
+- starredOnly (boolean): If true, only include span groups that have been starred as important in the dashboard
 - nextUrl (string): URL for retrieving the next page of results. Use the value in the previous response to get the next page when more results are available. Only values provided in the output from this tool can be used. Do not attempt to construct it manually.
-- filters (record<string, array>): Apply filters to narrow down the span group list. Use the List Trace Fields tool to discover available filter fields. Time filters support extended ISO 8601 format (e.g. 2018-05-20T00:00:00Z) or relative format (e.g. 7d, 24h). (default: {"span.since":[{"type":"eq","value":"7d"}]})
+- filters (record<string, array>): Filters for spans, as an object keyed by field name, where each value is an array of { type: 'eq' | 'ne' | 'empty', value }. Multiple filters are combined with AND. Use the List Trace Fields tool to discover available filter fields. Time filters support extended ISO 8601 format (e.g. 2018-05-20T00:00:00Z) or relative format (e.g. 7d, 24h). If omitted this defaults to span.since=7d, so older spans are excluded - pass 'span.since' (e.g. 30d) to look further back. (default: {"span.since":[{"type":"eq","value":"7d"}]})
 
 **Use Cases:** 1. View all operations being tracked for performance 2. Find slow operations by sorting by duration metrics 3. Filter to starred/important span groups
 
@@ -969,7 +991,7 @@ Expected Output: Array of span groups sorted by 95th percentile duration
 \`\`\`
 Expected Output: Array of starred span groups filtered by category
 
-**Hints:** 1. Span groups represent different operation types (page loads, API calls, etc.) 2. Use sort by duration_p95 or duration_p99 to find the slowest operations 3. Star important span groups for quick access 4. Use nextUrl for pagination",
+**Hints:** 1. Span groups represent different operation types (page loads, API calls, etc.) 2. Use sort by duration_p95 or duration_p99 to find the slowest operations 3. Only span groups with spans in the filtered time window are returned (last 7 days by default) - pass span.since in filters to look further back 4. Use nextUrl for pagination",
     "inputSchema": [
       "direction",
       "filters",
@@ -995,13 +1017,13 @@ Expected Output: Array of starred span groups filtered by category
 **Toolset:** Performance
 
 **Parameters:**
-- projectId (string): Unique identifier of the project. This is optional if a current project is set and is used to set the current project for BugSnag tools.
-- spanGroupId (string) *required*: ID of the span group
-- sort (enum): Field to sort by
-- direction (enum): Sort direction for ordering results (default: "desc")
+- projectId (string): The BugSnag project ID: an opaque 24-character hex string such as '515fb9337c1074f6fd000003'. This is NOT the project name or slug (the 'my-project' part of a dashboard URL). Get it from the 'id' field returned by List Projects. Optional if a current project is configured (see Get Current Project). When no project is configured, the project provided here becomes the current project for subsequent calls.
+- spanGroupId (string) *required*: ID of the span group, e.g. '[HttpClient]GET-api.example.com'. Get it from List Span Groups and pass it as returned (do not URL-encode it).
+- sort (enum): Field to sort by, e.g. duration for the slowest spans or timestamp for the newest
+- direction (enum): Sort direction: 'desc' (default) returns the highest/newest values first, 'asc' the lowest/oldest first (default: "desc")
 - perPage (number): How many results to return per page. (default: 30)
 - nextUrl (string): URL for retrieving the next page of results. Use the value in the previous response to get the next page when more results are available. Only values provided in the output from this tool can be used. Do not attempt to construct it manually.
-- filters (record<string, array>): Apply filters to narrow down the span group list. Use the List Trace Fields tool to discover available filter fields. Time filters support extended ISO 8601 format (e.g. 2018-05-20T00:00:00Z) or relative format (e.g. 7d, 24h). (default: {"span.since":[{"type":"eq","value":"7d"}]})
+- filters (record<string, array>): Filters for spans, as an object keyed by field name, where each value is an array of { type: 'eq' | 'ne' | 'empty', value }. Multiple filters are combined with AND. Use the List Trace Fields tool to discover available filter fields. Time filters support extended ISO 8601 format (e.g. 2018-05-20T00:00:00Z) or relative format (e.g. 7d, 24h). If omitted this defaults to span.since=7d, so older spans are excluded - pass 'span.since' (e.g. 30d) to look further back. (default: {"span.since":[{"type":"eq","value":"7d"}]})
 
 **Use Cases:** 1. Analyze individual slow operations 2. Debug performance issues by examining specific traces 3. Find patterns in operation attributes
 
@@ -1035,7 +1057,7 @@ Expected Output: Array of the 10 slowest span instances
 \`\`\`
 Expected Output: Array of spans from iOS devices with next page navigation
 
-**Hints:** 1. Sort by duration descending to find the slowest instances 2. Each span includes trace ID for further investigation",
+**Hints:** 1. Sort by duration descending to find the slowest instances 2. Each span includes trace ID for further investigation with the Get Trace tool 3. Only spans from the filtered time window are returned (last 7 days by default) - pass span.since in filters to look further back",
     "inputSchema": [
       "direction",
       "filters",
@@ -1061,7 +1083,7 @@ Expected Output: Array of spans from iOS devices with next page navigation
 **Toolset:** Performance
 
 **Parameters:**
-- projectId (string): Unique identifier of the project. This is optional if a current project is set and is used to set the current project for BugSnag tools.
+- projectId (string): The BugSnag project ID: an opaque 24-character hex string such as '515fb9337c1074f6fd000003'. This is NOT the project name or slug (the 'my-project' part of a dashboard URL). Get it from the 'id' field returned by List Projects. Optional if a current project is configured (see Get Current Project). When no project is configured, the project provided here becomes the current project for subsequent calls.
 
 **Use Cases:** 1. Find available custom attributes for performance filtering 2. Understand what metadata is attached to traces 3. Build dynamic filters based on available fields
 
@@ -1072,7 +1094,7 @@ Expected Output: Array of spans from iOS devices with next page navigation
 \`\`\`
 Expected Output: Array of field names and types available for filtering
 
-**Hints:** 1. Trace fields are custom attributes added to spans 2. Use these fields for filtering other performance queries",
+**Hints:** 1. Trace fields are custom attributes added to spans 2. Use these field names as keys in the filters parameter of List Span Groups, Get Span Group and List Spans",
     "inputSchema": [
       "projectId",
     ],
@@ -1092,7 +1114,7 @@ Expected Output: Array of field names and types available for filtering
 **Toolset:** Performance
 
 **Parameters:**
-- projectId (string): Unique identifier of the project. This is optional if a current project is set and is used to set the current project for BugSnag tools.
+- projectId (string): The BugSnag project ID: an opaque 24-character hex string such as '515fb9337c1074f6fd000003'. This is NOT the project name or slug (the 'my-project' part of a dashboard URL). Get it from the 'id' field returned by List Projects. Optional if a current project is configured (see Get Current Project). When no project is configured, the project provided here becomes the current project for subsequent calls.
 - endpoints (array) *required*: Array of URL patterns by which network spans are grouped. Endpoints follow OpenAPI path templating syntax (https://swagger.io/specification/#path-templating) where path parameters use curly braces (e.g., /users/{id}). If you encounter colon-prefixed parameters (e.g., :userId from Express/React Router), convert them to curly braces (e.g., {userId}). Wildcards (*) can be used in domains (e.g., https://*.example.com) to match multiple subdomains.
 
 **Use Cases:** 1. Consolidate similar API endpoints into single span groups 2. Group dynamic URLs using path parameters (e.g., /api/users/{userId} groups /api/users/123, /api/users/456) 3. Match multiple subdomains using wildcards (e.g., https://*.example.com groups api.example.com, cdn.example.com) 4. Simplify performance monitoring by reducing span group clutter
@@ -1133,7 +1155,7 @@ Expected Output: Success response confirming the update
 \`\`\`
 Expected Output: Success response confirming the update
 
-**Hints:** 1. Use Get Network Grouping first to see current patterns 2. Use OpenAPI path templating with curly braces for path parameters: /users/{userId}, /orders/{orderId}/items/{itemId} 3. Convert colon-prefixed parameters to curly braces: :organizationSlug becomes {organizationSlug}, :projectSlug becomes {projectSlug} 4. Wildcards (*) can be used in domains to match subdomains: https://*.example.com/api 5. This replaces all existing patterns - include all patterns you want to keep 6. Well-designed patterns reduce noise in performance monitoring",
+**Hints:** 1. Use Get Network Endpoint Groupings first to see current patterns 2. Use OpenAPI path templating with curly braces for path parameters: /users/{userId}, /orders/{orderId}/items/{itemId} 3. Convert colon-prefixed parameters to curly braces: :organizationSlug becomes {organizationSlug}, :projectSlug becomes {projectSlug} 4. Wildcards (*) can be used in domains to match subdomains: https://*.example.com/api 5. This REPLACES all existing patterns - call Get Network Endpoint Groupings first and send back the full list with your changes, otherwise existing patterns are lost 6. Well-designed patterns reduce noise in performance monitoring",
     "inputSchema": [
       "endpoints",
       "projectId",
@@ -1154,10 +1176,10 @@ Expected Output: Success response confirming the update
 **Toolset:** Errors
 
 **Parameters:**
-- projectId (string): Unique identifier of the project. This is optional if a current project is set and is used to set the current project for BugSnag tools.
-- errorId (string) *required*: Unique identifier of the error
-- operation (enum) *required*: The operation to apply to the error
-- issue_url (string): The URL of the issue to link to the error - required when operation is 'link_issue'
+- projectId (string): The BugSnag project ID: an opaque 24-character hex string such as '515fb9337c1074f6fd000003'. This is NOT the project name or slug (the 'my-project' part of a dashboard URL). Get it from the 'id' field returned by List Projects. Optional if a current project is configured (see Get Current Project). When no project is configured, the project provided here becomes the current project for subsequent calls.
+- errorId (string) *required*: ID of the error (a group of similar events). Get it from List Project Errors.
+- operation (enum) *required*: The operation to apply: 'open' reopens the error; 'fix' marks it fixed; 'ignore' ignores it until manually reopened; 'snooze' ignores it until the condition in reopenRules is met; 'discard' stops storing new events for it and 'undiscard' resumes; 'override_severity' changes its severity (the user will be asked to choose the value); 'link_issue' links it to an external issue (requires issue_url) and 'unlink_issue' removes that link
+- issue_url (string): The URL of the issue (e.g. a Jira issue) to link to the error - required when operation is 'link_issue'
 - reopenRules (object): Reopen rules for snooze operation - required when operation is 'snooze'
 
 **Use Cases:** 1. Mark an error as open, fixed or ignored 2. Discard or un-discard an error 3. Update the severity of an error 4. Snooze an error with defined conditions for when it should be reopened
@@ -1231,7 +1253,7 @@ Expected Output: Success response indicating the Jira issue was linked to the er
 \`\`\`
 Expected Output: Success response indicating the Jira issue was unlinked from the error
 
-**Hints:** 1. Only use valid operations - BugSnag may reject invalid values 2. When using 'snooze' operation, reopenRules parameter is required 3. When using 'link_issue' operation, issue_url parameter is required 4. Use 'unlink_issue' to remove the link between an error and its issue 5. For 'occurs_after' reopen rules, specify 'seconds' parameter 6. For 'n_additional_users' reopen rules, specify 'additionalUsers' parameter (max 100,000) 7. For 'n_occurrences_in_m_hours' reopen rules, specify both 'occurrences' and 'hours' parameters 8. For 'n_additional_occurrences' reopen rules, specify 'additionalOccurrences' parameter 9. Snoozing temporarily silences an error until the specified reopen condition is met",
+**Hints:** 1. Only use valid operations - BugSnag may reject invalid values 2. When using 'snooze' operation, reopenRules parameter is required 3. When using 'link_issue' operation, issue_url parameter is required 4. Use 'unlink_issue' to remove the link between an error and its issue 5. For 'occurs_after' reopen rules, specify 'seconds' parameter 6. For 'n_additional_users' reopen rules, specify 'additionalUsers' parameter (max 100,000) 7. For 'n_occurrences_in_m_hours' reopen rules, specify both 'occurrences' and 'hours' parameters 8. For 'n_additional_occurrences' reopen rules, specify 'additionalOccurrences' parameter 9. Snoozing temporarily silences an error until the specified reopen condition is met 10. This changes the error's workflow state in the BugSnag dashboard for the whole team - confirm with the user before fixing, ignoring or discarding errors",
     "inputSchema": [
       "errorId",
       "issue_url",
