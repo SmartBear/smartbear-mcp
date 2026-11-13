@@ -7,19 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-### Added
-
-- [Common] The server now sends a short instructions text when an assistant connects(stdio and HTTP). It says that only tools for configured products are registered and points to `smartbear_list_integrations`.
-- [Common] Added the `smartbear_list_integrations` tool. It is always available, takes no input and needs no credentials. It lists every product with a short description and whether it is configured. For configured products it shows the tool count and which toolsets are enabled. For products that are not configured it shows the environment variable and HTTP header each setting needs. Only products allowed by `MCP_CLIENTS` are listed, and BearQ, Reflect and QMetry always show as configured because they accept per-request OAuth tokens.
-
-### Changed
-
-- [Common] With the stdio transport and no product configured, the server no longer registers every product's tools. Only `smartbear_list_integrations` is available, and it tells the assistant what each product needs. Set the credentials for at least one product to get its tools.
-
 ## [0.44.0] - 2026-11-13
 
 ### Added
 
+- [Common] The server now sends a short instructions text when an assistant connects(stdio and HTTP). It says that only tools for configured products are registered and points to `smartbear_list_integrations`.
+- [Common] Added the `smartbear_list_integrations` tool. It is always available, takes no input and needs no credentials. It lists every product with a short description and whether it is configured. For configured products it shows the tool count and which toolsets are enabled. For products that are not configured it shows the environment variable and HTTP header each setting needs. Only products allowed by `MCP_CLIENTS` are listed, and BearQ, Reflect and QMetry always show as configured because they accept per-request OAuth tokens.
 - [PactFlow] Added a `Drift MCP Tests` GitHub Actions workflow (`.github/workflows/drift.yml`) that runs `npm run test:drift` in CI, and `scripts/ci/drift-publish-provider-contract`, which publishes the MCP definition and the Drift results to PactFlow as a provider contract.
 - [PactFlow] Added Drift test cases for the PactFlow MCP tools (hand-written cases in `src/pactflow/drift/pactflow.testcases.yaml` and generated calls in `pactflow.tools.testcases.yaml`) and `npm run test:drift` (`scripts/drift-verify.mjs`), which runs them against the mock PactFlow API using the Drift CLI and its MCP plugin. Results are written to `drift-results/`, which is gitignored.
 - [PactFlow] Added a mock PactFlow API (`src/pactflow/drift/mock-pactflow.mjs`) that serves learned fixtures for every PactFlow tool, and `npm run drift:generate` (`scripts/drift-generate-definition.mjs`), which regenerates the MCP definition and the generated tool-call fixtures from the tools the built server advertises.
@@ -33,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- [Common] With the stdio transport and no product configured, the server no longer registers every product's tools. Only `smartbear_list_integrations` is available, and it tells the assistant what each product needs. Set the credentials for at least one product to get its tools.
 - [Common] HTTP sessions are now bound to the exact credential that opened them, for every product. A refreshed OAuth access token no longer matches its existing session, so the client starts a new session with the new token. Clients that follow the MCP Streamable HTTP spec do this automatically, without the user logging in again. Session-scoped state, such as an open Reflect recording, does not carry over to the new session.
 
 ## [0.43.0] - 2026-11-02
