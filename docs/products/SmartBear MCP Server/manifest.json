@@ -68,6 +68,14 @@
     },
     {
       "order": 2,
+      "parent": "getting-started",
+      "name": "On-Premises Installation",
+      "slug": "on-prem-server",
+      "type": "markdown",
+      "contentUrl": "on-prem-server.md"
+    },
+    {
+      "order": 2,
       "parent": "",
       "name": "MCP Server Capabilities",
       "slug": "mcp-server-capabilities",
