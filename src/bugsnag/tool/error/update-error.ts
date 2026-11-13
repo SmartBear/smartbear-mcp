@@ -186,7 +186,7 @@ export class UpdateError extends Tool<BugsnagClient> {
       "For 'n_occurrences_in_m_hours' reopen rules, specify both 'occurrences' and 'hours' parameters",
       "For 'n_additional_occurrences' reopen rules, specify 'additionalOccurrences' parameter",
       "Snoozing temporarily silences an error until the specified reopen condition is met",
-      "This changes the error's workflow state in the BugSnag dashboard for the whole team - confirm with the user before fixing, ignoring or discarding errors",
+      "This changes the error's workflow state in the BugSnag dashboard for the whole team - confirm with the user before any state-changing operation, including snoozing, fixing, ignoring, discarding, reopening, severity changes or issue links",
     ],
     readOnly: false,
     idempotent: false,
