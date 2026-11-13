@@ -22,7 +22,7 @@ export class GetCurrentProject extends Tool<BugsnagClient> {
       "If a project is returned, it can be assumed that the user expects interactions with BugSnag tools to refer to this project",
       "If this tool returns no current project then other BugSnag tools will require an explicit project ID parameter",
       "Call the List Projects tool to see all projects that the user has access to. Find the project in this list by the name or slug the user gives you, then use its 'id' field (not the name or slug) as the projectId parameter",
-"You might find a BugSnag API key in the user's code where they configure the BugSnag SDK that can be matched to a project's 'api_key' field from the project list",
+      "You might find a BugSnag API key in the user's code where they configure the BugSnag SDK that can be matched to a project's 'api_key' field from the project list",
     ],
   };
 

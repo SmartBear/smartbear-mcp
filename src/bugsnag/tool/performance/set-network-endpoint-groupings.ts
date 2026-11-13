@@ -73,6 +73,7 @@ export class SetNetworkEndpointGroupings extends Tool<BugsnagClient> {
       "Convert colon-prefixed parameters to curly braces: :organizationSlug becomes {organizationSlug}, :projectSlug becomes {projectSlug}",
       "Wildcards (*) can be used in domains to match subdomains: https://*.example.com/api",
       "This REPLACES all existing patterns - call Get Network Endpoint Groupings first and send back the full list with your changes, otherwise existing patterns are lost",
+      "Confirm with the user before calling this tool, as it changes the endpoint grouping configuration for the whole project",
       "Well-designed patterns reduce noise in performance monitoring",
     ],
     readOnly: false,

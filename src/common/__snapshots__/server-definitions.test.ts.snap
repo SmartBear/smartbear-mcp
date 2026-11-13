@@ -386,7 +386,7 @@ None
 
 **Use Cases:** 1. Understand if a current project has been set
 
-**Hints:** 1. If a project is returned, it can be assumed that the user expects interactions with BugSnag tools to refer to this project 2. If this tool returns no current project then other BugSnag tools will require an explicit project ID parameter 3. Call the List Projects tool to see all projects that the user has access to. Find the project in this list by the name or slug the user gives you, then use its 'id' field (not the name or slug) as the projectId parameter 4. You might find a BugSnag API key in the user's code where they configure the BugSnag SDK that can be matched to a project 'apiKey' field from the project list",
+**Hints:** 1. If a project is returned, it can be assumed that the user expects interactions with BugSnag tools to refer to this project 2. If this tool returns no current project then other BugSnag tools will require an explicit project ID parameter 3. Call the List Projects tool to see all projects that the user has access to. Find the project in this list by the name or slug the user gives you, then use its 'id' field (not the name or slug) as the projectId parameter 4. You might find a BugSnag API key in the user's code where they configure the BugSnag SDK that can be matched to a project's 'api_key' field from the project list",
     "inputSchema": [],
     "outputSchema": undefined,
     "title": "BugSnag: Get Current Project",
@@ -1155,7 +1155,7 @@ Expected Output: Success response confirming the update
 \`\`\`
 Expected Output: Success response confirming the update
 
-**Hints:** 1. Use Get Network Endpoint Groupings first to see current patterns 2. Use OpenAPI path templating with curly braces for path parameters: /users/{userId}, /orders/{orderId}/items/{itemId} 3. Convert colon-prefixed parameters to curly braces: :organizationSlug becomes {organizationSlug}, :projectSlug becomes {projectSlug} 4. Wildcards (*) can be used in domains to match subdomains: https://*.example.com/api 5. This REPLACES all existing patterns - call Get Network Endpoint Groupings first and send back the full list with your changes, otherwise existing patterns are lost 6. Well-designed patterns reduce noise in performance monitoring",
+**Hints:** 1. Use Get Network Endpoint Groupings first to see current patterns 2. Use OpenAPI path templating with curly braces for path parameters: /users/{userId}, /orders/{orderId}/items/{itemId} 3. Convert colon-prefixed parameters to curly braces: :organizationSlug becomes {organizationSlug}, :projectSlug becomes {projectSlug} 4. Wildcards (*) can be used in domains to match subdomains: https://*.example.com/api 5. This REPLACES all existing patterns - call Get Network Endpoint Groupings first and send back the full list with your changes, otherwise existing patterns are lost 6. Confirm with the user before calling this tool, as it changes the endpoint grouping configuration for the whole project 7. Well-designed patterns reduce noise in performance monitoring",
     "inputSchema": [
       "endpoints",
       "projectId",
@@ -1253,7 +1253,7 @@ Expected Output: Success response indicating the Jira issue was linked to the er
 \`\`\`
 Expected Output: Success response indicating the Jira issue was unlinked from the error
 
-**Hints:** 1. Only use valid operations - BugSnag may reject invalid values 2. When using 'snooze' operation, reopenRules parameter is required 3. When using 'link_issue' operation, issue_url parameter is required 4. Use 'unlink_issue' to remove the link between an error and its issue 5. For 'occurs_after' reopen rules, specify 'seconds' parameter 6. For 'n_additional_users' reopen rules, specify 'additionalUsers' parameter (max 100,000) 7. For 'n_occurrences_in_m_hours' reopen rules, specify both 'occurrences' and 'hours' parameters 8. For 'n_additional_occurrences' reopen rules, specify 'additionalOccurrences' parameter 9. Snoozing temporarily silences an error until the specified reopen condition is met 10. This changes the error's workflow state in the BugSnag dashboard for the whole team - confirm with the user before fixing, ignoring or discarding errors",
+**Hints:** 1. Only use valid operations - BugSnag may reject invalid values 2. When using 'snooze' operation, reopenRules parameter is required 3. When using 'link_issue' operation, issue_url parameter is required 4. Use 'unlink_issue' to remove the link between an error and its issue 5. For 'occurs_after' reopen rules, specify 'seconds' parameter 6. For 'n_additional_users' reopen rules, specify 'additionalUsers' parameter (max 100,000) 7. For 'n_occurrences_in_m_hours' reopen rules, specify both 'occurrences' and 'hours' parameters 8. For 'n_additional_occurrences' reopen rules, specify 'additionalOccurrences' parameter 9. Snoozing temporarily silences an error until the specified reopen condition is met 10. This changes the error's workflow state in the BugSnag dashboard for the whole team - confirm with the user before any state-changing operation, including snoozing, fixing, ignoring, discarding, reopening, severity changes or issue links",
     "inputSchema": [
       "errorId",
       "issue_url",
