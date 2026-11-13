@@ -42,6 +42,7 @@ export class GetSpanGroup extends Tool<BugsnagClient> {
     ],
     hints: [
       "Use List Span Groups first to discover available span group IDs",
+      "Statistics only cover the filtered time window (last 7 days by default) - pass span.since in filters to change it",
       "IDs are automatically URL-encoded - provide the raw ID",
       "Statistics include p50, p75, p90, p95, p99 percentiles",
     ],

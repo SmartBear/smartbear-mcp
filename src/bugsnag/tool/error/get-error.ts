@@ -10,9 +10,11 @@ const inputSchema = z.object({
   errorId: toolInputParameters.errorId.describe(
     "Unique identifier of the error to retrieve",
   ),
-  filters: toolInputParameters.filters.describe(
-    "Apply filters to narrow down the error list. Use the List Project Event Filters tool to discover available filter fields. " +
-      "Time filters support extended ISO 8601 format (e.g. 2018-05-20T00:00:00Z) or relative format (e.g. 7d, 24h).",
+  filters: toolInputParameters.errorScopedFilters.describe(
+    "Optional filters that restrict which events of this error are used for the latest event and the pivot summaries, as an object keyed by field name where each value is an array of { type: 'eq' | 'ne' | 'empty', value }. " +
+      "Use the List Project Event Filters tool to discover available filter fields. " +
+      "Time filters (event.since, event.before) support extended ISO 8601 format (e.g. 2018-05-20T00:00:00Z) or relative format (e.g. 7d, 24h). " +
+      "No filters are applied by default, so events of any age are considered.",
   ),
 });
 
@@ -22,7 +24,7 @@ export class GetError extends Tool<BugsnagClient> {
     title: "Get Error",
     toolset: "Errors",
     summary:
-      "Get full details on an error, including aggregated and summarized data across all events (occurrences) and details of the latest event (occurrence), such as breadcrumbs, metadata and the stacktrace. Use the filters parameter to narrow down the summaries further.",
+      "Get full details on an error: aggregated data across its events (occurrences), the latest event (with stacktrace, breadcrumbs and metadata) and pivot summaries. Use the filters parameter to restrict which events are considered.",
     purpose:
       "Retrieve all the information required on a specified error to understand who it is affecting and why.",
     useCases: [
@@ -52,7 +54,8 @@ export class GetError extends Tool<BugsnagClient> {
       "Error IDs can be found using the List Project Errors tool",
       "Use this after filtering errors to get detailed information about specific errors",
       "Use Get Event Details tool if you need detailed information about a specific event (occurrence) rather than the aggregated error",
-      "If you used a filter to get this error, you can pass the same filters here to restrict the results or apply further filters",
+      "If you used filters to find this error, you can pass the same filters here to restrict the latest event and pivots to the same events",
+      "To list more than the latest event, use the Get Events on an Error tool",
       "The URL provided in the response points should be shown to the user in all cases as it allows them to view the error in the dashboard and perform further analysis",
     ],
   };

@@ -26,7 +26,9 @@ const inputSchema = z.object({
       "http_response_code",
     ])
     .optional()
-    .describe("Field to sort by"),
+    .describe(
+      "Field to sort by, e.g. duration for the slowest spans or timestamp for the newest",
+    ),
   direction: toolInputParameters.direction,
   perPage: toolInputParameters.perPage,
   nextUrl: toolInputParameters.nextUrl,
@@ -73,7 +75,8 @@ export class ListSpans extends Tool<BugsnagClient> {
     ],
     hints: [
       "Sort by duration descending to find the slowest instances",
-      "Each span includes trace ID for further investigation",
+      "Each span includes trace ID for further investigation with the Get Trace tool",
+      "Only spans from the filtered time window are returned (last 7 days by default) - pass span.since in filters to look further back",
     ],
   };
 

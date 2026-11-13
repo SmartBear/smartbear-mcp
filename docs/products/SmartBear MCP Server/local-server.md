@@ -48,7 +48,7 @@ The SmartBear MCP Server supports multiple SmartBear products, each requiring it
 
 - **Swagger - Contract Testing (PactFlow)**
 
-  Copy the relevant API tokens from [`app.pactflow.io`](https://app.pactflow.io/settings/api-tokens). You will also need to note the tenant URL for your organization (e.g., `{tenant}.pactflow.io`). The MCP server also supports the open source Pact Broker, in which case you will need a username and password instead of a token.
+  Copy the relevant API tokens from the API Tokens settings page of your PactFlow tenant (`https://{tenant}.pactflow.io/settings/api-tokens`, where `{tenant}` is the subdomain of your organization). The MCP server also supports the open source Pact Broker, in which case you will need a username and password instead of a token.
 
 - **Reflect**
 

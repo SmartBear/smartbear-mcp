@@ -7,21 +7,19 @@ import { toolInputParameters } from "../../input-schemas";
 const inputSchema = z.object({
   projectId: toolInputParameters.projectId,
   errorId: toolInputParameters.errorId,
-  filters: toolInputParameters.filters.describe(
-    "Apply filters to narrow down the event list. Use the List Project Event Filters tool to discover available filter fields. " +
-      "Time filters support extended ISO 8601 format (e.g. 2018-05-20T00:00:00Z) or relative format (e.g. 7d, 24h).",
-  ),
+  filters: toolInputParameters.errorScopedFilters,
   direction: toolInputParameters.direction,
   perPage: toolInputParameters.perPage,
   nextUrl: toolInputParameters.nextUrl,
 });
 
-// Fetches full details for a single event by its ID, including stack trace and metadata.
+// Lists the individual events (occurrences) that have grouped into a single error.
 export class ListErrorEvents extends Tool<BugsnagClient> {
   specification: ToolParams = {
     title: "Get Events on an Error",
     toolset: "Events",
-    summary: "Gets a list of events that have grouped into the specified error",
+    summary:
+      "List the individual events (occurrences) of one error, newest first by default",
     purpose:
       "Show the events that make up an error to see individual occurrences of the error for detailed analysis",
     useCases: [
@@ -38,6 +36,20 @@ export class ListErrorEvents extends Tool<BugsnagClient> {
         expectedOutput:
           "A list of events, ordered by timestamp, with complete details including stack trace, breadcrumbs, metadata, and context",
       },
+      {
+        description: "Get events of an error from the last 7 days only",
+        parameters: {
+          errorId: "6863e2af012caf1d5c320000",
+          filters: { "event.since": [{ type: "eq", value: "7d" }] },
+        },
+        expectedOutput: "A list of events that occurred in the last 7 days",
+      },
+    ],
+    hints: [
+      "No time filter is applied by default, so events of any age are returned. Use 'event.since' / 'event.before' in filters to restrict the time range",
+      "Event stack traces and metadata are included, so keep perPage small when you only need a few events",
+      "Use the 'id' of an event with the Get Event tool if you need to look at one event on its own",
+      "This tool returns paged results - if the output contains a 'next_url' value, call this tool again with it as the nextUrl parameter to get more events",
     ],
   };
 

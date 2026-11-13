@@ -33,7 +33,10 @@ export class GetBuild extends Tool<BugsnagClient> {
           "JSON object with build details including version, source control info, error counts and stability data.",
       },
     ],
-    hints: ["Build IDs can be found using the List builds tool"],
+    hints: [
+      "Build IDs can be found in the list of builds returned by the Get Release tool",
+      "user_stability and session_stability are fractions between 0 and 1; meets_target_stability and meets_critical_stability compare them with the project's stability targets",
+    ],
     readOnly: true,
     idempotent: true,
     outputDescription:
