@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.44.0] - 2026-11-13
 
+### Added
+
+- [PactFlow] Added a `Drift MCP Tests` GitHub Actions workflow (`.github/workflows/drift.yml`) that runs `npm run test:drift` in CI, and `scripts/ci/drift-publish-provider-contract`, which publishes the MCP definition and the Drift results to PactFlow as a provider contract.
+- [PactFlow] Added Drift test cases for the PactFlow MCP tools (hand-written cases in `src/pactflow/drift/pactflow.testcases.yaml` and generated calls in `pactflow.tools.testcases.yaml`) and `npm run test:drift` (`scripts/drift-verify.mjs`), which runs them against the mock PactFlow API using the Drift CLI and its MCP plugin. Results are written to `drift-results/`, which is gitignored.
+- [PactFlow] Added a mock PactFlow API (`src/pactflow/drift/mock-pactflow.mjs`) that serves learned fixtures for every PactFlow tool, and `npm run drift:generate` (`scripts/drift-generate-definition.mjs`), which regenerates the MCP definition and the generated tool-call fixtures from the tools the built server advertises.
+- [PactFlow] Added Drift MCP plugin tests for the PactFlow integration in `src/pactflow/drift/`, run with `npm run test:drift` (needs the Drift CLI and its MCP plugin). They verify the PactFlow tools and prompt the server advertises against a generated MCP definition (`src/pactflow/drift/pactflow.mcp.yaml`, regenerate with `npm run drift:generate`) and invoke every PactFlow tool against a mock PactFlow API, validating each result against its output schema, with hand-written cases for results, tool errors and invalid arguments. A `Drift MCP Tests` workflow runs them in CI and publishes the definition and results to PactFlow as a provider contract.
+
 ### Fixed
 
 - [BugSnag] `Pentest - MCP Session ID Acts as a Bearer Token Due to Cached-Credential Fallback` Now The session id no longer grants any authority on the Bugsnag path.
@@ -23,10 +30,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- [PactFlow] Added a `Drift MCP Tests` GitHub Actions workflow (`.github/workflows/drift.yml`) that runs `npm run test:drift` in CI, and `scripts/ci/drift-publish-provider-contract`, which publishes the MCP definition and the Drift results to PactFlow as a provider contract.
-- [PactFlow] Added Drift test cases for the PactFlow MCP tools (hand-written cases in `src/pactflow/drift/pactflow.testcases.yaml` and generated calls in `pactflow.tools.testcases.yaml`) and `npm run test:drift` (`scripts/drift-verify.mjs`), which runs them against the mock PactFlow API using the Drift CLI and its MCP plugin. Results are written to `drift-results/`, which is gitignored.
-- [PactFlow] Added a mock PactFlow API (`src/pactflow/drift/mock-pactflow.mjs`) that serves learned fixtures for every PactFlow tool, and `npm run drift:generate` (`scripts/drift-generate-definition.mjs`), which regenerates the MCP definition and the generated tool-call fixtures from the tools the built server advertises.
-- [PactFlow] Added Drift MCP plugin tests for the PactFlow integration in `src/pactflow/drift/`, run with `npm run test:drift` (needs the Drift CLI and its MCP plugin). They verify the PactFlow tools and prompt the server advertises against a generated MCP definition (`src/pactflow/drift/pactflow.mcp.yaml`, regenerate with `npm run drift:generate`) and invoke every PactFlow tool against a mock PactFlow API, validating each result against its output schema, with hand-written cases for results, tool errors and invalid arguments. A `Drift MCP Tests` workflow runs them in CI and publishes the definition and results to PactFlow as a provider contract.
 - [Swagger] Added one-click install buttons for VS Code (GitHub Copilot), Cursor, and Claude Desktop to the Swagger Remote MCP Server setup docs. Reorganized the Kiro section to use the same button-first layout for consistency.
 - [Common] Added a Claude plugin bundle in `plugin/` for submission to Anthropic's Claude directory, replacing the deprecated MCPB desktop extension listing. It runs the server with `npx` pinned to the released version and asks for each product's settings through plugin user configuration, with tokens stored as sensitive values. `scripts/bump.js` now updates the plugin's version and pin on each release.
 - [Swagger] Portal product tools (`swagger_create_portal_product`, `swagger_update_portal_product`): added a `visibility` parameter (`visible`, `hidden` or `conditional`). `conditional` shows the product on the portal landing page only to users who have access to it, and is not allowed for public products. Product output now includes `visibility`.
