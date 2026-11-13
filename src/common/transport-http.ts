@@ -23,6 +23,7 @@ import {
   trackToolsListed,
 } from "./analytics";
 import { clientRegistry } from "./client-registry";
+import { getHeaderName } from "./config-names";
 import { MCP_SERVER_VERSION } from "./info";
 import { extractModernClientMeta, handleInitializeMessage } from "./initialize";
 import {
@@ -37,6 +38,8 @@ import { SmartBearMcpServer } from "./server";
 import { isDraining, registerShutdownHandler } from "./shutdown";
 import { getEnvVarName } from "./transport-stdio";
 import { getTypeDescription, isOptionalType } from "./zod-utils";
+
+export { getHeaderName };
 
 type SessionEntry = {
   server: SmartBearMcpServer;
@@ -1181,30 +1184,6 @@ export async function newServerFromWebRequest(
     res,
     "modern",
   );
-}
-
-/**
- * Convert a config key to HTTP header name format
- *
- * Examples:
- * - auth_token -> Auth-Token
- * - project_api_key -> Project-Api-Key
- * - base_url -> Base-Url
- *
- * Combined with configPrefix: Bugsnag-Auth-Token, Reflect-Api-Token, etc.
- *
- * @param client The client instance (provides configPrefix)
- * @param key The config key in snake_case
- * @returns Header name in format: {ConfigPrefix}-{Pascal-Kebab-Case}
- */
-export function getHeaderName(clientPrefix: string, key: string): string {
-  return `${clientPrefix}-${key
-    .split("_")
-    .map(
-      (part: string) =>
-        part.charAt(0).toUpperCase() + part.slice(1).toLowerCase(),
-    )
-    .join("-")}`;
 }
 
 export function getQueryStringName(clientPrefix: string, key: string): string {
