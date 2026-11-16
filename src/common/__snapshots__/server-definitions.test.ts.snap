@@ -14133,12 +14133,21 @@ Expected Output: The ID of the Test Steps resource and the API self URL to fetch
 **Toolset:** Test Cases
 
 **Parameters:**
-- description (string): The web link description
+- description (string): The web link description, shown as the link text in Zephyr. Optional; defaults to the URL.
 - url (string) *required*: The web link URL
 - testCaseKey (string) *required*: The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+
 
 **Examples:**
-1. Create a web link for test case SA-T1 pointing to Atlassian's homepage
+1. Add a web link 'https://www.atlassian.com' to test case SA-T1 without a description
+\`\`\`json
+{
+  "testCaseKey": "SA-T1",
+  "url": "https://www.atlassian.com"
+}
+\`\`\`
+Expected Output: The newly created Web Link with its ID and self link; the URL is used as the link text
+
+2. Create a web link for test case SA-T1 pointing to Atlassian's homepage
 \`\`\`json
 {
   "testCaseKey": "SA-T1",
@@ -14148,7 +14157,7 @@ Expected Output: The ID of the Test Steps resource and the API self URL to fetch
 \`\`\`
 Expected Output: The newly created Web Link with its ID and self link
 
-2. Attach a documentation link to test case MM2-T15 for pump specifications
+3. Attach a documentation link to test case MM2-T15 for pump specifications
 \`\`\`json
 {
   "testCaseKey": "MM2-T15",
@@ -14318,11 +14327,20 @@ Expected Output: The link between Test Cycle and Jira issue should be created, b
 
 **Parameters:**
 - testCycleIdOrKey (string) *required*: The ID or key of the test cycle.
-- description (string): The web link description
+- description (string): The web link description, shown as the link text in Zephyr. Optional; defaults to the URL.
 - url (string): The web link URL
 
 **Examples:**
-1. Create a link between the specified test cycle by Id '100001' and generic URL 'https://www.atlassian.com' with description 'Atlassian homepage'
+1. Add a web link 'https://www.atlassian.com' to test cycle 'SA-R15' without a description
+\`\`\`json
+{
+  "testCycleIdOrKey": "SA-R15",
+  "url": "https://www.atlassian.com"
+}
+\`\`\`
+Expected Output: The newly created Web Link with its ID and self link; the URL is used as the link text
+
+2. Create a link between the specified test cycle by Id '100001' and generic URL 'https://www.atlassian.com' with description 'Atlassian homepage'
 \`\`\`json
 {
   "testCycleIdOrKey": "100001",
@@ -14332,7 +14350,7 @@ Expected Output: The link between Test Cycle and Jira issue should be created, b
 \`\`\`
 Expected Output: The newly created Web Link with its ID and self link
 
-2. Create a web link for test cycle 'SA-R15' pointing to url: 'https://atlassian.com' with description 'Atlassian homepage'
+3. Create a web link for test cycle 'SA-R15' pointing to url: 'https://atlassian.com' with description 'Atlassian homepage'
 \`\`\`json
 {
   "testCycleIdOrKey": "SA-R15",
@@ -14342,7 +14360,7 @@ Expected Output: The newly created Web Link with its ID and self link
 \`\`\`
 Expected Output: The newly created Web Link with its ID and self link
 
-3. Attach a documentation link 'https://docs.atlassian.com'  to test cycle MM2-R15 for pump specifications
+4. Attach a documentation link 'https://docs.atlassian.com'  to test cycle MM2-R15 for pump specifications
 \`\`\`json
 {
   "testCycleIdOrKey": "10001",

@@ -21,7 +21,15 @@ import {
   type McpClientIdentity,
   toClientIdentity,
 } from "./client-identity";
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./info";
+import {
+  MCP_SERVER_INSTRUCTIONS,
+  MCP_SERVER_NAME,
+  MCP_SERVER_VERSION,
+} from "./info";
+import {
+  buildIntegrationsReport,
+  LIST_INTEGRATIONS_TOOL_NAME,
+} from "./list-integrations";
 import {
   executeElicitationOrPolyfill,
   InputRequiredSignal,
@@ -81,6 +89,11 @@ export class SmartBearMcpServer extends McpServer {
   private enabledToolsets?: string[];
   private mcpClientIdentity?: McpClientIdentity;
   private analyticsSession?: AnalyticsSession;
+  /** Per client name: every tool the client offered, bucketed by toolset. */
+  private toolsetStats = new Map<
+    string,
+    Map<string, { total: number; enabled: number }>
+  >();
 
   constructor(enabledToolsets?: string, era: ProtocolEra = "legacy") {
     super(
@@ -89,6 +102,8 @@ export class SmartBearMcpServer extends McpServer {
         version: MCP_SERVER_VERSION,
       },
       {
+        // Static text, identical for every session, era and transport.
+        instructions: MCP_SERVER_INSTRUCTIONS,
         capabilities:
           era === "modern"
             ? {
@@ -124,6 +139,55 @@ export class SmartBearMcpServer extends McpServer {
         .split(",")
         .map((s) => s.trim().toLowerCase());
     }
+    this.registerListIntegrationsTool();
+  }
+
+  /**
+   * Registered unconditionally (not via addClient) so it exists even when no
+   * product is configured. Reads only in-memory metadata, so it never needs
+   * credentials and never throws a ToolError for missing configuration.
+   */
+  private registerListIntegrationsTool(): void {
+    this.registerTool(
+      LIST_INTEGRATIONS_TOOL_NAME,
+      {
+        title: "SmartBear: List Integrations",
+        description:
+          "Lists every SmartBear product this server supports, whether it is configured for this connection, and for unconfigured products the environment variable or HTTP header each setting needs. Only products allowed by the server's MCP_CLIENTS setting are listed. Products that accept per-request OAuth tokens (BearQ, Reflect, QMetry) always show as configured. Takes no parameters.",
+        inputSchema: z.object({}),
+        annotations: {
+          title: "SmartBear: List Integrations",
+          readOnlyHint: true,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async () => ({
+        content: [
+          {
+            type: "text" as const,
+            text: JSON.stringify(buildIntegrationsReport(this), null, 2),
+          },
+        ],
+      }),
+    );
+  }
+
+  /**
+   * Toolset breakdown for a client: the full potential tool count per toolset
+   * and whether the toolset is enabled (so hidden tools are visible).
+   */
+  getToolsetStats(
+    clientName: string,
+  ): { name: string; toolCount: number; enabled: boolean }[] {
+    return [...(this.toolsetStats.get(clientName) ?? [])]
+      .map(([name, { total, enabled }]) => ({
+        name,
+        toolCount: total,
+        enabled: enabled > 0,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
   }
 
   getCache(): CacheService {
@@ -243,7 +307,9 @@ export class SmartBearMcpServer extends McpServer {
     this.clients.push(client);
     await client.registerTools(
       (params, cb) => {
-        if (!this.isToolEnabled(client, params.toolset)) {
+        const enabled = this.isToolEnabled(client, params.toolset);
+        this.recordToolset(client.name, params.toolset, enabled);
+        if (!enabled) {
           return null;
         }
         const toolName = this.getCapabilityName(client, params.title);
@@ -418,6 +484,24 @@ export class SmartBearMcpServer extends McpServer {
     }
 
     this.sortToolsDeterministically();
+  }
+
+  private recordToolset(
+    clientName: string,
+    toolset: string,
+    enabled: boolean,
+  ): void {
+    let byToolset = this.toolsetStats.get(clientName);
+    if (!byToolset) {
+      byToolset = new Map();
+      this.toolsetStats.set(clientName, byToolset);
+    }
+    const stats = byToolset.get(toolset) ?? { total: 0, enabled: 0 };
+    stats.total++;
+    if (enabled) {
+      stats.enabled++;
+    }
+    byToolset.set(toolset, stats);
   }
 
   /**

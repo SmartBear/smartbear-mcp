@@ -9,12 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- [Common] The HTTP transport now rejects a request whose `Authorization` bearer JWT has expired with `401` and an RFC 6750 challenge (`WWW-Authenticate: Bearer error="invalid_token"`, with `resource_metadata` pointing to the Protected Resource Metadata endpoint). Previously the expired token only failed inside the tool call and reached the client as a tool error in an HTTP `200`, so OAuth clients never used their refresh token. The check covers `/mcp` for both the 2025-11-25 and 2026-07-28 protocol revisions, the legacy `GET /sse` and `POST /message`, and runs before session lookup, so the client refreshes its token before starting a new session. Opaque tokens and tokens sent in product-specific headers are not checked. [PLAT-17333](https://smartbear.atlassian.net/browse/PLAT-17333)
+
+
+## [0.44.0] - 2026-11-13
+
+### Added
+
+- [Common] The server now sends a short instructions text when an assistant connects(stdio and HTTP). It says that only tools for configured products are registered and points to `smartbear_list_integrations`.
+- [Common] Added the `smartbear_list_integrations` tool. It is always available, takes no input and needs no credentials. It lists every product with a short description and whether it is configured. For configured products it shows the tool count and which toolsets are enabled. For products that are not configured it shows the environment variable and HTTP header each setting needs. Only products allowed by `MCP_CLIENTS` are listed, and BearQ, Reflect and QMetry always show as configured because they accept per-request OAuth tokens.
+- [PactFlow] Added a `Drift MCP Tests` GitHub Actions workflow (`.github/workflows/drift.yml`) that runs `npm run test:drift` in CI, and `scripts/ci/drift-publish-provider-contract`, which publishes the MCP definition and the Drift results to PactFlow as a provider contract.
+- [PactFlow] Added Drift test cases for the PactFlow MCP tools (hand-written cases in `src/pactflow/drift/pactflow.testcases.yaml` and generated calls in `pactflow.tools.testcases.yaml`) and `npm run test:drift` (`scripts/drift-verify.mjs`), which runs them against the mock PactFlow API using the Drift CLI and its MCP plugin. Results are written to `drift-results/`, which is gitignored.
+- [PactFlow] Added a mock PactFlow API (`src/pactflow/drift/mock-pactflow.mjs`) that serves learned fixtures for every PactFlow tool, and `npm run drift:generate` (`scripts/drift-generate-definition.mjs`), which regenerates the MCP definition and the generated tool-call fixtures from the tools the built server advertises.
+- [PactFlow] Added Drift MCP plugin tests for the PactFlow integration in `src/pactflow/drift/`, run with `npm run test:drift` (needs the Drift CLI and its MCP plugin). They verify the PactFlow tools and prompt the server advertises against a generated MCP definition (`src/pactflow/drift/pactflow.mcp.yaml`, regenerate with `npm run drift:generate`) and invoke every PactFlow tool against a mock PactFlow API, validating each result against its output schema, with hand-written cases for results, tool errors and invalid arguments. A `Drift MCP Tests` workflow runs them in CI and publishes the definition and results to PactFlow as a provider contract.
+
+### Fixed
+
 - [BugSnag] `Pentest - MCP Session ID Acts as a Bearer Token Due to Cached-Credential Fallback` Now The session id no longer grants any authority on the Bugsnag path.
 - [Common] Pentest: an MCP session id alone no longer acts as the session owner's credential on the HTTP transport. Every `POST`, `GET` (event stream) and `DELETE` on `/mcp`, and every legacy `POST /message`, must now carry a credential for the identity that opened the session.
-- [Common] The HTTP transport now rejects a request whose `Authorization` bearer JWT has expired with `401` and an RFC 6750 challenge (`WWW-Authenticate: Bearer error="invalid_token"`, with `resource_metadata` pointing to the Protected Resource Metadata endpoint). Previously the expired token only failed inside the tool call and reached the client as a tool error in an HTTP `200`, so OAuth clients never used their refresh token. The check covers `/mcp` for both the 2025-11-25 and 2026-07-28 protocol revisions, the legacy `GET /sse` and `POST /message`, and runs before session lookup, so the client refreshes its token before starting a new session. Opaque tokens and tokens sent in product-specific headers are not checked. [PLAT-17333](https://smartbear.atlassian.net/browse/PLAT-17333)
+- [Zephyr] Default weblink description if not provided is set to url value.
 
 ### Changed
 
+- [Common] With the stdio transport and no product configured, the server no longer registers every product's tools. Only `smartbear_list_integrations` is available, and it tells the assistant what each product needs. Set the credentials for at least one product to get its tools.
 - [Common] HTTP sessions are now bound to the exact credential that opened them, for every product. A refreshed OAuth access token no longer matches its existing session, so the client starts a new session with the new token. Clients that follow the MCP Streamable HTTP spec do this automatically, without the user logging in again. Session-scoped state, such as an open Reflect recording, does not carry over to the new session.
 
 ## [0.43.0] - 2026-11-02
