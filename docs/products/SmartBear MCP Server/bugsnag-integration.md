@@ -200,7 +200,7 @@ Several parameters are shared by many tools and behave the same way everywhere.
   - Span group ID (`spanGroupId`) – for example `[HttpClient]GET-api.example.com`; get it from List Span Groups and pass it as returned, without URL-encoding
   - optional filters (`filters`) – span filters using trace fields; defaults to `span.since=7d`
 - **Returns**: Statistics across multiple percentiles (p50, p75, p90, p95, p99), timeline and distribution data, the span count, and any registered performance targets for the operation.
-- **Use case**: Analysing the performance of one operation.
+- **Use case**: Analyzing the performance of one operation.
 
 ### List Spans
 
