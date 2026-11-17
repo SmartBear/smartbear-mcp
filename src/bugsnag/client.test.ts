@@ -1319,9 +1319,7 @@ describe("BugsnagClient", () => {
       const mockError = getMockError("error-1");
 
       const defaultQueryString =
-        "?filters[error][][type]=eq&filters[error][][value]=error-1" +
-        "&filters[event.since][][type]=eq&filters[event.since][][value]=30d" +
-        "&filters[error.status][][type]=eq&filters[error.status][][value]=open";
+        "?filters[error][][type]=eq&filters[error][][value]=error-1";
 
       it("should get error details with project from cache", async () => {
         const mockEvents: EventApiView[] = [

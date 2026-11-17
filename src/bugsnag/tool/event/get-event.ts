@@ -30,6 +30,10 @@ export class GetEvent extends Tool<BugsnagClient> {
           "JSON object with complete event details including stack trace (error trace and other threads, if present), metadata, and context",
       },
     ],
+    hints: [
+      "Event IDs can be found using the Get Events on an Error tool, or in the 'event_id' parameter of a dashboard URL",
+      "If you only have a dashboard URL, use the Get Event Details From Dashboard URL tool instead",
+    ],
   };
 
   handle: ToolHandler = async (args, _ctx) => {
