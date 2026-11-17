@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- [BugSnag] `Get Release` no longer fails with `Expected response to be an array`. The builds in a release are now listed from `/release_groups/{id}/releases` instead of the release group endpoint, which returns a single object.
+
 ## [0.44.0] - 2026-11-13
 
 ### Added
