@@ -2,7 +2,7 @@ The BugSnag Remote MCP Server gives your AI assistant access to BugSnag error mo
 
 **Server URL:** `https://bugsnag.mcp.smartbear.com/mcp`
 
-For the full list of available tools, see [BugSnag Integration](./bugsnag-integration).
+For the full list of available tools, see [BugSnag Integration](/smartbear-mcp/docs/bugsnag-integration).
 
 ## Authentication
 

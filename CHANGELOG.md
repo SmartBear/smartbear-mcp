@@ -7,10 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+
+- [BugSnag] Improved tool descriptions for errors, events, projects, releases and performance so LLM clients use them correctly. Each parameter now says what it is, where to get its value and what its default does. The shared schemas in `input-schemas.ts` carry most of this wording, including project IDs vs. names/slugs, `direction`, `sort`, `releaseStage`, `spanGroupId`, and the filter defaults and the `eq`, `ne` and `empty` filter types.
+- [BugSnag] Tool hints now point to the next tool to call (for example error ID to Get Error or Get Events, span trace ID to Get Trace) and explain how to widen the default filters when results are empty. Added hints for Get Event and Get Event Details From Dashboard URL (dashboard URLs), pagination and payload size for List Error Events, and the `span.since=7d` default and trace time-window requirements for the performance tools.
+- [BugSnag] `update_error` now says it changes workflow state (snooze, fix, discard and similar) for the whole team and should be confirmed with the user first, and documents each operation.
+- [BugSnag] Get Error and Get Events on an Error no longer apply `event.since=30d` and `error.status=open` by default, because the caller has already picked a specific error. They now return all events unless filters are passed. List Project Errors and other list tools keep those defaults.
+
 ### Fixed
 
 - [Common] The HTTP transport now rejects a request whose `Authorization` bearer JWT has expired with `401` and an RFC 6750 challenge (`WWW-Authenticate: Bearer error="invalid_token"`, with `resource_metadata` pointing to the Protected Resource Metadata endpoint). Previously the expired token only failed inside the tool call and reached the client as a tool error in an HTTP `200`, so OAuth clients never used their refresh token. The check covers `/mcp` for both the 2025-11-25 and 2026-07-28 protocol revisions, the legacy `GET /sse` and `POST /message`, and runs before session lookup, so the client refreshes its token before starting a new session. Opaque tokens and tokens sent in product-specific headers are not checked. [PLAT-17333](https://smartbear.atlassian.net/browse/PLAT-17333)
-
+- [BugSnag] List Project Errors now documents its default `event.since=30d` and `error.status=open` filters, so fixed, ignored, snoozed or older errors no longer look like they don't exist.
+- [BugSnag] The pagination fields described for List Project Errors now match what the tool returns (`data_count`, `total_count`), and the Get Build hint no longer refers to a non-existent "List builds" tool.
 
 ## [0.44.0] - 2026-11-13
 

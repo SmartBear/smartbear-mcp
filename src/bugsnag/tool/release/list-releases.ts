@@ -21,7 +21,7 @@ const inputSchema = z.object({
   visibleOnly: z
     .boolean()
     .describe(
-      "Whether to only include releases that are marked as visible in the dashboard",
+      "If true, excludes releases that have been hidden in the dashboard. Defaults to false (include all)",
     )
     .default(false),
   perPage: toolInputParameters.perPage,
@@ -33,7 +33,8 @@ export class ListReleases extends Tool<BugsnagClient> {
   specification: ToolParams = {
     title: "List Releases",
     toolset: "Releases",
-    summary: "List releases for a project",
+    summary:
+      "List release groups (versions of the app) for a project, with stability metrics",
     purpose:
       "Retrieve a list of release summaries to analyze deployment history and associated errors",
     useCases: [
@@ -44,7 +45,7 @@ export class ListReleases extends Tool<BugsnagClient> {
     examples: [
       {
         description: "List production releases for a project",
-        parameters: {},
+        parameters: { projectId: "515fb9337c1074f6fd000003" },
         expectedOutput: "JSON array of release objects in the production stage",
       },
       {
@@ -65,7 +66,8 @@ export class ListReleases extends Tool<BugsnagClient> {
       },
     ],
     hints: [
-      "Use the Get Release tool to get more details on a specific release, including the builds it contains",
+      "Use the Get Release tool with a release's id to get more details, including the builds it contains",
+      "Only the production stage is listed by default - set releaseStage to list releases from another stage",
       "The release stage defaults to 'production' if not specified",
       "Use visibleOnly to filter out releases that have been marked as hidden in the dashboard",
     ],
