@@ -91,7 +91,7 @@
       "contentUrl": "swagger-studio-integration.md"
     },
     {
-      "order": 2,
+      "order": 4,
       "parent": "mcp-server-capabilities",
       "name": "Reflect Integration",
       "slug": "reflect-integration",
@@ -99,7 +99,7 @@
       "contentUrl": "reflect-integration.md"
     },
     {
-      "order": 3,
+      "order": 6,
       "parent": "mcp-server-capabilities",
       "name": "BugSnag Integration",
       "slug": "bugsnag-integration",
@@ -107,15 +107,15 @@
       "contentUrl": "bugsnag-integration.md"
     },
     {
-      "order": 4,
+      "order": 3,
       "parent": "mcp-server-capabilities",
-      "name": "Contract Testing with PactFlow",
+      "name": "Swagger Contract Testing (PactFlow) Integration",
       "slug": "contract-testing-with-pactflow",
       "type": "markdown",
       "contentUrl": "contract-testing-with-pactflow.md"
     },
     {
-      "order": 5,
+      "order": 7,
       "parent": "mcp-server-capabilities",
       "name": "QMetry Integration",
       "slug": "qmetry-integration",
@@ -123,7 +123,7 @@
       "contentUrl": "qmetry-integration.md"
     },
     {
-      "order": 6,
+      "order": 8,
       "parent": "mcp-server-capabilities",
       "name": "Zephyr Integration",
       "slug": "zephyr-integration",
@@ -131,7 +131,7 @@
       "contentUrl": "zephyr-integration.md"
     },
     {
-      "order": 7,
+      "order": 9,
       "parent": "mcp-server-capabilities",
       "name": "Collaborator Integration",
       "slug": "collaborator-integration",
@@ -139,7 +139,7 @@
       "contentUrl": "collaborator-integration.md"
     },
     {
-      "order": 8,
+      "order": 10,
       "parent": "mcp-server-capabilities",
       "name": "QTM4J Integration",
       "slug": "qtm4j-integration",
@@ -147,7 +147,7 @@
       "contentUrl": "qtm4j-integration.md"
     },
     {
-      "order": 9,
+      "order": 5,
       "parent": "mcp-server-capabilities",
       "name": "BearQ Integration",
       "slug": "bearq-integration",
@@ -155,7 +155,7 @@
       "contentUrl": "bearq-integration.md"
     },
     {
-      "order": 10,
+      "order": 2,
       "parent": "mcp-server-capabilities",
       "name": "Swagger Functional Testing Integration",
       "slug": "swagger-functional-testing-integration",
