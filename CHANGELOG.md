@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- [Zephyr] `get-test-cases` tool accepts optional `nameOrKey` parameter to filter results by the Test Case names or keys. This parameter requires `projectKey` parameter to also be provided.
+- [Zephyr] Update Zephyr Schemas
+
 ### Fixed
 
 - [Common] The HTTP transport now rejects a request whose `Authorization` bearer JWT has expired with `401` and an RFC 6750 challenge (`WWW-Authenticate: Bearer error="invalid_token"`, with `resource_metadata` pointing to the Protected Resource Metadata endpoint). Previously the expired token only failed inside the tool call and reached the client as a tool error in an HTTP `200`, so OAuth clients never used their refresh token. The check covers `/mcp` for both the 2025-11-25 and 2026-07-28 protocol revisions, the legacy `GET /sse` and `POST /message`, and runs before session lookup, so the client refreshes its token before starting a new session. Opaque tokens and tokens sent in product-specific headers are not checked. [PLAT-17333](https://smartbear.atlassian.net/browse/PLAT-17333)
