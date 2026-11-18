@@ -14427,6 +14427,7 @@ Expected Output: The newly created Web Link with its ID and self link",
 Dates should be in the format 'yyyy-MM-dd'.
 Users should have values of Jira User Account IDs.
 
+- automated (boolean): (optional) If true, the execution is marked as automated in the Zephyr UI; if false, it’s marked as manual. Defaults to true if not provided.
 
 **Examples:**
 1. Create a Passed execution for test case SA-T1 in cycle SA-R1
@@ -14475,6 +14476,7 @@ Expected Output: The newly created Test Execution including custom field values"
     "inputSchema": [
       "actualEndDate",
       "assignedToId",
+      "automated",
       "comment",
       "customFields",
       "environmentName",
@@ -15191,6 +15193,7 @@ Note that the server may enforce a lower limit than requested, depending on reso
  (default: 10)
 - startAtId (number): Zero-indexed starting position for ID-based pagination. (default: 0)
 - updatedAfter (string): Filter only entities updated after the given time. Format: yyyy-MM-dd'T'HH:mm:ss'Z'
+- nameOrKey (string): Filter only entities with the given Test Case name or key. If provided, the project key must also be provided.
 
 **Examples:**
 1. Get the first 10 Test Cases
@@ -15228,7 +15231,17 @@ Expected Output: Five Test Cases starting from the ID 123 with their details
 \`\`\`
 Expected Output: One Test Case from project PROJ with its details
 
-5. Get one Test Case from the folder with ID 123
+5. Get Test Cases having name containing 'tool' from the project PROJ
+\`\`\`json
+{
+  "projectKey": "PROJ",
+  "nameOrKey": "tool",
+  "limit": 10
+}
+\`\`\`
+Expected Output: The first 10 Test Cases from project PROJ having 'tool' in the title
+
+6. Get one Test Case from the folder with ID 123
 \`\`\`json
 {
   "folderId": 123,
@@ -15239,6 +15252,7 @@ Expected Output: One Test Case from folder with ID 123 with its details",
     "inputSchema": [
       "folderId",
       "limit",
+      "nameOrKey",
       "projectKey",
       "startAtId",
       "updatedAfter",
@@ -16143,6 +16157,7 @@ Expected Output: The test cycle should be updated, but no output is expected.",
 - environmentName (string): Environment assigned to the test case.
 - actualEndDate (string): The actual end date of the test cycle. Format: yyyy-MM-dd'T'HH:mm:ss'Z'
 - executionTime (number): Actual test execution time in milliseconds.
+- automated (boolean): (optional) If true, the execution is marked as automated in the Zephyr UI; if false, it’s marked as manual. Defaults to true if not provided.
 - executedById (string): Atlassian Account ID of the Jira user.
 - assignedToId (string): Atlassian Account ID of the Jira user.
 - comment (string): Comment added against overall test case execution.
@@ -16198,6 +16213,7 @@ Expected Output: The test execution should be updated, but no output is expected
     "inputSchema": [
       "actualEndDate",
       "assignedToId",
+      "automated",
       "comment",
       "environmentName",
       "executedById",
