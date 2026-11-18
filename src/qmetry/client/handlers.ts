@@ -86,7 +86,6 @@ type QMetryHandler = (
 
 export const QMETRY_HANDLER_MAP: Record<string, QMetryHandler> = {
   [QMetryToolsHandlers.FETCH_PROJECTS]: getProjects,
-  [QMetryToolsHandlers.SET_PROJECT_INFO]: getProjectInfo,
   [QMetryToolsHandlers.FETCH_PROJECT_INFO]: getProjectInfo,
   [QMetryToolsHandlers.FETCH_RELEASES_CYCLES]: getReleasesCycles,
   [QMetryToolsHandlers.FETCH_BUILDS]: getBuilds,

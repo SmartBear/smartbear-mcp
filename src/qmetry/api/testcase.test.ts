@@ -23,6 +23,7 @@ describe("testcase API clients", () => {
   const mockOk = (data: any) => ({
     ok: true,
     json: async () => data,
+    text: async () => JSON.stringify(data),
   });
 
   const mockFail = (status = 400, errorText = "Bad Request") => ({
@@ -181,7 +182,7 @@ describe("testcase API clients", () => {
         folderPath: "/",
         start: 0,
       }),
-    ).rejects.toThrow(/QMetry API request failed \(400\): Invalid request/);
+    ).rejects.toThrow(/QMetry API error 400: Invalid request/);
   });
 
   it("should handle JSON error responses", async () => {
@@ -199,7 +200,7 @@ describe("testcase API clients", () => {
         viewId: 1,
         folderPath: "/",
       }),
-    ).rejects.toThrow(/QMetry API request failed \(400\):/);
+    ).rejects.toThrow(/QMetry API error 400/);
   });
 
   describe("fetchTestCasesLinkedToRequirement", () => {
@@ -321,9 +322,7 @@ describe("testcase API clients", () => {
 
       await expect(
         fetchTestCasesLinkedToRequirement(token, baseUrl, projectKey, payload),
-      ).rejects.toThrow(
-        /QMetry API Invalid URL Error: The API endpoint appears to be incorrect/,
-      );
+      ).rejects.toThrow(/QMetry API error 404/);
     });
   });
 
@@ -451,9 +450,7 @@ describe("testcase API clients", () => {
 
       await expect(
         fetchTestCaseExecutions(token, baseUrl, projectKey, payload),
-      ).rejects.toThrow(
-        /QMetry API Invalid URL Error: The API endpoint appears to be incorrect/,
-      );
+      ).rejects.toThrow(/QMetry API error 404/);
     });
 
     it("should throw error when tcid is missing", async () => {
@@ -516,6 +513,7 @@ describe("testcase API clients", () => {
       global.fetch = vi.fn().mockResolvedValue({
         ok: true,
         json: async () => mockResponse,
+        text: async () => JSON.stringify(mockResponse),
       });
 
       const payload = {
@@ -551,6 +549,7 @@ describe("testcase API clients", () => {
       global.fetch = vi.fn().mockResolvedValue({
         ok: true,
         json: async () => mockResponse,
+        text: async () => JSON.stringify(mockResponse),
       });
 
       const payload = {

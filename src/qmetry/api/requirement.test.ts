@@ -57,6 +57,7 @@ describe("requirement API clients", () => {
   const mockOk = (data: any) => ({
     ok: true,
     json: async () => data,
+    text: async () => JSON.stringify(data),
   });
 
   const mockFail = (status = 400, errorText = "Bad Request") => ({
@@ -159,7 +160,7 @@ describe("requirement API clients", () => {
 
       await expect(
         fetchRequirements(token, baseUrl, projectKey, payload),
-      ).rejects.toThrow(/QMetry Authorization Error: Insufficient permissions/);
+      ).rejects.toThrow(/QMetry API error 403/);
     });
   });
 
@@ -243,7 +244,7 @@ describe("requirement API clients", () => {
         createRequirement(token, baseUrl, projectKey, {
           name: "New login requirement",
         }),
-      ).rejects.toThrow(/QMetry Authorization Error: Insufficient permissions/);
+      ).rejects.toThrow(/QMetry API error 403/);
     });
 
     describe("external-integration hard gate", () => {
@@ -455,9 +456,7 @@ describe("requirement API clients", () => {
           rqId: 99999,
           rqVersionId: 1,
         }),
-      ).rejects.toThrow(
-        /QMetry API Invalid URL Error: The API endpoint appears to be incorrect/,
-      );
+      ).rejects.toThrow(/QMetry API error 404/);
     });
 
     describe("external-integration hard gate", () => {
@@ -635,9 +634,7 @@ describe("requirement API clients", () => {
 
       await expect(
         fetchRequirementDetails(token, baseUrl, projectKey, payload),
-      ).rejects.toThrow(
-        /QMetry API Invalid URL Error: The API endpoint appears to be incorrect/,
-      );
+      ).rejects.toThrow(/QMetry API error 404/);
     });
 
     it("should handle JSON error responses", async () => {
@@ -653,7 +650,7 @@ describe("requirement API clients", () => {
 
       await expect(
         fetchRequirementDetails(token, baseUrl, projectKey, payload),
-      ).rejects.toThrow(/QMetry API request failed \(400\):/);
+      ).rejects.toThrow(/QMetry API error 400/);
     });
   });
 

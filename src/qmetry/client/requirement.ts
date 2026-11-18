@@ -1,3 +1,4 @@
+import { ToolError } from "../../common/tools";
 import { QMETRY_PATHS } from "../config/rest-endpoints";
 import {
   type CreateRequirementPayload,
@@ -46,14 +47,14 @@ async function assertRequirementNotExternallySynced(
   ) {
     const trackerType = projectInfo.extTrackerType;
     if (trackerType === EXT_TRACKER_TYPE_JIRA) {
-      throw new Error(
+      throw new ToolError(
         `[${functionName}] Blocked: This project is Jira-integrated and the Requirement module is ` +
           `configured to sync with Jira issue types. Requirements must be ${action} in Jira, not QMetry, ` +
           "for this project.",
       );
     }
     if (trackerType === EXT_TRACKER_TYPE_AZURE) {
-      throw new Error(
+      throw new ToolError(
         `[${functionName}] Blocked: This project is Azure-integrated and the Requirement module is ` +
           `configured to sync with Azure. Requirements must be ${action} in Azure, not QMetry, ` +
           "for this project.",
@@ -85,7 +86,7 @@ export async function createRequirement(
   };
 
   if (typeof body.name !== "string" || body.name.trim() === "") {
-    throw new Error(
+    throw new ToolError(
       "[createRequirement] Missing or invalid required parameter: 'name'.",
     );
   }
@@ -131,12 +132,12 @@ export async function updateRequirement(
   };
 
   if (typeof body.rqId !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[updateRequirement] Missing or invalid required parameter: 'rqId'.",
     );
   }
   if (typeof body.rqVersionId !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[updateRequirement] Missing or invalid required parameter: 'rqVersionId'.",
     );
   }
@@ -180,12 +181,12 @@ export async function fetchRequirements(
   };
 
   if (typeof body.viewId !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[fetchRequirements] Missing or invalid required parameter: 'viewId'.",
     );
   }
   if (typeof body.folderPath !== "string") {
-    throw new Error(
+    throw new ToolError(
       "[fetchRequirements] Missing or invalid required parameter: 'folderPath'.",
     );
   }
@@ -228,12 +229,12 @@ export async function fetchRequirementDetails(
   };
 
   if (typeof body.id !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[fetchRequirementDetails] Missing or invalid required parameter: 'id'.",
     );
   }
   if (typeof body.version !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[fetchRequirementDetails] Missing or invalid required parameter: 'version'.",
     );
   }
@@ -269,7 +270,7 @@ export async function fetchRequirementsLinkedToTestCase(
   };
 
   if (typeof body.tcID !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[fetchRequirementsLinkedToTestCase] Missing or invalid required parameter: 'tcID'.",
     );
   }

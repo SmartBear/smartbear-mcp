@@ -1,3 +1,4 @@
+import { ToolError } from "../../common/tools";
 import { QMETRY_PATHS } from "../config/rest-endpoints";
 import type {
   ExecuteGateReportPayload,
@@ -19,13 +20,13 @@ export async function getGateConfiguration(
   );
 
   if (!payload.projectId || Number.isNaN(Number(payload.projectId))) {
-    throw new Error(
+    throw new ToolError(
       "[getGateConfiguration] Missing or invalid required parameter: 'projectId'. Must be a valid numeric project ID.",
     );
   }
 
   if (!payload.agentIdentifier) {
-    throw new Error(
+    throw new ToolError(
       "[getGateConfiguration] Missing or invalid required parameter: 'agentIdentifier'.",
     );
   }
@@ -56,19 +57,19 @@ export async function executeGateReport(
   );
 
   if (!payload.reportName) {
-    throw new Error(
+    throw new ToolError(
       "[executeGateReport] Missing or invalid required parameter: 'reportName'.",
     );
   }
 
   if (!payload.gateIdentifier) {
-    throw new Error(
+    throw new ToolError(
       "[executeGateReport] Missing or invalid required parameter: 'gateIdentifier'.",
     );
   }
 
   if (!payload.projectId || Number.isNaN(Number(payload.projectId))) {
-    throw new Error(
+    throw new ToolError(
       "[executeGateReport] Missing or invalid required parameter: 'projectId'. Must be a valid numeric project ID.",
     );
   }
@@ -119,13 +120,13 @@ export async function exportHtmlReport(
   );
 
   if (!payload.htmlContent) {
-    throw new Error(
+    throw new ToolError(
       "[exportHtmlReport] Missing required parameter: 'htmlContent'.",
     );
   }
 
   if (!payload.fileName) {
-    throw new Error(
+    throw new ToolError(
       "[exportHtmlReport] Missing required parameter: 'fileName'.",
     );
   }

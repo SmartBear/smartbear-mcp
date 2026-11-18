@@ -4,17 +4,17 @@ The QMetry client provides the following test management capabilities as listed 
 
 ## Available Tools
 
-### `set_qmetry_project`
+### Choosing the project
 
--   Purpose: Set current QMetry project for your account.
--   Returns: Set and fetch list of project information available within your account.
--   Use case: Sets your project context for all subsequent operations.
+Every QMetry tool takes an optional `projectKey`. When it is omitted, QMetry uses the project currently selected in the QMetry UI by the API key's user (the selection persists across logouts). When it is given, that project is used. The MCP server keeps no project between calls, so automated or headless runs should always pass `projectKey`.
+
+Tools that fetch project info report the project they ran against in their response (`{"project": {"key", "id", "name", "source"}}`). An invalid project key returns an error with "Did you mean" suggestions.
 
 ### `get_qmetry_project`
 
--   Purpose: Fetch the current QMetry project for your account.
--   Returns: Complete list of project information available within your account.
--   Use case: Retrieve current project details.
+-   Purpose: Fetch a QMetry project's information. Without `projectKey`, returns the project currently selected in QMetry (`currentProjectId`, `currentProjectName`).
+-   Returns: Project configuration (view IDs, folders, date format) and a short `{id, key, name}` list of the projects you can access.
+-   Use case: Find out which project will be used, or retrieve a project's configuration. It does not change the selected project.
 
 ### `list_qmetry_project_list`
 

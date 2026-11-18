@@ -1,17 +1,22 @@
 import { getUserAgent } from "../../../common/info";
 import { QMETRY_DEFAULTS } from "../../config/constants";
 import type { RequestOptions } from "../../types/common";
-import { handleQMetryApiError, handleQMetryFetchError } from "./error-handler";
+import {
+  handleQMetryApiError,
+  handleQMetryFetchError,
+  readQMetryJson,
+} from "./error-handler";
 
 /**
  * QMetry API request function with centralized error handling.
  *
- * Handles authentication, project access, CORS, and generic API errors with
- * user-friendly messages and troubleshooting guidance.
+ * Every failure (non-2xx response, network error) throws a `QMetryApiError`,
+ * which the common tool wrapper returns to the model as an `isError: true`
+ * result.
  *
  * @param options Request configuration including authentication token
  * @returns Parsed JSON response from QMetry API
- * @throws User-friendly errors with detailed troubleshooting steps for various scenarios
+ * @throws QMetryApiError for failed calls; ToolError for unreadable 2xx bodies
  */
 export async function qmetryRequest<T>({
   method = "GET",
@@ -20,8 +25,6 @@ export async function qmetryRequest<T>({
   project,
   baseUrl,
   body,
-  scopeId,
-  orgCode,
   extraHeaders,
 }: RequestOptions): Promise<T> {
   const url: string = `${baseUrl}${path}`;
@@ -30,12 +33,6 @@ export async function qmetryRequest<T>({
     "User-Agent": getUserAgent(),
     "qmetry-source": "smartbear-mcp",
   };
-  if (scopeId !== undefined) {
-    headers.scope = String(scopeId);
-  }
-  if (orgCode !== undefined) {
-    headers.orgcode = orgCode;
-  }
   if (extraHeaders) {
     Object.assign(headers, extraHeaders);
   }
@@ -62,21 +59,13 @@ export async function qmetryRequest<T>({
   try {
     res = await fetch(url, init);
   } catch (error) {
-    // Handle fetch errors (CORS, network issues, SSL certificate issues, etc.)
-    handleQMetryFetchError(
-      error instanceof Error ? error : new Error(String(error)),
-      baseUrl,
-      project,
-      path,
-    );
+    // No response at all: network failure or TLS error
+    handleQMetryFetchError(error, url, baseUrl);
   }
 
   if (!res.ok) {
-    // Use centralized error handling
-    await handleQMetryApiError(res, baseUrl, project, path);
+    await handleQMetryApiError(res, url);
   }
 
-  const data = await res.json();
-
-  return data as T;
+  return readQMetryJson<T>(res, url);
 }

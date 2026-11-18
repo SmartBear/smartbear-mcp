@@ -1,13 +1,19 @@
+import type {
+  CallToolResult,
+  ServerContext,
+} from "@modelcontextprotocol/server";
 import z from "zod";
 import { getRequestHeader } from "../common/request-context";
+import type { SmartBearMcpServer } from "../common/server";
+import { ToolError } from "../common/tools";
 import type {
   Client,
   GetInputFunction,
   RegisterToolsFunction,
 } from "../common/types";
+import { QMetryApiError } from "./client/api/error-handler";
 import {
   autoResolveViewIdAndFolderPath,
-  extractProjectContext,
   findAutoResolveConfig,
 } from "./client/auto-resolve";
 import {
@@ -16,10 +22,91 @@ import {
   resolveProjectDateFormat,
 } from "./client/date-utils";
 import { QMETRY_HANDLER_MAP } from "./client/handlers";
-import { getProjectInfo } from "./client/project";
+import {
+  getProjectInfo,
+  type ResolvedProject,
+  resolveProjectFromInfo,
+  suggestProjects,
+} from "./client/project";
 import { TOOLS } from "./client/tools/index";
 import { fetchUdfLayout } from "./client/udf";
 import { QMETRY_DEFAULTS, QMetryToolsHandlers } from "./config/constants";
+
+/**
+ * Builds a single-text-block tool result. `isError: true` marks a failure the
+ * model should act on (the common tool wrapper also records it as a failed
+ * call); successful results omit the flag.
+ */
+function textResult(
+  text: string,
+  isError = false,
+  project?: ResolvedProject,
+): CallToolResult {
+  return {
+    content: [
+      { type: "text", text },
+      // Which project the call actually ran against, so the model (and the
+      // user) can see where "default" went. Only present when the call fetched
+      // project info anyway; no extra request is made for it.
+      ...(project
+        ? [{ type: "text" as const, text: JSON.stringify({ project }) }]
+        : []),
+    ],
+    ...(isError ? { isError: true } : {}),
+  };
+}
+
+const INVALID_PROJECT_CODE = "CO.INVALID_PROJECT_ID";
+
+/** Inputs worth echoing in an error: keys, IDs and folder/view selectors. */
+const ERROR_CONTEXT_NAMED_INPUTS = new Set([
+  "projectKey",
+  "resolvedProjectKey",
+  "entityKey",
+  "viewId",
+  "folderPath",
+]);
+const ERROR_CONTEXT_ID_INPUT = /(Id|ID|Ids|IDs)$/;
+const SECRET_INPUT = /key|token|secret|password|auth/i;
+const MAX_LISTED_VALUES = 10;
+const MAX_VALUE_LENGTH = 100;
+
+function formatInputValue(value: unknown): string | undefined {
+  if (Array.isArray(value)) {
+    if (!value.every((v) => ["string", "number"].includes(typeof v))) {
+      return undefined;
+    }
+    const shown = value.slice(0, MAX_LISTED_VALUES).join(", ");
+    return `[${shown}${value.length > MAX_LISTED_VALUES ? ", …" : ""}]`;
+  }
+  if (typeof value === "string" || typeof value === "number") {
+    const text = String(value);
+    return text.length > MAX_VALUE_LENGTH
+      ? `${text.slice(0, MAX_VALUE_LENGTH)}…`
+      : text;
+  }
+  return undefined;
+}
+
+/**
+ * Picks the tool inputs that identify what a failed call was about (project
+ * key, entity/folder/view IDs) so the model can see which value was wrong.
+ * Anything that looks like a credential is never included.
+ */
+export function pickErrorContextInputs(
+  args: Record<string, unknown>,
+): Record<string, string> {
+  const picked: Record<string, string> = {};
+  for (const [name, value] of Object.entries(args)) {
+    const relevant =
+      ERROR_CONTEXT_NAMED_INPUTS.has(name) ||
+      (ERROR_CONTEXT_ID_INPUT.test(name) && !SECRET_INPUT.test(name));
+    if (!relevant) continue;
+    const formatted = formatInputValue(value);
+    if (formatted !== undefined) picked[name] = formatted;
+  }
+  return picked;
+}
 
 const ConfigurationSchema = z.object({
   api_key: z
@@ -42,16 +129,15 @@ export class QmetryClient implements Client {
   configPrefix = "Qmetry";
   config = ConfigurationSchema;
 
+  // Only `configure` writes these. Tool calls must not store state here: on the
+  // 2026-07-28 HTTP transport every request gets a fresh client instance, so
+  // per-call context (such as the project) always comes from the call's args.
   private token: string | undefined;
-  private projectApiKey: string = QMETRY_DEFAULTS.PROJECT_KEY;
   private endpoint: string = QMETRY_DEFAULTS.BASE_URL;
-  private projectNumericId: number | undefined;
-  private orgCode: string | undefined;
 
   async configure(
-    _server: any,
+    _server: SmartBearMcpServer,
     config: z.infer<typeof ConfigurationSchema>,
-    _cache?: any,
   ): Promise<void> {
     this.token = config.api_key;
     if (config.base_url) {
@@ -84,18 +170,12 @@ export class QmetryClient implements Client {
       return token;
     }
 
-    if (!this.token) throw new Error("Client not configured");
+    if (!this.token) throw new ToolError("Client not configured");
     return this.token;
   }
 
   getBaseUrl() {
     return this.endpoint;
-  }
-
-  private persistProjectContext(projectInfo: any) {
-    const { scopeId, orgCode } = extractProjectContext(projectInfo);
-    if (scopeId !== undefined) this.projectNumericId = scopeId;
-    if (orgCode !== undefined) this.orgCode = orgCode;
   }
 
   async registerTools(
@@ -104,24 +184,8 @@ export class QmetryClient implements Client {
   ): Promise<void> {
     const resolveContext = (args: Record<string, any>) => ({
       baseUrl: this.endpoint,
-      projectKey: args.projectKey ?? this.projectApiKey,
+      projectKey: args.projectKey ?? QMETRY_DEFAULTS.PROJECT_KEY,
     });
-
-    const handleAsync = async (fn: () => Promise<any>) => {
-      try {
-        return await fn();
-      } catch (err) {
-        return {
-          content: [
-            {
-              success: false,
-              type: "text",
-              text: `Error: ${err instanceof Error ? err.message : String(err)}`,
-            },
-          ],
-        };
-      }
-    };
 
     for (const tool of TOOLS) {
       const handlerFn = QMETRY_HANDLER_MAP[tool.handler];
@@ -130,10 +194,68 @@ export class QmetryClient implements Client {
         continue;
       }
 
-      register(tool, (args) =>
-        handleAsync(async () => {
+      const toolName = `${this.capabilityPrefix}_${tool.title.replace(/\s+/g, "_").toLowerCase()}`;
+
+      // Errors are not caught here, except to add the tool name and inputs to
+      // a failed QMetry call. The common tool wrapper turns a ToolError
+      // (expected failures: bad input, QMetry API errors) into an `isError`
+      // result, and reports anything else to BugSnag as a bug.
+      register(
+        tool,
+        async (args, _ctx: ServerContext): Promise<CallToolResult> => {
           const a = args as Record<string, any>;
           const { baseUrl, projectKey } = resolveContext(a);
+
+          // Per-call project context. These are locals of this call only and
+          // are discarded when it returns: nothing is stored on the client, so
+          // the server stays stateless and the next call resolves afresh.
+          let projectInfo: Record<string, any> | undefined;
+          let resolvedProject: ResolvedProject | undefined;
+          // Fetches getinfo at most once per call. The first response also
+          // tells us which project "default" resolved to.
+          const loadProjectInfo = async (): Promise<Record<string, any>> => {
+            if (!projectInfo) {
+              projectInfo = (await getProjectInfo(
+                this.getToken(),
+                baseUrl,
+                projectKey,
+              )) as Record<string, any>;
+              resolvedProject =
+                resolveProjectFromInfo(projectInfo, projectKey) ?? undefined;
+            }
+            return projectInfo;
+          };
+          // Once getinfo has resolved the project, later requests in this call
+          // use its key, so a project switch in the QMetry UI mid-call cannot
+          // split one call across two projects.
+          const effectiveKey = (): string => resolvedProject?.key || projectKey;
+
+          const withToolContext = async (
+            err: QMetryApiError,
+            step?: string,
+          ): Promise<QMetryApiError> => {
+            const key = effectiveKey();
+            let suggestion: string | undefined;
+            if (err.code === INVALID_PROJECT_CODE) {
+              const matches =
+                (await suggestProjects(this.getToken(), baseUrl, key)) ?? [];
+              if (matches.length > 0) {
+                suggestion = matches
+                  .map((p) => (p.name ? `${p.key} (${p.name})` : p.key))
+                  .join(", ");
+              }
+            }
+            return err.withContext({
+              tool: toolName,
+              inputs: pickErrorContextInputs({
+                ...a,
+                projectKey,
+                ...(key !== projectKey ? { resolvedProjectKey: key } : {}),
+              }),
+              ...(step ? { step } : {}),
+              ...(suggestion ? { suggestion } : {}),
+            });
+          };
 
           // Dynamic auto-resolve for modules that support viewId, folderPath, and folderID
           const autoResolveConfig = findAutoResolveConfig(tool.handler);
@@ -162,15 +284,17 @@ export class QmetryClient implements Client {
               needsTcFolderIdAutoResolve ||
               needsParentFolderIdAutoResolve
             ) {
-              let projectInfo: any;
+              let autoResolveInfo: any;
               try {
-                projectInfo = (await getProjectInfo(
-                  this.getToken(),
-                  baseUrl,
-                  projectKey,
-                )) as any;
+                autoResolveInfo = await loadProjectInfo();
               } catch (err) {
-                throw new Error(
+                if (err instanceof QMetryApiError) {
+                  throw await withToolContext(
+                    err,
+                    `auto-resolving viewId/folderPath/folderID for ${autoResolveConfig.moduleName}; pass them explicitly to skip this lookup`,
+                  );
+                }
+                throw new ToolError(
                   `Failed to auto-resolve viewId/folderPath/folderID for ${autoResolveConfig.moduleName} in project ${projectKey}. ` +
                     `Please provide them manually or check project access. ` +
                     `Error: ${err instanceof Error ? err.message : String(err)}`,
@@ -182,13 +306,10 @@ export class QmetryClient implements Client {
                 a,
                 autoResolveViewIdAndFolderPath(
                   a,
-                  projectInfo,
+                  autoResolveInfo,
                   autoResolveConfig,
                 ),
               );
-
-              // Also persist numeric project context from this project info response
-              this.persistProjectContext(projectInfo);
             }
           }
 
@@ -198,26 +319,14 @@ export class QmetryClient implements Client {
           // This removes the requirement for the LLM to pre-call Fetch UDF Layout.
           if (tool.handler === QMetryToolsHandlers.CREATE_TEST_CASE) {
             try {
-              const projectInfoForDate = await getProjectInfo(
-                this.getToken(),
-                baseUrl,
-                projectKey,
-              );
-              const { scopeId: freshScopeId, orgCode: freshOrgCode } =
-                extractProjectContext(projectInfoForDate);
+              const projectInfoForDate = await loadProjectInfo();
               const layout = await fetchUdfLayout(
                 this.getToken(),
                 baseUrl,
-                projectKey,
+                effectiveKey(),
                 {
                   entityType: "TC",
                   pageName: "ADD",
-                  ...(freshScopeId !== undefined
-                    ? { scopeId: freshScopeId }
-                    : {}),
-                  ...(freshOrgCode !== undefined
-                    ? { orgCode: freshOrgCode }
-                    : {}),
                 },
               );
 
@@ -293,24 +402,20 @@ export class QmetryClient implements Client {
               }
 
               if (missingMandatory.length > 0) {
-                return {
-                  content: [
+                return textResult(
+                  JSON.stringify(
                     {
                       success: false,
-                      type: "text",
-                      text: JSON.stringify(
-                        {
-                          success: false,
-                          code: "PREFLIGHT.MANDATORY_UDF_MISSING",
-                          message: `Cannot create test case. The following mandatory UDF fields have no value and no configured default: ${missingMandatory.map((f) => `${f.label} (${f.fieldType})`).join(", ")}. Ask the user to provide values for these fields, then retry.`,
-                          missingFields: missingMandatory,
-                        },
-                        null,
-                        2,
-                      ),
+                      code: "PREFLIGHT.MANDATORY_UDF_MISSING",
+                      message: `Cannot create test case. The following mandatory UDF fields have no value and no configured default: ${missingMandatory.map((f) => `${f.label} (${f.fieldType})`).join(", ")}. Ask the user to provide values for these fields, then retry.`,
+                      missingFields: missingMandatory,
                     },
-                  ],
-                };
+                    null,
+                    2,
+                  ),
+                  true,
+                  resolvedProject,
+                );
               }
 
               // Auto-apply stepDefaultValues to each step's UDF for fields not explicitly set
@@ -339,26 +444,14 @@ export class QmetryClient implements Client {
           // auto-set testSuiteState, surface missing mandatory UDF fields, normalize dates.
           if (tool.handler === QMetryToolsHandlers.CREATE_TEST_SUITE) {
             try {
-              const projectInfoForDate = await getProjectInfo(
-                this.getToken(),
-                baseUrl,
-                projectKey,
-              );
-              const { scopeId: freshScopeId, orgCode: freshOrgCode } =
-                extractProjectContext(projectInfoForDate);
+              const projectInfoForDate = await loadProjectInfo();
               const layout = await fetchUdfLayout(
                 this.getToken(),
                 baseUrl,
-                projectKey,
+                effectiveKey(),
                 {
                   entityType: "TS",
                   pageName: "ADD",
-                  ...(freshScopeId !== undefined
-                    ? { scopeId: freshScopeId }
-                    : {}),
-                  ...(freshOrgCode !== undefined
-                    ? { orgCode: freshOrgCode }
-                    : {}),
                 },
               );
 
@@ -458,24 +551,20 @@ export class QmetryClient implements Client {
               }
 
               if (missingMandatory.length > 0) {
-                return {
-                  content: [
+                return textResult(
+                  JSON.stringify(
                     {
                       success: false,
-                      type: "text",
-                      text: JSON.stringify(
-                        {
-                          success: false,
-                          code: "PREFLIGHT.MANDATORY_FIELDS_MISSING",
-                          message: `Cannot create test suite. The following mandatory fields have no value and no configured default: ${missingMandatory.map((f) => `${f.label} (${f.fieldType})`).join(", ")}. Ask the user to provide values for these fields, then retry.`,
-                          missingFields: missingMandatory,
-                        },
-                        null,
-                        2,
-                      ),
+                      code: "PREFLIGHT.MANDATORY_FIELDS_MISSING",
+                      message: `Cannot create test suite. The following mandatory fields have no value and no configured default: ${missingMandatory.map((f) => `${f.label} (${f.fieldType})`).join(", ")}. Ask the user to provide values for these fields, then retry.`,
+                      missingFields: missingMandatory,
                     },
-                  ],
-                };
+                    null,
+                    2,
+                  ),
+                  true,
+                  resolvedProject,
+                );
               }
             } catch {
               // Preflight is best-effort — proceed without it if layout fetch fails
@@ -499,26 +588,14 @@ export class QmetryClient implements Client {
           const entityTypeForDate = UDF_DATE_PREFLIGHT_ENTITY_MAP[tool.handler];
           if (entityTypeForDate) {
             try {
-              const dateProjectInfo = await getProjectInfo(
-                this.getToken(),
-                baseUrl,
-                projectKey,
-              );
-              const { scopeId: freshScopeId, orgCode: freshOrgCode } =
-                extractProjectContext(dateProjectInfo);
+              const dateProjectInfo = await loadProjectInfo();
               const dateLayout = await fetchUdfLayout(
                 this.getToken(),
                 baseUrl,
-                projectKey,
+                effectiveKey(),
                 {
                   entityType: entityTypeForDate,
                   pageName: "ADD",
-                  ...(freshScopeId !== undefined
-                    ? { scopeId: freshScopeId }
-                    : {}),
-                  ...(freshOrgCode !== undefined
-                    ? { orgCode: freshOrgCode }
-                    : {}),
                 },
               );
               const targetDateFormat =
@@ -534,41 +611,17 @@ export class QmetryClient implements Client {
           // Extract projectKey and baseUrl from arguments to prevent them from being sent in request body
           const { projectKey: _, baseUrl: __, ...cleanArgs } = a;
 
-          // Inject persisted numeric project context only for handlers that explicitly support
-          // scope/orgcode headers and strip them from the request body before forwarding.
-          // Injecting into all handlers would silently add these fields to API request bodies.
-          const SCOPE_AWARE_HANDLERS = new Set([
-            QMetryToolsHandlers.FETCH_TESTCASE_RUNS_BY_TESTSUITE_RUN,
-            QMetryToolsHandlers.BULK_UPDATE_TEST_RUN_UDFS,
-            QMetryToolsHandlers.FETCH_TEST_RUN_UDF_METADATA,
-            QMetryToolsHandlers.FETCH_TEST_RUN_UDF_VALUES,
-            QMetryToolsHandlers.FETCH_CASCADE_CHILD_VALUES,
-            QMetryToolsHandlers.FETCH_ISSUE_DETAILS,
-            QMetryToolsHandlers.FETCH_UDF_LAYOUT,
-            QMetryToolsHandlers.BULK_UPDATE_EXECUTION_STATUS,
-          ]);
-          const isScopeAware = SCOPE_AWARE_HANDLERS.has(tool.handler);
-          const enrichedArgs = {
-            ...cleanArgs,
-            ...(isScopeAware &&
-              this.projectNumericId !== undefined && {
-                scopeId: this.projectNumericId,
-              }),
-            ...(isScopeAware &&
-              this.orgCode !== undefined && { orgCode: this.orgCode }),
-          };
-
-          const result = await handlerFn(
-            this.getToken(),
-            baseUrl,
-            projectKey,
-            enrichedArgs,
-          );
-
-          // Persist project context only after successful API call
-          if (tool.handler === QMetryToolsHandlers.SET_PROJECT_INFO) {
-            this.projectApiKey = projectKey;
-            this.persistProjectContext(result);
+          let result: unknown;
+          try {
+            result = await handlerFn(
+              this.getToken(),
+              baseUrl,
+              effectiveKey(),
+              cleanArgs,
+            );
+          } catch (err) {
+            if (err instanceof QMetryApiError) throw await withToolContext(err);
+            throw err;
           }
 
           // Use custom formatter if available, otherwise return JSON
@@ -576,19 +629,21 @@ export class QmetryClient implements Client {
             ? tool.formatResponse(result)
             : (result ?? {});
 
-          return {
-            content: [
-              {
-                success: true,
-                type: "text",
-                text:
-                  typeof formatted === "string"
-                    ? formatted
-                    : JSON.stringify(formatted, null, 2),
-              },
-            ],
-          };
-        }),
+          // A domain client that returns `{ success: false, ... }` (e.g. the
+          // mandatory Test Run UDF gate) did not do what was asked: flag it.
+          const reportedFailure =
+            typeof result === "object" &&
+            result !== null &&
+            (result as { success?: unknown }).success === false;
+
+          return textResult(
+            typeof formatted === "string"
+              ? formatted
+              : JSON.stringify(formatted, null, 2),
+            reportedFailure,
+            resolvedProject,
+          );
+        },
       );
     }
   }

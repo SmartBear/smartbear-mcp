@@ -927,7 +927,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       "Step 1: If user specifies projectKey (like 'UT', 'MAC'), use that EXACT projectKey for project info",
       "Step 2: Get project info using that projectKey, extract latestViews.TC.viewId",
       "Step 3: Use the SAME projectKey and the extracted TC viewId for fetching test cases",
-      "Step 4: If user doesn't specify projectKey, use 'default' for both project info and test case fetching",
+      "Step 4: If user doesn't specify a project, omit projectKey on both calls (QMetry then uses the project currently selected in the QMetry UI), or pass the key returned by project info explicitly",
       "NEVER mix project keys - if user says 'MAC project', use projectKey='MAC' for everything",
       "DEPRECATED: Do not use filter with entityKeyId for single test case - use 'Fetch Test Case Details' instead",
       "RELEASE/CYCLE FILTERING: Use release and cycle IDs, not names, for filtering",

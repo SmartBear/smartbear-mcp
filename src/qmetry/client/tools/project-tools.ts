@@ -21,10 +21,8 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
     handler: QMetryToolsHandlers.FETCH_PROJECTS,
     inputSchema: ProjectListArgsSchema,
     purpose:
-      "Prerequisite tool that provides project list to user that associated to valid API Key. " +
-      "The project key to fetch info for. Use 'default' if not specified. " +
-      "Common project keys include 'UT', 'VT', 'MAC', etc. " +
-      "If user doesn't specify a project key, this tool will use 'default' automatically.",
+      "Prerequisite tool that lists the QMetry projects the API key's user can access. " +
+      "Use it to find the projectKey of a project the user named (by name or key) before passing that key to other QMetry tools.",
     useCases: [
       "Get project list to check user how many project access to particular apikey",
       "Retrieve available fields of each project list including projectID, name, projectKey, isArchived, viewIds and folderPath needed for other operations",
@@ -81,7 +79,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
     ],
     hints: [
       "Fetch list of projects available to user",
-      "Use 'default' project key when user doesn't specify one",
+      "Use it to translate a project name the user mentioned into its projectKey",
       "Use params.showArchive: true/false to get archived/non-archived projects, default is false when not provided",
       "Pagination supported for large result sets (start, page, limit parameters)",
       "Filter parameter should be a JSON string with filter criteria",
@@ -93,55 +91,6 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
     idempotent: true,
   },
   {
-    title: "Set QMetry Project Info",
-    toolset: "Projects",
-    summary: "Set current QMetry project for your account",
-    handler: QMetryToolsHandlers.SET_PROJECT_INFO,
-    inputSchema: ProjectArgsSchema,
-    purpose:
-      "Switch the active QMetry project context for the current session. " +
-      "This tool sets the default project that will be used for all subsequent QMetry operations. " +
-      "Essential for multi-project QMetry instances where you need to work with specific projects.",
-    useCases: [
-      "Switch to a specific project before performing test case operations",
-      "Set project context for batch operations on test cases",
-      "Configure the default project for the current session",
-      "Validate access to a specific project before proceeding with operations",
-    ],
-    examples: [
-      {
-        description: "Set default project as active",
-        parameters: { projectKey: "default" },
-        expectedOutput:
-          "Project context set to 'default' with confirmation of project details",
-      },
-      {
-        description: "Switch to UT project",
-        parameters: { projectKey: "UT" },
-        expectedOutput:
-          "Project context switched to 'UT' project with available configurations",
-      },
-      {
-        description: "Set MAC project as active for test case operations",
-        parameters: { projectKey: "MAC" },
-        expectedOutput:
-          "Project context set to 'MAC' with viewIds and folder structure",
-      },
-    ],
-    hints: [
-      "Always set the project context before performing test case operations in multi-project environments",
-      "Use the same project key that you'll use in subsequent test case operations",
-      "Common project keys include 'default', 'UT', 'MAC', 'VT' - check with your QMetry admin for available projects",
-      "This operation must be performed before fetching test cases if working with non-default projects",
-      "The project context persists for the current session until changed again",
-    ],
-    outputDescription:
-      "JSON object containing project configuration details, confirmation of project switch, and available project metadata," +
-      "including Version, Build Number(if greater than or equal to 1), Project ID, name, Project Key and Date Format",
-    readOnly: false,
-    idempotent: true,
-  },
-  {
     title: "Fetch QMetry Project Info",
     toolset: "Projects",
     summary:
@@ -150,18 +99,19 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
     inputSchema: ProjectArgsSchema,
     purpose:
       "Prerequisite tool that provides project configuration data required by other QMetry operations. " +
-      "The project key to fetch info for. Use 'default' if not specified. " +
-      "Common project keys include 'UT', 'VT', 'MAC', etc. " +
-      "If user doesn't specify a project key, this tool will use 'default' automatically.",
+      "With projectKey omitted it returns the project currently selected in the QMetry UI for the API key's user " +
+      "(currentProjectId, currentProjectName). With a projectKey it returns that project. " +
+      "This tool does not change which project other tools use.",
     useCases: [
       "Get project configuration before fetching test cases",
       "Retrieve available viewIds for test case listing",
       "Get folderPath information for project navigation",
       "Validate project access and permissions",
+      "Find out which project is currently selected in QMetry when the user named no project",
     ],
     examples: [
       {
-        description: "Get default project info",
+        description: "Get info for the project currently selected in QMetry",
         parameters: {},
         expectedOutput:
           "Project configuration with viewIds, folderPaths, and project details",
@@ -175,7 +125,8 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
     ],
     hints: [
       "Always call this first when user doesn't provide viewId or folderPath",
-      "Use 'default' project key when user doesn't specify one",
+      "If the user named no project, call this once with projectKey omitted, tell the user which project (currentProjectName) will be used, and pass that project's key explicitly on the rest of the task's calls",
+      "Calling this tool does not switch projects: every QMetry tool uses its own 'projectKey' argument",
       "Extract viewId from latestViews.TC.viewId for test case operations",
       "Use empty string '' as folderPath for root directory",
       "DATE FORMAT — IMPORTANT: response contains 'dateTimeFormatID' (number) and 'dateTimeFormatNew' (array).",
@@ -193,6 +144,8 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
     ],
     outputDescription:
       "JSON object containing project details, viewIds, folderPaths, project configuration, " +
+      "'currentProjectId' and 'currentProjectName' (the project this response is for), " +
+      "'projects' (short { id, key, name } list of the projects the user can access), " +
       "'dateTimeFormatID' (active date format ID), and 'dateTimeFormatNew' array " +
       "(each entry: { id, name, unique_value } — use unique_value of the matching entry as the date format pattern for all API date fields).",
     readOnly: true,
@@ -201,16 +154,17 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
   {
     title: "Fetch Releases and Cycles",
     toolset: "Projects",
-    summary: "Fetch QMetry releases and cycles from the current project",
+    summary:
+      "Fetch QMetry releases and cycles from the project given by projectKey (or the project selected in QMetry)",
     handler: QMetryToolsHandlers.FETCH_RELEASES_CYCLES,
     inputSchema: ReleasesCyclesArgsSchema,
     purpose:
-      "Retrieve release and cycle information from the current QMetry project. " +
+      "Retrieve release and cycle information from the QMetry project given by projectKey (or the project selected in QMetry). " +
       "Releases represent major versions or milestones, while cycles represent test execution phases within releases. " +
       "This tool provides the hierarchical structure of releases and their associated cycles.",
     useCases: [
-      "Fetch associated releases and cycles of current project",
-      "Fetch available releases and cycles of current project",
+      "Fetch associated releases and cycles of the project",
+      "Fetch available releases and cycles of the project",
       "Get release and cycle information for test planning",
       "List all releases and cycles in a project",
       "Search for specific releases using release name or ID",
@@ -240,7 +194,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
       },
     ],
     hints: [
-      "Use 'default' project key when user doesn't specify one",
+      "Omit projectKey to use the project currently selected in QMetry; pass it when the user named a project",
       "PAYLOAD SCENARIOS:",
       "- No showArchive parameter → payload: {showArchive: false} → Returns only active releases/cycles",
       "- showArchive: false → payload: {showArchive: false} → Returns only active/non-archived releases/cycles",
@@ -258,15 +212,16 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
   {
     title: "Fetch Builds",
     toolset: "Projects",
-    summary: "Fetch QMetry builds from the current project",
+    summary:
+      "Fetch QMetry builds from the project given by projectKey (or the project selected in QMetry)",
     handler: QMetryToolsHandlers.FETCH_BUILDS,
     inputSchema: BuildArgsSchema,
     purpose:
-      "Retrieve builds information from the current QMetry project. " +
+      "Retrieve builds information from the QMetry project given by projectKey (or the project selected in QMetry). " +
       "Builds represent specific versions or iterations of software that can be associated with test executions. " +
       "This tool provides a list of builds with their metadata for test planning and execution tracking.",
     useCases: [
-      "Fetch all from the current project",
+      "Fetch all from the project given by projectKey (or the project selected in QMetry)",
       "Fetch all available builds for test execution planning",
       "Get build metadata for test run assignments",
       "List builds for reporting and analytics",
@@ -305,7 +260,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
       },
     ],
     hints: [
-      "Use 'default' project key when user doesn't specify one",
+      "Omit projectKey to use the project currently selected in QMetry; pass it when the user named a project",
       "Default pagination: start=0, page=1, limit=10",
       "Filter parameter should be a JSON string with filter criteria",
       "Common filter fields: 'name' (string), 'isArchived' (list of 0,1)",
@@ -321,16 +276,17 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
   {
     title: "Fetch Platforms",
     toolset: "Projects",
-    summary: "Fetch QMetry platforms from the current project",
+    summary:
+      "Fetch QMetry platforms from the project given by projectKey (or the project selected in QMetry)",
     handler: QMetryToolsHandlers.FETCH_PLATFORMS,
     inputSchema: PlatformArgsSchema,
     purpose:
-      "Retrieve platforms information from the current QMetry project. " +
+      "Retrieve platforms information from the QMetry project given by projectKey (or the project selected in QMetry). " +
       "Platforms represent testing environments, operating systems, browsers, or devices " +
       "that can be associated with test case execution and reporting. " +
       "This tool provides a list of platforms with their metadata for test planning and execution tracking.",
     useCases: [
-      "Fetch all platforms from the current project",
+      "Fetch all platforms from the project given by projectKey (or the project selected in QMetry)",
       "Get platform metadata for test execution planning",
       "List platforms for test environment selection",
       "Filter platforms by name or properties",
@@ -389,7 +345,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
       },
     ],
     hints: [
-      "Use 'default' project key when user doesn't specify one",
+      "Omit projectKey to use the project currently selected in QMetry; pass it when the user named a project",
       "Default pagination: start=0, page=1, limit=10",
       "Filter parameter should be a JSON string with filter criteria",
       "Sort parameter should be a JSON string with sort criteria",

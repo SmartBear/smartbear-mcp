@@ -63,7 +63,6 @@ export const UDF_FIELD_TYPES = [
 
 export const QMetryToolsHandlers = {
   FETCH_PROJECTS: "getProjects",
-  SET_PROJECT_INFO: "setProjectInfo",
   FETCH_PROJECT_INFO: "getProjectInfo",
   FETCH_RELEASES_CYCLES: "getReleasesCycles",
   FETCH_BUILDS: "getBuilds",

@@ -18,6 +18,7 @@ describe("UDF API clients", () => {
   const mockOk = (data: any) => ({
     ok: true,
     json: async () => data,
+    text: async () => JSON.stringify(data),
   });
 
   describe("bulkUpdateTestRunUdfs", () => {
@@ -36,8 +37,6 @@ describe("UDF API clients", () => {
         UDF: {
           "8190_String": { fieldID: 229241, value: "test" },
         },
-        scopeId: 42307,
-        orgCode: "2O5API",
       });
 
       expect(global.fetch).toHaveBeenCalledWith(
@@ -69,7 +68,6 @@ describe("UDF API clients", () => {
         UDF: {
           m_selections: { fieldID: 229223, value: [5158524, 5158525] },
         },
-        scopeId: 42307,
       });
 
       const body = JSON.parse(
@@ -90,7 +88,6 @@ describe("UDF API clients", () => {
             multiSelectAction: "replace",
           },
         },
-        scopeId: 42307,
       });
 
       const body = JSON.parse(
@@ -107,7 +104,6 @@ describe("UDF API clients", () => {
         UDF: {
           defaultNum: { fieldID: 229003, value: 3 },
         },
-        scopeId: 42307,
       });
 
       const body = JSON.parse(
@@ -127,7 +123,6 @@ describe("UDF API clients", () => {
             value: { parent: 5126498, child: 5126499 },
           },
         },
-        scopeId: 42307,
       });
 
       const body = JSON.parse(
@@ -164,8 +159,6 @@ describe("UDF API clients", () => {
             multiSelectAction: "replace",
           },
         },
-        scopeId: 42307,
-        orgCode: "2O5API",
       });
 
       const body = JSON.parse(
@@ -223,10 +216,7 @@ describe("UDF API clients", () => {
     it("should POST to metadata endpoint with entityType=TCR and special headers", async () => {
       global.fetch = vi.fn().mockResolvedValue(mockOk(mockMetaResponse));
 
-      await fetchTestRunUdfMetadata(token, baseUrl, projectKey, {
-        scopeId: 46270,
-        orgCode: "2O5API",
-      });
+      await fetchTestRunUdfMetadata(token, baseUrl, projectKey);
 
       expect(global.fetch).toHaveBeenCalledOnce();
       const [url, opts] = (global.fetch as any).mock.calls[0];
@@ -235,6 +225,7 @@ describe("UDF API clients", () => {
       expect(JSON.parse(opts.body)).toMatchObject({ entityType: "TCR" });
       expect(opts.headers.action).toBe("fetch-steps");
       expect(opts.headers.screenname).toBe("EXECUTION RUN");
+      expect(opts.headers.scope).toBeUndefined();
     });
 
     it("should return normalized fields array with fieldID and label", async () => {
@@ -605,8 +596,6 @@ describe("UDF API clients", () => {
       await fetchTestRunUdfValues(token, baseUrl, projectKey, {
         tsrunID: "731600",
         viewId: 87039,
-        scopeId: 46270,
-        orgCode: "2O5API",
       });
 
       expect(global.fetch).toHaveBeenCalledTimes(2);

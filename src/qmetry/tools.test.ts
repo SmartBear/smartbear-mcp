@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ToolError } from "../common/tools";
 import { QmetryClient } from "./client";
 import * as issues from "./client/issues";
 // Mock API clients
@@ -66,7 +67,7 @@ describe("QmetryClient tools", () => {
       expect(result.content[0].text).toContain("Proj");
     });
 
-    it("should handle API errors gracefully", async () => {
+    it("should propagate API errors to the common tool wrapper", async () => {
       // Mock console.error to suppress expected error logging during test
       const consoleSpy = vi
         .spyOn(console, "error")
@@ -75,17 +76,9 @@ describe("QmetryClient tools", () => {
       (project.getProjectInfo as any).mockRejectedValue(new Error("boom"));
 
       const handler = getHandler("Fetch QMetry Project Info");
-      const result = await handler({});
 
-      expect(result).toEqual({
-        content: [
-          {
-            success: false,
-            type: "text",
-            text: "Error: boom",
-          },
-        ],
-      });
+      // Errors propagate to the common tool wrapper, which returns `isError`
+      await expect(handler({})).rejects.toThrow("boom");
 
       // Restore console.error
       consoleSpy.mockRestore();
@@ -156,7 +149,7 @@ describe("QmetryClient tools", () => {
       expect(result.content[0].text).toContain("Test4");
     });
 
-    it("should handle auto-resolution failure gracefully", async () => {
+    it("should throw a ToolError when auto-resolution fails", async () => {
       // Mock console.error to suppress expected error logging during test
       const consoleSpy = vi
         .spyOn(console, "error")
@@ -168,20 +161,21 @@ describe("QmetryClient tools", () => {
       );
 
       const handler = getHandler("Fetch Test Cases");
-      const result = await handler({});
+      const error = await handler({}).catch((e: unknown) => e);
 
-      // Auto-resolution should be attempted and fail gracefully
+      // Auto-resolution should be attempted and fail with an expected-failure
+      // ToolError (returned to the model as `isError`, not reported to BugSnag)
       expect(project.getProjectInfo).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
         "default",
       );
 
-      expect(result.content[0].success).toBe(false);
-      expect(result.content[0].text).toContain(
+      expect(error).toBeInstanceOf(ToolError);
+      expect((error as Error).message).toContain(
         "Failed to auto-resolve viewId/folderPath",
       );
-      expect(result.content[0].text).toContain("Project not found");
+      expect((error as Error).message).toContain("Project not found");
 
       // Restore console.error
       consoleSpy.mockRestore();
@@ -481,7 +475,7 @@ describe("QmetryClient tools", () => {
       expect(result.content[0].text).toContain("Requirement1");
     });
 
-    it("should handle API errors gracefully", async () => {
+    it("should propagate API errors to the common tool wrapper", async () => {
       const consoleSpy = vi
         .spyOn(console, "error")
         .mockImplementation(() => {});
@@ -491,17 +485,12 @@ describe("QmetryClient tools", () => {
       );
 
       const handler = getHandler("Fetch Requirements");
-      const result = await handler({});
 
-      expect(result).toEqual({
-        content: [
-          {
-            success: false,
-            type: "text",
-            text: "Error: Failed to auto-resolve viewId/folderPath/folderID for Requirements in project default. Please provide them manually or check project access. Error: API failure",
-          },
-        ],
-      });
+      await expect(handler({})).rejects.toThrow(
+        new ToolError(
+          "Failed to auto-resolve viewId/folderPath/folderID for Requirements in project default. Please provide them manually or check project access. Error: API failure",
+        ),
+      );
 
       consoleSpy.mockRestore();
     });
@@ -565,7 +554,7 @@ describe("QmetryClient tools", () => {
       expect(result.content[0].text).toContain("Test Requirement");
     });
 
-    it("should handle API errors gracefully", async () => {
+    it("should propagate API errors to the common tool wrapper", async () => {
       const consoleSpy = vi
         .spyOn(console, "error")
         .mockImplementation(() => {});
@@ -575,17 +564,9 @@ describe("QmetryClient tools", () => {
       );
 
       const handler = getHandler("Fetch Requirement Details");
-      const result = await handler({ id: 99999, version: 1 });
-
-      expect(result).toEqual({
-        content: [
-          {
-            success: false,
-            type: "text",
-            text: "Error: Requirement not found",
-          },
-        ],
-      });
+      await expect(handler({ id: 99999, version: 1 })).rejects.toThrow(
+        "Requirement not found",
+      );
 
       consoleSpy.mockRestore();
     });
@@ -686,7 +667,7 @@ describe("QmetryClient tools", () => {
       expect(result.content[0].text).toContain("Unlinked test case");
     });
 
-    it("should handle API errors gracefully", async () => {
+    it("should propagate API errors to the common tool wrapper", async () => {
       const consoleSpy = vi
         .spyOn(console, "error")
         .mockImplementation(() => {});
@@ -696,17 +677,9 @@ describe("QmetryClient tools", () => {
       );
 
       const handler = getHandler("Fetch Test Cases Linked to Requirement");
-      const result = await handler({ rqID: 99999 });
-
-      expect(result).toEqual({
-        content: [
-          {
-            success: false,
-            type: "text",
-            text: "Error: Requirement ID not found",
-          },
-        ],
-      });
+      await expect(handler({ rqID: 99999 })).rejects.toThrow(
+        "Requirement ID not found",
+      );
 
       consoleSpy.mockRestore();
     });
@@ -809,7 +782,7 @@ describe("QmetryClient tools", () => {
       expect(result.content[0].text).toContain("PASS");
     });
 
-    it("should handle API errors gracefully", async () => {
+    it("should propagate API errors to the common tool wrapper", async () => {
       const consoleSpy = vi
         .spyOn(console, "error")
         .mockImplementation(() => {});
@@ -819,17 +792,9 @@ describe("QmetryClient tools", () => {
       );
 
       const handler = getHandler("Fetch Test Case Executions");
-      const result = await handler({ tcid: 99999 });
-
-      expect(result).toEqual({
-        content: [
-          {
-            success: false,
-            type: "text",
-            text: "Error: Test case ID not found",
-          },
-        ],
-      });
+      await expect(handler({ tcid: 99999 })).rejects.toThrow(
+        "Test case ID not found",
+      );
 
       consoleSpy.mockRestore();
     });
@@ -934,7 +899,7 @@ describe("QmetryClient tools", () => {
       expect(result.content[0].text).toContain("test.user");
     });
 
-    it("should handle API errors gracefully", async () => {
+    it("should propagate API errors to the common tool wrapper", async () => {
       const consoleSpy = vi
         .spyOn(console, "error")
         .mockImplementation(() => {});
@@ -944,19 +909,9 @@ describe("QmetryClient tools", () => {
       );
 
       const handler = getHandler("Fetch Issues Linked to Test Case");
-      const result = await handler({
-        linkedAsset: { type: "TC", id: 99999 },
-      });
-
-      expect(result).toEqual({
-        content: [
-          {
-            success: false,
-            type: "text",
-            text: "Error: Test case not found or no issues linked",
-          },
-        ],
-      });
+      await expect(
+        handler({ linkedAsset: { type: "TC", id: 99999 } }),
+      ).rejects.toThrow("Test case not found or no issues linked");
 
       consoleSpy.mockRestore();
     });
@@ -1056,11 +1011,9 @@ describe("QmetryClient tools", () => {
   });
 
   describe("Bulk Update Test Case Execution Status", () => {
-    it("should auto-resolve TE viewId and inject scope/orgcode from project info", async () => {
+    it("should auto-resolve TE viewId from project info without a scope id", async () => {
       (project.getProjectInfo as any).mockResolvedValue({
         latestViews: { TE: { viewId: 777 } },
-        currentProjectId: 42,
-        clientCode: "ORG1",
       });
       (testsuite.bulkUpdateExecutionStatus as any).mockResolvedValue({
         success: true,
@@ -1083,11 +1036,12 @@ describe("QmetryClient tools", () => {
         expect.objectContaining({
           entityIDs: "66095069",
           viewId: 777,
-          scopeId: 42,
-          orgCode: "ORG1",
           udfValuesByRun: { "66095069": { test_env: { value: "QA" } } },
         }),
       );
+      const forwardedArgs = (testsuite.bulkUpdateExecutionStatus as any).mock
+        .calls[0][3];
+      expect(forwardedArgs).not.toHaveProperty("scopeId");
     });
 
     it("should keep a caller-supplied viewId", async () => {
@@ -1639,48 +1593,6 @@ describe("QmetryClient tools", () => {
     });
   });
 
-  describe("Set QMetry Project Info", () => {
-    it("should set project info with default project key", async () => {
-      (project.getProjectInfo as any).mockResolvedValue({
-        id: 1,
-        name: "default",
-        projectKey: "default",
-      });
-
-      const handler = getHandler("Set QMetry Project Info");
-      const result = await handler({});
-
-      expect(project.getProjectInfo).toHaveBeenCalledWith(
-        "fake-token",
-        "https://qmetry.example",
-        "default",
-        {},
-      );
-
-      expect(result.content[0].text).toContain("default");
-    });
-
-    it("should set project info with custom project key", async () => {
-      (project.getProjectInfo as any).mockResolvedValue({
-        id: 2,
-        name: "MAC Project",
-        projectKey: "MAC",
-      });
-
-      const handler = getHandler("Set QMetry Project Info");
-      const result = await handler({ projectKey: "MAC" });
-
-      expect(project.getProjectInfo).toHaveBeenCalledWith(
-        "fake-token",
-        "https://qmetry.example",
-        "MAC",
-        {},
-      );
-
-      expect(result.content[0].text).toContain("MAC");
-    });
-  });
-
   describe("Fetch Releases and Cycles", () => {
     it("should fetch releases and cycles with default parameters", async () => {
       (project.getReleasesCycles as any).mockResolvedValue({
@@ -1852,7 +1764,7 @@ describe("QmetryClient tools", () => {
       expect(result.content[0].text).toContain("9872");
     });
 
-    it("should handle API errors gracefully", async () => {
+    it("should propagate API errors to the common tool wrapper", async () => {
       const consoleSpy = vi
         .spyOn(console, "error")
         .mockImplementation(() => {});
@@ -1862,10 +1774,8 @@ describe("QmetryClient tools", () => {
       );
 
       const handler = getHandler("Fetch API Call Quota");
-      const result = await handler({});
 
-      expect(result.content[0].success).toBe(false);
-      expect(result.content[0].text).toContain("Invalid API key");
+      await expect(handler({})).rejects.toThrow("Invalid API key");
 
       consoleSpy.mockRestore();
     });
@@ -2370,7 +2280,7 @@ describe("QmetryClient tools", () => {
       expect(result.content[0].text).toContain("linked");
     });
 
-    it("should handle API errors gracefully", async () => {
+    it("should propagate API errors to the common tool wrapper", async () => {
       const consoleSpy = vi
         .spyOn(console, "error")
         .mockImplementation(() => {});
@@ -2380,14 +2290,9 @@ describe("QmetryClient tools", () => {
       );
 
       const handler = getHandler("Link Requirements to Testcase");
-      const result = await handler({
-        tcID: "VT-TC-99",
-        tcVersionId: 999,
-        rqVersionIds: "111",
-      });
-
-      expect(result.content[0].success).toBe(false);
-      expect(result.content[0].text).toContain("Test case not found");
+      await expect(
+        handler({ tcID: "VT-TC-99", tcVersionId: 999, rqVersionIds: "111" }),
+      ).rejects.toThrow("Test case not found");
 
       consoleSpy.mockRestore();
     });
@@ -2863,7 +2768,7 @@ describe("QmetryClient tools", () => {
       expect(result.content[0].text).toContain("linked");
     });
 
-    it("should handle API errors gracefully", async () => {
+    it("should propagate API errors to the common tool wrapper", async () => {
       const consoleSpy = vi
         .spyOn(console, "error")
         .mockImplementation(() => {});
@@ -2873,13 +2778,9 @@ describe("QmetryClient tools", () => {
       );
 
       const handler = getHandler("Link Test Case to Issues");
-      const result = await handler({
-        tcID: "8d7b-TC-99",
-        dfIDs: [111],
-      });
-
-      expect(result.content[0].success).toBe(false);
-      expect(result.content[0].text).toContain("Test case not found");
+      await expect(
+        handler({ tcID: "8d7b-TC-99", dfIDs: [111] }),
+      ).rejects.toThrow("Test case not found");
 
       consoleSpy.mockRestore();
     });

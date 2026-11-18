@@ -324,7 +324,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       "Step 1: If user specifies projectKey (like 'UT', 'MAC'), use that EXACT projectKey for project info",
       "Step 2: Get project info using that projectKey, extract latestViews.RQ.viewId",
       "Step 3: Use the SAME projectKey and the extracted RQ viewId for fetching requirements",
-      "Step 4: If user doesn't specify projectKey, use 'default' for both project info and requirement fetching",
+      "Step 4: If user doesn't specify a project, omit projectKey on both calls (QMetry then uses the project currently selected in the QMetry UI), or pass the key returned by project info explicitly",
       "NEVER mix project keys - if user says 'MAC project', use projectKey='MAC' for everything",
       'For search by requirement key (like MAC-RQ-123), use filter: \'[{"type":"string","value":"MAC-RQ-123","field":"entityKeyId"}]\'',
       'For multiple entity keys, use comma-separated values: \'[{"type":"string","value":"MAC-RQ-123,MAC-RQ-456","field":"entityKeyId"}]\'',

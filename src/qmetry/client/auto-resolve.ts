@@ -171,23 +171,3 @@ export function findAutoResolveConfig(
 ): ModuleAutoResolveConfig | undefined {
   return AUTO_RESOLVE_MODULES.find((module) => module.handler === handler);
 }
-
-/**
- * Extracts numeric project context from a project info response.
- * Returns scopeId (currentProjectId) and orgCode (clientCode) needed as HTTP headers
- * for endpoints that use scope+orgcode for project resolution instead of the project key.
- */
-export function extractProjectContext(projectInfo: any): {
-  scopeId: number | undefined;
-  orgCode: string | undefined;
-} {
-  const rawScopeId = projectInfo?.currentProjectId;
-  const parsedScopeId = rawScopeId !== undefined ? Number(rawScopeId) : NaN;
-  return {
-    scopeId: Number.isFinite(parsedScopeId) ? parsedScopeId : undefined,
-    orgCode:
-      projectInfo?.clientCode !== undefined
-        ? String(projectInfo.clientCode)
-        : undefined,
-  };
-}

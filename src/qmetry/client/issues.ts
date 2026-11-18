@@ -1,3 +1,4 @@
+import { ToolError } from "../../common/tools";
 import { QMETRY_PATHS } from "../config/rest-endpoints";
 import {
   type CreateIssuePayload,
@@ -40,17 +41,17 @@ export async function createIssue(
   };
 
   if (typeof body.issueType !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[createIssue] Missing or invalid required parameter: 'issueType'.",
     );
   }
   if (typeof body.issuePriority !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[createIssue] Missing or invalid required parameter: 'issuePriority'.",
     );
   }
   if (typeof body.summary !== "string") {
-    throw new Error(
+    throw new ToolError(
       "[createIssue] Missing or invalid required parameter: 'summary'.",
     );
   }
@@ -107,7 +108,7 @@ export async function createIssue(
       }
     }
     if (missing.length > 0) {
-      throw new Error(
+      throw new ToolError(
         `[createIssue] Missing mandatory fields: ${missing.join(", ")}. ` +
           "Provide values for these fields before creating the issue.",
       );
@@ -150,7 +151,7 @@ export async function updateIssue(
   };
 
   if (typeof body.DefectId !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[updateIssue] Missing or invalid required parameter: 'DefectId'.",
     );
   }
@@ -186,7 +187,7 @@ export async function fetchIssues(
   };
 
   if (typeof body.viewId !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[fetchIssues] Missing or invalid required parameter: 'viewId'.",
     );
   }
@@ -229,7 +230,7 @@ export async function fetchIssuesLinkedToTestCase(
   };
 
   if (typeof body.tcID !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[fetchIssuesLinkedToTestCase] Missing or invalid required parameter: 'tcID'.",
     );
   }
@@ -273,7 +274,7 @@ export async function fetchIssueExecutions(
       : undefined);
 
   if (!resolvedLinkedAsset || typeof resolvedLinkedAsset.id !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[fetchIssueExecutions] Missing or invalid required parameter: 'linkedAssetId'.",
     );
   }
@@ -468,13 +469,13 @@ export async function linkIssuesToTestcaseRun(
   };
 
   if (!Array.isArray(body.issueIds) || body.issueIds.length === 0) {
-    throw new Error(
+    throw new ToolError(
       "[linkIssuesToTestcaseRun] Missing or invalid required parameter: 'issueIds'.",
     );
   }
 
   if (typeof body.tcrId !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[linkIssuesToTestcaseRun] Missing or invalid required parameter: 'tcrId'.",
     );
   }
@@ -497,7 +498,7 @@ export async function fetchIssueDetails(
   token: string,
   baseUrl: string,
   project: string | undefined,
-  payload: { defectId: number; scopeId?: number; orgCode?: string },
+  payload: { defectId: number },
 ) {
   const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
     baseUrl,
@@ -505,7 +506,7 @@ export async function fetchIssueDetails(
   );
 
   if (typeof payload.defectId !== "number" || payload.defectId <= 0) {
-    throw new Error(
+    throw new ToolError(
       "[fetchIssueDetails] Missing or invalid required parameter: 'defectId'.",
     );
   }
@@ -514,12 +515,6 @@ export async function fetchIssueDetails(
     action: "detail",
     screenname: "ISSUE",
   };
-  if (typeof payload.scopeId === "number") {
-    extraHeaders["scope"] = String(payload.scopeId);
-  }
-  if (typeof payload.orgCode === "string") {
-    extraHeaders["orgcode"] = payload.orgCode;
-  }
   extraHeaders["Content-Type"] = "application/json";
   return qmetryRequest<unknown>({
     method: "GET",

@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Removed
+
+- [QMetry] **Breaking:** removed the `Set QMetry Project Info` tool (`qmetry_set_qmetry_project_info`). It only fetched project info and never changed the project other tools use, but its name suggested it did. Use `Fetch QMetry Project Info` instead, and pass `projectKey` on each call that should target a specific project
+
+### Changed
+
+- [QMetry] Omitting `projectKey` (or passing `default`) now documented as what it is: QMetry uses the project currently selected in the QMetry UI by the API key's user. Tool descriptions no longer tell the model to use `'default'`; they tell it to omit the key when the user named no project, or to pass the named project's key. Automated or headless runs should always pass `projectKey`
+- [QMetry] Tools that already fetch project info (creates, updates and fetches with auto-resolved view or folder IDs) now report the project they ran against as a second content block, `{"project": {"key", "id", "name", "source"}}`, where `source` is `explicit` or `qmetry-selected`. Project info is fetched once per call instead of up to twice, and its key is used for the rest of the call, so a project switch in the QMetry UI cannot split one call across two projects. Nothing is stored between calls
+- [QMetry] `Fetch QMetry Project Info` now trims the `projects` list in its response to `{id, key, name}` entries
+- [QMetry] An invalid project key (`CO.INVALID_PROJECT_ID`) now adds up to three "Did you mean" suggestions from the active project list to the error
+
+- [QMetry] Project context is now taken from each tool call's `projectKey` argument (sent as the `project` header, `default` when omitted) instead of being stored on the server instance, so QMetry tools behave the same on stateless 2026-07-28 HTTP connections, where every request gets a fresh server. The numeric `scope` and `orgcode` headers derived from project info are no longer sent. `Set QMetry Project Info` now only validates access to a project and returns its configuration; it no longer changes the project used by later calls, and is now annotated read-only.
+
+- [QMetry] Internal: the QMetry client now uses the SDK v2 types (`configure(server: SmartBearMcpServer, config)`, tool callbacks typed `(args, ctx: ServerContext) => Promise<CallToolResult>`). No behavior change.
+
+### Fixed
+
+- [QMetry] Failed QMetry tool calls are now reported as errors. Previously every exception was caught and returned as an ordinary result, so clients never saw `isError`, usage analytics counted failures as successes, and genuine bugs never reached BugSnag. QMetry API errors and invalid-input errors are now `ToolError`s, returned to the model as `isError: true` results (and not reported to BugSnag); unexpected exceptions are reported. The Create Test Case and Create Test Suite mandatory-field checks and the mandatory Test Run UDF check in Bulk Update Test Case Execution Status also return `isError: true`. Tool result content blocks no longer carry a non-standard `success` property.
+- [QMetry] A successful (2xx) QMetry response that is not JSON, such as an SSO sign-in page, a corporate proxy notice, a maintenance page, or a base URL pointing at a web app, now returns an `isError` result explaining the likely causes and quoting the start of the page, instead of a raw `Unexpected token '<'` JSON parse error that was treated as a server bug and reported to BugSnag. A 2xx response with an empty body (e.g. 204 No Content) is now treated as success (`{ "success": true }`) instead of failing with `Unexpected end of JSON input`. Applies to all QMetry tools, including Import Automation Test Results.
+- [QMetry] Create Test Case, Create/Update Requirement, Link Requirements to Testcase, Link Test Case to Issues, Create/Update Test Suite, Link Test Cases to Test Suite, Requirements Linked Test Cases to Test Suite, Update Issue and Import Automation Test Results now accept a `projectKey` argument. Previously their schemas had none, so any `projectKey` was dropped and they used the project last set with `Set QMetry Project Info`, which on 2026-07-28 HTTP is always `default`.
+
 ## [0.43.0] - 2026-11-02
 
 ### Added

@@ -29,11 +29,6 @@ export interface UdfDataEntry {
   defaultValue?: string | number | number[] | null;
   defaultChildValue?: number[];
 }
-export interface FetchUdfFieldTypesPayload {
-  scopeId?: number;
-  orgCode?: string;
-}
-
 export const FetchUdfFieldTypesArgsSchema = z.object({
   projectKey: CommonFields.projectKey,
 });
@@ -51,8 +46,6 @@ export interface UdfFieldValue {
 export interface BulkUpdateTestRunUdfsPayload {
   tcRunIDs: number[];
   UDF: Record<string, UdfFieldValue>;
-  scopeId?: number;
-  orgCode?: string;
 }
 
 export const BulkUpdateTestRunUdfsArgsSchema = z.object({
@@ -81,11 +74,6 @@ export const BulkUpdateTestRunUdfsArgsSchema = z.object({
 // Test Run UDF Metadata
 // ---------------------------------------------------------------------------
 
-export interface FetchTestRunUdfMetadataPayload {
-  scopeId?: number;
-  orgCode?: string;
-}
-
 export const FetchTestRunUdfMetadataArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
 });
@@ -101,8 +89,6 @@ export interface FetchTestRunUdfValuesPayload {
   sourceRows?: Record<string, unknown>[];
   startIndex?: number;
   size?: number;
-  scopeId?: number;
-  orgCode?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -112,8 +98,6 @@ export interface FetchTestRunUdfValuesPayload {
 export interface FetchCascadeChildValuesPayload {
   id: number;
   isArchReq?: boolean;
-  scopeId?: number;
-  orgCode?: string;
 }
 
 export const FetchCascadeChildValuesArgsSchema = z.object({
@@ -144,8 +128,6 @@ export const FetchCascadeChildValuesArgsSchema = z.object({
 export interface FetchUdfLayoutPayload {
   entityType: "TC" | "TS" | "IS" | "RQ";
   pageName?: "ADD" | "DETAIL";
-  scopeId?: number;
-  orgCode?: string;
 }
 
 export const FetchUdfLayoutArgsSchema = z.object({

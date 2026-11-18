@@ -511,8 +511,6 @@ export const UDF_TOOLS: QMetryToolParams[] = [
       "The response 'children' array contains objects with 'id', 'name', 'uniqueLabel', and 'isArchived'. " +
         "Use 'id' as the 'child' value in the bulk update payload.",
       "Set 'isArchReq: true' only if the user explicitly asks to include archived/inactive child options.",
-      "This endpoint requires 'scope' and 'orgcode' headers — these are injected automatically from the session " +
-        "context when 'Set Project Info' has been called. If you see an authorization error, call 'Set Project Info' first.",
       "Do NOT call this tool for STRING, NUMBER, DATETIMEPICKER, LOOKUPLIST, or MULTILOOKUPLIST fields — " +
         "only CASCADINGLIST (fieldType: 'CASCADINGLIST') fields have a parent-child hierarchy.",
     ],

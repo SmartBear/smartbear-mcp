@@ -18,6 +18,7 @@ const projectKey = "TEST_PROJECT";
 const mockOk = (data: unknown) => ({
   ok: true,
   json: async () => data,
+  text: async () => JSON.stringify(data),
 });
 
 describe("AI Agent API clients", () => {

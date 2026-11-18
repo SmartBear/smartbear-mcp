@@ -7,6 +7,9 @@ import {
   getPlatforms,
   getProjectInfo,
   getReleasesCycles,
+  rankProjectSuggestions,
+  resolveProjectFromInfo,
+  suggestProjects,
   updateCycle,
 } from "../client/project.js";
 
@@ -24,6 +27,7 @@ describe("getProjectInfo", () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
+      text: async () => JSON.stringify(mockResponse),
     });
 
     const result = await getProjectInfo(token, baseUrl, projectKey);
@@ -51,7 +55,7 @@ describe("getProjectInfo", () => {
     });
 
     await expect(getProjectInfo(token, baseUrl, projectKey)).rejects.toThrow(
-      /QMetry API request failed \(500\)/,
+      /QMetry API error 500: Server error/,
     );
   });
 
@@ -60,6 +64,7 @@ describe("getProjectInfo", () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
+      text: async () => JSON.stringify(mockResponse),
     });
 
     await getProjectInfo(token, baseUrl);
@@ -113,6 +118,7 @@ describe("getReleasesCycles", () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
+      text: async () => JSON.stringify(mockResponse),
     });
 
     const result = await getReleasesCycles(token, baseUrl, projectKey);
@@ -175,6 +181,7 @@ describe("getReleasesCycles", () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
+      text: async () => JSON.stringify(mockResponse),
     });
 
     const result = await getReleasesCycles(token, baseUrl, projectKey, {
@@ -227,6 +234,7 @@ describe("getReleasesCycles", () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
+      text: async () => JSON.stringify(mockResponse),
     });
 
     const result = await getReleasesCycles(token, baseUrl, projectKey, {
@@ -259,6 +267,7 @@ describe("getReleasesCycles", () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
+      text: async () => JSON.stringify(mockResponse),
     });
 
     await getReleasesCycles(token, baseUrl);
@@ -282,6 +291,7 @@ describe("getReleasesCycles", () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
+      text: async () => JSON.stringify(mockResponse),
     });
 
     await getReleasesCycles(token, "", projectKey);
@@ -303,6 +313,7 @@ describe("getReleasesCycles", () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
+      text: async () => JSON.stringify(mockResponse),
     });
 
     const result = await getReleasesCycles(token, baseUrl, projectKey, {});
@@ -325,7 +336,7 @@ describe("getReleasesCycles", () => {
     });
 
     await expect(getReleasesCycles(token, baseUrl, projectKey)).rejects.toThrow(
-      /QMetry API Authentication Failed/,
+      /QMetry API error 401/,
     );
   });
 
@@ -386,6 +397,7 @@ describe("getReleasesCycles", () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
+      text: async () => JSON.stringify(mockResponse),
     });
 
     const result = await getReleasesCycles(token, baseUrl, projectKey, {
@@ -425,6 +437,7 @@ describe("getBuilds", () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
+      text: async () => JSON.stringify(mockResponse),
     });
 
     const result = await getBuilds(token, baseUrl, projectKey, {});
@@ -464,6 +477,7 @@ describe("getBuilds", () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
+      text: async () => JSON.stringify(mockResponse),
     });
 
     const customPayload = {
@@ -532,6 +546,7 @@ describe("getApiQuotaStatus", () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
+      text: async () => JSON.stringify(mockResponse),
     });
 
     const result = await getApiQuotaStatus(token, baseUrl, projectKey, {});
@@ -596,6 +611,7 @@ describe("getPlatforms", () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
+      text: async () => JSON.stringify(mockResponse),
     });
 
     const result = await getPlatforms(token, baseUrl, projectKey, {});
@@ -646,6 +662,7 @@ describe("getPlatforms", () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
+      text: async () => JSON.stringify(mockResponse),
     });
 
     const customPayload = {
@@ -711,6 +728,7 @@ describe("createRelease", () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
+      text: async () => JSON.stringify(mockResponse),
     });
 
     const payload = {
@@ -795,6 +813,7 @@ describe("createCycle", () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
+      text: async () => JSON.stringify(mockResponse),
     });
 
     const payload = {
@@ -858,6 +877,7 @@ describe("updateCycle", () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
+      text: async () => JSON.stringify(mockResponse),
     });
 
     const payload = {
@@ -909,5 +929,223 @@ describe("updateCycle", () => {
     ).rejects.toThrow(
       "[updateCycle] Missing or invalid required parameter: 'cycle.buildID'",
     );
+  });
+});
+
+describe("getProjectInfo projects trimming", () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  const respond = (body: unknown) => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => body,
+      text: async () => JSON.stringify(body),
+    });
+  };
+
+  it("trims each projects entry to {id, key, name}", async () => {
+    respond({
+      currentProjectId: 347,
+      currentProjectName: "Pranshu Basic Test",
+      projects: [
+        {
+          projectID: 347,
+          projectKey: "8d7b",
+          name: "Pranshu Basic Test",
+          isArchived: false,
+          latestViews: { TC: { viewId: 1 } },
+        },
+        { projectId: 192, key: "QT", projectName: "QTM--to--QTM4J" },
+        { name: "no id or key" },
+      ],
+    });
+
+    const result = await getProjectInfo(
+      "t",
+      "https://qmetry.example",
+      "default",
+    );
+
+    expect(result.projects).toEqual([
+      { id: 347, key: "8d7b", name: "Pranshu Basic Test" },
+      { id: 192, key: "QT", name: "QTM--to--QTM4J" },
+    ]);
+    expect(result.currentProjectId).toBe(347);
+  });
+
+  it("leaves a response without projects unchanged", async () => {
+    respond({ currentProjectId: 1 });
+    const result = await getProjectInfo("t", "https://qmetry.example", "MAC");
+    expect(result).toEqual({ currentProjectId: 1 });
+  });
+});
+
+describe("resolveProjectFromInfo", () => {
+  const info = {
+    currentProjectId: 347,
+    currentProjectName: "Pranshu Basic Test",
+    projects: [
+      { id: 347, key: "8d7b", name: "Pranshu Basic Test" },
+      { id: 192, key: "QT", name: "QTM--to--QTM4J" },
+    ],
+  };
+
+  it("reports the selected project for 'default'", () => {
+    expect(resolveProjectFromInfo(info, "default")).toEqual({
+      key: "8d7b",
+      id: 347,
+      name: "Pranshu Basic Test",
+      source: "qmetry-selected",
+    });
+  });
+
+  it("treats a missing key like 'default'", () => {
+    expect(resolveProjectFromInfo(info, undefined).source).toBe(
+      "qmetry-selected",
+    );
+  });
+
+  it("marks an explicit key as explicit", () => {
+    expect(
+      resolveProjectFromInfo(
+        {
+          ...info,
+          currentProjectId: 192,
+          currentProjectName: "QTM--to--QTM4J",
+        },
+        "QT",
+      ),
+    ).toEqual({
+      key: "QT",
+      id: 192,
+      name: "QTM--to--QTM4J",
+      source: "explicit",
+    });
+  });
+
+  it("matches ids given as strings", () => {
+    expect(
+      resolveProjectFromInfo({ ...info, currentProjectId: "347" }, "default")
+        .key,
+    ).toBe("8d7b");
+  });
+
+  it("omits the key when the selected project is not in projects", () => {
+    expect(
+      resolveProjectFromInfo({ ...info, currentProjectId: 999 }, "default"),
+    ).toEqual({
+      id: 999,
+      name: "Pranshu Basic Test",
+      source: "qmetry-selected",
+    });
+  });
+
+  it("falls back to an explicit key when projects has no match", () => {
+    expect(resolveProjectFromInfo({ currentProjectId: 5 }, "MAC")).toEqual({
+      key: "MAC",
+      id: 5,
+      source: "explicit",
+    });
+  });
+});
+
+describe("rankProjectSuggestions", () => {
+  const projects = [
+    { id: 192, key: "QT", name: "QTM--to--QTM4J" },
+    { id: 347, key: "8d7b", name: "Pranshu Basic Test" },
+    { id: 1, key: "MAC", name: "Mac Project" },
+    { id: 2, key: "QMTX", name: "Other" },
+  ];
+
+  it("ranks a case-insensitive exact key or name first", () => {
+    expect(rankProjectSuggestions("mac", projects)[0].key).toBe("MAC");
+    expect(rankProjectSuggestions("pranshu basic test", projects)[0].key).toBe(
+      "8d7b",
+    );
+  });
+
+  it("suggests close keys for a typo and drops unrelated ones", () => {
+    const keys = rankProjectSuggestions("QMT", projects).map((p) => p.key);
+    expect(keys).toContain("QT");
+    expect(keys).toContain("QMTX");
+    expect(keys).not.toContain("8d7b");
+  });
+
+  it("returns at most three suggestions", () => {
+    const many = Array.from({ length: 10 }, (_, i) => ({
+      id: i,
+      key: `Q${i}`,
+    }));
+    expect(rankProjectSuggestions("Q", many)).toHaveLength(3);
+  });
+
+  it("returns nothing for an empty value", () => {
+    expect(rankProjectSuggestions("  ", projects)).toEqual([]);
+  });
+});
+
+describe("suggestProjects", () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it("reads active projects from the project list and ranks them", async () => {
+    const body = {
+      data: [
+        { projectID: 192, projectKey: "QT", name: "QTM--to--QTM4J" },
+        { projectID: 1, projectKey: "ZZZZZZ", name: "Unrelated" },
+      ],
+      total: 2,
+    };
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => body,
+      text: async () => JSON.stringify(body),
+    });
+
+    const result = await suggestProjects("t", "https://qmetry.example", "QMT");
+
+    expect(result).toEqual([{ id: 192, key: "QT", name: "QTM--to--QTM4J" }]);
+    expect(global.fetch).toHaveBeenCalledOnce();
+    const [url, init] = (global.fetch as any).mock.calls[0];
+    expect(url).toBe("https://qmetry.example/rest/admin/project/list");
+    expect(JSON.parse(init.body).params).toEqual({ showArchive: false });
+  });
+
+  it("pages through the list until it has every project", async () => {
+    const page1 = {
+      data: Array.from({ length: 100 }, (_, i) => ({
+        projectID: i,
+        projectKey: `P${i}`,
+      })),
+      total: 101,
+    };
+    const page2 = { data: [{ projectID: 500, projectKey: "QT" }], total: 101 };
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => page1,
+        text: async () => JSON.stringify(page1),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => page2,
+        text: async () => JSON.stringify(page2),
+      });
+
+    const result = await suggestProjects("t", "https://qmetry.example", "QT");
+
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+    expect(result[0].key).toBe("QT");
+  });
+
+  it("returns no suggestions when the lookup fails", async () => {
+    global.fetch = vi.fn().mockRejectedValue(new Error("down"));
+    await expect(
+      suggestProjects("t", "https://qmetry.example", "QMT"),
+    ).resolves.toEqual([]);
   });
 });

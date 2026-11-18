@@ -18,8 +18,6 @@ export interface RequestOptions {
   project?: string; // Sent as HTTP header, not in body
   baseUrl: string; // Used for URL construction, not in body
   body?: any; // Only contains business logic parameters
-  scopeId?: number; // Sent as "scope" HTTP header (numeric project ID from currentProjectId)
-  orgCode?: string; // Sent as "orgcode" HTTP header (from clientCode in project info response)
   extraHeaders?: Record<string, string>; // Additional HTTP headers for specific endpoints
 }
 export interface PaginationPayload {
@@ -94,16 +92,21 @@ export const AutomationHierarchyEnum = z.enum(["1", "2", "3"]);
  */
 export const SkipWarningEnum = z.enum(["0", "1"]);
 
+const PROJECT_KEY_DESCRIPTION =
+  "Key of the QMetry project to use. Omit it if the user named no project: QMetry then uses " +
+  "the project currently selected in the QMetry UI for the API key's user. If the user named a " +
+  "project, pass its key (use Fetch QMetry list Projects to find the key from a project name).";
+
 // Reusable Zod schema components
 export const CommonFields = {
   projectKey: z
     .string()
-    .describe("Project key - unique identifier for the project")
+    .describe(PROJECT_KEY_DESCRIPTION)
     .default(QMETRY_DEFAULTS.PROJECT_KEY),
   projectKeyOptional: z
     .string()
     .optional()
-    .describe("Project key - unique identifier for the project")
+    .describe(PROJECT_KEY_DESCRIPTION)
     .default(QMETRY_DEFAULTS.PROJECT_KEY),
   start: z
     .number()
@@ -624,6 +627,7 @@ const UdfFieldsSchema = z
   );
 
 export const CreateTestCaseArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
   tcFolderID: z
     .string()
     .optional()
@@ -911,6 +915,7 @@ const RequirementAttachmentsSchema = z
   );
 
 export const CreateRequirementArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
   name: z.string().describe("Requirement name (required)."),
   priority: z.number().optional().describe("Priority ID of the requirement."),
   component: z
@@ -961,6 +966,7 @@ export const CreateRequirementArgsSchema = z.object({
 });
 
 export const UpdateRequirementArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
   rqId: z
     .number()
     .describe(
@@ -1027,6 +1033,7 @@ export const RequirementsLinkedToTestCaseArgsSchema = z.object({
 });
 
 export const LinkRequirementToTestCaseArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
   tcID: z.string().describe("EntityKey of Testcase (e.g. 'COD-TC-29')"),
   tcVersionId: CommonFields.tcVersionID,
   rqVersionIds: z
@@ -1037,6 +1044,7 @@ export const LinkRequirementToTestCaseArgsSchema = z.object({
 });
 
 export const LinkTestcaseToIssuesArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
   tcID: z
     .string()
     .describe(
@@ -1110,6 +1118,7 @@ export const TestCasesLinkedToRequirementArgsSchema = z.object({
 });
 
 export const CreateTestSuiteArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
   parentFolderId: z
     .string()
     .optional()
@@ -1159,6 +1168,7 @@ export const CreateTestSuiteArgsSchema = z.object({
 });
 
 export const UpdateTestSuiteArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
   id: z.number().describe("Id of Test Suite to be updated (required)"),
   TsFolderID: z
     .number()
@@ -1238,6 +1248,7 @@ export const TestSuitesForTestCaseArgsSchema = z.object({
 
 export const LinkTestCasesToTestSuiteArgsSchema = z
   .object({
+    projectKey: CommonFields.projectKeyOptional,
     tsID: z.coerce
       .number()
       .describe(
@@ -1257,6 +1268,7 @@ export const LinkTestCasesToTestSuiteArgsSchema = z
 
 export const RequirementsLinkedTestCasesToTestSuiteArgsSchema = z
   .object({
+    projectKey: CommonFields.projectKeyOptional,
     tsID: z.coerce
       .number()
       .describe(
@@ -1389,6 +1401,7 @@ export const CreateIssueArgsSchema = z.object({
 });
 
 export const UpdateIssueArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
   DefectId: z.coerce
     .number()
     .describe(
@@ -1675,6 +1688,7 @@ export const BulkUpdateExecutionStatusArgsSchema = z.object({
  * User should upload a valid result file (.json, .xml, or .zip up to 30 MB)
  */
 export const ImportAutomationResultsPayloadSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
   // REQUIRED: File data as base64 string or file path
   file: z
     .string()

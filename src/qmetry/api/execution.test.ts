@@ -14,6 +14,7 @@ const UDF_URL = `${baseUrl}/rest/execution/udf/bulkupdate`;
 const mockOk = (data: any) => ({
   ok: true,
   json: async () => data,
+  text: async () => JSON.stringify(data),
 });
 
 const metadataWith = (fields: Record<string, any>) => ({
@@ -149,8 +150,6 @@ describe("testsuite bulk update execution status API", () => {
         entityIDs: "66095087",
         isBulkOperation: false,
         dropID: 947,
-        scopeId: 9,
-        orgCode: "ORG",
         folderPath: "",
       } as BulkUpdateExecutionStatusPayload);
 

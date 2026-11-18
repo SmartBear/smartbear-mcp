@@ -1,3 +1,4 @@
+import { ToolError } from "../../common/tools";
 import { QMETRY_PATHS } from "../config/rest-endpoints";
 import {
   type CreateTestCasesPayload,
@@ -47,22 +48,22 @@ export async function createTestCases(
   };
 
   if (typeof body.tcFolderID !== "string") {
-    throw new Error(
+    throw new ToolError(
       "[createTestCases] Missing or invalid required parameter: 'tcFolderID'.",
     );
   }
   if (typeof body.name !== "string") {
-    throw new Error(
+    throw new ToolError(
       "[createTestCases] Missing or invalid required parameter: 'name'.",
     );
   }
   if (!skipSteps && (!Array.isArray(body.steps) || body.steps.length === 0)) {
-    throw new Error(
+    throw new ToolError(
       "[createTestCases] Missing or invalid required parameter: 'steps' — must be a non-empty array. Generate steps from context if the user did not provide them.",
     );
   }
   if (skipSteps && Array.isArray(body.steps) && body.steps.length > 0) {
-    throw new Error(
+    throw new ToolError(
       "[createTestCases] Contradictory payload: 'skipSteps' is true but 'steps' contains entries. Remove the steps array or set skipSteps to false.",
     );
   }
@@ -103,12 +104,12 @@ export async function updateTestCase(
   };
 
   if (typeof body.tcID !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[updateTestCase] Missing or invalid required parameter: 'tcID'.",
     );
   }
   if (typeof body.tcVersionID !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[updateTestCase] Missing or invalid required parameter: 'tcVersionID'.",
     );
   }
@@ -144,12 +145,12 @@ export async function fetchTestCases(
   };
 
   if (typeof body.viewId !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[fetchTestCases] Missing or invalid required parameter: 'viewId'.",
     );
   }
   if (typeof body.folderPath !== "string") {
-    throw new Error(
+    throw new ToolError(
       "[fetchTestCases] Missing or invalid required parameter: 'folderPath'.",
     );
   }
@@ -185,7 +186,7 @@ export async function fetchTestCaseDetails(
   };
 
   if (typeof body.tcID !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[fetchTestCaseDetails] Missing or invalid required parameter: 'tcID'.",
     );
   }
@@ -221,12 +222,12 @@ export async function fetchTestCaseVersionDetails(
   };
 
   if (!body.id) {
-    throw new Error(
+    throw new ToolError(
       "[fetchTestCaseVersionDetails] Missing or invalid required parameter: 'id'.",
     );
   }
   if (typeof body.version !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[fetchTestCaseVersionDetails] Missing or invalid required parameter: 'version'.",
     );
   }
@@ -262,7 +263,7 @@ export async function fetchTestCaseSteps(
   };
 
   if (typeof body.id !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[fetchTestCaseSteps] Missing or invalid required parameter: 'id'.",
     );
   }
@@ -293,7 +294,7 @@ export async function fetchTestCaseStepsWithUdf(
   );
 
   if (typeof payload.tcID !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[fetchTestCaseStepsWithUdf] Missing or invalid required parameter: 'tcID'.",
     );
   }
@@ -340,7 +341,7 @@ export async function fetchTestCasesLinkedToRequirement(
   };
 
   if (typeof body.rqID !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[fetchTestCasesLinkedToRequirement] Missing or invalid required parameter: 'rqID'.",
     );
   }
@@ -378,7 +379,7 @@ export async function fetchTestCaseExecutions(
   };
 
   if (typeof body.tcid !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[fetchTestCaseExecutions] Missing or invalid required parameter: 'tcid'.",
     );
   }
@@ -532,17 +533,17 @@ export async function linkRequirementToTestCase(
   };
 
   if (typeof body.tcID !== "string") {
-    throw new Error(
+    throw new ToolError(
       "[linkRequirementToTestCase] Missing or invalid required parameter: 'tcID'.",
     );
   }
   if (typeof body.tcVersionId !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[linkRequirementToTestCase] Missing or invalid required parameter: 'tcVersionId'.",
     );
   }
   if (typeof body.rqVersionIds !== "string") {
-    throw new Error(
+    throw new ToolError(
       "[linkRequirementToTestCase] Missing or invalid required parameter: 'rqVersionIds'.",
     );
   }
@@ -571,12 +572,12 @@ export async function linkTestcaseToIssues(
   const body: LinkTestcaseToIssuesPayload = { ...payload };
 
   if (typeof body.tcID !== "string" || body.tcID.trim() === "") {
-    throw new Error(
+    throw new ToolError(
       "[linkTestcaseToIssues] Missing or invalid required parameter: 'tcID'.",
     );
   }
   if (!Array.isArray(body.dfIDs) || body.dfIDs.length === 0) {
-    throw new Error(
+    throw new ToolError(
       "[linkTestcaseToIssues] Missing or invalid required parameter: 'dfIDs'.",
     );
   }

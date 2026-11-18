@@ -1,10 +1,15 @@
 import { getUserAgent } from "../../common/info";
+import { ToolError } from "../../common/tools";
 import { QMETRY_DEFAULTS } from "../config/constants";
 import { QMETRY_PATHS } from "../config/rest-endpoints";
 import type { ImportAutomationResultsPayload } from "../types/automation";
 import { DEFAULT_IMPORT_AUTOMATION_PAYLOAD } from "../types/automation";
 import { qmetryRequest } from "./api/client-api";
-import { handleQMetryApiError } from "./api/error-handler";
+import {
+  handleQMetryApiError,
+  handleQMetryFetchError,
+  readQMetryJson,
+} from "./api/error-handler";
 
 /**
  * Imports automation test results into QMetry
@@ -62,7 +67,7 @@ export async function importAutomationResults(
       const fileBuffer = await fs.readFile(finalPayload.file);
       fileBlob = new Blob([new Uint8Array(fileBuffer)]);
     } catch (error) {
-      throw new Error(
+      throw new ToolError(
         `Failed to read file from path: ${finalPayload.file}. Error: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
@@ -76,7 +81,7 @@ export async function importAutomationResults(
       }
       fileBlob = new Blob([bytes]);
     } catch (_error) {
-      throw new Error(
+      throw new ToolError(
         "Invalid file format. Please provide base64 encoded file content or file path.",
       );
     }
@@ -152,21 +157,14 @@ export async function importAutomationResults(
       body: formData,
     });
   } catch (error) {
-    throw new Error(
-      `Failed to import automation results. Network error: ${error instanceof Error ? error.message : String(error)}\n\nPlease check:\n- QMetry server is accessible\n- File size is under 30 MB\n- File format is .json, .xml, or .zip`,
-    );
+    handleQMetryFetchError(error, url, baseUrl || QMETRY_DEFAULTS.BASE_URL);
   }
 
   if (!res.ok) {
-    await handleQMetryApiError(
-      res,
-      baseUrl || QMETRY_DEFAULTS.BASE_URL,
-      project || QMETRY_DEFAULTS.PROJECT_KEY,
-      QMETRY_PATHS.AUTOMATION.IMPORT_RESULTS,
-    );
+    await handleQMetryApiError(res, url);
   }
 
-  return await res.json();
+  return readQMetryJson(res, url);
 }
 
 /**
@@ -194,7 +192,7 @@ export async function getAutomationStatus(
     numericRequestID = Number(requestID);
   }
   if (!numericRequestID || Number.isNaN(numericRequestID)) {
-    throw new Error("requestID must be a valid number");
+    throw new ToolError("requestID must be a valid number");
   }
   return qmetryRequest({
     method: "GET",

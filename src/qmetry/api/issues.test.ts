@@ -16,6 +16,7 @@ describe("issues API clients", () => {
   const mockOk = (data: any) => ({
     ok: true,
     json: async () => data,
+    text: async () => JSON.stringify(data),
   });
 
   const mockFail = (status = 400, errorText = "Bad Request") => ({
@@ -175,9 +176,7 @@ describe("issues API clients", () => {
 
       await expect(
         fetchIssuesLinkedToTestCase(token, baseUrl, projectKey, payload),
-      ).rejects.toThrow(
-        /QMetry API Invalid URL Error: The API endpoint appears to be incorrect/,
-      );
+      ).rejects.toThrow(/QMetry API error 404/);
     });
 
     it("should throw error when tcID is missing", async () => {

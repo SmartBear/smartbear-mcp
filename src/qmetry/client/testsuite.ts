@@ -1,3 +1,4 @@
+import { ToolError } from "../../common/tools";
 import { QMETRY_PATHS } from "../config/rest-endpoints";
 import { DEFAULT_PAGINATION } from "../types/common";
 import {
@@ -29,6 +30,7 @@ import {
 } from "../types/testsuite";
 import type { UdfFieldValue } from "../types/udf";
 import { qmetryRequest } from "./api/client-api";
+import { QMetryApiError } from "./api/error-handler";
 import {
   bulkUpdateTestRunUdfs,
   fetchTestRunUdfMetadata,
@@ -60,12 +62,12 @@ export async function createTestSuites(
   };
 
   if (typeof body.parentFolderId !== "string") {
-    throw new Error(
+    throw new ToolError(
       "[createTestSuites] Missing or invalid required parameter: 'parentFolderId'.",
     );
   }
   if (typeof body.name !== "string") {
-    throw new Error(
+    throw new ToolError(
       "[createTestSuites] Missing or invalid required parameter: 'name'.",
     );
   }
@@ -103,17 +105,17 @@ export async function updateTestSuite(
   };
 
   if (typeof body.id !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[updateTestSuite] Missing or invalid required parameter: 'id'.",
     );
   }
   if (typeof body.entityKey !== "string") {
-    throw new Error(
+    throw new ToolError(
       "[updateTestSuite] Missing or invalid required parameter: 'entityKey'.",
     );
   }
   if (typeof body.TsFolderID !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[updateTestSuite] Missing or invalid required parameter: 'TsFolderID'.",
     );
   }
@@ -149,12 +151,12 @@ export async function fetchTestSuites(
   };
 
   if (typeof body.viewId !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[fetchTestSuites] Missing or invalid required parameter: 'viewId'.",
     );
   }
   if (typeof body.folderPath !== "string") {
-    throw new Error(
+    throw new ToolError(
       "[fetchTestSuites] Missing or invalid required parameter: 'folderPath'.",
     );
   }
@@ -197,7 +199,7 @@ export async function fetchTestSuitesForTestCase(
   };
 
   if (typeof body.tsFolderID !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[fetchTestSuitesForTestCase] Missing or invalid required parameter: 'tsFolderID'.",
     );
   }
@@ -233,7 +235,7 @@ export async function fetchTestCasesByTestSuite(
   };
 
   if (typeof body.tsID !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[fetchTestCasesByTestSuite] Missing or invalid required parameter: 'tsID'.",
     );
   }
@@ -256,24 +258,20 @@ export async function fetchExecutionsByTestSuite(
   token: string,
   baseUrl: string,
   project: string | undefined,
-  payload: FetchExecutionsByTestSuitePayload & {
-    scopeId?: number;
-    orgCode?: string;
-  },
+  payload: FetchExecutionsByTestSuitePayload,
 ) {
   const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
     baseUrl,
     project,
   );
 
-  const { scopeId, orgCode, ...payloadRest } = payload as any;
   const body: FetchExecutionsByTestSuitePayload = {
     ...DEFAULT_FETCH_EXECUTIONS_BY_TESTSUITE_PAYLOAD,
-    ...payloadRest,
+    ...payload,
   };
 
   if (typeof body.tsID !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[fetchExecutionsByTestSuite] Missing or invalid required parameter: 'tsID'.",
     );
   }
@@ -285,8 +283,6 @@ export async function fetchExecutionsByTestSuite(
     project: resolvedProject,
     baseUrl: resolvedBaseUrl,
     body,
-    scopeId,
-    orgCode,
   });
 }
 
@@ -298,30 +294,26 @@ export async function fetchTestCaseRunsByTestSuiteRun(
   token: string,
   baseUrl: string,
   project: string | undefined,
-  payload: FetchTestCaseRunsByTestSuiteRunPayload & {
-    scopeId?: number;
-    orgCode?: string;
-  },
+  payload: FetchTestCaseRunsByTestSuiteRunPayload,
 ) {
   const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
     baseUrl,
     project,
   );
 
-  const { scopeId, orgCode, ...payloadRest } = payload as any;
   const body: FetchTestCaseRunsByTestSuiteRunPayload = {
     ...DEFAULT_FETCH_TESTCASE_RUNS_BY_TESTSUITE_RUN_PAYLOAD,
-    ...payloadRest,
+    ...payload,
   };
 
   if (typeof body.tsrunID !== "string" || !body.tsrunID) {
-    throw new Error(
+    throw new ToolError(
       "[fetchTestCaseRunsByTestSuiteRun] Missing or invalid required parameter: 'tsrunID'.",
     );
   }
 
   if (typeof body.viewId !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[fetchTestCaseRunsByTestSuiteRun] Missing or invalid required parameter: 'viewId'.",
     );
   }
@@ -333,8 +325,6 @@ export async function fetchTestCaseRunsByTestSuiteRun(
     project: resolvedProject,
     baseUrl: resolvedBaseUrl,
     body,
-    scopeId,
-    orgCode,
   });
 }
 
@@ -359,7 +349,7 @@ export async function fetchLinkedIssuesByTestCaseRun(
   };
 
   if (typeof body.entityId !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[fetchLinkedIssuesByTestCaseRun] Missing or invalid required parameter: 'entityId'.",
     );
   }
@@ -382,30 +372,28 @@ export async function linkTestCasesToTestSuite(
   token: string,
   baseUrl: string,
   project: string | undefined,
-  payload: LinkedTestCasesToTestSuitePayload & {
-    scopeId?: number;
-    orgCode?: string;
-  },
+  payload: LinkedTestCasesToTestSuitePayload,
 ) {
   const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
     baseUrl,
     project,
   );
 
-  const { scopeId, orgCode, ...payloadRest } = payload as any;
   const body: LinkedTestCasesToTestSuitePayload = {
     ...DEFAULT_LINKED_TESTCASE_TO_TESTSUITE_PAYLOAD,
-    ...payloadRest,
+    ...payload,
   };
 
   if (typeof body.tsID !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[linkTestCasesToTestSuite] Missing or invalid required parameter: 'tsID'.",
     );
   }
 
   if (!body.tcvdIDs) {
-    throw new Error("[linkTestCasesToTestSuite] 'tcvdIDs' must be provided.");
+    throw new ToolError(
+      "[linkTestCasesToTestSuite] 'tcvdIDs' must be provided.",
+    );
   }
 
   return qmetryRequest<unknown>({
@@ -415,8 +403,6 @@ export async function linkTestCasesToTestSuite(
     project: resolvedProject,
     baseUrl: resolvedBaseUrl,
     body,
-    scopeId,
-    orgCode,
   });
 }
 
@@ -428,30 +414,26 @@ export async function reqLinkedTestCasesToTestSuite(
   token: string,
   baseUrl: string,
   project: string | undefined,
-  payload: ReqLinkedTestCasesToTestSuitePayload & {
-    scopeId?: number;
-    orgCode?: string;
-  },
+  payload: ReqLinkedTestCasesToTestSuitePayload,
 ) {
   const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
     baseUrl,
     project,
   );
 
-  const { scopeId, orgCode, ...payloadRest } = payload as any;
   const body: ReqLinkedTestCasesToTestSuitePayload = {
     ...DEFAULT_REQLINKED_TESTCASE_TO_TESTSUITE_PAYLOAD,
-    ...payloadRest,
+    ...payload,
   };
 
   if (typeof body.tsID !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[reqLinkedTestCasesToTestSuite] Missing or invalid required parameter: 'tsID'.",
     );
   }
 
   if (!body.tcvdIDs) {
-    throw new Error(
+    throw new ToolError(
       "[reqLinkedTestCasesToTestSuite] 'tcvdIDs' must be provided.",
     );
   }
@@ -463,8 +445,6 @@ export async function reqLinkedTestCasesToTestSuite(
     project: resolvedProject,
     baseUrl: resolvedBaseUrl,
     body,
-    scopeId,
-    orgCode,
   });
 }
 
@@ -489,7 +469,7 @@ export async function linkPlatformsToTestSuite(
   };
 
   if (typeof body.qmTsId !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[linkPlatformsToTestSuite] Missing or invalid required parameter: 'qmTsId'.",
     );
   }
@@ -499,7 +479,7 @@ export async function linkPlatformsToTestSuite(
     typeof body.qmPlatformId !== "string" ||
     body.qmPlatformId.trim().length === 0
   ) {
-    throw new Error(
+    throw new ToolError(
       "[linkPlatformsToTestSuite] Missing or invalid required parameter: 'qmPlatformId'. It must be a non-empty comma-separated string of Platform IDs.",
     );
   }
@@ -539,7 +519,7 @@ export async function bulkUpdateExecutionStatus(
     typeof body.entityIDs !== "string" ||
     body.entityIDs.trim().length === 0
   ) {
-    throw new Error(
+    throw new ToolError(
       "[bulkUpdateExecutionStatus] Missing or invalid required parameter: 'entityIDs'. It must be a non-empty comma-separated string of Test Case Run IDs.",
     );
   }
@@ -548,7 +528,7 @@ export async function bulkUpdateExecutionStatus(
     !body.entityType ||
     (body.entityType !== "TCR" && body.entityType !== "TCSR")
   ) {
-    throw new Error(
+    throw new ToolError(
       "[bulkUpdateExecutionStatus] Missing or invalid required parameter: 'entityType'. Must be 'TCR' or 'TCSR'.",
     );
   }
@@ -558,13 +538,13 @@ export async function bulkUpdateExecutionStatus(
     typeof body.qmTsRunId !== "string" ||
     body.qmTsRunId.trim().length === 0
   ) {
-    throw new Error(
+    throw new ToolError(
       "[bulkUpdateExecutionStatus] Missing or invalid required parameter: 'qmTsRunId'. It must be a non-empty string.",
     );
   }
 
   if (typeof body.runStatusID !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[bulkUpdateExecutionStatus] Missing or invalid required parameter: 'runStatusID'. It must be a number.",
     );
   }
@@ -573,8 +553,6 @@ export async function bulkUpdateExecutionStatus(
   const {
     viewId,
     udfValuesByRun,
-    scopeId,
-    orgCode,
     folderPath: _folderPath,
     ...statusBody
   } = body as BulkUpdateExecutionStatusPayload & { folderPath?: string };
@@ -583,7 +561,7 @@ export async function bulkUpdateExecutionStatus(
 
   if (statusBody.entityType === "TCSR") {
     if (udfValuesByRun && Object.keys(udfValuesByRun).length > 0) {
-      throw new Error(
+      throw new ToolError(
         "[bulkUpdateExecutionStatus] 'udfValuesByRun' is only supported when entityType is 'TCR'. Test Run UDFs belong to Test Case Runs, not Test Case Step Runs.",
       );
     }
@@ -600,8 +578,6 @@ export async function bulkUpdateExecutionStatus(
         qmTsRunId: statusBody.qmTsRunId,
         viewId,
         udfValuesByRun,
-        scopeId,
-        orgCode,
       },
     );
     if (gate.blocked) {
@@ -660,24 +636,19 @@ async function applyMandatoryTestRunUdfGate(
     qmTsRunId: string;
     viewId?: number;
     udfValuesByRun?: Record<string, Record<string, TestRunUdfInputValue>>;
-    scopeId?: number;
-    orgCode?: string;
   },
 ): Promise<MandatoryTestRunUdfGateResult> {
-  const { tcRunIDs, qmTsRunId, viewId, scopeId, orgCode } = args;
+  const { tcRunIDs, qmTsRunId, viewId } = args;
   const udfValuesByRun = args.udfValuesByRun ?? {};
 
-  const metadata = await fetchTestRunUdfMetadata(token, baseUrl, project, {
-    scopeId,
-    orgCode,
-  });
+  const metadata = await fetchTestRunUdfMetadata(token, baseUrl, project);
   const fieldsByName = new Map(metadata.fields.map((f) => [f.name, f]));
 
   const unknownRuns = Object.keys(udfValuesByRun).filter(
     (id) => !tcRunIDs.includes(id),
   );
   if (unknownRuns.length > 0) {
-    throw new Error(
+    throw new ToolError(
       `[bulkUpdateExecutionStatus] 'udfValuesByRun' contains tcRunIDs that are not in 'entityIDs': ${unknownRuns.join(", ")}.`,
     );
   }
@@ -686,7 +657,7 @@ async function applyMandatoryTestRunUdfGate(
       (name) => !fieldsByName.has(name),
     );
     if (unknownFields.length > 0) {
-      throw new Error(
+      throw new ToolError(
         `[bulkUpdateExecutionStatus] 'udfValuesByRun.${tcRunID}' contains unknown Test Run UDF field names: ${unknownFields.join(", ")}. ` +
           `Valid names: ${[...fieldsByName.keys()].join(", ") || "(none)"}.`,
       );
@@ -699,7 +670,7 @@ async function applyMandatoryTestRunUdfGate(
         : [];
     });
     if (mismatchedIDs.length > 0) {
-      throw new Error(
+      throw new ToolError(
         `[bulkUpdateExecutionStatus] 'udfValuesByRun.${tcRunID}' contains fieldIDs that do not match the Test Run UDF metadata: ${mismatchedIDs.join(", ")}. ` +
           "Omit fieldID to have it filled in automatically.",
       );
@@ -710,7 +681,7 @@ async function applyMandatoryTestRunUdfGate(
 
   if (mandatoryFields.length > 0) {
     if (typeof viewId !== "number") {
-      throw new Error(
+      throw new ToolError(
         "[bulkUpdateExecutionStatus] Missing or invalid parameter: 'viewId'. It is required to verify mandatory Test Run UDFs (latestViews.TE.viewId from project info).",
       );
     }
@@ -719,13 +690,11 @@ async function applyMandatoryTestRunUdfGate(
       tcRunIDs,
       qmTsRunId,
       viewId,
-      scopeId,
-      orgCode,
     });
 
     const notFound = tcRunIDs.filter((id) => !rowsById.has(id));
     if (notFound.length > 0) {
-      throw new Error(
+      throw new ToolError(
         `[bulkUpdateExecutionStatus] tcRunID(s) ${notFound.join(", ")} not found in test suite run ${qmTsRunId}.`,
       );
     }
@@ -813,16 +782,17 @@ async function applyMandatoryTestRunUdfGate(
       const response = await bulkUpdateTestRunUdfs(token, baseUrl, project, {
         tcRunIDs: group.tcRunIDs,
         UDF: group.UDF,
-        scopeId,
-        orgCode,
       });
       udfUpdates.push({ tcRunIDs: group.tcRunIDs, response });
     } catch (err) {
       const applied = udfUpdates.flatMap((u) => u.tcRunIDs);
-      throw new Error(
-        `[bulkUpdateExecutionStatus] Test Run UDF update failed for tcRunIDs ${group.tcRunIDs.join(", ")}; execution status was NOT updated. ` +
-          `UDF updates already applied for tcRunIDs: ${applied.length > 0 ? applied.join(", ") : "(none)"}. ` +
-          `Error: ${err instanceof Error ? err.message : String(err)}`,
+      const step =
+        `Test Run UDF update failed for tcRunIDs ${group.tcRunIDs.join(", ")}; execution status was NOT updated. ` +
+        `UDF updates already applied for tcRunIDs: ${applied.length > 0 ? applied.join(", ") : "(none)"}.`;
+      // Keep the QMetry status/code so the model sees why the call failed
+      if (err instanceof QMetryApiError) throw err.withContext({ step });
+      throw new ToolError(
+        `[bulkUpdateExecutionStatus] ${step} Error: ${err instanceof Error ? err.message : String(err)}`,
       );
     }
   }
@@ -842,8 +812,6 @@ async function fetchTestCaseRunRows(
     tcRunIDs: string[];
     qmTsRunId: string;
     viewId: number;
-    scopeId?: number;
-    orgCode?: string;
   },
 ): Promise<Map<string, Record<string, any>>> {
   const wanted = new Set(args.tcRunIDs);
@@ -864,8 +832,6 @@ async function fetchTestCaseRunRows(
         page: 1,
         limit: TEST_RUN_UDF_GATE_PAGE_SIZE,
       },
-      scopeId: args.scopeId,
-      orgCode: args.orgCode,
     });
 
     const data: Record<string, any>[] = Array.isArray(response?.data)
@@ -900,7 +866,7 @@ export async function fetchTestSuiteDetails(
   );
 
   if (typeof payload.id !== "number" || payload.id <= 0) {
-    throw new Error(
+    throw new ToolError(
       "[fetchTestSuiteDetails] Missing or invalid required parameter: 'id'.",
     );
   }
