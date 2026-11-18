@@ -31,7 +31,7 @@ export class ListTraceFields extends Tool<BugsnagClient> {
     ],
     hints: [
       "Trace fields are custom attributes added to spans",
-      "Use these fields for filtering other performance queries",
+      "Use these field names as keys in the filters parameter of List Span Groups, Get Span Group and List Spans",
     ],
   };
 
