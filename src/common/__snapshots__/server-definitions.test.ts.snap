@@ -9283,6 +9283,75 @@ Expected Output: Affected release and affected cycles updated successfully.
     "outputSchema": undefined,
     "title": "QMetry: Update Issue",
   },
+  "qmetry_update_release": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+      "title": "QMetry: Update Release",
+    },
+    "description": "Update an existing release in QMetry (name, description, start date or target date)
+
+**Toolset:** Projects
+
+**Parameters:**
+- projectKey (string): Key of the QMetry project to use. Omit it if the user named no project: QMetry then uses the project currently selected in the QMetry UI for the API key's user. If the user named a project, pass its key (use Fetch QMetry list Projects to find the key from a project name). (default: "default")
+- release (object) *required*
+
+**Output Description:** JSON object containing the updated release details and confirmation of update
+
+**Use Cases:** 1. Rename a release 2. Update a release description 3. Move a release's start or target date after a schedule change 4. Update several release fields in one call
+
+**Examples:**
+1. Rename a release
+\`\`\`json
+{
+  "release": {
+    "projectID": 347,
+    "releaseID": 1631,
+    "name": "Q3-25 Performance Benchmarking"
+  }
+}
+\`\`\`
+Expected Output: Release 1631 renamed successfully
+
+2. Update release dates
+\`\`\`json
+{
+  "release": {
+    "projectID": 347,
+    "releaseID": 1631,
+    "startDate": "06-25-2025",
+    "targetDate": "06-26-2025"
+  }
+}
+\`\`\`
+Expected Output: Release 1631 dates updated successfully
+
+3. Update name, description and dates together
+\`\`\`json
+{
+  "release": {
+    "projectID": 347,
+    "releaseID": 1631,
+    "name": "Release 2.1",
+    "description": "<p><strong>Sprint 53</strong></p>",
+    "startDate": "06-25-2025",
+    "targetDate": "06-26-2025"
+  }
+}
+\`\`\`
+Expected Output: Release 1631 updated with new name, description and dates
+
+**Hints:** 1. CRITICAL: release.projectID and release.releaseID are REQUIRED 2. CRITICAL: provide AT LEAST ONE of release.name, release.description, release.startDate, release.targetDate 3. release.projectID is the NUMERIC project ID, not the projectKey string - get it from Fetch QMetry Project Info (currentProjectId) 4. HOW TO GET releaseID: call Fetch Releases and Cycles and match the release by name (case-insensitively); never guess IDs 5. If several releases match the name, ask the user which one to update 6. Release names must be UNIQUE within a project. Before renaming, check the Fetch Releases and Cycles response for an existing release with the same name; if one exists, tell the user instead of calling this tool. QMetry otherwise rejects the update with code AD.RELEASE_DUPLICATE ('Duplicate Release name is not allowed.') 7. Omit release.name when not renaming - leaving it out never triggers the duplicate-name check 8. Only include the fields you want to change - omitted fields stay unchanged 9. Date format depends on QMetry instance configuration: DD-MM-YYYY or MM-DD-YYYY (check QMetry -> User Profile) 10. release.description accepts HTML (e.g. '<p>text</p>') 11. To update a cycle inside a release use Update Cycle; to create a release use Create Release 12. Verify the change afterwards with Fetch Releases and Cycles",
+    "inputSchema": [
+      "projectKey",
+      "release",
+    ],
+    "outputSchema": undefined,
+    "title": "QMetry: Update Release",
+  },
   "qmetry_update_requirement": {
     "annotations": {
       "destructiveHint": false,

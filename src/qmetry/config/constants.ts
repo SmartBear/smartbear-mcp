@@ -106,6 +106,7 @@ export const QMetryToolsHandlers = {
   CREATE_RELEASE: "createRelease",
   CREATE_CYCLE: "createCycle",
   UPDATE_CYCLE: "updateCycle",
+  UPDATE_RELEASE: "updateRelease",
   FETCH_UDF_FIELD_TYPES: "fetchUdfFieldTypes",
   FETCH_UDF_MODULES: "fetchUdfModules",
   BULK_UPDATE_TEST_RUN_UDFS: "bulkUpdateTestRunUdfs",

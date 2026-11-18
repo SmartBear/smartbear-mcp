@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- [QMetry] Added the `Update Release` tool (`qmetry_update_release`) to change an existing release's name, description, start date or target date. `release.projectID` and `release.releaseID` are required, plus at least one field to change. Release names must be unique within a project; QMetry rejects duplicates with `AD.RELEASE_DUPLICATE`
+
 ### Removed
 
 - [QMetry] **Breaking:** removed the `Set QMetry Project Info` tool (`qmetry_set_qmetry_project_info`). It only fetched project info and never changed the project other tools use, but its name suggested it did. Use `Fetch QMetry Project Info` instead, and pass `projectKey` on each call that should target a specific project

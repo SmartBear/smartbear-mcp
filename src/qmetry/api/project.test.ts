@@ -11,7 +11,9 @@ import {
   resolveProjectFromInfo,
   suggestProjects,
   updateCycle,
+  updateRelease,
 } from "../client/project.js";
+import { UpdateReleaseArgsSchema } from "../types/common.js";
 
 describe("getProjectInfo", () => {
   const token = "fake-token";
@@ -929,6 +931,158 @@ describe("updateCycle", () => {
     ).rejects.toThrow(
       "[updateCycle] Missing or invalid required parameter: 'cycle.buildID'",
     );
+  });
+});
+
+describe("updateRelease", () => {
+  const token = "fake-token";
+  const baseUrl = "https://qmetry.example";
+  const projectKey = "TEST_PROJECT";
+
+  const mockOk = (response: unknown) => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => response,
+      text: async () => JSON.stringify(response),
+    });
+  };
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it("sends a PUT to /rest/admin/release with the full release body", async () => {
+    const mockResponse = { success: true, message: "Release updated" };
+    mockOk(mockResponse);
+
+    const payload = {
+      release: {
+        projectID: 347,
+        releaseID: 1631,
+        name: "Q3-25 Performance Benchmarking Test.2",
+        description: "<p><strong>Sprint 53</strong></p>",
+        startDate: "06-25-2025",
+        targetDate: "06-26-2025",
+      },
+    };
+
+    const result = await updateRelease(token, baseUrl, projectKey, payload);
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      `${baseUrl}/rest/admin/release`,
+      expect.objectContaining({
+        method: "PUT",
+        headers: expect.objectContaining({
+          apikey: token,
+          project: projectKey,
+          "Content-Type": "application/json",
+        }),
+      }),
+    );
+    const body = JSON.parse((globalThis.fetch as any).mock.calls[0][1].body);
+    expect(body).toEqual(payload);
+    expect(result).toEqual(mockResponse);
+  });
+
+  it("sends only the provided field alongside the IDs", async () => {
+    mockOk({ success: true });
+
+    await updateRelease(token, baseUrl, projectKey, {
+      release: { projectID: 347, releaseID: 1631, targetDate: "06-26-2025" },
+    });
+
+    const body = JSON.parse((globalThis.fetch as any).mock.calls[0][1].body);
+    expect(body).toEqual({
+      release: { projectID: 347, releaseID: 1631, targetDate: "06-26-2025" },
+    });
+  });
+
+  it("throws when projectID is missing", async () => {
+    globalThis.fetch = vi.fn();
+    await expect(
+      updateRelease(token, baseUrl, projectKey, {
+        release: { projectID: undefined as any, releaseID: 1631, name: "R" },
+      }),
+    ).rejects.toThrow(
+      "[updateRelease] Missing or invalid required parameter: 'release.projectID'",
+    );
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  it("throws when releaseID is missing", async () => {
+    await expect(
+      updateRelease(token, baseUrl, projectKey, {
+        release: { projectID: 347, releaseID: undefined as any, name: "R" },
+      }),
+    ).rejects.toThrow(
+      "[updateRelease] Missing or invalid required parameter: 'release.releaseID'",
+    );
+  });
+
+  it("throws when no updatable field is provided", async () => {
+    globalThis.fetch = vi.fn();
+    await expect(
+      updateRelease(token, baseUrl, projectKey, {
+        release: { projectID: 347, releaseID: 1631 },
+      }),
+    ).rejects.toThrow("[updateRelease] At least one of");
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  it("throws when name is blank", async () => {
+    await expect(
+      updateRelease(token, baseUrl, projectKey, {
+        release: { projectID: 347, releaseID: 1631, name: "  " },
+      }),
+    ).rejects.toThrow("'release.name' must not be empty");
+  });
+
+  it("surfaces QMetry's duplicate release name error", async () => {
+    const errorBody = {
+      success: false,
+      code: "AD.RELEASE_DUPLICATE",
+      message: "Duplicate Release name is not allowed.",
+    };
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 400,
+      statusText: "Bad Request",
+      json: async () => errorBody,
+      text: async () => JSON.stringify(errorBody),
+    });
+
+    await expect(
+      updateRelease(token, baseUrl, projectKey, {
+        release: { projectID: 347, releaseID: 1631, name: "Existing" },
+      }),
+    ).rejects.toThrow(/Duplicate Release name is not allowed/);
+  });
+});
+
+describe("UpdateReleaseArgsSchema", () => {
+  it("accepts IDs plus one updatable field and coerces string IDs", () => {
+    const parsed = UpdateReleaseArgsSchema.parse({
+      release: { projectID: "347", releaseID: "1631", description: "d" },
+    });
+    expect(parsed.release).toEqual({
+      projectID: 347,
+      releaseID: 1631,
+      description: "d",
+    });
+  });
+
+  it("rejects a request with only IDs", () => {
+    const result = UpdateReleaseArgsSchema.safeParse({
+      release: { projectID: 347, releaseID: 1631 },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a request without releaseID", () => {
+    const result = UpdateReleaseArgsSchema.safeParse({
+      release: { projectID: 347, name: "R" },
+    });
+    expect(result.success).toBe(false);
   });
 });
 

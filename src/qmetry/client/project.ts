@@ -13,6 +13,7 @@ import {
   type FetchPlatformsPayload,
   type FetchProjectsPayload,
   type UpdateCyclePayload,
+  type UpdateReleasePayload,
 } from "../types/project";
 import { qmetryRequest } from "./api/client-api";
 import { resolveDefaults } from "./utils";
@@ -586,6 +587,69 @@ export async function updateCycle(
   return qmetryRequest({
     method: "PUT",
     path: QMETRY_PATHS.PROJECT.UPDATE_CYCLE,
+    token,
+    project: resolvedProject,
+    baseUrl: resolvedBaseUrl,
+    body: payload,
+  });
+}
+
+const UPDATE_RELEASE_FIELDS = [
+  "name",
+  "description",
+  "startDate",
+  "targetDate",
+] as const;
+
+/**
+ * Updates an existing release in QMetry
+ * @param token - QMetry API token
+ * @param baseUrl - QMetry base URL
+ * @param project - Project key
+ * @param payload - Release data including projectID and releaseID for identification
+ * @returns Promise resolving to the updated release information
+ */
+export async function updateRelease(
+  token: string,
+  baseUrl: string,
+  project: string | undefined,
+  payload: UpdateReleasePayload,
+) {
+  const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
+    baseUrl,
+    project,
+  );
+
+  const release = payload?.release;
+  if (!release || typeof release !== "object") {
+    throw new ToolError(
+      "[updateRelease] Missing or invalid required parameter: 'release'.",
+    );
+  }
+  if (typeof release.projectID !== "number") {
+    throw new ToolError(
+      "[updateRelease] Missing or invalid required parameter: 'release.projectID'.",
+    );
+  }
+  if (typeof release.releaseID !== "number") {
+    throw new ToolError(
+      "[updateRelease] Missing or invalid required parameter: 'release.releaseID'.",
+    );
+  }
+  if (!UPDATE_RELEASE_FIELDS.some((f) => release[f] !== undefined)) {
+    throw new ToolError(
+      "[updateRelease] At least one of 'release.name', 'release.description', 'release.startDate' or 'release.targetDate' must be provided.",
+    );
+  }
+  if (release.name !== undefined && release.name.trim() === "") {
+    throw new ToolError(
+      "[updateRelease] Invalid parameter: 'release.name' must not be empty.",
+    );
+  }
+
+  return qmetryRequest({
+    method: "PUT",
+    path: QMETRY_PATHS.PROJECT.UPDATE_RELEASE,
     token,
     project: resolvedProject,
     baseUrl: resolvedBaseUrl,

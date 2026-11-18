@@ -9,6 +9,7 @@ import {
   ProjectListArgsSchema,
   ReleasesCyclesArgsSchema,
   UpdateCycleArgsSchema,
+  UpdateReleaseArgsSchema,
 } from "../../types/common";
 import type { QMetryToolParams } from "./types";
 
@@ -730,6 +731,83 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
     ],
     outputDescription:
       "JSON object containing the updated cycle details and confirmation of update",
+    readOnly: false,
+    idempotent: true,
+  },
+  {
+    title: "Update Release",
+    toolset: "Projects",
+    summary:
+      "Update an existing release in QMetry (name, description, start date or target date)",
+    handler: QMetryToolsHandlers.UPDATE_RELEASE,
+    inputSchema: UpdateReleaseArgsSchema,
+    purpose:
+      "Update an existing release to keep release planning accurate. " +
+      "Requires release.projectID and release.releaseID to identify the release, plus at least one of " +
+      "release.name, release.description, release.startDate or release.targetDate to change.",
+    useCases: [
+      "Rename a release",
+      "Update a release description",
+      "Move a release's start or target date after a schedule change",
+      "Update several release fields in one call",
+    ],
+    examples: [
+      {
+        description: "Rename a release",
+        parameters: {
+          release: {
+            projectID: 347,
+            releaseID: 1631,
+            name: "Q3-25 Performance Benchmarking",
+          },
+        },
+        expectedOutput: "Release 1631 renamed successfully",
+      },
+      {
+        description: "Update release dates",
+        parameters: {
+          release: {
+            projectID: 347,
+            releaseID: 1631,
+            startDate: "06-25-2025",
+            targetDate: "06-26-2025",
+          },
+        },
+        expectedOutput: "Release 1631 dates updated successfully",
+      },
+      {
+        description: "Update name, description and dates together",
+        parameters: {
+          release: {
+            projectID: 347,
+            releaseID: 1631,
+            name: "Release 2.1",
+            description: "<p><strong>Sprint 53</strong></p>",
+            startDate: "06-25-2025",
+            targetDate: "06-26-2025",
+          },
+        },
+        expectedOutput:
+          "Release 1631 updated with new name, description and dates",
+      },
+    ],
+    hints: [
+      "CRITICAL: release.projectID and release.releaseID are REQUIRED",
+      "CRITICAL: provide AT LEAST ONE of release.name, release.description, release.startDate, release.targetDate",
+      "release.projectID is the NUMERIC project ID, not the projectKey string - get it from Fetch QMetry Project Info (currentProjectId)",
+      "HOW TO GET releaseID: call Fetch Releases and Cycles and match the release by name (case-insensitively); never guess IDs",
+      "If several releases match the name, ask the user which one to update",
+      "Release names must be UNIQUE within a project. Before renaming, check the Fetch Releases and Cycles response for an existing release with the same name; " +
+        "if one exists, tell the user instead of calling this tool. QMetry otherwise rejects the update with code AD.RELEASE_DUPLICATE ('Duplicate Release name is not allowed.')",
+      "Omit release.name when not renaming - leaving it out never triggers the duplicate-name check",
+      "Only include the fields you want to change - omitted fields stay unchanged",
+      "Date format depends on QMetry instance configuration: DD-MM-YYYY or MM-DD-YYYY (check QMetry -> User Profile)",
+      "release.description accepts HTML (e.g. '<p>text</p>')",
+      "To update a cycle inside a release use Update Cycle; to create a release use Create Release",
+      "Verify the change afterwards with Fetch Releases and Cycles",
+    ],
+    outputDescription:
+      "JSON object containing the updated release details and confirmation of update",
     readOnly: false,
     idempotent: true,
   },

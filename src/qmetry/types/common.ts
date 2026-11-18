@@ -531,6 +531,62 @@ export const UpdateCycleArgsSchema = z.object({
   }),
 });
 
+export const UpdateReleaseArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+
+  release: z
+    .object({
+      projectID: z.coerce
+        .number()
+        .describe(
+          "Numeric project ID (required) of the project the release belongs to. " +
+            "CRITICAL: this is the numeric 'projectID', NOT the string projectKey. " +
+            "Get it from 'Fetch QMetry Project Info' (currentProjectId) or 'Fetch Releases and Cycles'.",
+        ),
+      releaseID: z.coerce
+        .number()
+        .describe(
+          "Release ID (required) identifying the release to update. " +
+            "Get it from 'Fetch Releases and Cycles' by matching the release name.",
+        ),
+      name: z
+        .string()
+        .optional()
+        .describe(
+          "New release name. Must be unique within the project - QMetry rejects duplicates with AD.RELEASE_DUPLICATE.",
+        ),
+      description: z
+        .string()
+        .optional()
+        .describe(
+          "New release description (HTML allowed, e.g. '<p>Sprint 53</p>')",
+        ),
+      startDate: z
+        .string()
+        .optional()
+        .describe(
+          "Release start date in format DD-MM-YYYY or MM-DD-YYYY (depends on QMetry instance date format configuration)",
+        ),
+      targetDate: z
+        .string()
+        .optional()
+        .describe(
+          "Release target/end date in format DD-MM-YYYY or MM-DD-YYYY (depends on QMetry instance date format configuration)",
+        ),
+    })
+    .refine(
+      (r) =>
+        r.name !== undefined ||
+        r.description !== undefined ||
+        r.startDate !== undefined ||
+        r.targetDate !== undefined,
+      {
+        message:
+          "At least one of 'name', 'description', 'startDate' or 'targetDate' must be provided.",
+      },
+    ),
+});
+
 const StepUdfValueSchema = z.union([
   z.string(),
   z.number(),

@@ -36,6 +36,13 @@ Tools that fetch project info report the project they ran against in their respo
 -   Returns: JSON object containing the new build ID, and metadata.
 -   Use case: Create a new test cycle for a sprint within an existing release for planning.
 
+### `update_release`
+
+-   Purpose: Update an existing release in QMetry (name, description, start date or target date).
+-   Parameters: Project ID (`projectID`) and Release ID (`releaseID`), plus at least one of `name`, `description`, `startDate`, `targetDate`.
+-   Returns: JSON object confirming the update.
+-   Use case: Rename a release or move its dates after a schedule change. Release names must be unique within the project (`AD.RELEASE_DUPLICATE` otherwise).
+
 ### `get_qmetry_releases_cycles`
 
 -   Purpose: Fetch QMetry releases and cycles from your account.

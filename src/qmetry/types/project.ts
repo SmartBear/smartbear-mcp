@@ -81,6 +81,17 @@ export const DEFAULT_CREATE_CYCLE_PAYLOAD: {
   },
 };
 
+export interface UpdateReleasePayload {
+  release: {
+    projectID: number;
+    releaseID: number;
+    name?: string;
+    description?: string;
+    startDate?: string;
+    targetDate?: string;
+  };
+}
+
 export interface UpdateCyclePayload {
   cycle: {
     name?: string;

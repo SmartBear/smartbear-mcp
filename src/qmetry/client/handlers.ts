@@ -24,6 +24,7 @@ import {
   getProjects,
   getReleasesCycles,
   updateCycle,
+  updateRelease,
 } from "./project";
 import {
   createRequirement,
@@ -94,6 +95,7 @@ export const QMETRY_HANDLER_MAP: Record<string, QMetryHandler> = {
   [QMetryToolsHandlers.CREATE_RELEASE]: createRelease,
   [QMetryToolsHandlers.CREATE_CYCLE]: createCycle,
   [QMetryToolsHandlers.UPDATE_CYCLE]: updateCycle,
+  [QMetryToolsHandlers.UPDATE_RELEASE]: updateRelease,
   [QMetryToolsHandlers.CREATE_TEST_CASE]: createTestCases,
   [QMetryToolsHandlers.UPDATE_TEST_CASE]: updateTestCase,
   [QMetryToolsHandlers.FETCH_TEST_CASES]: fetchTestCases,
