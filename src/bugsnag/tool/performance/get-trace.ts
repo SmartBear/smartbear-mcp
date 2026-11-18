@@ -6,13 +6,27 @@ import { toolInputParameters } from "../../input-schemas";
 
 const inputSchema = z.object({
   projectId: toolInputParameters.projectId,
-  traceId: z.string().describe("Trace ID"),
-  from: z.string().describe("Start time (ISO 8601 format)"),
-  to: z.string().describe("End time (ISO 8601 format)"),
+  traceId: z
+    .string()
+    .describe(
+      "ID of the trace, from the trace ID of a span returned by List Spans",
+    ),
+  from: z
+    .string()
+    .describe(
+      "Start of the time window to search, ISO 8601 UTC (e.g. 2024-01-01T00:00:00Z). Must be before the time the trace occurred",
+    ),
+  to: z
+    .string()
+    .describe(
+      "End of the time window to search, ISO 8601 UTC. Must be after the time the trace occurred - use the span timestamp plus a few minutes",
+    ),
   targetSpanId: z
     .string()
     .optional()
-    .describe("Optional target span ID to focus on"),
+    .describe(
+      "Optional ID of a span in the trace; results are focused around this span",
+    ),
   perPage: toolInputParameters.perPage,
   nextUrl: toolInputParameters.nextUrl,
 });
@@ -56,7 +70,7 @@ export class GetTrace extends Tool<BugsnagClient> {
     ],
     hints: [
       "Traces show the complete execution path of a request",
-      "Use from/to parameters to narrow the time window",
+      "The from/to window must contain the trace - take the timestamp of a span from List Spans and use a window around it",
       "targetSpanId can be used to focus on a specific span in the trace",
     ],
   };
