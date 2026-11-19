@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [BugSnag] Tool hints now point to the next tool to call (for example error ID to Get Error or Get Events, span trace ID to Get Trace) and explain how to widen the default filters when results are empty. Added hints for Get Event and Get Event Details From Dashboard URL (dashboard URLs), pagination and payload size for List Error Events, and the `span.since=7d` default and trace time-window requirements for the performance tools.
 - [BugSnag] `update_error` now says it changes workflow state (snooze, fix, discard and similar) for the whole team and should be confirmed with the user first, and documents each operation.
 - [BugSnag] Get Error and Get Events on an Error no longer apply `event.since=30d` and `error.status=open` by default, because the caller has already picked a specific error. They now return all events unless filters are passed. List Project Errors and other list tools keep those defaults.
+- [Zephyr] `get-test-cases` tool accepts optional `nameOrKey` parameter to filter results by the Test Case names or keys. This parameter requires `projectKey` parameter to also be provided.
+- [Zephyr] Update Zephyr Schemas.
 
 ### Fixed
 
