@@ -1,5 +1,5 @@
 import { type FilterObject, toUrlSearchParams } from "../filters";
-import { type ApiResponse, BaseAPI } from "./base";
+import { type ApiResponse, BaseAPI, buildPaginatedUrl } from "./base";
 import {
   type ErrorApiView,
   ErrorsApiFetchParamCreator,
@@ -61,8 +61,9 @@ export class ErrorAPI extends BaseAPI {
       undefined,
     );
 
-    const url = new URL(
-      nextUrl ?? localVarFetchArgs.url,
+    const url = buildPaginatedUrl(
+      nextUrl,
+      localVarFetchArgs.url,
       this.configuration.basePath,
     );
     if (perPage) {
@@ -131,8 +132,9 @@ export class ErrorAPI extends BaseAPI {
       undefined,
     );
 
-    const url = new URL(
-      nextUrl ?? localVarFetchArgs.url,
+    const url = buildPaginatedUrl(
+      nextUrl,
+      localVarFetchArgs.url,
       this.configuration.basePath,
     );
     if (perPage) {
@@ -186,8 +188,9 @@ export class ErrorAPI extends BaseAPI {
       undefined,
     );
 
-    const url = new URL(
-      nextUrl ?? localVarFetchArgs.url,
+    const url = buildPaginatedUrl(
+      nextUrl,
+      localVarFetchArgs.url,
       this.configuration.basePath,
     );
     if (perPage) {

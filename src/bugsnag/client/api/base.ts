@@ -55,6 +55,35 @@ export function ensureFullUrl(url: string, basePath: string) {
   return url.startsWith("http") ? url : `${basePath}${url}`;
 }
 
+// Build the URL for a (possibly paginated) request.
+//
+// `nextUrl` is tool input: a caller can pass any absolute URL, and
+// `new URL(nextUrl, basePath)` ignores `basePath` whenever `nextUrl` is
+// already absolute. Without this check a caller could redirect the server's
+// outbound request to an arbitrary host (SSRF), including internal/cloud
+// metadata addresses.
+//
+// Only `nextUrl`'s path and query are ever used; the origin always comes
+// from the configured `basePath`. This makes the result immune to SSRF
+// regardless of what host `nextUrl` names, while still following the API's
+// own pagination links normally — including when the API sits behind a
+// reverse proxy/CDN whose externally-visible host differs from `basePath`,
+// which would otherwise make a same-origin check reject legitimate links.
+export function buildPaginatedUrl(
+  nextUrl: string | undefined,
+  fallbackUrl: string,
+  basePath: string,
+): URL {
+  if (!nextUrl) {
+    return new URL(fallbackUrl, basePath);
+  }
+  const parsed = new URL(nextUrl, basePath);
+  const safeUrl = new URL(basePath);
+  safeUrl.pathname = parsed.pathname;
+  safeUrl.search = parsed.search;
+  return safeUrl;
+}
+
 // Merge nextUrl query parameters with options query parameters (usually filters)
 export function getQueryParams(
   nextUrl?: string | null,
@@ -74,6 +103,74 @@ export function getQueryParams(
     nextOptions.query = { ...nextOptions.query, ...options.query };
   }
   return nextOptions;
+}
+
+// Redirects are followed manually so that every hop can be validated. With
+// fetch()'s default `redirect: "follow"`, an endpoint that passes the
+// caller-supplied endpoint check could simply 3xx to a loopback or cloud
+// metadata address, which would then be fetched (with credentials) without
+// ever being inspected.
+const MAX_REDIRECTS = 5;
+const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
+const CREDENTIAL_HEADERS = new Set(["authorization", "cookie"]);
+
+export async function fetchWithValidatedRedirects(
+  url: string,
+  init: RequestInit & { headers?: Record<string, string> },
+  validateRequestUrl?: (url: URL) => void,
+): Promise<Response> {
+  let currentUrl = new URL(url);
+  let currentInit: RequestInit & { headers?: Record<string, string> } = {
+    ...init,
+    redirect: "manual",
+  };
+
+  for (let hop = 0; ; hop++) {
+    const response = await fetch(currentUrl.toString(), currentInit);
+    if (!REDIRECT_STATUSES.has(response.status)) {
+      return response;
+    }
+
+    const location = response.headers?.get("location");
+    if (!location) {
+      return response;
+    }
+    if (hop >= MAX_REDIRECTS) {
+      throw new ToolError(
+        `Too many redirects (more than ${MAX_REDIRECTS}) requesting ${url}`,
+      );
+    }
+
+    const nextUrl = new URL(location, currentUrl);
+    if (nextUrl.protocol !== "https:" && nextUrl.protocol !== "http:") {
+      throw new ToolError(
+        `Refusing to follow redirect to unsupported protocol ${nextUrl.protocol}`,
+      );
+    }
+    validateRequestUrl?.(nextUrl);
+
+    let headers = currentInit.headers;
+    // Never forward credentials to a different origin.
+    if (headers && nextUrl.origin !== currentUrl.origin) {
+      headers = Object.fromEntries(
+        Object.entries(headers).filter(
+          ([name]) => !CREDENTIAL_HEADERS.has(name.toLowerCase()),
+        ),
+      );
+    }
+
+    // Match fetch's method rewriting: 303 always becomes GET, and 301/302
+    // turn a POST into a GET; 307/308 preserve method and body.
+    const method = (currentInit.method ?? "GET").toUpperCase();
+    const toGet =
+      response.status === 303 ||
+      ((response.status === 301 || response.status === 302) &&
+        method === "POST");
+    currentInit = toGet
+      ? { ...currentInit, headers, method: "GET", body: undefined }
+      : { ...currentInit, headers };
+    currentUrl = nextUrl;
+  }
 }
 
 export class BaseAPI {
@@ -99,7 +196,7 @@ export class BaseAPI {
         ...options.headers,
       };
     }
-    const response: Response = await fetch(
+    const response: Response = await fetchWithValidatedRedirects(
       ensureFullUrl(url, this.configuration.basePath),
       {
         ...options,
@@ -108,6 +205,7 @@ export class BaseAPI {
           ...this.configuration.headers,
         },
       },
+      this.configuration.validateRequestUrl,
     );
     if (!response.ok) {
       const errorText = await response.text();
@@ -162,14 +260,26 @@ export class BaseAPI {
     let nextUrl: string | null = url;
     let apiResponse: ApiResponse<T[]>;
     do {
-      nextUrl = ensureFullUrl(nextUrl, this.configuration.basePath);
-      const response: Response = await fetch(nextUrl, {
-        ...options,
-        headers: {
-          ...options.headers,
-          ...this.configuration.headers,
+      // Follow-up pages come from the server's `Link` header. Pin them to the
+      // configured origin (path + query only) so a Link pointing at another
+      // host can't make us send the auth token there — the same rule the API
+      // classes already apply to caller-supplied `nextUrl` values.
+      const requestUrl = buildPaginatedUrl(
+        nextUrl,
+        nextUrl,
+        this.configuration.basePath,
+      ).toString();
+      const response: Response = await fetchWithValidatedRedirects(
+        requestUrl,
+        {
+          ...options,
+          headers: {
+            ...options.headers,
+            ...this.configuration.headers,
+          },
         },
-      });
+        this.configuration.validateRequestUrl,
+      );
       if (!response.ok) {
         const errorText = await response.text();
         throw new ToolError(
