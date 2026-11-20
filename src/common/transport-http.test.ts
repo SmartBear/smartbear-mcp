@@ -1502,6 +1502,26 @@ describe("idle session reaping", () => {
     expect(e.server.cleanupSession).toHaveBeenCalledWith("s");
   });
 
+  it("logs and continues when per-client cleanup rejects", async () => {
+    const failing = entry(0);
+    failing.server.cleanupSession = vi.fn(async () => {
+      throw new Error("disconnect failed");
+    });
+    const other = entry(0);
+    const sessions = new Map<string, any>([
+      ["bad", failing],
+      ["ok", other],
+    ]);
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    await expect(reapIdleSessions(sessions, 1, 10_000)).resolves.toBe(2);
+    expect(sessions.size).toBe(0);
+    expect(other.server.cleanupSession).toHaveBeenCalledWith("ok");
+    expect(errorSpy).toHaveBeenCalledWith(
+      "[MCP] Error cleaning up idle session:",
+      expect.any(Error),
+    );
+  });
+
   it("still removes the session when close() throws", async () => {
     const sessions = new Map<string, any>([
       [

@@ -123,7 +123,13 @@ export async function reapIdleSessions(
         console.error("[MCP] Error closing idle session:", err);
       }
       endSessionAnalytics(entry.server);
-      entry.server.cleanupSession(sessionId);
+      // Await so a failed per-client cleanup (e.g. a Reflect disconnect) is
+      // logged here instead of becoming an unhandled rejection.
+      try {
+        await entry.server.cleanupSession(sessionId);
+      } catch (err) {
+        console.error("[MCP] Error cleaning up idle session:", err);
+      }
     }),
   );
   return idle.length;
