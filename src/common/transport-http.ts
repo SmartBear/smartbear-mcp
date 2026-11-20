@@ -685,12 +685,16 @@ async function createNewTransport(
         `[MCP] New session initialized: ${redactSessionId(newSessionId)}`,
       );
       // Store session so subsequent requests can find it
-      transports.set(newSessionId, {
+      const entry: SessionEntry = {
         server,
         transport,
         lastActivity: Date.now(),
         identity,
-      });
+      };
+      transports.set(newSessionId, entry);
+      // The initialize exchange is open until its response closes; count it so
+      // a slow initialize is never mistaken for an idle session.
+      trackExchange(entry, res);
       // The SDK awaits this callback before dispatching the `initialize`
       // message, so the analytics session exists by the time
       // handleInitializeMessage fires `Session Started`.
@@ -705,9 +709,13 @@ async function createNewTransport(
       console.log(
         `[MCP] Session closed: ${redactSessionId(transport.sessionId)}`,
       );
-      transports.delete(transport.sessionId);
-      endSessionAnalytics(server);
-      server.cleanupSession(transport.sessionId);
+      // Only the closer that actually unregisters the session cleans up. The
+      // idle reaper unregisters first and runs cleanup itself, so this must
+      // not repeat it.
+      if (transports.delete(transport.sessionId)) {
+        endSessionAnalytics(server);
+        server.cleanupSession(transport.sessionId);
+      }
     }
   };
 

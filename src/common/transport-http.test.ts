@@ -869,6 +869,71 @@ describe("handleStreamableHttpRequest (session routing)", () => {
     }
   });
 
+  it("runs session cleanup in onclose only when it unregisters the session", async () => {
+    let transport: any;
+    const cleanupSession = vi.fn();
+    const testClient = createTestClient({
+      name: "CloseTest",
+      configPrefix: "CloseTest",
+      hasGetAuthToken: false,
+    });
+    clientRegistry.getAll = () => [testClient];
+    const { SmartBearMcpServer } = await import("./server.js");
+    vi.mocked(SmartBearMcpServer).mockImplementation(
+      () =>
+        ({
+          getCache: () => ({ get: vi.fn(), set: vi.fn(), del: vi.fn() }),
+          addClient: vi.fn(),
+          getClients: () => [testClient],
+          connect: vi.fn(async (t: any) => {
+            transport = t;
+          }),
+          setElicitationSupported: vi.fn(),
+          cleanupSession,
+          getAnalyticsSession: () => undefined,
+          server: { elicitInput: vi.fn() },
+          isClientEnabled: () => true,
+        }) as any,
+    );
+    const { NodeStreamableHTTPServerTransport: Transport } = await import(
+      "@modelcontextprotocol/node"
+    );
+    const spy = vi
+      .spyOn(Transport.prototype, "handleRequest")
+      .mockResolvedValue(undefined);
+    try {
+      const transports = new Map<string, any>();
+      const req = fakeStreamRequest({
+        method: "POST",
+        headers: { host: "localhost:3000" },
+        body: {
+          jsonrpc: "2.0",
+          method: "initialize",
+          id: 1,
+          params: {
+            protocolVersion: "2025-06-18",
+            capabilities: {},
+            clientInfo: { name: "test", version: "0.0.0" },
+          },
+        },
+      });
+      await handleStreamableHttpRequest(req, fakeResponse(), transports);
+      expect(transport).toBeDefined();
+      Object.defineProperty(transport, "sessionId", { value: "s1" });
+
+      // Already unregistered (the reaper's case): onclose must not clean up.
+      transport.onclose();
+      expect(cleanupSession).not.toHaveBeenCalled();
+
+      // Still registered (client DELETE, shutdown): onclose cleans up once.
+      transports.set("s1", { server: {}, transport });
+      transport.onclose();
+      expect(cleanupSession).toHaveBeenCalledTimes(1);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
   it("routes to existing transport when session id is known", async () => {
     const transports = new Map();
     const handleRequest = vi.fn().mockResolvedValue(undefined);
