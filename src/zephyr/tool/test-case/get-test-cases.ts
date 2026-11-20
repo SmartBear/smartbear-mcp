@@ -49,6 +49,17 @@ export class GetTestCases extends Tool<ZephyrClient> {
         expectedOutput: "One Test Case from project PROJ with its details",
       },
       {
+        description:
+          "Get Test Cases having name containing 'tool' from the project PROJ",
+        parameters: {
+          projectKey: "PROJ",
+          nameOrKey: "tool",
+          limit: 10,
+        },
+        expectedOutput:
+          "The first 10 Test Cases from project PROJ having 'tool' in the title",
+      },
+      {
         description: "Get one Test Case from the folder with ID 123",
         parameters: {
           folderId: 123,
