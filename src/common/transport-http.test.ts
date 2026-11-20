@@ -1554,12 +1554,12 @@ describe("idle session reaping", () => {
     expect(getSessionIdleTimeoutMs()).toBe(4 * 60 * 60 * 1000);
     process.env.SESSION_IDLE_TIMEOUT_MS = "0";
     expect(getSessionIdleTimeoutMs()).toBe(0);
-    for (const bad of ["junk", "4h", "1.5", "-5"]) {
+    for (const bad of ["junk", "4h", "1.5", "-5", " ", "\t\n"]) {
       process.env.SESSION_IDLE_TIMEOUT_MS = bad;
       expect(getSessionIdleTimeoutMs()).toBe(4 * 60 * 60 * 1000);
     }
-    process.env.SESSION_IDLE_TIMEOUT_MS = "junk";
-    expect(getSessionIdleTimeoutMs()).toBe(4 * 60 * 60 * 1000);
+    process.env.SESSION_IDLE_TIMEOUT_MS = " 5000 ";
+    expect(getSessionIdleTimeoutMs()).toBe(5000);
     delete process.env.SESSION_IDLE_TIMEOUT_MS;
   });
 });

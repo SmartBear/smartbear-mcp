@@ -83,8 +83,9 @@ const DEFAULT_SESSION_IDLE_TIMEOUT_MS = 4 * 60 * 60 * 1000;
  * clients and registered tools, so sessions must be reaped when idle.
  */
 export function getSessionIdleTimeoutMs(): number {
-  const raw = process.env.SESSION_IDLE_TIMEOUT_MS;
-  if (raw === undefined || raw === "") return DEFAULT_SESSION_IDLE_TIMEOUT_MS;
+  // Trim first: Number("  ") is 0, which would silently disable the reaper.
+  const raw = process.env.SESSION_IDLE_TIMEOUT_MS?.trim();
+  if (!raw) return DEFAULT_SESSION_IDLE_TIMEOUT_MS;
   // Number(), not parseInt: "4h" must be rejected, not read as 4 ms.
   const parsed = Number(raw);
   return Number.isInteger(parsed) && parsed >= 0
