@@ -36,7 +36,16 @@ export class CacheService {
   private cache: NodeCache | null;
   private enabled: boolean;
 
-  constructor() {
+  /**
+   * @param options.sweepExpired Run node-cache's periodic expiry sweep
+   *   (default true). The sweep re-arms a timer forever, and that pending timer
+   *   keeps the cache - and everything in it - reachable until `close()` is
+   *   called. Short-lived owners (one cache per server instance, which can mean
+   *   one per request) must pass false so the cache can be garbage collected
+   *   along with its owner; expired entries are still dropped lazily on `get`.
+   *   Only process-lifetime singletons should leave the sweep on.
+   */
+  constructor(options: { sweepExpired?: boolean } = {}) {
     // Read configuration from environment variables
     this.enabled = isCachingEnabled();
     const ttl = getConfiguredCacheTtlSeconds();
@@ -44,6 +53,9 @@ export class CacheService {
     this.cache = this.enabled
       ? new NodeCache({
           stdTTL: ttl,
+          // Only set when disabling: an explicit `undefined` would override
+          // node-cache's default sweep period rather than fall back to it.
+          ...(options.sweepExpired === false ? { checkperiod: 0 } : {}),
         })
       : null;
   }
@@ -86,6 +98,14 @@ export class CacheService {
    */
   isEnabled(): boolean {
     return this.enabled;
+  }
+
+  /**
+   * Stop the expiry sweep timer and drop all entries.
+   */
+  close(): void {
+    this.cache?.close();
+    this.cache?.flushAll();
   }
 
   /**

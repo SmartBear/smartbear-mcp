@@ -44,12 +44,96 @@ export { getHeaderName };
 type SessionEntry = {
   server: SmartBearMcpServer;
   transport: NodeStreamableHTTPServerTransport | SSEServerTransport;
+  /** Epoch ms of the last request seen on this session; drives idle reaping. */
+  lastActivity?: number;
+  /**
+   * HTTP exchanges currently open on this session (in-flight requests, SSE
+   * streams). A session with an open exchange is live, however long it has
+   * been since the last request began, so it is never reaped.
+   */
+  inFlight?: number;
   /**
    * Identity the opening credential resolved to. Unset when no client resolves
    * a per-request credential, in which case there is nothing to bind.
    */
   identity?: string;
 };
+
+/**
+ * Mark an HTTP exchange on `entry` as open until `res` closes, and restart the
+ * idle clock when it ends. Keeps a long tool call or an open server-push
+ * stream from being mistaken for an abandoned session.
+ */
+function trackExchange(entry: SessionEntry, res: ServerResponse): void {
+  entry.inFlight = (entry.inFlight ?? 0) + 1;
+  entry.lastActivity = Date.now();
+  res.once("close", () => {
+    entry.inFlight = Math.max(0, (entry.inFlight ?? 1) - 1);
+    entry.lastActivity = Date.now();
+  });
+}
+
+/** Default idle lifetime of a session before it is reaped: 4 hours. */
+const DEFAULT_SESSION_IDLE_TIMEOUT_MS = 4 * 60 * 60 * 1000;
+
+/**
+ * Idle lifetime for HTTP sessions (SESSION_IDLE_TIMEOUT_MS, default 4 h,
+ * 0 disables). Clients routinely vanish without sending DELETE / closing the
+ * SSE stream, and each leftover session pins a full server instance with its
+ * clients and registered tools, so sessions must be reaped when idle.
+ */
+export function getSessionIdleTimeoutMs(): number {
+  // Trim first: Number("  ") is 0, which would silently disable the reaper.
+  const raw = process.env.SESSION_IDLE_TIMEOUT_MS?.trim();
+  if (!raw) return DEFAULT_SESSION_IDLE_TIMEOUT_MS;
+  // Number(), not parseInt: "4h" must be rejected, not read as 4 ms.
+  const parsed = Number(raw);
+  return Number.isInteger(parsed) && parsed >= 0
+    ? parsed
+    : DEFAULT_SESSION_IDLE_TIMEOUT_MS;
+}
+
+/**
+ * Close every session idle for longer than `idleMs`. Each is removed from the
+ * map before its transport is closed, then per-client cleanup runs.
+ * @returns the number of sessions reaped
+ */
+export async function reapIdleSessions(
+  transports: Map<string, SessionEntry>,
+  idleMs: number,
+  now: number = Date.now(),
+): Promise<number> {
+  const idle = [...transports.entries()].filter(
+    ([, entry]) =>
+      (entry.inFlight ?? 0) === 0 && now - (entry.lastActivity ?? now) > idleMs,
+  );
+  await Promise.all(
+    idle.map(async ([sessionId, entry]) => {
+      // Re-check: a request may have arrived while earlier closes were awaited.
+      if ((entry.inFlight ?? 0) > 0) return;
+      // Unregister first: new requests then get a clean 404 (client
+      // re-initializes) instead of hitting a closing transport, and an
+      // overlapping reaper run cannot pick the same session. Since the entry is
+      // already gone, onclose skips its cleanup, so it is done here.
+      if (!transports.delete(sessionId)) return;
+      console.log(`[MCP] Reaping idle session: ${redactSessionId(sessionId)}`);
+      try {
+        await entry.transport.close();
+      } catch (err) {
+        console.error("[MCP] Error closing idle session:", err);
+      }
+      endSessionAnalytics(entry.server);
+      // Await so a failed per-client cleanup (e.g. a Reflect disconnect) is
+      // logged here instead of becoming an unhandled rejection.
+      try {
+        await entry.server.cleanupSession(sessionId);
+      } catch (err) {
+        console.error("[MCP] Error cleaning up idle session:", err);
+      }
+    }),
+  );
+  return idle.length;
+}
 
 const IDENTITY_KEY = randomBytes(32);
 
@@ -439,9 +523,26 @@ export async function runHttpMode() {
     }
   });
 
+  // Reap sessions abandoned without a DELETE / SSE close. unref'd so it never
+  // holds the process open; cleared on shutdown.
+  const idleMs = getSessionIdleTimeoutMs();
+  const reaper =
+    idleMs > 0
+      ? setInterval(
+          () => {
+            reapIdleSessions(transports, idleMs).catch((err) =>
+              console.error("[MCP] Idle session reaper failed:", err),
+            );
+          },
+          Math.min(60_000, Math.max(1_000, Math.floor(idleMs / 2))),
+        )
+      : undefined;
+  reaper?.unref();
+
   // Register graceful shutdown. Tears down active
   // transports before any subsystem registered earlier (e.g. logging).
   registerShutdownHandler("http-transport", async () => {
+    if (reaper) clearInterval(reaper);
     // Tear down the modern leg first: it aborts in-flight modern exchanges and
     // closes their per-request instances. The sessionful legacy transports are
     // drained separately below.
@@ -591,7 +692,16 @@ async function createNewTransport(
         `[MCP] New session initialized: ${redactSessionId(newSessionId)}`,
       );
       // Store session so subsequent requests can find it
-      transports.set(newSessionId, { server, transport, identity });
+      const entry: SessionEntry = {
+        server,
+        transport,
+        lastActivity: Date.now(),
+        identity,
+      };
+      transports.set(newSessionId, entry);
+      // The initialize exchange is open until its response closes; count it so
+      // a slow initialize is never mistaken for an idle session.
+      trackExchange(entry, res);
       // The SDK awaits this callback before dispatching the `initialize`
       // message, so the analytics session exists by the time
       // handleInitializeMessage fires `Session Started`.
@@ -606,9 +716,13 @@ async function createNewTransport(
       console.log(
         `[MCP] Session closed: ${redactSessionId(transport.sessionId)}`,
       );
-      transports.delete(transport.sessionId);
-      endSessionAnalytics(server);
-      server.cleanupSession(transport.sessionId);
+      // Only the closer that actually unregisters the session cleans up. The
+      // idle reaper unregisters first and runs cleanup itself, so this must
+      // not repeat it.
+      if (transports.delete(transport.sessionId)) {
+        endSessionAnalytics(server);
+        server.cleanupSession(transport.sessionId);
+      }
     }
   };
 
@@ -855,6 +969,9 @@ export async function handleStreamableHttpRequest(
       return;
     }
 
+    const existingEntry = sessionId ? transports.get(sessionId) : undefined;
+    if (existingEntry) trackExchange(existingEntry, res);
+
     const parsedBody = preParsed ? preParsed.body : await parseRequestBody(req);
 
     let transport: NodeStreamableHTTPServerTransport;
@@ -947,7 +1064,15 @@ export async function handleLegacySseRequest(
   transport.onmessage = (message) => handleSessionMessage(server, message);
 
   // Store the session so POST /message requests can find it
-  transports.set(transport.sessionId, { server, transport, identity });
+  transports.set(transport.sessionId, {
+    server,
+    transport,
+    lastActivity: Date.now(),
+    // The SSE stream itself is an open exchange; the res "close" handler
+    // below removes the session when it ends.
+    inFlight: 1,
+    identity,
+  });
   attachSessionAnalytics(server, transport.sessionId, "sse");
 
   // Clean up session when connection closes
@@ -1000,6 +1125,8 @@ export async function handleLegacyMessageRequest(
     writeLegacySessionNotFound(res);
     return;
   }
+
+  trackExchange(session, res);
 
   // Validate this session is using SSE transport
   if (!(session.transport instanceof SSEServerTransport)) {
