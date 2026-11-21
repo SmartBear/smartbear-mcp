@@ -31,10 +31,13 @@ describe("Qtm4jClient", () => {
 
   it("should initialize ApiClient with custom baseUrl", async () => {
     const client = new Qtm4jClient();
-    await client.configure({ getCache: () => undefined } as any, {
-      api_key: "token",
-      base_url: "https://custom.qtm4j.com",
-    });
+    await client.configure(
+      { getCache: () => undefined } as any,
+      {
+        api_key: "token",
+        base_url: "https://custom.qtm4j.com",
+      } as any,
+    );
     expect(client.getApiClient()).toBeInstanceOf(ApiClient);
   });
 
@@ -184,5 +187,27 @@ describe("Qtm4jClient", () => {
       { api_key: "token" } as any,
     );
     expect(client.getAutomationApiKey()).toBe("array-auto-key");
+  });
+
+  it("should initialize with default api_version when not provided", async () => {
+    const client = new Qtm4jClient();
+    await client.configure(
+      { getCache: () => undefined } as any,
+      { api_key: "token" } as any,
+    );
+    const apiClient = client.getApiClient();
+    const url = apiClient.getUrl("/projects");
+    expect(url).toContain("/rest/api/latest/projects");
+  });
+
+  it("should use custom api_version when provided", async () => {
+    const client = new Qtm4jClient();
+    await client.configure(
+      { getCache: () => undefined } as any,
+      { api_key: "token", api_version: "/rest/api/v2" } as any,
+    );
+    const apiClient = client.getApiClient();
+    const url = apiClient.getUrl("/projects");
+    expect(url).toContain("/rest/api/v2/projects");
   });
 });
