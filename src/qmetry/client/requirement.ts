@@ -10,6 +10,7 @@ import {
   type FetchRequirementDetailsPayload,
   type FetchRequirementsLinkedToTestCasePayload,
   type FetchRequirementsPayload,
+  type LinkReleaseCycleWithRequirementPayload,
   type UpdateRequirementPayload,
 } from "../types/requirements";
 import { qmetryRequest } from "./api/client-api";
@@ -278,6 +279,86 @@ export async function fetchRequirementsLinkedToTestCase(
   return qmetryRequest<unknown>({
     method: "POST",
     path: QMETRY_PATHS.REQUIREMENT.GET_RQ_LINKED_TO_TC,
+    token,
+    project: resolvedProject,
+    baseUrl: resolvedBaseUrl,
+    body,
+  });
+}
+
+/**
+ * Links one release and one or more of its cycles to one existing requirement
+ * version. QMetry treats a cycle as a build, so cycle errors come back as
+ * CO.INVALID_BUILD_ID.
+ * @throws If any required ID is missing/invalid or `cycleIds` is empty.
+ */
+export async function linkReleaseCycleWithRequirement(
+  token: string,
+  baseUrl: string,
+  project: string | undefined,
+  payload: LinkReleaseCycleWithRequirementPayload,
+) {
+  const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
+    baseUrl,
+    project,
+  );
+
+  const numericFields = [
+    "sourceProjectId",
+    "sourceReleaseId",
+    "sourceBuildId",
+    "releaseId",
+    "rqId",
+    "rqVersionId",
+  ] as const;
+  for (const field of numericFields) {
+    const value = payload?.[field];
+    if (typeof value !== "number" || Number.isNaN(value)) {
+      throw new ToolError(
+        `[linkReleaseCycleWithRequirement] Missing or invalid required parameter: '${field}'.`,
+      );
+    }
+  }
+
+  const cycleIds = payload.cycleIds;
+  if (
+    !Array.isArray(cycleIds) ||
+    cycleIds.length === 0 ||
+    cycleIds.some((id) => typeof id !== "number" || Number.isNaN(id))
+  ) {
+    throw new ToolError(
+      "[linkReleaseCycleWithRequirement] Missing or invalid required parameter: 'cycleIds' (must be a non-empty array of numeric cycle IDs).",
+    );
+  }
+
+  const body = {
+    sourceBuildId: payload.sourceBuildId,
+    sourceProjectId: payload.sourceProjectId,
+    sourceReleaseId: payload.sourceReleaseId,
+    sourceScope: "project",
+    entityType: "RQ",
+    releaseCycleMapping: [
+      {
+        release: payload.releaseId,
+        cycle: cycleIds,
+        version: 1,
+      },
+    ],
+    opType: "otherScope",
+    withVersion: true,
+    updateFlag: false,
+    destinationProjectId: payload.sourceProjectId,
+    entityData: [
+      {
+        entityId: payload.rqId,
+        version: payload.rqVersionId,
+      },
+    ],
+  };
+
+  return qmetryRequest<unknown>({
+    method: "POST",
+    path: QMETRY_PATHS.REQUIREMENT.LINK_RELEASE_CYCLE,
     token,
     project: resolvedProject,
     baseUrl: resolvedBaseUrl,

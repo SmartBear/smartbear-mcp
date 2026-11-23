@@ -5365,9 +5365,9 @@ Expected Output: Release 'Summer 2024 Release' created with dates and 'Beta Test
 - component (array): Component (Label) IDs associated with the requirement.
 - requirementOwner (number): Owner ID of the requirement.
 - requirementState (number): State ID of the requirement.
-- releaseCycleMapping (array): Release/cycle mapping for the requirement.
+- releaseCycleMapping (array): Releases and cycles to link the NEW requirement to, one object per release, e.g. [{ release: 92340, cycle: [131142], version: 1 }]. Set associateRelCyc=true when providing this. Use this instead of calling 'Link Release Cycle with Requirement' after creating.
 - description (string): Description of the requirement.
-- associateRelCyc (boolean): Whether to associate the release/cycle mapping.
+- associateRelCyc (boolean): Set to true whenever releaseCycleMapping is provided, so the release/cycle link is made during creation.
 - rqFolderId (string): Requirement folder ID - SYSTEM AUTOMATICALLY RESOLVES THIS. Leave empty unless you have a specific folder ID. System will fetch project info using the projectKey and extract rootFolders.RQ.id automatically. Manual folder ID only needed if you want to target a specific sub-folder.
 - scope (string): Scope of the requirement, usually 'project'. (default: "project")
 - udfFields (record<string, union>): Flat UDF field values. Keys = UDF field names from 'Fetch UDF Layout'. Values depend on fieldTypeName: STRING/LARGETEXT: string, NUMBER: number, DATETIMEPICKER: date string ('14-08-2026'), LOOKUPLIST: numeric ID, MULTILOOKUPLIST: array of IDs [101, 102], CASCADINGLIST: { parent: 101, child: 102 }. Call 'Fetch UDF Layout' with entityType + pageName='ADD' to discover available fields and list option IDs.
@@ -5411,7 +5411,7 @@ Expected Output: Requirement created in the root requirement folder with ID and 
 \`\`\`
 Expected Output: Requirement created with metadata. Example uses: priority=688864, component=[689030], requirementOwner=8, requirementState=688912 — resolve these IDs from project info's customListObjs before use.
 
-**Hints:** 1. 'name' is the only mandatory field — sets the requirement's title/summary. Every other field is optional. 2. 'description' is a free-text field (supports HTML) for detailed requirement information. 3. 'component' is an array of Component (Label) IDs — resolve names to IDs from project info before use. 4. If rqFolderId is not provided, it will be auto-resolved to the root requirement folder using project info (rootFolders.RQ.id). 5. To get valid values for priority, component, requirementOwner (owner), requirementState (state), call the 'Admin/Get info Service' API (FETCH_PROJECT_INFO tool) and use the returned customListObjs IDs. 6. If the user provides a name instead of an ID for owner/state/priority/component, fetch project info, find the matching entry by name in the relevant customListObjs list, and use its ID. If not found, skip that field and tell the user it was omitted because the value wasn't available in the current project. 7. Release/cycle mapping is optional. If the user wants to associate a release and cycle, set associateRelCyc: true and provide releaseCycleMapping. 8. HARD GATE (not configurable): before creating, this tool checks project info for isExtTrackerConfigured, extTrackerType, and isRQConfigured. If the project has an external tracker configured (isExtTrackerConfigured=true) and isRQConfigured=true, and the tracker is Jira (extTrackerType=1) or Azure (extTrackerType=3), the create is refused with an error — do NOT retry or work around this. Tell the user requirements for this project must be created directly in the external system (Jira or Azure), then synced into QMetry. 9.  10. UDF (User Defined Fields) WORKFLOW FOR CREATE: 11. 1. Call 'Fetch UDF Layout' with entityType='RQ', pageName='ADD' to discover field names, types, and list option IDs. 12.    IF listOptions[field.listName] is empty after Fetch UDF Layout, the tool already tried a metadata fallback.    If STILL empty, ask the user to provide the option ID from the QMetry UI — do NOT guess numeric IDs. 13. 2. For LOOKUPLIST fields: pick one ID from listOptions[field.listName][].id. 14. 3. For MULTILOOKUPLIST fields: pick an array of IDs. 15. 4. For CASCADINGLIST fields: pick parent ID, then call 'Fetch Cascade Child Values' for child ID. Pass { parent: parentId, child: childId }. 16. 5. Pass all UDF values via 'udfFields' param: { fieldName: value }. 17. 6. Mandatory UDF fields (isMandatory=true) MUST be included or create will fail.",
+**Hints:** 1. 'name' is the only mandatory field — sets the requirement's title/summary. Every other field is optional. 2. 'description' is a free-text field (supports HTML) for detailed requirement information. 3. 'component' is an array of Component (Label) IDs — resolve names to IDs from project info before use. 4. If rqFolderId is not provided, it will be auto-resolved to the root requirement folder using project info (rootFolders.RQ.id). 5. To get valid values for priority, component, requirementOwner (owner), requirementState (state), call the 'Admin/Get info Service' API (FETCH_PROJECT_INFO tool) and use the returned customListObjs IDs. 6. If the user provides a name instead of an ID for owner/state/priority/component, fetch project info, find the matching entry by name in the relevant customListObjs list, and use its ID. If not found, skip that field and tell the user it was omitted because the value wasn't available in the current project. 7. CRITICAL: if the user asks to create a requirement AND link/associate/map it to a release or cycle, include them IN THIS CALL: set associateRelCyc: true and releaseCycleMapping: [{ release: <releaseID>, cycle: [<cycleID>, ...], version: 1 }]. Do NOT create the requirement first and then call 'Link Release Cycle with Requirement' - that tool is only for requirements that existed before this request. 8. Release/cycle IDs: use the IDs the user gave, or call 'Fetch Releases and Cycles' and match the release by name, then each cycle by name within that release (release names are unique in a project; cycle names are unique within a release). If a name cannot be matched, ask the user - do not guess. 9. releaseCycleMapping: one object per release; 'cycle' lists that release's cycle IDs; 'version' is always 1. Release/cycle mapping is optional - omit both fields when the user asks for none. 10. HARD GATE (not configurable): before creating, this tool checks project info for isExtTrackerConfigured, extTrackerType, and isRQConfigured. If the project has an external tracker configured (isExtTrackerConfigured=true) and isRQConfigured=true, and the tracker is Jira (extTrackerType=1) or Azure (extTrackerType=3), the create is refused with an error — do NOT retry or work around this. Tell the user requirements for this project must be created directly in the external system (Jira or Azure), then synced into QMetry. 11.  12. UDF (User Defined Fields) WORKFLOW FOR CREATE: 13. 1. Call 'Fetch UDF Layout' with entityType='RQ', pageName='ADD' to discover field names, types, and list option IDs. 14.    IF listOptions[field.listName] is empty after Fetch UDF Layout, the tool already tried a metadata fallback.    If STILL empty, ask the user to provide the option ID from the QMetry UI — do NOT guess numeric IDs. 15. 2. For LOOKUPLIST fields: pick one ID from listOptions[field.listName][].id. 16. 3. For MULTILOOKUPLIST fields: pick an array of IDs. 17. 4. For CASCADINGLIST fields: pick parent ID, then call 'Fetch Cascade Child Values' for child ID. Pass { parent: parentId, child: childId }. 18. 5. Pass all UDF values via 'udfFields' param: { fieldName: value }. 19. 6. Mandatory UDF fields (isMandatory=true) MUST be included or create will fail.",
     "inputSchema": [
       "associateRelCyc",
       "component",
@@ -8948,6 +8948,80 @@ Expected Output: Platforms 63004, 63005, 63006 linked to test suite 1511970 succ
     "outputSchema": undefined,
     "title": "QMetry: Link Platforms to Test Suite",
   },
+  "qmetry_link_release_cycle_with_requirement": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+      "title": "QMetry: Link Release Cycle with Requirement",
+    },
+    "description": "Link a release and one or more of its cycles to a requirement that ALREADY EXISTED before this request. Never use it right after Create Requirement.
+
+**Toolset:** Requirements
+
+**Parameters:**
+- projectKey (string): Key of the QMetry project to use. Omit it if the user named no project: QMetry then uses the project currently selected in the QMetry UI for the API key's user. If the user named a project, pass its key (use Fetch QMetry list Projects to find the key from a project name). (default: "default")
+- sourceProjectId (number) *required*: Numeric ID of the current project (required). Take it from 'Fetch QMetry Project Info' -> currentProjectId. CRITICAL: this is the numeric project ID, NOT the string projectKey.
+- sourceReleaseId (number) *required*: Release ID of the current project context (required). Take it from 'Fetch QMetry Project Info' -> currentReleaseId. This is NOT the release being linked - that goes in 'releaseId'.
+- sourceBuildId (number) *required*: Cycle (build) ID of the current project context (required). Take it from 'Fetch QMetry Project Info' -> currentBuildId. This is NOT a cycle being linked - those go in 'cycleIds'.
+- releaseId (number) *required*: ID of the ONE release to link to the requirement (required). If the user gives a release name, resolve it with 'Fetch Releases and Cycles' (release names are unique in a project).
+- cycleIds (array) *required*: One or more cycle IDs (required, at least one) that belong to 'releaseId'. If the user gives cycle names, resolve them with 'Fetch Releases and Cycles' under that release (cycle names are unique within a release). CRITICAL: the parameter name is 'cycleIds' - do NOT use 'buildIds' or 'cycle'.
+- rqId (number) *required*: Requirement numeric ID (required), sent to QMetry as entityId. Not the entity key like 'MAC-RQ-730'. Resolve a key with 'Fetch Requirements' (filter on entityKeyId) -> data[0].id.
+- rqVersionId (number) *required*: Requirement VERSION ID (required), e.g. 3987149 - NOT the visible version number like 1 or 2. Latest version: 'Fetch Requirements' (filter on entityKeyId) -> data[0].versionId. Specific visible version N: 'Fetch Requirement Details' with id=rqId and version=N -> rqVersionID.
+
+**Output Description:** JSON object with success, code (CO.REL_CYCLE_LINK_SUCCESS or RQ.REL_CYC_EXIST), message, and duplicate_rel_cycle listing release/cycle pairs that were already linked.
+
+**Use Cases:** 1. Link a requirement to a release and one of its cycles 2. Link a requirement to several cycles of the same release in one call 3. Link a requirement identified by key (e.g. MAC-RQ-730) to a release/cycle given by name 4. Link a specific (non-latest) version of a requirement to a release/cycle
+
+**Examples:**
+1. Link the latest version of requirement 3976920 to release 92342, cycle 131144
+\`\`\`json
+{
+  "sourceProjectId": 46893,
+  "sourceReleaseId": 92340,
+  "sourceBuildId": 131142,
+  "releaseId": 92342,
+  "cycleIds": [
+    131144
+  ],
+  "rqId": 3976920,
+  "rqVersionId": 3987149
+}
+\`\`\`
+Expected Output: code CO.REL_CYCLE_LINK_SUCCESS - Release(s) and Cycle(s) associated successfully.
+
+2. Link a requirement to two cycles of one release
+\`\`\`json
+{
+  "sourceProjectId": 46893,
+  "sourceReleaseId": 92340,
+  "sourceBuildId": 131142,
+  "releaseId": 92341,
+  "cycleIds": [
+    133715,
+    133716
+  ],
+  "rqId": 3976920,
+  "rqVersionId": 3987149
+}
+\`\`\`
+Expected Output: code CO.REL_CYCLE_LINK_SUCCESS - Release(s) and Cycle(s) associated successfully.
+
+**Hints:** 1. CRITICAL: NEVER call this tool right after Create Requirement in the same request. If the user asks to create a requirement AND link/associate a release or cycle, put associateRelCyc: true and releaseCycleMapping in the Create Requirement call itself - one call, no follow-up link. 2. Use this tool only when the requirement already existed before this request (the user names an existing requirement by key, ID or name). 3. CRITICAL: ALL parameters are required. Only ONE release and ONE requirement per call - for more, call the tool again. 4. STEP 1 - source IDs: call 'Fetch QMetry Project Info' and use currentProjectId -> sourceProjectId, currentReleaseId -> sourceReleaseId, currentBuildId -> sourceBuildId. These describe the current project context, NOT the release/cycle being linked. 5. STEP 2 - releaseId and cycleIds: use the IDs the user gave, or call 'Fetch Releases and Cycles' and match the release by name, then match each cycle name among THAT release's cycles. Release names are unique in a project and cycle names are unique within a release, so a name match is exact. 6. STEP 3 - rqId: use the numeric ID the user gave, or resolve a key (e.g. MAC-RQ-730) with 'Fetch Requirements' using filter '[{"type":"string","value":"MAC-RQ-730","field":"entityKeyId"}]' -> data[0].id. 7. STEP 4 - rqVersionId (a version ID like 3987149, NOT a visible version number): if the user named NO version, use the LATEST: 'Fetch Requirements' (filter on entityKeyId) -> data[0].versionId (data[0].associatedVersion is the latest visible number). If you only have the numeric rqId, first call 'Fetch Requirement Details' with id=rqId and version=1 to read entityKey, then use 'Fetch Requirements' as above. If the user named a visible version N (e.g. 'version 2'), call 'Fetch Requirement Details' with id=rqId and version=N and use rqVersionID. 8. ASK THE USER - do not guess - when a requirement key, requirement version, release name or cycle name cannot be resolved (no match in Fetch Requirements / Fetch Releases and Cycles, or Fetch Requirement Details fails for that version number). 9. RESPONSE: code CO.REL_CYCLE_LINK_SUCCESS means the link was made. If 'duplicate_rel_cycle' is also present, the release/cycle pairs listed there were ALREADY linked and were skipped; the rest were linked - tell the user both. 10. RESPONSE: success=true with code RQ.REL_CYC_EXIST means EVERY selected release/cycle was already linked - nothing changed; tell the user, do not retry. 11. ERROR CO.INVALID_RELEASE_ID: releaseId is wrong - re-check it with 'Fetch Releases and Cycles'. 12. ERROR CO.INVALID_BUILD_ID ('Invalid Build ID.'): at least one cycle ID is wrong (QMetry calls cycles 'builds'). The whole request fails and NOTHING is linked - re-check every cycleId belongs to releaseId with 'Fetch Releases and Cycles', then retry with valid IDs only.",
+    "inputSchema": [
+      "cycleIds",
+      "projectKey",
+      "releaseId",
+      "rqId",
+      "rqVersionId",
+      "sourceBuildId",
+      "sourceProjectId",
+      "sourceReleaseId",
+    ],
+    "outputSchema": undefined,
+    "title": "QMetry: Link Release Cycle with Requirement",
+  },
   "qmetry_link_requirements_to_testcase": {
     "annotations": {
       "destructiveHint": false,
@@ -9468,7 +9542,7 @@ Expected Output: Requirement priority updated successfully.
 \`\`\`
 Expected Output: Requirement updated with new name, description, owner, state, and component.
 
-**Hints:** 1. If the user provides an entityKey (e.g., MAC-RQ-730), first call 'Fetch Requirements' with a filter on entityKeyId to resolve rqId and rqVersionId. 2. updateWithVersion: pass 'true' to create a new version of the requirement instead of updating the current version in place. 3. To get valid values for priority, requirementOwner, requirementState, and component, call the 'Admin/Get info Service' API (FETCH_PROJECT_INFO tool) and use the returned customListObjs IDs. 4. If the user provides a name instead of an ID for owner/state/priority, fetch project info, find the matching entry by name in the relevant customListObjs list, and use its ID. If not found, skip that field and tell the user it was omitted because the value wasn't available in the current project. 5. attachments (if used) requires both ADD and REMOVE arrays — pass empty arrays when there is nothing to add or remove. 6. Only fields explicitly listed in this tool's parameters are supported — releaseCycleMapping and associateRelCyc are create-only and not supported here. 7. HARD GATE: before updating, this tool checks project info for isExtTrackerConfigured, extTrackerType, and isRQConfigured. If the project has an external tracker configured (isExtTrackerConfigured=true) and isRQConfigured=true, and the tracker is Jira (extTrackerType=1) or Azure (extTrackerType=3), the update is refused with an error — do NOT retry or work around this. Tell the user requirements for this project must be updated directly in the external system (Jira or Azure), then synced into QMetry. 8.  9. UDF (User Defined Fields) WORKFLOW FOR UPDATE: 10. 1. Call 'Fetch UDF Layout' with entityType='RQ', pageName='DETAIL' to get field names, fieldIDs (projectUserFieldID), and list option IDs. 11.    IF listOptions[field.listName] is empty after Fetch UDF Layout, the tool already tried a metadata fallback.    If STILL empty, ask the user to provide the option ID from the QMetry UI — do NOT guess numeric IDs. 12. 2. For LOOKUPLIST fields: pick one ID from listOptions[field.listName][].id. 13. 3. For MULTILOOKUPLIST fields: pick array of IDs; also pass alias flat key (e.g., fieldNameAlias: 'Option Label'). 14. 4. For CASCADINGLIST fields: pick parent ID + fetch child with 'Fetch Cascade Child Values'. Pass { parent: parentId, child: childId }. 15. 5. Pass BOTH 'udfFields' (flat root values) AND 'UDF' wrapper (with fieldID) — both required for update. Example: udfFields: { rq_field: 'value' }, UDF: { rq_field: { fieldID: 2001, value: 'value' } } 16. 6. Mandatory UDF fields (isMandatory=true) MUST be included.",
+**Hints:** 1. If the user provides an entityKey (e.g., MAC-RQ-730), first call 'Fetch Requirements' with a filter on entityKeyId to resolve rqId and rqVersionId. 2. updateWithVersion: pass 'true' to create a new version of the requirement instead of updating the current version in place. 3. To get valid values for priority, requirementOwner, requirementState, and component, call the 'Admin/Get info Service' API (FETCH_PROJECT_INFO tool) and use the returned customListObjs IDs. 4. If the user provides a name instead of an ID for owner/state/priority, fetch project info, find the matching entry by name in the relevant customListObjs list, and use its ID. If not found, skip that field and tell the user it was omitted because the value wasn't available in the current project. 5. attachments (if used) requires both ADD and REMOVE arrays — pass empty arrays when there is nothing to add or remove. 6. Only fields explicitly listed in this tool's parameters are supported — releaseCycleMapping and associateRelCyc are create-only and not supported here. To add a release/cycle to an existing requirement, use 'Link Release Cycle with Requirement'. 7. HARD GATE: before updating, this tool checks project info for isExtTrackerConfigured, extTrackerType, and isRQConfigured. If the project has an external tracker configured (isExtTrackerConfigured=true) and isRQConfigured=true, and the tracker is Jira (extTrackerType=1) or Azure (extTrackerType=3), the update is refused with an error — do NOT retry or work around this. Tell the user requirements for this project must be updated directly in the external system (Jira or Azure), then synced into QMetry. 8.  9. UDF (User Defined Fields) WORKFLOW FOR UPDATE: 10. 1. Call 'Fetch UDF Layout' with entityType='RQ', pageName='DETAIL' to get field names, fieldIDs (projectUserFieldID), and list option IDs. 11.    IF listOptions[field.listName] is empty after Fetch UDF Layout, the tool already tried a metadata fallback.    If STILL empty, ask the user to provide the option ID from the QMetry UI — do NOT guess numeric IDs. 12. 2. For LOOKUPLIST fields: pick one ID from listOptions[field.listName][].id. 13. 3. For MULTILOOKUPLIST fields: pick array of IDs; also pass alias flat key (e.g., fieldNameAlias: 'Option Label'). 14. 4. For CASCADINGLIST fields: pick parent ID + fetch child with 'Fetch Cascade Child Values'. Pass { parent: parentId, child: childId }. 15. 5. Pass BOTH 'udfFields' (flat root values) AND 'UDF' wrapper (with fieldID) — both required for update. Example: udfFields: { rq_field: 'value' }, UDF: { rq_field: { fieldID: 2001, value: 'value' } } 16. 6. Mandatory UDF fields (isMandatory=true) MUST be included.",
     "inputSchema": [
       "UDF",
       "attachments",

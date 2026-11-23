@@ -52,6 +52,19 @@ export interface UpdateRequirementPayload {
   [key: string]: unknown;
 }
 
+// Link Release/Cycle with Requirement (POST /rest/requirements/scope/add).
+// Tool-facing payload; the client builds the QMetry request body from it and
+// adds the fixed fields (sourceScope, entityType, opType, withVersion, ...).
+export interface LinkReleaseCycleWithRequirementPayload {
+  sourceProjectId: number; // required - currentProjectId from project info
+  sourceReleaseId: number; // required - currentReleaseId from project info
+  sourceBuildId: number; // required - currentBuildId from project info
+  releaseId: number; // required - release to link
+  cycleIds: number[]; // required - one or more cycle IDs of that release
+  rqId: number; // required - requirement numeric ID (entityId)
+  rqVersionId: number; // required - requirement version ID (entityData.version)
+}
+
 export interface FetchRequirementsPayload
   extends PaginationPayload,
     FilterPayload,

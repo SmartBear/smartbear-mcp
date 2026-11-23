@@ -438,6 +438,63 @@ describe("QmetryClient tools", () => {
     });
   });
 
+  describe("Link Release Cycle with Requirement", () => {
+    const args = {
+      sourceProjectId: 46893,
+      sourceReleaseId: 92340,
+      sourceBuildId: 131142,
+      releaseId: 92342,
+      cycleIds: [131144],
+      rqId: 3976920,
+      rqVersionId: 3987149,
+    };
+
+    it("should pass the IDs to the client with the default project", async () => {
+      (requirement.linkReleaseCycleWithRequirement as any).mockResolvedValue({
+        success: true,
+        code: "CO.REL_CYCLE_LINK_SUCCESS",
+        message: "Release(s) and Cycle(s) associated successfully.",
+        data: [{}],
+      });
+
+      const handler = getHandler("Link Release Cycle with Requirement");
+      const result = await handler(args);
+
+      expect(requirement.linkReleaseCycleWithRequirement).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining(args),
+      );
+      const passed = (requirement.linkReleaseCycleWithRequirement as any).mock
+        .calls[0][3];
+      expect(passed).not.toHaveProperty("projectKey");
+      expect(passed).not.toHaveProperty("baseUrl");
+      expect(result.content[0].text).toContain("CO.REL_CYCLE_LINK_SUCCESS");
+    });
+
+    it("should use the provided projectKey and return already-linked pairs", async () => {
+      (requirement.linkReleaseCycleWithRequirement as any).mockResolvedValue({
+        duplicate_rel_cycle: [{ release: "Releases :- A", cycle: "ABC" }],
+        success: true,
+        code: "RQ.REL_CYC_EXIST",
+        message: "The selected Release(s)/Cycle(s) is already linked.",
+      });
+
+      const handler = getHandler("Link Release Cycle with Requirement");
+      const result = await handler({ ...args, projectKey: "S98e" });
+
+      expect(requirement.linkReleaseCycleWithRequirement).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "S98e",
+        expect.objectContaining(args),
+      );
+      expect(result.content[0].text).toContain("RQ.REL_CYC_EXIST");
+      expect(result.content[0].text).toContain("duplicate_rel_cycle");
+    });
+  });
+
   describe("Fetch Requirements", () => {
     it("should auto-resolve viewId and call fetchRequirements with default pagination", async () => {
       // Mock project info response for auto-resolution

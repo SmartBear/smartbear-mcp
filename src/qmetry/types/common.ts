@@ -989,13 +989,24 @@ export const CreateRequirementArgsSchema = z.object({
   releaseCycleMapping: z
     .array(
       z.object({
-        release: z.number(),
-        cycle: z.array(z.number()),
-        version: z.number(),
+        release: z
+          .number()
+          .describe(
+            "Release ID - from the user or 'Fetch Releases and Cycles' (match the release by name).",
+          ),
+        cycle: z
+          .array(z.number())
+          .describe(
+            "Cycle IDs that belong to this release - from the user or 'Fetch Releases and Cycles' (match each cycle by name within the release).",
+          ),
+        version: z.number().describe("Always 1."),
       }),
     )
     .optional()
-    .describe("Release/cycle mapping for the requirement."),
+    .describe(
+      "Releases and cycles to link the NEW requirement to, one object per release, e.g. [{ release: 92340, cycle: [131142], version: 1 }]. " +
+        "Set associateRelCyc=true when providing this. Use this instead of calling 'Link Release Cycle with Requirement' after creating.",
+    ),
   description: z
     .string()
     .optional()
@@ -1003,7 +1014,9 @@ export const CreateRequirementArgsSchema = z.object({
   associateRelCyc: z
     .boolean()
     .optional()
-    .describe("Whether to associate the release/cycle mapping."),
+    .describe(
+      "Set to true whenever releaseCycleMapping is provided, so the release/cycle link is made during creation.",
+    ),
   rqFolderId: z
     .string()
     .optional()
@@ -1065,6 +1078,57 @@ export const UpdateRequirementArgsSchema = z.object({
         "Each value must include fieldID and value. " +
         "Also set matching flat key in udfFields for the LOOKUPLIST Alias display. " +
         "Example: { custom_text: { fieldID: 1001, value: 'new value' } }",
+    ),
+});
+
+// Export for Link Release Cycle with Requirement tool
+export const LinkReleaseCycleWithRequirementArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+
+  sourceProjectId: z.coerce
+    .number()
+    .describe(
+      "Numeric ID of the current project (required). Take it from 'Fetch QMetry Project Info' -> currentProjectId. " +
+        "CRITICAL: this is the numeric project ID, NOT the string projectKey.",
+    ),
+  sourceReleaseId: z.coerce
+    .number()
+    .describe(
+      "Release ID of the current project context (required). Take it from 'Fetch QMetry Project Info' -> currentReleaseId. " +
+        "This is NOT the release being linked - that goes in 'releaseId'.",
+    ),
+  sourceBuildId: z.coerce
+    .number()
+    .describe(
+      "Cycle (build) ID of the current project context (required). Take it from 'Fetch QMetry Project Info' -> currentBuildId. " +
+        "This is NOT a cycle being linked - those go in 'cycleIds'.",
+    ),
+  releaseId: z.coerce
+    .number()
+    .describe(
+      "ID of the ONE release to link to the requirement (required). " +
+        "If the user gives a release name, resolve it with 'Fetch Releases and Cycles' (release names are unique in a project).",
+    ),
+  cycleIds: z
+    .array(z.coerce.number())
+    .min(1)
+    .describe(
+      "One or more cycle IDs (required, at least one) that belong to 'releaseId'. " +
+        "If the user gives cycle names, resolve them with 'Fetch Releases and Cycles' under that release (cycle names are unique within a release). " +
+        "CRITICAL: the parameter name is 'cycleIds' - do NOT use 'buildIds' or 'cycle'.",
+    ),
+  rqId: z.coerce
+    .number()
+    .describe(
+      "Requirement numeric ID (required), sent to QMetry as entityId. Not the entity key like 'MAC-RQ-730'. " +
+        "Resolve a key with 'Fetch Requirements' (filter on entityKeyId) -> data[0].id.",
+    ),
+  rqVersionId: z.coerce
+    .number()
+    .describe(
+      "Requirement VERSION ID (required), e.g. 3987149 - NOT the visible version number like 1 or 2. " +
+        "Latest version: 'Fetch Requirements' (filter on entityKeyId) -> data[0].versionId. " +
+        "Specific visible version N: 'Fetch Requirement Details' with id=rqId and version=N -> rqVersionID.",
     ),
 });
 

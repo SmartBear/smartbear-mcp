@@ -28,6 +28,7 @@ export const QMETRY_PATHS = {
     GET_RQ_DETAILS: "/rest/requirements/detail/data",
     GET_RQ_LINKED_TO_TC: "/rest/requirements/list/forTC",
     CREATE_UPDATE_RQ: "/rest/requirements",
+    LINK_RELEASE_CYCLE: "/rest/requirements/scope/add",
   },
   TESTSUITE: {
     CREATE_UPDATE_TS: "/rest/testsuites",

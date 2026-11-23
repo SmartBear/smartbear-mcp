@@ -4,10 +4,12 @@ import {
   createRequirement,
   fetchRequirementDetails,
   fetchRequirements,
+  linkReleaseCycleWithRequirement,
   updateRequirement,
 } from "../client/requirement.js";
 import { fetchTestCasesLinkedToRequirement } from "../client/testcase.js";
 import { QMetryToolsHandlers } from "../config/constants.js";
+import { LinkReleaseCycleWithRequirementArgsSchema } from "../types/common.js";
 import { DEFAULT_FETCH_REQUIREMENTS_PAYLOAD } from "../types/requirements.js";
 
 const token = "fake-token";
@@ -722,5 +724,220 @@ describe("requirement API clients", () => {
         );
       });
     });
+  });
+});
+
+describe("linkReleaseCycleWithRequirement", () => {
+  const validPayload = {
+    sourceProjectId: 46893,
+    sourceReleaseId: 92340,
+    sourceBuildId: 131142,
+    releaseId: 92342,
+    cycleIds: [131144],
+    rqId: 3976920,
+    rqVersionId: 3987149,
+  };
+
+  const mockResponse = (body: unknown, ok = true, status = 200) => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok,
+      status,
+      statusText: ok ? "OK" : "Bad Request",
+      json: async () => body,
+      text: async () => JSON.stringify(body),
+    });
+  };
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it("maps linkReleaseCycleWithRequirement to its handler", () => {
+    expect(
+      QMETRY_HANDLER_MAP[
+        QMetryToolsHandlers.LINK_RELEASE_CYCLE_WITH_REQUIREMENT
+      ],
+    ).toBe(linkReleaseCycleWithRequirement);
+  });
+
+  it("POSTs the full scope/add body with fixed fields", async () => {
+    const response = {
+      success: true,
+      code: "CO.REL_CYCLE_LINK_SUCCESS",
+      message: "Release(s) and Cycle(s) associated successfully.",
+      data: [{}],
+    };
+    mockResponse(response);
+
+    const result = await linkReleaseCycleWithRequirement(
+      token,
+      baseUrl,
+      projectKey,
+      validPayload,
+    );
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      `${baseUrl}/rest/requirements/scope/add`,
+      expect.objectContaining({
+        method: "POST",
+        headers: expect.objectContaining({
+          apikey: token,
+          project: projectKey,
+          "Content-Type": "application/json",
+        }),
+      }),
+    );
+    const body = JSON.parse((globalThis.fetch as any).mock.calls[0][1].body);
+    expect(body).toEqual({
+      sourceBuildId: 131142,
+      sourceProjectId: 46893,
+      sourceReleaseId: 92340,
+      sourceScope: "project",
+      entityType: "RQ",
+      releaseCycleMapping: [{ release: 92342, cycle: [131144], version: 1 }],
+      opType: "otherScope",
+      withVersion: true,
+      updateFlag: false,
+      destinationProjectId: 46893,
+      entityData: [{ entityId: 3976920, version: 3987149 }],
+    });
+    expect(result).toEqual(response);
+  });
+
+  it("sends every cycle ID for the release and drops extra fields", async () => {
+    mockResponse({ success: true });
+
+    await linkReleaseCycleWithRequirement(token, baseUrl, projectKey, {
+      ...validPayload,
+      cycleIds: [133716, 133715],
+      projectKey: "SHOULD_NOT_BE_SENT",
+    } as any);
+
+    const body = JSON.parse((globalThis.fetch as any).mock.calls[0][1].body);
+    expect(body.releaseCycleMapping).toEqual([
+      { release: 92342, cycle: [133716, 133715], version: 1 },
+    ]);
+    expect(body).not.toHaveProperty("projectKey");
+    expect(body).not.toHaveProperty("cycleIds");
+    expect(body).not.toHaveProperty("rqId");
+  });
+
+  it("returns the already-linked response as-is", async () => {
+    const response = {
+      duplicate_rel_cycle: [
+        { release: "Default Release", cycle: "Default Cycle" },
+      ],
+      success: true,
+      code: "RQ.REL_CYC_EXIST",
+      message: "The selected Release(s)/Cycle(s) is already linked.",
+    };
+    mockResponse(response);
+
+    await expect(
+      linkReleaseCycleWithRequirement(token, baseUrl, projectKey, validPayload),
+    ).resolves.toEqual(response);
+  });
+
+  it.each([
+    "sourceProjectId",
+    "sourceReleaseId",
+    "sourceBuildId",
+    "releaseId",
+    "rqId",
+    "rqVersionId",
+  ])("throws when %s is missing", async (field) => {
+    globalThis.fetch = vi.fn();
+    const payload: any = { ...validPayload };
+    delete payload[field];
+
+    await expect(
+      linkReleaseCycleWithRequirement(token, baseUrl, projectKey, payload),
+    ).rejects.toThrow(
+      `[linkReleaseCycleWithRequirement] Missing or invalid required parameter: '${field}'.`,
+    );
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["missing", undefined],
+    ["empty", []],
+    ["non-numeric", [131144, "abc"]],
+  ])("throws when cycleIds is %s", async (_label, cycleIds) => {
+    globalThis.fetch = vi.fn();
+    await expect(
+      linkReleaseCycleWithRequirement(token, baseUrl, projectKey, {
+        ...validPayload,
+        cycleIds,
+      } as any),
+    ).rejects.toThrow(
+      "[linkReleaseCycleWithRequirement] Missing or invalid required parameter: 'cycleIds'",
+    );
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  it("surfaces QMetry's invalid cycle (build) error", async () => {
+    mockResponse(
+      {
+        success: false,
+        code: "CO.INVALID_BUILD_ID",
+        message: "Invalid Build ID.",
+      },
+      false,
+      400,
+    );
+
+    await expect(
+      linkReleaseCycleWithRequirement(token, baseUrl, projectKey, {
+        ...validPayload,
+        cycleIds: [133716, 133715, 131],
+      }),
+    ).rejects.toThrow(/Invalid Build ID/);
+  });
+
+  it("surfaces QMetry's invalid release error", async () => {
+    mockResponse({ success: false, code: "CO.INVALID_RELEASE_ID" }, false, 400);
+
+    await expect(
+      linkReleaseCycleWithRequirement(token, baseUrl, projectKey, validPayload),
+    ).rejects.toThrow(/CO.INVALID_RELEASE_ID/);
+  });
+});
+
+describe("LinkReleaseCycleWithRequirementArgsSchema", () => {
+  const base = {
+    sourceProjectId: 46893,
+    sourceReleaseId: 92340,
+    sourceBuildId: 131142,
+    releaseId: 92342,
+    cycleIds: [131144],
+    rqId: 3976920,
+    rqVersionId: 3987149,
+  };
+
+  it("coerces string IDs to numbers", () => {
+    const parsed = LinkReleaseCycleWithRequirementArgsSchema.parse({
+      sourceProjectId: "46893",
+      sourceReleaseId: "92340",
+      sourceBuildId: "131142",
+      releaseId: "92342",
+      cycleIds: ["131144"],
+      rqId: "3976920",
+      rqVersionId: "3987149",
+    });
+    expect(parsed).toMatchObject(base);
+  });
+
+  it("rejects an empty cycleIds array", () => {
+    const result = LinkReleaseCycleWithRequirementArgsSchema.safeParse({
+      ...base,
+      cycleIds: [],
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a request without rqVersionId", () => {
+    const { rqVersionId: _omit, ...rest } = base;
+    const result = LinkReleaseCycleWithRequirementArgsSchema.safeParse(rest);
+    expect(result.success).toBe(false);
   });
 });
