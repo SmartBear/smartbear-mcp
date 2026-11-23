@@ -432,6 +432,70 @@ describe("QmetryClient", () => {
       await createTestCase();
       expect({ ...(client as any) }).toEqual(before);
     });
+
+    describe("numeric projectID for Create Release / Create Cycle", () => {
+      const bodyOf = (path: string) => {
+        const call = fetchMock.mock.calls.find(([url]) =>
+          String(url).endsWith(path),
+        );
+        return call ? JSON.parse(call[1]?.body as string) : undefined;
+      };
+
+      it("fills release.projectID from the call's projectKey", async () => {
+        const result = await callTool("Create Release", {
+          projectKey: "QT",
+          release: { name: "R1", startDate: "11-18-2026" },
+        });
+
+        expect(result.isError).toBeUndefined();
+        expect(bodyOf("/rest/admin/release")?.release.projectID).toBe(192);
+        expect(projectEcho(result)).toMatchObject({ key: "QT", id: 192 });
+        expect(new Set(sentProjectHeaders())).toEqual(new Set(["QT"]));
+      });
+
+      it("fills release.projectID from the selected project when projectKey is omitted", async () => {
+        await callTool("Create Release", { release: { name: "R1" } });
+
+        expect(bodyOf("/rest/admin/release")?.release.projectID).toBe(347);
+      });
+
+      it("keeps an explicit release.projectID and makes no getinfo request", async () => {
+        await callTool("Create Release", {
+          projectKey: "QT",
+          release: { name: "R1", projectID: 46792 },
+        });
+
+        expect(bodyOf("/rest/admin/release")?.release.projectID).toBe(46792);
+        expect(fetchMock.mock.calls.some(([url]) => isGetInfo(url))).toBe(
+          false,
+        );
+      });
+
+      it("fills cycle.projectID for Create Cycle", async () => {
+        await callTool("Create Cycle", {
+          projectKey: "QT",
+          cycle: { name: "C1", releaseID: 10 },
+        });
+
+        expect(bodyOf("/rest/admin/cycle")?.cycle.projectID).toBe(192);
+      });
+
+      it("reports a failed projectID lookup instead of creating without it", async () => {
+        fetchMock.mockResponse(async (req) =>
+          isGetInfo(req.url)
+            ? { status: 500, body: "boom" }
+            : JSON.stringify({ success: true }),
+        );
+
+        await expect(
+          callTool("Create Release", {
+            projectKey: "QT",
+            release: { name: "R1" },
+          }),
+        ).rejects.toThrow(/resolving the numeric projectID/);
+        expect(bodyOf("/rest/admin/release")).toBeUndefined();
+      });
+    });
   });
 
   describe("utilities", () => {

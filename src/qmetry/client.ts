@@ -58,6 +58,16 @@ function textResult(
 
 const INVALID_PROJECT_CODE = "CO.INVALID_PROJECT_ID";
 
+/**
+ * Tools whose request body needs the numeric project ID inside a nested
+ * object (`release.projectID`, `cycle.projectID`). If the caller omits it, it
+ * is filled from the project the call resolves to.
+ */
+const PROJECT_ID_BODY_FIELD: Partial<Record<string, "release" | "cycle">> = {
+  [QMetryToolsHandlers.CREATE_RELEASE]: "release",
+  [QMetryToolsHandlers.CREATE_CYCLE]: "cycle",
+};
+
 /** Inputs worth echoing in an error: keys, IDs and folder/view selectors. */
 const ERROR_CONTEXT_NAMED_INPUTS = new Set([
   "projectKey",
@@ -605,6 +615,41 @@ export class QmetryClient implements Client {
               normalizeDateFieldsInArgs(a, datetimePickers, targetDateFormat);
             } catch {
               // Best-effort — proceed without normalization if preflight fails
+            }
+          }
+
+          // Create Release / Create Cycle need the numeric projectID in the
+          // request body; the projectKey only travels as the `project` header.
+          // When the caller left it out, fill it from the project this call
+          // resolves to (getinfo's currentProjectId).
+          const projectIdTarget = PROJECT_ID_BODY_FIELD[tool.handler];
+          if (projectIdTarget) {
+            const entity = a[projectIdTarget];
+            if (
+              entity &&
+              typeof entity === "object" &&
+              entity.projectID == null
+            ) {
+              let info: Record<string, any>;
+              try {
+                info = await loadProjectInfo();
+              } catch (err) {
+                if (err instanceof QMetryApiError) {
+                  throw await withToolContext(
+                    err,
+                    `resolving the numeric projectID for ${projectIdTarget}.projectID; pass it explicitly to skip this lookup`,
+                  );
+                }
+                throw err;
+              }
+              const id = Number(info.currentProjectId);
+              if (!Number.isFinite(id)) {
+                throw new ToolError(
+                  `Could not resolve the numeric projectID for project '${projectKey}'. ` +
+                    `Pass ${projectIdTarget}.projectID explicitly (currentProjectId from Fetch QMetry Project Info).`,
+                );
+              }
+              entity.projectID = id;
             }
           }
 

@@ -449,7 +449,7 @@ export const CreateReleaseArgsSchema = z.object({
       .number()
       .optional()
       .describe(
-        "Project ID (optional, can be auto-resolved from project key if not provided)",
+        "Numeric project ID (NOT the projectKey string). Optional: if omitted, the server fills it with the ID of the project given by projectKey (or the project selected in QMetry when projectKey is omitted).",
       ),
   }),
   cycle: z
@@ -489,7 +489,7 @@ export const CreateCycleArgsSchema = z.object({
       .number()
       .optional()
       .describe(
-        "Project ID (optional, can be auto-resolved from project key if not provided)",
+        "Numeric project ID (NOT the projectKey string). Optional: if omitted, the server fills it with the ID of the project given by projectKey (or the project selected in QMetry when projectKey is omitted).",
       ),
     releaseID: z
       .number()
