@@ -100,6 +100,7 @@ export const QMetryToolsHandlers = {
   UPDATE_ISSUE: "updateIssue",
   FETCH_ISSUES: "getIssues",
   LINK_ISSUES_TO_TESTCASE_RUN: "linkIssuesToTestcaseRun",
+  FETCH_ISSUES_LINKED_TO_EXECUTION: "getIssuesLinkedToExecution",
   LINK_PLATFORMS_TO_TESTSUITE: "linkPlatformsToTestSuite",
   IMPORT_AUTOMATION_RESULTS: "importAutomationResults",
   FETCH_AUTOMATION_STATUS: "fetchAutomationStatus",

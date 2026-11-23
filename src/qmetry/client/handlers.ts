@@ -10,6 +10,7 @@ import {
   fetchIssueDetails,
   fetchIssueExecutions,
   fetchIssues,
+  fetchIssuesLinkedToExecution,
   fetchIssuesLinkedToTestCase,
   linkIssuesToTestcaseRun,
   updateIssue,
@@ -140,6 +141,8 @@ export const QMETRY_HANDLER_MAP: Record<string, QMetryHandler> = {
   [QMetryToolsHandlers.FETCH_ISSUES]: fetchIssues,
   [QMetryToolsHandlers.FETCH_ISSUE_DETAILS]: fetchIssueDetails,
   [QMetryToolsHandlers.LINK_ISSUES_TO_TESTCASE_RUN]: linkIssuesToTestcaseRun,
+  [QMetryToolsHandlers.FETCH_ISSUES_LINKED_TO_EXECUTION]:
+    fetchIssuesLinkedToExecution,
   [QMetryToolsHandlers.LINK_PLATFORMS_TO_TESTSUITE]: linkPlatformsToTestSuite,
   [QMetryToolsHandlers.IMPORT_AUTOMATION_RESULTS]: importAutomationResults,
   [QMetryToolsHandlers.FETCH_AUTOMATION_STATUS]: getAutomationStatus,

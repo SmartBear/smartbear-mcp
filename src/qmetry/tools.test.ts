@@ -2690,6 +2690,55 @@ describe("QmetryClient tools", () => {
     });
   });
 
+  describe("Fetch Issues Linked to Execution", () => {
+    it("should pass tsRunID and pagination to the client with default project", async () => {
+      (issues.fetchIssuesLinkedToExecution as any).mockResolvedValue({
+        header: {
+          testSuiteKey: "PT-TS-1",
+          testSuiteSummary: "All Test Cases Suite",
+          release: "Default Release",
+          cycle: "Default Cycle",
+          platform: "No Platform",
+        },
+        total: 1,
+        data: [{ dfId: 9719420, entityKey: "PT-IS-1", summary: "Bug" }],
+      });
+
+      const handler = getHandler("Fetch Issues Linked to Execution");
+      const result = await handler({ tsRunID: 819218 });
+
+      expect(issues.fetchIssuesLinkedToExecution).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({ tsRunID: 819218 }),
+      );
+      const passed = (issues.fetchIssuesLinkedToExecution as any).mock
+        .calls[0][3];
+      expect(passed).not.toHaveProperty("projectKey");
+      expect(passed).not.toHaveProperty("baseUrl");
+      expect(result.content[0].text).toContain("PT-TS-1");
+      expect(result.content[0].text).toContain("PT-IS-1");
+    });
+
+    it("should use the provided projectKey", async () => {
+      (issues.fetchIssuesLinkedToExecution as any).mockResolvedValue({
+        total: 0,
+        data: [],
+      });
+
+      const handler = getHandler("Fetch Issues Linked to Execution");
+      await handler({ tsRunID: 819218, projectKey: "PT", page: 2, limit: 5 });
+
+      expect(issues.fetchIssuesLinkedToExecution).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "PT",
+        expect.objectContaining({ tsRunID: 819218, page: 2, limit: 5 }),
+      );
+    });
+  });
+
   describe("Link Platforms to Test Suite", () => {
     it("should link single platform to test suite", async () => {
       (testsuite.linkPlatformsToTestSuite as any).mockResolvedValue({

@@ -1574,6 +1574,22 @@ export const IssueExecutionsArgsSchema = z.object({
     .default("[]"),
 });
 
+// Export for Fetch Issues Linked to Execution tool
+export const IssuesLinkedToExecutionArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+
+  tsRunID: z.coerce
+    .number()
+    .describe(
+      "Test Suite Run (execution) ID. CRITICAL: for THIS tool the parameter name is 'tsRunID' (capital R) — do NOT use 'tsrunID', 'tsRunId', 'executionId', 'tcRunID', or other variants. " +
+        "Accepts a string or number. " +
+        "If the user does not give it, get it from the 'Fetch Executions by Test Suite' tool (data[<index>].tsRunID) for the execution matching the user's Test Suite, Release, Cycle and Platform.",
+    ),
+  start: CommonFields.start,
+  page: CommonFields.page,
+  limit: CommonFields.limit,
+});
+
 // Export for Link Platforms to Test Suite tool
 export const LinkPlatformsToTestSuiteArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,

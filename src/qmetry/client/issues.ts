@@ -4,11 +4,13 @@ import {
   type CreateIssuePayload,
   DEFAULT_CREATE_ISSUE_PAYLOAD,
   DEFAULT_FETCH_ISSUE_EXECUTIONS_PAYLOAD,
+  DEFAULT_FETCH_ISSUES_LINKED_TO_EXECUTION_PAYLOAD,
   DEFAULT_FETCH_ISSUES_LINKED_TO_TESTCASE_PAYLOAD,
   DEFAULT_FETCH_ISSUES_PAYLOAD,
   DEFAULT_LINK_ISSUES_TO_TESTCASE_RUN_PAYLOAD,
   DEFAULT_UPDATE_ISSUE_PAYLOAD,
   type FetchIssueExecutionsPayload,
+  type FetchIssuesLinkedToExecutionPayload,
   type FetchIssuesLinkedToTestCasePayload,
   type FetchIssuesPayload,
   type LinkIssuesToTestcaseRunPayload,
@@ -483,6 +485,53 @@ export async function linkIssuesToTestcaseRun(
   return qmetryRequest<unknown>({
     method: "PUT",
     path: QMETRY_PATHS.ISSUES.LINK_ISSUES_TO_TESTCASE_RUN,
+    token,
+    project: resolvedProject,
+    baseUrl: resolvedBaseUrl,
+    body,
+  });
+}
+
+/**
+ * Fetches issues linked to an execution (test suite run).
+ * Filter and sort are out of scope for now (QTM8-24527) and are always sent
+ * as empty arrays.
+ * @throws If `tsRunID` is missing/invalid.
+ */
+export async function fetchIssuesLinkedToExecution(
+  token: string,
+  baseUrl: string,
+  project: string | undefined,
+  payload: FetchIssuesLinkedToExecutionPayload,
+) {
+  const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
+    baseUrl,
+    project,
+  );
+
+  const merged: FetchIssuesLinkedToExecutionPayload = {
+    ...DEFAULT_FETCH_ISSUES_LINKED_TO_EXECUTION_PAYLOAD,
+    ...payload,
+  };
+
+  if (typeof merged.tsRunID !== "number" || Number.isNaN(merged.tsRunID)) {
+    throw new ToolError(
+      "[fetchIssuesLinkedToExecution] Missing or invalid required parameter: 'tsRunID'.",
+    );
+  }
+
+  const body = {
+    tsRunID: merged.tsRunID,
+    page: merged.page,
+    start: merged.start,
+    limit: merged.limit,
+    filter: "[]",
+    sort: "[]",
+  };
+
+  return qmetryRequest<unknown>({
+    method: "POST",
+    path: QMETRY_PATHS.ISSUES.GET_ISSUES_LINKED_TO_EXECUTION,
     token,
     project: resolvedProject,
     baseUrl: resolvedBaseUrl,

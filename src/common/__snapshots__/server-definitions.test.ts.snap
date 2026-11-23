@@ -6408,6 +6408,63 @@ Expected Output: Executions at Test Case linkage level for version 1
     "outputSchema": undefined,
     "title": "QMetry: Fetch Issue Executions",
   },
+  "qmetry_fetch_issues_linked_to_execution": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "QMetry: Fetch Issues Linked to Execution",
+    },
+    "description": "Get the issues/defects linked to a test execution (test suite run) in QMetry. ALWAYS show the execution header (Test Suite Key, Test Suite Summary, Release, Cycle, Platform) and the total count, then the issues as a table: Issue Key | Summary | Type | State | Priority.
+
+**Toolset:** Issues
+
+**Parameters:**
+- projectKey (string): Key of the QMetry project to use. Omit it if the user named no project: QMetry then uses the project currently selected in the QMetry UI for the API key's user. If the user named a project, pass its key (use Fetch QMetry list Projects to find the key from a project name). (default: "default")
+- tsRunID (number) *required*: Test Suite Run (execution) ID. CRITICAL: for THIS tool the parameter name is 'tsRunID' (capital R) — do NOT use 'tsrunID', 'tsRunId', 'executionId', 'tcRunID', or other variants. Accepts a string or number. If the user does not give it, get it from the 'Fetch Executions by Test Suite' tool (data[<index>].tsRunID) for the execution matching the user's Test Suite, Release, Cycle and Platform.
+- start (number): Start index for pagination - defaults to 0 (default: 0)
+- page (number): Page number to return (starts from 1) (default: 1)
+- limit (number): Number of records (default 10). (default: 10)
+
+**Output Description:** JSON object with 'header' (testSuiteKey, testSuiteSummary, release, cycle, platform), 'total' (number of linked issues), and 'data' array of issues (dfId, entityKey, summary, issuePriority, issueState, issueType, associatedCycle, attachmentCount, linkedExecutionCount).
+
+**Use Cases:** 1. List the defects linked to a specific test execution 2. Check which issues were raised against a test suite run for a given release, cycle and platform 3. Review issue state and priority for an execution before sign-off 4. Traceability between executions and defects
+
+**Examples:**
+1. Get issues linked to execution with tsRunID 819218
+\`\`\`json
+{
+  "tsRunID": 819218
+}
+\`\`\`
+Expected Output: Execution: PT-TS-1 — All Test Cases Suite | Release: Default Release | Cycle: Default Cycle | Platform: No Platform
+Total linked issues: 1
+| Issue Key | Summary | Type | State | Priority |
+| PT-IS-1   | Login fails on submit | Bug | Open | Blocker |
+
+2. Get the second page of issues linked to execution 819218 (10 per page)
+\`\`\`json
+{
+  "tsRunID": 819218,
+  "page": 2,
+  "start": 10,
+  "limit": 10
+}
+\`\`\`
+Expected Output: Header, total count and issues 11-20 linked to the execution
+
+**Hints:** 1. HOW TO GET tsRunID: 2. A) If the user provides the execution / test suite run ID, pass it directly as tsRunID. 3. B) Otherwise the user MUST provide all four: Test Suite, Release, Cycle and Platform. If any is missing, ASK the user for it — do not assume defaults. 4.    1. Resolve the test suite numeric ID (tsID) with 'Fetch Test Suites' (data[<index>].id; e.g. filter by entityKeyId for a key like PT-TS-1). 5.    2. Resolve release and cycle IDs with 'Fetch Releases and Cycles', and the platform ID with 'Fetch Platforms'. 6.    3. Call 'Fetch Executions by Test Suite' with tsID and filter '[{"type":"list","value":[releaseId],"field":"releaseID"},{"type":"list","value":[cycleId],"field":"cycleID"},{"type":"list","value":[platformId],"field":"platformID"}]'. 7.    4. Take data[<index>].tsRunID from the matching execution and pass it as tsRunID. 8.    - If exactly one execution matches, use it. 9.    - If MORE THAN ONE execution matches, show the matches (test suite, release, cycle, platform, tsRunID) and ASK the user to pick one. Do not pick for them. 10.    - If NONE match, tell the user no execution exists for that combination and do not call this tool. 11. CRITICAL: the parameter name is 'tsRunID' (capital R) — not 'tsrunID' as used by 'Fetch Test Case Runs by Test Suite Run'. 12. Filtering and sorting are not supported by this tool yet. 13. DISPLAY RULES: 14. 1. ALWAYS show the response 'header' first: Test Suite Key (testSuiteKey), Test Suite Summary (testSuiteSummary), Release (release), Cycle (cycle), Platform (platform). 15. 2. ALWAYS show the total count ('total'). 16. 3. Show the 'data' array as a table with columns: Issue Key (entityKey) | Summary (summary) | Type (issueType) | State (issueState) | Priority (issuePriority). 17. 4. If the user asks for other fields (e.g. associatedCycle, attachmentCount, linkedExecutionCount, dfId), add those columns. 18. 5. If 'total' is 0, still show the header and say no issues are linked to this execution. 19. 6. If 'total' is greater than the rows returned, say more issues exist and offer the next page (increase page/start). 20. dfId in each row is the numeric issue ID — use it as defectId for 'Fetch Issue Details'.",
+    "inputSchema": [
+      "limit",
+      "page",
+      "projectKey",
+      "start",
+      "tsRunID",
+    ],
+    "outputSchema": undefined,
+    "title": "QMetry: Fetch Issues Linked to Execution",
+  },
   "qmetry_fetch_issues_linked_to_test_case": {
     "annotations": {
       "destructiveHint": false,

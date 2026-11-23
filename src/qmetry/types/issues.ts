@@ -88,6 +88,20 @@ export const DEFAULT_LINK_ISSUES_TO_TESTCASE_RUN_PAYLOAD: Omit<
   "issueIds" | "tcrId"
 > = {};
 
+// Fetch Issues Linked to Execution (test suite run)
+// Filter and sort are intentionally out of scope for now (QTM8-24527) and are
+// always sent as empty arrays by the client.
+export interface FetchIssuesLinkedToExecutionPayload extends PaginationPayload {
+  tsRunID: number; // required - Test Suite Run (execution) ID
+}
+
+export const DEFAULT_FETCH_ISSUES_LINKED_TO_EXECUTION_PAYLOAD: Omit<
+  FetchIssuesLinkedToExecutionPayload,
+  "tsRunID"
+> = {
+  ...DEFAULT_PAGINATION,
+};
+
 export interface FetchIssuesPayload
   extends PaginationPayload,
     FilterPayload,
