@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - [QMetry] Added the `Update Release` tool (`qmetry_update_release`) to change an existing release's name, description, start date or target date. `release.projectID` and `release.releaseID` are required, plus at least one field to change. Release names must be unique within a project; QMetry rejects duplicates with `AD.RELEASE_DUPLICATE`
+- [QMetry] Added the `Fetch Issues Linked to Execution` tool (`qmetry_fetch_issues_linked_to_execution`) to list the issues linked to a test execution (test suite run). It takes the execution's `tsRunID`, or resolves it with `Fetch Executions by Test Suite` from the test suite, release, cycle and platform, all four required; if several executions match, the user is asked to pick one. Results show the execution header (test suite, release, cycle, platform), the total count, and each issue's key, summary, type, state and priority. Filtering and sorting are not supported yet
 
 ### Removed
 
