@@ -672,11 +672,19 @@ describe("BugsnagClient", () => {
             "https://[::7f00:1]",
             "https://[64:ff9b::169.254.169.254]",
             "https://[64:ff9b:1::a9fe:a9fe]",
+            // 64:ff9b:1::/48 local-use NAT64 under /48, /56 and /64
+            // translator prefixes (RFC 6052 layouts), all -> 169.254.169.254
+            "https://[64:ff9b:1:a9fe:a9:fe00::]",
+            "https://[64:ff9b:1:a9:fe:a9fe::]",
+            "https://[64:ff9b:1:0:a9:fea9:fe00:0]",
+            "https://[64:ff9b:1:0:7f:0:100:0]",
             "https://[::ffff:100.100.100.200]",
             "https://[::ffff:0.0.0.0]",
             "https://[0:0:0:0:0:0:0:1]",
             "https://[fe80::1]",
             "https://[fd00:ec2::254]",
+            "https://[fd00:ec2:0:0:0:0:0:254]",
+            "https://[fd20:ce::254]",
             "https://[::]",
             "https://localhost./",
             "https://foo.localhost",
@@ -771,6 +779,9 @@ describe("BugsnagClient", () => {
             "https://[2001:db8::1]",
             "https://[::ffff:10.0.5.20]",
             "https://[64:ff9b::8.8.8.8]",
+            // Ordinary private (ULA) IPv6, like RFC1918 for IPv4
+            "https://[fd12:3456:789a::20]",
+            "https://[fd00:ec2::253]",
           ])("should still allow non-loopback/non-metadata IPv6 %s", (endpoint) => {
             expect(
               withHttpRequest(() =>

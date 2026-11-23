@@ -124,32 +124,75 @@ function parseIPv6Groups(address: string): number[] | undefined {
   return groups.map((g) => Number.parseInt(g, 16));
 }
 
+// RFC 6052 section 2.2 layouts for an IPv4 address embedded under a NAT64
+// prefix of the given length, as byte offsets into the 16-byte address. Byte 8
+// (bits 64-71, the "u" octet) is always skipped, so prefixes shorter than /96
+// split the IPv4 address around it.
+const NAT64_IPV4_BYTE_OFFSETS: Record<number, number[]> = {
+  48: [6, 7, 9, 10],
+  56: [7, 9, 10, 11],
+  64: [9, 10, 11, 12],
+  96: [12, 13, 14, 15],
+};
+
+function ipv4FromBytes(bytes: number[], offsets: number[]): string {
+  return offsets.map((i) => bytes[i]).join(".");
+}
+
 // If the IPv6 address embeds an IPv4 address that the network stack (or a
-// translator) will actually deliver to, return it in dotted form so the IPv4
-// rules above can be applied. Covers:
+// translator) may actually deliver to, return every plausible decoding in
+// dotted form so the IPv4 rules above can be applied. Covers:
 //   ::ffff:0:0/96      IPv4-mapped        (::ffff:7f00:1)
 //   ::ffff:0:0:0/96    IPv4-translated    (::ffff:0:7f00:1, RFC 2765)
 //   ::/96              IPv4-compatible    (::7f00:1, deprecated)
 //   64:ff9b::/96       NAT64 well-known   (64:ff9b::a9fe:a9fe, RFC 6052)
 //   64:ff9b:1::/48     NAT64 local-use    (RFC 8215)
-function embeddedIPv4(groups: number[]): string | undefined {
+//
+// The local-use block is a /48 out of which operators carve their own
+// translator prefix, which may be any RFC 6052 length >= /48 (/48, /56, /64
+// or /96). We cannot know which one the network in front of this server uses,
+// and each length places the IPv4 bits differently — e.g. under a /64 prefix
+// 64:ff9b:1:0:a9:fea9:fe00:0 reaches 169.254.169.254, while reading only the
+// last 32 bits would yield 254.0.0.0. So return the decoding for every
+// possible length; the caller rejects the address if any of them is forbidden.
+function embeddedIPv4Candidates(groups: number[]): string[] {
   const zeros = (from: number, to: number) =>
     groups.slice(from, to).every((g) => g === 0);
+  const bytes = groups.flatMap((g) => [g >> 8, g & 255]);
+
+  const isNat64LocalUse =
+    groups[0] === 0x64 && groups[1] === 0xff9b && groups[2] === 1;
+  if (isNat64LocalUse) {
+    return Object.values(NAT64_IPV4_BYTE_OFFSETS).map((offsets) =>
+      ipv4FromBytes(bytes, offsets),
+    );
+  }
+
   const isMapped = zeros(0, 5) && groups[5] === 0xffff;
   const isTranslated = zeros(0, 4) && groups[4] === 0xffff && groups[5] === 0;
   const isCompatible = zeros(0, 6);
-  const isNat64 =
-    groups[0] === 0x64 &&
-    groups[1] === 0xff9b &&
-    (zeros(2, 6) || groups[2] === 1);
-  if (!(isMapped || isTranslated || isCompatible || isNat64)) return undefined;
-  const [high, low] = [groups[6], groups[7]];
-  return `${high >> 8}.${high & 255}.${low >> 8}.${low & 255}`;
+  const isNat64WellKnown =
+    groups[0] === 0x64 && groups[1] === 0xff9b && zeros(2, 6);
+  if (!(isMapped || isTranslated || isCompatible || isNat64WellKnown)) {
+    return [];
+  }
+  return [ipv4FromBytes(bytes, NAT64_IPV4_BYTE_OFFSETS[96])];
 }
 
+// Known cloud instance-metadata services reachable over IPv6. These live
+// inside fc00::/7 (ULA), but the rest of that range is ordinary private
+// address space — the IPv6 counterpart of RFC1918 — which on-premise Bugsnag
+// installations can legitimately use, so only these exact addresses are
+// blocked rather than the whole range.
+const IPV6_METADATA_ADDRESSES: number[][] = [
+  [0xfd00, 0xec2, 0, 0, 0, 0, 0, 0x254], // AWS IMDS (fd00:ec2::254)
+  [0xfd20, 0xce, 0, 0, 0, 0, 0, 0x254], // GCP metadata (fd20:ce::254)
+];
+
 // IPv6 equivalents of the IPv4 checks above: loopback, unspecified,
-// link-local and ULA, plus any IPv6 form that embeds an IPv4 address
-// (checked against the IPv4 ranges above).
+// link-local and known metadata addresses, plus any IPv6 form that embeds an
+// IPv4 address (checked against the IPv4 ranges above). Like RFC1918 for
+// IPv4, private ULA (fc00::/7) addresses are otherwise allowed.
 function isForbiddenIPv6(hostname: string): boolean {
   // URL.hostname keeps the [brackets] for IPv6 literals; drop any zone id.
   const h = hostname
@@ -162,10 +205,15 @@ function isForbiddenIPv6(hostname: string): boolean {
   const allZeroUpTo = (n: number) => groups.slice(0, n).every((g) => g === 0);
   if (allZeroUpTo(7) && (groups[7] === 0 || groups[7] === 1)) return true; // :: / ::1
   if ((groups[0] & 0xffc0) === 0xfe80) return true; // fe80::/10 link-local
-  if ((groups[0] & 0xfe00) === 0xfc00) return true; // fc00::/7 ULA (e.g. AWS fd00:ec2::254)
+  if (
+    IPV6_METADATA_ADDRESSES.some((addr) =>
+      addr.every((g, i) => g === groups[i]),
+    )
+  ) {
+    return true; // cloud metadata
+  }
 
-  const v4 = embeddedIPv4(groups);
-  return v4 !== undefined && isForbiddenIPv4(v4);
+  return embeddedIPv4Candidates(groups).some(isForbiddenIPv4);
 }
 
 // Only called when `endpoint` could have come from an untrusted per-request

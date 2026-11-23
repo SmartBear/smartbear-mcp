@@ -135,6 +135,12 @@ export async function fetchWithValidatedRedirects(
     if (!location) {
       return response;
     }
+    // This response is never handed back to the caller, so release its body
+    // now — before any of the checks below can throw — rather than leaving an
+    // unread (possibly streaming) body holding the connection open. Not
+    // awaited, and errors ignored: cancellation is best-effort cleanup and
+    // must not delay or fail the redirect handling itself.
+    response.body?.cancel().catch(() => {});
     if (hop >= MAX_REDIRECTS) {
       throw new ToolError(
         `Too many redirects (more than ${MAX_REDIRECTS}) requesting ${url}`,
@@ -264,9 +270,15 @@ export class BaseAPI {
       // configured origin (path + query only) so a Link pointing at another
       // host can't make us send the auth token there — the same rule the API
       // classes already apply to caller-supplied `nextUrl` values.
+      //
+      // Expand relative paths with ensureFullUrl() first: `new URL()` would
+      // resolve "/user/organizations" against basePath's origin and drop any
+      // path prefix (e.g. ".../api/v1"), and getNextUrlPathFromHeader() strips
+      // the full basePath from follow-up links, so they need it re-added too.
+      const fullUrl = ensureFullUrl(nextUrl, this.configuration.basePath);
       const requestUrl = buildPaginatedUrl(
-        nextUrl,
-        nextUrl,
+        fullUrl,
+        fullUrl,
         this.configuration.basePath,
       ).toString();
       const response: Response = await fetchWithValidatedRedirects(
