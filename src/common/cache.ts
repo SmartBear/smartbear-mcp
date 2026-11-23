@@ -104,8 +104,9 @@ export class CacheService {
    * Stop the expiry sweep timer and drop all entries.
    */
   close(): void {
-    this.cache?.close();
+    // Flush first: flushAll() re-arms the sweep timer, so close() must be last.
     this.cache?.flushAll();
+    this.cache?.close();
   }
 
   /**

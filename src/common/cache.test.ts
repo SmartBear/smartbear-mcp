@@ -88,4 +88,18 @@ describe("CacheService sweep timer", () => {
     cache.close();
     spy.mockRestore();
   });
+
+  it("close() leaves no sweep timer pending and drops entries", () => {
+    vi.useFakeTimers();
+    try {
+      const cache = new CacheService();
+      cache.set("k", 1);
+      expect(vi.getTimerCount()).toBeGreaterThan(0);
+      cache.close();
+      expect(vi.getTimerCount()).toBe(0);
+      expect(cache.get("k")).toBeUndefined();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
