@@ -1,32 +1,49 @@
 #!/usr/bin/env bash
-# Install the PactFlow unified CLI
+# Install the PactFlow unified CLI via mise
 #
-# Installs the Pact CLI into ${HOME}/.pact and creates a pact-broker shim so
-# existing scripts continue to work. The new CLI (0.10+) consolidates all
-# commands under a single `pact` binary; pact-broker is now a subcommand
-# (`pact broker`).
+# Installs the Pact CLI (https://github.com/pact-foundation/pact-cli) with mise's
+# github backend and creates a pact-broker shim so existing scripts continue to
+# work. The new CLI (0.10+) consolidates all commands under a single `pact`
+# binary; pact-broker is now a subcommand (`pact broker`).
+#
+# Using mise avoids the upstream install.sh, whose env script location changed
+# between releases (cargo-dist 0.32 -> 0.34).
 #
 # In GitHub Actions this also appends the bin directory to GITHUB_PATH.
 #
 # Usage:
-#   scripts/ci/pact-install-cli
+#   [PACT_CLI_VERSION=0.10.10] scripts/ci/pact-install-cli
 #
 set -euo pipefail
 
-curl -fsSL https://d.pactflow.io/pact/install.sh | bash
+PACT_CLI_VERSION="${PACT_CLI_VERSION:-latest}"
+PACT_CLI_VERSION="${PACT_CLI_VERSION#v}"
 
-# shellcheck source=/dev/null
-source "${HOME}/.pact/bin/env"
-
-if [ -n "${GITHUB_PATH-}" ]; then
-  printf '%s\n' "${HOME}/.pact/bin" >> "$GITHUB_PATH"
+if ! command -v mise >/dev/null 2>&1; then
+  curl -fsSL https://mise.run | sh
+  export PATH="${HOME}/.local/bin:${PATH}"
 fi
 
+mise use --global "github:pact-foundation/pact-cli@${PACT_CLI_VERSION}"
+
+PACT_BIN="$(mise which pact)"
+PACT_BIN_DIR="$(dirname "$PACT_BIN")"
+
+# Shim dir on PATH containing both `pact` and `pact-broker`
+SHIM_DIR="${HOME}/.pact/bin"
+mkdir -p "$SHIM_DIR"
+ln -sf "$PACT_BIN" "${SHIM_DIR}/pact"
+
 # Shim so `pact-broker <cmd>` delegates to `pact broker <cmd>`
-cat > "${HOME}/.pact/bin/pact-broker" <<'SHIM'
+cat > "${SHIM_DIR}/pact-broker" <<SHIM
 #!/usr/bin/env bash
-exec pact broker "$@"
+exec "${PACT_BIN}" broker "\$@"
 SHIM
-chmod +x "${HOME}/.pact/bin/pact-broker"
+chmod +x "${SHIM_DIR}/pact-broker"
+
+export PATH="${SHIM_DIR}:${PACT_BIN_DIR}:${PATH}"
+if [ -n "${GITHUB_PATH-}" ]; then
+  printf '%s\n' "$SHIM_DIR" >> "$GITHUB_PATH"
+fi
 
 command -v pact-broker >/dev/null 2>&1 || { echo "pact-broker not found after install" >&2; exit 1; }
