@@ -443,10 +443,14 @@ describe("QmetryClient tools", () => {
       sourceProjectId: 46893,
       sourceReleaseId: 92340,
       sourceBuildId: 131142,
-      releaseId: 92342,
-      cycleIds: [131144],
-      rqId: 3976920,
-      rqVersionId: 3987149,
+      releaseCycleMapping: [
+        { releaseId: 92342, cycleIds: [131144] },
+        { releaseId: 92341, cycleIds: [131143] },
+      ],
+      requirements: [
+        { rqId: 3976920, rqVersionId: 3987149 },
+        { rqId: 3976932, rqVersionId: 3987161 },
+      ],
     };
 
     it("should pass the IDs to the client with the default project", async () => {

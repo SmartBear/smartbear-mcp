@@ -1095,40 +1095,61 @@ export const LinkReleaseCycleWithRequirementArgsSchema = z.object({
     .number()
     .describe(
       "Release ID of the current project context (required). Take it from 'Fetch QMetry Project Info' -> currentReleaseId. " +
-        "This is NOT the release being linked - that goes in 'releaseId'.",
+        "This is NOT a release being linked - those go in 'releaseCycleMapping'.",
     ),
   sourceBuildId: z.coerce
     .number()
     .describe(
       "Cycle (build) ID of the current project context (required). Take it from 'Fetch QMetry Project Info' -> currentBuildId. " +
-        "This is NOT a cycle being linked - those go in 'cycleIds'.",
+        "This is NOT a cycle being linked - those go in 'releaseCycleMapping[].cycleIds'.",
     ),
-  releaseId: z.coerce
-    .number()
-    .describe(
-      "ID of the ONE release to link to the requirement (required). " +
-        "If the user gives a release name, resolve it with 'Fetch Releases and Cycles' (release names are unique in a project).",
-    ),
-  cycleIds: z
-    .array(z.coerce.number())
+  releaseCycleMapping: z
+    .array(
+      z.object({
+        releaseId: z.coerce
+          .number()
+          .describe(
+            "ID of a release to link. If the user gives a release name, resolve it with 'Fetch Releases and Cycles' (release names are unique in a project).",
+          ),
+        cycleIds: z
+          .array(z.coerce.number())
+          .min(1)
+          .describe(
+            "One or more cycle IDs (at least one) that belong to THIS release. " +
+              "If the user gives cycle names, resolve them with 'Fetch Releases and Cycles' under this release (cycle names are unique within a release). " +
+              "CRITICAL: the parameter name is 'cycleIds' - do NOT use 'buildIds' or 'cycle'.",
+          ),
+      }),
+    )
     .min(1)
     .describe(
-      "One or more cycle IDs (required, at least one) that belong to 'releaseId'. " +
-        "If the user gives cycle names, resolve them with 'Fetch Releases and Cycles' under that release (cycle names are unique within a release). " +
-        "CRITICAL: the parameter name is 'cycleIds' - do NOT use 'buildIds' or 'cycle'.",
+      "Releases to link and, for each, the cycles of that release to link (required, at least one release). " +
+        "One entry per release - do NOT repeat a releaseId; put all of its cycles in one entry. " +
+        "Example: [{ releaseId: 92342, cycleIds: [131144] }, { releaseId: 92341, cycleIds: [133715, 133716] }].",
     ),
-  rqId: z.coerce
-    .number()
+  requirements: z
+    .array(
+      z.object({
+        rqId: z.coerce
+          .number()
+          .describe(
+            "Requirement numeric ID, sent to QMetry as entityId. Not the entity key like 'MAC-RQ-730'. " +
+              "Resolve a key with 'Fetch Requirements' (filter on entityKeyId) -> data[].id.",
+          ),
+        rqVersionId: z.coerce
+          .number()
+          .describe(
+            "Requirement VERSION ID, e.g. 3987149 - NOT the visible version number like 1 or 2. " +
+              "Latest version: 'Fetch Requirements' (filter on entityKeyId) -> data[].versionId. " +
+              "Specific visible version N: 'Fetch Requirement Details' with id=rqId and version=N -> rqVersionID.",
+          ),
+      }),
+    )
+    .min(1)
     .describe(
-      "Requirement numeric ID (required), sent to QMetry as entityId. Not the entity key like 'MAC-RQ-730'. " +
-        "Resolve a key with 'Fetch Requirements' (filter on entityKeyId) -> data[0].id.",
-    ),
-  rqVersionId: z.coerce
-    .number()
-    .describe(
-      "Requirement VERSION ID (required), e.g. 3987149 - NOT the visible version number like 1 or 2. " +
-        "Latest version: 'Fetch Requirements' (filter on entityKeyId) -> data[0].versionId. " +
-        "Specific visible version N: 'Fetch Requirement Details' with id=rqId and version=N -> rqVersionID.",
+      "Existing requirement versions to link (required, at least one). Every release/cycle in 'releaseCycleMapping' is linked to EVERY requirement listed here. " +
+        "One entry per requirement - do NOT repeat an rqId. " +
+        "Example: [{ rqId: 3976920, rqVersionId: 3987149 }, { rqId: 3976932, rqVersionId: 3987161 }].",
     ),
 });
 

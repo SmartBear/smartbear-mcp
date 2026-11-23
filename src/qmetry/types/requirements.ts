@@ -59,10 +59,14 @@ export interface LinkReleaseCycleWithRequirementPayload {
   sourceProjectId: number; // required - currentProjectId from project info
   sourceReleaseId: number; // required - currentReleaseId from project info
   sourceBuildId: number; // required - currentBuildId from project info
-  releaseId: number; // required - release to link
-  cycleIds: number[]; // required - one or more cycle IDs of that release
-  rqId: number; // required - requirement numeric ID (entityId)
-  rqVersionId: number; // required - requirement version ID (entityData.version)
+  releaseCycleMapping: Array<{
+    releaseId: number; // release to link
+    cycleIds: number[]; // one or more cycle IDs of that release
+  }>; // required - at least one release, no repeated releaseId
+  requirements: Array<{
+    rqId: number; // requirement numeric ID (entityData[].entityId)
+    rqVersionId: number; // requirement version ID (entityData[].version)
+  }>; // required - at least one requirement, no repeated rqId
 }
 
 export interface FetchRequirementsPayload

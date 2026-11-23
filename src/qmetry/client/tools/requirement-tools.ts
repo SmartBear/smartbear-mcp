@@ -746,18 +746,19 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
     title: "Link Release Cycle with Requirement",
     toolset: "Requirements",
     summary:
-      "Link a release and one or more of its cycles to a requirement that ALREADY EXISTED before this request. Never use it right after Create Requirement.",
+      "Link one or more releases and their cycles to one or more requirements that ALREADY EXISTED before this request. Never use it right after Create Requirement.",
     handler: QMetryToolsHandlers.LINK_RELEASE_CYCLE_WITH_REQUIREMENT,
     inputSchema: LinkReleaseCycleWithRequirementArgsSchema,
     purpose:
       "ONLY for requirements that existed BEFORE the current request. Update Requirement cannot change a requirement's releases/cycles, " +
-      "so this tool is the only way to add a release and its cycles to an existing requirement version, for release planning and traceability. " +
+      "so this tool is the only way to add releases and their cycles to existing requirement versions, for release planning and traceability. " +
       "NOT for new requirements: to create a requirement with a release/cycle, pass associateRelCyc: true and releaseCycleMapping to Create Requirement in ONE call. " +
-      "One call links exactly ONE requirement to ONE release; to link more requirements or releases, call the tool once per requirement/release pair.",
+      "One call links EVERY release/cycle in releaseCycleMapping to EVERY requirement in requirements, so link several releases and requirements together in a single call.",
     useCases: [
       "Link a requirement to a release and one of its cycles",
-      "Link a requirement to several cycles of the same release in one call",
-      "Link a requirement identified by key (e.g. MAC-RQ-730) to a release/cycle given by name",
+      "Link a requirement to several cycles of the same release",
+      "Link several releases, each with its own cycles, to several requirements in one call",
+      "Link requirements identified by key (e.g. MAC-RQ-730) to releases/cycles given by name",
       "Link a specific (non-latest) version of a requirement to a release/cycle",
     ],
     examples: [
@@ -768,24 +769,28 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
           sourceProjectId: 46893,
           sourceReleaseId: 92340,
           sourceBuildId: 131142,
-          releaseId: 92342,
-          cycleIds: [131144],
-          rqId: 3976920,
-          rqVersionId: 3987149,
+          releaseCycleMapping: [{ releaseId: 92342, cycleIds: [131144] }],
+          requirements: [{ rqId: 3976920, rqVersionId: 3987149 }],
         },
         expectedOutput:
           "code CO.REL_CYCLE_LINK_SUCCESS - Release(s) and Cycle(s) associated successfully.",
       },
       {
-        description: "Link a requirement to two cycles of one release",
+        description:
+          "Link two releases (each with its own cycles) to three requirements in one call",
         parameters: {
           sourceProjectId: 46893,
           sourceReleaseId: 92340,
           sourceBuildId: 131142,
-          releaseId: 92341,
-          cycleIds: [133715, 133716],
-          rqId: 3976920,
-          rqVersionId: 3987149,
+          releaseCycleMapping: [
+            { releaseId: 92342, cycleIds: [131144] },
+            { releaseId: 92341, cycleIds: [131143, 133715] },
+          ],
+          requirements: [
+            { rqId: 3976920, rqVersionId: 3987149 },
+            { rqId: 3976932, rqVersionId: 3987161 },
+            { rqId: 3976933, rqVersionId: 3987162 },
+          ],
         },
         expectedOutput:
           "code CO.REL_CYCLE_LINK_SUCCESS - Release(s) and Cycle(s) associated successfully.",
@@ -795,25 +800,28 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       "CRITICAL: NEVER call this tool right after Create Requirement in the same request. " +
         "If the user asks to create a requirement AND link/associate a release or cycle, put associateRelCyc: true and releaseCycleMapping " +
         "in the Create Requirement call itself - one call, no follow-up link.",
-      "Use this tool only when the requirement already existed before this request (the user names an existing requirement by key, ID or name).",
-      "CRITICAL: ALL parameters are required. Only ONE release and ONE requirement per call - for more, call the tool again.",
+      "Use this tool only when the requirements already existed before this request (the user names existing requirements by key, ID or name).",
+      "CRITICAL: ALL parameters are required. Put ALL releases in releaseCycleMapping and ALL requirements in requirements and make ONE call - " +
+        "every listed release/cycle is linked to every listed requirement. Only split into several calls when different requirements need DIFFERENT releases/cycles.",
       "STEP 1 - source IDs: call 'Fetch QMetry Project Info' and use currentProjectId -> sourceProjectId, currentReleaseId -> sourceReleaseId, currentBuildId -> sourceBuildId. " +
-        "These describe the current project context, NOT the release/cycle being linked.",
-      "STEP 2 - releaseId and cycleIds: use the IDs the user gave, or call 'Fetch Releases and Cycles' and match the release by name, then match each cycle name among THAT release's cycles. " +
-        "Release names are unique in a project and cycle names are unique within a release, so a name match is exact.",
-      "STEP 3 - rqId: use the numeric ID the user gave, or resolve a key (e.g. MAC-RQ-730) with 'Fetch Requirements' using filter " +
-        `'[{"type":"string","value":"MAC-RQ-730","field":"entityKeyId"}]' -> data[0].id.`,
-      "STEP 4 - rqVersionId (a version ID like 3987149, NOT a visible version number): " +
-        "if the user named NO version, use the LATEST: 'Fetch Requirements' (filter on entityKeyId) -> data[0].versionId (data[0].associatedVersion is the latest visible number). " +
-        "If you only have the numeric rqId, first call 'Fetch Requirement Details' with id=rqId and version=1 to read entityKey, then use 'Fetch Requirements' as above. " +
-        "If the user named a visible version N (e.g. 'version 2'), call 'Fetch Requirement Details' with id=rqId and version=N and use rqVersionID.",
+        "These describe the current project context, NOT the releases/cycles being linked.",
+      "STEP 2 - releaseCycleMapping: one entry per release ({ releaseId, cycleIds }); never repeat a releaseId. Use the IDs the user gave, or call 'Fetch Releases and Cycles', " +
+        "match each release by name, then match each cycle name among THAT release's cycles. " +
+        "Release names are unique in a project and cycle names are unique within a release, so a name match is exact. A cycle must belong to the release it is listed under.",
+      "STEP 3 - requirements[].rqId: use the numeric IDs the user gave, or resolve keys with ONE 'Fetch Requirements' call using a comma-separated filter " +
+        `'[{"type":"string","value":"MAC-RQ-730,MAC-RQ-731","field":"entityKeyId"}]' -> data[].id (set limit to at least the number of keys).`,
+      "STEP 4 - requirements[].rqVersionId (a version ID like 3987149, NOT a visible version number): " +
+        "if the user named NO version, use the LATEST: 'Fetch Requirements' (filter on entityKeyId) -> data[].versionId (data[].associatedVersion is the latest visible number). " +
+        "If you only have a numeric rqId, first call 'Fetch Requirement Details' with id=rqId and version=1 to read entityKey, then use 'Fetch Requirements' as above. " +
+        "If the user named a visible version N for a requirement (e.g. 'version 2'), call 'Fetch Requirement Details' with id=rqId and version=N and use rqVersionID.",
       "ASK THE USER - do not guess - when a requirement key, requirement version, release name or cycle name cannot be resolved " +
         "(no match in Fetch Requirements / Fetch Releases and Cycles, or Fetch Requirement Details fails for that version number).",
-      "RESPONSE: code CO.REL_CYCLE_LINK_SUCCESS means the link was made. If 'duplicate_rel_cycle' is also present, the release/cycle pairs listed there were ALREADY linked and were skipped; the rest were linked - tell the user both.",
+      "RESPONSE: code CO.REL_CYCLE_LINK_SUCCESS means the links were made. If 'duplicate_rel_cycle' is also present, the release/cycle pairs listed there were ALREADY linked and were skipped; the rest were linked - tell the user both.",
       "RESPONSE: success=true with code RQ.REL_CYC_EXIST means EVERY selected release/cycle was already linked - nothing changed; tell the user, do not retry.",
-      "ERROR CO.INVALID_RELEASE_ID: releaseId is wrong - re-check it with 'Fetch Releases and Cycles'.",
-      "ERROR CO.INVALID_BUILD_ID ('Invalid Build ID.'): at least one cycle ID is wrong (QMetry calls cycles 'builds'). The whole request fails and NOTHING is linked - " +
-        "re-check every cycleId belongs to releaseId with 'Fetch Releases and Cycles', then retry with valid IDs only.",
+      "ERRORS: each of these fails the WHOLE request and NOTHING is linked - fix the bad ID and retry with valid IDs only:",
+      "  CO.INVALID_RELEASE_ID: a releaseId is wrong - re-check releases with 'Fetch Releases and Cycles'.",
+      "  CO.INVALID_BUILD_ID ('Invalid Build ID.'): at least one cycle ID is wrong (QMetry calls cycles 'builds') - re-check that every cycleId belongs to the release it is listed under.",
+      "  RQ.ENTITY_NOT_FOUND_ERROR: at least one requirement rqId/rqVersionId is wrong - re-resolve the requirements with 'Fetch Requirements' / 'Fetch Requirement Details'.",
     ],
     outputDescription:
       "JSON object with success, code (CO.REL_CYCLE_LINK_SUCCESS or RQ.REL_CYC_EXIST), message, and duplicate_rel_cycle listing release/cycle pairs that were already linked.",

@@ -286,11 +286,16 @@ export async function fetchRequirementsLinkedToTestCase(
   });
 }
 
+const isValidId = (value: unknown): value is number =>
+  typeof value === "number" && !Number.isNaN(value);
+
 /**
- * Links one release and one or more of its cycles to one existing requirement
- * version. QMetry treats a cycle as a build, so cycle errors come back as
- * CO.INVALID_BUILD_ID.
- * @throws If any required ID is missing/invalid or `cycleIds` is empty.
+ * Links one or more releases (each with one or more of its cycles) to one or
+ * more existing requirement versions. Every release/cycle in the mapping is
+ * linked to every requirement. QMetry treats a cycle as a build, so cycle
+ * errors come back as CO.INVALID_BUILD_ID.
+ * @throws If a required ID is missing/invalid, a list is empty, or a
+ * releaseId / rqId is repeated.
  */
 export async function linkReleaseCycleWithRequirement(
   token: string,
@@ -298,38 +303,76 @@ export async function linkReleaseCycleWithRequirement(
   project: string | undefined,
   payload: LinkReleaseCycleWithRequirementPayload,
 ) {
+  const fn = "linkReleaseCycleWithRequirement";
   const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
     baseUrl,
     project,
   );
 
-  const numericFields = [
+  for (const field of [
     "sourceProjectId",
     "sourceReleaseId",
     "sourceBuildId",
-    "releaseId",
-    "rqId",
-    "rqVersionId",
-  ] as const;
-  for (const field of numericFields) {
-    const value = payload?.[field];
-    if (typeof value !== "number" || Number.isNaN(value)) {
+  ] as const) {
+    if (!isValidId(payload?.[field])) {
       throw new ToolError(
-        `[linkReleaseCycleWithRequirement] Missing or invalid required parameter: '${field}'.`,
+        `[${fn}] Missing or invalid required parameter: '${field}'.`,
       );
     }
   }
 
-  const cycleIds = payload.cycleIds;
-  if (
-    !Array.isArray(cycleIds) ||
-    cycleIds.length === 0 ||
-    cycleIds.some((id) => typeof id !== "number" || Number.isNaN(id))
-  ) {
+  const mapping = payload.releaseCycleMapping;
+  if (!Array.isArray(mapping) || mapping.length === 0) {
     throw new ToolError(
-      "[linkReleaseCycleWithRequirement] Missing or invalid required parameter: 'cycleIds' (must be a non-empty array of numeric cycle IDs).",
+      `[${fn}] Missing or invalid required parameter: 'releaseCycleMapping' (must be a non-empty array of { releaseId, cycleIds }).`,
     );
   }
+  const seenReleases = new Set<number>();
+  mapping.forEach((entry, i) => {
+    if (!isValidId(entry?.releaseId)) {
+      throw new ToolError(
+        `[${fn}] Missing or invalid required parameter: 'releaseCycleMapping[${i}].releaseId'.`,
+      );
+    }
+    if (
+      !Array.isArray(entry.cycleIds) ||
+      entry.cycleIds.length === 0 ||
+      !entry.cycleIds.every(isValidId)
+    ) {
+      throw new ToolError(
+        `[${fn}] Missing or invalid required parameter: 'releaseCycleMapping[${i}].cycleIds' (must be a non-empty array of numeric cycle IDs).`,
+      );
+    }
+    if (seenReleases.has(entry.releaseId)) {
+      throw new ToolError(
+        `[${fn}] Release ${entry.releaseId} appears more than once in 'releaseCycleMapping'. Put all of its cycles in one entry.`,
+      );
+    }
+    seenReleases.add(entry.releaseId);
+  });
+
+  const requirements = payload.requirements;
+  if (!Array.isArray(requirements) || requirements.length === 0) {
+    throw new ToolError(
+      `[${fn}] Missing or invalid required parameter: 'requirements' (must be a non-empty array of { rqId, rqVersionId }).`,
+    );
+  }
+  const seenRequirements = new Set<number>();
+  requirements.forEach((rq, i) => {
+    for (const field of ["rqId", "rqVersionId"] as const) {
+      if (!isValidId(rq?.[field])) {
+        throw new ToolError(
+          `[${fn}] Missing or invalid required parameter: 'requirements[${i}].${field}'.`,
+        );
+      }
+    }
+    if (seenRequirements.has(rq.rqId)) {
+      throw new ToolError(
+        `[${fn}] Requirement ${rq.rqId} appears more than once in 'requirements'. List each requirement once.`,
+      );
+    }
+    seenRequirements.add(rq.rqId);
+  });
 
   const body = {
     sourceBuildId: payload.sourceBuildId,
@@ -337,23 +380,19 @@ export async function linkReleaseCycleWithRequirement(
     sourceReleaseId: payload.sourceReleaseId,
     sourceScope: "project",
     entityType: "RQ",
-    releaseCycleMapping: [
-      {
-        release: payload.releaseId,
-        cycle: cycleIds,
-        version: 1,
-      },
-    ],
+    releaseCycleMapping: mapping.map((entry) => ({
+      release: entry.releaseId,
+      cycle: entry.cycleIds,
+      version: 1,
+    })),
     opType: "otherScope",
     withVersion: true,
     updateFlag: false,
     destinationProjectId: payload.sourceProjectId,
-    entityData: [
-      {
-        entityId: payload.rqId,
-        version: payload.rqVersionId,
-      },
-    ],
+    entityData: requirements.map((rq) => ({
+      entityId: rq.rqId,
+      version: rq.rqVersionId,
+    })),
   };
 
   return qmetryRequest<unknown>({
