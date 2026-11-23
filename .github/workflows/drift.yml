@@ -56,6 +56,12 @@ jobs:
           PACT_BROKER_BASE_URL: ${{ secrets.PACT_BROKER_BASE_URL }}
           PACT_BROKER_TOKEN: ${{ secrets.PACT_BROKER_TOKEN }}
 
+      - name: Setup mise (pact CLI)
+        uses: jdx/mise-action@924e7c586e33d7d4bae9c14e26c5d22e2beb6e78 # v5.3.0
+        if: ${{ !cancelled() && steps.drift.outcome != 'skipped' }}
+        with:
+          install_args: github:pact-foundation/pact-cli
+
       - name: Install pact CLI tools
         if: ${{ !cancelled() && steps.drift.outcome != 'skipped' }}
         run: ./scripts/ci/pact-install-cli
