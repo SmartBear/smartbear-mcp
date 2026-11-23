@@ -1,49 +1,31 @@
 #!/usr/bin/env bash
-# Install the PactFlow unified CLI via mise
+# Set up the `pact-broker` compatibility shim for the PactFlow unified CLI
 #
-# Installs the Pact CLI (https://github.com/pact-foundation/pact-cli) with mise's
-# github backend and creates a pact-broker shim so existing scripts continue to
-# work. The new CLI (0.10+) consolidates all commands under a single `pact`
-# binary; pact-broker is now a subcommand (`pact broker`).
+# The Pact CLI itself is installed by mise (see mise.toml; in GitHub Actions via
+# jdx/mise-action). The new CLI (0.10+) consolidates all commands under a single
+# `pact` binary; pact-broker is now a subcommand (`pact broker`). This script
+# creates a `pact-broker` shim so existing scripts continue to work, and, in
+# GitHub Actions, appends the shim directory to GITHUB_PATH.
 #
-# Using mise avoids the upstream install.sh, whose env script location changed
-# between releases (cargo-dist 0.32 -> 0.34).
-#
-# In GitHub Actions this also appends the bin directory to GITHUB_PATH.
-#
-# Usage:
-#   [PACT_CLI_VERSION=0.10.10] scripts/ci/pact-install-cli
+# Usage (requires `pact` on PATH, e.g. `mise install && eval "$(mise activate bash)"`):
+#   scripts/ci/pact-install-cli
 #
 set -euo pipefail
 
-PACT_CLI_VERSION="${PACT_CLI_VERSION:-latest}"
-PACT_CLI_VERSION="${PACT_CLI_VERSION#v}"
+command -v pact >/dev/null 2>&1 || { echo "pact not found on PATH; install it with mise first" >&2; exit 1; }
 
-if ! command -v mise >/dev/null 2>&1; then
-  curl -fsSL https://mise.run | sh
-  export PATH="${HOME}/.local/bin:${PATH}"
-fi
-
-mise use --global "github:pact-foundation/pact-cli@${PACT_CLI_VERSION}"
-
-PACT_BIN="$(mise which pact)"
-PACT_BIN_DIR="$(dirname "$PACT_BIN")"
-
-# Shim dir on PATH containing both `pact` and `pact-broker`
 SHIM_DIR="${HOME}/.pact/bin"
 mkdir -p "$SHIM_DIR"
-ln -sf "$PACT_BIN" "${SHIM_DIR}/pact"
 
-# Shim so `pact-broker <cmd>` delegates to `pact broker <cmd>`
 cat > "${SHIM_DIR}/pact-broker" <<SHIM
 #!/usr/bin/env bash
-exec "${PACT_BIN}" broker "\$@"
+exec "$(command -v pact)" broker "\$@"
 SHIM
 chmod +x "${SHIM_DIR}/pact-broker"
 
-export PATH="${SHIM_DIR}:${PACT_BIN_DIR}:${PATH}"
+export PATH="${SHIM_DIR}:${PATH}"
 if [ -n "${GITHUB_PATH-}" ]; then
   printf '%s\n' "$SHIM_DIR" >> "$GITHUB_PATH"
 fi
 
-command -v pact-broker >/dev/null 2>&1 || { echo "pact-broker not found after install" >&2; exit 1; }
+command -v pact-broker >/dev/null 2>&1 || { echo "pact-broker not found after setup" >&2; exit 1; }
