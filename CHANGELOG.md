@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [BugSnag] List Project Errors now documents its default `event.since=30d` and `error.status=open` filters, so fixed, ignored, snoozed or older errors no longer look like they don't exist.
 - [BugSnag] The pagination fields described for List Project Errors now match what the tool returns (`data_count`, `total_count`), and the Get Build hint no longer refers to a non-existent "List builds" tool.
 - [BugSnag] `Get Release` no longer fails with `Expected response to be an array`. The builds in a release are now listed from `/release_groups/{id}/releases` instead of the release group endpoint, which returns a single object.[PLAT-17136](https://smartbear.atlassian.net/browse/PLAT-17136)
+- [Common] HTTP transport: sessions abandoned by clients (no `DELETE`, SSE stream never closed) were never freed, so memory grew until the process ran out of heap. Sessions idle for longer than `SESSION_IDLE_TIMEOUT_MS` (default 4 hours, `0` disables) are now closed; sessions with an open stream or a request in flight are never reaped. A client returning with a reaped session id receives 404 and must re-initialize. stdio mode is unaffected. Per-server caches no longer run node-cache's sweep timer, which kept each cache reachable after its server was gone.
 
 ## [0.44.0] - 2026-11-13
 
