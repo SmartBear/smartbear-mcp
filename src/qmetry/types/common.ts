@@ -400,6 +400,20 @@ export const ApiQuotaStatusArgsSchema = z.object({
 export const ReleasesCyclesArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
   showArchive: CommonFields.showArchive,
+  projectID: z.coerce
+    .number()
+    .optional()
+    .describe(
+      "Optional NUMERIC ID of the project whose releases and cycles to return (currentProjectId from Fetch QMetry Project Info). " +
+        "Not the projectKey. If omitted, the server looks it up from projectKey (or the project selected in QMetry). Ignored when allProjects is true.",
+    ),
+  allProjects: z
+    .boolean()
+    .optional()
+    .describe(
+      "Default false: return releases and cycles of the current project only. " +
+        "Set true ONLY when the user explicitly asks for releases/cycles across ALL projects.",
+    ),
 });
 
 export const BuildArgsSchema = z.object({
@@ -1326,14 +1340,14 @@ export const TestCasesLinkedToRequirementArgsSchema = z.object({
     .optional()
     .describe(
       "Filter test cases by release ID. Accepts a string or number. " +
-        "Get release IDs from FETCH_RELEASES_AND_CYCLES tool.",
+        "Get release IDs from 'Fetch Releases and Cycles' tool.",
     ),
   cycleID: z.coerce
     .string()
     .optional()
     .describe(
       "Filter test cases by cycle ID. Accepts a string or number. " +
-        "Get cycle IDs from FETCH_RELEASES_AND_CYCLES tool.",
+        "Get cycle IDs from 'Fetch Releases and Cycles' tool.",
     ),
   filter: CommonFields.filter,
   getSubEntities: z
@@ -1373,7 +1387,7 @@ export const CreateTestSuiteArgsSchema = z.object({
           .describe(
             "Release numeric ID. " +
               "CRITICAL: key is 'releaseId' (lowercase d) — do NOT use 'releaseID', 'release', or 'releaseKey'. " +
-              "Get from project info → projects[<index>].releases[<index>].releaseID. " +
+              "Get it from 'Fetch Releases and Cycles': the release node's relID (match the release by its 'type', i.e. name). " +
               "NEVER use the TC mapping key 'release' here — test suite mapping uses 'releaseId'.",
           ),
         buildID: z
@@ -1381,7 +1395,7 @@ export const CreateTestSuiteArgsSchema = z.object({
           .describe(
             "Cycle/Build numeric ID. " +
               "CRITICAL: key is 'buildID' (capital D) — do NOT use 'cycleId', 'cycle', 'buildId', or 'cycleID'. " +
-              "Get from project info → projects[<index>].releases[<index>].builds[<index>].buildID. " +
+              "Get it from 'Fetch Releases and Cycles': the cycle node's cyclID, under the chosen release (match the cycle by its 'type', i.e. name). " +
               "NEVER use the TC mapping key 'cycle' here — test suite mapping uses 'buildID'.",
           ),
       }),

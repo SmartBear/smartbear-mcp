@@ -1767,6 +1767,20 @@ describe("QmetryClient tools", () => {
 
       expect(result.content[0].text).toContain("Archived Release");
     });
+
+    it("passes allProjects and projectID through and keeps projectKey out of the payload", async () => {
+      (project.getReleasesCycles as any).mockResolvedValue({ children: [] });
+
+      const handler = getHandler("Fetch Releases and Cycles");
+      await handler({ projectKey: "MAC", projectID: 42, allProjects: true });
+
+      expect(project.getReleasesCycles).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "MAC",
+        { projectID: 42, allProjects: true },
+      );
+    });
   });
 
   describe("Fetch Builds", () => {

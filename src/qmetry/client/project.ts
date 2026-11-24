@@ -356,32 +356,89 @@ export async function getProjects(
   return result;
 }
 
+/** UI-only fields of the scope tree that carry no information for the caller. */
+const SCOPE_TREE_FIELDS_TO_OMIT = new Set(["iconCls", "expanded", "leaf"]);
+
+/** Recursively removes UI-only fields from a scope tree node and its children. */
+function stripScopeTreeNode(node: unknown): unknown {
+  if (!node || typeof node !== "object" || Array.isArray(node)) return node;
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(node)) {
+    if (SCOPE_TREE_FIELDS_TO_OMIT.has(key)) continue;
+    out[key] =
+      key === "children" && Array.isArray(value)
+        ? value.map(stripScopeTreeNode)
+        : value;
+  }
+  return out;
+}
+
+/**
+ * Fetches the release/cycle scope tree (`/rest/admin/scope/tree`).
+ *
+ * The API returns the tree for every project the user can access. To save
+ * tokens, unless `allProjects` is true the result is trimmed to the current
+ * project: the one given by `projectID`, or else the `currentProjectId` that
+ * getinfo reports for `project`. If that project can't be determined or isn't
+ * in the tree, the full tree is returned. UI-only fields (iconCls, expanded,
+ * leaf, and the root's `text`) are always dropped.
+ */
 export async function getReleasesCycles(
   token: string,
   baseUrl: string,
   project?: string,
-  payload: { showArchive?: boolean } = {},
+  payload: {
+    showArchive?: boolean;
+    projectID?: number;
+    allProjects?: boolean;
+  } = {},
 ) {
-  let showArchiveValue: boolean;
-
-  if (payload.showArchive !== undefined) {
-    showArchiveValue = payload.showArchive;
-  } else {
-    showArchiveValue = false;
-  }
-
   const body: { showArchive: boolean } = {
-    showArchive: showArchiveValue,
+    showArchive: payload.showArchive ?? false,
   };
 
-  return qmetryRequest({
-    method: "POST",
-    path: QMETRY_PATHS.PROJECT.GET_RELEASES_CYCLES,
-    token,
-    baseUrl: baseUrl || QMETRY_DEFAULTS.BASE_URL,
-    project: project || QMETRY_DEFAULTS.PROJECT_KEY,
-    body,
-  });
+  const filterToProject = payload.allProjects !== true;
+  const explicitId =
+    typeof payload.projectID === "number" && Number.isFinite(payload.projectID)
+      ? payload.projectID
+      : undefined;
+
+  const [tree, resolvedId] = await Promise.all([
+    qmetryRequest<{ children?: unknown[] } & Record<string, unknown>>({
+      method: "POST",
+      path: QMETRY_PATHS.PROJECT.GET_RELEASES_CYCLES,
+      token,
+      baseUrl: baseUrl || QMETRY_DEFAULTS.BASE_URL,
+      project: project || QMETRY_DEFAULTS.PROJECT_KEY,
+      body,
+    }),
+    filterToProject && explicitId === undefined
+      ? getProjectInfo(token, baseUrl, project)
+          .then((info) => info.currentProjectId as number | string | undefined)
+          .catch(() => undefined)
+      : Promise.resolve(explicitId),
+  ]);
+
+  if (!tree || typeof tree !== "object" || !Array.isArray(tree.children)) {
+    return tree;
+  }
+
+  const { text: _text, ...rest } = tree;
+  const projects = tree.children.map(stripScopeTreeNode);
+
+  if (filterToProject && resolvedId !== undefined && resolvedId !== null) {
+    const match = projects.filter(
+      (p) =>
+        !!p &&
+        typeof p === "object" &&
+        String((p as Record<string, unknown>).projID) === String(resolvedId),
+    );
+    if (match.length > 0) {
+      return { ...rest, children: match };
+    }
+  }
+
+  return { ...rest, children: projects };
 }
 
 /**

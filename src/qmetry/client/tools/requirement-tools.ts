@@ -592,7 +592,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       "showEntityWithReleaseCycle=true: Only show test cases that have the specified release and cycle",
       "showEntityWithReleaseCycle=false (default): Show all test cases regardless of release/cycle",
       "RELEASE/CYCLE FILTERING: Use string IDs, not numeric (e.g., releaseID: '55178', cycleID: '111577')",
-      "Get release/cycle IDs from FETCH_RELEASES_AND_CYCLES tool before filtering",
+      "Get release/cycle IDs from 'Fetch Releases and Cycles' tool before filtering",
       "tcFolderPath: Use empty string '' for root folder or specific path like '/Sample Template'",
       "FILTER CAPABILITIES: Support same filters as regular test case listing",
       "FILTER FIELDS: summary, rqVersion, priorityAlias, testCaseStateAlias, createdByAlias, testCaseTypeAlias, testingTypeAlias, release, cycle, isArchived, isParameterized, componentAlias, entityKeyId",

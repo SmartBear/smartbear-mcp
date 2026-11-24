@@ -90,250 +90,304 @@ describe("getReleasesCycles", () => {
   const baseUrl = "https://qmetry.example";
   const projectKey = "TEST_PROJECT";
 
+  const tree = {
+    text: ".",
+    children: [
+      {
+        projID: 100,
+        type: "Project A",
+        isArchived: false,
+        isLocked: false,
+        iconCls: "ad-project-ico",
+        expanded: true,
+        children: [
+          {
+            relID: 1001,
+            type: "Release A1",
+            isLocked: false,
+            scope: "release",
+            isArchived: false,
+            startdate: "2026-06-09T04:00:00",
+            targetdate: "2026-07-01T04:00:00",
+            iconCls: "ad-release-ico",
+            expanded: true,
+            children: [
+              {
+                cyclID: 5001,
+                type: "Cycle A1.1",
+                isLocked: false,
+                scope: "cycle",
+                isArchived: false,
+                iconCls: "ad-cycle-ico",
+                leaf: true,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        projID: 200,
+        type: "Project B",
+        isArchived: false,
+        isLocked: false,
+        iconCls: "ad-project-ico",
+        expanded: true,
+        children: [
+          {
+            relID: 2001,
+            type: "Release B1",
+            isLocked: false,
+            scope: "release",
+            isArchived: false,
+            iconCls: "ad-release-ico",
+            expanded: true,
+            children: [
+              {
+                cyclID: 6001,
+                type: "Cycle B1.1",
+                isLocked: false,
+                scope: "cycle",
+                isArchived: false,
+                iconCls: "ad-cycle-ico",
+                leaf: true,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+
+  const strippedA = {
+    projID: 100,
+    type: "Project A",
+    isArchived: false,
+    isLocked: false,
+    children: [
+      {
+        relID: 1001,
+        type: "Release A1",
+        isLocked: false,
+        scope: "release",
+        isArchived: false,
+        startdate: "2026-06-09T04:00:00",
+        targetdate: "2026-07-01T04:00:00",
+        children: [
+          {
+            cyclID: 5001,
+            type: "Cycle A1.1",
+            isLocked: false,
+            scope: "cycle",
+            isArchived: false,
+          },
+        ],
+      },
+    ],
+  };
+
+  const strippedB = {
+    projID: 200,
+    type: "Project B",
+    isArchived: false,
+    isLocked: false,
+    children: [
+      {
+        relID: 2001,
+        type: "Release B1",
+        isLocked: false,
+        scope: "release",
+        isArchived: false,
+        children: [
+          {
+            cyclID: 6001,
+            type: "Cycle B1.1",
+            isLocked: false,
+            scope: "cycle",
+            isArchived: false,
+          },
+        ],
+      },
+    ],
+  };
+
+  function okResponse(body: unknown) {
+    return {
+      ok: true,
+      json: async () => body,
+      text: async () => JSON.stringify(body),
+    };
+  }
+
+  /** Routes scope/tree and getinfo to separate responses. */
+  function mockFetch(
+    treeBody: unknown,
+    info: unknown | Error = { currentProjectId: 200, projects: [] },
+  ) {
+    global.fetch = vi.fn().mockImplementation(async (url: string) => {
+      if (url.endsWith("/rest/admin/scope/tree")) return okResponse(treeBody);
+      if (url.endsWith("/rest/admin/project/getinfo")) {
+        if (info instanceof Error) {
+          return { ok: false, status: 500, text: async () => info.message };
+        }
+        return okResponse(info);
+      }
+      throw new Error(`unexpected URL ${url}`);
+    });
+  }
+
+  function treeCalls() {
+    return (global.fetch as any).mock.calls.filter(([url]: [string]) =>
+      url.endsWith("/rest/admin/scope/tree"),
+    );
+  }
+
+  function infoCalls() {
+    return (global.fetch as any).mock.calls.filter(([url]: [string]) =>
+      url.endsWith("/rest/admin/project/getinfo"),
+    );
+  }
+
   beforeEach(() => {
     vi.resetAllMocks();
   });
 
-  it("should call fetch with correct URL and headers for default behavior (showArchive: false)", async () => {
-    const mockResponse = {
-      text: ".",
-      children: [
-        {
-          projID: 12997,
-          type: "Test Project",
-          isArchived: false,
-          children: [
-            {
-              relID: 75414,
-              type: "Default Release",
-              isArchived: false,
-              children: [
-                {
-                  cyclID: 176734,
-                  type: "Default Cycle",
-                  isArchived: false,
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    };
+  it("posts showArchive: false by default with the project header", async () => {
+    mockFetch(tree);
 
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => mockResponse,
-      text: async () => JSON.stringify(mockResponse),
+    await getReleasesCycles(token, baseUrl, projectKey);
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      `${baseUrl}/rest/admin/scope/tree`,
+      expect.objectContaining({
+        method: "POST",
+        headers: expect.objectContaining({
+          apikey: token,
+          project: projectKey,
+          "Content-Type": "application/json",
+          "User-Agent": expect.stringContaining("SmartBear MCP Server"),
+        }),
+        body: JSON.stringify({ showArchive: false }),
+      }),
+    );
+  });
+
+  it.each([
+    true,
+    false,
+  ])("sends only showArchive: %s in the body", async (showArchive) => {
+    mockFetch(tree);
+
+    await getReleasesCycles(token, baseUrl, projectKey, {
+      showArchive,
+      projectID: 100,
+      allProjects: false,
     });
+
+    expect(treeCalls()[0][1].body).toBe(JSON.stringify({ showArchive }));
+  });
+
+  it("trims to the current project resolved via getinfo and strips UI fields", async () => {
+    mockFetch(tree, { currentProjectId: 200, projects: [] });
 
     const result = await getReleasesCycles(token, baseUrl, projectKey);
 
-    expect(global.fetch).toHaveBeenCalledWith(
-      `${baseUrl}/rest/admin/scope/tree`,
-      expect.objectContaining({
-        method: "POST",
-        headers: expect.objectContaining({
-          apikey: token,
-          project: projectKey,
-          "Content-Type": "application/json",
-          "User-Agent": expect.stringContaining("SmartBear MCP Server"),
-        }),
-        body: JSON.stringify({ showArchive: false }),
-      }),
-    );
-
-    expect(result).toEqual(mockResponse);
+    expect(infoCalls()).toHaveLength(1);
+    expect(infoCalls()[0][1].headers.project).toBe(projectKey);
+    expect(result).toEqual({ children: [strippedB] });
   });
 
-  it("should call fetch with showArchive: true when explicitly provided", async () => {
-    const mockResponse = {
-      text: ".",
-      children: [
-        {
-          projID: 12997,
-          type: "Test Project",
-          isArchived: false,
-          children: [
-            {
-              relID: 75414,
-              type: "Default Release",
-              isArchived: false,
-              children: [
-                {
-                  cyclID: 176734,
-                  type: "Default Cycle",
-                  isArchived: false,
-                },
-              ],
-            },
-            {
-              relID: 75415,
-              type: "Archived Release",
-              isArchived: true,
-              children: [
-                {
-                  cyclID: 176735,
-                  type: "Archived Cycle",
-                  isArchived: true,
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    };
+  it("matches a string currentProjectId against numeric projID", async () => {
+    mockFetch(tree, { currentProjectId: "100", projects: [] });
 
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => mockResponse,
-      text: async () => JSON.stringify(mockResponse),
-    });
+    const result = await getReleasesCycles(token, baseUrl, projectKey);
+
+    expect(result).toEqual({ children: [strippedA] });
+  });
+
+  it("uses the explicit projectID and skips getinfo", async () => {
+    mockFetch(tree);
 
     const result = await getReleasesCycles(token, baseUrl, projectKey, {
-      showArchive: true,
+      projectID: 100,
     });
 
-    expect(global.fetch).toHaveBeenCalledWith(
-      `${baseUrl}/rest/admin/scope/tree`,
-      expect.objectContaining({
-        method: "POST",
-        headers: expect.objectContaining({
-          apikey: token,
-          project: projectKey,
-          "Content-Type": "application/json",
-          "User-Agent": expect.stringContaining("SmartBear MCP Server"),
-        }),
-        body: JSON.stringify({ showArchive: true }),
-      }),
-    );
-
-    expect(result).toEqual(mockResponse);
+    expect(infoCalls()).toHaveLength(0);
+    expect(result).toEqual({ children: [strippedA] });
   });
 
-  it("should call fetch with showArchive: false when explicitly provided", async () => {
-    const mockResponse = {
-      text: ".",
-      children: [
-        {
-          projID: 12997,
-          type: "Test Project",
-          isArchived: false,
-          children: [
-            {
-              relID: 75414,
-              type: "Default Release",
-              isArchived: false,
-              children: [
-                {
-                  cyclID: 176734,
-                  type: "Default Cycle",
-                  isArchived: false,
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    };
-
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => mockResponse,
-      text: async () => JSON.stringify(mockResponse),
-    });
+  it("returns every project (stripped) when allProjects is true, without getinfo", async () => {
+    mockFetch(tree);
 
     const result = await getReleasesCycles(token, baseUrl, projectKey, {
-      showArchive: false,
+      allProjects: true,
+      projectID: 100,
     });
 
-    expect(global.fetch).toHaveBeenCalledWith(
-      `${baseUrl}/rest/admin/scope/tree`,
-      expect.objectContaining({
-        method: "POST",
-        headers: expect.objectContaining({
-          apikey: token,
-          project: projectKey,
-          "Content-Type": "application/json",
-          "User-Agent": expect.stringContaining("SmartBear MCP Server"),
-        }),
-        body: JSON.stringify({ showArchive: false }),
-      }),
-    );
-
-    expect(result).toEqual(mockResponse);
+    expect(infoCalls()).toHaveLength(0);
+    expect(result).toEqual({ children: [strippedA, strippedB] });
   });
 
-  it("should use default project key when not provided", async () => {
-    const mockResponse = {
-      text: ".",
-      children: [],
-    };
+  it("falls back to the full tree when getinfo fails", async () => {
+    mockFetch(tree, new Error("boom"));
 
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => mockResponse,
-      text: async () => JSON.stringify(mockResponse),
-    });
+    const result = await getReleasesCycles(token, baseUrl, projectKey);
+
+    expect(result).toEqual({ children: [strippedA, strippedB] });
+  });
+
+  it("falls back to the full tree when the resolved project is not in the tree", async () => {
+    mockFetch(tree, { currentProjectId: 999, projects: [] });
+
+    const result = await getReleasesCycles(token, baseUrl, projectKey);
+
+    expect(result).toEqual({ children: [strippedA, strippedB] });
+  });
+
+  it("falls back to the full tree when getinfo has no currentProjectId", async () => {
+    mockFetch(tree, { projects: [] });
+
+    const result = await getReleasesCycles(token, baseUrl, projectKey);
+
+    expect(result).toEqual({ children: [strippedA, strippedB] });
+  });
+
+  it("uses the default project key for both calls when not provided", async () => {
+    mockFetch(tree);
 
     await getReleasesCycles(token, baseUrl);
 
-    expect(global.fetch).toHaveBeenCalledWith(
-      `${baseUrl}/rest/admin/scope/tree`,
-      expect.objectContaining({
-        headers: expect.objectContaining({
-          project: "default", // from QMETRY_DEFAULTS
-        }),
-      }),
-    );
+    expect(treeCalls()[0][1].headers.project).toBe("default");
+    expect(infoCalls()[0][1].headers.project).toBe("default");
   });
 
-  it("should use default base URL when not provided", async () => {
-    const mockResponse = {
-      text: ".",
-      children: [],
-    };
-
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => mockResponse,
-      text: async () => JSON.stringify(mockResponse),
-    });
+  it("uses the default base URL when not provided", async () => {
+    mockFetch({ text: ".", children: [] });
 
     await getReleasesCycles(token, "", projectKey);
 
     expect(global.fetch).toHaveBeenCalledWith(
-      "https://testmanagement.qmetry.com/rest/admin/scope/tree", // from QMETRY_DEFAULTS
-      expect.objectContaining({
-        method: "POST",
-      }),
+      "https://testmanagement.qmetry.com/rest/admin/scope/tree",
+      expect.objectContaining({ method: "POST" }),
     );
   });
 
-  it("should handle empty payload object", async () => {
-    const mockResponse = {
-      text: ".",
-      children: [],
-    };
-
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => mockResponse,
-      text: async () => JSON.stringify(mockResponse),
-    });
+  it("returns an empty children array unchanged (minus text)", async () => {
+    mockFetch({ text: ".", children: [] });
 
     const result = await getReleasesCycles(token, baseUrl, projectKey, {});
 
-    expect(global.fetch).toHaveBeenCalledWith(
-      `${baseUrl}/rest/admin/scope/tree`,
-      expect.objectContaining({
-        body: JSON.stringify({ showArchive: false }), // default behavior
-      }),
-    );
-
-    expect(result).toEqual(mockResponse);
+    expect(result).toEqual({ children: [] });
   });
 
-  it("should throw error on non-OK response", async () => {
+  it("returns a response without a children array as-is", async () => {
+    mockFetch({ message: "nothing" });
+
+    const result = await getReleasesCycles(token, baseUrl, projectKey, {});
+
+    expect(result).toEqual({ message: "nothing" });
+  });
+
+  it("throws on a non-OK scope/tree response", async () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: false,
       status: 401,
@@ -345,73 +399,12 @@ describe("getReleasesCycles", () => {
     );
   });
 
-  it("should handle network errors", async () => {
+  it("propagates network errors from scope/tree", async () => {
     global.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
 
     await expect(getReleasesCycles(token, baseUrl, projectKey)).rejects.toThrow(
       "Network error",
     );
-  });
-
-  it("should handle complex hierarchical response data", async () => {
-    const mockResponse = {
-      text: ".",
-      children: [
-        {
-          projID: 15266,
-          type: "VK Testi",
-          isArchived: false,
-          isLocked: false,
-          iconCls: "ad-project-ico",
-          expanded: true,
-          children: [
-            {
-              relID: 111840,
-              type: "release 1",
-              isLocked: false,
-              scope: "release",
-              isArchived: false,
-              iconCls: "ad-release-ico",
-              expanded: true,
-              children: [
-                {
-                  cyclID: 226970,
-                  type: "Default Cycle",
-                  isLocked: false,
-                  scope: "cycle",
-                  isArchived: false,
-                  iconCls: "ad-cycle-ico",
-                  leaf: true,
-                },
-                {
-                  cyclID: 226972,
-                  type: "My_Cycle1.1",
-                  isLocked: false,
-                  scope: "cycle",
-                  isArchived: false,
-                  iconCls: "ad-cycle-ico",
-                  leaf: true,
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    };
-
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => mockResponse,
-      text: async () => JSON.stringify(mockResponse),
-    });
-
-    const result = await getReleasesCycles(token, baseUrl, projectKey, {
-      showArchive: false,
-    });
-
-    expect(result).toEqual(mockResponse);
-    expect((result as any).children[0].children[0].children).toHaveLength(2);
-    expect((result as any).children[0].children[0].type).toBe("release 1");
   });
 });
 
