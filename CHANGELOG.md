@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.45.0] - 2026-11-24
+
 ### Changed
 
 - [Swagger] `validate_api` tool description now lists A2A Agent Cards as supported and says that MCP, GraphQL and gRPC definitions are not validated yet, so LLM clients call the tool for A2A.
