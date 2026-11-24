@@ -9388,7 +9388,7 @@ Expected Output: Test cases VT-TC-4, VT-TC-1, VT-TC-101, and VT-TC-22 linked to 
       "readOnlyHint": false,
       "title": "QMetry: Update Cycle",
     },
-    "description": "Update an existing cycle in QMetry for test execution planning
+    "description": "Update an existing cycle within a release in QMetry (name, start date or target date)
 
 **Toolset:** Projects
 
@@ -9398,7 +9398,7 @@ Expected Output: Test cases VT-TC-4, VT-TC-1, VT-TC-101, and VT-TC-22 linked to 
 
 **Output Description:** JSON object containing the updated cycle details and confirmation of update
 
-**Use Cases:** 1. Update cycle name for better organization 2. Modify cycle dates to reflect schedule changes 3. Adjust testing phase timelines within a release 4. Update cycle metadata for sprint tracking 5. Revise milestone dates for test execution planning 6. Rename cycles to match updated sprint naming conventions
+**Use Cases:** 1. Rename a cycle 2. Move a cycle's start or target date after a schedule change 3. Update a cycle's name and dates in one call
 
 **Examples:**
 1. Update cycle name
@@ -9440,7 +9440,7 @@ Expected Output: Cycle dates updated successfully with new start date 10-10-2018
 \`\`\`
 Expected Output: Cycle updated with new name and dates successfully
 
-**Hints:** 1. CRITICAL: cycle.buildID is REQUIRED - must provide the build ID to identify the cycle to update 2. CRITICAL: cycle.releaseID is REQUIRED - must provide the release ID to identify the cycle to update 3. HOW TO GET buildID and releaseID: 4. 1. Call FETCH_RELEASES_CYCLES tool (API: 'Cycle/List') to get all cycles 5. 2. From the response, get buildID from projects.releases[<index>].builds[<index>].buildID 6. 3. From the response, get releaseID from projects.releases[<index>].releaseID 7. 4. Use those numeric IDs in cycle.buildID and cycle.releaseID parameters 8. Example: Cycle 'Sprint 2' might have buildID: 1494 and releaseID: 3729 9. CRITICAL WORKFLOW - IF USER PROVIDES CYCLE NAME: 10. 1. User says: 'Update cycle Sprint 2 to change dates' 11. 2. You MUST first call FETCH_RELEASES_CYCLES tool to get all cycles 12. 3. Search the response for cycle with matching name 'Sprint 2' 13. 4. Extract buildID and releaseID from the matching cycle 14. 5. Use those IDs in cycle.buildID and cycle.releaseID parameters 15. 6. If cycle name not found, inform user and list available cycles 16. Example workflow: 17. - User request: 'Update cycle Alpha_v1 name to Alpha_v1_Updated' 18. - Step 1: Call FETCH_RELEASES_CYCLES 19. - Step 2: Find cycle where name = 'Alpha_v1', get its buildID (e.g., 1494) and releaseID (e.g., 3729) 20. - Step 3: Call UPDATE_CYCLE with cycle.buildID = 1494 and cycle.releaseID = 3729 21. CYCLE IDENTIFICATION: 22. - NEVER assume or guess buildID or releaseID - always fetch from API 23. - Cycle names are user-defined strings (e.g., 'Sprint 2', 'Alpha_v1', 'Regression Cycle') 24. - buildID and releaseID are numeric identifiers assigned by QMetry 25. - Match cycle names case-insensitively when searching 26. - If multiple cycles match the name, ask user to clarify or use the most recent one 27. - FETCH_RELEASES_CYCLES returns: projects.releases[].builds[] array with name, buildID, and releaseID 28. Date format depends on QMetry instance configuration: DD-MM-YYYY or MM-DD-YYYY 29. Check your QMetry instance settings to determine the correct date format 30. NOTE: To verify/update the Date Format - Go to QMetry -> User Profile 31. If dates are in wrong format, QMetry will return an error - verify format with admin 32. You can update name, startDate, or targetDate independently or together 33. Only include the fields you want to update - other fields will remain unchanged 34. startDate and targetDate help with sprint planning and milestone tracking 35. Cycle hierarchy: Project → Release → Cycle → Test Execution 36. After updating a cycle, you can verify changes using FETCH_RELEASES_CYCLES tool 37. DIFFERENCE FROM CREATE_CYCLE: This tool updates an EXISTING cycle, while CREATE_CYCLE creates a new one",
+**Hints:** 1. CRITICAL: cycle.buildID and cycle.releaseID are REQUIRED 2. CRITICAL: provide AT LEAST ONE of cycle.name, cycle.startDate, cycle.targetDate 3. cycle.buildID is the cycle's numeric ID - QMetry calls cycles 'builds' (project info path: projects.releases[<index>].builds[<index>].buildID); cycle.releaseID is the ID of the release that contains it 4. HOW TO GET THE IDs: call Fetch Releases and Cycles, find the release by name, then the cycle by name WITHIN that release (case-insensitively); never guess IDs 5. Cycle names can repeat across releases - if the user did not name the release and several cycles match, ask which one to update 6. If the cycle is not found, tell the user and list the cycles available in that release 7. Before renaming, check the Fetch Releases and Cycles response for another cycle with the same name in that release; if one exists, tell the user instead of calling this tool 8. Omit cycle.name when not renaming 9. Only include the fields you want to change - omitted fields stay unchanged 10. Date format depends on QMetry instance configuration: DD-MM-YYYY or MM-DD-YYYY (check QMetry -> User Profile) 11. To update the release itself use Update Release; to create a cycle use Create Cycle 12. Verify the change afterwards with Fetch Releases and Cycles",
     "inputSchema": [
       "cycle",
       "projectKey",
@@ -9557,11 +9557,10 @@ Expected Output: Affected release and affected cycles updated successfully.
 **Use Cases:** 1. Rename a release 2. Update a release description 3. Move a release's start or target date after a schedule change 4. Update several release fields in one call
 
 **Examples:**
-1. Rename a release
+1. Rename a release (projectID filled from the project)
 \`\`\`json
 {
   "release": {
-    "projectID": 347,
     "releaseID": 1631,
     "name": "Q3-25 Performance Benchmarking"
   }
@@ -9597,7 +9596,7 @@ Expected Output: Release 1631 dates updated successfully
 \`\`\`
 Expected Output: Release 1631 updated with new name, description and dates
 
-**Hints:** 1. CRITICAL: release.projectID and release.releaseID are REQUIRED 2. CRITICAL: provide AT LEAST ONE of release.name, release.description, release.startDate, release.targetDate 3. release.projectID is the NUMERIC project ID, not the projectKey string - get it from Fetch QMetry Project Info (currentProjectId) 4. HOW TO GET releaseID: call Fetch Releases and Cycles and match the release by name (case-insensitively); never guess IDs 5. If several releases match the name, ask the user which one to update 6. Release names must be UNIQUE within a project. Before renaming, check the Fetch Releases and Cycles response for an existing release with the same name; if one exists, tell the user instead of calling this tool. QMetry otherwise rejects the update with code AD.RELEASE_DUPLICATE ('Duplicate Release name is not allowed.') 7. Omit release.name when not renaming - leaving it out never triggers the duplicate-name check 8. Only include the fields you want to change - omitted fields stay unchanged 9. Date format depends on QMetry instance configuration: DD-MM-YYYY or MM-DD-YYYY (check QMetry -> User Profile) 10. release.description accepts HTML (e.g. '<p>text</p>') 11. To update a cycle inside a release use Update Cycle; to create a release use Create Release 12. Verify the change afterwards with Fetch Releases and Cycles",
+**Hints:** 1. CRITICAL: release.releaseID is REQUIRED 2. CRITICAL: provide AT LEAST ONE of release.name, release.description, release.startDate, release.targetDate 3. release.projectID is the NUMERIC project ID, not the projectKey string. Usually omit it: the server fills it from the project given by projectKey (or the project selected in QMetry). Pass projectKey for the target project; never put the key in projectID 4. HOW TO GET releaseID: call Fetch Releases and Cycles and match the release by name (case-insensitively); never guess IDs 5. If several releases match the name, ask the user which one to update 6. Release names must be UNIQUE within a project. Before renaming, check the Fetch Releases and Cycles response for an existing release with the same name; if one exists, tell the user instead of calling this tool. QMetry otherwise rejects the update with code AD.RELEASE_DUPLICATE ('Duplicate Release name is not allowed.') 7. Omit release.name when not renaming - leaving it out never triggers the duplicate-name check 8. Only include the fields you want to change - omitted fields stay unchanged 9. Date format depends on QMetry instance configuration: DD-MM-YYYY or MM-DD-YYYY (check QMetry -> User Profile) 10. release.description accepts HTML (e.g. '<p>text</p>') 11. To update a cycle inside a release use Update Cycle; to create a release use Create Release 12. Verify the change afterwards with Fetch Releases and Cycles",
     "inputSchema": [
       "projectKey",
       "release",

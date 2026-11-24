@@ -634,21 +634,18 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
   {
     title: "Update Cycle",
     toolset: "Projects",
-    summary: "Update an existing cycle in QMetry for test execution planning",
+    summary:
+      "Update an existing cycle within a release in QMetry (name, start date or target date)",
     handler: QMetryToolsHandlers.UPDATE_CYCLE,
     inputSchema: UpdateCycleArgsSchema,
     purpose:
-      "Update an existing cycle within a release to modify test execution phase details. " +
-      "Cycles represent specific testing iterations, sprints, or phases within a release. " +
-      "This tool requires buildID and releaseID to identify the cycle to update. " +
-      "Essential for maintaining accurate test planning and sprint-based test execution tracking.",
+      "Update an existing cycle (a testing iteration, sprint or phase within a release). " +
+      "Requires cycle.buildID and cycle.releaseID to identify the cycle, plus at least one of " +
+      "cycle.name, cycle.startDate or cycle.targetDate to change.",
     useCases: [
-      "Update cycle name for better organization",
-      "Modify cycle dates to reflect schedule changes",
-      "Adjust testing phase timelines within a release",
-      "Update cycle metadata for sprint tracking",
-      "Revise milestone dates for test execution planning",
-      "Rename cycles to match updated sprint naming conventions",
+      "Rename a cycle",
+      "Move a cycle's start or target date after a schedule change",
+      "Update a cycle's name and dates in one call",
     ],
     examples: [
       {
@@ -691,43 +688,18 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
       },
     ],
     hints: [
-      "CRITICAL: cycle.buildID is REQUIRED - must provide the build ID to identify the cycle to update",
-      "CRITICAL: cycle.releaseID is REQUIRED - must provide the release ID to identify the cycle to update",
-      "HOW TO GET buildID and releaseID:",
-      "1. Call FETCH_RELEASES_CYCLES tool (API: 'Cycle/List') to get all cycles",
-      "2. From the response, get buildID from projects.releases[<index>].builds[<index>].buildID",
-      "3. From the response, get releaseID from projects.releases[<index>].releaseID",
-      "4. Use those numeric IDs in cycle.buildID and cycle.releaseID parameters",
-      "Example: Cycle 'Sprint 2' might have buildID: 1494 and releaseID: 3729",
-      "CRITICAL WORKFLOW - IF USER PROVIDES CYCLE NAME:",
-      "1. User says: 'Update cycle Sprint 2 to change dates'",
-      "2. You MUST first call FETCH_RELEASES_CYCLES tool to get all cycles",
-      "3. Search the response for cycle with matching name 'Sprint 2'",
-      "4. Extract buildID and releaseID from the matching cycle",
-      "5. Use those IDs in cycle.buildID and cycle.releaseID parameters",
-      "6. If cycle name not found, inform user and list available cycles",
-      "Example workflow:",
-      "- User request: 'Update cycle Alpha_v1 name to Alpha_v1_Updated'",
-      "- Step 1: Call FETCH_RELEASES_CYCLES",
-      "- Step 2: Find cycle where name = 'Alpha_v1', get its buildID (e.g., 1494) and releaseID (e.g., 3729)",
-      "- Step 3: Call UPDATE_CYCLE with cycle.buildID = 1494 and cycle.releaseID = 3729",
-      "CYCLE IDENTIFICATION:",
-      "- NEVER assume or guess buildID or releaseID - always fetch from API",
-      "- Cycle names are user-defined strings (e.g., 'Sprint 2', 'Alpha_v1', 'Regression Cycle')",
-      "- buildID and releaseID are numeric identifiers assigned by QMetry",
-      "- Match cycle names case-insensitively when searching",
-      "- If multiple cycles match the name, ask user to clarify or use the most recent one",
-      "- FETCH_RELEASES_CYCLES returns: projects.releases[].builds[] array with name, buildID, and releaseID",
-      "Date format depends on QMetry instance configuration: DD-MM-YYYY or MM-DD-YYYY",
-      "Check your QMetry instance settings to determine the correct date format",
-      "NOTE: To verify/update the Date Format - Go to QMetry -> User Profile",
-      "If dates are in wrong format, QMetry will return an error - verify format with admin",
-      "You can update name, startDate, or targetDate independently or together",
-      "Only include the fields you want to update - other fields will remain unchanged",
-      "startDate and targetDate help with sprint planning and milestone tracking",
-      "Cycle hierarchy: Project → Release → Cycle → Test Execution",
-      "After updating a cycle, you can verify changes using FETCH_RELEASES_CYCLES tool",
-      "DIFFERENCE FROM CREATE_CYCLE: This tool updates an EXISTING cycle, while CREATE_CYCLE creates a new one",
+      "CRITICAL: cycle.buildID and cycle.releaseID are REQUIRED",
+      "CRITICAL: provide AT LEAST ONE of cycle.name, cycle.startDate, cycle.targetDate",
+      "cycle.buildID is the cycle's numeric ID - QMetry calls cycles 'builds' (project info path: projects.releases[<index>].builds[<index>].buildID); cycle.releaseID is the ID of the release that contains it",
+      "HOW TO GET THE IDs: call Fetch Releases and Cycles, find the release by name, then the cycle by name WITHIN that release (case-insensitively); never guess IDs",
+      "Cycle names can repeat across releases - if the user did not name the release and several cycles match, ask which one to update",
+      "If the cycle is not found, tell the user and list the cycles available in that release",
+      "Before renaming, check the Fetch Releases and Cycles response for another cycle with the same name in that release; if one exists, tell the user instead of calling this tool",
+      "Omit cycle.name when not renaming",
+      "Only include the fields you want to change - omitted fields stay unchanged",
+      "Date format depends on QMetry instance configuration: DD-MM-YYYY or MM-DD-YYYY (check QMetry -> User Profile)",
+      "To update the release itself use Update Release; to create a cycle use Create Cycle",
+      "Verify the change afterwards with Fetch Releases and Cycles",
     ],
     outputDescription:
       "JSON object containing the updated cycle details and confirmation of update",
@@ -743,7 +715,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
     inputSchema: UpdateReleaseArgsSchema,
     purpose:
       "Update an existing release to keep release planning accurate. " +
-      "Requires release.projectID and release.releaseID to identify the release, plus at least one of " +
+      "Requires release.releaseID to identify the release, plus at least one of " +
       "release.name, release.description, release.startDate or release.targetDate to change.",
     useCases: [
       "Rename a release",
@@ -753,10 +725,9 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
     ],
     examples: [
       {
-        description: "Rename a release",
+        description: "Rename a release (projectID filled from the project)",
         parameters: {
           release: {
-            projectID: 347,
             releaseID: 1631,
             name: "Q3-25 Performance Benchmarking",
           },
@@ -792,9 +763,9 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
       },
     ],
     hints: [
-      "CRITICAL: release.projectID and release.releaseID are REQUIRED",
+      "CRITICAL: release.releaseID is REQUIRED",
       "CRITICAL: provide AT LEAST ONE of release.name, release.description, release.startDate, release.targetDate",
-      "release.projectID is the NUMERIC project ID, not the projectKey string - get it from Fetch QMetry Project Info (currentProjectId)",
+      "release.projectID is the NUMERIC project ID, not the projectKey string. Usually omit it: the server fills it from the project given by projectKey (or the project selected in QMetry). Pass projectKey for the target project; never put the key in projectID",
       "HOW TO GET releaseID: call Fetch Releases and Cycles and match the release by name (case-insensitively); never guess IDs",
       "If several releases match the name, ask the user which one to update",
       "Release names must be UNIQUE within a project. Before renaming, check the Fetch Releases and Cycles response for an existing release with the same name; " +

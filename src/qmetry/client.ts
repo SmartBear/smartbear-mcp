@@ -66,6 +66,7 @@ const INVALID_PROJECT_CODE = "CO.INVALID_PROJECT_ID";
 const PROJECT_ID_BODY_FIELD: Partial<Record<string, "release" | "cycle">> = {
   [QMetryToolsHandlers.CREATE_RELEASE]: "release",
   [QMetryToolsHandlers.CREATE_CYCLE]: "cycle",
+  [QMetryToolsHandlers.UPDATE_RELEASE]: "release",
 };
 
 /** Inputs worth echoing in an error: keys, IDs and folder/view selectors. */
@@ -618,7 +619,7 @@ export class QmetryClient implements Client {
             }
           }
 
-          // Create Release / Create Cycle need the numeric projectID in the
+          // Create Release / Create Cycle / Update Release need the numeric projectID in the
           // request body; the projectKey only travels as the `project` header.
           // When the caller left it out, fill it from the project this call
           // resolves to (getinfo's currentProjectId).

@@ -13,7 +13,10 @@ import {
   updateCycle,
   updateRelease,
 } from "../client/project.js";
-import { UpdateReleaseArgsSchema } from "../types/common.js";
+import {
+  UpdateCycleArgsSchema,
+  UpdateReleaseArgsSchema,
+} from "../types/common.js";
 
 describe("getProjectInfo", () => {
   const token = "fake-token";
@@ -932,6 +935,120 @@ describe("updateCycle", () => {
       "[updateCycle] Missing or invalid required parameter: 'cycle.buildID'",
     );
   });
+
+  it("sends only the provided field alongside the IDs", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ success: true }),
+      text: async () => JSON.stringify({ success: true }),
+    });
+
+    await updateCycle(token, baseUrl, projectKey, {
+      cycle: { buildID: 1494, releaseID: 3729, targetDate: "11-11-2018" },
+    });
+
+    const body = JSON.parse((globalThis.fetch as any).mock.calls[0][1].body);
+    expect(body).toEqual({
+      cycle: { buildID: 1494, releaseID: 3729, targetDate: "11-11-2018" },
+    });
+  });
+
+  it("throws a ToolError when cycle is missing", async () => {
+    globalThis.fetch = vi.fn();
+    await expect(
+      updateCycle(token, baseUrl, projectKey, {} as any),
+    ).rejects.toThrow(
+      "[updateCycle] Missing or invalid required parameter: 'cycle'.",
+    );
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  it("throws when releaseID is missing", async () => {
+    globalThis.fetch = vi.fn();
+    await expect(
+      updateCycle(token, baseUrl, projectKey, {
+        cycle: { buildID: 1494, releaseID: undefined as any, name: "C" },
+      }),
+    ).rejects.toThrow(
+      "[updateCycle] Missing or invalid required parameter: 'cycle.releaseID'",
+    );
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  it("throws when no updatable field is provided", async () => {
+    globalThis.fetch = vi.fn();
+    await expect(
+      updateCycle(token, baseUrl, projectKey, {
+        cycle: { buildID: 1494, releaseID: 3729 },
+      }),
+    ).rejects.toThrow("[updateCycle] At least one of");
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  it("throws when name is blank", async () => {
+    globalThis.fetch = vi.fn();
+    await expect(
+      updateCycle(token, baseUrl, projectKey, {
+        cycle: { buildID: 1494, releaseID: 3729, name: "  " },
+      }),
+    ).rejects.toThrow("'cycle.name' must not be empty");
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  it("surfaces QMetry's error message", async () => {
+    const errorBody = {
+      success: false,
+      code: "CO.INVALID_BUILD_ID",
+      message: "Invalid Build ID.",
+    };
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 400,
+      statusText: "Bad Request",
+      json: async () => errorBody,
+      text: async () => JSON.stringify(errorBody),
+    });
+
+    await expect(
+      updateCycle(token, baseUrl, projectKey, {
+        cycle: { buildID: 1, releaseID: 3729, name: "C" },
+      }),
+    ).rejects.toThrow(/Invalid Build ID/);
+  });
+});
+
+describe("UpdateCycleArgsSchema", () => {
+  it("accepts IDs plus one updatable field and coerces string IDs", () => {
+    const parsed = UpdateCycleArgsSchema.parse({
+      cycle: { buildID: "1494", releaseID: "3729", name: "Sprint 2" },
+    });
+    expect(parsed.cycle).toEqual({
+      buildID: 1494,
+      releaseID: 3729,
+      name: "Sprint 2",
+    });
+  });
+
+  it("rejects a request with only IDs", () => {
+    const result = UpdateCycleArgsSchema.safeParse({
+      cycle: { buildID: 1494, releaseID: 3729 },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a request without releaseID", () => {
+    const result = UpdateCycleArgsSchema.safeParse({
+      cycle: { buildID: 1494, name: "C" },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a blank name", () => {
+    const result = UpdateCycleArgsSchema.safeParse({
+      cycle: { buildID: 1494, releaseID: 3729, name: "   " },
+    });
+    expect(result.success).toBe(false);
+  });
 });
 
 describe("updateRelease", () => {
@@ -1081,6 +1198,20 @@ describe("UpdateReleaseArgsSchema", () => {
   it("rejects a request without releaseID", () => {
     const result = UpdateReleaseArgsSchema.safeParse({
       release: { projectID: 347, name: "R" },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts a request without projectID (filled from the project)", () => {
+    const parsed = UpdateReleaseArgsSchema.parse({
+      release: { releaseID: "1631", name: "R" },
+    });
+    expect(parsed.release).toEqual({ releaseID: 1631, name: "R" });
+  });
+
+  it("rejects a blank name", () => {
+    const result = UpdateReleaseArgsSchema.safeParse({
+      release: { releaseID: 1631, name: "  " },
     });
     expect(result.success).toBe(false);
   });

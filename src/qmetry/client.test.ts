@@ -480,6 +480,44 @@ describe("QmetryClient", () => {
         expect(bodyOf("/rest/admin/cycle")?.cycle.projectID).toBe(192);
       });
 
+      it("fills release.projectID for Update Release", async () => {
+        const result = await callTool("Update Release", {
+          projectKey: "QT",
+          release: { releaseID: 1631, name: "R2" },
+        });
+
+        expect(result.isError).toBeUndefined();
+        const body = bodyOf("/rest/admin/release");
+        expect(body).toEqual({
+          release: { releaseID: 1631, name: "R2", projectID: 192 },
+        });
+        expect(new Set(sentProjectHeaders())).toEqual(new Set(["QT"]));
+      });
+
+      it("keeps an explicit release.projectID for Update Release", async () => {
+        await callTool("Update Release", {
+          projectKey: "QT",
+          release: { projectID: 46792, releaseID: 1631, name: "R2" },
+        });
+
+        expect(bodyOf("/rest/admin/release")?.release.projectID).toBe(46792);
+        expect(fetchMock.mock.calls.some(([url]) => isGetInfo(url))).toBe(
+          false,
+        );
+      });
+
+      it("sends Update Cycle without projectKey in the body", async () => {
+        await callTool("Update Cycle", {
+          projectKey: "QT",
+          cycle: { buildID: "1494", releaseID: 3729, name: "C2" },
+        });
+
+        expect(bodyOf("/rest/admin/cycle")).toEqual({
+          cycle: { buildID: 1494, releaseID: 3729, name: "C2" },
+        });
+        expect(new Set(sentProjectHeaders())).toEqual(new Set(["QT"]));
+      });
+
       it("reports a failed projectID lookup instead of creating without it", async () => {
         fetchMock.mockResponse(async (req) =>
           isGetInfo(req.url)

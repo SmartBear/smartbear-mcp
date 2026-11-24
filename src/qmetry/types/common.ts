@@ -497,38 +497,54 @@ export const CreateCycleArgsSchema = z.object({
   }),
 });
 
+/** Matches any string with at least one non-whitespace character. */
+const NON_BLANK = /\S/;
+
 export const UpdateCycleArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
 
-  cycle: z.object({
-    name: z.string().optional().describe("Cycle name (optional for update)"),
-    startDate: z
-      .string()
-      .optional()
-      .describe(
-        "Cycle start date in format DD-MM-YYYY or MM-DD-YYYY (depends on QMetry instance date format configuration)",
-      ),
-    targetDate: z
-      .string()
-      .optional()
-      .describe(
-        "Cycle target/end date in format DD-MM-YYYY or MM-DD-YYYY (depends on QMetry instance date format configuration)",
-      ),
-    buildID: z
-      .number()
-      .describe(
-        "Build ID (required for identifying the cycle to update). " +
-          "To get the buildID - Call API 'Cycle/List' (FETCH_RELEASES_CYCLES tool). " +
-          "From the response, get value of following attribute -> data[<index>].buildID",
-      ),
-    releaseID: z
-      .number()
-      .describe(
-        "Release ID (required for identifying the cycle to update). " +
-          "To get the releaseID - Call API 'Cycle/List' (FETCH_RELEASES_CYCLES tool). " +
-          "From the response, get value of following attribute -> data[<index>].releaseID",
-      ),
-  }),
+  cycle: z
+    .object({
+      buildID: z.coerce
+        .number()
+        .describe(
+          "Cycle ID (required) identifying the cycle to update - QMetry calls cycles 'builds', so the key is 'buildID'. " +
+            "Get it from 'Fetch Releases and Cycles' by matching the cycle name within its release.",
+        ),
+      releaseID: z.coerce
+        .number()
+        .describe(
+          "Release ID (required) of the release the cycle belongs to. " +
+            "Get it from 'Fetch Releases and Cycles' by matching the release name.",
+        ),
+      name: z
+        .string()
+        .regex(NON_BLANK, "'name' must not be empty")
+        .optional()
+        .describe("New cycle name (must not be blank)"),
+      startDate: z
+        .string()
+        .optional()
+        .describe(
+          "Cycle start date in format DD-MM-YYYY or MM-DD-YYYY (depends on QMetry instance date format configuration)",
+        ),
+      targetDate: z
+        .string()
+        .optional()
+        .describe(
+          "Cycle target/end date in format DD-MM-YYYY or MM-DD-YYYY (depends on QMetry instance date format configuration)",
+        ),
+    })
+    .refine(
+      (c) =>
+        c.name !== undefined ||
+        c.startDate !== undefined ||
+        c.targetDate !== undefined,
+      {
+        message:
+          "At least one of 'name', 'startDate' or 'targetDate' must be provided.",
+      },
+    ),
 });
 
 export const UpdateReleaseArgsSchema = z.object({
@@ -538,10 +554,10 @@ export const UpdateReleaseArgsSchema = z.object({
     .object({
       projectID: z.coerce
         .number()
+        .optional()
         .describe(
-          "Numeric project ID (required) of the project the release belongs to. " +
-            "CRITICAL: this is the numeric 'projectID', NOT the string projectKey. " +
-            "Get it from 'Fetch QMetry Project Info' (currentProjectId) or 'Fetch Releases and Cycles'.",
+          "Numeric project ID (NOT the projectKey string) of the project the release belongs to. " +
+            "Optional: if omitted, the server fills it with the ID of the project given by projectKey (or the project selected in QMetry when projectKey is omitted).",
         ),
       releaseID: z.coerce
         .number()
@@ -551,9 +567,10 @@ export const UpdateReleaseArgsSchema = z.object({
         ),
       name: z
         .string()
+        .regex(NON_BLANK, "'name' must not be empty")
         .optional()
         .describe(
-          "New release name. Must be unique within the project - QMetry rejects duplicates with AD.RELEASE_DUPLICATE.",
+          "New release name (must not be blank). Must be unique within the project - QMetry rejects duplicates with AD.RELEASE_DUPLICATE.",
         ),
       description: z
         .string()

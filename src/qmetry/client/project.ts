@@ -554,6 +554,8 @@ export async function createCycle(
   });
 }
 
+const UPDATE_CYCLE_FIELDS = ["name", "startDate", "targetDate"] as const;
+
 /**
  * Updates an existing cycle in QMetry
  * @param token - QMetry API token
@@ -573,14 +575,30 @@ export async function updateCycle(
     project,
   );
 
-  if (typeof payload.cycle.buildID !== "number") {
+  const cycle = payload?.cycle;
+  if (!cycle || typeof cycle !== "object") {
+    throw new ToolError(
+      "[updateCycle] Missing or invalid required parameter: 'cycle'.",
+    );
+  }
+  if (typeof cycle.buildID !== "number") {
     throw new ToolError(
       "[updateCycle] Missing or invalid required parameter: 'cycle.buildID'.",
     );
   }
-  if (typeof payload.cycle.releaseID !== "number") {
+  if (typeof cycle.releaseID !== "number") {
     throw new ToolError(
       "[updateCycle] Missing or invalid required parameter: 'cycle.releaseID'.",
+    );
+  }
+  if (!UPDATE_CYCLE_FIELDS.some((f) => cycle[f] !== undefined)) {
+    throw new ToolError(
+      "[updateCycle] At least one of 'cycle.name', 'cycle.startDate' or 'cycle.targetDate' must be provided.",
+    );
+  }
+  if (cycle.name !== undefined && cycle.name.trim() === "") {
+    throw new ToolError(
+      "[updateCycle] Invalid parameter: 'cycle.name' must not be empty.",
     );
   }
 
