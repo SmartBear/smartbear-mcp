@@ -1153,6 +1153,79 @@ export const LinkReleaseCycleWithRequirementArgsSchema = z.object({
     ),
 });
 
+// Export for Link Release Cycle with Test Case tool
+export const LinkReleaseCycleWithTestCaseArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+
+  sourceProjectId: z.coerce
+    .number()
+    .describe(
+      "Numeric ID of the current project (required). Take it from 'Fetch QMetry Project Info' -> currentProjectId. " +
+        "CRITICAL: this is the numeric project ID, NOT the string projectKey.",
+    ),
+  sourceReleaseId: z.coerce
+    .number()
+    .describe(
+      "Release ID of the current project context (required). Take it from 'Fetch QMetry Project Info' -> currentReleaseId. " +
+        "This is NOT a release being linked - those go in 'releaseCycleMapping'.",
+    ),
+  sourceBuildId: z.coerce
+    .number()
+    .describe(
+      "Cycle (build) ID of the current project context (required). Take it from 'Fetch QMetry Project Info' -> currentBuildId. " +
+        "This is NOT a cycle being linked - those go in 'releaseCycleMapping[].cycleIds'.",
+    ),
+  releaseCycleMapping: z
+    .array(
+      z.object({
+        releaseId: z.coerce
+          .number()
+          .describe(
+            "ID of a release to link. If the user gives a release name, resolve it with 'Fetch Releases and Cycles' (release names are unique in a project).",
+          ),
+        cycleIds: z
+          .array(z.coerce.number())
+          .min(1)
+          .describe(
+            "One or more cycle IDs (at least one) that belong to THIS release. " +
+              "If the user gives cycle names, resolve them with 'Fetch Releases and Cycles' under this release (cycle names are unique within a release). " +
+              "CRITICAL: the parameter name is 'cycleIds' - do NOT use 'buildIds' or 'cycle'.",
+          ),
+      }),
+    )
+    .min(1)
+    .describe(
+      "Releases to link and, for each, the cycles of that release to link (required, at least one release). " +
+        "One entry per release - do NOT repeat a releaseId; put all of its cycles in one entry. " +
+        "Example: [{ releaseId: 92340, cycleIds: [131142] }, { releaseId: 92341, cycleIds: [131143, 133715] }].",
+    ),
+  testCases: z
+    .array(
+      z.object({
+        tcID: z.coerce
+          .number()
+          .describe(
+            "Test case numeric ID, sent to QMetry as entityId. Not the entity key like 'MAC-TC-1684'. " +
+              "Resolve a key with 'Fetch Test Cases' (filter on entityKeyId) -> data[].tcID.",
+          ),
+        tcVersionID: z.coerce
+          .number()
+          .describe(
+            "Test case VERSION ID, e.g. 4705299 - NOT the visible version number (tcVersion) like 1 or 2. " +
+              "Latest version: 'Fetch Test Cases' (filter on entityKeyId) -> data[].tcVersionID. " +
+              "Specific visible version N: 'Fetch Test Case Version Details' with id=tcID and version=N -> data[0].tcVersionID.",
+          ),
+      }),
+    )
+    .min(1)
+    .describe(
+      "Existing test case versions to link (required, at least one). Every release/cycle in 'releaseCycleMapping' is linked to EVERY test case listed here. " +
+        "One entry per test case - do NOT repeat a tcID. " +
+        "CRITICAL: the parameter name is 'testCases' - do NOT use 'entityData' or 'testcases'. " +
+        "Example: [{ tcID: 4611391, tcVersionID: 4705299 }, { tcID: 4611393, tcVersionID: 4705304 }].",
+    ),
+});
+
 export const RequirementsLinkedToTestCaseArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
 

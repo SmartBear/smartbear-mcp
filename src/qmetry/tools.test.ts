@@ -438,6 +438,69 @@ describe("QmetryClient tools", () => {
     });
   });
 
+  describe("Link Release Cycle with Test Case", () => {
+    const args = {
+      sourceProjectId: 46893,
+      sourceReleaseId: 92340,
+      sourceBuildId: 131142,
+      releaseCycleMapping: [
+        { releaseId: 92340, cycleIds: [131142] },
+        { releaseId: 92341, cycleIds: [131143] },
+      ],
+      testCases: [
+        { tcID: 4611391, tcVersionID: 4705299 },
+        { tcID: 4611393, tcVersionID: 4705304 },
+      ],
+    };
+
+    it("should pass the IDs to the client with the default project", async () => {
+      (testcase.linkReleaseCycleWithTestCase as any).mockResolvedValue({
+        success: true,
+        code: "CO.REL_CYCLE_LINK_SUCCESS",
+        message: "Release(s) and Cycle(s) associated successfully.",
+        data: [{}],
+      });
+
+      const handler = getHandler("Link Release Cycle with Test Case");
+      const result = await handler(args);
+
+      expect(testcase.linkReleaseCycleWithTestCase).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining(args),
+      );
+      const passed = (testcase.linkReleaseCycleWithTestCase as any).mock
+        .calls[0][3];
+      expect(passed).not.toHaveProperty("projectKey");
+      expect(passed).not.toHaveProperty("baseUrl");
+      expect(result.content[0].text).toContain("CO.REL_CYCLE_LINK_SUCCESS");
+    });
+
+    it("should use the provided projectKey and return already-linked pairs", async () => {
+      (testcase.linkReleaseCycleWithTestCase as any).mockResolvedValue({
+        duplicate_rel_cycle: [
+          { release: "Default Release", cycle: "Default Cycle" },
+        ],
+        success: true,
+        code: "TC.REL_CYC_EXIST",
+        message: "The selected Release(s)/Cycle(s) is already linked.",
+      });
+
+      const handler = getHandler("Link Release Cycle with Test Case");
+      const result = await handler({ ...args, projectKey: "S98e" });
+
+      expect(testcase.linkReleaseCycleWithTestCase).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "S98e",
+        expect.objectContaining(args),
+      );
+      expect(result.content[0].text).toContain("TC.REL_CYC_EXIST");
+      expect(result.content[0].text).toContain("duplicate_rel_cycle");
+    });
+  });
+
   describe("Link Release Cycle with Requirement", () => {
     const args = {
       sourceProjectId: 46893,

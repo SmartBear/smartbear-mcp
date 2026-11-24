@@ -22,6 +22,7 @@ export const QMETRY_PATHS = {
     CREATE_UPDATE_TC: "/rest/testcases",
     LINKED_RQ_TO_TC: "/rest/testcases/link/requirements",
     LINK_ISSUES_TO_TC: "/rest/testcases/link/issues",
+    LINK_RELEASE_CYCLE: "/rest/testcases/scope/add",
   },
   REQUIREMENT: {
     GET_RQ_LIST: "/rest/requirements/list/viewColumns",

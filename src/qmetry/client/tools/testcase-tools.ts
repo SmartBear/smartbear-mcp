@@ -1,6 +1,7 @@
 import { QMetryToolsHandlers } from "../../config/constants";
 import {
   CreateTestCaseArgsSchema,
+  LinkReleaseCycleWithTestCaseArgsSchema,
   LinkTestcaseToIssuesArgsSchema,
   TestCaseDetailsArgsSchema,
   TestCaseExecutionsArgsSchema,
@@ -354,6 +355,9 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       "Demo steps payload: steps: [ { orderId: 1, description: 'First Step', inputData: 'First Data', expectedOutcome: 'First Outcome', UDF: { customField1: 'Custom Field Data A', customField2: 'Custom Field Data B' } }, ... ]",
       "UDF fields in steps must match your QMetry custom field configuration.",
       "Release/cycle mapping is optional but useful for planning.",
+      "CRITICAL: if the user asks to create a test case AND link/associate/map it to a release or cycle, include them IN THIS CALL " +
+        "(associateRelCyc: true and releaseCycleMapping). Do NOT create the test case first and then call 'Link Release Cycle with Test Case' - " +
+        "that tool is only for test cases that existed before this request.",
       "If the user wants to link or associate a release and cycle to the test case, set associateRelCyc: true in the payload.",
       "If the user provides a release ID, map it from projects.releases[index].releaseID in the project info response, and use that ID in releaseCycleMapping.",
       "If the user provides both release and cycle IDs, validate both against the current project's releases and cycles; if valid, use them in releaseCycleMapping.",
@@ -655,6 +659,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       },
     ],
     hints: [
+      "This tool cannot change a test case's releases/cycles. To add a release/cycle to an existing test case, use 'Link Release Cycle with Test Case'.",
       "=== DEFAULT VALUES — APPLY FOR ANY UNSET FIELD ===",
       "Call 'Fetch UDF Layout' with entityType='TC', pageName='DETAIL' before updating.",
       "defaultValues (from Fetch UDF Layout): { fieldName: defaultValueId } — sweep ALL entries.",
@@ -1350,5 +1355,91 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
     outputDescription: "JSON object with success status and linkage details.",
     readOnly: false,
     idempotent: false,
+  },
+  {
+    title: "Link Release Cycle with Test Case",
+    toolset: "Test Cases",
+    summary:
+      "Link one or more releases and their cycles to one or more test cases that ALREADY EXISTED before this request. Never use it right after Create Test Case.",
+    handler: QMetryToolsHandlers.LINK_RELEASE_CYCLE_WITH_TESTCASE,
+    inputSchema: LinkReleaseCycleWithTestCaseArgsSchema,
+    purpose:
+      "ONLY for test cases that existed BEFORE the current request. Update Test Case cannot change a test case's releases/cycles, " +
+      "so this tool is the only way to add releases and their cycles to existing test case versions, for release planning and traceability. " +
+      "NOT for new test cases: to create a test case with a release/cycle, pass associateRelCyc: true and releaseCycleMapping to Create Test Case in ONE call. " +
+      "One call links EVERY release/cycle in releaseCycleMapping to EVERY test case in testCases, so link several releases and test cases together in a single call.",
+    useCases: [
+      "Link a test case to a release and one of its cycles",
+      "Link a test case to several cycles of the same release",
+      "Link several releases, each with its own cycles, to several test cases in one call",
+      "Link test cases identified by key (e.g. MAC-TC-1684) to releases/cycles given by name",
+      "Link a specific (non-latest) version of a test case to a release/cycle",
+    ],
+    examples: [
+      {
+        description:
+          "Link the latest version of test case 4611391 to release 92340, cycle 131142",
+        parameters: {
+          sourceProjectId: 46893,
+          sourceReleaseId: 92340,
+          sourceBuildId: 131142,
+          releaseCycleMapping: [{ releaseId: 92340, cycleIds: [131142] }],
+          testCases: [{ tcID: 4611391, tcVersionID: 4705299 }],
+        },
+        expectedOutput:
+          "code CO.REL_CYCLE_LINK_SUCCESS - Release(s) and Cycle(s) associated successfully.",
+      },
+      {
+        description:
+          "Link two releases (each with its own cycles) to two test cases in one call",
+        parameters: {
+          sourceProjectId: 46893,
+          sourceReleaseId: 92340,
+          sourceBuildId: 131142,
+          releaseCycleMapping: [
+            { releaseId: 92340, cycleIds: [131142] },
+            { releaseId: 92341, cycleIds: [131143, 133715] },
+          ],
+          testCases: [
+            { tcID: 4611391, tcVersionID: 4705299 },
+            { tcID: 4611393, tcVersionID: 4705304 },
+          ],
+        },
+        expectedOutput:
+          "code CO.REL_CYCLE_LINK_SUCCESS - Release(s) and Cycle(s) associated successfully.",
+      },
+    ],
+    hints: [
+      "CRITICAL: NEVER call this tool right after Create Test Case in the same request. " +
+        "If the user asks to create a test case AND link/associate a release or cycle, put associateRelCyc: true and releaseCycleMapping " +
+        "in the Create Test Case call itself - one call, no follow-up link.",
+      "Use this tool only when the test cases already existed before this request (the user names existing test cases by key, ID or name).",
+      "CRITICAL: ALL parameters are required. Put ALL releases in releaseCycleMapping and ALL test cases in testCases and make ONE call - " +
+        "every listed release/cycle is linked to every listed test case. Only split into several calls when different test cases need DIFFERENT releases/cycles.",
+      "STEP 1 - source IDs: call 'Fetch QMetry Project Info' and use currentProjectId -> sourceProjectId, currentReleaseId -> sourceReleaseId, currentBuildId -> sourceBuildId. " +
+        "These describe the current project context, NOT the releases/cycles being linked.",
+      "STEP 2 - releaseCycleMapping: one entry per release ({ releaseId, cycleIds }); never repeat a releaseId. Use the IDs the user gave, or call 'Fetch Releases and Cycles', " +
+        "match each release by name, then match each cycle name among THAT release's cycles. " +
+        "Release names are unique in a project and cycle names are unique within a release, so a name match is exact. A cycle must belong to the release it is listed under.",
+      "STEP 3 - testCases[].tcID: use the numeric IDs the user gave, or resolve keys with ONE 'Fetch Test Cases' call using a comma-separated filter " +
+        `'[{"type":"string","value":"MAC-TC-1684,MAC-TC-1685","field":"entityKeyId"}]' -> data[].tcID (set limit to at least the number of keys).`,
+      "STEP 4 - testCases[].tcVersionID (a version ID like 4705299, NOT the visible version number tcVersion): " +
+        "if the user named NO version, use the LATEST: 'Fetch Test Cases' (filter on entityKeyId) -> data[].tcVersionID. " +
+        "If you only have a numeric tcID, first call 'Fetch Test Case Version Details' with id=tcID and version=1 to read data[0].entityKey, then use 'Fetch Test Cases' as above. " +
+        "If the user named a visible version N for a test case (e.g. 'version 2'), call 'Fetch Test Case Version Details' with id=tcID and version=N and use data[0].tcVersionID.",
+      "ASK THE USER - do not guess - when a test case key, test case version, release name or cycle name cannot be resolved " +
+        "(no match in Fetch Test Cases / Fetch Releases and Cycles, or Fetch Test Case Version Details returns no data for that version number).",
+      "RESPONSE: code CO.REL_CYCLE_LINK_SUCCESS means the links were made. If 'duplicate_rel_cycle' is also present, the release/cycle pairs listed there were ALREADY linked and were skipped; the rest were linked - tell the user both.",
+      "RESPONSE: success=true with code TC.REL_CYC_EXIST means EVERY selected release/cycle was already linked - nothing changed; tell the user, do not retry.",
+      "ERRORS: each of these fails the WHOLE request and NOTHING is linked - fix the bad ID and retry with valid IDs only:",
+      "  CO.INVALID_RELEASE_ID: a releaseId is wrong - re-check releases with 'Fetch Releases and Cycles'.",
+      "  CO.INVALID_BUILD_ID ('Invalid Build ID.'): at least one cycle ID is wrong (QMetry calls cycles 'builds') - re-check that every cycleId belongs to the release it is listed under.",
+      "  RQ.ENTITY_NOT_FOUND_ERROR (QMetry returns this code for test cases too): at least one tcID/tcVersionID is wrong - re-resolve the test cases with 'Fetch Test Cases' / 'Fetch Test Case Version Details'.",
+    ],
+    outputDescription:
+      "JSON object with success, code (CO.REL_CYCLE_LINK_SUCCESS or TC.REL_CYC_EXIST), message, and duplicate_rel_cycle listing release/cycle pairs that were already linked.",
+    readOnly: false,
+    destructive: false,
+    idempotent: true,
   },
 ];

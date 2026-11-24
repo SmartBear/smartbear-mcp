@@ -78,6 +78,7 @@ export const QMetryToolsHandlers = {
   FETCH_TEST_CASE_EXECUTIONS: "getTestCaseExecutions",
   LINK_REQUIREMENT_TO_TESTCASE: "linkRequirementToTestCase",
   LINK_TESTCASE_TO_ISSUES: "linkTestcaseToIssues",
+  LINK_RELEASE_CYCLE_WITH_TESTCASE: "linkReleaseCycleWithTestCase",
   CREATE_REQUIREMENT: "createRequirement",
   UPDATE_REQUIREMENT: "updateRequirement",
   LINK_RELEASE_CYCLE_WITH_REQUIREMENT: "linkReleaseCycleWithRequirement",

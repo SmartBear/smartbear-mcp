@@ -14,6 +14,7 @@ import {
   type UpdateRequirementPayload,
 } from "../types/requirements";
 import { qmetryRequest } from "./api/client-api";
+import { buildReleaseCycleScopeBody } from "./release-cycle-scope";
 import { getProjectInfo } from "./project";
 import { resolveDefaults } from "./utils";
 
@@ -286,9 +287,6 @@ export async function fetchRequirementsLinkedToTestCase(
   });
 }
 
-const isValidId = (value: unknown): value is number =>
-  typeof value === "number" && !Number.isNaN(value);
-
 /**
  * Links one or more releases (each with one or more of its cycles) to one or
  * more existing requirement versions. Every release/cycle in the mapping is
@@ -303,97 +301,22 @@ export async function linkReleaseCycleWithRequirement(
   project: string | undefined,
   payload: LinkReleaseCycleWithRequirementPayload,
 ) {
-  const fn = "linkReleaseCycleWithRequirement";
   const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
     baseUrl,
     project,
   );
 
-  for (const field of [
-    "sourceProjectId",
-    "sourceReleaseId",
-    "sourceBuildId",
-  ] as const) {
-    if (!isValidId(payload?.[field])) {
-      throw new ToolError(
-        `[${fn}] Missing or invalid required parameter: '${field}'.`,
-      );
-    }
-  }
-
-  const mapping = payload.releaseCycleMapping;
-  if (!Array.isArray(mapping) || mapping.length === 0) {
-    throw new ToolError(
-      `[${fn}] Missing or invalid required parameter: 'releaseCycleMapping' (must be a non-empty array of { releaseId, cycleIds }).`,
-    );
-  }
-  const seenReleases = new Set<number>();
-  mapping.forEach((entry, i) => {
-    if (!isValidId(entry?.releaseId)) {
-      throw new ToolError(
-        `[${fn}] Missing or invalid required parameter: 'releaseCycleMapping[${i}].releaseId'.`,
-      );
-    }
-    if (
-      !Array.isArray(entry.cycleIds) ||
-      entry.cycleIds.length === 0 ||
-      !entry.cycleIds.every(isValidId)
-    ) {
-      throw new ToolError(
-        `[${fn}] Missing or invalid required parameter: 'releaseCycleMapping[${i}].cycleIds' (must be a non-empty array of numeric cycle IDs).`,
-      );
-    }
-    if (seenReleases.has(entry.releaseId)) {
-      throw new ToolError(
-        `[${fn}] Release ${entry.releaseId} appears more than once in 'releaseCycleMapping'. Put all of its cycles in one entry.`,
-      );
-    }
-    seenReleases.add(entry.releaseId);
-  });
-
-  const requirements = payload.requirements;
-  if (!Array.isArray(requirements) || requirements.length === 0) {
-    throw new ToolError(
-      `[${fn}] Missing or invalid required parameter: 'requirements' (must be a non-empty array of { rqId, rqVersionId }).`,
-    );
-  }
-  const seenRequirements = new Set<number>();
-  requirements.forEach((rq, i) => {
-    for (const field of ["rqId", "rqVersionId"] as const) {
-      if (!isValidId(rq?.[field])) {
-        throw new ToolError(
-          `[${fn}] Missing or invalid required parameter: 'requirements[${i}].${field}'.`,
-        );
-      }
-    }
-    if (seenRequirements.has(rq.rqId)) {
-      throw new ToolError(
-        `[${fn}] Requirement ${rq.rqId} appears more than once in 'requirements'. List each requirement once.`,
-      );
-    }
-    seenRequirements.add(rq.rqId);
-  });
-
-  const body = {
-    sourceBuildId: payload.sourceBuildId,
-    sourceProjectId: payload.sourceProjectId,
-    sourceReleaseId: payload.sourceReleaseId,
-    sourceScope: "project",
-    entityType: "RQ",
-    releaseCycleMapping: mapping.map((entry) => ({
-      release: entry.releaseId,
-      cycle: entry.cycleIds,
-      version: 1,
-    })),
-    opType: "otherScope",
-    withVersion: true,
-    updateFlag: false,
-    destinationProjectId: payload.sourceProjectId,
-    entityData: requirements.map((rq) => ({
-      entityId: rq.rqId,
-      version: rq.rqVersionId,
-    })),
-  };
+  const body = buildReleaseCycleScopeBody(
+    "linkReleaseCycleWithRequirement",
+    "RQ",
+    payload,
+    {
+      field: "requirements",
+      idField: "rqId",
+      versionField: "rqVersionId",
+      label: "Requirement",
+    },
+  );
 
   return qmetryRequest<unknown>({
     method: "POST",

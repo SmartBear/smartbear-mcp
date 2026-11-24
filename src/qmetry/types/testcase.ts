@@ -147,6 +147,23 @@ export interface LinkTestcaseToIssuesPayload {
   dfIDs: number[]; // required - Array of numeric defect/issue IDs
 }
 
+// Link Release/Cycle with Test Case (POST /rest/testcases/scope/add).
+// Tool-facing payload; the client builds the QMetry request body from it and
+// adds the fixed fields (sourceScope, entityType, opType, withVersion, ...).
+export interface LinkReleaseCycleWithTestCasePayload {
+  sourceProjectId: number; // required - currentProjectId from project info
+  sourceReleaseId: number; // required - currentReleaseId from project info
+  sourceBuildId: number; // required - currentBuildId from project info
+  releaseCycleMapping: Array<{
+    releaseId: number; // release to link
+    cycleIds: number[]; // one or more cycle IDs of that release
+  }>; // required - at least one release, no repeated releaseId
+  testCases: Array<{
+    tcID: number; // test case numeric ID (entityData[].entityId)
+    tcVersionID: number; // test case version ID (entityData[].version)
+  }>; // required - at least one test case, no repeated tcID
+}
+
 export interface FetchTestCaseExecutionsPayload
   extends PaginationPayload,
     FilterPayload,

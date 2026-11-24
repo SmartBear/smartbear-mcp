@@ -44,6 +44,7 @@ import {
   fetchTestCases,
   fetchTestCasesLinkedToRequirement,
   fetchTestCaseVersionDetails,
+  linkReleaseCycleWithTestCase,
   linkRequirementToTestCase,
   linkTestcaseToIssues,
   updateTestCase,
@@ -110,6 +111,8 @@ export const QMETRY_HANDLER_MAP: Record<string, QMetryHandler> = {
   [QMetryToolsHandlers.FETCH_TEST_CASE_EXECUTIONS]: fetchTestCaseExecutions,
   [QMetryToolsHandlers.LINK_REQUIREMENT_TO_TESTCASE]: linkRequirementToTestCase,
   [QMetryToolsHandlers.LINK_TESTCASE_TO_ISSUES]: linkTestcaseToIssues,
+  [QMetryToolsHandlers.LINK_RELEASE_CYCLE_WITH_TESTCASE]:
+    linkReleaseCycleWithTestCase,
   [QMetryToolsHandlers.CREATE_REQUIREMENT]: createRequirement,
   [QMetryToolsHandlers.UPDATE_REQUIREMENT]: updateRequirement,
   [QMetryToolsHandlers.LINK_RELEASE_CYCLE_WITH_REQUIREMENT]:

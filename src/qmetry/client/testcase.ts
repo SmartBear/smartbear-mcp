@@ -18,11 +18,13 @@ import {
   type FetchTestCasesLinkedToRequirementPayload,
   type FetchTestCasesPayload,
   type FetchTestCaseVersionDetailsPayload,
+  type LinkReleaseCycleWithTestCasePayload,
   type LinkTestcaseToIssuesPayload,
   type linkRequirementToTestCasePayload,
   type UpdateTestCasesPayload,
 } from "../types/testcase.js";
 import { qmetryRequest } from "./api/client-api";
+import { buildReleaseCycleScopeBody } from "./release-cycle-scope";
 import { resolveDefaults } from "./utils";
 
 /**
@@ -585,6 +587,47 @@ export async function linkTestcaseToIssues(
   return qmetryRequest<unknown>({
     method: "POST",
     path: QMETRY_PATHS.TESTCASE.LINK_ISSUES_TO_TC,
+    token,
+    project: resolvedProject,
+    baseUrl: resolvedBaseUrl,
+    body,
+  });
+}
+
+/**
+ * Links one or more releases (each with one or more of its cycles) to one or
+ * more existing test case versions. Every release/cycle in the mapping is
+ * linked to every test case. QMetry treats a cycle as a build, so cycle
+ * errors come back as CO.INVALID_BUILD_ID.
+ * @throws If a required ID is missing/invalid, a list is empty, or a
+ * releaseId / tcID is repeated.
+ */
+export async function linkReleaseCycleWithTestCase(
+  token: string,
+  baseUrl: string,
+  project: string | undefined,
+  payload: LinkReleaseCycleWithTestCasePayload,
+) {
+  const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
+    baseUrl,
+    project,
+  );
+
+  const body = buildReleaseCycleScopeBody(
+    "linkReleaseCycleWithTestCase",
+    "TC",
+    payload,
+    {
+      field: "testCases",
+      idField: "tcID",
+      versionField: "tcVersionID",
+      label: "Test case",
+    },
+  );
+
+  return qmetryRequest<unknown>({
+    method: "POST",
+    path: QMETRY_PATHS.TESTCASE.LINK_RELEASE_CYCLE,
     token,
     project: resolvedProject,
     baseUrl: resolvedBaseUrl,
