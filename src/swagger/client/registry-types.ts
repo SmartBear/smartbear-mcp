@@ -452,7 +452,9 @@ export const ApidomValidationOutputSchema = z.looseObject({
   recognized: z
     .boolean()
     .optional()
-    .describe("True if the spec was recognized as OpenAPI/AsyncAPI"),
+    .describe(
+      "True if the spec was recognized as OpenAPI, AsyncAPI or an A2A Agent Card",
+    ),
   spec: z
     .looseObject({
       namespace: z.string().optional().describe("Detected spec namespace"),
