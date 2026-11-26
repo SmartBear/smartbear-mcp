@@ -45,7 +45,10 @@ export class GetRelease extends Tool<BugsnagClient> {
           "JSON object with release details including version, source control info, error counts and stability data.",
       },
     ],
-    hints: ["Release IDs can be found using the List releases tool"],
+    hints: [
+      "Release IDs can be found using the List Releases tool",
+      "user_stability and session_stability are fractions between 0 and 1; meets_target_stability and meets_critical_stability compare them with the project's stability targets",
+    ],
     readOnly: true,
     idempotent: true,
     outputDescription:

@@ -187,7 +187,7 @@ export class ProjectAPI extends BaseAPI {
   async listBuildsInRelease(releaseId: string): Promise<ApiResponse<Build[]>> {
     const localVarFetchArgs = ProjectsApiFetchParamCreator(
       this.configuration,
-    ).getReleaseGroup(releaseId);
+    ).listReleaseGroupReleases(releaseId);
     return await this.requestArray<Build>(
       localVarFetchArgs.url,
       localVarFetchArgs.options,

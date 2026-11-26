@@ -203,6 +203,71 @@ describe("GetTestCases", () => {
     expect(result.structuredContent).toBe(responseMock);
   });
 
+  describe("nameOrKey filter", () => {
+    it("should accept nameOrKey in the input schema", () => {
+      const parsed = ListTestCasesCursorPaginatedQueryParams.parse({
+        projectKey: "PROJ",
+        nameOrKey: "tool",
+      });
+      expect(parsed.nameOrKey).toBe("tool");
+    });
+
+    it("should document nameOrKey in the input schema", () => {
+      const description =
+        ListTestCasesCursorPaginatedQueryParams.shape.nameOrKey.description;
+      expect(description).toContain("name or key");
+      expect(description).toContain(
+        "If provided, the project key must also be provided",
+      );
+    });
+
+    it("should forward projectKey and nameOrKey to apiClient.get", async () => {
+      const responseMock = {
+        nextStartAtId: null,
+        limit: 10,
+        values: [{ id: 1, key: "PROJ-T1", name: "Tool test" }],
+      };
+      mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
+      const result = await instance.handle(
+        { projectKey: "PROJ", nameOrKey: "tool", limit: 10 },
+        {} as any,
+      );
+      expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
+        "/testcases/nextgen",
+        { projectKey: "PROJ", nameOrKey: "tool", limit: 10, startAtId: 0 },
+      );
+      expect(result.structuredContent).toBe(responseMock);
+    });
+
+    it("should not send nameOrKey when it is not provided", async () => {
+      mockClient.getApiClient().get.mockResolvedValueOnce({ values: [] });
+      await instance.handle({ projectKey: "PROJ" }, {} as any);
+      const params = mockClient.getApiClient().get.mock.calls[0][1];
+      expect(params).not.toHaveProperty("nameOrKey");
+    });
+
+    it("should return an empty result when nothing matches", async () => {
+      const responseMock = { nextStartAtId: null, limit: 10, values: [] };
+      mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
+      const result = await instance.handle(
+        { projectKey: "PROJ", nameOrKey: "no-such-test" },
+        {} as any,
+      );
+      expect(result.structuredContent).toEqual(responseMock);
+    });
+
+    it("should propagate the API error when nameOrKey is sent without projectKey", async () => {
+      mockClient
+        .getApiClient()
+        .get.mockRejectedValueOnce(
+          new Error("projectKey is required when nameOrKey is provided"),
+        );
+      await expect(
+        instance.handle({ nameOrKey: "tool" }, {} as any),
+      ).rejects.toThrow("projectKey is required");
+    });
+  });
+
   it("should handle apiClient.get throwing error", async () => {
     mockClient.getApiClient().get.mockRejectedValueOnce(new Error("API error"));
     await expect(instance.handle({ limit: 1 }, {} as any)).rejects.toThrow(
