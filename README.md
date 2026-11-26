@@ -109,6 +109,7 @@ Alternatively, you can use `npx` (or globally install) the `@smartbear/mcp` pack
         "COLLABORATOR_LOGIN_TICKET": "${input:collab_login_ticket}",
         "QTM4J_API_KEY": "${input:qtm4j_api_key}",
         "QTM4J_BASE_URL": "${input:qtm4j_base_url}",
+        "QTM4J_API_VERSION": "${input:qtm4j_api_version}",
         "QTM4J_AUTOMATION_API_KEY": "${input:qtm4j_automation_api_key}",
         "SWAGGER_FUNCTIONAL_TESTING_API_TOKEN": "${input:swagger_functional_testing_api_token}",
         "SWAGGER_FUNCTIONAL_TESTING_BASE_PATH": "${input:swagger_functional_testing_base_path}"
@@ -249,6 +250,12 @@ Alternatively, you can use `npx` (or globally install) the `@smartbear/mcp` pack
           "password": false
     },
     {
+          "id": "qtm4j_api_version",
+          "type": "promptString",
+          "description": "QTM4J API version prefix (optional). Defaults to /rest/api/latest.",
+          "password": false
+    },
+    {
           "id": "qtm4j_automation_api_key",
           "type": "promptString",
           "description": "QTM4J Automation API Key - required for automation tools, leave blank to disable them",
@@ -306,6 +313,7 @@ Add the following configuration to your `claude_desktop_config.json` to launch t
         "COLLABORATOR_LOGIN_TICKET": "your collab login ticket",
         "QTM4J_API_KEY": "your_qtm4j_key",
         "QTM4J_BASE_URL": "https://qtmcloud.qmetry.com",
+        "QTM4J_API_VERSION": "/rest/api/latest",
         "QTM4J_AUTOMATION_API_KEY": "your_qtm4j_automation_api_key",
         "SWAGGER_FUNCTIONAL_TESTING_API_TOKEN": "your_swagger_functional_testing_api_token",
         "SWAGGER_FUNCTIONAL_TESTING_BASE_PATH": "https://api.reflect.run/v1"

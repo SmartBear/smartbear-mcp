@@ -1,5 +1,6 @@
 import { ToolError } from "../../common/tools";
 import {
+  API_CONFIG,
   CONTENT_TYPES,
   EMPTY_VALUES,
   ERROR_MESSAGES,
@@ -15,6 +16,7 @@ import { AuthService } from "./auth-service";
  */
 export class ApiClient {
   private readonly baseUrl: string;
+  private readonly apiVersion: string;
   private readonly tokenProvider: () => string | null;
   private readonly automationTokenProvider?: () => string | null;
   private readonly allowTracking: boolean;
@@ -23,10 +25,12 @@ export class ApiClient {
   constructor(
     tokenOrProvider: string | (() => string | null),
     baseUrl: string,
+    apiVersion: string = API_CONFIG.DEFAULT_API_VERSION,
     automationTokenProvider?: () => string | null,
     allowTracking = true,
   ) {
     this.baseUrl = baseUrl.trim().replace(/\/$/, EMPTY_VALUES.STRING);
+    this.apiVersion = this.normalizeApiVersion(apiVersion);
 
     if (typeof tokenOrProvider === "string") {
       this.tokenProvider = () => tokenOrProvider;
@@ -41,12 +45,31 @@ export class ApiClient {
       this._skipInstance = new ApiClient(
         this.tokenProvider,
         this.baseUrl,
+        this.apiVersion,
         this.automationTokenProvider,
         false,
       );
     } else {
       this._skipInstance = this;
     }
+  }
+
+  /**
+   * Normalize API version prefix:
+   * - Trim whitespace
+   * - Strip trailing slashes
+   * - Ensure leading slash
+   * - Fall back to default if empty
+   */
+  private normalizeApiVersion(version: string): string {
+    let normalized = version.trim().replace(/\/$/, EMPTY_VALUES.STRING);
+    if (!normalized) {
+      return API_CONFIG.DEFAULT_API_VERSION;
+    }
+    if (!normalized.startsWith("/")) {
+      normalized = `/${normalized}`;
+    }
+    return normalized;
   }
 
   /**
@@ -93,13 +116,16 @@ export class ApiClient {
    * Construct full URL with query parameters
    * @param endpoint - API endpoint path
    * @param params - Optional query parameters
+   * @param versioned - Whether to prepend the API version prefix (default true)
    * @returns Complete URL string
    */
   getUrl(
     endpoint: string,
     params?: Record<string, string | number | boolean | undefined>,
+    versioned = true,
   ): string {
-    const url = new URL(this.baseUrl + endpoint);
+    const path = versioned ? this.apiVersion + endpoint : endpoint;
+    const url = new URL(this.baseUrl + path);
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
         if (value !== undefined) {
@@ -171,6 +197,7 @@ export class ApiClient {
   /**
    * Perform GET request using the automation API key (QTM4J_AUTOMATION_API_KEY).
    * Used for automation endpoints that require the automation key instead of the regular API key.
+   * Automation endpoints are absolute paths and bypass the version prefix.
    * @param endpoint - API endpoint path
    * @param params - Optional query parameters
    * @returns Parsed response data
@@ -179,7 +206,7 @@ export class ApiClient {
     endpoint: string,
     params?: Record<string, string | number | boolean | undefined>,
   ): Promise<any> {
-    const response = await fetch(this.getUrl(endpoint, params), {
+    const response = await fetch(this.getUrl(endpoint, params, false), {
       method: HTTP_METHODS.GET,
       headers: this.getAutomationHeaders(),
     });
@@ -190,12 +217,13 @@ export class ApiClient {
    * Perform POST request using the automation API key (QTM4J_AUTOMATION_API_KEY).
    * Used for automation import endpoints — same apiKey header as all other APIs,
    * but the value is the automation key instead of the regular API key.
+   * Automation endpoints are absolute paths and bypass the version prefix.
    * @param endpoint - API endpoint path
    * @param body - Request body object
    * @returns Parsed response data
    */
   async postAutomation(endpoint: string, body: object): Promise<any> {
-    const url = this.getUrl(endpoint);
+    const url = this.getUrl(endpoint, undefined, false);
     const requestHeaders = {
       ...this.getAutomationHeaders(),
       [HTTP_HEADERS.CONTENT_TYPE]: CONTENT_TYPES.JSON,
