@@ -261,6 +261,25 @@ function assertSafeCustomEndpoint(endpoint: string): void {
   }
 }
 
+// The operator's own `BUGSNAG_ENDPOINT` env var is trusted configuration, not
+// caller input. In HTTP mode every configure() runs inside a request context
+// and falls back to that env var when no header is sent, so without this
+// exemption an operator pointing the server at a local or cluster-internal
+// on-premise instance (e.g. http://localhost:9000) would be blocked on every
+// session. Compared by origin so redirects within that same server are also
+// allowed. Mirrors isOperatorToken() for the auth token.
+function isOperatorEndpoint(url: string | URL): boolean {
+  const operatorEndpoint = process.env.BUGSNAG_ENDPOINT;
+  if (!operatorEndpoint) return false;
+  try {
+    const origin = new URL(url).origin;
+    // Non-http(s) URLs all report the opaque origin "null"; never match those.
+    return origin !== "null" && origin === new URL(operatorEndpoint).origin;
+  } catch {
+    return false;
+  }
+}
+
 const cacheKeys = {
   ORG: "bugsnag_org",
   PROJECTS: "bugsnag_projects",
@@ -522,9 +541,10 @@ export class BugsnagClient implements Client {
       },
       // Applied to every redirect hop in BaseAPI. Same trust model as the
       // initial endpoint check in getEndpoint(): only enforced while serving
-      // an HTTP request, where the endpoint may be caller-controlled.
+      // an HTTP request, where the endpoint may be caller-controlled, and
+      // never for hops within the operator's own BUGSNAG_ENDPOINT server.
       validateRequestUrl: (url: URL) => {
-        if (getRequestContext()) {
+        if (getRequestContext() && !isOperatorEndpoint(url)) {
           assertSafeCustomEndpoint(url.toString());
         }
       },
@@ -578,8 +598,11 @@ export class BugsnagClient implements Client {
         // configured once at startup from an operator's own env var) there
         // is no untrusted caller to defend against, and operators running
         // this locally or against an on-premise instance on a loopback/
-        // internal address should not be blocked from doing so.
-        if (getRequestContext()) {
+        // internal address should not be blocked from doing so. The same
+        // applies inside a request when the value is the operator's own
+        // BUGSNAG_ENDPOINT (the HTTP transport's fallback when no header is
+        // sent).
+        if (getRequestContext() && !isOperatorEndpoint(endpoint)) {
           assertSafeCustomEndpoint(endpoint);
         }
         subDomainEndpoint = endpoint;

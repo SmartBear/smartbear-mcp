@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- [BugSnag] Fixed two SSRF vulnerabilities. A caller-supplied `endpoint` (the `Bugsnag-Endpoint` header) can no longer point the client at loopback, link-local/cloud metadata (including IPv4-mapped IPv6, ULA forms), `*.localhost` or Kubernetes-internal hosts on HTTP requests; on-premise and local setups, including `BUGSNAG_ENDPOINT` outside a request, are unaffected. The `nextUrl` pagination argument now only contributes its path and query to the configured API base URL, so it can no longer redirect requests to another host.
+- [BugSnag] Fixed an SSRF vulnerability: the `nextUrl` pagination argument and API `Link` headers now only contribute their path and query to the configured API base URL, so they can no longer send requests to another host.
+- [BugSnag] Mitigated SSRF through a caller-supplied `endpoint` (the `Bugsnag-Endpoint` header or query parameter) over HTTP: loopback, link-local/cloud metadata, `*.localhost` and Kubernetes-internal host names are refused, including on redirects. The check only looks at the URL as written, so private network addresses and host names that resolve to internal addresses are still allowed. To fully restrict HTTP deployments, set `MCP_ALLOWED_ENDPOINTS`. The operator's own `BUGSNAG_ENDPOINT` and stdio setups are not affected.
 
 ### Changed
 

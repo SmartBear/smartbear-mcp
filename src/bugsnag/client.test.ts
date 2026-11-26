@@ -803,6 +803,61 @@ describe("BugsnagClient", () => {
           });
         });
 
+        // In HTTP mode configure() always runs inside a request context and
+        // falls back to the operator's BUGSNAG_ENDPOINT env var when no
+        // header is sent, so that trusted value must not be blocked.
+        describe("over HTTP with the operator's BUGSNAG_ENDPOINT", () => {
+          const withHttpRequest = <T>(fn: () => T): T =>
+            requestContextStorage.run({ headers: {} }, fn);
+
+          afterEach(() => {
+            vi.unstubAllEnvs();
+          });
+
+          it("allows a loopback BUGSNAG_ENDPOINT inside an HTTP request context", () => {
+            vi.stubEnv("BUGSNAG_ENDPOINT", "http://localhost");
+            expect(
+              withHttpRequest(() =>
+                client.getEndpoint("api", "00000key", "http://localhost"),
+              ),
+            ).toBe("http://localhost");
+          });
+
+          it("allows a cluster-internal BUGSNAG_ENDPOINT inside an HTTP request context", () => {
+            vi.stubEnv(
+              "BUGSNAG_ENDPOINT",
+              "http://bugsnag.ns.svc.cluster.local",
+            );
+            expect(
+              withHttpRequest(() =>
+                client.getEndpoint(
+                  "api",
+                  "00000key",
+                  "http://bugsnag.ns.svc.cluster.local",
+                ),
+              ),
+            ).toBe("http://bugsnag.ns.svc.cluster.local");
+          });
+
+          it("still rejects a caller-supplied unsafe endpoint on a different origin", () => {
+            vi.stubEnv("BUGSNAG_ENDPOINT", "http://localhost");
+            expect(() =>
+              withHttpRequest(() =>
+                client.getEndpoint("api", "00000key", "http://localhost:9000"),
+              ),
+            ).toThrow(/localhost is not allowed/);
+            expect(() =>
+              withHttpRequest(() =>
+                client.getEndpoint(
+                  "api",
+                  "00000key",
+                  "http://169.254.169.254/latest/meta-data",
+                ),
+              ),
+            ).toThrow(/Unsafe Bugsnag endpoint/);
+          });
+        });
+
         // Outside a request context — stdio transport (local Claude
         // Desktop/VS Code/Claude Code usage), or an HTTP server's one-time
         // startup configuration from its own env vars — `endpoint` can only
@@ -1007,6 +1062,41 @@ describe("BugsnagClient", () => {
 
       // Outside a request context (stdio / operator config) nothing is enforced.
       expect(() => validateRequestUrl(loopback)).not.toThrow();
+    });
+
+    it("lets the redirect validator follow hops within the operator's BUGSNAG_ENDPOINT during HTTP requests", async () => {
+      vi.stubEnv("BUGSNAG_ENDPOINT", "http://localhost");
+      try {
+        const { Configuration } = await import("./client/api/index.js");
+        const MockedConfiguration = vi.mocked(Configuration);
+        MockedConfiguration.mockClear();
+
+        await requestContextStorage.run({ headers: {} }, () =>
+          new BugsnagClient().configure({} as any, {
+            auth_token: "test-token",
+            endpoint: "http://localhost",
+          }),
+        );
+
+        const validateRequestUrl = MockedConfiguration.mock.calls[0][0]
+          .validateRequestUrl as (url: URL) => void;
+
+        requestContextStorage.run({ headers: {} }, () => {
+          // Same origin as the operator's endpoint: allowed.
+          expect(() =>
+            validateRequestUrl(new URL("http://localhost/user/organizations")),
+          ).not.toThrow();
+          // Any other unsafe origin is still refused.
+          expect(() =>
+            validateRequestUrl(new URL("http://localhost:9000/")),
+          ).toThrow(/Unsafe Bugsnag endpoint/);
+          expect(() =>
+            validateRequestUrl(new URL("http://169.254.169.254/")),
+          ).toThrow(/Unsafe Bugsnag endpoint/);
+        });
+      } finally {
+        vi.unstubAllEnvs();
+      }
     });
 
     it("uses the shared cache, namespaced by the caller's identity", async () => {
