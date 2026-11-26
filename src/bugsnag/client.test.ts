@@ -3430,7 +3430,7 @@ describe("BugsnagClient", () => {
 
         const result = await toolHandler({
           projectId: "proj-1",
-          collaboratorNameOrId: "Alice",
+          collaboratorNameEmailOrId: "Alice",
         });
 
         expect(mockProjectAPI.listProjectCollaborators).toHaveBeenCalledWith(
@@ -3464,7 +3464,7 @@ describe("BugsnagClient", () => {
 
         const result = await toolHandler({
           projectId: "proj-1",
-          collaboratorNameOrId: "collab-2",
+          collaboratorNameEmailOrId: "collab-2",
         });
 
         expect(mockProjectAPI.listProjectCollaborators).toHaveBeenCalledWith(
@@ -3477,6 +3477,48 @@ describe("BugsnagClient", () => {
           filtered: true,
         };
         expect(result.content[0].text).toBe(JSON.stringify(expectedResult));
+      });
+
+      it("should trim whitespace around the filter before matching", async () => {
+        mockProjectAPI.listProjectCollaborators.mockResolvedValue({
+          body: [],
+        });
+
+        mockCache.get.mockReturnValueOnce([
+          getMockProject("proj-1", "Project 1"),
+        ]);
+        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        const toolHandler = registerToolsSpy.mock.calls.find(
+          (call: any) => call[0].title === "List Project Collaborators",
+        )?.[1];
+
+        await toolHandler({
+          projectId: "proj-1",
+          collaboratorNameEmailOrId: "  alice ",
+        });
+
+        expect(mockProjectAPI.listProjectCollaborators).toHaveBeenCalledWith(
+          "proj-1",
+          "alice",
+        );
+      });
+
+      it.each([
+        ["an empty", ""],
+        ["a whitespace-only", "   "],
+      ])("should reject %s filter", async (_, filter) => {
+        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        const toolHandler = registerToolsSpy.mock.calls.find(
+          (call: any) => call[0].title === "List Project Collaborators",
+        )?.[1];
+
+        await expect(
+          toolHandler({
+            projectId: "proj-1",
+            collaboratorNameEmailOrId: filter,
+          }),
+        ).rejects.toThrow();
+        expect(mockProjectAPI.listProjectCollaborators).not.toHaveBeenCalled();
       });
 
       it("should return empty message when no collaborators found", async () => {
@@ -3521,7 +3563,7 @@ describe("BugsnagClient", () => {
 
         const result = await toolHandler({
           projectId: "proj-1",
-          collaboratorNameOrId: "NonExistent",
+          collaboratorNameEmailOrId: "NonExistent",
         });
 
         expect(mockProjectAPI.listProjectCollaborators).toHaveBeenCalledWith(

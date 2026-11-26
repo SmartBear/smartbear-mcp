@@ -751,14 +751,14 @@ Expected Output: Array of up to 50 spans focused around the target span
 **Toolset:** Projects
 
 **Parameters:**
-- projectId (string): The ID of the Bugsnag project. If omitted, uses the current project if one is set.
-- collaboratorNameOrId (string): Optional: filter by exact collaborator ID, or by part of a collaborator's name or email address (case-insensitive)
+- projectId (string): The BugSnag project ID: an opaque 24-character hex string such as '515fb9337c1074f6fd000003'. This is NOT the project name or slug (the 'my-project' part of a dashboard URL). Get it from the 'id' field returned by List Projects. Optional if a current project is configured (see Get Current Project). When no project is configured, the project provided here becomes the current project for subsequent calls.
+- collaboratorNameEmailOrId (string): Optional: filter by exact collaborator ID, or by part of a collaborator's name or email address (case-insensitive)
 
-**Use Cases:** 1. Find all team members with access to a project 2. Locate a specific collaborator to assign errors or tasks 3. Check project team membership 4. Get collaborator details for project management and reporting 5. Retrieve collaborator information for communication and coordination
+**Use Cases:** 1. Find all team members with access to a project 2. Look up a collaborator's email address or role on the project 3. Check project team membership 4. Get collaborator details for project management and reporting 5. Retrieve collaborator information for communication and coordination
 
-**Hints:** 1. Use collaboratorNameOrId to filter by exact ID, or by partial name or email match",
+**Hints:** 1. Use collaboratorNameEmailOrId to filter by exact ID, or by partial name or email match 2. project_role is the collaborator's role on this project. is_admin is whether they are an admin of the whole organization, not of this project 3. pending_invitation is true for people who have been invited but have not accepted yet",
     "inputSchema": [
-      "collaboratorNameOrId",
+      "collaboratorNameEmailOrId",
       "projectId",
     ],
     "outputSchema": undefined,

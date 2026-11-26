@@ -64,9 +64,13 @@ describe("ProjectAPI.listProjectCollaborators", () => {
 
     const result = await api.listProjectCollaborators("proj-1");
 
+    const allowedKeys = [
+      ...ProjectAPI.collaboratorFields.filter((f) => f !== "project_roles"),
+      "project_role",
+    ];
     for (const collaborator of result.body ?? []) {
       for (const key of Object.keys(collaborator)) {
-        expect(ProjectAPI.collaboratorFields).toContain(key);
+        expect(allowedKeys).toContain(key);
       }
     }
     expect(result.body?.[0]).toEqual({
@@ -75,10 +79,28 @@ describe("ProjectAPI.listProjectCollaborators", () => {
       email: "alice@example.com",
       is_admin: false,
       pending_invitation: false,
+      project_role: undefined,
     });
     expect(JSON.stringify(result.body)).not.toMatch(
       /two_factor|recovery_codes|password_updated|heroku/,
     );
+  });
+
+  it("returns the role on the listed project only, not every project's role", async () => {
+    respondWith([
+      getMockCollaborator("collab-5", "Dana", "dana@example.com", {
+        project_roles: { "proj-1": "admin", "proj-2": "member" },
+      }),
+      getMockCollaborator("collab-6", "Eve", "eve@example.com", {
+        project_roles: { "proj-2": "admin" },
+      }),
+    ]);
+
+    const result = await api.listProjectCollaborators("proj-1");
+
+    expect(result.body?.[0].project_role).toBe("admin");
+    expect(result.body?.[1].project_role).toBeUndefined();
+    expect(JSON.stringify(result.body)).not.toMatch(/project_roles|proj-2/);
   });
 
   it("keeps a null last_request_at for a collaborator who never used the dashboard", async () => {

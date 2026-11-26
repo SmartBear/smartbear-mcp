@@ -5,6 +5,7 @@ import {
   type Collaborator,
   type EventField,
   type Project,
+  type ProjectCollaborator,
   type ProjectNetworkGroupingRuleset,
   ProjectsApiFetchParamCreator,
   type Release,
@@ -57,6 +58,7 @@ export class ProjectAPI extends BaseAPI {
   ];
   // Excludes account-security fields such as 2FA state, recovery codes and
   // password change dates, which collaborator records also carry.
+  // project_roles is reduced to the single project_role for the listed project.
   static collaboratorFields: (keyof Collaborator)[] = [
     "id",
     "name",
@@ -64,6 +66,7 @@ export class ProjectAPI extends BaseAPI {
     "is_admin",
     "pending_invitation",
     "last_request_at",
+    "project_roles",
   ];
   // Largest page the Data Access API serves, so fetching every collaborator
   // takes as few round trips as possible.
@@ -517,14 +520,15 @@ export class ProjectAPI extends BaseAPI {
    * List the collaborators in a Project
    * GET /projects/{project_id}/collaborators
    * @param projectId The project ID
-   * @param collaboratorNameOrEmailOrId Optional filter: an exact collaborator ID,
+   * @param collaboratorNameEmailOrId Optional filter: an exact collaborator ID,
    *   or part of a name or email address (case-insensitive)
-   * @returns A promise that resolves to the list of collaborators
+   * @returns A promise that resolves to the list of collaborators, each with
+   *   its role on this project as project_role
    */
   async listProjectCollaborators(
     projectId: string,
-    collaboratorNameOrEmailOrId?: string,
-  ): Promise<ApiResponse<Collaborator[]>> {
+    collaboratorNameEmailOrId?: string,
+  ): Promise<ApiResponse<ProjectCollaborator[]>> {
     const localVarFetchArgs = ProjectsApiFetchParamCreator(
       this.configuration,
     ).listProjectCollaborators(projectId, ProjectAPI.collaboratorsPerPage);
@@ -534,15 +538,22 @@ export class ProjectAPI extends BaseAPI {
       true,
       ProjectAPI.collaboratorFields,
     );
-    if (collaboratorNameOrEmailOrId) {
-      const filterValue = collaboratorNameOrEmailOrId.toLowerCase();
-      collaborators.body = (collaborators.body ?? []).filter(
+    let matching = collaborators.body ?? [];
+    if (collaboratorNameEmailOrId) {
+      const filterValue = collaboratorNameEmailOrId.toLowerCase();
+      matching = matching.filter(
         (c) =>
-          c.id === collaboratorNameOrEmailOrId ||
+          c.id === collaboratorNameEmailOrId ||
           c.name?.toLowerCase().includes(filterValue) ||
           c.email?.toLowerCase().includes(filterValue),
       );
     }
-    return collaborators;
+    return {
+      ...collaborators,
+      body: matching.map(({ project_roles, ...rest }) => ({
+        ...rest,
+        project_role: project_roles?.[projectId],
+      })),
+    };
   }
 }
