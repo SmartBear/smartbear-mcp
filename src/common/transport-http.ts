@@ -1,5 +1,5 @@
 import { AsyncLocalStorage } from "node:async_hooks";
-import { randomUUID } from "node:crypto";
+import { createHmac, randomBytes, randomUUID } from "node:crypto";
 import type { IncomingMessage, Server, ServerResponse } from "node:http";
 import { createServer } from "node:http";
 import querystring from "node:querystring";
@@ -23,6 +23,7 @@ import {
   trackToolsListed,
 } from "./analytics";
 import { clientRegistry } from "./client-registry";
+import { getHeaderName } from "./config-names";
 import { MCP_SERVER_VERSION } from "./info";
 import { extractModernClientMeta, handleInitializeMessage } from "./initialize";
 import {
@@ -38,10 +39,189 @@ import { isDraining, registerShutdownHandler } from "./shutdown";
 import { getEnvVarName } from "./transport-stdio";
 import { getTypeDescription, isOptionalType } from "./zod-utils";
 
+export { getHeaderName };
+
 type SessionEntry = {
   server: SmartBearMcpServer;
   transport: NodeStreamableHTTPServerTransport | SSEServerTransport;
+  /** Epoch ms of the last request seen on this session; drives idle reaping. */
+  lastActivity?: number;
+  /**
+   * HTTP exchanges currently open on this session (in-flight requests, SSE
+   * streams). A session with an open exchange is live, however long it has
+   * been since the last request began, so it is never reaped.
+   */
+  inFlight?: number;
+  /**
+   * Identity the opening credential resolved to. Unset when no client resolves
+   * a per-request credential, in which case there is nothing to bind.
+   */
+  identity?: string;
 };
+
+/**
+ * Mark an HTTP exchange on `entry` as open until `res` closes, and restart the
+ * idle clock when it ends. Keeps a long tool call or an open server-push
+ * stream from being mistaken for an abandoned session.
+ */
+function trackExchange(entry: SessionEntry, res: ServerResponse): void {
+  entry.inFlight = (entry.inFlight ?? 0) + 1;
+  entry.lastActivity = Date.now();
+  res.once("close", () => {
+    entry.inFlight = Math.max(0, (entry.inFlight ?? 1) - 1);
+    entry.lastActivity = Date.now();
+  });
+}
+
+/** Default idle lifetime of a session before it is reaped: 4 hours. */
+const DEFAULT_SESSION_IDLE_TIMEOUT_MS = 4 * 60 * 60 * 1000;
+
+/**
+ * Idle lifetime for HTTP sessions (SESSION_IDLE_TIMEOUT_MS, default 4 h,
+ * 0 disables). Clients routinely vanish without sending DELETE / closing the
+ * SSE stream, and each leftover session pins a full server instance with its
+ * clients and registered tools, so sessions must be reaped when idle.
+ */
+export function getSessionIdleTimeoutMs(): number {
+  // Trim first: Number("  ") is 0, which would silently disable the reaper.
+  const raw = process.env.SESSION_IDLE_TIMEOUT_MS?.trim();
+  if (!raw) return DEFAULT_SESSION_IDLE_TIMEOUT_MS;
+  // Number(), not parseInt: "4h" must be rejected, not read as 4 ms.
+  const parsed = Number(raw);
+  return Number.isInteger(parsed) && parsed >= 0
+    ? parsed
+    : DEFAULT_SESSION_IDLE_TIMEOUT_MS;
+}
+
+/**
+ * Close every session idle for longer than `idleMs`. Each is removed from the
+ * map before its transport is closed, then per-client cleanup runs.
+ * @returns the number of sessions reaped
+ */
+export async function reapIdleSessions(
+  transports: Map<string, SessionEntry>,
+  idleMs: number,
+  now: number = Date.now(),
+): Promise<number> {
+  const idle = [...transports.entries()].filter(
+    ([, entry]) =>
+      (entry.inFlight ?? 0) === 0 && now - (entry.lastActivity ?? now) > idleMs,
+  );
+  await Promise.all(
+    idle.map(async ([sessionId, entry]) => {
+      // Re-check: a request may have arrived while earlier closes were awaited.
+      if ((entry.inFlight ?? 0) > 0) return;
+      // Unregister first: new requests then get a clean 404 (client
+      // re-initializes) instead of hitting a closing transport, and an
+      // overlapping reaper run cannot pick the same session. Since the entry is
+      // already gone, onclose skips its cleanup, so it is done here.
+      if (!transports.delete(sessionId)) return;
+      console.log(`[MCP] Reaping idle session: ${redactSessionId(sessionId)}`);
+      try {
+        await entry.transport.close();
+      } catch (err) {
+        console.error("[MCP] Error closing idle session:", err);
+      }
+      endSessionAnalytics(entry.server);
+      // Await so a failed per-client cleanup (e.g. a Reflect disconnect) is
+      // logged here instead of becoming an unhandled rejection.
+      try {
+        await entry.server.cleanupSession(sessionId);
+      } catch (err) {
+        console.error("[MCP] Error cleaning up idle session:", err);
+      }
+    }),
+  );
+  return idle.length;
+}
+
+const IDENTITY_KEY = randomBytes(32);
+
+/**
+ * Opaque identity the current request's credentials resolve to, or null when
+ * none of the clients find a credential. Must run inside the request context.
+ *
+ * Bound to the exact token rather than to unverified JWT claims, which anyone
+ * can forge. A refreshed OAuth token therefore no longer matches its session;
+ * the mismatch is answered as an unknown session, so the client re-initializes.
+ */
+export function resolveCredentialIdentity(
+  server: SmartBearMcpServer,
+): string | null {
+  const parts: string[] = [];
+  for (const client of server.getClients()) {
+    const token = client.getAuthToken?.();
+    if (token) {
+      // Clients differ on whether getAuthToken() keeps the `Bearer ` prefix.
+      parts.push(
+        `${client.capabilityPrefix}:${token.replace(/^Bearer\s+/i, "")}`,
+      );
+    }
+  }
+  if (parts.length === 0) {
+    return null;
+  }
+  return createHmac("sha256", IDENTITY_KEY)
+    .update(parts.join("\0"))
+    .digest("hex");
+}
+
+function requestIdentity(
+  req: IncomingMessage,
+  server: SmartBearMcpServer,
+): string | null {
+  return withRequestContext(req, () => resolveCredentialIdentity(server));
+}
+
+/** Streamable HTTP's unknown-session response, which tells clients to re-initialize. */
+function writeSessionNotFound(res: ServerResponse): void {
+  res.writeHead(404, { "Content-Type": "application/json" });
+  res.end(
+    JSON.stringify({
+      jsonrpc: "2.0",
+      error: {
+        code: -32001,
+        message: "Session not found",
+      },
+      id: null,
+    }),
+  );
+}
+
+/**
+ * Require every request on an established session to carry a credential that
+ * resolves to the identity that opened it. The session id only correlates
+ * requests. Writes the response and returns false on failure.
+ *
+ * No credential gets a 401 with the OAuth challenge. A credential for another
+ * identity gets the same 404 as an unknown session: the client re-initializes
+ * on its own (e.g. after an OAuth token refresh), and a caller holding someone
+ * else's session id learns nothing about whether it exists. The session itself
+ * is left alone so a mismatched request cannot tear down the owner's session.
+ */
+export function authorizeSessionRequest(
+  req: IncomingMessage,
+  res: ServerResponse,
+  entry: SessionEntry,
+  notFound: (res: ServerResponse) => void = writeSessionNotFound,
+): boolean {
+  if (!entry.identity) {
+    return true;
+  }
+  const current = requestIdentity(req, entry.server);
+  if (current === entry.identity) {
+    return true;
+  }
+  // Drain so keep-alive sockets aren't left half-read.
+  req.resume();
+  if (current === null) {
+    res.writeHead(401, unauthorizedHeaders(req.headers, req.headers.host));
+    res.end("Unauthorized: credentials are required on every request");
+  } else {
+    notFound(res);
+  }
+  return false;
+}
 
 /**
  * Common cache-control headers for probe endpoints.
@@ -139,6 +319,59 @@ export function getBaseUrlFromHeaders(headers: HeaderRecord): string {
  */
 export function getBaseUrl(req: IncomingMessage): string {
   return getBaseUrlFromHeaders(req.headers);
+}
+
+/**
+ * True when the request carries a Bearer JWT whose `exp` claim has passed.
+ * The signature is not verified here; the upstream API does that.
+ */
+export function hasExpiredBearerJwt(
+  req: IncomingMessage,
+  now: number = Date.now(),
+): boolean {
+  const header = req.headers.authorization;
+  const value = Array.isArray(header) ? header[0] : header;
+  // The auth scheme is case-insensitive (RFC 9110 §11.1).
+  const token = value?.match(/^Bearer\s+(\S+)/i)?.[1];
+  if (!token) return false;
+
+  const parts = token.split(".");
+  if (parts.length !== 3) return false;
+
+  try {
+    const { exp } = JSON.parse(
+      Buffer.from(parts[1], "base64url").toString("utf8"),
+    );
+    return typeof exp === "number" && exp * 1000 <= now;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Responds 401 with an RFC 6750 challenge if the Bearer token has expired.
+ * Without this, the expired token only fails inside the tool call, which reaches
+ * the client as a tool error in an HTTP 200, so OAuth clients never refresh.
+ * @returns true if a 401 response was sent
+ */
+export function rejectExpiredBearerToken(
+  req: IncomingMessage,
+  res: ServerResponse,
+): boolean {
+  if (!hasExpiredBearerJwt(req)) return false;
+
+  req.resume();
+  res.writeHead(401, {
+    "Content-Type": "application/json",
+    "WWW-Authenticate": `Bearer error="invalid_token", error_description="The access token expired", resource_metadata="${getBaseUrl(req)}/.well-known/oauth-protected-resource"`,
+  });
+  res.end(
+    JSON.stringify({
+      error: "invalid_token",
+      error_description: "The access token expired",
+    }),
+  );
+  return true;
 }
 
 /**
@@ -290,9 +523,26 @@ export async function runHttpMode() {
     }
   });
 
+  // Reap sessions abandoned without a DELETE / SSE close. unref'd so it never
+  // holds the process open; cleared on shutdown.
+  const idleMs = getSessionIdleTimeoutMs();
+  const reaper =
+    idleMs > 0
+      ? setInterval(
+          () => {
+            reapIdleSessions(transports, idleMs).catch((err) =>
+              console.error("[MCP] Idle session reaper failed:", err),
+            );
+          },
+          Math.min(60_000, Math.max(1_000, Math.floor(idleMs / 2))),
+        )
+      : undefined;
+  reaper?.unref();
+
   // Register graceful shutdown. Tears down active
   // transports before any subsystem registered earlier (e.g. logging).
   registerShutdownHandler("http-transport", async () => {
+    if (reaper) clearInterval(reaper);
     // Tear down the modern leg first: it aborts in-flight modern exchanges and
     // closes their per-request instances. The sessionful legacy transports are
     // drained separately below.
@@ -389,13 +639,7 @@ async function parseRequestBody(req: IncomingMessage): Promise<unknown> {
  */
 function getExistingTransport(
   sessionId: string,
-  transports: Map<
-    string,
-    {
-      server: SmartBearMcpServer;
-      transport: NodeStreamableHTTPServerTransport | SSEServerTransport;
-    }
-  >,
+  transports: Map<string, SessionEntry>,
   res: ServerResponse,
 ): NodeStreamableHTTPServerTransport | null {
   const existing = transports.get(sessionId);
@@ -431,27 +675,33 @@ function getExistingTransport(
 async function createNewTransport(
   req: IncomingMessage,
   res: ServerResponse,
-  transports: Map<
-    string,
-    {
-      server: SmartBearMcpServer;
-      transport: NodeStreamableHTTPServerTransport | SSEServerTransport;
-    }
-  >,
+  transports: Map<string, SessionEntry>,
 ): Promise<NodeStreamableHTTPServerTransport | null> {
   // Create and configure server with headers from the request
   const server = await newServer(req, res);
   if (!server) {
     return null;
   }
+  const identity = requestIdentity(req, server) ?? undefined;
 
   // Create transport with session management
   const transport = new NodeStreamableHTTPServerTransport({
     sessionIdGenerator: () => randomUUID(),
     onsessioninitialized: (newSessionId) => {
-      console.log(`[MCP] New session initialized: ${newSessionId}`);
+      console.log(
+        `[MCP] New session initialized: ${redactSessionId(newSessionId)}`,
+      );
       // Store session so subsequent requests can find it
-      transports.set(newSessionId, { server, transport });
+      const entry: SessionEntry = {
+        server,
+        transport,
+        lastActivity: Date.now(),
+        identity,
+      };
+      transports.set(newSessionId, entry);
+      // The initialize exchange is open until its response closes; count it so
+      // a slow initialize is never mistaken for an idle session.
+      trackExchange(entry, res);
       // The SDK awaits this callback before dispatching the `initialize`
       // message, so the analytics session exists by the time
       // handleInitializeMessage fires `Session Started`.
@@ -463,16 +713,27 @@ async function createNewTransport(
   // Clean up session on close
   transport.onclose = () => {
     if (transport.sessionId) {
-      console.log(`[MCP] Session closed: ${transport.sessionId}`);
-      transports.delete(transport.sessionId);
-      endSessionAnalytics(server);
-      server.cleanupSession(transport.sessionId);
+      console.log(
+        `[MCP] Session closed: ${redactSessionId(transport.sessionId)}`,
+      );
+      // Only the closer that actually unregisters the session cleans up. The
+      // idle reaper unregisters first and runs cleanup itself, so this must
+      // not repeat it.
+      if (transports.delete(transport.sessionId)) {
+        endSessionAnalytics(server);
+        server.cleanupSession(transport.sessionId);
+      }
     }
   };
 
   // Connect server to transport to start handling messages
   await server.connect(transport);
   return transport;
+}
+
+/** Log-safe session reference: enough to correlate lines, not enough to replay. */
+function redactSessionId(sessionId: string): string {
+  return `${sessionId.slice(0, 8)}...`;
 }
 
 /**
@@ -580,13 +841,18 @@ function createModernHandler() {
  *   predicate — the same code `createMcpHandler` runs internally — so a
  *   claim-less `initialize` still opens a legacy session, while envelope-
  *   carrying requests are served by the modern handler.
+ *
+ * An expired bearer token is rejected first, for both eras: the modern leg
+ * never reaches {@link handleStreamableHttpRequest}, which has its own check.
  */
-async function handleMcpEndpoint(
+export async function handleMcpEndpoint(
   req: IncomingMessage,
   res: ServerResponse,
   transports: Map<string, SessionEntry>,
   modern: ReturnType<typeof toNodeHandler>,
 ) {
+  if (rejectExpiredBearerToken(req, res)) return;
+
   if (req.headers["mcp-session-id"]) {
     await handleStreamableHttpRequest(req, res, transports);
     return;
@@ -674,19 +940,15 @@ function extractModernClientMetaFromBody(
 export async function handleStreamableHttpRequest(
   req: IncomingMessage,
   res: ServerResponse,
-  transports: Map<
-    string,
-    {
-      server: SmartBearMcpServer;
-      transport: NodeStreamableHTTPServerTransport | SSEServerTransport;
-    }
-  >,
+  transports: Map<string, SessionEntry>,
   // Boxed so an explicitly-`undefined` parsed body (e.g. a GET) is still
   // recognised as "already read" — the era router drains the stream to
   // classify, so re-parsing here would yield nothing.
   preParsed?: { body: unknown },
 ) {
   try {
+    if (rejectExpiredBearerToken(req, res)) return;
+
     const sessionId = req.headers["mcp-session-id"] as string | undefined;
 
     // Case 1: Unknown session - per MCP Streamable HTTP spec, return 404 so
@@ -695,21 +957,20 @@ export async function handleStreamableHttpRequest(
     // Reject before buffering the body so a junk session id can't force JSON
     // parsing of an arbitrary payload; drain the stream so keep-alive sockets
     // aren't left half-read.
-    if (sessionId && !transports.has(sessionId)) {
+    const sessionEntry = sessionId ? transports.get(sessionId) : undefined;
+    if (sessionId && !sessionEntry) {
       req.resume();
-      res.writeHead(404, { "Content-Type": "application/json" });
-      res.end(
-        JSON.stringify({
-          jsonrpc: "2.0",
-          error: {
-            code: -32001,
-            message: "Session not found",
-          },
-          id: null,
-        }),
-      );
+      writeSessionNotFound(res);
       return;
     }
+
+    // Applies to POST, GET (event stream) and DELETE (teardown) alike.
+    if (sessionEntry && !authorizeSessionRequest(req, res, sessionEntry)) {
+      return;
+    }
+
+    const existingEntry = sessionId ? transports.get(sessionId) : undefined;
+    if (existingEntry) trackExchange(existingEntry, res);
 
     const parsedBody = preParsed ? preParsed.body : await parseRequestBody(req);
 
@@ -780,22 +1041,19 @@ export async function handleStreamableHttpRequest(
  * This is kept for backwards compatibility with older MCP clients.
  * New integrations should use the modern StreamableHTTP transport (/mcp).
  */
-async function handleLegacySseRequest(
+export async function handleLegacySseRequest(
   req: IncomingMessage,
   res: ServerResponse,
-  transports: Map<
-    string,
-    {
-      server: SmartBearMcpServer;
-      transport: NodeStreamableHTTPServerTransport | SSEServerTransport;
-    }
-  >,
+  transports: Map<string, SessionEntry>,
 ) {
+  if (rejectExpiredBearerToken(req, res)) return;
+
   // Create a new server instance for this connection
   const server = await newServer(req, res);
   if (!server) {
     return;
   }
+  const identity = requestIdentity(req, server) ?? undefined;
 
   // SSE transport keeps the connection open and sends events to the client
   const transport = new SSEServerTransport("/message", res);
@@ -806,7 +1064,15 @@ async function handleLegacySseRequest(
   transport.onmessage = (message) => handleSessionMessage(server, message);
 
   // Store the session so POST /message requests can find it
-  transports.set(transport.sessionId, { server, transport });
+  transports.set(transport.sessionId, {
+    server,
+    transport,
+    lastActivity: Date.now(),
+    // The SSE stream itself is an open exchange; the res "close" handler
+    // below removes the session when it ends.
+    inFlight: 1,
+    identity,
+  });
   attachSessionAnalytics(server, transport.sessionId, "sse");
 
   // Clean up session when connection closes
@@ -820,6 +1086,12 @@ async function handleLegacySseRequest(
   await server.connect(transport);
 }
 
+/** Legacy `POST /message` unknown-session response. */
+function writeLegacySessionNotFound(res: ServerResponse): void {
+  res.writeHead(404, { "Content-Type": "text/plain" });
+  res.end("Session not found");
+}
+
 /**
  * Handle legacy POST message requests (POST /message?sessionId=xxx)
  *
@@ -830,18 +1102,14 @@ async function handleLegacySseRequest(
  *
  * New integrations should use the modern StreamableHTTP transport (/mcp).
  */
-async function handleLegacyMessageRequest(
+export async function handleLegacyMessageRequest(
   req: IncomingMessage,
   res: ServerResponse,
   url: URL,
-  transports: Map<
-    string,
-    {
-      server: SmartBearMcpServer;
-      transport: NodeStreamableHTTPServerTransport | SSEServerTransport;
-    }
-  >,
+  transports: Map<string, SessionEntry>,
 ) {
+  if (rejectExpiredBearerToken(req, res)) return;
+
   // Extract session ID from query parameter
   const sessionId = url.searchParams.get("sessionId");
 
@@ -854,15 +1122,20 @@ async function handleLegacyMessageRequest(
   // Find the session created by the SSE connection
   const session = transports.get(sessionId);
   if (!session) {
-    res.writeHead(404, { "Content-Type": "text/plain" });
-    res.end("Session not found");
+    writeLegacySessionNotFound(res);
     return;
   }
+
+  trackExchange(session, res);
 
   // Validate this session is using SSE transport
   if (!(session.transport instanceof SSEServerTransport)) {
     res.writeHead(400, { "Content-Type": "text/plain" });
     res.end("Invalid transport for this endpoint");
+    return;
+  }
+
+  if (!authorizeSessionRequest(req, res, session, writeLegacySessionNotFound)) {
     return;
   }
 
@@ -1032,25 +1305,32 @@ async function buildConfiguredServer(
         ? `Configuration error: ${error instanceof Error ? error.message : String(error)}. Please provide valid headers:\n${headerHelp.join("\n")}`
         : "No clients support HTTP header configuration.";
 
-    const responseHeaders: Record<string, string> = {
-      "Content-Type": "text/plain",
-    };
-
-    // Add WWW-Authenticate header to support OAuth discovery flow
-    // This points the client to the Protected Resource Metadata endpoint.
-    // Built via getBaseUrlFromHeaders so it honours BASE_URL and matches the
-    // deployment's scheme, rather than echoing the Host header over a hardcoded
-    // http://. Shared by both HTTP eras, so the modern leg is covered too.
-    if (process.env.BASE_URL || host) {
-      responseHeaders["WWW-Authenticate"] =
-        `OAuth resource_metadata="${getBaseUrlFromHeaders(headers)}/.well-known/oauth-protected-resource"`;
-    }
-
-    res.writeHead(401, responseHeaders);
+    res.writeHead(401, unauthorizedHeaders(headers, host));
     res.end(errorMessage);
     return null;
   }
   return server;
+}
+
+/**
+ * Response headers for a 401, including the WWW-Authenticate OAuth discovery
+ * challenge that points the client to the Protected Resource Metadata endpoint.
+ * Built via getBaseUrlFromHeaders so it honours BASE_URL and matches the
+ * deployment's scheme, rather than echoing the Host header over a hardcoded
+ * http://. Shared by both HTTP eras, so the modern leg is covered too.
+ */
+function unauthorizedHeaders(
+  headers: HeaderRecord,
+  host: string | undefined,
+): Record<string, string> {
+  const responseHeaders: Record<string, string> = {
+    "Content-Type": "text/plain",
+  };
+  if (process.env.BASE_URL || host) {
+    responseHeaders["WWW-Authenticate"] =
+      `OAuth resource_metadata="${getBaseUrlFromHeaders(headers)}/.well-known/oauth-protected-resource"`;
+  }
+  return responseHeaders;
 }
 
 /**
@@ -1095,30 +1375,6 @@ export async function newServerFromWebRequest(
     res,
     "modern",
   );
-}
-
-/**
- * Convert a config key to HTTP header name format
- *
- * Examples:
- * - auth_token -> Auth-Token
- * - project_api_key -> Project-Api-Key
- * - base_url -> Base-Url
- *
- * Combined with configPrefix: Bugsnag-Auth-Token, Reflect-Api-Token, etc.
- *
- * @param client The client instance (provides configPrefix)
- * @param key The config key in snake_case
- * @returns Header name in format: {ConfigPrefix}-{Pascal-Kebab-Case}
- */
-export function getHeaderName(clientPrefix: string, key: string): string {
-  return `${clientPrefix}-${key
-    .split("_")
-    .map(
-      (part: string) =>
-        part.charAt(0).toUpperCase() + part.slice(1).toLowerCase(),
-    )
-    .join("-")}`;
 }
 
 export function getQueryStringName(clientPrefix: string, key: string): string {

@@ -8,8 +8,10 @@ import { toolInputParameters } from "../../input-schemas";
 const inputSchema = z.object({
   projectId: toolInputParameters.projectId,
   filters: toolInputParameters.filters.describe(
-    "Apply filters to narrow down the error list. Use the List Project Event Filters tool to discover available filter fields. " +
-      "Time filters support extended ISO 8601 format (e.g. 2018-05-20T00:00:00Z) or relative format (e.g. 7d, 24h).",
+    "Filters that narrow down the error list, as an object keyed by field name where each value is an array of { type: 'eq' | 'ne' | 'empty', value }. Multiple filters are combined with AND. " +
+      "Use the List Project Event Filters tool to discover available filter fields. " +
+      "Time filters (event.since, event.before) support extended ISO 8601 format (e.g. 2018-05-20T00:00:00Z) or relative format (e.g. 7d, 24h). " +
+      "Defaults: 'event.since' is 30d and 'error.status' is 'open' unless you specify them, so errors that are fixed, ignored or snoozed, or have no events in the last 30 days, are excluded by default.",
   ),
   sort: toolInputParameters.sort,
   direction: toolInputParameters.direction,
@@ -44,7 +46,7 @@ export class ListProjectErrors extends Tool<BugsnagClient> {
           },
         },
         expectedOutput:
-          "JSON object with a list of errors in the 'data' field, a count of the current page of results in the 'count' field, and a total count of all results in the 'total' field",
+          "JSON object with a list of errors in the 'data' field, a count of the current page of results in the 'data_count' field, and a total count of all results in the 'total_count' field",
       },
       {
         description:
@@ -59,7 +61,7 @@ export class ListProjectErrors extends Tool<BugsnagClient> {
           perPage: 10,
         },
         expectedOutput:
-          "JSON object with a list of errors in the 'data' field, a count of the current page of results in the 'count' field, and a total count of all results in the 'total' field",
+          "JSON object with a list of errors in the 'data' field, a count of the current page of results in the 'data_count' field, and a total count of all results in the 'total_count' field",
       },
       {
         description: "Get the next 50 results",
@@ -77,9 +79,11 @@ export class ListProjectErrors extends Tool<BugsnagClient> {
       "Combine multiple filters to narrow results - filters are applied with AND logic",
       "For time filters: use relative format (7d, 24h) for recent periods or ISO 8601 UTC format (2018-05-20T00:00:00Z) for specific dates",
       "Common time filters: event.since (from this time), event.before (until this time)",
-      "The 'event.since' filter and 'error.status' filters are always applied and if not specified are set to '30d' and 'open' respectively",
+      "The 'event.since' filter and 'error.status' filters are always applied and if not specified are set to '30d' and 'open' respectively. To see errors that are fixed, ignored or snoozed, or older errors, set these filters explicitly (e.g. 'event.since' of '365d')",
+      "If no errors are returned, the default 30d/open filters may be excluding them - try widening 'event.since' or changing 'error.status' before concluding there are none",
+      "Use the 'id' of an error with Get Error or Get Events on an Error to investigate it further",
       "There may not be any errors matching the filters - this is not a problem with the tool, in fact it might be a good thing that the user's application had no errors",
-      "This tool returns paged results. The 'page_error_count' field indicates the number of results returned in the current page, and the 'total_error_count' field indicates the total number of results across all pages.",
+      "This tool returns paged results. The 'data_count' field indicates the number of results returned in the current page, and the 'total_count' field indicates the total number of results across all pages.",
       "If the output contains a 'next_url' value, there are more results available - call this tool again supplying the next URL as a parameter to retrieve the next page.",
       "Do not modify the next URL as this can cause incorrect results. The only other parameter that can be used with 'next' is 'per_page' to control the page size.",
     ],

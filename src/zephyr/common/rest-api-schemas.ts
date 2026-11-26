@@ -792,6 +792,12 @@ export const ListTestCasesCursorPaginatedQueryParams = zod.object({
     .describe(
       "Filter only entities updated after the given time. Format: yyyy-MM-dd'T'HH:mm:ss'Z'",
     ),
+  nameOrKey: zod
+    .string()
+    .optional()
+    .describe(
+      "Filter only entities with the given Test Case name or key. If provided, the project key must also be provided.",
+    ),
 });
 
 export const listTestCasesCursorPaginated200ResponseOneNextStartAtIdMin = 0;
@@ -9054,6 +9060,12 @@ export const CreateTestExecutionBody = zod.strictObject({
     .describe(
       "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
     ),
+  automated: zod
+    .boolean()
+    .optional()
+    .describe(
+      "(optional) If true, the execution is marked as automated in the Zephyr UI; if false, it’s marked as manual. Defaults to true if not provided.",
+    ),
 });
 
 export const CreateTestExecution201Response = zod.strictObject({
@@ -9894,6 +9906,12 @@ export const UpdateTestExecutionBody = zod.strictObject({
     .min(updateTestExecutionBodyExecutionTimeMin)
     .optional()
     .describe("Actual test execution time in milliseconds."),
+  automated: zod
+    .boolean()
+    .optional()
+    .describe(
+      "(optional) If true, the execution is marked as automated in the Zephyr UI; if false, it’s marked as manual. Defaults to true if not provided.",
+    ),
   executedById: zod
     .string()
     .regex(updateTestExecutionBodyExecutedByIdRegExp)
@@ -13211,7 +13229,7 @@ export const createCustomExecutionsBodyTestCycleNameMax = 255;
 export const createCustomExecutionsBodyTestCycleNameRegExp = /^(?!\\s*$).+/;
 
 export const CreateCustomExecutionsBody = zod.strictObject({
-  file: zod.instanceof(File),
+  file: zod.instanceof(Blob),
   testCycle: zod
     .strictObject({
       name: zod
@@ -13320,7 +13338,7 @@ export const createCucumberExecutionsBodyTestCycleNameMax = 255;
 export const createCucumberExecutionsBodyTestCycleNameRegExp = /^(?!\\s*$).+/;
 
 export const CreateCucumberExecutionsBody = zod.strictObject({
-  file: zod.instanceof(File),
+  file: zod.instanceof(Blob),
   testCycle: zod
     .strictObject({
       name: zod
@@ -13428,7 +13446,7 @@ export const createJUnitExecutionsBodyTestCycleNameMax = 255;
 export const createJUnitExecutionsBodyTestCycleNameRegExp = /^(?!\\s*$).+/;
 
 export const CreateJUnitExecutionsBody = zod.strictObject({
-  file: zod.instanceof(File),
+  file: zod.instanceof(Blob),
   testCycle: zod
     .strictObject({
       name: zod

@@ -81,7 +81,7 @@ The Swagger Studio client provides comprehensive API and Domain management capab
 
 #### `validate_api`
 
--   Purpose: Validate the structure of an OpenAPI (2.0, 3.0, 3.1) or AsyncAPI definition using server-side apidom-ls and asyncapi/parser, matching the Validation tab in Swagger Studio.
+-   Purpose: Validate the structure of an OpenAPI (2.0, 3.0, 3.1), AsyncAPI or A2A Agent Card definition using server-side apidom-ls and asyncapi/parser, matching the Validation tab in Swagger Studio. MCP, GraphQL and gRPC definitions are not validated yet and return `recognized: false`.
 -   Returns: `valid`, `recognized`, the detected `spec` (namespace, version, format), a `summary` with error and warning counts, and `findings` with line, column, severity and message. A definition that is not recognized as a supported spec returns `recognized: false` instead of an error.
 -   Use case: Check an API definition for structural errors before saving or publishing it.
 -   Parameters:

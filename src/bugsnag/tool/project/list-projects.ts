@@ -8,7 +8,9 @@ const inputSchema = z.object({
   apiKey: z
     .string()
     .optional()
-    .describe("The API key of the BugSnag project, if known."),
+    .describe(
+      "The notifier API key of the BugSnag project (found where the BugSnag SDK is configured in the user's code). If provided, only the project with this key is returned.",
+    ),
 });
 
 // Lists all projects the user has access to, optionally filtered by API key.
@@ -17,7 +19,7 @@ export class ListProjects extends Tool<BugsnagClient> {
     toolset: "Projects",
     title: "List Projects",
     summary:
-      "List all projects in the organization that the current user has access to, or find a project matching an API key.",
+      "List the projects the current user has access to, or find the project matching an API key. Each project includes its 'id', 'name', 'slug' and 'api_key'.",
     purpose:
       "Retrieve available projects for browsing and selecting which project to analyze.",
     useCases: [
@@ -26,7 +28,8 @@ export class ListProjects extends Tool<BugsnagClient> {
     ],
     inputSchema,
     hints: [
-      "Project IDs from this list can be used with other tools when no project API key is configured",
+      "Use the 'id' field (not the name or slug) as the projectId parameter of other BugSnag tools when no current project is configured",
+      "To find a project the user refers to by name or slug, look it up in this list and use its 'id'",
     ],
   };
 
