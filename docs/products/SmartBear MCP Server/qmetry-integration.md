@@ -6,20 +6,24 @@ The QMetry client provides the following test management capabilities as listed 
 
 ### Choosing the project
 
-Every QMetry tool takes an optional `projectKey`. When it is omitted, QMetry uses the project currently selected in the QMetry UI by the API key's user (the selection persists across logouts). When it is given, that project is used. The MCP server keeps no project between calls, so automated or headless runs should always pass `projectKey`.
+Every QMetry tool that works inside a project **requires** `projectKey`. A call that leaves it out, or passes a blank value or `default`, is rejected before any request is sent; the server never falls back to the project selected in the QMetry UI for these tools. The MCP server keeps no project between calls, so each call names its own project.
 
-Tools that fetch project info report the project they ran against in their response (`{"project": {"key", "id", "name", "source"}}`). An invalid project key returns an error with "Did you mean" suggestions.
+To find the key: a project name is looked up with `Fetch QMetry list Projects` and a `name` filter; a numeric project ID is matched against the `projectID` of the rows that tool returns. When the user names no project, the AI asks which one and offers that list.
+
+Four tools do not need a project: `Fetch QMetry list Projects`, `Fetch QMetry Project Info`, `Fetch API Call Quota`, and `Fetch Releases and Cycles` when `allProjects` is `true`. Calling `Fetch QMetry Project Info` without `projectKey` returns the project selected in the QMetry UI by the API key's user; use it only when that is what the user asks for.
+
+Every project-scoped response reports the project it ran against (`{"project": {"key", "source"}}`, plus `id` and `name` when the call looked up project info). An invalid project key returns an error with "Did you mean" suggestions.
 
 ### `get_qmetry_project`
 
--   Purpose: Fetch a QMetry project's information. Without `projectKey`, returns the project currently selected in QMetry (`currentProjectId`, `currentProjectName`).
--   Returns: Project configuration (view IDs, folders, date format) and a short `{id, key, name}` list of the projects you can access.
+-   Purpose: Fetch a QMetry project's configuration for the given `projectKey`. Without `projectKey`, returns the project currently selected in QMetry (`currentProjectId`, `currentProjectName`); use that only when the user asks for it.
+-   Returns: Project configuration (folders, date format) and a short `{id, key, name}` list of the projects you can access.
 -   Use case: Find out which project will be used, or retrieve a project's configuration. It does not change the selected project.
 
 ### `list_qmetry_project_list`
 
--   Purpose: Fetch QMetry projects list including projectID, name, projectKey, isArchived, viewIds and folderPath needed for other operations.
--   Returns: Complete list of project details, viewIds, folderPaths, and project configuration.
+-   Purpose: Fetch QMetry projects list including projectID, name, projectKey, isArchived and folderPath needed for other operations.
+-   Returns: Complete list of project details, folderPaths, and project configuration.
 -   Use case: Retrieve all projects available in your account.
 
 ### `create_release`
@@ -86,7 +90,7 @@ Tools that fetch project info report the project they ran against in their respo
 ### `list_qmetry_requirements`
 
 -   Purpose: Fetch QMetry requirements from the current project.
--   Parameters: Requirement required parameters (`viewId`, `folderPath`).
+-   Parameters: Requirement required parameters (`folderPath`).
 -   Returns: Complete list of requirements available within your current project.
 -   Use case: Retrieve available requirements.
 
@@ -135,7 +139,7 @@ Tools that fetch project info report the project they ran against in their respo
 ### `list_qmetry_testcases`
 
 -   Purpose: List all QMetry test cases from the current project.
--   Parameters: Test Case required parameters (`viewId`, `folderPath`).
+-   Parameters: Test Case required parameters (`folderPath`).
 -   Returns: Complete list of test cases available within the current project.
 -   Use case: Retrieve available test cases.
 
@@ -191,7 +195,7 @@ Tools that fetch project info report the project they ran against in their respo
 ### `fetch_test_suites`
 
 -   Purpose: Fetch QMetry test suites from the current project.
--   Parameters: Test Suite view ID (`viewId`), folder path (`folderPath`).
+-   Parameters: Test Suite folder path (`folderPath`).
 -   Returns: Complete list of test suites available within the current project with pagination info.
 -   Use case: List all test suites in a project, search for specific test suites using filters, browse test suites in specific folders.
 
@@ -240,7 +244,7 @@ Tools that fetch project info report the project they ran against in their respo
 ### `get_testcase_runs_by_testsuite_run`
 
 -   Purpose: Get test case runs under a specific test suite run execution in QMetry.
--   Parameters: Test Suite Run identifier (`test suite run ID`), Test Execution View identifier (`viewId`).
+-   Parameters: Test Suite Run identifier (`test suite run ID`).
 -   Returns: Complete list of test case runs with detailed execution information, status, tester details, and run metadata.
 -   Use case: Retrieve individual test case execution results and status within a specific test suite run, including Test Run UDFs.
 
@@ -268,7 +272,7 @@ Tools that fetch project info report the project they ran against in their respo
 ### `fetch_issues`
 
 -   Purpose: Fetch QMetry issues from the current project.
--   Parameters: Issue view ID (`viewId`).
+-   Parameters: Optional pagination and filter parameters.
 -   Returns: Complete list of issues with pagination info and issue details including priorities, status, and metadata.
 -   Use case: List all issues in a project, search for specific issues using filters, get paginated issue results.
 

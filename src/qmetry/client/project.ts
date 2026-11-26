@@ -162,7 +162,7 @@ function toProjectSummary(entry: unknown): ProjectSummary | undefined {
  * @param token - QMetry API authentication token
  * @param baseUrl - QMetry instance base URL (defaults to configured URL)
  * @param project - Project key, or "default" for the project selected in QMetry
- * @returns Promise resolving to project information including viewIds, folders, and configuration
+ * @returns Promise resolving to project information including folders, and configuration
  */
 export async function getProjectInfo(
   token: string,

@@ -39,6 +39,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       {
         description: "Create an issue with summary 'Login Issue'",
         parameters: {
+          projectKey: "MAC",
           name: "Login Issue",
           issuePriority: 2231988,
           issueType: 2231983,
@@ -49,6 +50,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
         description:
           "Create an issue with Major priority and Bug type to Bug with summary 'Login Issue'",
         parameters: {
+          projectKey: "MAC",
           name: "Login Issue",
           issuePriority: 2231988,
           issueType: 2231983,
@@ -60,6 +62,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
         description:
           "Create an issue with summary 'Login Issue' and set issueOwner to 'John Doe'",
         parameters: {
+          projectKey: "MAC",
           name: "Login Issue",
           issueOwner: 15112,
           issuePriority: 2231988,
@@ -72,6 +75,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
         description:
           "Create an issue with summary 'Login Issue' and link it to test case run ID 567890",
         parameters: {
+          projectKey: "MAC",
           name: "Login Issue",
           issueOwner: 15112,
           issuePriority: 2231988,
@@ -85,6 +89,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
         description:
           "Create an issue with summary 'Login Issue' and set description to 'User is unable to login' and owner to 'John Doe' and link it to test case run ID 567890",
         parameters: {
+          projectKey: "MAC",
           name: "Login Issue",
           issueOwner: 15112,
           issuePriority: 2231988,
@@ -99,6 +104,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
         description:
           "Create an issue with summary 'Login Issue' and set release to 'Release 1.0' and its associated all cycles and owner to 'John Doe'",
         parameters: {
+          projectKey: "MAC",
           name: "Login Issue",
           issueOwner: 15112,
           issuePriority: 2231988,
@@ -113,6 +119,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
         description:
           "Create an issue with summary 'Login Issue' and set release to 'Release 1.0' and its associated all cycle 'Cycle 1.0.1', 'Cycle 1.0.2'",
         parameters: {
+          projectKey: "MAC",
           name: "Login Issue",
           issuePriority: 2231988,
           issueType: 2231983,
@@ -200,16 +207,10 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       "  NEVER ask user to 'try again' manually — resolve and retry automatically.",
       "=== END ERROR RECOVERY ===",
       "",
-      "=== DATE FORMAT CHECK (MANDATORY — EVERY CREATE REQUEST) ===",
-      "ALWAYS call 'Fetch QMetry Project Info' before every create request — not only when the user explicitly mentions a date.",
-      "Any UDF field could be a DATETIMEPICKER. Wrong format causes QMetry to silently discard the field value (API returns success but value is NOT stored — no error).",
-      "STEP 1: From project info, read dateTimeFormatID (e.g. 3).",
-      "STEP 2: Find entry in dateTimeFormatNew where id === dateTimeFormatID → read its unique_value (e.g. 'yyyy-MM-dd').",
-      "STEP 3: unique_value pattern: yyyy=4-digit year, MM=2-digit month (01-12), dd=2-digit day, MMM=3-letter month (Jan/Feb/...).",
-      "  Example: id=1 → MM-dd-yyyy → '10-25-2000' | id=2 → dd-MM-yyyy → '25-10-2000' | id=3 → yyyy-MM-dd → '2000-10-25' | id=4 → dd-MMM-yyyy → '25-Oct-2000'",
-      "STEP 4: For EVERY DATETIMEPICKER field in the payload: parse any user-provided date and re-format it using the active unique_value pattern before sending.",
-      "NEVER assume a date format — always derive it from dateTimeFormatID. Wrong format = silent data loss.",
-      "=== END DATE FORMAT CHECK ===",
+      "=== DATE FIELDS ===",
+      "The server converts every DATETIMEPICKER UDF value (udfFields and step UDFs) to the project's date format before sending. Do NOT call 'Fetch QMetry Project Info' just to read the date format.",
+      "Send dates as ISO 'YYYY-MM-DD' (e.g. the user says '25 Dec 2024' -> send '2024-12-25'). ISO is never ambiguous; other forms such as '03/04/2024' are read using the project's day/month order.",
+      "=== END DATE FIELDS ===",
       "",
       "CRITICAL: summary, issueType, issuePriority are REQUIRED fields to create an issue",
       "OPTIONAL SYSTEM FIELDS: issueOwner, component, affectedRelease, affectedCycles, description, environment, tcRunID",
@@ -289,6 +290,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       {
         description: "Update issue summary",
         parameters: {
+          projectKey: "MAC",
           DefectId: 118150,
           summary:
             "Money withdrawal is success even if insufficient amount_updated",
@@ -297,17 +299,22 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       },
       {
         description: "Update issue priority",
-        parameters: { DefectId: 118150, issuePriority: 189340 },
+        parameters: {
+          projectKey: "MAC",
+          DefectId: 118150,
+          issuePriority: 189340,
+        },
         expectedOutput: "Issue priority updated successfully.",
       },
       {
         description: "Update issue type",
-        parameters: { DefectId: 118150, issueType: 189337 },
+        parameters: { projectKey: "MAC", DefectId: 118150, issueType: 189337 },
         expectedOutput: "Issue type updated successfully.",
       },
       {
         description: "Update affected release and affected cycles",
         parameters: {
+          projectKey: "MAC",
           DefectId: 118150,
           affectedRelease: 3730,
           affectedCycles: [1168],
@@ -333,16 +340,10 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       "fields/UDF (from qmUDF.IS): isMandatory=true UDF fields must be included if being changed.",
       "=== END DEFAULT VALUES ===",
       "",
-      "=== DATE FORMAT CHECK (MANDATORY — EVERY UPDATE REQUEST) ===",
-      "ALWAYS call 'Fetch QMetry Project Info' before every update request — not only when the user explicitly mentions a date.",
-      "Any UDF field could be a DATETIMEPICKER. Wrong format causes QMetry to silently discard the field value (API returns success but value is NOT stored — no error).",
-      "STEP 1: From project info, read dateTimeFormatID (e.g. 3).",
-      "STEP 2: Find entry in dateTimeFormatNew where id === dateTimeFormatID → read its unique_value (e.g. 'yyyy-MM-dd').",
-      "STEP 3: unique_value pattern: yyyy=4-digit year, MM=2-digit month (01-12), dd=2-digit day, MMM=3-letter month (Jan/Feb/...).",
-      "  Example: id=1 → MM-dd-yyyy → '10-25-2000' | id=2 → dd-MM-yyyy → '25-10-2000' | id=3 → yyyy-MM-dd → '2000-10-25' | id=4 → dd-MMM-yyyy → '25-Oct-2000'",
-      "STEP 4: For EVERY DATETIMEPICKER field in the payload: parse any user-provided date and re-format it using the active unique_value pattern before sending.",
-      "NEVER assume a date format — always derive it from dateTimeFormatID. Wrong format = silent data loss.",
-      "=== END DATE FORMAT CHECK ===",
+      "=== DATE FIELDS ===",
+      "The server converts every DATETIMEPICKER UDF value (udfFields and step UDFs) to the project's date format before sending. Do NOT call 'Fetch QMetry Project Info' just to read the date format.",
+      "Send dates as ISO 'YYYY-MM-DD' (e.g. the user says '25 Dec 2024' -> send '2024-12-25'). ISO is never ambiguous; other forms such as '03/04/2024' are read using the project's day/month order.",
+      "=== END DATE FIELDS ===",
       "",
       "To get the DefectId, call the Issue/Fetch issue tool and use data[<index>].id from the response.",
       "if you have pass issue key (VT-IS-5, MAC-IS-10 etc.) then first fetch issue by issue key to get issue id.",
@@ -369,12 +370,10 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
   {
     title: "Fetch Defects or Issues",
     toolset: "Issues",
-    summary:
-      "Fetch QMetry defects or issues - automatically handles viewId resolution based on project",
+    summary: "Fetch QMetry defects or issues",
     handler: QMetryToolsHandlers.FETCH_ISSUES,
     inputSchema: IssuesListArgsSchema,
-    purpose:
-      "Get defects or issues from QMetry. System automatically gets correct viewId from project.",
+    purpose: "Get defects or issues from QMetry.",
     useCases: [
       "List all issues in a project",
       "Search for specific issues using filters",
@@ -382,18 +381,14 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
     ],
     examples: [
       {
-        description:
-          "Get all issues from default project - system will auto-fetch viewId",
-        parameters: {},
-        expectedOutput:
-          "List of issues from default project with auto-resolved viewId",
+        description: "Get all issues from project MAC",
+        parameters: { projectKey: "MAC" },
+        expectedOutput: "List of issues from project MAC",
       },
       {
-        description:
-          "Get all issues from UT project - system will auto-fetch UT project's viewId",
+        description: "Get all issues from UT project",
         parameters: { projectKey: "UT" },
-        expectedOutput:
-          "List of issues from UT project using UT's specific IS viewId",
+        expectedOutput: "List of issues from UT project",
       },
       {
         description: "Get issues by release/cycle filter",
@@ -444,12 +439,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       },
     ],
     hints: [
-      "CRITICAL WORKFLOW: Always use the SAME projectKey for both project info and issues fetching",
-      "Step 1: If user specifies projectKey (like 'UT', 'MAC'), use that EXACT projectKey for project info",
-      "Step 2: Get project info using that projectKey, extract latestViews.IS.viewId",
-      "Step 3: Use the SAME projectKey and the extracted IS viewId for fetching issues",
-      "Step 4: If user doesn't specify a project, omit projectKey on both calls (QMetry then uses the project currently selected in the QMetry UI), or pass the key returned by project info explicitly",
-      "NEVER mix project keys - if user says 'MAC project', use projectKey='MAC' for everything",
+      "PROJECT: pass the same explicit projectKey on every call of the task (never omit it). See the projectKey field for how to find the key from a project name or ID.",
       'For search by issues key (like MAC-IS-1684), use filter: \'[{"type":"string","value":"MAC-IS-1684","field":"entityKeyId"}]\'',
       "RELEASE/CYCLE FILTERING: Use release and cycle IDs, not names, for filtering",
       'For release filter: \'[{"value":[releaseId],"type":"list","field":"release"}]\'',
@@ -500,6 +490,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       {
         description: "Get all issues linked to test case run ID 1121218",
         parameters: {
+          projectKey: "MAC",
           entityId: 1121218,
           getColumns: true,
           getLinked: true,
@@ -510,6 +501,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       {
         description: "Get issues NOT linked to test case run (gap analysis)",
         parameters: {
+          projectKey: "MAC",
           entityId: 1121218,
           getColumns: true,
           getLinked: false,
@@ -520,6 +512,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter linked issues by issue type and status",
         parameters: {
+          projectKey: "MAC",
           entityId: 1121218,
           getColumns: true,
           getLinked: true,
@@ -531,6 +524,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       {
         description: "Search linked issues by name and priority",
         parameters: {
+          projectKey: "MAC",
           entityId: 1121218,
           getColumns: true,
           getLinked: true,
@@ -542,6 +536,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter issues by date range and entity key",
         parameters: {
+          projectKey: "MAC",
           entityId: 1121218,
           getColumns: true,
           getLinked: true,
@@ -553,6 +548,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter issues by owner and created system",
         parameters: {
+          projectKey: "MAC",
           entityId: 1121218,
           getColumns: true,
           getLinked: true,
@@ -632,13 +628,17 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
     examples: [
       {
         description: "Link one issue to a testcase run",
-        parameters: { issueIds: ["5054834"], tcrId: 567890 },
+        parameters: { projectKey: "MAC", issueIds: ["5054834"], tcrId: 567890 },
         expectedOutput:
           "Issue 5054834 linked to testcase run 567890 successfully.",
       },
       {
         description: "Link multiple issues to a testcase run",
-        parameters: { issueIds: ["5054834", "5054835"], tcrId: 567890 },
+        parameters: {
+          projectKey: "MAC",
+          issueIds: ["5054834", "5054835"],
+          tcrId: 567890,
+        },
         expectedOutput:
           "Issues 5054834, 5054835 linked to testcase run 567890 successfully.",
       },
@@ -658,7 +658,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
     title: "Fetch Issues Linked to Execution",
     toolset: "Issues",
     summary:
-      "Get the issues/defects linked to a test execution (test suite run) in QMetry. " +
+      "Get the issues/defects linked to a test execution (test suite run) in QMetry." +
       "ALWAYS show the execution header (Test Suite Key, Test Suite Summary, Release, Cycle, Platform) and the total count, then the issues as a table: Issue Key | Summary | Type | State | Priority.",
     handler: QMetryToolsHandlers.FETCH_ISSUES_LINKED_TO_EXECUTION,
     inputSchema: IssuesLinkedToExecutionArgsSchema,
@@ -676,7 +676,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
     examples: [
       {
         description: "Get issues linked to execution with tsRunID 819218",
-        parameters: { tsRunID: 819218 },
+        parameters: { projectKey: "MAC", tsRunID: 819218 },
         expectedOutput:
           "Execution: PT-TS-1 — All Test Cases Suite | Release: Default Release | Cycle: Default Cycle | Platform: No Platform\n" +
           "Total linked issues: 1\n" +
@@ -686,7 +686,13 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       {
         description:
           "Get the second page of issues linked to execution 819218 (10 per page)",
-        parameters: { tsRunID: 819218, page: 2, start: 10, limit: 10 },
+        parameters: {
+          projectKey: "MAC",
+          tsRunID: 819218,
+          page: 2,
+          start: 10,
+          limit: 10,
+        },
         expectedOutput:
           "Header, total count and issues 11-20 linked to the execution",
       },
@@ -756,6 +762,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       {
         description: "Get all executions linked to issue ID 9598240",
         parameters: {
+          projectKey: "MAC",
           linkedAssetId: 9598240,
         },
         expectedOutput:
@@ -769,6 +776,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       {
         description: "Get executions with pagination (page 1, 20 records)",
         parameters: {
+          projectKey: "MAC",
           linkedAssetId: 9598240,
           page: 1,
           start: 0,
@@ -779,6 +787,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter executions by run status (failed or passed)",
         parameters: {
+          projectKey: "MAC",
           linkedAssetId: 9509016,
           filter:
             '[{"type":"list","field":"runStatusName","value":["failed","passed"]}]',
@@ -791,6 +800,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter executions by test case name",
         parameters: {
+          projectKey: "MAC",
           linkedAssetId: 9509016,
           filter: '[{"type":"string","value":"login","field":"tcName"}]',
           page: 1,
@@ -802,6 +812,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter by platform, status, and tester",
         parameters: {
+          projectKey: "MAC",
           linkedAssetId: 9509016,
           filter:
             '[{"type":"list","field":"runStatusName","value":["failed"]},{"type":"list","field":"platformID","value":[100145]},{"type":"list","field":"executionCreatedByLoginAlias","value":["Varis Khan"]}]',
@@ -816,6 +827,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
         description:
           "Filter by status and include archived test suite executions",
         parameters: {
+          projectKey: "MAC",
           linkedAssetId: 9509016,
           filter:
             '[{"type":"list","field":"runStatusName","value":["failed","passed"]},{"value":[1,0],"type":"list","field":"isTestSuiteArchived"}]',
@@ -829,6 +841,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter by execution version and linkage level",
         parameters: {
+          projectKey: "MAC",
           linkedAssetId: 9509016,
           filter:
             '[{"type":"string","value":"1","field":"executedVersion"},{"type":"string","value":"Test Case","field":"linkageLevel"}]',
@@ -949,30 +962,37 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       {
         description:
           "Get all issues linked to test case ID 4495658 (default behavior)",
-        parameters: { tcID: 4495658 },
+        parameters: { projectKey: "MAC", tcID: 4495658 },
         expectedOutput:
           "List of issues linked to the test case with issue details, status, and metadata",
       },
       {
         description: "Get all issues linked to test case ID 4495658 (explicit)",
-        parameters: { tcID: 4495658, getLinked: true },
+        parameters: { projectKey: "MAC", tcID: 4495658, getLinked: true },
         expectedOutput:
           "List of issues linked to the test case with issue details, status, and metadata",
       },
       {
         description: "Get issues NOT linked to test case (gap analysis)",
-        parameters: { tcID: 4495658, getLinked: false },
+        parameters: { projectKey: "MAC", tcID: 4495658, getLinked: false },
         expectedOutput: "List of issues that are NOT linked to the test case",
       },
       {
         description: "Get linked issues with pagination",
-        parameters: { tcID: 4495658, getLinked: true, limit: 25, page: 1 },
+        parameters: {
+          projectKey: "MAC",
+          tcID: 4495658,
+          getLinked: true,
+          limit: 25,
+          page: 1,
+        },
         expectedOutput: "Paginated list of issues linked to the test case",
       },
       {
         description:
           "Filter linked issues by summary content (using default getLinked=true)",
         parameters: {
+          projectKey: "MAC",
           tcID: 4495658,
           filter: '[{"value":"login","type":"string","field":"summary"}]',
         },
@@ -982,6 +1002,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter linked issues by status and priority",
         parameters: {
+          projectKey: "MAC",
           tcID: 4495658,
           getLinked: true,
           filter:
@@ -992,6 +1013,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter issues by execution version",
         parameters: {
+          projectKey: "MAC",
           tcID: 4495658,
           getLinked: true,
           filter: '[{"value":"2","type":"string","field":"executedVersion"}]',
@@ -1045,7 +1067,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
     examples: [
       {
         description: "Fetch details for issue with DefectId 1430676",
-        parameters: { defectId: 1430676 },
+        parameters: { projectKey: "MAC", defectId: 1430676 },
         expectedOutput:
           "Full issue detail object with UDFTypeData map and all UDF field values including MUL1, TCR_STR, etc.",
       },

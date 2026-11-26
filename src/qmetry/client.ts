@@ -13,7 +13,7 @@ import type {
 } from "../common/types";
 import { QMetryApiError } from "./client/api/error-handler";
 import {
-  autoResolveViewIdAndFolderPath,
+  autoResolveFolderIds,
   findAutoResolveConfig,
 } from "./client/auto-resolve";
 import {
@@ -45,9 +45,9 @@ function textResult(
   return {
     content: [
       { type: "text", text },
-      // Which project the call actually ran against, so the model (and the
-      // user) can see where "default" went. Only present when the call fetched
-      // project info anyway; no extra request is made for it.
+      // Which project the call ran against, so the model (and the user) can
+      // see it. Built from the call's projectKey, plus id/name when the call
+      // fetched project info anyway; no extra request is made for it.
       ...(project
         ? [{ type: "text" as const, text: JSON.stringify({ project }) }]
         : []),
@@ -57,6 +57,65 @@ function textResult(
 }
 
 const INVALID_PROJECT_CODE = "CO.INVALID_PROJECT_ID";
+
+/**
+ * Tools that may run without a projectKey. Every other tool acts inside one
+ * project and must name it explicitly: the server never falls back to the
+ * project selected in the QMetry UI ("default") for them.
+ * Fetch Releases and Cycles is listed but still needs a key unless
+ * `allProjects` is true (see `missingProjectKeyMessage`).
+ */
+export const PROJECT_OPTIONAL_HANDLERS: ReadonlySet<string> = new Set([
+  QMetryToolsHandlers.FETCH_PROJECTS,
+  QMetryToolsHandlers.FETCH_PROJECT_INFO,
+  QMetryToolsHandlers.FETCH_API_QUOTA_STATUS,
+  QMetryToolsHandlers.FETCH_RELEASES_CYCLES,
+]);
+
+export const PROJECT_KEY_REQUIRED_MESSAGE =
+  "projectKey is required for this tool. If the user gave a project key, pass it. " +
+  "For a project name, call 'Fetch QMetry list Projects' with a name filter and use the matching projectKey; " +
+  "for a numeric project ID, page through 'Fetch QMetry list Projects' and use the projectKey of the row whose projectID matches. " +
+  "If the user named no project, ask which one and offer the list from 'Fetch QMetry list Projects'. " +
+  "'default' is not accepted.";
+
+/** True when the value is a usable explicit project key. */
+function isExplicitProjectKey(value: unknown): value is string {
+  return (
+    typeof value === "string" &&
+    value.trim().length > 0 &&
+    value.trim().toLowerCase() !== QMETRY_DEFAULTS.PROJECT_KEY
+  );
+}
+
+/**
+ * Whether this call must carry an explicit projectKey: every tool outside
+ * PROJECT_OPTIONAL_HANDLERS, plus Fetch Releases and Cycles unless
+ * `allProjects` is true.
+ */
+export function requiresProjectKey(
+  handler: string,
+  args: Record<string, unknown>,
+): boolean {
+  if (handler === QMetryToolsHandlers.FETCH_RELEASES_CYCLES) {
+    return args.allProjects !== true;
+  }
+  return !PROJECT_OPTIONAL_HANDLERS.has(handler);
+}
+
+/**
+ * Returns the error message when a call that needs a project has no usable
+ * projectKey (missing, blank or 'default'), otherwise undefined.
+ */
+export function missingProjectKeyMessage(
+  handler: string,
+  args: Record<string, unknown>,
+): string | undefined {
+  if (!requiresProjectKey(handler, args)) return undefined;
+  return isExplicitProjectKey(args.projectKey)
+    ? undefined
+    : PROJECT_KEY_REQUIRED_MESSAGE;
+}
 
 /**
  * Tools whose request body needs the numeric project ID inside a nested
@@ -74,7 +133,6 @@ const ERROR_CONTEXT_NAMED_INPUTS = new Set([
   "projectKey",
   "resolvedProjectKey",
   "entityKey",
-  "viewId",
   "folderPath",
 ]);
 const ERROR_CONTEXT_ID_INPUT = /(Id|ID|Ids|IDs)$/;
@@ -215,7 +273,18 @@ export class QmetryClient implements Client {
         tool,
         async (args, _ctx: ServerContext): Promise<CallToolResult> => {
           const a = args as Record<string, any>;
+
+          // Project-scoped tools must name their project: reject before any
+          // QMetry request so nothing lands on the UI-selected project.
+          const projectKeyProblem = missingProjectKeyMessage(tool.handler, a);
+          if (projectKeyProblem) {
+            throw new ToolError(projectKeyProblem);
+          }
+          if (typeof a.projectKey === "string") {
+            a.projectKey = a.projectKey.trim();
+          }
           const { baseUrl, projectKey } = resolveContext(a);
+          const projectKeyRequired = requiresProjectKey(tool.handler, a);
 
           // Per-call project context. These are locals of this call only and
           // are discarded when it returns: nothing is stored on the client, so
@@ -240,6 +309,13 @@ export class QmetryClient implements Client {
           // use its key, so a project switch in the QMetry UI mid-call cannot
           // split one call across two projects.
           const effectiveKey = (): string => resolvedProject?.key || projectKey;
+          // Project shown in the result: what getinfo resolved, or else the
+          // explicit key of a project-scoped call (no extra request).
+          const reportedProject = (): ResolvedProject | undefined =>
+            resolvedProject ??
+            (projectKeyRequired
+              ? { key: projectKey, source: "explicit" }
+              : undefined);
 
           const withToolContext = async (
             err: QMetryApiError,
@@ -268,60 +344,31 @@ export class QmetryClient implements Client {
             });
           };
 
-          // Dynamic auto-resolve for modules that support viewId, folderPath, and folderID
+          // Root folder ID auto-resolution (tcFolderID, rqFolderId, tsFolderID, ...)
           const autoResolveConfig = findAutoResolveConfig(tool.handler);
-          if (autoResolveConfig) {
-            // Check if we need to auto-resolve viewId, folderPath, or folderID
-            const needsViewIdResolve =
-              !a.viewId && autoResolveConfig.viewIdPath;
-            const needsFolderPathResolve = a.folderPath === undefined;
-            const needsFolderIdResolve =
-              autoResolveConfig.folderIdField &&
-              !a[autoResolveConfig.folderIdField];
-
-            // Explicit condition for auto-resolving tcFolderID for Create Test Case
-            const needsTcFolderIdAutoResolve =
-              autoResolveConfig.folderIdField === "tcFolderID" && !a.tcFolderID;
-
-            // Explicit condition for auto-resolving parentFolderId for Create Test Suite
-            const needsParentFolderIdAutoResolve =
-              autoResolveConfig.folderIdField === "parentFolderId" &&
-              !a.parentFolderId;
-
-            if (
-              needsViewIdResolve ||
-              needsFolderPathResolve ||
-              needsFolderIdResolve ||
-              needsTcFolderIdAutoResolve ||
-              needsParentFolderIdAutoResolve
-            ) {
-              let autoResolveInfo: any;
-              try {
-                autoResolveInfo = await loadProjectInfo();
-              } catch (err) {
-                if (err instanceof QMetryApiError) {
-                  throw await withToolContext(
-                    err,
-                    `auto-resolving viewId/folderPath/folderID for ${autoResolveConfig.moduleName}; pass them explicitly to skip this lookup`,
-                  );
-                }
-                throw new ToolError(
-                  `Failed to auto-resolve viewId/folderPath/folderID for ${autoResolveConfig.moduleName} in project ${projectKey}. ` +
-                    `Please provide them manually or check project access. ` +
-                    `Error: ${err instanceof Error ? err.message : String(err)}`,
+          if (autoResolveConfig && !a[autoResolveConfig.folderIdField]) {
+            const field = autoResolveConfig.folderIdField;
+            let autoResolveInfo: any;
+            try {
+              autoResolveInfo = await loadProjectInfo();
+            } catch (err) {
+              if (err instanceof QMetryApiError) {
+                throw await withToolContext(
+                  err,
+                  `auto-resolving '${field}' for ${autoResolveConfig.moduleName}; pass '${field}' explicitly to skip this lookup`,
                 );
               }
-
-              // Apply auto-resolution using the dynamic configuration
-              Object.assign(
-                a,
-                autoResolveViewIdAndFolderPath(
-                  a,
-                  autoResolveInfo,
-                  autoResolveConfig,
-                ),
+              throw new ToolError(
+                `Failed to auto-resolve '${field}' for ${autoResolveConfig.moduleName} in project ${projectKey}. ` +
+                  `Pass '${field}' explicitly or check project access. ` +
+                  `Error: ${err instanceof Error ? err.message : String(err)}`,
               );
             }
+
+            Object.assign(
+              a,
+              autoResolveFolderIds(a, autoResolveInfo, autoResolveConfig),
+            );
           }
 
           // UDF preflight for CREATE_TEST_CASE:
@@ -425,7 +472,7 @@ export class QmetryClient implements Client {
                     2,
                   ),
                   true,
-                  resolvedProject,
+                  reportedProject(),
                 );
               }
 
@@ -574,7 +621,7 @@ export class QmetryClient implements Client {
                     2,
                   ),
                   true,
-                  resolvedProject,
+                  reportedProject(),
                 );
               }
             } catch {
@@ -687,7 +734,7 @@ export class QmetryClient implements Client {
               ? formatted
               : JSON.stringify(formatted, null, 2),
             reportedFailure,
-            resolvedProject,
+            reportedProject(),
           );
         },
       );

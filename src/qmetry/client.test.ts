@@ -153,7 +153,7 @@ describe("QmetryClient", () => {
         "Fetch QMetry list Projects",
       );
       expect(mockRegister.mock.calls[0][0].summary).toBe(
-        "Fetch QMetry projects list including projectID, name, projectKey, isArchived, viewIds and folderPath needed for other operations",
+        "Fetch QMetry projects list including projectID, name, projectKey, isArchived and folderPath needed for other operations",
       );
     });
 
@@ -236,16 +236,17 @@ describe("QmetryClient", () => {
       expect(new Set(sentProjectHeaders())).toEqual(new Set(["MAC"]));
     });
 
-    it("uses the 'default' project when projectKey is omitted, even after Fetch QMetry Project Info", async () => {
+    it("rejects a project-scoped call that omits projectKey, even after Fetch QMetry Project Info", async () => {
       await callTool("Fetch QMetry Project Info", { projectKey: "UT" });
       fetchMock.mockClear();
 
-      await callTool("Link Issues to Testcase Run", {
-        issueIds: [2038],
-        tcrId: 23450,
-      });
-
-      expect(sentProjectHeaders()).toEqual(["default"]);
+      await expect(
+        callTool("Link Issues to Testcase Run", {
+          issueIds: [2038],
+          tcrId: 23450,
+        }),
+      ).rejects.toThrow();
+      expect(fetchMock).not.toHaveBeenCalled();
     });
 
     it("no longer registers Set QMetry Project Info", async () => {
@@ -296,7 +297,6 @@ describe("QmetryClient", () => {
             currentProjectId: current?.projectID,
             currentProjectName: current?.name,
             projects: PROJECTS,
-            latestViews: { TC: { viewId: 1 } },
             rootFolders: { TC: { id: 10 } },
           });
         }
@@ -316,23 +316,14 @@ describe("QmetryClient", () => {
         ...extra,
       });
 
-    it("fetches getinfo once and pins the selected project's key for the rest of the call", async () => {
-      const result = await createTestCase();
+    it("fetches getinfo at most once per call", async () => {
+      await createTestCase({ projectKey: "QT" });
 
       const getInfoCalls = fetchMock.mock.calls.filter(([url]) =>
         isGetInfo(url),
       );
       expect(getInfoCalls).toHaveLength(1);
-      const headers = sentProjectHeaders();
-      expect(headers[0]).toBe("default");
-      expect(headers.slice(1).length).toBeGreaterThan(0);
-      expect(new Set(headers.slice(1))).toEqual(new Set(["8d7b"]));
-      expect(projectEcho(result)).toEqual({
-        key: "8d7b",
-        id: 347,
-        name: "Pranshu Basic Test",
-        source: "qmetry-selected",
-      });
+      expect(new Set(sentProjectHeaders())).toEqual(new Set(["QT"]));
     });
 
     it("sends an explicit key unchanged and echoes it as explicit", async () => {
@@ -348,7 +339,7 @@ describe("QmetryClient", () => {
     });
 
     it("leaves the tool's own result as the first content block", async () => {
-      const result = await createTestCase();
+      const result = await createTestCase({ projectKey: "QT" });
 
       expect(JSON.parse(result.content[0].text)).toEqual({
         success: true,
@@ -357,7 +348,7 @@ describe("QmetryClient", () => {
       expect(result.content).toHaveLength(2);
     });
 
-    it("does not pin when the selected project is missing from the projects list", async () => {
+    it("keeps the explicit key when getinfo's project is missing from the projects list", async () => {
       fetchMock.mockResponse(async (req) =>
         isGetInfo(req.url)
           ? JSON.stringify({
@@ -368,17 +359,18 @@ describe("QmetryClient", () => {
           : JSON.stringify({ success: true }),
       );
 
-      const result = await createTestCase();
+      const result = await createTestCase({ projectKey: "QT" });
 
-      expect(new Set(sentProjectHeaders())).toEqual(new Set(["default"]));
+      expect(new Set(sentProjectHeaders())).toEqual(new Set(["QT"]));
       expect(projectEcho(result)).toEqual({
+        key: "QT",
         id: 999,
         name: "Hidden",
-        source: "qmetry-selected",
+        source: "explicit",
       });
     });
 
-    it("falls back to the call's key, without an echo, when getinfo fails in a preflight", async () => {
+    it("still runs, with the explicit key echoed, when getinfo fails in a preflight", async () => {
       // Only the preflight's getinfo fails; the domain client may make its
       // own getinfo request later, which succeeds.
       let getInfoCount = 0;
@@ -392,44 +384,46 @@ describe("QmetryClient", () => {
       // Update Requirement has no auto-resolve: only its best-effort date
       // preflight calls getinfo, so a getinfo failure must not fail the call.
       const result = await callTool("Update Requirement", {
+        projectKey: "QT",
         rqId: 1,
         rqVersionId: 1,
         name: "Renamed",
       });
 
       expect(result.isError).toBeUndefined();
-      expect(new Set(sentProjectHeaders())).toEqual(new Set(["default"]));
-      expect(projectEcho(result)).toBeUndefined();
-      expect(result.content).toHaveLength(1);
+      expect(new Set(sentProjectHeaders())).toEqual(new Set(["QT"]));
+      expect(projectEcho(result)).toEqual({ key: "QT", source: "explicit" });
     });
 
-    it("adds no echo to tools that never fetch project info", async () => {
+    it("echoes the explicit key without a getinfo request on tools that never fetch project info", async () => {
       const result = await callTool("Link Issues to Testcase Run", {
+        projectKey: "QT",
         issueIds: [2038],
         tcrId: 23450,
       });
 
       expect(fetchMock.mock.calls.some(([url]) => isGetInfo(url))).toBe(false);
-      expect(result.content).toHaveLength(1);
+      expect(result.content).toHaveLength(2);
+      expect(projectEcho(result)).toEqual({ key: "QT", source: "explicit" });
     });
 
-    it("keeps no project state: a later call on the same client resolves afresh", async () => {
-      const first = await createTestCase();
+    it("keeps no project state: each call on the same client uses its own projectKey", async () => {
+      const first = await createTestCase({ projectKey: "8d7b" });
       expect(projectEcho(first)?.key).toBe("8d7b");
 
-      // The user switches project in the QMetry UI between calls
+      // The user switches project in the QMetry UI between calls: no effect,
+      // because every call names its project.
       selected = 192;
       fetchMock.mockClear();
-      const second = await createTestCase();
+      const second = await createTestCase({ projectKey: "8d7b" });
 
-      expect(projectEcho(second)?.key).toBe("QT");
-      expect(sentProjectHeaders()[0]).toBe("default");
-      expect(new Set(sentProjectHeaders().slice(1))).toEqual(new Set(["QT"]));
+      expect(projectEcho(second)?.key).toBe("8d7b");
+      expect(new Set(sentProjectHeaders())).toEqual(new Set(["8d7b"]));
     });
 
     it("leaves the client's own fields unchanged after a call", async () => {
       const before = { ...(client as any) };
-      await createTestCase();
+      await createTestCase({ projectKey: "QT" });
       expect({ ...(client as any) }).toEqual(before);
     });
 
@@ -453,10 +447,11 @@ describe("QmetryClient", () => {
         expect(new Set(sentProjectHeaders())).toEqual(new Set(["QT"]));
       });
 
-      it("fills release.projectID from the selected project when projectKey is omitted", async () => {
-        await callTool("Create Release", { release: { name: "R1" } });
-
-        expect(bodyOf("/rest/admin/release")?.release.projectID).toBe(347);
+      it("rejects Create Release without projectKey before any request", async () => {
+        await expect(
+          callTool("Create Release", { release: { name: "R1" } }),
+        ).rejects.toThrow();
+        expect(fetchMock).not.toHaveBeenCalled();
       });
 
       it("keeps an explicit release.projectID and makes no getinfo request", async () => {

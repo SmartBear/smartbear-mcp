@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ToolError } from "../common/tools";
-import { QmetryClient } from "./client";
+import { QmetryClient, requiresProjectKey } from "./client";
+import { QMetryApiError } from "./client/api/error-handler";
 import * as issues from "./client/issues";
 // Mock API clients
 import * as project from "./client/project";
@@ -16,6 +17,8 @@ vi.mock("./client/requirement");
 vi.mock("./client/issues");
 vi.mock("./client/testsuite");
 vi.mock("./client/udf");
+
+const TEST_PROJECT_KEY = "TEST";
 
 // Helper to create and configure a client
 async function createConfiguredClient(
@@ -40,11 +43,20 @@ describe("QmetryClient tools", () => {
     vi.clearAllMocks();
   });
 
+  // Project-scoped tools require an explicit projectKey; these tests use
+  // TEST_PROJECT_KEY unless a test passes its own. Exempt tools get nothing.
   const getHandler = (title: string) => {
     client.registerTools(mockRegister, vi.fn());
     const call = mockRegister.mock.calls.find((c) => c[0].title === title);
     if (!call) throw new Error(`Tool not registered: ${title}`);
-    return call[1]; // handler fn
+    const handler = call[1];
+    return (args: Record<string, unknown> = {}, ctx?: unknown) =>
+      handler(
+        !requiresProjectKey(call[0].handler, args) || "projectKey" in args
+          ? args
+          : { projectKey: TEST_PROJECT_KEY, ...args },
+        ctx,
+      );
   };
 
   describe("Fetch QMetry Project Info", () => {
@@ -86,11 +98,7 @@ describe("QmetryClient tools", () => {
   });
 
   describe("Fetch Test Cases", () => {
-    it("should auto-resolve viewId and call fetchTestCases with default pagination", async () => {
-      // Mock project info response for auto-resolution
-      (project.getProjectInfo as any).mockResolvedValue({
-        latestViews: { TC: { viewId: 12345 } },
-      });
+    it("should call fetchTestCases without a project info lookup", async () => {
       (testcase.fetchTestCases as any).mockResolvedValue({
         data: [
           { id: 1, name: "Test1" },
@@ -101,84 +109,34 @@ describe("QmetryClient tools", () => {
       const handler = getHandler("Fetch Test Cases");
       const result = await handler({});
 
-      // Auto-resolution is now working correctly - getProjectInfo should be called
-      // when viewId is not provided to auto-resolve it
-      expect(project.getProjectInfo).toHaveBeenCalledWith(
-        "fake-token",
-        "https://qmetry.example",
-        "default",
-      );
+      expect(project.getProjectInfo).not.toHaveBeenCalled();
 
-      // fetchTestCases should be called with auto-resolved viewId and folderPath
-      expect(testcase.fetchTestCases).toHaveBeenCalledWith(
-        "fake-token",
-        "https://qmetry.example",
-        "default",
-        expect.objectContaining({
-          viewId: 12345, // Auto-resolved from project info
-          folderPath: "", // Auto-set to empty string for root
-        }),
-      );
+      // folderPath defaults to root inside fetchTestCases (covered in api/testcase.test.ts)
+      const forwarded = (testcase.fetchTestCases as any).mock.calls[0][3];
+      expect(forwarded).not.toHaveProperty("viewId");
+      expect(forwarded).not.toHaveProperty("folderPath");
 
       expect(result.content[0].text).toContain("Test1");
       expect(result.content[0].text).toContain("Test2");
     });
 
-    it("should skip auto-resolution when viewId is provided", async () => {
+    it("should pass a caller-supplied folderPath through", async () => {
       (testcase.fetchTestCases as any).mockResolvedValue({
         data: [{ id: 4, name: "Test4" }],
       });
 
       const handler = getHandler("Fetch Test Cases");
-      const result = await handler({ viewId: 99999, folderPath: "test" });
+      const result = await handler({ folderPath: "test" });
 
-      // Should not call getProjectInfo when viewId is provided
       expect(project.getProjectInfo).not.toHaveBeenCalled();
-
-      // Should call fetchTestCases directly with provided viewId
       expect(testcase.fetchTestCases).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
-        expect.objectContaining({
-          viewId: 99999,
-          folderPath: "test",
-        }),
+        TEST_PROJECT_KEY,
+        expect.objectContaining({ folderPath: "test" }),
       );
 
       expect(result.content[0].text).toContain("Test4");
-    });
-
-    it("should throw a ToolError when auto-resolution fails", async () => {
-      // Mock console.error to suppress expected error logging during test
-      const consoleSpy = vi
-        .spyOn(console, "error")
-        .mockImplementation(() => {});
-
-      // Mock getProjectInfo to fail during auto-resolution
-      (project.getProjectInfo as any).mockRejectedValue(
-        new Error("Project not found"),
-      );
-
-      const handler = getHandler("Fetch Test Cases");
-      const error = await handler({}).catch((e: unknown) => e);
-
-      // Auto-resolution should be attempted and fail with an expected-failure
-      // ToolError (returned to the model as `isError`, not reported to BugSnag)
-      expect(project.getProjectInfo).toHaveBeenCalledWith(
-        "fake-token",
-        "https://qmetry.example",
-        "default",
-      );
-
-      expect(error).toBeInstanceOf(ToolError);
-      expect((error as Error).message).toContain(
-        "Failed to auto-resolve viewId/folderPath",
-      );
-      expect((error as Error).message).toContain("Project not found");
-
-      // Restore console.error
-      consoleSpy.mockRestore();
     });
   });
 
@@ -192,7 +150,7 @@ describe("QmetryClient tools", () => {
       expect(testcase.fetchTestCaseDetails).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({ tcID: "TC-1" }),
       );
 
@@ -213,7 +171,7 @@ describe("QmetryClient tools", () => {
       expect(testcase.fetchTestCaseVersionDetails).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({ id: "TC-2", version: 3 }),
       );
 
@@ -233,7 +191,7 @@ describe("QmetryClient tools", () => {
       expect(testcase.fetchTestCaseSteps).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({ id: "TC-3" }),
       );
 
@@ -258,7 +216,7 @@ describe("QmetryClient tools", () => {
       expect(requirement.createRequirement).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           name: "New login requirement",
           rqFolderId: "633",
@@ -280,12 +238,12 @@ describe("QmetryClient tools", () => {
       expect(project.getProjectInfo).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
       );
       expect(requirement.createRequirement).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({ rqFolderId: "633" }),
       );
     });
@@ -305,7 +263,7 @@ describe("QmetryClient tools", () => {
       expect(requirement.createRequirement).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({ rqFolderId: "999" }),
       );
     });
@@ -328,7 +286,7 @@ describe("QmetryClient tools", () => {
       expect(requirement.createRequirement).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           name: "Requirement with metadata",
           priority: 688864,
@@ -360,7 +318,7 @@ describe("QmetryClient tools", () => {
       expect(requirement.updateRequirement).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           rqId: 2073,
           rqVersionId: 2087,
@@ -393,7 +351,7 @@ describe("QmetryClient tools", () => {
       expect(requirement.updateRequirement).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           rqId: 2073,
           rqVersionId: 2087,
@@ -425,7 +383,7 @@ describe("QmetryClient tools", () => {
       expect(requirement.updateRequirement).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           rqId: 2073,
           rqVersionId: 2087,
@@ -440,9 +398,7 @@ describe("QmetryClient tools", () => {
 
   describe("Link Release Cycle with Test Case", () => {
     const args = {
-      sourceProjectId: 46893,
-      sourceReleaseId: 92340,
-      sourceBuildId: 131142,
+      destinationProjectId: 46893,
       releaseCycleMapping: [
         { releaseId: 92340, cycleIds: [131142] },
         { releaseId: 92341, cycleIds: [131143] },
@@ -467,7 +423,7 @@ describe("QmetryClient tools", () => {
       expect(testcase.linkReleaseCycleWithTestCase).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining(args),
       );
       const passed = (testcase.linkReleaseCycleWithTestCase as any).mock
@@ -503,9 +459,7 @@ describe("QmetryClient tools", () => {
 
   describe("Link Release Cycle with Requirement", () => {
     const args = {
-      sourceProjectId: 46893,
-      sourceReleaseId: 92340,
-      sourceBuildId: 131142,
+      destinationProjectId: 46893,
       releaseCycleMapping: [
         { releaseId: 92342, cycleIds: [131144] },
         { releaseId: 92341, cycleIds: [131143] },
@@ -530,7 +484,7 @@ describe("QmetryClient tools", () => {
       expect(requirement.linkReleaseCycleWithRequirement).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining(args),
       );
       const passed = (requirement.linkReleaseCycleWithRequirement as any).mock
@@ -563,11 +517,7 @@ describe("QmetryClient tools", () => {
   });
 
   describe("Fetch Requirements", () => {
-    it("should auto-resolve viewId and call fetchRequirements with default pagination", async () => {
-      // Mock project info response for auto-resolution
-      (project.getProjectInfo as any).mockResolvedValue({
-        latestViews: { RQ: { viewId: 54321 } },
-      });
+    it("should call fetchRequirements without a project info lookup", async () => {
       (requirement.fetchRequirements as any).mockResolvedValue({
         data: [
           { id: 1, name: "Requirement1", entityKey: "MAC-RQ-1" },
@@ -578,23 +528,12 @@ describe("QmetryClient tools", () => {
       const handler = getHandler("Fetch Requirements");
       const result = await handler({});
 
-      // Auto-resolution should call getProjectInfo to resolve RQ viewId
-      expect(project.getProjectInfo).toHaveBeenCalledWith(
-        "fake-token",
-        "https://qmetry.example",
-        "default",
-      );
+      expect(project.getProjectInfo).not.toHaveBeenCalled();
 
-      // fetchRequirements should be called with auto-resolved viewId and folderPath
-      expect(requirement.fetchRequirements).toHaveBeenCalledWith(
-        "fake-token",
-        "https://qmetry.example",
-        "default",
-        expect.objectContaining({
-          viewId: 54321,
-          folderPath: "",
-        }),
-      );
+      // folderPath defaults to root inside fetchRequirements (covered in api/requirement.test.ts)
+      const forwarded = (requirement.fetchRequirements as any).mock.calls[0][3];
+      expect(forwarded).not.toHaveProperty("viewId");
+      expect(forwarded).not.toHaveProperty("folderPath");
 
       expect(result.content[0].text).toContain("Requirement1");
     });
@@ -604,50 +543,15 @@ describe("QmetryClient tools", () => {
         .spyOn(console, "error")
         .mockImplementation(() => {});
 
-      (project.getProjectInfo as any).mockRejectedValue(
+      (requirement.fetchRequirements as any).mockRejectedValue(
         new Error("API failure"),
       );
 
       const handler = getHandler("Fetch Requirements");
 
-      await expect(handler({})).rejects.toThrow(
-        new ToolError(
-          "Failed to auto-resolve viewId/folderPath/folderID for Requirements in project default. Please provide them manually or check project access. Error: API failure",
-        ),
-      );
+      await expect(handler({})).rejects.toThrow("API failure");
 
       consoleSpy.mockRestore();
-    });
-
-    it("should use manual viewId when provided", async () => {
-      // Mock project info for auto-resolution of folderPath
-      (project.getProjectInfo as any).mockResolvedValue({
-        latestViews: { RQ: { viewId: 54321 } },
-      });
-      (requirement.fetchRequirements as any).mockResolvedValue({
-        data: [{ id: 1, name: "Requirement1" }],
-      });
-
-      const handler = getHandler("Fetch Requirements");
-      const result = await handler({ viewId: 99999, projectKey: "TEST" });
-
-      // Even when viewId is provided, auto-resolution still calls getProjectInfo to resolve folderPath
-      expect(project.getProjectInfo).toHaveBeenCalledWith(
-        "fake-token",
-        "https://qmetry.example",
-        "TEST",
-      );
-
-      expect(requirement.fetchRequirements).toHaveBeenCalledWith(
-        "fake-token",
-        "https://qmetry.example",
-        "TEST",
-        expect.objectContaining({
-          viewId: 99999,
-        }),
-      );
-
-      expect(result.content[0].text).toContain("Requirement1");
     });
   });
 
@@ -667,7 +571,7 @@ describe("QmetryClient tools", () => {
       expect(requirement.fetchRequirementDetails).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           id: 12345,
           version: 1,
@@ -748,7 +652,7 @@ describe("QmetryClient tools", () => {
       expect(testcase.fetchTestCasesLinkedToRequirement).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           rqID: 2499315,
         }),
@@ -780,7 +684,7 @@ describe("QmetryClient tools", () => {
       expect(testcase.fetchTestCasesLinkedToRequirement).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           rqID: 2499315,
           getLinked: false,
@@ -845,7 +749,7 @@ describe("QmetryClient tools", () => {
       expect(testcase.fetchTestCaseExecutions).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           tcid: 1223922,
         }),
@@ -890,7 +794,7 @@ describe("QmetryClient tools", () => {
       expect(testcase.fetchTestCaseExecutions).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           tcid: 1223922,
           tcversion: 3,
@@ -962,7 +866,7 @@ describe("QmetryClient tools", () => {
       expect(issues.fetchIssuesLinkedToTestCase).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           linkedAsset: { type: "TC", id: 3878816 },
         }),
@@ -1008,7 +912,7 @@ describe("QmetryClient tools", () => {
       expect(issues.fetchIssuesLinkedToTestCase).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           linkedAsset: { type: "TC", id: 3878816 },
           filter:
@@ -1075,7 +979,7 @@ describe("QmetryClient tools", () => {
       expect(testsuite.fetchTestCasesByTestSuite).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           tsID: 92091,
         }),
@@ -1118,7 +1022,7 @@ describe("QmetryClient tools", () => {
       expect(testsuite.fetchTestCasesByTestSuite).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           tsID: 92091,
           filter:
@@ -1135,10 +1039,7 @@ describe("QmetryClient tools", () => {
   });
 
   describe("Bulk Update Test Case Execution Status", () => {
-    it("should auto-resolve TE viewId from project info without a scope id", async () => {
-      (project.getProjectInfo as any).mockResolvedValue({
-        latestViews: { TE: { viewId: 777 } },
-      });
+    it("should forward the status payload without a view lookup or scope id", async () => {
       (testsuite.bulkUpdateExecutionStatus as any).mockResolvedValue({
         success: true,
       });
@@ -1152,45 +1053,20 @@ describe("QmetryClient tools", () => {
         udfValuesByRun: { "66095069": { test_env: { value: "QA" } } },
       });
 
-      expect(project.getProjectInfo).toHaveBeenCalled();
+      expect(project.getProjectInfo).not.toHaveBeenCalled();
       expect(testsuite.bulkUpdateExecutionStatus).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           entityIDs: "66095069",
-          viewId: 777,
           udfValuesByRun: { "66095069": { test_env: { value: "QA" } } },
         }),
       );
       const forwardedArgs = (testsuite.bulkUpdateExecutionStatus as any).mock
         .calls[0][3];
       expect(forwardedArgs).not.toHaveProperty("scopeId");
-    });
-
-    it("should keep a caller-supplied viewId", async () => {
-      (project.getProjectInfo as any).mockResolvedValue({
-        latestViews: { TE: { viewId: 777 } },
-      });
-      (testsuite.bulkUpdateExecutionStatus as any).mockResolvedValue({
-        success: true,
-      });
-
-      const handler = getHandler("Bulk Update Test Case Execution Status");
-      await handler({
-        entityIDs: "66095069",
-        entityType: "TCR",
-        qmTsRunId: "2720260",
-        runStatusID: 123268,
-        viewId: 999,
-      });
-
-      expect(testsuite.bulkUpdateExecutionStatus).toHaveBeenCalledWith(
-        "fake-token",
-        "https://qmetry.example",
-        "default",
-        expect.objectContaining({ viewId: 999 }),
-      );
+      expect(forwardedArgs).not.toHaveProperty("viewId");
     });
   });
 
@@ -1232,7 +1108,7 @@ describe("QmetryClient tools", () => {
       expect(testsuite.fetchExecutionsByTestSuite).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           tsID: 194955,
         }),
@@ -1271,7 +1147,6 @@ describe("QmetryClient tools", () => {
       const result = await handler({
         tsID: 194955,
         tsFolderID: 126554,
-        viewId: 41799,
         gridName: "TESTEXECUTIONLIST",
         filter:
           '[{"type":"boolean","value":true,"field":"isAutomatedFlag"},{"value":[0],"type":"list","field":"isArchived"}]',
@@ -1282,11 +1157,10 @@ describe("QmetryClient tools", () => {
       expect(testsuite.fetchExecutionsByTestSuite).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           tsID: 194955,
           tsFolderID: 126554,
-          viewId: 41799,
           gridName: "TESTEXECUTIONLIST",
           filter:
             '[{"type":"boolean","value":true,"field":"isAutomatedFlag"},{"value":[0],"type":"list","field":"isArchived"}]',
@@ -1338,7 +1212,6 @@ describe("QmetryClient tools", () => {
       const handler = getHandler("Fetch Test Case Runs by Test Suite Run");
       const result = await handler({
         tsrunID: 78901,
-        viewId: 12345,
         projectKey: "MAC",
         start: 0,
         page: 1,
@@ -1351,7 +1224,6 @@ describe("QmetryClient tools", () => {
         "MAC",
         expect.objectContaining({
           tsrunID: 78901,
-          viewId: 12345,
           start: 0,
           page: 1,
           limit: 10,
@@ -1396,7 +1268,6 @@ describe("QmetryClient tools", () => {
       const handler = getHandler("Fetch Test Case Runs by Test Suite Run");
       const result = await handler({
         tsrunID: 78901,
-        viewId: 12345,
         projectKey: "MAC",
         showTcWithDefects: true,
         filter:
@@ -1411,7 +1282,6 @@ describe("QmetryClient tools", () => {
         "MAC",
         expect.objectContaining({
           tsrunID: 78901,
-          viewId: 12345,
           showTcWithDefects: true,
           filter:
             '[{"type":"string","value":"BLOCKED","field":"executionStatus"}]',
@@ -1443,7 +1313,6 @@ describe("QmetryClient tools", () => {
       const handler = getHandler("Fetch Test Case Runs by Test Suite Run");
       const result = await handler({
         tsrunID: "728995",
-        viewId: 79451,
         projectKey: "VKT",
         tcrUdfFilter: '[{"type":"list","value":[5108701],"field":"8260LUP"}]',
         page: 1,
@@ -1456,7 +1325,6 @@ describe("QmetryClient tools", () => {
         "VKT",
         expect.objectContaining({
           tsrunID: "728995",
-          viewId: 79451,
           tcrUdfFilter: '[{"type":"list","value":[5108701],"field":"8260LUP"}]',
         }),
       );
@@ -1489,7 +1357,6 @@ describe("QmetryClient tools", () => {
       const handler = getHandler("Fetch Test Case Runs by Test Suite Run");
       const result = await handler({
         tsrunID: "728995",
-        viewId: 79451,
         projectKey: "VKT",
       });
 
@@ -1670,7 +1537,7 @@ describe("QmetryClient tools", () => {
       expect(project.getProjects).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        "default", // exempt tool: no projectKey needed
         expect.objectContaining({
           params: { showArchive: false },
         }),
@@ -1704,7 +1571,7 @@ describe("QmetryClient tools", () => {
       expect(project.getProjects).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        "default", // exempt tool: no projectKey needed
         expect.objectContaining({
           params: { showArchive: true },
           filter: '[{"value":"MAC","type":"string","field":"name"}]',
@@ -1736,7 +1603,7 @@ describe("QmetryClient tools", () => {
       expect(project.getReleasesCycles).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         {},
       );
 
@@ -1761,7 +1628,7 @@ describe("QmetryClient tools", () => {
       expect(project.getReleasesCycles).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({ showArchive: true }),
       );
 
@@ -1799,7 +1666,7 @@ describe("QmetryClient tools", () => {
       expect(project.getBuilds).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({}),
       );
 
@@ -1822,7 +1689,7 @@ describe("QmetryClient tools", () => {
       expect(project.getBuilds).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           filter: '[{"value":"Build 2.0","type":"string","field":"name"}]',
           limit: 20,
@@ -1849,7 +1716,7 @@ describe("QmetryClient tools", () => {
       expect(project.getPlatforms).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({}),
       );
 
@@ -1871,7 +1738,7 @@ describe("QmetryClient tools", () => {
       expect(project.getPlatforms).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           filter: '[{"value":[0],"type":"list","field":"isArchived"}]',
         }),
@@ -1895,7 +1762,7 @@ describe("QmetryClient tools", () => {
       expect(project.getApiQuotaStatus).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        "default", // exempt tool: no projectKey needed
         expect.objectContaining({}),
       );
 
@@ -1936,7 +1803,7 @@ describe("QmetryClient tools", () => {
       expect(testcase.createTestCases).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           tcFolderID: "102653",
           name: "New Test Case",
@@ -1972,7 +1839,7 @@ describe("QmetryClient tools", () => {
       expect(testcase.createTestCases).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           tcFolderID: "102653",
           name: "Test with Steps",
@@ -2019,7 +1886,7 @@ describe("QmetryClient tools", () => {
       expect(testcase.createTestCases).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           steps: [
             expect.objectContaining({ orderId: 1, UDF: { status: 5232630 } }),
@@ -2048,7 +1915,7 @@ describe("QmetryClient tools", () => {
       expect(testcase.updateTestCase).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           tcID: 4519260,
           tcVersionID: 5448492,
@@ -2083,7 +1950,7 @@ describe("QmetryClient tools", () => {
       expect(testcase.updateTestCase).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           tcID: 4519260,
           tcVersionID: 5448492,
@@ -2118,7 +1985,7 @@ describe("QmetryClient tools", () => {
       expect(testsuite.createTestSuites).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           parentFolderId: "113557",
           name: "New Test Suite",
@@ -2149,7 +2016,7 @@ describe("QmetryClient tools", () => {
       expect(testsuite.createTestSuites).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           parentFolderId: "113557",
           name: "Suite with Metadata",
@@ -2191,7 +2058,7 @@ describe("QmetryClient tools", () => {
       expect(testsuite.createTestSuites).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           parentFolderId: "113557",
           name: "login failure",
@@ -2236,7 +2103,7 @@ describe("QmetryClient tools", () => {
       expect(testsuite.updateTestSuite).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           id: 1505898,
           entityKey: "TS-003",
@@ -2268,7 +2135,7 @@ describe("QmetryClient tools", () => {
       expect(testsuite.updateTestSuite).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           id: 1505898,
           testSuiteState: 505036,
@@ -2281,10 +2148,7 @@ describe("QmetryClient tools", () => {
   });
 
   describe("Fetch Test Suites", () => {
-    it("should auto-resolve viewId and fetch test suites", async () => {
-      (project.getProjectInfo as any).mockResolvedValue({
-        latestViews: { TS: { viewId: 103097 } },
-      });
+    it("should fetch test suites without a project info lookup", async () => {
       (testsuite.fetchTestSuites as any).mockResolvedValue({
         data: [
           { id: 1, name: "Suite 1", entityKey: "TS-001" },
@@ -2295,38 +2159,30 @@ describe("QmetryClient tools", () => {
       const handler = getHandler("Fetch Test Suites");
       const result = await handler({});
 
-      expect(project.getProjectInfo).toHaveBeenCalled();
-      expect(testsuite.fetchTestSuites).toHaveBeenCalledWith(
-        "fake-token",
-        "https://qmetry.example",
-        "default",
-        expect.objectContaining({
-          viewId: 103097,
-          folderPath: "",
-        }),
-      );
+      expect(project.getProjectInfo).not.toHaveBeenCalled();
+      // folderPath defaults to root inside fetchTestSuites (covered in api/testsuite.test.ts)
+      const forwarded = (testsuite.fetchTestSuites as any).mock.calls[0][3];
+      expect(forwarded).not.toHaveProperty("viewId");
+      expect(forwarded).not.toHaveProperty("folderPath");
 
       expect(result.content[0].text).toContain("Suite 1");
       expect(result.content[0].text).toContain("Suite 2");
     });
 
-    it("should skip auto-resolution when viewId provided", async () => {
+    it("should pass a caller-supplied folderPath through", async () => {
       (testsuite.fetchTestSuites as any).mockResolvedValue({
         data: [{ id: 3, name: "Suite 3", entityKey: "TS-003" }],
       });
 
       const handler = getHandler("Fetch Test Suites");
-      const result = await handler({ viewId: 99999, folderPath: "" });
+      const result = await handler({ folderPath: "Regression" });
 
       expect(project.getProjectInfo).not.toHaveBeenCalled();
       expect(testsuite.fetchTestSuites).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
-        expect.objectContaining({
-          viewId: 99999,
-          folderPath: "",
-        }),
+        TEST_PROJECT_KEY,
+        expect.objectContaining({ folderPath: "Regression" }),
       );
 
       expect(result.content[0].text).toContain("Suite 3");
@@ -2336,7 +2192,7 @@ describe("QmetryClient tools", () => {
   describe("Fetch Test Suites for Test Case", () => {
     it("should fetch test suites for test case with auto-resolution", async () => {
       (project.getProjectInfo as any).mockResolvedValue({
-        latestViews: { TSFS: { viewId: 104316 } },
+        rootFolders: { TS: { id: 113557 } },
       });
       (testsuite.fetchTestSuitesForTestCase as any).mockResolvedValue({
         data: [
@@ -2346,16 +2202,15 @@ describe("QmetryClient tools", () => {
       });
 
       const handler = getHandler("Fetch Test Suites for Test Case");
-      const result = await handler({ tsFolderID: 113557 });
+      const result = await handler({});
 
       expect(project.getProjectInfo).toHaveBeenCalled();
       expect(testsuite.fetchTestSuitesForTestCase).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           tsFolderID: 113557,
-          viewId: 104316,
         }),
       );
 
@@ -2363,9 +2218,6 @@ describe("QmetryClient tools", () => {
     });
 
     it("should fetch test suites with filter", async () => {
-      (project.getProjectInfo as any).mockResolvedValue({
-        latestViews: { TSFS: { viewId: 104316 } },
-      });
       (testsuite.fetchTestSuitesForTestCase as any).mockResolvedValue({
         data: [{ id: 103, name: "Filtered Suite" }],
       });
@@ -2379,7 +2231,7 @@ describe("QmetryClient tools", () => {
       expect(testsuite.fetchTestSuitesForTestCase).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           tsFolderID: 113557,
           filter: '[{"value":[0],"type":"list","field":"isArchived"}]',
@@ -2387,6 +2239,57 @@ describe("QmetryClient tools", () => {
       );
 
       expect(result.content[0].text).toContain("Filtered Suite");
+    });
+
+    it("should skip the project info lookup when tsFolderID is supplied", async () => {
+      (testsuite.fetchTestSuitesForTestCase as any).mockResolvedValue({
+        data: [],
+      });
+
+      const handler = getHandler("Fetch Test Suites for Test Case");
+      await handler({ tsFolderID: 42 });
+
+      expect(project.getProjectInfo).not.toHaveBeenCalled();
+    });
+
+    it("should add tool context when the folder ID lookup fails with a QMetry API error", async () => {
+      (project.getProjectInfo as any).mockRejectedValue(
+        new QMetryApiError({
+          kind: "client",
+          url: "https://qmetry.example/rest/admin/project/getinfo",
+          status: 403,
+          code: "CO.ACCESS_DENIED",
+        }),
+      );
+
+      const handler = getHandler("Fetch Test Suites for Test Case");
+      const error = await handler({}).catch((e: unknown) => e);
+
+      expect(error).toBeInstanceOf(QMetryApiError);
+      expect((error as QMetryApiError).context.tool).toBe(
+        "qmetry_fetch_test_suites_for_test_case",
+      );
+      expect((error as QMetryApiError).context.step).toContain(
+        "auto-resolving 'tsFolderID' for Test Suites",
+      );
+      expect(testsuite.fetchTestSuitesForTestCase).not.toHaveBeenCalled();
+    });
+
+    it("should throw a ToolError naming the field when the folder ID lookup fails otherwise", async () => {
+      (project.getProjectInfo as any).mockRejectedValue(
+        new Error("network down"),
+      );
+
+      const handler = getHandler("Fetch Test Suites for Test Case");
+      const error = await handler({}).catch((e: unknown) => e);
+
+      expect(error).toBeInstanceOf(ToolError);
+      expect(error).not.toBeInstanceOf(QMetryApiError);
+      expect((error as Error).message).toContain(
+        "Failed to auto-resolve 'tsFolderID' for Test Suites in project TEST",
+      );
+      expect((error as Error).message).toContain("network down");
+      expect(testsuite.fetchTestSuitesForTestCase).not.toHaveBeenCalled();
     });
   });
 
@@ -2407,7 +2310,7 @@ describe("QmetryClient tools", () => {
       expect(testcase.linkRequirementToTestCase).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           tcID: "VT-TC-26",
           tcVersionId: 5448515,
@@ -2453,7 +2356,7 @@ describe("QmetryClient tools", () => {
       ).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           tcID: 594294,
         }),
@@ -2476,7 +2379,7 @@ describe("QmetryClient tools", () => {
       ).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           tcID: 594294,
           getLinked: false,
@@ -2504,7 +2407,7 @@ describe("QmetryClient tools", () => {
       expect(testsuite.linkTestCasesToTestSuite).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           tsID: 1487397,
           tcvdIDs: [5448504, 5448503],
@@ -2531,7 +2434,7 @@ describe("QmetryClient tools", () => {
       expect(testsuite.linkTestCasesToTestSuite).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           tsID: 1487397,
           tcvdIDs: expect.arrayContaining([5448504, 5448503, 5448505, 5448506]),
@@ -2561,7 +2464,7 @@ describe("QmetryClient tools", () => {
       expect(testsuite.reqLinkedTestCasesToTestSuite).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           tsID: 1487397,
           tcvdIDs: [5448504, 5448503],
@@ -2590,7 +2493,7 @@ describe("QmetryClient tools", () => {
       expect(testsuite.reqLinkedTestCasesToTestSuite).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           tsID: 8674,
           fromReqs: true,
@@ -2619,7 +2522,7 @@ describe("QmetryClient tools", () => {
       expect(issues.createIssue).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           summary: "Login button not working",
           issueType: 2231983,
@@ -2653,7 +2556,7 @@ describe("QmetryClient tools", () => {
       expect(issues.createIssue).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           summary: "Complete Issue",
           issueOwner: 15112,
@@ -2682,7 +2585,7 @@ describe("QmetryClient tools", () => {
       expect(issues.updateIssue).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           DefectId: 118150,
           summary: "Updated summary",
@@ -2709,7 +2612,7 @@ describe("QmetryClient tools", () => {
       expect(issues.updateIssue).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           DefectId: 118150,
           issuePriority: 189340,
@@ -2722,10 +2625,7 @@ describe("QmetryClient tools", () => {
   });
 
   describe("Fetch Defects or Issues", () => {
-    it("should auto-resolve viewId and fetch issues", async () => {
-      (project.getProjectInfo as any).mockResolvedValue({
-        latestViews: { IS: { viewId: 169424 } },
-      });
+    it("should fetch issues without a project info lookup or viewId", async () => {
       (issues.fetchIssues as any).mockResolvedValue({
         data: [
           { id: 1, entityKey: "IS-001", name: "Issue 1" },
@@ -2736,14 +2636,10 @@ describe("QmetryClient tools", () => {
       const handler = getHandler("Fetch Defects or Issues");
       const result = await handler({});
 
-      expect(project.getProjectInfo).toHaveBeenCalled();
-      expect(issues.fetchIssues).toHaveBeenCalledWith(
-        "fake-token",
-        "https://qmetry.example",
-        "default",
-        expect.objectContaining({
-          viewId: 169424,
-        }),
+      expect(project.getProjectInfo).not.toHaveBeenCalled();
+      expect(issues.fetchIssues).toHaveBeenCalledTimes(1);
+      expect((issues.fetchIssues as any).mock.calls[0][3]).not.toHaveProperty(
+        "viewId",
       );
 
       expect(result.content[0].text).toContain("IS-001");
@@ -2751,9 +2647,6 @@ describe("QmetryClient tools", () => {
     });
 
     it("should fetch issues with filter", async () => {
-      (project.getProjectInfo as any).mockResolvedValue({
-        latestViews: { IS: { viewId: 169424 } },
-      });
       (issues.fetchIssues as any).mockResolvedValue({
         data: [{ id: 3, entityKey: "IS-003", name: "Filtered Issue" }],
       });
@@ -2766,7 +2659,7 @@ describe("QmetryClient tools", () => {
       expect(issues.fetchIssues).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           filter: '[{"type":"string","value":"IS-003","field":"entityKeyId"}]',
         }),
@@ -2792,7 +2685,7 @@ describe("QmetryClient tools", () => {
       expect(issues.linkIssuesToTestcaseRun).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           issueIds: ["5054834"],
           tcrId: 567890,
@@ -2817,7 +2710,7 @@ describe("QmetryClient tools", () => {
       expect(issues.linkIssuesToTestcaseRun).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           issueIds: ["5054834", "5054835"],
           tcrId: 567890,
@@ -2848,7 +2741,7 @@ describe("QmetryClient tools", () => {
       expect(issues.fetchIssuesLinkedToExecution).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({ tsRunID: 819218 }),
       );
       const passed = (issues.fetchIssuesLinkedToExecution as any).mock
@@ -2893,7 +2786,7 @@ describe("QmetryClient tools", () => {
       expect(testsuite.linkPlatformsToTestSuite).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           qmTsId: 1511970,
           qmPlatformId: "63004",
@@ -2918,7 +2811,7 @@ describe("QmetryClient tools", () => {
       expect(testsuite.linkPlatformsToTestSuite).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           qmTsId: 1511970,
           qmPlatformId: "63004,63005,63006",
@@ -2945,7 +2838,7 @@ describe("QmetryClient tools", () => {
       expect(testcase.linkTestcaseToIssues).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default",
+        TEST_PROJECT_KEY,
         expect.objectContaining({
           tcID: "8d7b-TC-63",
           dfIDs: [2039, 2038, 2037, 1528],

@@ -453,6 +453,7 @@ describe("AI Agent API clients", () => {
   describe("ExportHtmlReportArgsSchema fileName validation", () => {
     const parseFileName = (fileName: string) =>
       ExportHtmlReportArgsSchema.safeParse({
+        projectKey: "MAC",
         htmlContent: "<h1>Report</h1>",
         fileName,
       });

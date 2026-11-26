@@ -645,7 +645,7 @@ export async function fetchTestRunUdfMetadata(
  * 2. Checks `hasTcRunUdf` — if false, returns immediately with a note.
  * 3. If UDFs exist, calls `rest/admin/udf/metadata` to get field definitions
  *    and enriches each run's UDF values with field label and type information.
- * @throws If tsrunID or viewId are missing.
+ * @throws If tsrunID is missing.
  */
 export async function fetchTestRunUdfValues(
   token: string,
@@ -668,14 +668,6 @@ export async function fetchTestRunUdfValues(
       "[fetchTestRunUdfValues] Missing or invalid required parameter: 'tsrunID'. Provide 'tsrunID' or pass parent tool rows in 'sourceRows'.",
     );
   }
-  if (
-    (!Array.isArray(payload.sourceRows) || payload.sourceRows.length === 0) &&
-    typeof payload.viewId !== "number"
-  ) {
-    throw new ToolError(
-      "[fetchTestRunUdfValues] Missing or invalid required parameter: 'viewId'. Provide 'viewId' or pass parent tool rows in 'sourceRows'.",
-    );
-  }
 
   const usingSourceRows =
     Array.isArray(payload.sourceRows) && payload.sourceRows.length > 0;
@@ -694,7 +686,6 @@ export async function fetchTestRunUdfValues(
         baseUrl: resolvedBaseUrl,
         body: {
           tsrunID: payload.tsrunID,
-          viewId: payload.viewId,
           start: payload.startIndex ?? 0,
           page: 1,
           limit: payload.size ?? 50,

@@ -132,7 +132,7 @@ export async function updateTestSuite(
 
 /**
  * Fetches a list of test suites.
- * @throws If `viewId` or `folderPath` are missing/invalid.
+ * @throws If `folderPath` is missing/invalid.
  */
 export async function fetchTestSuites(
   token: string,
@@ -150,11 +150,6 @@ export async function fetchTestSuites(
     ...payload,
   };
 
-  if (typeof body.viewId !== "number") {
-    throw new ToolError(
-      "[fetchTestSuites] Missing or invalid required parameter: 'viewId'.",
-    );
-  }
   if (typeof body.folderPath !== "string") {
     throw new ToolError(
       "[fetchTestSuites] Missing or invalid required parameter: 'folderPath'.",
@@ -288,7 +283,7 @@ export async function fetchExecutionsByTestSuite(
 
 /**
  * Fetches test case runs for a given test suite run ID.
- * @throws If `tsrunID` or `viewId` is missing/invalid.
+ * @throws If `tsrunID` is missing/invalid.
  */
 export async function fetchTestCaseRunsByTestSuiteRun(
   token: string,
@@ -309,12 +304,6 @@ export async function fetchTestCaseRunsByTestSuiteRun(
   if (typeof body.tsrunID !== "string" || !body.tsrunID) {
     throw new ToolError(
       "[fetchTestCaseRunsByTestSuiteRun] Missing or invalid required parameter: 'tsrunID'.",
-    );
-  }
-
-  if (typeof body.viewId !== "number") {
-    throw new ToolError(
-      "[fetchTestCaseRunsByTestSuiteRun] Missing or invalid required parameter: 'viewId'.",
     );
   }
 
@@ -549,13 +538,8 @@ export async function bulkUpdateExecutionStatus(
     );
   }
 
-  // Gate-only fields (and the auto-resolved folderPath) must not reach the status API body.
-  const {
-    viewId,
-    udfValuesByRun,
-    folderPath: _folderPath,
-    ...statusBody
-  } = body as BulkUpdateExecutionStatusPayload & { folderPath?: string };
+  // Gate-only fields must not reach the status API body.
+  const { udfValuesByRun, ...statusBody } = body;
 
   let udfUpdates: TestRunUdfUpdateResult[] = [];
 
@@ -576,7 +560,6 @@ export async function bulkUpdateExecutionStatus(
           .map((id) => id.trim())
           .filter(Boolean),
         qmTsRunId: statusBody.qmTsRunId,
-        viewId,
         udfValuesByRun,
       },
     );
@@ -634,11 +617,10 @@ async function applyMandatoryTestRunUdfGate(
   args: {
     tcRunIDs: string[];
     qmTsRunId: string;
-    viewId?: number;
     udfValuesByRun?: Record<string, Record<string, TestRunUdfInputValue>>;
   },
 ): Promise<MandatoryTestRunUdfGateResult> {
-  const { tcRunIDs, qmTsRunId, viewId } = args;
+  const { tcRunIDs, qmTsRunId } = args;
   const udfValuesByRun = args.udfValuesByRun ?? {};
 
   const metadata = await fetchTestRunUdfMetadata(token, baseUrl, project);
@@ -680,16 +662,9 @@ async function applyMandatoryTestRunUdfGate(
   const mandatoryFields = metadata.fields.filter((f) => f.allowBlank === false);
 
   if (mandatoryFields.length > 0) {
-    if (typeof viewId !== "number") {
-      throw new ToolError(
-        "[bulkUpdateExecutionStatus] Missing or invalid parameter: 'viewId'. It is required to verify mandatory Test Run UDFs (latestViews.TE.viewId from project info).",
-      );
-    }
-
     const rowsById = await fetchTestCaseRunRows(token, baseUrl, project, {
       tcRunIDs,
       qmTsRunId,
-      viewId,
     });
 
     const notFound = tcRunIDs.filter((id) => !rowsById.has(id));
@@ -811,7 +786,6 @@ async function fetchTestCaseRunRows(
   args: {
     tcRunIDs: string[];
     qmTsRunId: string;
-    viewId: number;
   },
 ): Promise<Map<string, Record<string, any>>> {
   const wanted = new Set(args.tcRunIDs);
@@ -827,7 +801,6 @@ async function fetchTestCaseRunRows(
       baseUrl,
       body: {
         tsrunID: args.qmTsRunId,
-        viewId: args.viewId,
         start,
         page: 1,
         limit: TEST_RUN_UDF_GATE_PAGE_SIZE,

@@ -14,8 +14,8 @@ import {
   type UpdateRequirementPayload,
 } from "../types/requirements";
 import { qmetryRequest } from "./api/client-api";
-import { buildReleaseCycleScopeBody } from "./release-cycle-scope";
 import { getProjectInfo } from "./project";
+import { buildReleaseCycleScopeBody } from "./release-cycle-scope";
 import { resolveDefaults } from "./utils";
 
 // extTrackerType values used by QMetry's `integrationsystems` list.
@@ -164,7 +164,7 @@ export async function updateRequirement(
 
 /**
  * Fetches a list of requirements.
- * @throws If `viewId` or `folderPath` are missing/invalid.
+ * @throws If `folderPath` is missing/invalid.
  */
 export async function fetchRequirements(
   token: string,
@@ -182,11 +182,6 @@ export async function fetchRequirements(
     ...payload,
   };
 
-  if (typeof body.viewId !== "number") {
-    throw new ToolError(
-      "[fetchRequirements] Missing or invalid required parameter: 'viewId'.",
-    );
-  }
   if (typeof body.folderPath !== "string") {
     throw new ToolError(
       "[fetchRequirements] Missing or invalid required parameter: 'folderPath'.",

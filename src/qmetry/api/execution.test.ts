@@ -100,7 +100,6 @@ const basePayload: BulkUpdateExecutionStatusPayload = {
   qmTsRunId: "2720260",
   runStatusID: 123268,
   isBulkOperation: true,
-  viewId: 555,
 };
 
 describe("testsuite bulk update execution status API", () => {
@@ -150,7 +149,6 @@ describe("testsuite bulk update execution status API", () => {
         entityIDs: "66095087",
         isBulkOperation: false,
         dropID: 947,
-        folderPath: "",
       } as BulkUpdateExecutionStatusPayload);
 
       const status = calls().find((c: any) => c.url === STATUS_URL);
@@ -193,7 +191,6 @@ describe("testsuite bulk update execution status API", () => {
       ]);
       expect(calls()[1].body).toEqual({
         tsrunID: "2720260",
-        viewId: 555,
         start: 0,
         page: 1,
         limit: 10,
@@ -530,17 +527,6 @@ describe("testsuite bulk update execution status API", () => {
         }),
       ).rejects.toThrow("only supported when entityType is 'TCR'");
       expect(globalThis.fetch).not.toHaveBeenCalled();
-    });
-
-    it("should require viewId when mandatory UDFs exist", async () => {
-      mockQmetry({ metadata: MANDATORY_METADATA });
-
-      await expect(
-        bulkUpdateExecutionStatus(token, baseUrl, projectKey, {
-          ...basePayload,
-          viewId: undefined,
-        }),
-      ).rejects.toThrow("'viewId'");
     });
   });
 });

@@ -595,7 +595,6 @@ describe("UDF API clients", () => {
 
       await fetchTestRunUdfValues(token, baseUrl, projectKey, {
         tsrunID: "731600",
-        viewId: 87039,
       });
 
       expect(global.fetch).toHaveBeenCalledTimes(2);
@@ -610,7 +609,6 @@ describe("UDF API clients", () => {
 
       const result = (await fetchTestRunUdfValues(token, baseUrl, projectKey, {
         tsrunID: "731600",
-        viewId: 87039,
       })) as any;
 
       expect(global.fetch).toHaveBeenCalledTimes(1);
@@ -627,7 +625,6 @@ describe("UDF API clients", () => {
 
       const result = (await fetchTestRunUdfValues(token, baseUrl, projectKey, {
         tsrunID: "731600",
-        viewId: 87039,
       })) as any;
 
       expect(result.runs).toHaveLength(1);
@@ -642,18 +639,8 @@ describe("UDF API clients", () => {
       await expect(
         fetchTestRunUdfValues(token, baseUrl, projectKey, {
           tsrunID: "",
-          viewId: 87039,
         }),
       ).rejects.toThrow("tsrunID");
-    });
-
-    it("should throw when viewId is missing", async () => {
-      await expect(
-        fetchTestRunUdfValues(token, baseUrl, projectKey, {
-          tsrunID: "731600",
-          viewId: undefined as any,
-        }),
-      ).rejects.toThrow("viewId");
     });
 
     it("should include both linked defect counts in unifiedTableRows, defaulting to 0", async () => {
@@ -677,7 +664,6 @@ describe("UDF API clients", () => {
 
       const result = (await fetchTestRunUdfValues(token, baseUrl, projectKey, {
         tsrunID: "731600",
-        viewId: 87039,
       })) as any;
 
       expect(result.defaultColumns).toEqual([
@@ -707,7 +693,6 @@ describe("UDF API clients", () => {
 
       const result = (await fetchTestRunUdfValues(token, baseUrl, projectKey, {
         tsrunID: "731600",
-        viewId: 87039,
       })) as any;
 
       expect(result.availableUdfFields).toHaveLength(1);

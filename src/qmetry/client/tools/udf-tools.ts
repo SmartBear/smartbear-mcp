@@ -37,7 +37,7 @@ export const UDF_TOOLS: QMetryToolParams[] = [
     examples: [
       {
         description: "Get UDF field definitions for creating a Test Case",
-        parameters: { entityType: "TC", pageName: "ADD" },
+        parameters: { projectKey: "MAC", entityType: "TC", pageName: "ADD" },
         expectedOutput:
           "{ fields: [{ name: 'custom_text', label: 'Custom Text', fieldTypeName: 'STRING', fieldID: null, isMandatory: false }, ...], " +
           "stepFields: [{ name: 'step_field', label: 'Step Field', fieldTypeName: 'STRING', ... }], " +
@@ -45,26 +45,26 @@ export const UDF_TOOLS: QMetryToolParams[] = [
       },
       {
         description: "Get UDF fieldIDs for updating a Test Suite",
-        parameters: { entityType: "TS", pageName: "DETAIL" },
+        parameters: { projectKey: "MAC", entityType: "TS", pageName: "DETAIL" },
         expectedOutput:
           "{ fields: [{ name: 'dropdown_field', label: 'Dropdown', fieldTypeName: 'LOOKUPLIST', fieldID: 2002, isMandatory: false, listName: 'myListKey' }, ...], " +
           "listOptions: { myListKey: [{ id: 101, name: 'Option A' }, { id: 102, name: 'Option B' }] } }",
       },
       {
         description: "Get UDF field definitions for creating an Issue",
-        parameters: { entityType: "IS", pageName: "ADD" },
+        parameters: { projectKey: "MAC", entityType: "IS", pageName: "ADD" },
         expectedOutput:
           "{ fields: [{ name: 'TCR_STR', label: 'String Field', fieldTypeName: 'STRING', fieldID: null }, ...], listOptions: {} }",
       },
       {
         description: "Get UDF field definitions for creating a Requirement",
-        parameters: { entityType: "RQ", pageName: "ADD" },
+        parameters: { projectKey: "MAC", entityType: "RQ", pageName: "ADD" },
         expectedOutput:
           "{ fields: [{ name: 'rq_custom_field', label: 'Custom Field', fieldTypeName: 'STRING', fieldID: null, isMandatory: false }, ...], listOptions: {} }",
       },
       {
         description: "Get UDF fieldIDs for updating a Requirement",
-        parameters: { entityType: "RQ", pageName: "DETAIL" },
+        parameters: { projectKey: "MAC", entityType: "RQ", pageName: "DETAIL" },
         expectedOutput:
           "{ fields: [{ name: 'rq_dropdown_field', label: 'Dropdown', fieldTypeName: 'LOOKUPLIST', fieldID: 3002, isMandatory: false, listName: 'myListKey' }, ...], " +
           "listOptions: { myListKey: [{ id: 101, name: 'Option A' }] } }",
@@ -97,10 +97,7 @@ export const UDF_TOOLS: QMetryToolParams[] = [
         "If listOptions is STILL empty after this tool returns, call 'Fetch Test Run UDF Metadata' with the same entityType — " +
         "its 'lookupOptions' map uses the same listName keys and contains the full option list.",
       "isMandatory: If true, this field MUST be included. Source: allowBlank=false in QMetry API (for UDF/system fields) or mandatory=true (for step system fields).",
-      "DATETIMEPICKER fields: date value MUST match the project's active date format.",
-      "  Get format: project info → dateTimeFormatID → find in dateTimeFormatNew where id matches → read unique_value.",
-      "  unique_value pattern: yyyy=4-digit year, MM=2-digit month (01-12), dd=2-digit day, MMM=3-letter month (Jan/Feb/...).",
-      "  Re-format user date to match before sending. NEVER guess the format — always check project info first.",
+      "DATETIMEPICKER fields: when the entity is created or updated, the server converts the value to the project's date format. Send dates as ISO 'YYYY-MM-DD'; do NOT call 'Fetch QMetry Project Info' just to read the date format.",
       "defaultValues: Pre-configured defaults from QMetry. If a mandatory field has a defaultValues entry, use that value automatically without asking the user. Only ask user for mandatory fields with NO default.",
       "stepDefaultValues: Same as defaultValues but for test case step fields.",
       "PRE-CREATE MANDATORY CHECK WORKFLOW (CRITICAL — do this before every create):",
@@ -157,6 +154,7 @@ export const UDF_TOOLS: QMetryToolParams[] = [
       {
         description: "Bulk update a STRING UDF for multiple test runs",
         parameters: {
+          projectKey: "MAC",
           tcRunIDs: [41572006, 41572009, 41572013],
           UDF: {
             "8190_String": {
@@ -172,6 +170,7 @@ export const UDF_TOOLS: QMetryToolParams[] = [
         description:
           "Bulk update a DATE UDF field for multiple test runs (MM-DD-YYYY format)",
         parameters: {
+          projectKey: "MAC",
           tcRunIDs: [41572006, 41572009],
           UDF: {
             KN_DATE: {
@@ -186,6 +185,7 @@ export const UDF_TOOLS: QMetryToolParams[] = [
       {
         description: "Bulk update a NUMBER UDF field for multiple test runs",
         parameters: {
+          projectKey: "MAC",
           tcRunIDs: [41572006, 41572009, 41572013, 41572015],
           UDF: {
             defaultNum: {
@@ -201,6 +201,7 @@ export const UDF_TOOLS: QMetryToolParams[] = [
         description:
           "Bulk update a single-select LOOKUPLIST UDF for multiple test runs",
         parameters: {
+          projectKey: "MAC",
           tcRunIDs: [41572006, 41572009],
           UDF: {
             "8260LUP": {
@@ -216,6 +217,7 @@ export const UDF_TOOLS: QMetryToolParams[] = [
         description:
           "Bulk update a MULTILOOKUPLIST UDF — APPEND new values to existing selections",
         parameters: {
+          projectKey: "MAC",
           tcRunIDs: [41572006, 41572009, 41572013],
           UDF: {
             m_selections: {
@@ -232,6 +234,7 @@ export const UDF_TOOLS: QMetryToolParams[] = [
         description:
           "Bulk update a MULTILOOKUPLIST UDF — REPLACE existing selections with new values",
         parameters: {
+          projectKey: "MAC",
           tcRunIDs: [41572006, 41572009],
           UDF: {
             mullt_env: {
@@ -248,6 +251,7 @@ export const UDF_TOOLS: QMetryToolParams[] = [
         description:
           "Bulk update a CASCADINGLIST UDF (parent + child) for multiple test runs",
         parameters: {
+          projectKey: "MAC",
           tcRunIDs: [41572006, 41572009, 41572013],
           UDF: {
             cascade_mcp: {
@@ -263,6 +267,7 @@ export const UDF_TOOLS: QMetryToolParams[] = [
         description:
           "Bulk update multiple UDF fields of different types in a single operation",
         parameters: {
+          projectKey: "MAC",
           tcRunIDs: [41572006, 41572009, 41572013, 41572015, 41579875],
           UDF: {
             "8190_String": {
@@ -367,7 +372,7 @@ export const UDF_TOOLS: QMetryToolParams[] = [
     examples: [
       {
         description: "List all Test Run UDF fields in the project",
-        parameters: {},
+        parameters: { projectKey: "MAC" },
         expectedOutput:
           "Array of fields with fieldID, name, label, fieldType, and lookupOptions for list-based fields.",
       },
@@ -418,6 +423,7 @@ export const UDF_TOOLS: QMetryToolParams[] = [
       {
         description: "Fetch UDF values for all runs in test suite run 731600",
         parameters: {
+          projectKey: "MAC",
           tsrunID: "731600",
           sourceContext: "testSuiteRun",
         },
@@ -438,7 +444,6 @@ export const UDF_TOOLS: QMetryToolParams[] = [
       "For prompts like 'Fetch Test Case Executions and show Test Run UDFs': call Fetch Test Case Executions ONLY — that tool already calls metadata internally and returns testRunUdfs on every execution row. Do NOT call this tool for test case executions.",
       "For prompts like 'Fetch Issue Executions and Test Run UDFs': call Fetch Issue Executions only. Do not call this tool, because issue UDF values come from /rest/execution/getExecutionsForIssue udfjson and are already enriched by the issue tool with metadata.",
       "If no parent rows are available, use 'tsrunID' from the 'Fetch Executions by Test Suite' tool (data[<index>].tsRunID field).",
-      "'viewId' is auto-resolved from latestViews.TE.viewId — leave blank unless explicitly overriding. It is only needed when sourceRows is not supplied.",
       "If 'hasTcRunUdf' is false in the response, no Test Run UDFs are configured for this project.",
       "The 'testRunUdfs' array on each run contains enriched UDF values with label and fieldID — use fieldID from here when calling 'Bulk Update Test Run UDFs'.",
       "VALUE RESOLUTION: For LOOKUPLIST and MULTILOOKUPLIST fields, 'value' is resolved from the internal uniqueLabel key to the human-readable display name using qmUDFList lookup options. Always display the resolved name, never the raw uniqueLabel.",
@@ -482,6 +487,7 @@ export const UDF_TOOLS: QMetryToolParams[] = [
         description:
           "Fetch child values for parent cascade item with ID 5173534",
         parameters: {
+          projectKey: "MAC",
           id: 5173534,
         },
         expectedOutput:
@@ -491,6 +497,7 @@ export const UDF_TOOLS: QMetryToolParams[] = [
         description:
           "Fetch child values including archived items for parent ID 5126498",
         parameters: {
+          projectKey: "MAC",
           id: 5126498,
           isArchReq: true,
         },

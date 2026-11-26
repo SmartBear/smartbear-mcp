@@ -60,13 +60,18 @@ describe("QMetry tool result shape", () => {
     } as any);
 
     const result = await (await handlerFor("Create Test Case"))({
+      projectKey: "MAC",
       name: "Login works",
       tcFolderID: "102653",
       steps: [{ orderId: 1, description: "Open the login page" }],
     });
 
     expect(result.isError).toBe(true);
-    expect(result.content).toHaveLength(1);
+    // The tool's own result, then the project block for the explicit key
+    expect(result.content).toHaveLength(2);
+    expect(JSON.parse(result.content[1].text)).toEqual({
+      project: { key: "MAC", source: "explicit" },
+    });
     expect(Object.keys(result.content[0]).sort()).toEqual(["text", "type"]);
     expect(JSON.parse(result.content[0].text)).toMatchObject({
       code: "PREFLIGHT.MANDATORY_UDF_MISSING",
@@ -83,6 +88,7 @@ describe("QMetry tool result shape", () => {
     } as any);
 
     const result = await (await handlerFor("Create Test Suite"))({
+      projectKey: "MAC",
       name: "Regression",
       parentFolderId: 1,
     });
@@ -104,11 +110,11 @@ describe("QMetry tool result shape", () => {
     const result = await (
       await handlerFor("Bulk Update Test Case Execution Status")
     )({
+      projectKey: "MAC",
       entityIDs: "66095069",
       entityType: "TCR",
       qmTsRunId: "2720260",
       runStatusID: 123268,
-      viewId: 777,
       folderPath: "",
     });
 
@@ -126,11 +132,11 @@ describe("QMetry tool result shape", () => {
     const result = await (
       await handlerFor("Bulk Update Test Case Execution Status")
     )({
+      projectKey: "MAC",
       entityIDs: "66095069",
       entityType: "TCR",
       qmTsRunId: "2720260",
       runStatusID: 123268,
-      viewId: 777,
       folderPath: "",
     });
 

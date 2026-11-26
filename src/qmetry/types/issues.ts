@@ -106,7 +106,6 @@ export interface FetchIssuesPayload
   extends PaginationPayload,
     FilterPayload,
     SortPayload {
-  viewId: number; // required
   isJiraIntegated?: boolean; // optional - default false
   udfFilter?: string; // only this API uses udfFilter
   /**
@@ -134,16 +133,15 @@ export const DEFAULT_FETCH_ISSUE_EXECUTIONS_PAYLOAD: Omit<
   filter: "[]",
 };
 
-export const DEFAULT_FETCH_ISSUES_PAYLOAD: Omit<FetchIssuesPayload, "viewId"> =
-  {
-    ...DEFAULT_PAGINATION,
-    ...DEFAULT_FILTER,
-    ...DEFAULT_SORT,
-    udfFilter: "[]",
-    isJiraIntegated: false,
-    /**
-     * Prevents filter persistence in the QMetry web application UI.
-     * Always set to false to ensure filters are not saved when fetching test cases via API.
-     */
-    isFilterSaveRequired: false,
-  };
+export const DEFAULT_FETCH_ISSUES_PAYLOAD: FetchIssuesPayload = {
+  ...DEFAULT_PAGINATION,
+  ...DEFAULT_FILTER,
+  ...DEFAULT_SORT,
+  udfFilter: "[]",
+  isJiraIntegated: false,
+  /**
+   * Prevents filter persistence in the QMetry web application UI.
+   * Always set to false to ensure filters are not saved when fetching test cases via API.
+   */
+  isFilterSaveRequired: false,
+};

@@ -7,9 +7,8 @@ import { ToolError } from "../../common/tools";
  */
 
 export interface ReleaseCycleScopeSource {
-  sourceProjectId: number;
-  sourceReleaseId: number;
-  sourceBuildId: number;
+  /** Numeric ID of the project being worked in (the projectKey's project). */
+  destinationProjectId: number;
   releaseCycleMapping: Array<{ releaseId: number; cycleIds: number[] }>;
 }
 
@@ -49,19 +48,14 @@ export function buildReleaseCycleScopeBody<
   },
   entities: ReleaseCycleScopeEntities<F, I, V>,
 ) {
-  for (const field of [
-    "sourceProjectId",
-    "sourceReleaseId",
-    "sourceBuildId",
-  ] as const) {
-    if (!isValidId(payload?.[field])) {
-      throw new ToolError(
-        `[${fn}] Missing or invalid required parameter: '${field}'.`,
-      );
-    }
+  const destinationProjectId = payload?.destinationProjectId;
+  if (!isValidId(destinationProjectId)) {
+    throw new ToolError(
+      `[${fn}] Missing or invalid required parameter: 'destinationProjectId' (the numeric projectID of the projectKey's row in 'Fetch QMetry list Projects').`,
+    );
   }
 
-  const mapping = payload.releaseCycleMapping;
+  const mapping = payload?.releaseCycleMapping;
   if (!Array.isArray(mapping) || mapping.length === 0) {
     throw new ToolError(
       `[${fn}] Missing or invalid required parameter: 'releaseCycleMapping' (must be a non-empty array of { releaseId, cycleIds }).`,
@@ -116,9 +110,6 @@ export function buildReleaseCycleScopeBody<
   });
 
   return {
-    sourceBuildId: payload.sourceBuildId,
-    sourceProjectId: payload.sourceProjectId,
-    sourceReleaseId: payload.sourceReleaseId,
     sourceScope: "project",
     entityType,
     releaseCycleMapping: mapping.map((entry) => ({
@@ -126,10 +117,7 @@ export function buildReleaseCycleScopeBody<
       cycle: entry.cycleIds,
       version: 1,
     })),
-    opType: "otherScope",
-    withVersion: true,
-    updateFlag: false,
-    destinationProjectId: payload.sourceProjectId,
+    destinationProjectId,
     entityData: list.map((item) => ({
       entityId: item[idField],
       version: item[versionField],

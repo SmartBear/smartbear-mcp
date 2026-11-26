@@ -128,7 +128,7 @@ export async function updateTestCase(
 
 /**
  * Fetches a list of test cases.
- * @throws If `viewId` or `folderPath` are missing/invalid.
+ * @throws If `folderPath` is missing/invalid.
  */
 export async function fetchTestCases(
   token: string,
@@ -146,11 +146,6 @@ export async function fetchTestCases(
     ...payload,
   };
 
-  if (typeof body.viewId !== "number") {
-    throw new ToolError(
-      "[fetchTestCases] Missing or invalid required parameter: 'viewId'.",
-    );
-  }
   if (typeof body.folderPath !== "string") {
     throw new ToolError(
       "[fetchTestCases] Missing or invalid required parameter: 'folderPath'.",
@@ -308,7 +303,6 @@ export async function fetchTestCaseStepsWithUdf(
     page: payload.page ?? 1,
     version: payload.version ?? 1,
     gridName: payload.gridName ?? "TCSTEPLIST",
-    ...(payload.viewId !== undefined ? { viewId: payload.viewId } : {}),
   };
 
   return qmetryRequest<unknown>({

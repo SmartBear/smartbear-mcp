@@ -1013,6 +1013,7 @@ describe("updateCycle", () => {
 describe("UpdateCycleArgsSchema", () => {
   it("accepts IDs plus one updatable field and coerces string IDs", () => {
     const parsed = UpdateCycleArgsSchema.parse({
+      projectKey: "MAC",
       cycle: { buildID: "1494", releaseID: "3729", name: "Sprint 2" },
     });
     expect(parsed.cycle).toEqual({
@@ -1024,6 +1025,7 @@ describe("UpdateCycleArgsSchema", () => {
 
   it("rejects a request with only IDs", () => {
     const result = UpdateCycleArgsSchema.safeParse({
+      projectKey: "MAC",
       cycle: { buildID: 1494, releaseID: 3729 },
     });
     expect(result.success).toBe(false);
@@ -1031,6 +1033,7 @@ describe("UpdateCycleArgsSchema", () => {
 
   it("rejects a request without releaseID", () => {
     const result = UpdateCycleArgsSchema.safeParse({
+      projectKey: "MAC",
       cycle: { buildID: 1494, name: "C" },
     });
     expect(result.success).toBe(false);
@@ -1038,6 +1041,7 @@ describe("UpdateCycleArgsSchema", () => {
 
   it("rejects a blank name", () => {
     const result = UpdateCycleArgsSchema.safeParse({
+      projectKey: "MAC",
       cycle: { buildID: 1494, releaseID: 3729, name: "   " },
     });
     expect(result.success).toBe(false);
@@ -1172,6 +1176,7 @@ describe("updateRelease", () => {
 describe("UpdateReleaseArgsSchema", () => {
   it("accepts IDs plus one updatable field and coerces string IDs", () => {
     const parsed = UpdateReleaseArgsSchema.parse({
+      projectKey: "MAC",
       release: { projectID: "347", releaseID: "1631", description: "d" },
     });
     expect(parsed.release).toEqual({
@@ -1183,6 +1188,7 @@ describe("UpdateReleaseArgsSchema", () => {
 
   it("rejects a request with only IDs", () => {
     const result = UpdateReleaseArgsSchema.safeParse({
+      projectKey: "MAC",
       release: { projectID: 347, releaseID: 1631 },
     });
     expect(result.success).toBe(false);
@@ -1190,6 +1196,7 @@ describe("UpdateReleaseArgsSchema", () => {
 
   it("rejects a request without releaseID", () => {
     const result = UpdateReleaseArgsSchema.safeParse({
+      projectKey: "MAC",
       release: { projectID: 347, name: "R" },
     });
     expect(result.success).toBe(false);
@@ -1197,6 +1204,7 @@ describe("UpdateReleaseArgsSchema", () => {
 
   it("accepts a request without projectID (filled from the project)", () => {
     const parsed = UpdateReleaseArgsSchema.parse({
+      projectKey: "MAC",
       release: { releaseID: "1631", name: "R" },
     });
     expect(parsed.release).toEqual({ releaseID: 1631, name: "R" });
@@ -1204,6 +1212,7 @@ describe("UpdateReleaseArgsSchema", () => {
 
   it("rejects a blank name", () => {
     const result = UpdateReleaseArgsSchema.safeParse({
+      projectKey: "MAC",
       release: { releaseID: 1631, name: "  " },
     });
     expect(result.success).toBe(false);
@@ -1233,7 +1242,7 @@ describe("getProjectInfo projects trimming", () => {
           projectKey: "8d7b",
           name: "Pranshu Basic Test",
           isArchived: false,
-          latestViews: { TC: { viewId: 1 } },
+          rootFolders: { TC: { id: 10 } },
         },
         { projectId: 192, key: "QT", projectName: "QTM--to--QTM4J" },
         { name: "no id or key" },

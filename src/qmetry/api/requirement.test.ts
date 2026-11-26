@@ -93,7 +93,6 @@ describe("requirement API clients", () => {
     it("should POST with correct URL and headers", async () => {
       const payload = {
         ...DEFAULT_FETCH_REQUIREMENTS_PAYLOAD,
-        viewId: 54321,
         folderPath: "",
       };
       const mockResponse = {
@@ -122,7 +121,7 @@ describe("requirement API clients", () => {
             apikey: token,
             project: projectKey,
           }),
-          body: expect.stringContaining("54321"),
+          body: expect.not.stringContaining("viewId"),
         }),
       );
 
@@ -131,18 +130,17 @@ describe("requirement API clients", () => {
       expect((result as any).total).toBe(2);
     });
 
-    it("should throw error when viewId is missing", async () => {
-      const payload = { folderPath: "" };
+    it("should default folderPath to root when omitted", async () => {
+      global.fetch = vi.fn().mockResolvedValue(mockOk({ data: [] }));
 
-      await expect(
-        fetchRequirements(token, baseUrl, projectKey, payload as any),
-      ).rejects.toThrow(
-        "[fetchRequirements] Missing or invalid required parameter: 'viewId'.",
-      );
+      await fetchRequirements(token, baseUrl, projectKey, {} as any);
+
+      const body = JSON.parse((global.fetch as any).mock.calls[0][1].body);
+      expect(body.folderPath).toBe("");
     });
 
-    it("should throw error when folderPath is missing", async () => {
-      const payload = { viewId: 54321 };
+    it("should throw error when folderPath is invalid", async () => {
+      const payload = { folderPath: null };
 
       await expect(
         fetchRequirements(token, baseUrl, projectKey, payload as any),
@@ -155,7 +153,6 @@ describe("requirement API clients", () => {
       global.fetch = vi.fn().mockResolvedValue(mockFail(403, "Access denied"));
 
       const payload = {
-        viewId: 54321,
         folderPath: "",
         isFilterSaveRequired: false,
       };
@@ -729,9 +726,7 @@ describe("requirement API clients", () => {
 
 describe("linkReleaseCycleWithRequirement", () => {
   const validPayload = {
-    sourceProjectId: 46893,
-    sourceReleaseId: 92340,
-    sourceBuildId: 131142,
+    destinationProjectId: 46893,
     releaseCycleMapping: [{ releaseId: 92342, cycleIds: [131144] }],
     requirements: [{ rqId: 3976920, rqVersionId: 3987149 }],
   };
@@ -774,7 +769,7 @@ describe("linkReleaseCycleWithRequirement", () => {
     ).toBe(linkReleaseCycleWithRequirement);
   });
 
-  it("POSTs the full scope/add body with fixed fields for one release and one requirement", async () => {
+  it("POSTs the new scope/add body for one release and one requirement", async () => {
     const response = {
       success: true,
       code: "CO.REL_CYCLE_LINK_SUCCESS",
@@ -802,15 +797,9 @@ describe("linkReleaseCycleWithRequirement", () => {
       }),
     );
     expect(sentBody()).toEqual({
-      sourceBuildId: 131142,
-      sourceProjectId: 46893,
-      sourceReleaseId: 92340,
       sourceScope: "project",
       entityType: "RQ",
       releaseCycleMapping: [{ release: 92342, cycle: [131144], version: 1 }],
-      opType: "otherScope",
-      withVersion: true,
-      updateFlag: false,
       destinationProjectId: 46893,
       entityData: [{ entityId: 3976920, version: 3987149 }],
     });
@@ -876,15 +865,13 @@ describe("linkReleaseCycleWithRequirement", () => {
   });
 
   it.each([
-    "sourceProjectId",
-    "sourceReleaseId",
-    "sourceBuildId",
-  ])("throws when %s is missing", async (field) => {
-    const payload: any = { ...validPayload };
-    delete payload[field];
+    ["missing", undefined],
+    ["a string", "abc"],
+    ["NaN", Number.NaN],
+  ])("throws when destinationProjectId is %s", async (_label, value) => {
     await expectRejected(
-      payload,
-      `[linkReleaseCycleWithRequirement] Missing or invalid required parameter: '${field}'.`,
+      { ...validPayload, destinationProjectId: value },
+      "[linkReleaseCycleWithRequirement] Missing or invalid required parameter: 'destinationProjectId'",
     );
   });
 
@@ -1007,18 +994,24 @@ describe("linkReleaseCycleWithRequirement", () => {
 
 describe("LinkReleaseCycleWithRequirementArgsSchema", () => {
   const base = {
-    sourceProjectId: 46893,
-    sourceReleaseId: 92340,
-    sourceBuildId: 131142,
+    destinationProjectId: 46893,
     releaseCycleMapping: [{ releaseId: 92342, cycleIds: [131144] }],
     requirements: [{ rqId: 3976920, rqVersionId: 3987149 }],
   };
 
+  it("rejects a call without destinationProjectId", () => {
+    const { destinationProjectId: _omit, ...rest } = base;
+    const result = LinkReleaseCycleWithRequirementArgsSchema.safeParse({
+      projectKey: "MAC",
+      ...rest,
+    });
+    expect(result.success).toBe(false);
+  });
+
   it("coerces string IDs to numbers", () => {
     const parsed = LinkReleaseCycleWithRequirementArgsSchema.parse({
-      sourceProjectId: "46893",
-      sourceReleaseId: "92340",
-      sourceBuildId: "131142",
+      projectKey: "MAC",
+      destinationProjectId: "46893",
       releaseCycleMapping: [{ releaseId: "92342", cycleIds: ["131144"] }],
       requirements: [{ rqId: "3976920", rqVersionId: "3987149" }],
     });
@@ -1035,6 +1028,7 @@ describe("LinkReleaseCycleWithRequirementArgsSchema", () => {
     ["a requirement without rqVersionId", { requirements: [{ rqId: 1 }] }],
   ])("rejects %s", (_label, override) => {
     const result = LinkReleaseCycleWithRequirementArgsSchema.safeParse({
+      projectKey: "MAC",
       ...base,
       ...override,
     });

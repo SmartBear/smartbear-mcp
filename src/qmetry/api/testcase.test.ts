@@ -40,7 +40,6 @@ describe("testcase API clients", () => {
   it("fetchTestCases should POST with correct URL and headers", async () => {
     const payload = {
       ...DEFAULT_FETCH_TESTCASES_PAYLOAD,
-      viewId: 1,
       folderPath: "/",
     };
     const mockResponse = {
@@ -70,21 +69,21 @@ describe("testcase API clients", () => {
     expect(result).toEqual(mockResponse);
   });
 
-  it("fetchTestCases should throw on missing viewId", async () => {
-    const invalidPayload = {
-      ...DEFAULT_FETCH_TESTCASES_PAYLOAD,
-      folderPath: "/",
-    };
-    const payload = invalidPayload as any;
+  it("fetchTestCases should default folderPath to root and send no viewId", async () => {
+    global.fetch = vi.fn().mockResolvedValue(mockOk({ data: [] }));
 
-    await expect(
-      fetchTestCases(token, baseUrl, projectKey, payload),
-    ).rejects.toThrow(/Missing or invalid required parameter: 'viewId'/);
+    await fetchTestCases(token, baseUrl, projectKey, {} as any);
+
+    const body = JSON.parse((global.fetch as any).mock.calls[0][1].body);
+    expect(body.folderPath).toBe("");
+    expect(body).not.toHaveProperty("viewId");
   });
 
-  it("fetchTestCases should throw on missing folderPath", async () => {
-    const invalidPayload = { ...DEFAULT_FETCH_TESTCASES_PAYLOAD, viewId: 1 };
-    const payload = invalidPayload as any;
+  it("fetchTestCases should throw on invalid folderPath", async () => {
+    const payload = {
+      ...DEFAULT_FETCH_TESTCASES_PAYLOAD,
+      folderPath: 5,
+    } as any;
 
     await expect(
       fetchTestCases(token, baseUrl, projectKey, payload),
@@ -182,7 +181,6 @@ describe("testcase API clients", () => {
     await expect(
       fetchTestCases(token, baseUrl, projectKey, {
         ...DEFAULT_FETCH_TESTCASES_PAYLOAD,
-        viewId: 1,
         folderPath: "/",
         start: 0,
       }),
@@ -201,7 +199,6 @@ describe("testcase API clients", () => {
     await expect(
       fetchTestCases(token, baseUrl, projectKey, {
         ...DEFAULT_FETCH_TESTCASES_PAYLOAD,
-        viewId: 1,
         folderPath: "/",
       }),
     ).rejects.toThrow(/QMetry API error 400/);
@@ -578,9 +575,7 @@ describe("testcase API clients", () => {
 
 describe("linkReleaseCycleWithTestCase", () => {
   const validPayload = {
-    sourceProjectId: 46893,
-    sourceReleaseId: 92340,
-    sourceBuildId: 131142,
+    destinationProjectId: 46893,
     releaseCycleMapping: [{ releaseId: 92340, cycleIds: [131142] }],
     testCases: [{ tcID: 4611391, tcVersionID: 4705299 }],
   };
@@ -616,7 +611,7 @@ describe("linkReleaseCycleWithTestCase", () => {
     ).toBe(linkReleaseCycleWithTestCase);
   });
 
-  it("POSTs the full scope/add body with fixed fields for one release and one test case", async () => {
+  it("POSTs the new scope/add body for one release and one test case", async () => {
     const response = {
       success: true,
       code: "CO.REL_CYCLE_LINK_SUCCESS",
@@ -644,15 +639,9 @@ describe("linkReleaseCycleWithTestCase", () => {
       }),
     );
     expect(sentBody()).toEqual({
-      sourceBuildId: 131142,
-      sourceProjectId: 46893,
-      sourceReleaseId: 92340,
       sourceScope: "project",
       entityType: "TC",
       releaseCycleMapping: [{ release: 92340, cycle: [131142], version: 1 }],
-      opType: "otherScope",
-      withVersion: true,
-      updateFlag: false,
       destinationProjectId: 46893,
       entityData: [{ entityId: 4611391, version: 4705299 }],
     });
@@ -732,15 +721,13 @@ describe("linkReleaseCycleWithTestCase", () => {
   });
 
   it.each([
-    "sourceProjectId",
-    "sourceReleaseId",
-    "sourceBuildId",
-  ])("throws when %s is missing", async (field) => {
-    const payload: any = { ...validPayload };
-    delete payload[field];
+    ["missing", undefined],
+    ["a string", "abc"],
+    ["NaN", Number.NaN],
+  ])("throws when destinationProjectId is %s", async (_label, value) => {
     await expectRejected(
-      payload,
-      `[linkReleaseCycleWithTestCase] Missing or invalid required parameter: '${field}'.`,
+      { ...validPayload, destinationProjectId: value },
+      "[linkReleaseCycleWithTestCase] Missing or invalid required parameter: 'destinationProjectId'",
     );
   });
 
@@ -863,18 +850,24 @@ describe("linkReleaseCycleWithTestCase", () => {
 
 describe("LinkReleaseCycleWithTestCaseArgsSchema", () => {
   const base = {
-    sourceProjectId: 46893,
-    sourceReleaseId: 92340,
-    sourceBuildId: 131142,
+    destinationProjectId: 46893,
     releaseCycleMapping: [{ releaseId: 92340, cycleIds: [131142] }],
     testCases: [{ tcID: 4611391, tcVersionID: 4705299 }],
   };
 
+  it("rejects a call without destinationProjectId", () => {
+    const { destinationProjectId: _omit, ...rest } = base;
+    const result = LinkReleaseCycleWithTestCaseArgsSchema.safeParse({
+      projectKey: "MAC",
+      ...rest,
+    });
+    expect(result.success).toBe(false);
+  });
+
   it("coerces string IDs to numbers", () => {
     const parsed = LinkReleaseCycleWithTestCaseArgsSchema.parse({
-      sourceProjectId: "46893",
-      sourceReleaseId: "92340",
-      sourceBuildId: "131142",
+      projectKey: "MAC",
+      destinationProjectId: "46893",
       releaseCycleMapping: [{ releaseId: "92340", cycleIds: ["131142"] }],
       testCases: [{ tcID: "4611391", tcVersionID: "4705299" }],
     });
@@ -891,6 +884,7 @@ describe("LinkReleaseCycleWithTestCaseArgsSchema", () => {
     ["a test case without tcVersionID", { testCases: [{ tcID: 1 }] }],
   ])("rejects %s", (_label, override) => {
     const result = LinkReleaseCycleWithTestCaseArgsSchema.safeParse({
+      projectKey: "MAC",
       ...base,
       ...override,
     });

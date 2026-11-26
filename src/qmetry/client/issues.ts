@@ -169,8 +169,7 @@ export async function updateIssue(
 }
 
 /**
- * Fetches a list of test suites.
- * @throws If `viewId` or `folderPath` are missing/invalid.
+ * Fetches a list of defects or issues.
  */
 export async function fetchIssues(
   token: string,
@@ -187,12 +186,6 @@ export async function fetchIssues(
     ...DEFAULT_FETCH_ISSUES_PAYLOAD,
     ...payload,
   };
-
-  if (typeof body.viewId !== "number") {
-    throw new ToolError(
-      "[fetchIssues] Missing or invalid required parameter: 'viewId'.",
-    );
-  }
 
   const result = await qmetryRequest<Record<string, unknown>>({
     method: "POST",
