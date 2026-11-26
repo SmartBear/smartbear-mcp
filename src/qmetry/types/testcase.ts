@@ -48,7 +48,6 @@ export interface FetchTestCasesPayload
   extends PaginationPayload,
     FilterPayload,
     FolderPayload {
-  viewId: number; // required
   folderPath: string; // required
   udfFilter?: string; // only this API uses udfFilter
   /**
@@ -118,7 +117,6 @@ export interface FetchTestCaseStepsPayload extends PaginationPayload {
 
 export interface FetchTestCaseStepsWithUdfPayload extends PaginationPayload {
   tcID: number; // required - Test Case ID
-  viewId?: number; // auto-resolved from project info if not provided
   version?: number; // TC version, defaults to 1
   gridName?: string; // grid name, defaults to "TCSTEPLIST"
 }
@@ -147,6 +145,21 @@ export interface LinkTestcaseToIssuesPayload {
   dfIDs: number[]; // required - Array of numeric defect/issue IDs
 }
 
+// Link Release/Cycle with Test Case (POST /rest/testcases/scope/add).
+// Tool-facing payload; the client builds the QMetry request body from it and
+// adds the fixed fields (sourceScope, entityType).
+export interface LinkReleaseCycleWithTestCasePayload {
+  destinationProjectId: number; // required - projectID of the projectKey's row in Fetch QMetry list Projects
+  releaseCycleMapping: Array<{
+    releaseId: number; // release to link
+    cycleIds: number[]; // one or more cycle IDs of that release
+  }>; // required - at least one release, no repeated releaseId
+  testCases: Array<{
+    tcID: number; // test case numeric ID (entityData[].entityId)
+    tcVersionID: number; // test case version ID (entityData[].version)
+  }>; // required - at least one test case, no repeated tcID
+}
+
 export interface FetchTestCaseExecutionsPayload
   extends PaginationPayload,
     FilterPayload,
@@ -155,10 +168,8 @@ export interface FetchTestCaseExecutionsPayload
   tcversion?: number; // optional - version number of test case
 }
 
-export const DEFAULT_FETCH_TESTCASES_PAYLOAD: Omit<
-  FetchTestCasesPayload,
-  "viewId" | "folderPath"
-> = {
+export const DEFAULT_FETCH_TESTCASES_PAYLOAD: FetchTestCasesPayload = {
+  folderPath: "", // root folder
   ...DEFAULT_PAGINATION,
   ...DEFAULT_FILTER,
   ...DEFAULT_FOLDER_OPTIONS,

@@ -1,3 +1,4 @@
+import { ToolError } from "../../common/tools";
 import { QMETRY_PATHS } from "../config/rest-endpoints";
 import {
   type CreateRequirementPayload,
@@ -9,10 +10,12 @@ import {
   type FetchRequirementDetailsPayload,
   type FetchRequirementsLinkedToTestCasePayload,
   type FetchRequirementsPayload,
+  type LinkReleaseCycleWithRequirementPayload,
   type UpdateRequirementPayload,
 } from "../types/requirements";
 import { qmetryRequest } from "./api/client-api";
 import { getProjectInfo } from "./project";
+import { buildReleaseCycleScopeBody } from "./release-cycle-scope";
 import { resolveDefaults } from "./utils";
 
 // extTrackerType values used by QMetry's `integrationsystems` list.
@@ -46,14 +49,14 @@ async function assertRequirementNotExternallySynced(
   ) {
     const trackerType = projectInfo.extTrackerType;
     if (trackerType === EXT_TRACKER_TYPE_JIRA) {
-      throw new Error(
+      throw new ToolError(
         `[${functionName}] Blocked: This project is Jira-integrated and the Requirement module is ` +
           `configured to sync with Jira issue types. Requirements must be ${action} in Jira, not QMetry, ` +
           "for this project.",
       );
     }
     if (trackerType === EXT_TRACKER_TYPE_AZURE) {
-      throw new Error(
+      throw new ToolError(
         `[${functionName}] Blocked: This project is Azure-integrated and the Requirement module is ` +
           `configured to sync with Azure. Requirements must be ${action} in Azure, not QMetry, ` +
           "for this project.",
@@ -85,7 +88,7 @@ export async function createRequirement(
   };
 
   if (typeof body.name !== "string" || body.name.trim() === "") {
-    throw new Error(
+    throw new ToolError(
       "[createRequirement] Missing or invalid required parameter: 'name'.",
     );
   }
@@ -131,12 +134,12 @@ export async function updateRequirement(
   };
 
   if (typeof body.rqId !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[updateRequirement] Missing or invalid required parameter: 'rqId'.",
     );
   }
   if (typeof body.rqVersionId !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[updateRequirement] Missing or invalid required parameter: 'rqVersionId'.",
     );
   }
@@ -161,7 +164,7 @@ export async function updateRequirement(
 
 /**
  * Fetches a list of requirements.
- * @throws If `viewId` or `folderPath` are missing/invalid.
+ * @throws If `folderPath` is missing/invalid.
  */
 export async function fetchRequirements(
   token: string,
@@ -179,13 +182,8 @@ export async function fetchRequirements(
     ...payload,
   };
 
-  if (typeof body.viewId !== "number") {
-    throw new Error(
-      "[fetchRequirements] Missing or invalid required parameter: 'viewId'.",
-    );
-  }
   if (typeof body.folderPath !== "string") {
-    throw new Error(
+    throw new ToolError(
       "[fetchRequirements] Missing or invalid required parameter: 'folderPath'.",
     );
   }
@@ -228,12 +226,12 @@ export async function fetchRequirementDetails(
   };
 
   if (typeof body.id !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[fetchRequirementDetails] Missing or invalid required parameter: 'id'.",
     );
   }
   if (typeof body.version !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[fetchRequirementDetails] Missing or invalid required parameter: 'version'.",
     );
   }
@@ -269,7 +267,7 @@ export async function fetchRequirementsLinkedToTestCase(
   };
 
   if (typeof body.tcID !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[fetchRequirementsLinkedToTestCase] Missing or invalid required parameter: 'tcID'.",
     );
   }
@@ -277,6 +275,47 @@ export async function fetchRequirementsLinkedToTestCase(
   return qmetryRequest<unknown>({
     method: "POST",
     path: QMETRY_PATHS.REQUIREMENT.GET_RQ_LINKED_TO_TC,
+    token,
+    project: resolvedProject,
+    baseUrl: resolvedBaseUrl,
+    body,
+  });
+}
+
+/**
+ * Links one or more releases (each with one or more of its cycles) to one or
+ * more existing requirement versions. Every release/cycle in the mapping is
+ * linked to every requirement. QMetry treats a cycle as a build, so cycle
+ * errors come back as CO.INVALID_BUILD_ID.
+ * @throws If a required ID is missing/invalid, a list is empty, or a
+ * releaseId / rqId is repeated.
+ */
+export async function linkReleaseCycleWithRequirement(
+  token: string,
+  baseUrl: string,
+  project: string | undefined,
+  payload: LinkReleaseCycleWithRequirementPayload,
+) {
+  const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
+    baseUrl,
+    project,
+  );
+
+  const body = buildReleaseCycleScopeBody(
+    "linkReleaseCycleWithRequirement",
+    "RQ",
+    payload,
+    {
+      field: "requirements",
+      idField: "rqId",
+      versionField: "rqVersionId",
+      label: "Requirement",
+    },
+  );
+
+  return qmetryRequest<unknown>({
+    method: "POST",
+    path: QMETRY_PATHS.REQUIREMENT.LINK_RELEASE_CYCLE,
     token,
     project: resolvedProject,
     baseUrl: resolvedBaseUrl,

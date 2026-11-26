@@ -88,11 +88,24 @@ export const DEFAULT_LINK_ISSUES_TO_TESTCASE_RUN_PAYLOAD: Omit<
   "issueIds" | "tcrId"
 > = {};
 
+// Fetch Issues Linked to Execution (test suite run)
+// Filter and sort are intentionally out of scope for now (QTM8-24527) and are
+// always sent as empty arrays by the client.
+export interface FetchIssuesLinkedToExecutionPayload extends PaginationPayload {
+  tsRunID: number; // required - Test Suite Run (execution) ID
+}
+
+export const DEFAULT_FETCH_ISSUES_LINKED_TO_EXECUTION_PAYLOAD: Omit<
+  FetchIssuesLinkedToExecutionPayload,
+  "tsRunID"
+> = {
+  ...DEFAULT_PAGINATION,
+};
+
 export interface FetchIssuesPayload
   extends PaginationPayload,
     FilterPayload,
     SortPayload {
-  viewId: number; // required
   isJiraIntegated?: boolean; // optional - default false
   udfFilter?: string; // only this API uses udfFilter
   /**
@@ -120,16 +133,15 @@ export const DEFAULT_FETCH_ISSUE_EXECUTIONS_PAYLOAD: Omit<
   filter: "[]",
 };
 
-export const DEFAULT_FETCH_ISSUES_PAYLOAD: Omit<FetchIssuesPayload, "viewId"> =
-  {
-    ...DEFAULT_PAGINATION,
-    ...DEFAULT_FILTER,
-    ...DEFAULT_SORT,
-    udfFilter: "[]",
-    isJiraIntegated: false,
-    /**
-     * Prevents filter persistence in the QMetry web application UI.
-     * Always set to false to ensure filters are not saved when fetching test cases via API.
-     */
-    isFilterSaveRequired: false,
-  };
+export const DEFAULT_FETCH_ISSUES_PAYLOAD: FetchIssuesPayload = {
+  ...DEFAULT_PAGINATION,
+  ...DEFAULT_FILTER,
+  ...DEFAULT_SORT,
+  udfFilter: "[]",
+  isJiraIntegated: false,
+  /**
+   * Prevents filter persistence in the QMetry web application UI.
+   * Always set to false to ensure filters are not saved when fetching test cases via API.
+   */
+  isFilterSaveRequired: false,
+};

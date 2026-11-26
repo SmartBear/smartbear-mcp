@@ -1,9 +1,9 @@
+import { ToolError } from "../../common/tools";
 import { UDF_FIELD_TYPES, UDF_MODULES } from "../config/constants";
 import { QMETRY_PATHS } from "../config/rest-endpoints";
 import type {
   BulkUpdateTestRunUdfsPayload,
   FetchCascadeChildValuesPayload,
-  FetchTestRunUdfMetadataPayload,
   FetchTestRunUdfValuesPayload,
   FetchUdfLayoutPayload,
 } from "../types/udf";
@@ -254,7 +254,7 @@ export async function bulkUpdateTestRunUdfs(
   );
 
   if (!Array.isArray(payload.tcRunIDs) || payload.tcRunIDs.length === 0) {
-    throw new Error(
+    throw new ToolError(
       "[bulkUpdateTestRunUdfs] Missing or invalid required parameter: 'tcRunIDs'. Must be a non-empty array of numeric Test Case Run IDs.",
     );
   }
@@ -264,7 +264,7 @@ export async function bulkUpdateTestRunUdfs(
     typeof payload.UDF !== "object" ||
     Object.keys(payload.UDF).length === 0
   ) {
-    throw new Error(
+    throw new ToolError(
       "[bulkUpdateTestRunUdfs] Missing or invalid required parameter: 'UDF'. Must be an object with at least one UDF field entry.",
     );
   }
@@ -294,8 +294,6 @@ export async function bulkUpdateTestRunUdfs(
     project: resolvedProject,
     baseUrl: resolvedBaseUrl,
     body,
-    scopeId: payload.scopeId,
-    orgCode: payload.orgCode,
   });
 }
 
@@ -317,7 +315,7 @@ export async function fetchCascadeChildValues(
   );
 
   if (typeof payload.id !== "number" || payload.id <= 0) {
-    throw new Error(
+    throw new ToolError(
       "[fetchCascadeChildValues] Missing or invalid required parameter: 'id'. " +
         "Must be a positive integer representing the parent cascade item ID.",
     );
@@ -343,8 +341,6 @@ export async function fetchCascadeChildValues(
       id: payload.id,
       isArchReq: payload.isArchReq ?? false,
     },
-    scopeId: payload.scopeId,
-    orgCode: payload.orgCode,
     extraHeaders: {
       action: "fetch-cascade-children",
       screenname: "EXECUTION RUN",
@@ -412,7 +408,7 @@ export async function fetchUdfLayout(
     !payload.entityType ||
     !["TC", "TS", "IS", "RQ"].includes(payload.entityType)
   ) {
-    throw new Error(
+    throw new ToolError(
       "[fetchUdfLayout] Missing or invalid required parameter: 'entityType'. Must be 'TC', 'TS', 'IS', or 'RQ'.",
     );
   }
@@ -450,8 +446,6 @@ export async function fetchUdfLayout(
     project: resolvedProject,
     baseUrl: resolvedBaseUrl,
     body: { entityType: payload.entityType, pageName },
-    scopeId: payload.scopeId,
-    orgCode: payload.orgCode,
     extraHeaders,
   });
 
@@ -534,8 +528,6 @@ export async function fetchUdfLayout(
       project: resolvedProject,
       baseUrl: resolvedBaseUrl,
       body: { entityType: payload.entityType },
-      scopeId: payload.scopeId,
-      orgCode: payload.orgCode,
     });
     const metaList = metaRaw.qmUDFList ?? {};
     // Merge: prefer gis.customList but fill in gaps from metadata
@@ -600,7 +592,7 @@ export async function fetchTestRunUdfMetadata(
   token: string,
   baseUrl: string,
   project: string | undefined,
-  payload: FetchTestRunUdfMetadataPayload,
+  _payload?: Record<string, unknown>,
 ) {
   const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
     baseUrl,
@@ -618,8 +610,6 @@ export async function fetchTestRunUdfMetadata(
     project: resolvedProject,
     baseUrl: resolvedBaseUrl,
     body: { entityType: "TCR" },
-    scopeId: payload.scopeId,
-    orgCode: payload.orgCode,
     extraHeaders: {
       action: "fetch-steps",
       screenname: "EXECUTION RUN",
@@ -655,7 +645,7 @@ export async function fetchTestRunUdfMetadata(
  * 2. Checks `hasTcRunUdf` — if false, returns immediately with a note.
  * 3. If UDFs exist, calls `rest/admin/udf/metadata` to get field definitions
  *    and enriches each run's UDF values with field label and type information.
- * @throws If tsrunID or viewId are missing.
+ * @throws If tsrunID is missing.
  */
 export async function fetchTestRunUdfValues(
   token: string,
@@ -674,16 +664,8 @@ export async function fetchTestRunUdfValues(
     (!Array.isArray(payload.sourceRows) || payload.sourceRows.length === 0) &&
     (typeof payload.tsrunID !== "string" || !payload.tsrunID)
   ) {
-    throw new Error(
+    throw new ToolError(
       "[fetchTestRunUdfValues] Missing or invalid required parameter: 'tsrunID'. Provide 'tsrunID' or pass parent tool rows in 'sourceRows'.",
-    );
-  }
-  if (
-    (!Array.isArray(payload.sourceRows) || payload.sourceRows.length === 0) &&
-    typeof payload.viewId !== "number"
-  ) {
-    throw new Error(
-      "[fetchTestRunUdfValues] Missing or invalid required parameter: 'viewId'. Provide 'viewId' or pass parent tool rows in 'sourceRows'.",
     );
   }
 
@@ -704,13 +686,10 @@ export async function fetchTestRunUdfValues(
         baseUrl: resolvedBaseUrl,
         body: {
           tsrunID: payload.tsrunID,
-          viewId: payload.viewId,
           start: payload.startIndex ?? 0,
           page: 1,
           limit: payload.size ?? 50,
         },
-        scopeId: payload.scopeId,
-        orgCode: payload.orgCode,
       });
 
   // Step 2: check hasTcRunUdf flag
@@ -740,8 +719,6 @@ export async function fetchTestRunUdfValues(
       project: resolvedProject,
       baseUrl: resolvedBaseUrl,
       body: { entityType: "TCR" },
-      scopeId: payload.scopeId,
-      orgCode: payload.orgCode,
       extraHeaders: {
         action: "fetch-steps",
         screenname: "EXECUTION RUN",

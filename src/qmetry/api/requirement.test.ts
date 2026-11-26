@@ -4,10 +4,12 @@ import {
   createRequirement,
   fetchRequirementDetails,
   fetchRequirements,
+  linkReleaseCycleWithRequirement,
   updateRequirement,
 } from "../client/requirement.js";
 import { fetchTestCasesLinkedToRequirement } from "../client/testcase.js";
 import { QMetryToolsHandlers } from "../config/constants.js";
+import { LinkReleaseCycleWithRequirementArgsSchema } from "../types/common.js";
 import { DEFAULT_FETCH_REQUIREMENTS_PAYLOAD } from "../types/requirements.js";
 
 const token = "fake-token";
@@ -57,6 +59,7 @@ describe("requirement API clients", () => {
   const mockOk = (data: any) => ({
     ok: true,
     json: async () => data,
+    text: async () => JSON.stringify(data),
   });
 
   const mockFail = (status = 400, errorText = "Bad Request") => ({
@@ -90,7 +93,6 @@ describe("requirement API clients", () => {
     it("should POST with correct URL and headers", async () => {
       const payload = {
         ...DEFAULT_FETCH_REQUIREMENTS_PAYLOAD,
-        viewId: 54321,
         folderPath: "",
       };
       const mockResponse = {
@@ -119,7 +121,7 @@ describe("requirement API clients", () => {
             apikey: token,
             project: projectKey,
           }),
-          body: expect.stringContaining("54321"),
+          body: expect.not.stringContaining("viewId"),
         }),
       );
 
@@ -128,18 +130,17 @@ describe("requirement API clients", () => {
       expect((result as any).total).toBe(2);
     });
 
-    it("should throw error when viewId is missing", async () => {
-      const payload = { folderPath: "" };
+    it("should default folderPath to root when omitted", async () => {
+      global.fetch = vi.fn().mockResolvedValue(mockOk({ data: [] }));
 
-      await expect(
-        fetchRequirements(token, baseUrl, projectKey, payload as any),
-      ).rejects.toThrow(
-        "[fetchRequirements] Missing or invalid required parameter: 'viewId'.",
-      );
+      await fetchRequirements(token, baseUrl, projectKey, {} as any);
+
+      const body = JSON.parse((global.fetch as any).mock.calls[0][1].body);
+      expect(body.folderPath).toBe("");
     });
 
-    it("should throw error when folderPath is missing", async () => {
-      const payload = { viewId: 54321 };
+    it("should throw error when folderPath is invalid", async () => {
+      const payload = { folderPath: null };
 
       await expect(
         fetchRequirements(token, baseUrl, projectKey, payload as any),
@@ -152,14 +153,13 @@ describe("requirement API clients", () => {
       global.fetch = vi.fn().mockResolvedValue(mockFail(403, "Access denied"));
 
       const payload = {
-        viewId: 54321,
         folderPath: "",
         isFilterSaveRequired: false,
       };
 
       await expect(
         fetchRequirements(token, baseUrl, projectKey, payload),
-      ).rejects.toThrow(/QMetry Authorization Error: Insufficient permissions/);
+      ).rejects.toThrow(/QMetry API error 403/);
     });
   });
 
@@ -243,7 +243,7 @@ describe("requirement API clients", () => {
         createRequirement(token, baseUrl, projectKey, {
           name: "New login requirement",
         }),
-      ).rejects.toThrow(/QMetry Authorization Error: Insufficient permissions/);
+      ).rejects.toThrow(/QMetry API error 403/);
     });
 
     describe("external-integration hard gate", () => {
@@ -455,9 +455,7 @@ describe("requirement API clients", () => {
           rqId: 99999,
           rqVersionId: 1,
         }),
-      ).rejects.toThrow(
-        /QMetry API Invalid URL Error: The API endpoint appears to be incorrect/,
-      );
+      ).rejects.toThrow(/QMetry API error 404/);
     });
 
     describe("external-integration hard gate", () => {
@@ -635,9 +633,7 @@ describe("requirement API clients", () => {
 
       await expect(
         fetchRequirementDetails(token, baseUrl, projectKey, payload),
-      ).rejects.toThrow(
-        /QMetry API Invalid URL Error: The API endpoint appears to be incorrect/,
-      );
+      ).rejects.toThrow(/QMetry API error 404/);
     });
 
     it("should handle JSON error responses", async () => {
@@ -653,7 +649,7 @@ describe("requirement API clients", () => {
 
       await expect(
         fetchRequirementDetails(token, baseUrl, projectKey, payload),
-      ).rejects.toThrow(/QMetry API request failed \(400\):/);
+      ).rejects.toThrow(/QMetry API error 400/);
     });
   });
 
@@ -725,5 +721,317 @@ describe("requirement API clients", () => {
         );
       });
     });
+  });
+});
+
+describe("linkReleaseCycleWithRequirement", () => {
+  const validPayload = {
+    destinationProjectId: 46893,
+    releaseCycleMapping: [{ releaseId: 92342, cycleIds: [131144] }],
+    requirements: [{ rqId: 3976920, rqVersionId: 3987149 }],
+  };
+
+  const mockResponse = (body: unknown, ok = true, status = 200) => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok,
+      status,
+      statusText: ok ? "OK" : "Bad Request",
+      json: async () => body,
+      text: async () => JSON.stringify(body),
+    });
+  };
+
+  const sentBody = () =>
+    JSON.parse((globalThis.fetch as any).mock.calls[0][1].body);
+
+  const expectRejected = async (payload: unknown, message: string) => {
+    globalThis.fetch = vi.fn();
+    await expect(
+      linkReleaseCycleWithRequirement(
+        token,
+        baseUrl,
+        projectKey,
+        payload as any,
+      ),
+    ).rejects.toThrow(message);
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  };
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it("maps linkReleaseCycleWithRequirement to its handler", () => {
+    expect(
+      QMETRY_HANDLER_MAP[
+        QMetryToolsHandlers.LINK_RELEASE_CYCLE_WITH_REQUIREMENT
+      ],
+    ).toBe(linkReleaseCycleWithRequirement);
+  });
+
+  it("POSTs the new scope/add body for one release and one requirement", async () => {
+    const response = {
+      success: true,
+      code: "CO.REL_CYCLE_LINK_SUCCESS",
+      message: "Release(s) and Cycle(s) associated successfully.",
+      data: [{}],
+    };
+    mockResponse(response);
+
+    const result = await linkReleaseCycleWithRequirement(
+      token,
+      baseUrl,
+      projectKey,
+      validPayload,
+    );
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      `${baseUrl}/rest/requirements/scope/add`,
+      expect.objectContaining({
+        method: "POST",
+        headers: expect.objectContaining({
+          apikey: token,
+          project: projectKey,
+          "Content-Type": "application/json",
+        }),
+      }),
+    );
+    expect(sentBody()).toEqual({
+      sourceScope: "project",
+      entityType: "RQ",
+      releaseCycleMapping: [{ release: 92342, cycle: [131144], version: 1 }],
+      destinationProjectId: 46893,
+      entityData: [{ entityId: 3976920, version: 3987149 }],
+    });
+    expect(result).toEqual(response);
+  });
+
+  it("maps several releases and several requirements in order", async () => {
+    mockResponse({ success: true });
+
+    await linkReleaseCycleWithRequirement(token, baseUrl, projectKey, {
+      ...validPayload,
+      releaseCycleMapping: [
+        { releaseId: 92342, cycleIds: [131144] },
+        { releaseId: 92341, cycleIds: [131143, 133715] },
+      ],
+      requirements: [
+        { rqId: 3976920, rqVersionId: 3987149 },
+        { rqId: 3976932, rqVersionId: 3987161 },
+        { rqId: 3976933, rqVersionId: 3987162 },
+      ],
+    });
+
+    const body = sentBody();
+    expect(body.releaseCycleMapping).toEqual([
+      { release: 92342, cycle: [131144], version: 1 },
+      { release: 92341, cycle: [131143, 133715], version: 1 },
+    ]);
+    expect(body.entityData).toEqual([
+      { entityId: 3976920, version: 3987149 },
+      { entityId: 3976932, version: 3987161 },
+      { entityId: 3976933, version: 3987162 },
+    ]);
+  });
+
+  it("does not send tool-level or extra fields", async () => {
+    mockResponse({ success: true });
+
+    await linkReleaseCycleWithRequirement(token, baseUrl, projectKey, {
+      ...validPayload,
+      projectKey: "SHOULD_NOT_BE_SENT",
+    } as any);
+
+    const body = sentBody();
+    expect(body).not.toHaveProperty("projectKey");
+    expect(body).not.toHaveProperty("requirements");
+    expect(body.releaseCycleMapping[0]).not.toHaveProperty("releaseId");
+  });
+
+  it("returns the already-linked response as-is", async () => {
+    const response = {
+      duplicate_rel_cycle: [
+        { release: "Default Release", cycle: "Default Cycle" },
+      ],
+      success: true,
+      code: "RQ.REL_CYC_EXIST",
+      message: "The selected Release(s)/Cycle(s) is already linked.",
+    };
+    mockResponse(response);
+
+    await expect(
+      linkReleaseCycleWithRequirement(token, baseUrl, projectKey, validPayload),
+    ).resolves.toEqual(response);
+  });
+
+  it.each([
+    ["missing", undefined],
+    ["a string", "abc"],
+    ["NaN", Number.NaN],
+  ])("throws when destinationProjectId is %s", async (_label, value) => {
+    await expectRejected(
+      { ...validPayload, destinationProjectId: value },
+      "[linkReleaseCycleWithRequirement] Missing or invalid required parameter: 'destinationProjectId'",
+    );
+  });
+
+  it.each([
+    ["missing", undefined],
+    ["empty", []],
+  ])("throws when releaseCycleMapping is %s", async (_label, mapping) => {
+    await expectRejected(
+      { ...validPayload, releaseCycleMapping: mapping },
+      "Missing or invalid required parameter: 'releaseCycleMapping'",
+    );
+  });
+
+  it("throws when a releaseId is invalid", async () => {
+    await expectRejected(
+      {
+        ...validPayload,
+        releaseCycleMapping: [
+          { releaseId: 92342, cycleIds: [131144] },
+          { releaseId: "abc", cycleIds: [131143] },
+        ],
+      },
+      "'releaseCycleMapping[1].releaseId'",
+    );
+  });
+
+  it.each([
+    ["missing", undefined],
+    ["empty", []],
+    ["non-numeric", [131144, "abc"]],
+  ])("throws when a release's cycleIds is %s", async (_label, cycleIds) => {
+    await expectRejected(
+      {
+        ...validPayload,
+        releaseCycleMapping: [{ releaseId: 92342, cycleIds }],
+      },
+      "'releaseCycleMapping[0].cycleIds'",
+    );
+  });
+
+  it("throws when a release is repeated", async () => {
+    await expectRejected(
+      {
+        ...validPayload,
+        releaseCycleMapping: [
+          { releaseId: 92342, cycleIds: [131144] },
+          { releaseId: 92342, cycleIds: [131145] },
+        ],
+      },
+      "Release 92342 appears more than once",
+    );
+  });
+
+  it.each([
+    ["missing", undefined],
+    ["empty", []],
+  ])("throws when requirements is %s", async (_label, requirements) => {
+    await expectRejected(
+      { ...validPayload, requirements },
+      "Missing or invalid required parameter: 'requirements'",
+    );
+  });
+
+  it.each([
+    "rqId",
+    "rqVersionId",
+  ])("throws when a requirement's %s is missing", async (field) => {
+    const rq: any = { rqId: 3976932, rqVersionId: 3987161 };
+    delete rq[field];
+    await expectRejected(
+      {
+        ...validPayload,
+        requirements: [{ rqId: 3976920, rqVersionId: 3987149 }, rq],
+      },
+      `'requirements[1].${field}'`,
+    );
+  });
+
+  it("throws when a requirement is repeated", async () => {
+    await expectRejected(
+      {
+        ...validPayload,
+        requirements: [
+          { rqId: 3976920, rqVersionId: 3987149 },
+          { rqId: 3976920, rqVersionId: 3987150 },
+        ],
+      },
+      "Requirement 3976920 appears more than once",
+    );
+  });
+
+  it.each([
+    [
+      "invalid cycle (build)",
+      {
+        success: false,
+        code: "CO.INVALID_BUILD_ID",
+        message: "Invalid Build ID.",
+      },
+      /Invalid Build ID/,
+    ],
+    [
+      "invalid release",
+      { success: false, code: "CO.INVALID_RELEASE_ID" },
+      /CO.INVALID_RELEASE_ID/,
+    ],
+    [
+      "unknown requirement",
+      { success: false, code: "RQ.ENTITY_NOT_FOUND_ERROR" },
+      /RQ.ENTITY_NOT_FOUND_ERROR/,
+    ],
+  ])("surfaces QMetry's %s error", async (_label, errorBody, expected) => {
+    mockResponse(errorBody, false, 400);
+
+    await expect(
+      linkReleaseCycleWithRequirement(token, baseUrl, projectKey, validPayload),
+    ).rejects.toThrow(expected);
+  });
+});
+
+describe("LinkReleaseCycleWithRequirementArgsSchema", () => {
+  const base = {
+    destinationProjectId: 46893,
+    releaseCycleMapping: [{ releaseId: 92342, cycleIds: [131144] }],
+    requirements: [{ rqId: 3976920, rqVersionId: 3987149 }],
+  };
+
+  it("rejects a call without destinationProjectId", () => {
+    const { destinationProjectId: _omit, ...rest } = base;
+    const result = LinkReleaseCycleWithRequirementArgsSchema.safeParse({
+      projectKey: "MAC",
+      ...rest,
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("coerces string IDs to numbers", () => {
+    const parsed = LinkReleaseCycleWithRequirementArgsSchema.parse({
+      projectKey: "MAC",
+      destinationProjectId: "46893",
+      releaseCycleMapping: [{ releaseId: "92342", cycleIds: ["131144"] }],
+      requirements: [{ rqId: "3976920", rqVersionId: "3987149" }],
+    });
+    expect(parsed).toMatchObject(base);
+  });
+
+  it.each([
+    ["empty releaseCycleMapping", { releaseCycleMapping: [] }],
+    [
+      "a release with no cycles",
+      { releaseCycleMapping: [{ releaseId: 92342, cycleIds: [] }] },
+    ],
+    ["empty requirements", { requirements: [] }],
+    ["a requirement without rqVersionId", { requirements: [{ rqId: 1 }] }],
+  ])("rejects %s", (_label, override) => {
+    const result = LinkReleaseCycleWithRequirementArgsSchema.safeParse({
+      projectKey: "MAC",
+      ...base,
+      ...override,
+    });
+    expect(result.success).toBe(false);
   });
 });

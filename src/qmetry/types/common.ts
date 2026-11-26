@@ -18,8 +18,6 @@ export interface RequestOptions {
   project?: string; // Sent as HTTP header, not in body
   baseUrl: string; // Used for URL construction, not in body
   body?: any; // Only contains business logic parameters
-  scopeId?: number; // Sent as "scope" HTTP header (numeric project ID from currentProjectId)
-  orgCode?: string; // Sent as "orgcode" HTTP header (from clientCode in project info response)
   extraHeaders?: Record<string, string>; // Additional HTTP headers for specific endpoints
 }
 export interface PaginationPayload {
@@ -94,17 +92,42 @@ export const AutomationHierarchyEnum = z.enum(["1", "2", "3"]);
  */
 export const SkipWarningEnum = z.enum(["0", "1"]);
 
+const PROJECT_KEY_DESCRIPTION =
+  "Key of the QMetry project to use. When omitted, QMetry uses the project currently selected " +
+  "in the QMetry UI for the API key's user.";
+
+/**
+ * Shown on every project-scoped tool. The server rejects a missing, blank or
+ * 'default' key for these tools, so the AI must always choose the project.
+ */
+export const PROJECT_KEY_REQUIRED_DESCRIPTION =
+  "REQUIRED. Key of the QMetry project this call acts on (e.g. 'MAC'). Never omit it and never pass 'default'. " +
+  "How to get it: (1) user gave a project key: pass it as is. " +
+  '(2) user gave a project name: call \'Fetch QMetry list Projects\' with filter [{"value":"<name>","type":"string","field":"name"}] and use its projectKey; if several or none match, show the candidates and ask. ' +
+  "(3) user gave a numeric project ID: call 'Fetch QMetry list Projects' without a filter, page through it and use the projectKey of the row whose projectID matches. " +
+  "(4) user named no project: ask which one and offer the list from 'Fetch QMetry list Projects'; use 'Fetch QMetry Project Info' (no projectKey) only if the user asks for the project selected in QMetry. " +
+  "Switching projects: new work uses the project from the user's latest instruction; work on an item from an earlier result uses the project shown in that result's 'project' block, even if the user switched since; if unclear, ask. " +
+  "Tell the user which project you used.";
+
+const PROJECT_KEY_NOT_NEEDED_DESCRIPTION =
+  "Not needed for this tool; leave it out.";
+
 // Reusable Zod schema components
 export const CommonFields = {
   projectKey: z
     .string()
-    .describe("Project key - unique identifier for the project")
+    .describe(PROJECT_KEY_DESCRIPTION)
     .default(QMETRY_DEFAULTS.PROJECT_KEY),
   projectKeyOptional: z
     .string()
     .optional()
-    .describe("Project key - unique identifier for the project")
+    .describe(PROJECT_KEY_DESCRIPTION)
     .default(QMETRY_DEFAULTS.PROJECT_KEY),
+  projectKeyRequired: z
+    .string()
+    .trim()
+    .min(1)
+    .describe(PROJECT_KEY_REQUIRED_DESCRIPTION),
   start: z
     .number()
     .optional()
@@ -120,6 +143,14 @@ export const CommonFields = {
     .optional()
     .describe("Number of records (default 10).")
     .default(10),
+  destinationProjectId: z.coerce
+    .number()
+    .describe(
+      "Numeric ID of the project you are working in (the same project as projectKey) - required. " +
+        'If you don\'t already have it, call \'Fetch QMetry list Projects\' with filter [{"value":"<projectKey>","type":"string","field":"projectKey"}] ' +
+        "and use projectID of the row whose projectKey EXACTLY matches (the filter can also return similar keys). " +
+        "CRITICAL: this is the numeric project ID, NOT the string projectKey.",
+    ),
   tcID: z.coerce
     .number()
     .describe(
@@ -167,22 +198,6 @@ export const CommonFields = {
     .describe(
       "Requirement version number (required for fetching specific requirement version details). " +
         "This is the internal numeric identifier for the version.",
-    ),
-  tcViewId: z
-    .number()
-    .optional()
-    .describe(
-      "ViewId for test cases - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
-        "Leave empty unless you have a specific viewId. " +
-        "System will fetch project info using the projectKey and extract latestViews.TC.viewId automatically.",
-    ),
-  rqViewId: z
-    .number()
-    .optional()
-    .describe(
-      "ViewId for requirements - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
-        "Leave empty unless you have a specific viewId. " +
-        "System will fetch project info using the projectKey and extract latestViews.RQ.viewId automatically.",
     ),
   rqFolderPath: z
     .string()
@@ -239,30 +254,6 @@ export const CommonFields = {
     .string()
     .optional()
     .describe("Grid Name to be displayed (default 'TESTEXECUTIONLIST')"),
-  teViewId: z
-    .number()
-    .optional()
-    .describe(
-      "ViewId for test execution - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
-        "Leave empty unless you have a specific viewId. " +
-        "System will fetch project info using the projectKey and extract latestViews.TE.viewId automatically.",
-    ),
-  tsfeViewId: z
-    .number()
-    .optional()
-    .describe(
-      "ViewId for test suite folders - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
-        "Leave empty unless you have a specific viewId. " +
-        "System will fetch project info using the projectKey and extract latestViews.TSFS.viewId automatically.",
-    ),
-  tsViewId: z
-    .number()
-    .optional()
-    .describe(
-      "ViewId for test suites - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
-        "Leave empty unless you have a specific viewId. " +
-        "System will fetch project info using the projectKey and extract latestViews.TS.viewId automatically.",
-    ),
   tsrunID: z.coerce
     .string()
     .describe(
@@ -367,7 +358,9 @@ export const CommonFields = {
 } as const;
 
 export const ProjectListArgsSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional,
+  projectKey: CommonFields.projectKeyOptional.describe(
+    PROJECT_KEY_NOT_NEEDED_DESCRIPTION,
+  ),
 
   params: z.object({
     showArchive: z
@@ -387,20 +380,43 @@ export const ProjectListArgsSchema = z.object({
 });
 
 export const ProjectArgsSchema = z.object({
-  projectKey: CommonFields.projectKey,
+  projectKey: CommonFields.projectKeyOptional.describe(
+    "Optional. Leave it out ONLY when the user asks for the project currently selected in the QMetry UI; " +
+      "QMetry then returns that project (currentProjectId, currentProjectName). " +
+      "Pass a key to read that project's configuration.",
+  ),
 });
 
 export const ApiQuotaStatusArgsSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional,
+  projectKey: CommonFields.projectKeyOptional.describe(
+    PROJECT_KEY_NOT_NEEDED_DESCRIPTION,
+  ),
 });
 
 export const ReleasesCyclesArgsSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional,
+  projectKey: CommonFields.projectKeyOptional.describe(
+    "Key of the QMetry project whose releases and cycles to return. REQUIRED unless allProjects is true " +
+      "(then leave it out). See any project-scoped tool's projectKey for how to find the key.",
+  ),
   showArchive: CommonFields.showArchive,
+  projectID: z.coerce
+    .number()
+    .optional()
+    .describe(
+      "Optional NUMERIC ID of the project whose releases and cycles to return (currentProjectId from Fetch QMetry Project Info). " +
+        "Not the projectKey. If omitted, the server looks it up from projectKey. Ignored when allProjects is true.",
+    ),
+  allProjects: z
+    .boolean()
+    .optional()
+    .describe(
+      "Default false: return releases and cycles of the current project only. " +
+        "Set true ONLY when the user explicitly asks for releases/cycles across ALL projects.",
+    ),
 });
 
 export const BuildArgsSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional,
+  projectKey: CommonFields.projectKeyRequired,
 
   start: CommonFields.start,
   page: CommonFields.page,
@@ -409,7 +425,7 @@ export const BuildArgsSchema = z.object({
 });
 
 export const PlatformArgsSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional,
+  projectKey: CommonFields.projectKeyRequired,
 
   start: CommonFields.start,
   page: CommonFields.page,
@@ -425,7 +441,7 @@ export const PlatformArgsSchema = z.object({
 });
 
 export const CreateReleaseArgsSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional,
+  projectKey: CommonFields.projectKeyRequired,
 
   release: z.object({
     name: z.string().describe("Release name (required)"),
@@ -446,7 +462,7 @@ export const CreateReleaseArgsSchema = z.object({
       .number()
       .optional()
       .describe(
-        "Project ID (optional, can be auto-resolved from project key if not provided)",
+        "Numeric project ID (NOT the projectKey string). Optional: if omitted, the server fills it with the ID of the project given by projectKey.",
       ),
   }),
   cycle: z
@@ -466,7 +482,7 @@ export const CreateReleaseArgsSchema = z.object({
 });
 
 export const CreateCycleArgsSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional,
+  projectKey: CommonFields.projectKeyRequired,
 
   cycle: z.object({
     name: z.string().describe("Cycle name (required)"),
@@ -486,7 +502,7 @@ export const CreateCycleArgsSchema = z.object({
       .number()
       .optional()
       .describe(
-        "Project ID (optional, can be auto-resolved from project key if not provided)",
+        "Numeric project ID (NOT the projectKey string). Optional: if omitted, the server fills it with the ID of the project given by projectKey.",
       ),
     releaseID: z
       .number()
@@ -494,38 +510,111 @@ export const CreateCycleArgsSchema = z.object({
   }),
 });
 
-export const UpdateCycleArgsSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional,
+/** Matches any string with at least one non-whitespace character. */
+const NON_BLANK = /\S/;
 
-  cycle: z.object({
-    name: z.string().optional().describe("Cycle name (optional for update)"),
-    startDate: z
-      .string()
-      .optional()
-      .describe(
-        "Cycle start date in format DD-MM-YYYY or MM-DD-YYYY (depends on QMetry instance date format configuration)",
-      ),
-    targetDate: z
-      .string()
-      .optional()
-      .describe(
-        "Cycle target/end date in format DD-MM-YYYY or MM-DD-YYYY (depends on QMetry instance date format configuration)",
-      ),
-    buildID: z
-      .number()
-      .describe(
-        "Build ID (required for identifying the cycle to update). " +
-          "To get the buildID - Call API 'Cycle/List' (FETCH_RELEASES_CYCLES tool). " +
-          "From the response, get value of following attribute -> data[<index>].buildID",
-      ),
-    releaseID: z
-      .number()
-      .describe(
-        "Release ID (required for identifying the cycle to update). " +
-          "To get the releaseID - Call API 'Cycle/List' (FETCH_RELEASES_CYCLES tool). " +
-          "From the response, get value of following attribute -> data[<index>].releaseID",
-      ),
-  }),
+export const UpdateCycleArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyRequired,
+
+  cycle: z
+    .object({
+      buildID: z.coerce
+        .number()
+        .describe(
+          "Cycle ID (required) identifying the cycle to update - QMetry calls cycles 'builds', so the key is 'buildID'. " +
+            "Get it from 'Fetch Releases and Cycles' by matching the cycle name within its release.",
+        ),
+      releaseID: z.coerce
+        .number()
+        .describe(
+          "Release ID (required) of the release the cycle belongs to. " +
+            "Get it from 'Fetch Releases and Cycles' by matching the release name.",
+        ),
+      name: z
+        .string()
+        .regex(NON_BLANK, "'name' must not be empty")
+        .optional()
+        .describe("New cycle name (must not be blank)"),
+      startDate: z
+        .string()
+        .optional()
+        .describe(
+          "Cycle start date in format DD-MM-YYYY or MM-DD-YYYY (depends on QMetry instance date format configuration)",
+        ),
+      targetDate: z
+        .string()
+        .optional()
+        .describe(
+          "Cycle target/end date in format DD-MM-YYYY or MM-DD-YYYY (depends on QMetry instance date format configuration)",
+        ),
+    })
+    .refine(
+      (c) =>
+        c.name !== undefined ||
+        c.startDate !== undefined ||
+        c.targetDate !== undefined,
+      {
+        message:
+          "At least one of 'name', 'startDate' or 'targetDate' must be provided.",
+      },
+    ),
+});
+
+export const UpdateReleaseArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyRequired,
+
+  release: z
+    .object({
+      projectID: z.coerce
+        .number()
+        .optional()
+        .describe(
+          "Numeric project ID (NOT the projectKey string) of the project the release belongs to. " +
+            "Optional: if omitted, the server fills it with the ID of the project given by projectKey.",
+        ),
+      releaseID: z.coerce
+        .number()
+        .describe(
+          "Release ID (required) identifying the release to update. " +
+            "Get it from 'Fetch Releases and Cycles' by matching the release name.",
+        ),
+      name: z
+        .string()
+        .regex(NON_BLANK, "'name' must not be empty")
+        .optional()
+        .describe(
+          "New release name (must not be blank). Must be unique within the project - QMetry rejects duplicates with AD.RELEASE_DUPLICATE.",
+        ),
+      description: z
+        .string()
+        .optional()
+        .describe(
+          "New release description (HTML allowed, e.g. '<p>Sprint 53</p>')",
+        ),
+      startDate: z
+        .string()
+        .optional()
+        .describe(
+          "Release start date in format DD-MM-YYYY or MM-DD-YYYY (depends on QMetry instance date format configuration)",
+        ),
+      targetDate: z
+        .string()
+        .optional()
+        .describe(
+          "Release target/end date in format DD-MM-YYYY or MM-DD-YYYY (depends on QMetry instance date format configuration)",
+        ),
+    })
+    .refine(
+      (r) =>
+        r.name !== undefined ||
+        r.description !== undefined ||
+        r.startDate !== undefined ||
+        r.targetDate !== undefined,
+      {
+        message:
+          "At least one of 'name', 'description', 'startDate' or 'targetDate' must be provided.",
+      },
+    ),
 });
 
 const StepUdfValueSchema = z.union([
@@ -624,6 +713,7 @@ const UdfFieldsSchema = z
   );
 
 export const CreateTestCaseArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyRequired,
   tcFolderID: z
     .string()
     .optional()
@@ -706,7 +796,7 @@ export const CreateTestCaseArgsSchema = z.object({
 });
 
 export const UpdateTestCaseArgsSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional,
+  projectKey: CommonFields.projectKeyRequired,
 
   tcID: CommonFields.tcID,
   tcVersionID: CommonFields.tcVersionID,
@@ -791,9 +881,8 @@ export const UpdateTestCaseArgsSchema = z.object({
 });
 
 export const TestCaseListArgsSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional,
+  projectKey: CommonFields.projectKeyRequired,
 
-  viewId: CommonFields.tcViewId,
   folderPath: CommonFields.tcFolderPath,
   folderID: CommonFields.folderID,
   start: CommonFields.start,
@@ -811,7 +900,7 @@ export const TestCaseListArgsSchema = z.object({
 });
 
 export const TestCaseDetailsArgsSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional,
+  projectKey: CommonFields.projectKeyRequired,
 
   tcID: CommonFields.tcID,
   start: CommonFields.start,
@@ -820,7 +909,7 @@ export const TestCaseDetailsArgsSchema = z.object({
 });
 
 export const TestCaseVersionDetailsArgsSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional,
+  projectKey: CommonFields.projectKeyRequired,
 
   id: CommonFields.id,
   version: CommonFields.version,
@@ -828,7 +917,7 @@ export const TestCaseVersionDetailsArgsSchema = z.object({
 });
 
 export const TestCaseStepsArgsSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional,
+  projectKey: CommonFields.projectKeyRequired,
 
   id: CommonFields.id,
   version: CommonFields.versionOptional,
@@ -838,9 +927,8 @@ export const TestCaseStepsArgsSchema = z.object({
 });
 
 export const TestCaseStepsWithUdfArgsSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional,
+  projectKey: CommonFields.projectKeyRequired,
   tcID: CommonFields.tcID,
-  viewId: CommonFields.tcViewId,
   version: CommonFields.versionOptional,
   start: CommonFields.start,
   page: CommonFields.page,
@@ -848,7 +936,7 @@ export const TestCaseStepsWithUdfArgsSchema = z.object({
 });
 
 export const TestCaseExecutionsArgsSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional,
+  projectKey: CommonFields.projectKeyRequired,
 
   tcid: CommonFields.tcID,
   tcversion: CommonFields.versionOptional,
@@ -860,9 +948,8 @@ export const TestCaseExecutionsArgsSchema = z.object({
 });
 
 export const RequirementListArgsSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional,
+  projectKey: CommonFields.projectKeyRequired,
 
-  viewId: CommonFields.rqViewId,
   folderPath: CommonFields.rqFolderPath,
   start: CommonFields.start,
   page: CommonFields.page,
@@ -894,7 +981,7 @@ export const RequirementListArgsSchema = z.object({
 });
 
 export const RequirementDetailsArgsSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional,
+  projectKey: CommonFields.projectKeyRequired,
 
   id: CommonFields.rqID,
   version: CommonFields.rqVersion,
@@ -911,6 +998,7 @@ const RequirementAttachmentsSchema = z
   );
 
 export const CreateRequirementArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyRequired,
   name: z.string().describe("Requirement name (required)."),
   priority: z.number().optional().describe("Priority ID of the requirement."),
   component: z
@@ -928,13 +1016,24 @@ export const CreateRequirementArgsSchema = z.object({
   releaseCycleMapping: z
     .array(
       z.object({
-        release: z.number(),
-        cycle: z.array(z.number()),
-        version: z.number(),
+        release: z
+          .number()
+          .describe(
+            "Release ID - from the user or 'Fetch Releases and Cycles' (match the release by name).",
+          ),
+        cycle: z
+          .array(z.number())
+          .describe(
+            "Cycle IDs that belong to this release - from the user or 'Fetch Releases and Cycles' (match each cycle by name within the release).",
+          ),
+        version: z.number().describe("Always 1."),
       }),
     )
     .optional()
-    .describe("Release/cycle mapping for the requirement."),
+    .describe(
+      "Releases and cycles to link the NEW requirement to, one object per release, e.g. [{ release: 92340, cycle: [131142], version: 1 }]. " +
+        "Set associateRelCyc=true when providing this. Use this instead of calling 'Link Release Cycle with Requirement' after creating.",
+    ),
   description: z
     .string()
     .optional()
@@ -942,7 +1041,9 @@ export const CreateRequirementArgsSchema = z.object({
   associateRelCyc: z
     .boolean()
     .optional()
-    .describe("Whether to associate the release/cycle mapping."),
+    .describe(
+      "Set to true whenever releaseCycleMapping is provided, so the release/cycle link is made during creation.",
+    ),
   rqFolderId: z
     .string()
     .optional()
@@ -961,6 +1062,7 @@ export const CreateRequirementArgsSchema = z.object({
 });
 
 export const UpdateRequirementArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyRequired,
   rqId: z
     .number()
     .describe(
@@ -1006,8 +1108,119 @@ export const UpdateRequirementArgsSchema = z.object({
     ),
 });
 
+// Export for Link Release Cycle with Requirement tool
+export const LinkReleaseCycleWithRequirementArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyRequired,
+
+  destinationProjectId: CommonFields.destinationProjectId,
+  releaseCycleMapping: z
+    .array(
+      z.object({
+        releaseId: z.coerce
+          .number()
+          .describe(
+            "ID of a release to link. If the user gives a release name, resolve it with 'Fetch Releases and Cycles' (release names are unique in a project).",
+          ),
+        cycleIds: z
+          .array(z.coerce.number())
+          .min(1)
+          .describe(
+            "One or more cycle IDs (at least one) that belong to THIS release. " +
+              "If the user gives cycle names, resolve them with 'Fetch Releases and Cycles' under this release (cycle names are unique within a release). " +
+              "CRITICAL: the parameter name is 'cycleIds' - do NOT use 'buildIds' or 'cycle'.",
+          ),
+      }),
+    )
+    .min(1)
+    .describe(
+      "Releases to link and, for each, the cycles of that release to link (required, at least one release). " +
+        "One entry per release - do NOT repeat a releaseId; put all of its cycles in one entry. " +
+        "Example: [{ releaseId: 92342, cycleIds: [131144] }, { releaseId: 92341, cycleIds: [133715, 133716] }].",
+    ),
+  requirements: z
+    .array(
+      z.object({
+        rqId: z.coerce
+          .number()
+          .describe(
+            "Requirement numeric ID, sent to QMetry as entityId. Not the entity key like 'MAC-RQ-730'. " +
+              "Resolve a key with 'Fetch Requirements' (filter on entityKeyId) -> data[].id.",
+          ),
+        rqVersionId: z.coerce
+          .number()
+          .describe(
+            "Requirement VERSION ID, e.g. 3987149 - NOT the visible version number like 1 or 2. " +
+              "Latest version: 'Fetch Requirements' (filter on entityKeyId) -> data[].versionId. " +
+              "Specific visible version N: 'Fetch Requirement Details' with id=rqId and version=N -> rqVersionID.",
+          ),
+      }),
+    )
+    .min(1)
+    .describe(
+      "Existing requirement versions to link (required, at least one). Every release/cycle in 'releaseCycleMapping' is linked to EVERY requirement listed here. " +
+        "One entry per requirement - do NOT repeat an rqId. " +
+        "Example: [{ rqId: 3976920, rqVersionId: 3987149 }, { rqId: 3976932, rqVersionId: 3987161 }].",
+    ),
+});
+
+// Export for Link Release Cycle with Test Case tool
+export const LinkReleaseCycleWithTestCaseArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyRequired,
+
+  destinationProjectId: CommonFields.destinationProjectId,
+  releaseCycleMapping: z
+    .array(
+      z.object({
+        releaseId: z.coerce
+          .number()
+          .describe(
+            "ID of a release to link. If the user gives a release name, resolve it with 'Fetch Releases and Cycles' (release names are unique in a project).",
+          ),
+        cycleIds: z
+          .array(z.coerce.number())
+          .min(1)
+          .describe(
+            "One or more cycle IDs (at least one) that belong to THIS release. " +
+              "If the user gives cycle names, resolve them with 'Fetch Releases and Cycles' under this release (cycle names are unique within a release). " +
+              "CRITICAL: the parameter name is 'cycleIds' - do NOT use 'buildIds' or 'cycle'.",
+          ),
+      }),
+    )
+    .min(1)
+    .describe(
+      "Releases to link and, for each, the cycles of that release to link (required, at least one release). " +
+        "One entry per release - do NOT repeat a releaseId; put all of its cycles in one entry. " +
+        "Example: [{ releaseId: 92340, cycleIds: [131142] }, { releaseId: 92341, cycleIds: [131143, 133715] }].",
+    ),
+  testCases: z
+    .array(
+      z.object({
+        tcID: z.coerce
+          .number()
+          .describe(
+            "Test case numeric ID, sent to QMetry as entityId. Not the entity key like 'MAC-TC-1684'. " +
+              "Resolve a key with 'Fetch Test Cases' (filter on entityKeyId) -> data[].tcID.",
+          ),
+        tcVersionID: z.coerce
+          .number()
+          .describe(
+            "Test case VERSION ID, e.g. 4705299 - NOT the visible version number (tcVersion) like 1 or 2. " +
+              "Latest version: 'Fetch Test Cases' (filter on entityKeyId) -> data[].tcVersionID. " +
+              "Specific visible version N: 'Fetch Test Case Version Details' with id=tcID and version=N -> data[0].tcVersionID.",
+          ),
+      }),
+    )
+    .min(1)
+    .describe(
+      "Existing test case versions to link (required, at least one). Every release/cycle in 'releaseCycleMapping' is linked to EVERY test case listed here. " +
+        "One entry per test case - do NOT repeat a tcID. " +
+        "CRITICAL: the parameter name is 'testCases' - do NOT use 'entityData' or 'testcases'. " +
+        "Example: [{ tcID: 4611391, tcVersionID: 4705299 }, { tcID: 4611393, tcVersionID: 4705304 }].",
+    ),
+});
+
 export const RequirementsLinkedToTestCaseArgsSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional,
+  projectKey: CommonFields.projectKeyRequired,
 
   tcID: CommonFields.tcID,
   getLinked: z
@@ -1027,6 +1240,7 @@ export const RequirementsLinkedToTestCaseArgsSchema = z.object({
 });
 
 export const LinkRequirementToTestCaseArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyRequired,
   tcID: z.string().describe("EntityKey of Testcase (e.g. 'COD-TC-29')"),
   tcVersionId: CommonFields.tcVersionID,
   rqVersionIds: z
@@ -1037,6 +1251,7 @@ export const LinkRequirementToTestCaseArgsSchema = z.object({
 });
 
 export const LinkTestcaseToIssuesArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyRequired,
   tcID: z
     .string()
     .describe(
@@ -1050,7 +1265,7 @@ export const LinkTestcaseToIssuesArgsSchema = z.object({
 });
 
 export const TestCasesLinkedToRequirementArgsSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional,
+  projectKey: CommonFields.projectKeyRequired,
 
   rqID: CommonFields.rqID,
   getLinked: z
@@ -1087,14 +1302,14 @@ export const TestCasesLinkedToRequirementArgsSchema = z.object({
     .optional()
     .describe(
       "Filter test cases by release ID. Accepts a string or number. " +
-        "Get release IDs from FETCH_RELEASES_AND_CYCLES tool.",
+        "Get release IDs from 'Fetch Releases and Cycles' tool.",
     ),
   cycleID: z.coerce
     .string()
     .optional()
     .describe(
       "Filter test cases by cycle ID. Accepts a string or number. " +
-        "Get cycle IDs from FETCH_RELEASES_AND_CYCLES tool.",
+        "Get cycle IDs from 'Fetch Releases and Cycles' tool.",
     ),
   filter: CommonFields.filter,
   getSubEntities: z
@@ -1110,6 +1325,7 @@ export const TestCasesLinkedToRequirementArgsSchema = z.object({
 });
 
 export const CreateTestSuiteArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyRequired,
   parentFolderId: z
     .string()
     .optional()
@@ -1133,7 +1349,7 @@ export const CreateTestSuiteArgsSchema = z.object({
           .describe(
             "Release numeric ID. " +
               "CRITICAL: key is 'releaseId' (lowercase d) — do NOT use 'releaseID', 'release', or 'releaseKey'. " +
-              "Get from project info → projects[<index>].releases[<index>].releaseID. " +
+              "Get it from 'Fetch Releases and Cycles': the release node's relID (match the release by its 'type', i.e. name). " +
               "NEVER use the TC mapping key 'release' here — test suite mapping uses 'releaseId'.",
           ),
         buildID: z
@@ -1141,7 +1357,7 @@ export const CreateTestSuiteArgsSchema = z.object({
           .describe(
             "Cycle/Build numeric ID. " +
               "CRITICAL: key is 'buildID' (capital D) — do NOT use 'cycleId', 'cycle', 'buildId', or 'cycleID'. " +
-              "Get from project info → projects[<index>].releases[<index>].builds[<index>].buildID. " +
+              "Get it from 'Fetch Releases and Cycles': the cycle node's cyclID, under the chosen release (match the cycle by its 'type', i.e. name). " +
               "NEVER use the TC mapping key 'cycle' here — test suite mapping uses 'buildID'.",
           ),
       }),
@@ -1159,6 +1375,7 @@ export const CreateTestSuiteArgsSchema = z.object({
 });
 
 export const UpdateTestSuiteArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyRequired,
   id: z.number().describe("Id of Test Suite to be updated (required)"),
   TsFolderID: z
     .number()
@@ -1187,9 +1404,8 @@ export const UpdateTestSuiteArgsSchema = z.object({
 });
 
 export const TestSuiteListArgsSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional,
+  projectKey: CommonFields.projectKeyRequired,
 
-  viewId: CommonFields.tsViewId,
   folderPath: CommonFields.tsFolderPath,
   start: CommonFields.start,
   page: CommonFields.page,
@@ -1208,13 +1424,13 @@ export const TestSuiteListArgsSchema = z.object({
 });
 
 export const FetchTestSuiteDetailsArgsSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional,
+  projectKey: CommonFields.projectKeyRequired,
   id: z.number().int().positive().describe("Test Suite ID (numeric ID)"),
   scope: CommonFields.scope,
 });
 
 export const FetchIssueDetailsArgsSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional,
+  projectKey: CommonFields.projectKeyRequired,
   defectId: z
     .number()
     .int()
@@ -1225,10 +1441,9 @@ export const FetchIssueDetailsArgsSchema = z.object({
 });
 
 export const TestSuitesForTestCaseArgsSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional,
+  projectKey: CommonFields.projectKeyRequired,
 
   tsFolderID: CommonFields.tsFolderID.optional(),
-  viewId: CommonFields.tsfeViewId,
   start: CommonFields.start,
   page: CommonFields.page,
   limit: CommonFields.limit,
@@ -1238,6 +1453,7 @@ export const TestSuitesForTestCaseArgsSchema = z.object({
 
 export const LinkTestCasesToTestSuiteArgsSchema = z
   .object({
+    projectKey: CommonFields.projectKeyRequired,
     tsID: z.coerce
       .number()
       .describe(
@@ -1257,6 +1473,7 @@ export const LinkTestCasesToTestSuiteArgsSchema = z
 
 export const RequirementsLinkedTestCasesToTestSuiteArgsSchema = z
   .object({
+    projectKey: CommonFields.projectKeyRequired,
     tsID: z.coerce
       .number()
       .describe(
@@ -1275,7 +1492,7 @@ export const RequirementsLinkedTestCasesToTestSuiteArgsSchema = z
   .strip();
 
 export const IssuesLinkedToTestCaseArgsSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional,
+  projectKey: CommonFields.projectKeyRequired,
 
   tcID: CommonFields.tcID,
   getLinked: CommonFields.getLinked.optional().default(true),
@@ -1286,7 +1503,7 @@ export const IssuesLinkedToTestCaseArgsSchema = z.object({
 });
 
 export const TestCasesByTestSuiteArgsSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional,
+  projectKey: CommonFields.projectKeyRequired,
 
   tsID: CommonFields.tsID,
   getLinked: CommonFields.getLinked.optional().default(true),
@@ -1297,12 +1514,11 @@ export const TestCasesByTestSuiteArgsSchema = z.object({
 });
 
 export const ExecutionsByTestSuiteArgsSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional,
+  projectKey: CommonFields.projectKeyRequired,
 
   tsID: CommonFields.tsID, // API payload param - sent in request body (REQUIRED)
   tsFolderID: CommonFields.tsFolderID.optional(),
   gridName: CommonFields.gridName,
-  viewId: CommonFields.teViewId,
   start: CommonFields.start,
   page: CommonFields.page,
   limit: CommonFields.limit,
@@ -1310,10 +1526,9 @@ export const ExecutionsByTestSuiteArgsSchema = z.object({
 });
 
 export const TestCaseRunsByTestSuiteRunArgsSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional,
+  projectKey: CommonFields.projectKeyRequired,
 
   tsrunID: CommonFields.tsrunID, // API payload param - sent in request body (REQUIRED)
-  viewId: CommonFields.teViewId, // auto-resolved via SYSTEM if not provided
   start: CommonFields.start,
   page: CommonFields.page,
   limit: CommonFields.limit,
@@ -1324,7 +1539,7 @@ export const TestCaseRunsByTestSuiteRunArgsSchema = z.object({
 });
 
 export const LinkedIssuesByTestCaseRunArgsSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional,
+  projectKey: CommonFields.projectKeyRequired,
 
   entityId: CommonFields.entityId, // API payload param - sent in request body (REQUIRED)
   getLinked: CommonFields.getLinked,
@@ -1337,7 +1552,7 @@ export const LinkedIssuesByTestCaseRunArgsSchema = z.object({
 });
 
 export const CreateIssueArgsSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional,
+  projectKey: CommonFields.projectKeyRequired,
 
   issueType: z.number().describe("Issue type ID (e.g. Bug, Enhancement, etc.)"),
   issuePriority: z
@@ -1389,6 +1604,7 @@ export const CreateIssueArgsSchema = z.object({
 });
 
 export const UpdateIssueArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyRequired,
   DefectId: z.coerce
     .number()
     .describe(
@@ -1434,16 +1650,8 @@ export const UpdateIssueArgsSchema = z.object({
 });
 
 export const IssuesListArgsSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional,
+  projectKey: CommonFields.projectKeyRequired,
 
-  viewId: z
-    .number()
-    .optional()
-    .describe(
-      "ViewId for issues - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
-        "Leave empty unless you have a specific viewId. " +
-        "System will fetch project info using the projectKey and extract latestViews.IS.viewId automatically.",
-    ),
   start: CommonFields.start,
   page: CommonFields.page,
   limit: CommonFields.limit,
@@ -1464,7 +1672,7 @@ export const IssuesListArgsSchema = z.object({
 
 // Export for Link Issues to Testcase Run tool
 export const LinkIssuesToTestcaseRunArgsSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional,
+  projectKey: CommonFields.projectKeyRequired,
 
   issueIds: z
     .array(z.union([z.string(), z.number()]))
@@ -1477,7 +1685,7 @@ export const LinkIssuesToTestcaseRunArgsSchema = z.object({
 });
 
 export const IssueExecutionsArgsSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional,
+  projectKey: CommonFields.projectKeyRequired,
 
   linkedAssetId: z.coerce
     .number()
@@ -1505,9 +1713,25 @@ export const IssueExecutionsArgsSchema = z.object({
     .default("[]"),
 });
 
+// Export for Fetch Issues Linked to Execution tool
+export const IssuesLinkedToExecutionArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyRequired,
+
+  tsRunID: z.coerce
+    .number()
+    .describe(
+      "Test Suite Run (execution) ID. CRITICAL: for THIS tool the parameter name is 'tsRunID' (capital R) — do NOT use 'tsrunID', 'tsRunId', 'executionId', 'tcRunID', or other variants. " +
+        "Accepts a string or number. " +
+        "If the user does not give it, get it from the 'Fetch Executions by Test Suite' tool (data[<index>].tsRunID) for the execution matching the user's Test Suite, Release, Cycle and Platform.",
+    ),
+  start: CommonFields.start,
+  page: CommonFields.page,
+  limit: CommonFields.limit,
+});
+
 // Export for Link Platforms to Test Suite tool
 export const LinkPlatformsToTestSuiteArgsSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional,
+  projectKey: CommonFields.projectKeyRequired,
 
   qmTsId: z.coerce
     .number()
@@ -1568,7 +1792,7 @@ export const UdfFieldValueSchema = z.object({
 
 // Export for Bulk Update Test Case Execution Status tool
 export const BulkUpdateExecutionStatusArgsSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional,
+  projectKey: CommonFields.projectKeyRequired,
 
   entityIDs: z.coerce
     .string()
@@ -1643,7 +1867,6 @@ export const BulkUpdateExecutionStatusArgsSchema = z.object({
     .describe(
       "Type of Entity - same as entityType (for backwards compatibility)",
     ),
-  viewId: CommonFields.teViewId,
   udfValuesByRun: z
     .record(
       z.string(),
@@ -1675,6 +1898,7 @@ export const BulkUpdateExecutionStatusArgsSchema = z.object({
  * User should upload a valid result file (.json, .xml, or .zip up to 30 MB)
  */
 export const ImportAutomationResultsPayloadSchema = z.object({
+  projectKey: CommonFields.projectKeyRequired,
   // REQUIRED: File data as base64 string or file path
   file: z
     .string()
@@ -1805,7 +2029,7 @@ export const ImportAutomationResultsPayloadSchema = z.object({
 });
 
 export const FetchAutomationStatusPayloadSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional,
+  projectKey: CommonFields.projectKeyRequired,
 
   requestID: z.coerce
     .number()
@@ -1815,7 +2039,7 @@ export const FetchAutomationStatusPayloadSchema = z.object({
 });
 
 export const AnalyticsQueryArgsSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional,
+  projectKey: CommonFields.projectKeyRequired,
 
   query: z
     .string()

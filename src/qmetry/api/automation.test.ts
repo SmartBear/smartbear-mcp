@@ -17,6 +17,7 @@ describe("automation API clients", () => {
   const mockOk = (data: any) => ({
     ok: true,
     json: async () => data,
+    text: async () => JSON.stringify(data),
   });
 
   describe("importAutomationResults", () => {

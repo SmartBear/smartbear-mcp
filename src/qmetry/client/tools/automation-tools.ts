@@ -31,6 +31,7 @@ export const AUTOMATION_TOOLS: QMetryToolParams[] = [
       {
         description: "Basic TestNG result import",
         parameters: {
+          projectKey: "MAC",
           file: "<base64_encoded_testng_xml_content>",
           fileName: "testng-results.xml",
           entityType: "TESTNG",
@@ -41,6 +42,7 @@ export const AUTOMATION_TOOLS: QMetryToolParams[] = [
       {
         description: "JUnit results with custom test suite name",
         parameters: {
+          projectKey: "MAC",
           file: "<base64_encoded_junit_xml_content>",
           fileName: "junit-results.xml",
           entityType: "JUNIT",
@@ -53,6 +55,7 @@ export const AUTOMATION_TOOLS: QMetryToolParams[] = [
       {
         description: "Cucumber results with platform and release mapping",
         parameters: {
+          projectKey: "MAC",
           file: "<base64_encoded_cucumber_json_content>",
           fileName: "cucumber-results.json",
           entityType: "CUCUMBER",
@@ -67,6 +70,7 @@ export const AUTOMATION_TOOLS: QMetryToolParams[] = [
       {
         description: "Reuse existing test suite",
         parameters: {
+          projectKey: "MAC",
           file: "<base64_encoded_testng_xml_content>",
           fileName: "testng-regression.xml",
           entityType: "TESTNG",
@@ -78,6 +82,7 @@ export const AUTOMATION_TOOLS: QMetryToolParams[] = [
       {
         description: "Import with folder organization",
         parameters: {
+          projectKey: "MAC",
           file: "<base64_encoded_junit_xml_content>",
           fileName: "junit-results.xml",
           entityType: "JUNIT",
@@ -91,6 +96,7 @@ export const AUTOMATION_TOOLS: QMetryToolParams[] = [
       {
         description: "Import with test case custom fields",
         parameters: {
+          projectKey: "MAC",
           file: "<base64_encoded_testng_xml_content>",
           fileName: "testng-results.xml",
           entityType: "TESTNG",
@@ -108,6 +114,7 @@ export const AUTOMATION_TOOLS: QMetryToolParams[] = [
       {
         description: "Import ZIP file with multiple results",
         parameters: {
+          projectKey: "MAC",
           file: "<base64_encoded_zip_content>",
           fileName: "test-results.zip",
           entityType: "JUNIT",
@@ -120,6 +127,7 @@ export const AUTOMATION_TOOLS: QMetryToolParams[] = [
       {
         description: "Import with custom hierarchy for JUnit",
         parameters: {
+          projectKey: "MAC",
           file: "<base64_encoded_junit_xml_content>",
           fileName: "junit-results.xml",
           entityType: "JUNIT",
@@ -132,6 +140,7 @@ export const AUTOMATION_TOOLS: QMetryToolParams[] = [
       {
         description: "Import with build and platform mapping",
         parameters: {
+          projectKey: "MAC",
           file: "<base64_encoded_testng_xml_content>",
           fileName: "testng-results.xml",
           entityType: "TESTNG",
@@ -146,6 +155,7 @@ export const AUTOMATION_TOOLS: QMetryToolParams[] = [
       {
         description: "Import with test suite and test case fields",
         parameters: {
+          projectKey: "MAC",
           file: "<base64_encoded_cucumber_json_content>",
           fileName: "cucumber-results.json",
           entityType: "CUCUMBER",
@@ -301,6 +311,7 @@ export const AUTOMATION_TOOLS: QMetryToolParams[] = [
       {
         description: "Fetch status for request ID 12345",
         parameters: {
+          projectKey: "MAC",
           requestID: 12345,
         },
         expectedOutput:

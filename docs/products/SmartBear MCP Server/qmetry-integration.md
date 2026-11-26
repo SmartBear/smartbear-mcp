@@ -4,22 +4,26 @@ The QMetry client provides the following test management capabilities as listed 
 
 ## Available Tools
 
-### `set_qmetry_project`
+### Choosing the project
 
--   Purpose: Set current QMetry project for your account.
--   Returns: Set and fetch list of project information available within your account.
--   Use case: Sets your project context for all subsequent operations.
+Every QMetry tool that works inside a project **requires** `projectKey`. A call that leaves it out, or passes a blank value or `default`, is rejected before any request is sent; the server never falls back to the project selected in the QMetry UI for these tools. The MCP server keeps no project between calls, so each call names its own project.
+
+To find the key: a project name is looked up with `Fetch QMetry list Projects` and a `name` filter; a numeric project ID is matched against the `projectID` of the rows that tool returns. When the user names no project, the AI asks which one and offers that list.
+
+Four tools do not need a project: `Fetch QMetry list Projects`, `Fetch QMetry Project Info`, `Fetch API Call Quota`, and `Fetch Releases and Cycles` when `allProjects` is `true`. Calling `Fetch QMetry Project Info` without `projectKey` returns the project selected in the QMetry UI by the API key's user; use it only when that is what the user asks for.
+
+Every project-scoped response reports the project it ran against (`{"project": {"key", "source"}}`, plus `id` and `name` when the call looked up project info). An invalid project key returns an error with "Did you mean" suggestions.
 
 ### `get_qmetry_project`
 
--   Purpose: Fetch the current QMetry project for your account.
--   Returns: Complete list of project information available within your account.
--   Use case: Retrieve current project details.
+-   Purpose: Fetch a QMetry project's configuration for the given `projectKey`. Without `projectKey`, returns the project currently selected in QMetry (`currentProjectId`, `currentProjectName`); use that only when the user asks for it.
+-   Returns: Project configuration (folders, date format) and a short `{id, key, name}` list of the projects you can access.
+-   Use case: Find out which project will be used, or retrieve a project's configuration. It does not change the selected project.
 
 ### `list_qmetry_project_list`
 
--   Purpose: Fetch QMetry projects list including projectID, name, projectKey, isArchived, viewIds and folderPath needed for other operations.
--   Returns: Complete list of project details, viewIds, folderPaths, and project configuration.
+-   Purpose: Fetch QMetry projects list including projectID, name, projectKey, isArchived and folderPath needed for other operations.
+-   Returns: Complete list of project details, folderPaths, and project configuration.
 -   Use case: Retrieve all projects available in your account.
 
 ### `create_release`
@@ -35,6 +39,13 @@ The QMetry client provides the following test management capabilities as listed 
 -   Parameters: Cycle name (`name`), Release name (`name`) or Release ID.
 -   Returns: JSON object containing the new build ID, and metadata.
 -   Use case: Create a new test cycle for a sprint within an existing release for planning.
+
+### `update_release`
+
+-   Purpose: Update an existing release in QMetry (name, description, start date or target date).
+-   Parameters: Project ID (`projectID`) and Release ID (`releaseID`), plus at least one of `name`, `description`, `startDate`, `targetDate`.
+-   Returns: JSON object confirming the update.
+-   Use case: Rename a release or move its dates after a schedule change. Release names must be unique within the project (`AD.RELEASE_DUPLICATE` otherwise).
 
 ### `get_qmetry_releases_cycles`
 
@@ -79,7 +90,7 @@ The QMetry client provides the following test management capabilities as listed 
 ### `list_qmetry_requirements`
 
 -   Purpose: Fetch QMetry requirements from the current project.
--   Parameters: Requirement required parameters (`viewId`, `folderPath`).
+-   Parameters: Requirement required parameters (`folderPath`).
 -   Returns: Complete list of requirements available within your current project.
 -   Use case: Retrieve available requirements.
 
@@ -128,7 +139,7 @@ The QMetry client provides the following test management capabilities as listed 
 ### `list_qmetry_testcases`
 
 -   Purpose: List all QMetry test cases from the current project.
--   Parameters: Test Case required parameters (`viewId`, `folderPath`).
+-   Parameters: Test Case required parameters (`folderPath`).
 -   Returns: Complete list of test cases available within the current project.
 -   Use case: Retrieve available test cases.
 
@@ -184,7 +195,7 @@ The QMetry client provides the following test management capabilities as listed 
 ### `fetch_test_suites`
 
 -   Purpose: Fetch QMetry test suites from the current project.
--   Parameters: Test Suite view ID (`viewId`), folder path (`folderPath`).
+-   Parameters: Test Suite folder path (`folderPath`).
 -   Returns: Complete list of test suites available within the current project with pagination info.
 -   Use case: List all test suites in a project, search for specific test suites using filters, browse test suites in specific folders.
 
@@ -233,7 +244,7 @@ The QMetry client provides the following test management capabilities as listed 
 ### `get_testcase_runs_by_testsuite_run`
 
 -   Purpose: Get test case runs under a specific test suite run execution in QMetry.
--   Parameters: Test Suite Run identifier (`test suite run ID`), Test Execution View identifier (`viewId`).
+-   Parameters: Test Suite Run identifier (`test suite run ID`).
 -   Returns: Complete list of test case runs with detailed execution information, status, tester details, and run metadata.
 -   Use case: Retrieve individual test case execution results and status within a specific test suite run, including Test Run UDFs.
 
@@ -261,7 +272,7 @@ The QMetry client provides the following test management capabilities as listed 
 ### `fetch_issues`
 
 -   Purpose: Fetch QMetry issues from the current project.
--   Parameters: Issue view ID (`viewId`).
+-   Parameters: Optional pagination and filter parameters.
 -   Returns: Complete list of issues with pagination info and issue details including priorities, status, and metadata.
 -   Use case: List all issues in a project, search for specific issues using filters, get paginated issue results.
 

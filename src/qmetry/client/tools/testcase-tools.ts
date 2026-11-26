@@ -1,6 +1,7 @@
 import { QMetryToolsHandlers } from "../../config/constants";
 import {
   CreateTestCaseArgsSchema,
+  LinkReleaseCycleWithTestCaseArgsSchema,
   LinkTestcaseToIssuesArgsSchema,
   TestCaseDetailsArgsSchema,
   TestCaseExecutionsArgsSchema,
@@ -53,6 +54,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
         description:
           "MOST COMMON: User provides only a name — steps are auto-generated from context.",
         parameters: {
+          projectKey: "MAC",
           name: "Login Test Case",
           steps: [
             { orderId: 1, description: "Navigate to the login page" },
@@ -71,6 +73,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
         description:
           "Create test case with metadata only — steps auto-generated from context",
         parameters: {
+          projectKey: "MAC",
           tcFolderID: "102653",
           name: "Login Test Case",
           priority: 2025268,
@@ -91,6 +94,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
         description:
           "SCENARIO 1: User explicitly asked for steps — 'create test case with step 1 - Go to login page, step 2 - enter credentials'",
         parameters: {
+          projectKey: "MAC",
           tcFolderID: "102653",
           name: "Login Flow Test",
           steps: [
@@ -111,6 +115,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
         description:
           "SCENARIO 1: User provided steps with full metadata (steps explicitly mentioned in prompt)",
         parameters: {
+          projectKey: "MAC",
           tcFolderID: "102653",
           name: "Test Case 1",
           steps: [
@@ -149,6 +154,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
         description:
           "SCENARIO 3: User explicitly says no steps — 'create a test case without any steps'",
         parameters: {
+          projectKey: "MAC",
           name: "Login Test Case",
           skipSteps: true,
         },
@@ -159,6 +165,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
         description:
           "User provides name only — steps auto-generated from test case name context",
         parameters: {
+          projectKey: "MAC",
           name: "Password Reset Test Case",
           steps: [
             { orderId: 1, description: "Navigate to the login page" },
@@ -304,32 +311,16 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       "  NEVER ask user to 'try again' manually — resolve and retry automatically.",
       "=== END ERROR RECOVERY ===",
       "",
-      "=== DATE FORMAT CHECK (MANDATORY — EVERY CREATE REQUEST) ===",
-      "ALWAYS call 'Fetch QMetry Project Info' before every create request — not only when the user explicitly mentions a date.",
-      "Any UDF field could be a DATETIMEPICKER. Wrong format causes QMetry to silently discard the field value (API returns success but value is NOT stored — no error).",
-      "Project info response contains 'dateTimeFormatID' and 'dateTimeFormatNew' array.",
-      "STEP 1: From project info, read dateTimeFormatID (e.g. 3).",
-      "STEP 2: Find entry in dateTimeFormatNew where id === dateTimeFormatID → read its unique_value (e.g. 'yyyy-MM-dd').",
-      "STEP 3: unique_value is the Java/QMetry format pattern. Mapping:",
-      "  yyyy = 4-digit year | MM = 2-digit month (01-12) | dd = 2-digit day | MMM = 3-letter month (Jan/Feb/...)",
-      "  Example: id=1 → MM-dd-yyyy → '10-25-2000' | id=2 → dd-MM-yyyy → '25-10-2000' | id=3 → yyyy-MM-dd → '2000-10-25' | id=4 → dd-MMM-yyyy → '25-Oct-2000'",
-      "STEP 4: For EVERY DATETIMEPICKER field in the payload (user-provided OR from defaultValues):",
-      "  - Parse the date regardless of what format the user typed",
-      "  - Re-format it using the active unique_value pattern",
-      "  - Send the re-formatted string to the API",
-      "Examples with unique_value='yyyy-MM-dd':",
-      "  User says '25 Dec 2024' → send '2024-12-25'",
-      "  User says '12/25/2024' → send '2024-12-25'",
-      "  Default value is a date string '2024-12-25' → already correct, keep it",
-      "NEVER send a date in a format different from the project's active dateTimeFormatID format.",
-      "Fetch project info ONCE per create/update operation and reuse dateTimeFormatID for all date fields.",
-      "=== END DATE FORMAT CHECK ===",
+      "=== DATE FIELDS ===",
+      "The server converts every DATETIMEPICKER UDF value (udfFields and step UDFs) to the project's date format before sending. Do NOT call 'Fetch QMetry Project Info' just to read the date format.",
+      "Send dates as ISO 'YYYY-MM-DD' (e.g. the user says '25 Dec 2024' -> send '2024-12-25'). ISO is never ambiguous; other forms such as '03/04/2024' are read using the project's day/month order.",
+      "=== END DATE FIELDS ===",
       "",
       "If tcFolderID is not provided, it will be auto-resolved to the root test case folder using project info (rootFolders.TC.id).",
       "To get valid values for priority, owner, component, etc., call the project info tool and use the returned customListObjs IDs.",
       "STALE / NOT-FOUND ID RECOVERY (applies to ALL system fields — priority, component/label, owner, status, testCaseType, testingType, release, cycle): " +
         "If the user references a value by name and it is NOT found in your current cached project info data, DO NOT give up or skip the field immediately. " +
-        "Instead: call 'Fetch QMetry Project Info' fresh (no arguments needed) to get the latest snapshot, then re-scan the relevant customListObjs list. " +
+        "Instead: call 'Fetch QMetry Project Info' fresh with the same projectKey to get the latest snapshot, then re-scan the relevant customListObjs list. " +
         "This is mandatory when: (a) the user just added a new label/priority/status/user in QMetry UI, or (b) the cached info is from an earlier turn. " +
         "Only skip + show a friendly message if the value is still missing AFTER the fresh fetch.",
       "FOLDER ID RESOLUTION (tcFolderID): " +
@@ -354,8 +345,10 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       "Demo steps payload: steps: [ { orderId: 1, description: 'First Step', inputData: 'First Data', expectedOutcome: 'First Outcome', UDF: { customField1: 'Custom Field Data A', customField2: 'Custom Field Data B' } }, ... ]",
       "UDF fields in steps must match your QMetry custom field configuration.",
       "Release/cycle mapping is optional but useful for planning.",
+      "CRITICAL: if the user asks to create a test case AND link/associate/map it to a release or cycle, include them IN THIS CALL " +
+        "(associateRelCyc: true and releaseCycleMapping). Do NOT create the test case first and then call 'Link Release Cycle with Test Case' - " +
+        "that tool is only for test cases that existed before this request.",
       "If the user wants to link or associate a release and cycle to the test case, set associateRelCyc: true in the payload.",
-      "If the user provides a release ID, map it from projects.releases[index].releaseID in the project info response, and use that ID in releaseCycleMapping.",
       "If the user provides both release and cycle IDs, validate both against the current project's releases and cycles; if valid, use them in releaseCycleMapping.",
       "When adding releaseCycleMapping, always include the 'version' field (usually set to 1) in each mapping object. The correct format is: { release: <releaseID>, cycle: [<cycleID>], version: 1 }. If 'version' is missing, the request will fail.",
       "If the user provides a release name, map it to its ID from project info; if a cycle name is provided, map it to its ID from the associated release's builds list.",
@@ -435,6 +428,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       {
         description: "Update test case summary (existing version update)",
         parameters: {
+          projectKey: "MAC",
           tcID: 4519260,
           tcVersionID: 5448492,
           name: "MAC Test11",
@@ -445,6 +439,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       {
         description: "Create NEW VERSION with updated summary and description",
         parameters: {
+          projectKey: "MAC",
           tcID: 4572654,
           tcVersionID: 5514384,
           tcVersion: 1,
@@ -462,6 +457,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
         description:
           "Create NEW VERSION with all metadata fields (release, cycle, priority, owner, etc.)",
         parameters: {
+          projectKey: "MAC",
           tcID: 4572654,
           tcVersionID: 5514384,
           tcVersion: 1,
@@ -485,6 +481,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       {
         description: "Update EXISTING VERSION 2 (not creating new version)",
         parameters: {
+          projectKey: "MAC",
           tcID: 4572654,
           tcVersionID: 5514385,
           name: "Updated version 2 name",
@@ -497,6 +494,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
         description:
           "Update priority to High and owner to john.doe (existing version)",
         parameters: {
+          projectKey: "MAC",
           tcID: 4519260,
           tcVersionID: 5448492,
           priority: 505015,
@@ -508,6 +506,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       {
         description: "Update steps (edit, add, remove) - existing version",
         parameters: {
+          projectKey: "MAC",
           tcID: 4519260,
           tcVersionID: 5448492,
           steps: [
@@ -537,6 +536,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       {
         description: "Create NEW VERSION with updated steps",
         parameters: {
+          projectKey: "MAC",
           tcID: 4572654,
           tcVersionID: 5514384,
           tcVersion: 1,
@@ -576,6 +576,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       {
         description: "Update only metadata (no steps) - existing version",
         parameters: {
+          projectKey: "MAC",
           tcID: 4519260,
           tcVersionID: 5448492,
           updateOnlyMetadata: true,
@@ -588,6 +589,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
         description:
           "Create NEW VERSION from existing version 2 with updated steps (working payload for linked test cases)",
         parameters: {
+          projectKey: "MAC",
           tcID: 4594145,
           tcVersionID: 5536706,
           tcVersion: 2,
@@ -655,6 +657,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       },
     ],
     hints: [
+      "This tool cannot change a test case's releases/cycles. To add a release/cycle to an existing test case, use 'Link Release Cycle with Test Case'.",
       "=== DEFAULT VALUES — APPLY FOR ANY UNSET FIELD ===",
       "Call 'Fetch UDF Layout' with entityType='TC', pageName='DETAIL' before updating.",
       "defaultValues (from Fetch UDF Layout): { fieldName: defaultValueId } — sweep ALL entries.",
@@ -662,16 +665,10 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       "  This applies to non-mandatory fields too (e.g. priority, estimatedTime). Omitting them = data loss.",
       "=== END DEFAULT VALUES ===",
       "",
-      "=== DATE FORMAT CHECK (MANDATORY — EVERY UPDATE REQUEST) ===",
-      "ALWAYS call 'Fetch QMetry Project Info' before every update request — not only when the user explicitly mentions a date.",
-      "Any UDF field could be a DATETIMEPICKER. Wrong format causes QMetry to silently discard the field value (API returns success but value is NOT stored — no error).",
-      "STEP 1: From project info, read dateTimeFormatID (e.g. 3).",
-      "STEP 2: Find entry in dateTimeFormatNew where id === dateTimeFormatID → read its unique_value (e.g. 'yyyy-MM-dd').",
-      "STEP 3: unique_value pattern: yyyy=4-digit year, MM=2-digit month (01-12), dd=2-digit day, MMM=3-letter month (Jan/Feb/...).",
-      "  Example: id=1 → MM-dd-yyyy → '10-25-2000' | id=2 → dd-MM-yyyy → '25-10-2000' | id=3 → yyyy-MM-dd → '2000-10-25' | id=4 → dd-MMM-yyyy → '25-Oct-2000'",
-      "STEP 4: For EVERY DATETIMEPICKER field in the payload: parse any user-provided date and re-format it using the active unique_value pattern before sending.",
-      "NEVER assume a date format — always derive it from dateTimeFormatID. Wrong format = silent data loss.",
-      "=== END DATE FORMAT CHECK ===",
+      "=== DATE FIELDS ===",
+      "The server converts every DATETIMEPICKER UDF value (udfFields and step UDFs) to the project's date format before sending. Do NOT call 'Fetch QMetry Project Info' just to read the date format.",
+      "Send dates as ISO 'YYYY-MM-DD' (e.g. the user says '25 Dec 2024' -> send '2024-12-25'). ISO is never ambiguous; other forms such as '03/04/2024' are read using the project's day/month order.",
+      "=== END DATE FIELDS ===",
       "",
       "CRITICAL - VERSION CREATION vs UPDATE DISTINCTION:",
       "This tool supports TWO MODES using the SAME API endpoint:",
@@ -825,16 +822,14 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
   {
     title: "Fetch Test Cases",
     toolset: "Test Cases",
-    summary:
-      "Fetch QMetry test cases - automatically handles viewId resolution based on project",
+    summary: "Fetch QMetry test cases",
     handler: QMetryToolsHandlers.FETCH_TEST_CASES,
     inputSchema: TestCaseListArgsSchema,
     purpose:
       "Get LIST of test cases from QMetry for browsing and bulk operations. " +
       "CRITICAL: DO NOT use this tool with filters to fetch a single test case by ID or entityKey! " +
       "Using filters with this API will persist those filters in the production UI, causing only filtered records to be visible. " +
-      "For fetching a SINGLE test case by ID or entityKey, ALWAYS use 'Fetch Test Case Details' tool instead. " +
-      "System automatically gets correct viewId from project info if not provided.",
+      "For fetching a SINGLE test case by ID or entityKey, ALWAYS use 'Fetch Test Case Details' tool instead.",
     useCases: [
       "List all test cases in a project (without filters)",
       "Browse test cases in specific folders for bulk operations",
@@ -843,18 +838,14 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
     ],
     examples: [
       {
-        description:
-          "Get all test cases from default project - system will auto-fetch viewId",
-        parameters: {},
-        expectedOutput:
-          "List of test cases from default project with auto-resolved viewId",
+        description: "Get all test cases from project MAC",
+        parameters: { projectKey: "MAC" },
+        expectedOutput: "List of test cases from project MAC",
       },
       {
-        description:
-          "Get all test cases from UT project - system will auto-fetch UT project's viewId",
+        description: "Get all test cases from UT project",
         parameters: { projectKey: "UT" },
-        expectedOutput:
-          "List of test cases from UT project using UT's specific TC viewId",
+        expectedOutput: "List of test cases from UT project",
       },
       {
         description: "Get test cases by release/cycle filter",
@@ -923,18 +914,13 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       "- 'Get all test cases' (without specifying a single test case)",
       "- 'Export test cases' (for bulk operations)",
       "",
-      "CRITICAL WORKFLOW: Always use the SAME projectKey for both project info and test case fetching",
-      "Step 1: If user specifies projectKey (like 'UT', 'MAC'), use that EXACT projectKey for project info",
-      "Step 2: Get project info using that projectKey, extract latestViews.TC.viewId",
-      "Step 3: Use the SAME projectKey and the extracted TC viewId for fetching test cases",
-      "Step 4: If user doesn't specify projectKey, use 'default' for both project info and test case fetching",
-      "NEVER mix project keys - if user says 'MAC project', use projectKey='MAC' for everything",
+      "PROJECT: pass the same explicit projectKey on every call of the task (never omit it). See the projectKey field for how to find the key from a project name or ID.",
       "DEPRECATED: Do not use filter with entityKeyId for single test case - use 'Fetch Test Case Details' instead",
       "RELEASE/CYCLE FILTERING: Use release and cycle IDs, not names, for filtering",
       'For release filter: \'[{"value":[releaseId],"type":"list","field":"release"}]\'',
       'For cycle filter: \'[{"value":[cycleId],"type":"list","field":"cycle"}]\'',
       'For combined release+cycle: \'[{"value":[releaseId],"type":"list","field":"release"},{"value":[cycleId],"type":"list","field":"cycle"}]\'',
-      "Get release/cycle IDs from FETCH_RELEASES_AND_CYCLES tool before filtering",
+      "Get release/cycle IDs from 'Fetch Releases and Cycles' tool before filtering",
       "FILTER FIELDS: entityKeyId, priorityAlias, createdByAlias, updatedByAlias, testCaseStateAlias, testingTypeAlias, testCaseTypeAlias, componentAlias, owner, release, cycle",
       "SORT FIELDS: entityKey, name, associatedVersion, priorityAlias, createdDate, createdByAlias, updatedDate, updatedByAlias, testCaseStateAlias, testingTypeAlias, executionMinutes",
       "For multiple entity keys, use comma-separated values in filter",
@@ -968,7 +954,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
     examples: [
       {
         description: "Get test case details by numeric ID",
-        parameters: { tcID: 4468020 },
+        parameters: { projectKey: "MAC", tcID: 4468020 },
         expectedOutput:
           "Detailed test case information including summary, description, status",
       },
@@ -1007,7 +993,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
     examples: [
       {
         description: "Get version 2 details for test case ID 123",
-        parameters: { id: 123, version: 2 },
+        parameters: { projectKey: "MAC", id: 123, version: 2 },
         expectedOutput: "Version 2 details for test case 123",
       },
     ],
@@ -1039,7 +1025,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
     examples: [
       {
         description: "Get steps for test case ID 123",
-        parameters: { id: 123 },
+        parameters: { projectKey: "MAC", id: 123 },
         expectedOutput:
           "Detailed steps with actions and expected results for test case 123",
       },
@@ -1090,7 +1076,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
     examples: [
       {
         description: "Get all executions for test case ID 1223922",
-        parameters: { tcid: 1223922 },
+        parameters: { projectKey: "MAC", tcid: 1223922 },
         expectedOutput:
           "Present as ONE unified table — never as a separate type+value UDF breakdown. Example:\n" +
           "| Test Suite Key | Test Suite Name  | Release | Cycle  | Platform | Executed Version | Execution Status | Tested By | Environments UDF     | Execution Type |\n" +
@@ -1101,12 +1087,13 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       },
       {
         description: "Get executions for specific test case version",
-        parameters: { tcid: 1223922, tcversion: 2 },
+        parameters: { projectKey: "MAC", tcid: 1223922, tcversion: 2 },
         expectedOutput: "Execution records for version 2 of the test case",
       },
       {
         description: "Filter executions by test suite and platform",
         parameters: {
+          projectKey: "MAC",
           tcid: 1223922,
           filter:
             '[{"value":"Sample Test Suite","type":"string","field":"testSuiteName"},{"value":[12345],"type":"list","field":"platformID"}]',
@@ -1117,6 +1104,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter executions by execution status",
         parameters: {
+          projectKey: "MAC",
           tcid: 1223922,
           filter:
             '[{"value":["PASS"],"type":"list","field":"executionStatus"}]',
@@ -1126,6 +1114,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter executions by release and cycle",
         parameters: {
+          projectKey: "MAC",
           tcid: 1223922,
           filter:
             '[{"value":[55178],"type":"list","field":"release"},{"value":[111577],"type":"list","field":"cycle"}]',
@@ -1136,6 +1125,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter executions by date range",
         parameters: {
+          projectKey: "MAC",
           tcid: 1223922,
           filter:
             '[{"value":"2024-01-01","type":"date","field":"executedDate","comparison":"gt"},{"value":"2024-12-31","type":"date","field":"executedDate","comparison":"lt"}]',
@@ -1145,6 +1135,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter executions by user",
         parameters: {
+          projectKey: "MAC",
           tcid: 1223922,
           filter: '[{"value":["john.doe"],"type":"list","field":"executedBy"}]',
         },
@@ -1153,7 +1144,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       {
         description:
           "Fetch Test Run UDF values for all executions of test case ID 41571999",
-        parameters: { tcid: 41571999 },
+        parameters: { projectKey: "MAC", tcid: 41571999 },
         expectedOutput:
           "Present as ONE unified table combining identification fields and UDF values — never a separate type+value breakdown. Example:\n" +
           "| Test Suite Key | Test Suite Name | Release | Cycle   | Platform | Executed Version | Execution Status | Tested By | Environments UDF     | Execution Type | Country    |\n" +
@@ -1163,7 +1154,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       {
         description:
           "Check if project has Test Run UDFs — response includes hasTcRunUdf flag",
-        parameters: { tcid: 1223922 },
+        parameters: { projectKey: "MAC", tcid: 1223922 },
         expectedOutput:
           "Response contains hasTcRunUdf: true (UDFs present, testRunUdfs populated) or hasTcRunUdf: false (no UDFs configured, testRunUdfNote explains this)",
       },
@@ -1241,7 +1232,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       "PLATFORM/SUITE ARCHIVE: Use [1,0] for both archived and non-archived, [1] for archived only, [0] for active only",
       "Multiple filter conditions are combined with AND logic",
       "Use pagination for large execution result sets (start, page, limit parameters)",
-      "Get platform IDs from FETCH_PLATFORMS tool and release/cycle IDs from FETCH_RELEASES_AND_CYCLES tool",
+      "Get platform IDs from FETCH_PLATFORMS tool and release/cycle IDs from 'Fetch Releases and Cycles' tool",
       "This tool is essential for test execution reporting, trend analysis, and compliance auditing",
       "Execution data includes timestamps, user information, environment details, and test results",
       "Use scope parameter to define retrieval context (project, folder, release, cycle)",
@@ -1296,7 +1287,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
     examples: [
       {
         description: "Fetch steps with UDF values for test case ID 112768054",
-        parameters: { tcID: 112768054 },
+        parameters: { projectKey: "MAC", tcID: 112768054 },
         expectedOutput:
           "Steps with UDF object containing field values, ID_<field> arrays for lookup IDs, UDF_<field> prefixed values, filterTemplate with UDF field definitions",
       },
@@ -1308,10 +1299,9 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       "LOOKUPLIST: id = UDF_ID_<fieldName>, display = UDF_<fieldName>",
       "MULTILOOKUPLIST: ids = UDF_ID_<fieldName> (array), display = UDF_<fieldName>",
       "CASCADINGLIST: parent = UDF_ID_<fieldName>[0], child = UDF_ID_<fieldName>[1]",
-      "viewId auto-resolved from project info if not provided",
     ],
     outputDescription:
-      "JSON object with data array (steps with UDF values), filterTemplate (UDF field definitions), columns (visible/hidden column config), total count, and viewId",
+      "JSON object with data array (steps with UDF values), filterTemplate (UDF field definitions), columns (visible/hidden column config), and total count",
     readOnly: true,
     idempotent: true,
   },
@@ -1334,6 +1324,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       {
         description: "Link issues to test case 8d7b-TC-63",
         parameters: {
+          projectKey: "MAC",
           tcID: "8d7b-TC-63",
           dfIDs: [2039, 2038, 2037, 1528],
         },
@@ -1350,5 +1341,90 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
     outputDescription: "JSON object with success status and linkage details.",
     readOnly: false,
     idempotent: false,
+  },
+  {
+    title: "Link Release Cycle with Test Case",
+    toolset: "Test Cases",
+    summary:
+      "Link one or more releases and their cycles to one or more test cases that ALREADY EXISTED before this request. Never use it right after Create Test Case.",
+    handler: QMetryToolsHandlers.LINK_RELEASE_CYCLE_WITH_TESTCASE,
+    inputSchema: LinkReleaseCycleWithTestCaseArgsSchema,
+    purpose:
+      "ONLY for test cases that existed BEFORE the current request. Update Test Case cannot change a test case's releases/cycles, " +
+      "so this tool is the only way to add releases and their cycles to existing test case versions, for release planning and traceability. " +
+      "NOT for new test cases: to create a test case with a release/cycle, pass associateRelCyc: true and releaseCycleMapping to Create Test Case in ONE call. " +
+      "One call links EVERY release/cycle in releaseCycleMapping to EVERY test case in testCases, so link several releases and test cases together in a single call.",
+    useCases: [
+      "Link a test case to a release and one of its cycles",
+      "Link a test case to several cycles of the same release",
+      "Link several releases, each with its own cycles, to several test cases in one call",
+      "Link test cases identified by key (e.g. MAC-TC-1684) to releases/cycles given by name",
+      "Link a specific (non-latest) version of a test case to a release/cycle",
+    ],
+    examples: [
+      {
+        description:
+          "Link the latest version of test case 4611391 to release 92340, cycle 131142",
+        parameters: {
+          projectKey: "MAC",
+          destinationProjectId: 46893,
+          releaseCycleMapping: [{ releaseId: 92340, cycleIds: [131142] }],
+          testCases: [{ tcID: 4611391, tcVersionID: 4705299 }],
+        },
+        expectedOutput:
+          "code CO.REL_CYCLE_LINK_SUCCESS - Release(s) and Cycle(s) associated successfully.",
+      },
+      {
+        description:
+          "Link two releases (each with its own cycles) to two test cases in one call",
+        parameters: {
+          projectKey: "MAC",
+          destinationProjectId: 46893,
+          releaseCycleMapping: [
+            { releaseId: 92340, cycleIds: [131142] },
+            { releaseId: 92341, cycleIds: [131143, 133715] },
+          ],
+          testCases: [
+            { tcID: 4611391, tcVersionID: 4705299 },
+            { tcID: 4611393, tcVersionID: 4705304 },
+          ],
+        },
+        expectedOutput:
+          "code CO.REL_CYCLE_LINK_SUCCESS - Release(s) and Cycle(s) associated successfully.",
+      },
+    ],
+    hints: [
+      "CRITICAL: NEVER call this tool right after Create Test Case in the same request. " +
+        "If the user asks to create a test case AND link/associate a release or cycle, put associateRelCyc: true and releaseCycleMapping " +
+        "in the Create Test Case call itself - one call, no follow-up link.",
+      "Use this tool only when the test cases already existed before this request (the user names existing test cases by key, ID or name).",
+      "CRITICAL: ALL parameters are required (projectKey, destinationProjectId, releaseCycleMapping, testCases). Put ALL releases in releaseCycleMapping and ALL test cases in testCases and make ONE call - " +
+        "every listed release/cycle is linked to every listed test case. Only split into several calls when different test cases need DIFFERENT releases/cycles.",
+      "STEP 1 - destinationProjectId: the numeric ID of the project you are working in (the projectKey's project). If you don't already have it, call 'Fetch QMetry list Projects' with " +
+        `filter '[{"value":"<projectKey>","type":"string","field":"projectKey"}]' and use projectID of the row whose projectKey EXACTLY matches (the filter can also return similar keys). ` +
+        "If no active project matches, retry with params.showArchive: true. NOT the string projectKey.",
+      "STEP 2 - releaseCycleMapping: one entry per release ({ releaseId, cycleIds }); never repeat a releaseId. Use the IDs the user gave, or call 'Fetch Releases and Cycles', " +
+        "match each release by name, then match each cycle name among THAT release's cycles. " +
+        "Release names are unique in a project and cycle names are unique within a release, so a name match is exact. A cycle must belong to the release it is listed under.",
+      "STEP 3 - testCases[].tcID: use the numeric IDs the user gave, or resolve keys with ONE 'Fetch Test Cases' call using a comma-separated filter " +
+        `'[{"type":"string","value":"MAC-TC-1684,MAC-TC-1685","field":"entityKeyId"}]' -> data[].tcID (set limit to at least the number of keys).`,
+      "STEP 4 - testCases[].tcVersionID (a version ID like 4705299, NOT the visible version number tcVersion): " +
+        "if the user named NO version, use the LATEST: 'Fetch Test Cases' (filter on entityKeyId) -> data[].tcVersionID. " +
+        "If you only have a numeric tcID, first call 'Fetch Test Case Version Details' with id=tcID and version=1 to read data[0].entityKey, then use 'Fetch Test Cases' as above. " +
+        "If the user named a visible version N for a test case (e.g. 'version 2'), call 'Fetch Test Case Version Details' with id=tcID and version=N and use data[0].tcVersionID.",
+      "ASK THE USER - do not guess - when a test case key, test case version, release name or cycle name cannot be resolved " +
+        "(no match in Fetch Test Cases / Fetch Releases and Cycles, or Fetch Test Case Version Details returns no data for that version number).",
+      "RESPONSE: code CO.REL_CYCLE_LINK_SUCCESS means the links were made. If 'duplicate_rel_cycle' is also present, the release/cycle pairs listed there were ALREADY linked and were skipped; the rest were linked - tell the user both.",
+      "RESPONSE: success=true with code TC.REL_CYC_EXIST means EVERY selected release/cycle was already linked - nothing changed; tell the user, do not retry.",
+      "ERRORS: each of these fails the WHOLE request and NOTHING is linked - fix the bad ID and retry with valid IDs only:",
+      "  CO.INVALID_RELEASE_ID: a releaseId is wrong - re-check releases with 'Fetch Releases and Cycles'.",
+      "  CO.INVALID_BUILD_ID ('Invalid Build ID.'): at least one cycle ID is wrong (QMetry calls cycles 'builds') - re-check that every cycleId belongs to the release it is listed under.",
+      "  RQ.ENTITY_NOT_FOUND_ERROR (QMetry returns this code for test cases too): at least one tcID/tcVersionID is wrong - re-resolve the test cases with 'Fetch Test Cases' / 'Fetch Test Case Version Details'.",
+    ],
+    outputDescription:
+      "JSON object with success, code (CO.REL_CYCLE_LINK_SUCCESS or TC.REL_CYC_EXIST), message, and duplicate_rel_cycle listing release/cycle pairs that were already linked.",
+    readOnly: false,
+    destructive: false,
+    idempotent: true,
   },
 ];

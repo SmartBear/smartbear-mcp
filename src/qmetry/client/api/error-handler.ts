@@ -1,433 +1,370 @@
 /**
  * QMetry API Error Handling Utilities
  *
- * This module provides centralized error handling for QMetry API operations,
- * including user-friendly error messages and troubleshooting guidance.
+ * Every failed QMetry call (non-2xx response or network failure) is
+ * thrown as a {@link QMetryApiError}. It is a ToolError, so the common tool
+ * wrapper returns it to the model as an `isError: true` result instead of
+ * reporting it to BugSnag as a bug.
  *
- * Handles common error scenarios:
- * - SSL/TLS Certificate errors (corporate proxies like Zscaler)
- * - Authentication/Authorization failures
- * - CORS (Cross-Origin Resource Sharing) issues
- * - Project access errors
- * - Network connectivity problems
- * - Generic API errors with helpful troubleshooting
+ * The message is kept short and model-readable: the HTTP status, QMetry's own
+ * `code` and `message` from the response body, and a hint only where one
+ * actually applies (bad credentials, connectivity, server errors, or a known
+ * QMetry error code). An invalid request gets no generic troubleshooting.
  */
 
+import { ToolError } from "../../../common/tools";
+
+/** How much of an unexpected response body to quote back to the model. */
+const SNIPPET_LENGTH = 200;
+
+export type QMetryErrorKind = "auth" | "client" | "server" | "network";
+
+export interface QMetryErrorDetails {
+  kind: QMetryErrorKind;
+  /** Full request URL (never contains the API key, which is sent as a header). */
+  url: string;
+  /** HTTP status; absent for network failures. */
+  status?: number;
+  /** QMetry error code from the response body, e.g. `CO.INVALID_PROJECT_ID`. */
+  code?: string;
+  /** QMetry's message, or the readable part of a non-JSON body. */
+  detail?: string;
+  hint?: string;
+}
+
+/** Where the failure happened, added by the tool registration layer. */
 export interface QMetryErrorContext {
-  status: number;
-  errorData?: any;
-  errorText: string;
-  baseUrl: string;
-  project?: string;
-  path?: string;
-  isCorsError?: boolean;
+  /** Public MCP tool name, e.g. `qmetry_create_test_case`. */
+  tool?: string;
+  /** Relevant, non-secret tool inputs (IDs, keys) as `name=value` pairs. */
+  inputs?: Record<string, string>;
+  /** What the tool was doing when the call failed, if not the main request. */
+  step?: string;
+  /** Close matches for an invalid value, shown as "Did you mean: …". */
+  suggestion?: string;
 }
 
 /**
- * Error message templates for common QMetry API issues
+ * Hints for QMetry error codes seen in practice. Only add a code here once it
+ * has been observed from the real API — never guess codes.
  */
-const ERROR_TEMPLATES = {
-  AUTHENTICATION_FAILED: (baseUrl: string, errorText: string) =>
-    `QMetry API Authentication Failed: Invalid or expired API key.\n\n` +
-    `To resolve this issue:\n` +
-    `1. Log into your QMetry Test Management instance: ${baseUrl}\n` +
-    `2. Search Open API → Go To Open API Page\n` +
-    `3. Generate a new API key OR copy an existing valid key\n` +
-    `4. Copy the API key to your clipboard\n` +
-    `5. Restart VS Code or reload the MCP server\n` +
-    `6. When prompted, paste the new API key for 'QMetry Open API Key'\n\n` +
-    `Note: API keys may expire or be revoked. Always use the latest key from your QMetry instance.\n` +
-    `Original error: ${errorText}`,
-
-  AUTHORIZATION_ERROR: (errorText: string) =>
-    `QMetry Authorization Error: Insufficient permissions.\n\n` +
-    `Your API key is valid but lacks the necessary permissions for this operation.\n\n` +
-    `Possible causes:\n` +
-    `1. Your user role doesn't have access to this resource\n` +
-    `2. The project permissions are restricted\n` +
-    `3. The specific operation requires higher privileges\n\n` +
-    `To resolve:\n` +
-    `1. Contact your QMetry administrator to review your permissions\n` +
-    `2. Verify you have the correct project access\n` +
-    `3. Check if your user role includes the required privileges\n\n` +
-    `Original error: ${errorText}`,
-
-  PROJECT_ACCESS_ERROR: (project: string, errorText: string) =>
-    `QMetry Project Access Error: Cannot access project '${project}'.\n\n` +
-    `Possible causes:\n` +
-    `1. API key lacks permissions for this project\n` +
-    `2. Project key '${project}' doesn't exist or is archived\n` +
-    `3. Your user account doesn't have access to this project\n\n` +
-    `To resolve:\n` +
-    `1. Verify the project key is correct\n` +
-    `2. Check your QMetry permissions for this project\n` +
-    `3. Contact your QMetry administrator if needed\n\n` +
-    `Original error: ${errorText}`,
-
-  GENERIC_API_ERROR: (status: number, baseUrl: string, errorText: string) =>
-    `QMetry API request failed (${status}): ${errorText}\n\n` +
-    `Troubleshooting tips:\n` +
-    `Verify your QMetry instance URL: ${baseUrl}\n` +
-    `Check if your API key is valid and not expired\n` +
-    `Ensure you have the necessary permissions\n` +
-    `Try accessing QMetry directly in your browser to confirm connectivity`,
-
-  CORS_ERROR: (baseUrl: string, errorText: string) =>
-    `QMetry API CORS Error: Cross-Origin Request Blocked.\n\n` +
-    `CORS (Cross-Origin Resource Sharing) issue detected:\n` +
-    `Your browser is blocking the request due to CORS policy\n` +
-    `The QMetry server may not be configured to allow requests from this origin\n\n` +
-    `Possible solutions:\n` +
-    `1. Contact your QMetry administrator to configure CORS headers\n` +
-    `2. Ensure the QMetry instance URL is correct: ${baseUrl}\n` +
-    `3. If using a proxy, verify proxy CORS configuration\n` +
-    `4. Try accessing QMetry from the same domain/protocol\n` +
-    `5. Check if browser extensions are blocking the request\n\n` +
-    `Technical details: ${errorText}`,
-
-  SSL_CERTIFICATE_ERROR: (baseUrl: string, errorText: string) =>
-    `QMetry API SSL Certificate Error: Unable to verify certificate.\n\n` +
-    `SSL/TLS Certificate verification failed - Common in corporate networks:\n` +
-    `• Corporate proxy/firewall (Zscaler, Forcepoint, etc.) is intercepting HTTPS traffic\n` +
-    `• Self-signed or corporate certificates are being used\n` +
-    `• Certificate chain validation is failing\n\n` +
-    `Solution for corporate network environments:\n` +
-    `Contact your IT administrator to:\n` +
-    `• Add QMetry domain to certificate bypass list\n` +
-    `• Configure corporate certificates properly\n` +
-    `• Whitelist the QMetry API endpoints\n` +
-    `Target URL: ${baseUrl}\n` +
-    `Technical details: ${errorText}`,
-
-  INVALID_URL_ERROR: (baseUrl: string, path: string, errorText: string) =>
-    `QMetry API Invalid URL Error: The API endpoint appears to be incorrect.\n\n` +
-    `Request details:\n` +
-    `• Base URL: ${baseUrl}\n` +
-    `• API Path: ${path}\n` +
-    `• Full URL: ${baseUrl}${path}\n\n` +
-    `Common URL issues:\n` +
-    `1. Wrong API endpoint path (check QMetry API documentation)\n` +
-    `2. Typo in the URL path (missing '/', wrong spelling)\n` +
-    `3. API version mismatch (v1, v2, etc.)\n` +
-    `4. Incorrect base URL (should end with QMetry instance domain)\n` +
-    `5. Body stream errors (often caused by malformed URLs or wrong HTTP method)\n\n` +
-    `Troubleshooting steps:\n` +
-    `1. Verify the API endpoint in QMetry documentation\n` +
-    `2. Check the QMetry instance URL is correct\n` +
-    `3. Test the endpoint manually using a REST client\n` +
-    `4. Ensure the API path matches the expected format\n` +
-    `5. If you see 'Body is unusable' errors, check for URL typos or wrong endpoints\n\n` +
-    `Expected URL format: https://your-qmetry-instance.com/rest/...\n` +
-    `Server response: ${errorText}`,
+const KNOWN_CODE_HINTS: Record<string, string> = {
+  "CO.INVALID_PROJECT_ID":
+    "Invalid project key: call qmetry_fetch_qmetry_list_projects to see valid keys.",
+  "CO.CREATE_ENTITY_IS_NOT_ALLOWED_AS_SELECTED_FOLDER_DOES_NOT_EXIST":
+    "The folder ID does not exist: omit it to use the root folder, or get folder IDs from qmetry_fetch_qmetry_project_info.",
 };
 
-/**
- * Checks if the error is related to authentication (invalid/expired API key)
- */
-function isAuthenticationError(context: QMetryErrorContext): boolean {
-  const { status, errorData } = context;
-
-  return (
-    status === 401 ||
-    errorData?.code === "CO.INVALID_API_KEY" ||
-    errorData?.message?.toLowerCase().includes("invalid api key")
-  );
-}
+const AUTH_HINT =
+  "Check that the QMetry API key is valid and not expired, and that its user has permission for this project and operation.";
+const SERVER_HINT =
+  "This is a QMetry server error; retrying the request may succeed.";
+const SSL_HINT =
+  "The TLS certificate could not be verified; a corporate proxy may be intercepting HTTPS traffic to QMetry.";
 
 /**
- * Checks if the error is related to authorization (insufficient permissions)
+ * A failed QMetry API call. Immutable: {@link withContext} returns a new error
+ * so callers higher up can add the tool name and inputs.
  */
-function isAuthorizationError(context: QMetryErrorContext): boolean {
-  const { status } = context;
-  return status === 403;
-}
+export class QMetryApiError extends ToolError {
+  readonly details: QMetryErrorDetails;
+  readonly context: QMetryErrorContext;
 
-/**
- * Checks if the error is related to project access
- */
-function isProjectAccessError(context: QMetryErrorContext): boolean {
-  const { status, path } = context;
-  return status === 404 && (path?.includes("project") ?? false);
-}
-
-/**
- * Checks if the error is related to CORS (Cross-Origin Resource Sharing)
- */
-function isCorsError(context: QMetryErrorContext): boolean {
-  const { status, errorText, isCorsError } = context;
-
-  // Explicit CORS flag from fetch error
-  if (isCorsError) {
-    return true;
-  }
-
-  // Common CORS indicators
-  const corsIndicators = [
-    "cors",
-    "cross-origin",
-    "cross origin",
-    "preflight",
-    "access-control-allow-origin",
-    "network error when attempting to fetch resource",
-    "failed to fetch",
-  ];
-
-  const lowercaseErrorText = errorText.toLowerCase();
-
-  // Status 0 often indicates CORS issues
-  if (status === 0) {
-    return true;
-  }
-
-  // Check error text for CORS-related keywords
-  return corsIndicators.some((indicator) =>
-    lowercaseErrorText.includes(indicator),
-  );
-}
-
-/**
- * Checks if the error is related to SSL/TLS certificate issues
- */
-function isSslCertificateError(context: QMetryErrorContext): boolean {
-  const { errorText } = context;
-
-  // Common SSL certificate error indicators
-  const sslErrorIndicators = [
-    "unable to get local issuer certificate",
-    "unable_to_get_issuer_cert_locally",
-    "self signed certificate",
-    "certificate verify failed",
-    "ssl certificate problem",
-    "certificate has expired",
-    "certificate authority is invalid",
-    "untrusted certificate",
-    "cert authority invalid",
-    "tls certificate verification failed",
-    "certificate validation error",
-  ];
-
-  const lowercaseErrorText = errorText.toLowerCase();
-
-  // Check for specific error codes that indicate SSL issues
-  if (
-    lowercaseErrorText.includes("unable_to_get_issuer_cert_locally") ||
-    lowercaseErrorText.includes("cert_untrusted") ||
-    lowercaseErrorText.includes("cert_authority_invalid") ||
-    lowercaseErrorText.includes("certificate verify failed")
+  constructor(
+    details: QMetryErrorDetails,
+    context: QMetryErrorContext = {},
+    options?: ErrorOptions,
   ) {
-    return true;
+    super(formatQMetryError(details, context), options);
+    this.name = "QMetryApiError";
+    this.details = details;
+    this.context = context;
+    Object.setPrototypeOf(this, QMetryApiError.prototype);
   }
 
-  // Check error text for SSL-related keywords
-  return sslErrorIndicators.some((indicator) =>
-    lowercaseErrorText.includes(indicator),
-  );
-}
-
-/**
- * Checks if the error is related to invalid/wrong API URL
- */
-function isInvalidUrlError(context: QMetryErrorContext): boolean {
-  const { status, errorText, errorData } = context;
-  const lowercaseErrorText = errorText.toLowerCase();
-
-  // HTTP 404 is the most common indicator of wrong URL/endpoint
-  if (status === 404) {
-    return true;
+  get status(): number | undefined {
+    return this.details.status;
   }
 
-  // Check for specific error messages that indicate wrong URL
-  const urlErrorIndicators = [
-    "not found",
-    "resource not found",
-    "endpoint not found",
-    "path not found",
-    "url not found",
-    "route not found",
-    "invalid endpoint",
-    "unknown endpoint",
-    "method not allowed",
-    "no handler found",
-    "404",
-    // Body stream errors that often indicate wrong URL/malformed requests
-    "body is unusable",
-    "body has already been read",
-    "request body already read",
-    "body stream already consumed",
-    "invalid request body",
-    "malformed request",
-  ];
-
-  // Check error text for URL-related keywords
-  if (
-    urlErrorIndicators.some((indicator) =>
-      lowercaseErrorText.includes(indicator),
-    )
-  ) {
-    return true;
+  get code(): string | undefined {
+    return this.details.code;
   }
 
-  // Check if error data indicates invalid endpoint
-  if (
-    errorData?.error?.toLowerCase().includes("not found") ||
-    errorData?.message?.toLowerCase().includes("not found")
-  ) {
-    return true;
-  }
-
-  return false;
-}
-
-/**
- * Creates an appropriate error message based on the error context
- */
-export function createQMetryError(context: QMetryErrorContext): Error {
-  const { status, errorText, baseUrl, project } = context;
-
-  // SSL certificate errors should be checked first as they're network-level issues
-  if (isSslCertificateError(context)) {
-    return new Error(ERROR_TEMPLATES.SSL_CERTIFICATE_ERROR(baseUrl, errorText));
-  }
-
-  if (isCorsError(context)) {
-    return new Error(ERROR_TEMPLATES.CORS_ERROR(baseUrl, errorText));
-  }
-
-  if (isAuthenticationError(context)) {
-    return new Error(ERROR_TEMPLATES.AUTHENTICATION_FAILED(baseUrl, errorText));
-  }
-
-  if (isAuthorizationError(context)) {
-    return new Error(ERROR_TEMPLATES.AUTHORIZATION_ERROR(errorText));
-  }
-
-  if (isProjectAccessError(context) && project) {
-    return new Error(ERROR_TEMPLATES.PROJECT_ACCESS_ERROR(project, errorText));
-  }
-
-  // Check for invalid URL/endpoint errors (404, wrong paths, etc.)
-  if (isInvalidUrlError(context)) {
-    const path = context.path || "";
-    return new Error(
-      ERROR_TEMPLATES.INVALID_URL_ERROR(baseUrl, path, errorText),
+  /** Returns a copy of this error with `context` merged over the existing one. */
+  withContext(context: QMetryErrorContext): QMetryApiError {
+    return new QMetryApiError(
+      this.details,
+      {
+        ...this.context,
+        ...context,
+        inputs: { ...this.context.inputs, ...context.inputs },
+      },
+      { cause: this.cause },
     );
   }
+}
 
-  return new Error(
-    ERROR_TEMPLATES.GENERIC_API_ERROR(status, baseUrl, errorText),
-  );
+function formatQMetryError(
+  details: QMetryErrorDetails,
+  context: QMetryErrorContext,
+): string {
+  const { kind, url, status, code, detail, hint } = details;
+  let headline: string;
+  switch (kind) {
+    case "network":
+      headline = `Could not reach QMetry at ${url}${detail ? `: ${detail}` : ""}`;
+      break;
+    default: {
+      const label = [`QMetry API error ${status}`, code]
+        .filter(Boolean)
+        .join(" ");
+      headline = `${label}: ${detail || `HTTP ${status}`}`;
+    }
+  }
+
+  const lines = [headline];
+  if (context.tool) lines.push(`Tool: ${context.tool}`);
+  const inputs = Object.entries(context.inputs ?? {});
+  if (inputs.length > 0) {
+    lines.push(`Inputs: ${inputs.map(([k, v]) => `${k}=${v}`).join(", ")}`);
+  }
+  if (context.step) lines.push(`Step: ${context.step}`);
+  if (kind !== "network" && status !== undefined) {
+    // Network headlines already carry the URL; for HTTP errors it is
+    // useful to know which endpoint failed when a tool makes several calls.
+    lines.push(`Request: ${url}`);
+  }
+  if (hint) lines.push(`Hint: ${hint}`);
+  if (context.suggestion) lines.push(`Did you mean: ${context.suggestion}`);
+  return lines.join("\n");
+}
+
+/** Collapses whitespace (and strips markup from HTML) and caps the length. */
+function readableSnippet(body: string, looksLikeHtml: boolean): string {
+  const readable = (looksLikeHtml ? body.replace(/<[^>]*>/g, " ") : body)
+    .replace(/\s+/g, " ")
+    .trim();
+  return readable.length > SNIPPET_LENGTH
+    ? `${readable.slice(0, SNIPPET_LENGTH)}…`
+    : readable;
+}
+
+function classifyStatus(status: number, code?: string): QMetryErrorKind {
+  if (status === 401 || status === 403 || code === "CO.INVALID_API_KEY") {
+    return "auth";
+  }
+  if (status >= 500) return "server";
+  return "client";
+}
+
+function hintFor(kind: QMetryErrorKind, code?: string): string | undefined {
+  switch (kind) {
+    case "auth":
+      return AUTH_HINT;
+    case "server":
+      return SERVER_HINT;
+    case "client":
+      return code ? KNOWN_CODE_HINTS[code] : undefined;
+    default:
+      return undefined;
+  }
 }
 
 /**
- * Handles QMetry API errors in a standardized way
- *
- * @param response - The failed HTTP response
- * @param baseUrl - The QMetry base URL
- * @param project - Optional project context
- * @param path - Optional API path context
+ * Builds the error for a non-2xx QMetry response from its status and raw body.
+ * The body is parsed as JSON for QMetry's `code`/`message`; anything else is
+ * quoted as readable text. Never throws.
+ */
+export function createQMetryApiError(
+  status: number,
+  rawBody: string,
+  url: string,
+  contentType?: string | null,
+): QMetryApiError {
+  let code: string | undefined;
+  let detail: string | undefined;
+
+  let data: unknown;
+  try {
+    data = JSON.parse(rawBody);
+  } catch {
+    data = undefined;
+  }
+
+  if (data && typeof data === "object" && !Array.isArray(data)) {
+    const obj = data as Record<string, unknown>;
+    if (typeof obj.code === "string" && obj.code) code = obj.code;
+    const message = [obj.message, obj.errorMessage, obj.error].find(
+      (v): v is string => typeof v === "string" && v.trim() !== "",
+    );
+    detail = message ?? readableSnippet(rawBody, false);
+  } else if (rawBody.trim() !== "") {
+    const looksLikeHtml =
+      (contentType ?? "").toLowerCase().includes("html") ||
+      /^\s*</.test(rawBody);
+    detail = readableSnippet(rawBody, looksLikeHtml);
+  }
+
+  const kind = classifyStatus(status, code);
+  return new QMetryApiError({
+    kind,
+    url,
+    status,
+    code,
+    detail,
+    hint: hintFor(kind, code),
+  });
+}
+
+/**
+ * Throws a {@link QMetryApiError} for a failed (non-2xx) QMetry response.
+ * The body is read once: a failed json() would consume the stream and a
+ * follow-up text() would throw "Body is unusable", masking the real error.
  */
 export async function handleQMetryApiError(
   response: Response,
-  baseUrl: string,
-  project?: string,
-  path?: string,
+  url: string,
 ): Promise<never> {
-  let errorData: any;
-  let errorText: string;
-
-  // Read the body once: a failed json() consumes the stream, so a follow-up
-  // text() would throw "Body is unusable" and mask the real error.
   let rawBody = "";
   try {
     rawBody = await response.text();
   } catch {
     // Body could not be read (e.g. connection dropped); fall back to status
   }
+  throw createQMetryApiError(
+    response.status,
+    rawBody,
+    url,
+    response.headers?.get?.("content-type"),
+  );
+}
 
-  try {
-    errorData = JSON.parse(rawBody);
-    errorText = JSON.stringify(errorData);
-  } catch {
-    errorText = rawBody || `HTTP ${response.status}`;
+const SSL_INDICATORS = [
+  "certificate",
+  "unable_to_get_issuer_cert",
+  "cert_untrusted",
+  "cert_authority_invalid",
+  "self_signed_cert",
+  "self-signed",
+  "ssl",
+];
+
+/**
+ * Builds the error for a QMetry request that got no response at all: a
+ * network failure (DNS, refused connection, TLS).
+ */
+export function createQMetryFetchError(
+  error: unknown,
+  url: string,
+  baseUrl: string,
+): QMetryApiError {
+  const options = { cause: error };
+  const err = error instanceof Error ? error : new Error(String(error));
+  const cause = err.cause as { message?: unknown; code?: unknown } | undefined;
+  const parts = [err.message || String(error)];
+  if (cause && typeof cause === "object") {
+    if (typeof cause.code === "string") parts.push(cause.code);
+    if (typeof cause.message === "string" && cause.message !== err.message) {
+      parts.push(cause.message);
+    }
   }
+  const detail = parts.join(" — ");
+  const lower = detail.toLowerCase();
+  const isSsl = SSL_INDICATORS.some((s) => lower.includes(s));
 
-  const context: QMetryErrorContext = {
-    status: response.status,
-    errorData,
-    errorText,
-    baseUrl,
-    project,
-    path,
-  };
+  return new QMetryApiError(
+    {
+      kind: "network",
+      url,
+      detail,
+      hint:
+        `Check the QMetry instance URL (${baseUrl}) and network connectivity.` +
+        (isSsl ? ` ${SSL_HINT}` : ""),
+    },
+    {},
+    options,
+  );
+}
 
-  throw createQMetryError(context);
+/** Throws {@link createQMetryFetchError}. */
+export function handleQMetryFetchError(
+  error: unknown,
+  url: string,
+  baseUrl: string,
+): never {
+  throw createQMetryFetchError(error, url, baseUrl);
+}
+
+export interface QMetryNonJsonResponseContext {
+  status: number;
+  contentType: string | null;
+  body: string;
+  url: string;
 }
 
 /**
- * Handles fetch errors that occur before receiving a response (e.g., CORS, network issues)
- *
- * @param error - The fetch error
- * @param baseUrl - The QMetry base URL
- * @param project - Optional project context
- * @param path - Optional API path context
+ * Builds the error for a successful (2xx) QMetry response whose body is not
+ * JSON. That is an environment problem, not a bug: typically a sign-in page
+ * (SSO gateway, expired session), a corporate proxy notice, a maintenance page,
+ * or a base URL pointing at a web app that answers every path with HTML.
  */
-export function handleQMetryFetchError(
-  error: Error,
-  baseUrl: string,
-  project?: string,
-  path?: string,
-): never {
-  // Extract comprehensive error information
-  let errorText = error.message || error.toString();
+export function createNonJsonResponseError(
+  context: QMetryNonJsonResponseContext,
+): ToolError {
+  const { status, contentType, body, url } = context;
+  const looksLikeHtml =
+    (contentType ?? "").toLowerCase().includes("html") || /^\s*</.test(body);
+  const snippet = readableSnippet(body, looksLikeHtml);
 
-  // Check if error has a cause property with more details (common for SSL errors)
-  if (error.cause && typeof error.cause === "object") {
-    const cause = error.cause as any;
-    if (cause.message) {
-      errorText += ` | Cause: ${cause.message}`;
-    }
-    if (cause.code) {
-      errorText += ` | Code: ${cause.code}`;
-    }
-    // Add the full cause details for better debugging
-    if (cause.toString && typeof cause.toString === "function") {
-      errorText += ` | Details: ${cause.toString()}`;
-    }
-  }
-
-  // Check for specific SSL error patterns in the full error
-  const fullErrorString = JSON.stringify(
-    error,
-    Object.getOwnPropertyNames(error),
+  return new ToolError(
+    `QMetry returned a non-JSON response (HTTP ${status}${contentType ? `, ${contentType}` : ""}) for ${url}.\n\n` +
+      (looksLikeHtml
+        ? `The response is an HTML page, not the QMetry API. This is usually a sign-in page (SSO gateway or expired session), a corporate proxy or firewall notice, or a maintenance page.\n\n`
+        : `The response could not be read as JSON.\n\n`) +
+      `To resolve:\n` +
+      `1. Check that the QMetry base URL points at your QMetry instance (not a web app, portal or proxy address)\n` +
+      `2. Check that your API key or sign-in session is still valid\n` +
+      `3. Check whether a corporate proxy or firewall is intercepting requests to QMetry\n` +
+      `4. Try the same URL in a browser or REST client to see what it returns\n\n` +
+      `Response starts with: ${snippet || "(no readable text)"}`,
   );
-  if (
-    fullErrorString.includes("unable to get local issuer certificate") ||
-    fullErrorString.includes("UNABLE_TO_GET_ISSUER_CERT_LOCALLY")
-  ) {
-    errorText +=
-      " | SSL Certificate Error: Corporate proxy/firewall intercepting HTTPS";
+}
+
+/**
+ * Reads the body of a successful (2xx) QMetry response.
+ *
+ * - An empty body (e.g. 204 No Content) is a success with nothing to return,
+ *   reported as `{ success: true }`.
+ * - A body that is not JSON throws a ToolError with troubleshooting guidance
+ *   (see {@link createNonJsonResponseError}), instead of a raw `SyntaxError`
+ *   that would be treated as a server bug.
+ */
+export async function readQMetryJson<T>(
+  response: Response,
+  url: string,
+): Promise<T> {
+  let body: string;
+  try {
+    body = await response.text();
+  } catch (error) {
+    throw new ToolError(
+      `Failed to read the QMetry response from ${url}: ${error instanceof Error ? error.message : String(error)}. ` +
+        `The connection may have been interrupted; please retry.`,
+    );
   }
 
-  // Check if this is an SSL certificate error first
-  const tempContext = {
-    status: 0,
-    errorText,
-    baseUrl,
-    project,
-    path,
-  };
-  const isSSLError = isSslCertificateError(tempContext);
-  const isURLError = isInvalidUrlError(tempContext);
+  if (body.trim() === "") {
+    return { success: true } as T;
+  }
 
-  const context: QMetryErrorContext = {
-    status: 0, // Status 0 typically indicates network/CORS/SSL issues
-    errorText,
-    baseUrl,
-    project,
-    path,
-    // Only assume CORS if it's not an SSL or URL error
-    isCorsError: !isSSLError && !isURLError,
-  };
-
-  throw createQMetryError(context);
+  try {
+    return JSON.parse(body) as T;
+  } catch {
+    throw createNonJsonResponseError({
+      status: response.status,
+      contentType: response.headers?.get?.("content-type") ?? null,
+      body,
+      url,
+    });
+  }
 }

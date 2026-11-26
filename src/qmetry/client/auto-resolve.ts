@@ -1,50 +1,34 @@
 import { QMetryToolsHandlers } from "../config/constants";
 
 /**
- * Configuration for auto-resolving viewId and folderPath for different QMetry modules
- * Each module defines which handler it applies to and which viewId path to extract from project info
+ * Configuration for auto-resolving a root folder ID for a QMetry tool.
+ * When the caller omits `folderIdField`, it is filled from `folderIdPath` in
+ * the project info response.
  */
 export interface ModuleAutoResolveConfig {
   /** The handler that requires auto-resolution */
   handler: string;
-  /** Path in project info to extract viewId (e.g., 'latestViews.TC.viewId') */
-  viewIdPath?: string;
   /** Path in project info to extract folder ID (e.g., 'rootFolders.TS.id') */
-  folderIdPath?: string;
+  folderIdPath: string;
+  /** Payload field that receives the folder ID (e.g., 'tsFolderID') */
+  folderIdField: string;
   /** Module name for error messages */
   moduleName: string;
-  /** Field name for the folder ID (e.g., 'tsFolderID') */
-  folderIdField?: string;
   /** When true, converts the resolved folder ID to a string (needed for tcFolderID, parentFolderId) */
   folderIdAsString?: boolean;
 }
 
 /**
- * Registry of all modules that support auto-resolution
- * Add new modules here to automatically support viewId/folderPath resolution
+ * Registry of the tools whose root folder ID is auto-resolved from project info.
+ * Add a tool here only when its endpoint needs a folder ID the caller usually won't know.
  */
 export const AUTO_RESOLVE_MODULES: ModuleAutoResolveConfig[] = [
-  {
-    handler: QMetryToolsHandlers.FETCH_TEST_CASES,
-    viewIdPath: "latestViews.TC.viewId",
-    moduleName: "Test Cases",
-  },
-  {
-    handler: QMetryToolsHandlers.FETCH_TEST_CASE_STEPS_WITH_UDF,
-    viewIdPath: "latestViews.TCS.viewId",
-    moduleName: "Test Case Steps",
-  },
   {
     handler: QMetryToolsHandlers.CREATE_TEST_CASE,
     folderIdPath: "rootFolders.TC.id",
     folderIdField: "tcFolderID",
     folderIdAsString: true,
     moduleName: "Test Cases",
-  },
-  {
-    handler: QMetryToolsHandlers.FETCH_REQUIREMENTS,
-    viewIdPath: "latestViews.RQ.viewId",
-    moduleName: "Requirements",
   },
   {
     handler: QMetryToolsHandlers.CREATE_REQUIREMENT,
@@ -54,33 +38,7 @@ export const AUTO_RESOLVE_MODULES: ModuleAutoResolveConfig[] = [
     moduleName: "Requirements",
   },
   {
-    handler: QMetryToolsHandlers.FETCH_TEST_SUITES,
-    viewIdPath: "latestViews.TS.viewId",
-    moduleName: "Test Suites",
-  },
-  {
-    handler: QMetryToolsHandlers.FETCH_TESTCASE_RUNS_BY_TESTSUITE_RUN,
-    viewIdPath: "latestViews.TE.viewId",
-    moduleName: "Test Case Run By Test Suite Run",
-  },
-  {
-    handler: QMetryToolsHandlers.FETCH_TEST_RUN_UDF_VALUES,
-    viewIdPath: "latestViews.TE.viewId",
-    moduleName: "Test Run UDF Values",
-  },
-  {
-    handler: QMetryToolsHandlers.BULK_UPDATE_EXECUTION_STATUS,
-    viewIdPath: "latestViews.TE.viewId",
-    moduleName: "Bulk Update Test Case Execution Status",
-  },
-  {
-    handler: QMetryToolsHandlers.FETCH_EXECUTIONS_BY_TESTSUITE,
-    viewIdPath: "latestViews.TEL.viewId",
-    moduleName: "Executions By Test Suites",
-  },
-  {
     handler: QMetryToolsHandlers.FETCH_TESTSUITES_FOR_TESTCASE,
-    viewIdPath: "latestViews.TSFS.viewId",
     folderIdPath: "rootFolders.TS.id",
     folderIdField: "tsFolderID",
     moduleName: "Test Suites",
@@ -98,17 +56,12 @@ export const AUTO_RESOLVE_MODULES: ModuleAutoResolveConfig[] = [
     folderIdField: "TsFolderID",
     moduleName: "Test Suite",
   },
-  {
-    handler: QMetryToolsHandlers.FETCH_ISSUES,
-    viewIdPath: "latestViews.IS.viewId",
-    moduleName: "Issues",
-  },
 ];
 
 /**
  * Helper function to safely get nested property value using dot notation
  * @param obj - Object to traverse
- * @param path - Dot notation path (e.g., 'latestViews.TC.viewId')
+ * @param path - Dot notation path (e.g., 'rootFolders.TS.id')
  * @returns The value at the path or undefined if not found
  */
 export function getNestedProperty(obj: any, path: string): any {
@@ -116,40 +69,20 @@ export function getNestedProperty(obj: any, path: string): any {
 }
 
 /**
- * Generic auto-resolve function for viewId, folderPath, and folderID
- * @param args - Tool arguments that may contain viewId/folderPath/folderID
+ * Fills the configured folder ID field from project info when the caller left it out.
+ * @param args - Tool arguments that may contain the folder ID field
  * @param projectInfo - Project information from QMetry API
  * @param config - Module configuration for this specific handler
- * @returns Updated args with resolved values
+ * @returns Updated args with the resolved folder ID
  */
-export function autoResolveViewIdAndFolderPath(
+export function autoResolveFolderIds(
   args: Record<string, any>,
   projectInfo: any,
   config: ModuleAutoResolveConfig,
 ): Record<string, any> {
   const updatedArgs = { ...args };
-  let viewId = updatedArgs.viewId;
-  const folderPath = updatedArgs.folderPath;
 
-  // Auto-resolve viewId if not provided and config has viewIdPath
-  if (!viewId && config.viewIdPath) {
-    viewId = getNestedProperty(projectInfo, config.viewIdPath);
-    if (viewId) {
-      updatedArgs.viewId = viewId;
-    }
-  }
-
-  // Auto-resolve folderPath if not provided (defaults to root)
-  if (folderPath === undefined) {
-    updatedArgs.folderPath = "";
-  }
-
-  // Auto-resolve folder ID if not provided and config has folderIdPath
-  if (
-    config.folderIdPath &&
-    config.folderIdField &&
-    !updatedArgs[config.folderIdField]
-  ) {
+  if (!updatedArgs[config.folderIdField]) {
     const folderId = getNestedProperty(projectInfo, config.folderIdPath);
     if (folderId) {
       updatedArgs[config.folderIdField] = config.folderIdAsString
@@ -170,24 +103,4 @@ export function findAutoResolveConfig(
   handler: string,
 ): ModuleAutoResolveConfig | undefined {
   return AUTO_RESOLVE_MODULES.find((module) => module.handler === handler);
-}
-
-/**
- * Extracts numeric project context from a project info response.
- * Returns scopeId (currentProjectId) and orgCode (clientCode) needed as HTTP headers
- * for endpoints that use scope+orgcode for project resolution instead of the project key.
- */
-export function extractProjectContext(projectInfo: any): {
-  scopeId: number | undefined;
-  orgCode: string | undefined;
-} {
-  const rawScopeId = projectInfo?.currentProjectId;
-  const parsedScopeId = rawScopeId !== undefined ? Number(rawScopeId) : NaN;
-  return {
-    scopeId: Number.isFinite(parsedScopeId) ? parsedScopeId : undefined,
-    orgCode:
-      projectInfo?.clientCode !== undefined
-        ? String(projectInfo.clientCode)
-        : undefined,
-  };
 }

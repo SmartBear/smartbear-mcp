@@ -52,12 +52,26 @@ export interface UpdateRequirementPayload {
   [key: string]: unknown;
 }
 
+// Link Release/Cycle with Requirement (POST /rest/requirements/scope/add).
+// Tool-facing payload; the client builds the QMetry request body from it and
+// adds the fixed fields (sourceScope, entityType).
+export interface LinkReleaseCycleWithRequirementPayload {
+  destinationProjectId: number; // required - projectID of the projectKey's row in Fetch QMetry list Projects
+  releaseCycleMapping: Array<{
+    releaseId: number; // release to link
+    cycleIds: number[]; // one or more cycle IDs of that release
+  }>; // required - at least one release, no repeated releaseId
+  requirements: Array<{
+    rqId: number; // requirement numeric ID (entityData[].entityId)
+    rqVersionId: number; // requirement version ID (entityData[].version)
+  }>; // required - at least one requirement, no repeated rqId
+}
+
 export interface FetchRequirementsPayload
   extends PaginationPayload,
     FilterPayload,
     FolderPayload,
     SortPayload {
-  viewId: number; // required
   folderPath: string; // required
   udfFilter?: string; // user-defined field filter
   isJiraFilter?: boolean; // false if using qmetry filter
@@ -82,10 +96,8 @@ export interface FetchRequirementsLinkedToTestCasePayload
   rqFolderPath?: string; // folder path for requirements
 }
 
-export const DEFAULT_FETCH_REQUIREMENTS_PAYLOAD: Omit<
-  FetchRequirementsPayload,
-  "viewId" | "folderPath"
-> = {
+export const DEFAULT_FETCH_REQUIREMENTS_PAYLOAD: FetchRequirementsPayload = {
+  folderPath: "", // root folder
   ...DEFAULT_PAGINATION,
   ...DEFAULT_FILTER,
   ...DEFAULT_FOLDER_OPTIONS,

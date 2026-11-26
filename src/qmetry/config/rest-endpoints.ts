@@ -8,6 +8,7 @@ export const QMETRY_PATHS = {
     CREATE_RELEASE: "/rest/admin/release",
     CREATE_CYCLE: "/rest/admin/cycle",
     UPDATE_CYCLE: "/rest/admin/cycle",
+    UPDATE_RELEASE: "/rest/admin/release",
     GET_API_QUOTA_STATUS: "/rest/admin/apiquota/status",
   },
   TESTCASE: {
@@ -21,12 +22,14 @@ export const QMETRY_PATHS = {
     CREATE_UPDATE_TC: "/rest/testcases",
     LINKED_RQ_TO_TC: "/rest/testcases/link/requirements",
     LINK_ISSUES_TO_TC: "/rest/testcases/link/issues",
+    LINK_RELEASE_CYCLE: "/rest/testcases/scope/add",
   },
   REQUIREMENT: {
     GET_RQ_LIST: "/rest/requirements/list/viewColumns",
     GET_RQ_DETAILS: "/rest/requirements/detail/data",
     GET_RQ_LINKED_TO_TC: "/rest/requirements/list/forTC",
     CREATE_UPDATE_RQ: "/rest/requirements",
+    LINK_RELEASE_CYCLE: "/rest/requirements/scope/add",
   },
   TESTSUITE: {
     CREATE_UPDATE_TS: "/rest/testsuites",
@@ -46,6 +49,7 @@ export const QMETRY_PATHS = {
     CREATE_UPDATE_ISSUE: "/rest/issues",
     GET_ISSUES_LINKED_TO_TC: "/rest/issues/list/ForTC",
     LINK_ISSUES_TO_TESTCASE_RUN: "/rest/execution/link/issue",
+    GET_ISSUES_LINKED_TO_EXECUTION: "/rest/execution/issue/list/forTsRun",
     GET_ISSUE_EXECUTIONS: "/rest/execution/getExecutionsForIssue",
     GET_ISSUE_DETAIL: "/rest/issues/",
   },

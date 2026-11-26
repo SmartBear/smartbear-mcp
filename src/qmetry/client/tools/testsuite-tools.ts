@@ -45,6 +45,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description: "Create a test suite in the root folder (auto-resolved)",
         parameters: {
+          projectKey: "MAC",
           name: "Demo Test Suite",
         },
         expectedOutput:
@@ -53,6 +54,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description: "Create a simple test suite in folder 102653",
         parameters: {
+          projectKey: "MAC",
           parentFolderId: "102653",
           name: "Login Test Suite",
         },
@@ -61,6 +63,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description: "Create a test suite with some details and metadata",
         parameters: {
+          projectKey: "MAC",
           parentFolderId: "113557",
           isAutomatedFlag: false,
           name: "Testsuite Summary",
@@ -76,7 +79,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
           ],
         },
         expectedOutput:
-          "Test suite created with details and metadata. Example uses: parentFolderId=113557 (MAC root TS folder from rootFolders.TS.id), testsuiteOwner=6963 (umang.savaliya from customListObjs.owner[index].id), testSuiteState=505035 (New from customListObjs.testSuiteState[index].id), releaseId=10286 (Air release from projects[index].releases[index].releaseID), buildID=18411 (Air Q1-19 cycle from projects[index].releases[index].builds[index].buildID)",
+          "Test suite created with details and metadata. Example uses: parentFolderId=113557 (MAC root TS folder from rootFolders.TS.id), testsuiteOwner=6963 (umang.savaliya from customListObjs.owner[index].id), testSuiteState=505035 (New from customListObjs.testSuiteState[index].id), releaseId=10286 (Air release: relID from 'Fetch Releases and Cycles'), buildID=18411 (Air Q1-19 cycle: cyclID from 'Fetch Releases and Cycles')",
       },
     ],
     hints: [
@@ -141,16 +144,10 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       "  NEVER ask user to 'try again' manually — resolve and retry automatically.",
       "=== END ERROR RECOVERY ===",
       "",
-      "=== DATE FORMAT CHECK (MANDATORY — EVERY CREATE REQUEST) ===",
-      "ALWAYS call 'Fetch QMetry Project Info' before every create request — not only when the user explicitly mentions a date.",
-      "Any UDF field could be a DATETIMEPICKER. Wrong format causes QMetry to silently discard the field value (API returns success but value is NOT stored — no error).",
-      "STEP 1: From project info, read dateTimeFormatID (e.g. 3).",
-      "STEP 2: Find entry in dateTimeFormatNew where id === dateTimeFormatID → read its unique_value (e.g. 'yyyy-MM-dd').",
-      "STEP 3: unique_value pattern: yyyy=4-digit year, MM=2-digit month (01-12), dd=2-digit day, MMM=3-letter month (Jan/Feb/...).",
-      "  Example: id=1 → MM-dd-yyyy → '10-25-2000' | id=2 → dd-MM-yyyy → '25-10-2000' | id=3 → yyyy-MM-dd → '2000-10-25' | id=4 → dd-MMM-yyyy → '25-Oct-2000'",
-      "STEP 4: For EVERY DATETIMEPICKER field in the payload: parse any user-provided date and re-format it using the active unique_value pattern before sending.",
-      "NEVER assume a date format — always derive it from dateTimeFormatID. Wrong format = silent data loss.",
-      "=== END DATE FORMAT CHECK ===",
+      "=== DATE FIELDS ===",
+      "The server converts every DATETIMEPICKER UDF value (udfFields and step UDFs) to the project's date format before sending. Do NOT call 'Fetch QMetry Project Info' just to read the date format.",
+      "Send dates as ISO 'YYYY-MM-DD' (e.g. the user says '25 Dec 2024' -> send '2024-12-25'). ISO is never ambiguous; other forms such as '03/04/2024' are read using the project's day/month order.",
+      "=== END DATE FIELDS ===",
       "",
       "If parentFolderId is not provided, it will be auto-resolved to the root test suite folder using project info (rootFolders.TS.id).",
       "To get valid values for testsuiteOwner, testSuiteState, etc., call the 'Admin/Get info Service' API (FETCH_PROJECT_INFO tool) and use the returned customListObjs IDs.",
@@ -161,14 +158,15 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       "parentFolderId is required; use the root folder ID from project info (rootFolders.TS.id) or a specific folder.",
       "Release/cycle mapping is optional but useful for planning.",
       "If the user wants to link or associate a release and cycle to the test suite, set associateRelCyc: true in the payload.",
-      "CRITICAL: For releaseCycleMapping.releaseId - Call API 'Release/List' (or use project info projects[<index>].releases[<index>].releaseID), from the response get value from data[<index>].releaseID or projects[<index>].releases[<index>].releaseID. Match the release by name.",
-      "CRITICAL: For releaseCycleMapping.buildID - Call API 'Cycle/List' (or use project info projects[<index>].releases[<index>].builds[<index>].buildID), from the response get value from data[<index>].buildID or projects[<index>].releases[<index>].builds[<index>].buildID. Match the build/cycle by name.",
-      "If the user provides a release name, map it to its ID from projects[<index>].releases[<index>].releaseID in the project info response, and use that ID as releaseId in releaseCycleMapping.",
-      "If the user provides a build/cycle name, map it to its ID from projects[<index>].releases[<index>].builds[<index>].buildID in the project info response, and use that ID as buildID in releaseCycleMapping.",
+      "CRITICAL: resolve release and cycle IDs with 'Fetch Releases and Cycles' (same projectKey) — do NOT guess IDs or take them from project info. " +
+        "Its response: children[<p>] = project { projID, type } → children[<p>].children[<r>] = release { relID, type: <release name> } → children[<p>].children[<r>].children[<c>] = cycle { cyclID, type: <cycle name> }.",
+      "CRITICAL: For releaseCycleMapping.releaseId - use the release node's relID. Match the release by its 'type' (name), case-insensitively.",
+      "CRITICAL: For releaseCycleMapping.buildID - use the cycle node's cyclID (QMetry calls cycles 'builds' here). Match the cycle by its 'type' (name) WITHIN the chosen release.",
+      "If the user provides a release name, map it to that release's relID and use it as releaseId; if they provide a cycle name, map it to the cyclID under that release and use it as buildID.",
       "Example payload: releaseCycleMapping: [ { releaseId: <releaseID>, buildID: <buildID> } ]",
       "Example: For 'Air' release and 'Air Q1-19' cycle in MAC project, use releaseId: 10286 and buildID: 18411",
       "LLM should ensure that provided release/cycle names or IDs exist in the current project before using them in the payload. If not found, skip and show a user-friendly message: 'Test suite created without release/cycle association, as given release/cycle is not available in the current project.'",
-      "All IDs (testSuiteState from customListObjs.testSuiteState[index].id, testsuiteOwner from customListObjs.owner[index].id, releaseId from projects.releases[index].releaseID, buildID from projects.releases.builds[index].buildID) must be valid for your QMetry instance.",
+      "All IDs (testSuiteState from customListObjs.testSuiteState[index].id, testsuiteOwner from customListObjs.owner[index].id, releaseId from the release relID and buildID from the cycle cyclID in 'Fetch Releases and Cycles') must be valid for your QMetry instance.",
       "If a custom field is mandatory, include it in the UDF object.",
       "",
       "UDF (User Defined Fields) WORKFLOW FOR CREATE:",
@@ -222,6 +220,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description: "Update test suite summary (updated name)",
         parameters: {
+          projectKey: "MAC",
           id: 1505898,
           entityKey: "VT-TS-7",
           TsFolderID: 1644087,
@@ -233,6 +232,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description: "Update state to Open and owner of the test suite",
         parameters: {
+          projectKey: "MAC",
           id: 1505898,
           entityKey: "VT-TS-7",
           TsFolderID: 1644087,
@@ -245,6 +245,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description: "Update only description of the test suite",
         parameters: {
+          projectKey: "MAC",
           id: 1505898,
           entityKey: "VT-TS-7",
           TsFolderID: 1644087,
@@ -264,16 +265,10 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       "fields/UDF (from qmUDF.TS): isMandatory=true UDF fields must be included if being changed.",
       "=== END DEFAULT VALUES ===",
       "",
-      "=== DATE FORMAT CHECK (MANDATORY — EVERY UPDATE REQUEST) ===",
-      "ALWAYS call 'Fetch QMetry Project Info' before every update request — not only when the user explicitly mentions a date.",
-      "Any UDF field could be a DATETIMEPICKER. Wrong format causes QMetry to silently discard the field value (API returns success but value is NOT stored — no error).",
-      "STEP 1: From project info, read dateTimeFormatID (e.g. 3).",
-      "STEP 2: Find entry in dateTimeFormatNew where id === dateTimeFormatID → read its unique_value (e.g. 'yyyy-MM-dd').",
-      "STEP 3: unique_value pattern: yyyy=4-digit year, MM=2-digit month (01-12), dd=2-digit day, MMM=3-letter month (Jan/Feb/...).",
-      "  Example: id=1 → MM-dd-yyyy → '10-25-2000' | id=2 → dd-MM-yyyy → '25-10-2000' | id=3 → yyyy-MM-dd → '2000-10-25' | id=4 → dd-MMM-yyyy → '25-Oct-2000'",
-      "STEP 4: For EVERY DATETIMEPICKER field in the payload: parse any user-provided date and re-format it using the active unique_value pattern before sending.",
-      "NEVER assume a date format — always derive it from dateTimeFormatID. Wrong format = silent data loss.",
-      "=== END DATE FORMAT CHECK ===",
+      "=== DATE FIELDS ===",
+      "The server converts every DATETIMEPICKER UDF value (udfFields and step UDFs) to the project's date format before sending. Do NOT call 'Fetch QMetry Project Info' just to read the date format.",
+      "Send dates as ISO 'YYYY-MM-DD' (e.g. the user says '25 Dec 2024' -> send '2024-12-25'). ISO is never ambiguous; other forms such as '03/04/2024' are read using the project's day/month order.",
+      "=== END DATE FIELDS ===",
       "",
       "If user provides entityKey (e.g., MAC-TS-7), first call Fetch Test Suites with a filter on entityKeyId to resolve the id (test suite numeric id) and TsFolderID from rootFolders.TS.id.",
       "To get valid values for owner, state, etc., call the 'Admin/Get info Service' API (FETCH_PROJECT_INFO tool) and use the returned customListObjs IDs.",
@@ -305,12 +300,10 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
   {
     title: "Fetch Test Suites",
     toolset: "Test Suites",
-    summary:
-      "Fetch QMetry test suites - automatically handles viewId resolution based on project",
+    summary: "Fetch QMetry test suites",
     handler: QMetryToolsHandlers.FETCH_TEST_SUITES,
     inputSchema: TestSuiteListArgsSchema,
-    purpose:
-      "Get test suites from QMetry. System automatically gets correct viewId from project info if not provided.",
+    purpose: "Get test suites from QMetry.",
     useCases: [
       "List all test suites in a project",
       "Search for specific test suites using filters",
@@ -319,18 +312,14 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
     ],
     examples: [
       {
-        description:
-          "Get all test suites from default project - system will auto-fetch viewId",
-        parameters: {},
-        expectedOutput:
-          "List of test suites from default project with auto-resolved viewId",
+        description: "Get all test suites from project MAC",
+        parameters: { projectKey: "MAC" },
+        expectedOutput: "List of test suites from project MAC",
       },
       {
-        description:
-          "Get all test suites from UT project - system will auto-fetch UT project's viewId",
+        description: "Get all test suites from UT project",
         parameters: { projectKey: "UT" },
-        expectedOutput:
-          "List of test suites from UT project using UT's specific TS viewId",
+        expectedOutput: "List of test suites from UT project",
       },
       {
         description: "Get test suites by release/cycle filter",
@@ -381,18 +370,13 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       },
     ],
     hints: [
-      "CRITICAL WORKFLOW: Always use the SAME projectKey for both project info and test suite fetching",
-      "Step 1: If user specifies projectKey (like 'UT', 'MAC'), use that EXACT projectKey for project info",
-      "Step 2: Get project info using that projectKey, extract latestViews.TS.viewId",
-      "Step 3: Use the SAME projectKey and the extracted TS viewId for fetching test suites",
-      "Step 4: If user doesn't specify projectKey, use 'default' for both project info and test suite fetching",
-      "NEVER mix project keys - if user says 'MAC project', use projectKey='MAC' for everything",
+      "PROJECT: pass the same explicit projectKey on every call of the task (never omit it). See the projectKey field for how to find the key from a project name or ID.",
       'For search by test suite key (like MAC-TS-1684), use filter: \'[{"type":"string","value":"MAC-TS-1684","field":"entityKeyId"}]\'',
       "RELEASE/CYCLE FILTERING: Use release and cycle IDs, not names, for filtering",
       'For release filter: \'[{"value":[releaseId],"type":"list","field":"release"}]\'',
       'For cycle filter: \'[{"value":[cycleId],"type":"list","field":"cycle"}]\'',
       'For combined release+cycle: \'[{"value":[releaseId],"type":"list","field":"release"},{"value":[cycleId],"type":"list","field":"cycle"}]\'',
-      "Get release/cycle IDs from FETCH_RELEASES_AND_CYCLES tool before filtering",
+      "Get release/cycle IDs from 'Fetch Releases and Cycles' tool before filtering",
       "FILTER FIELDS: name, release, cycle, platform, isArchived, testsuiteStatus, createdByAlias, createdDate, entityKeyId, attachmentCount, linkedPlatformCount, linkedTcCount, updatedByAlias, updatedDate, owner, remExecutionTime, and totalExecutionTime",
       "SORT FIELDS: entityKey, name, testsuiteStatus, linkedPlatformCount, linkedTcCount, createdDate, createdByAlias, updatedDate, updatedByAlias, attachmentCount, remExecutionTime, and totalExecutionTime",
       "For multiple entity keys, use comma-separated values in filter",
@@ -407,8 +391,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
   {
     title: "Fetch Test Suites for Test Case",
     toolset: "Test Suites",
-    summary:
-      "Get test suites that can be linked to test cases in QMetry with automatic viewId resolution",
+    summary: "Get test suites that can be linked to test cases in QMetry",
     handler: QMetryToolsHandlers.FETCH_TESTSUITES_FOR_TESTCASE,
     inputSchema: TestSuitesForTestCaseArgsSchema,
     purpose:
@@ -416,9 +399,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       "This tool helps organize test cases into test suites for better test management, " +
       "execution planning, and reporting. You can filter test suites by various criteria " +
       "to find the most appropriate suites for test case organization. " +
-      "The tsFolderID parameter is required and represents the Test Suite folder ID. " +
-      "The viewId parameter is automatically resolved from project info (latestViews.TSFS.viewId) " +
-      "if not provided, making the tool easier to use.",
+      "The tsFolderID parameter is required and represents the Test Suite folder ID.",
     useCases: [
       "Get test suites available for linking with test cases",
       "Find appropriate test suites for test case organization",
@@ -432,29 +413,34 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
     ],
     examples: [
       {
-        description:
-          "Get test suites from root folder using auto-resolved viewId",
-        parameters: { tsFolderID: 113557 },
+        description: "Get test suites from root folder",
+        parameters: { projectKey: "MAC", tsFolderID: 113557 },
         expectedOutput:
-          "List of test suites available in the root test suite folder with auto-resolved viewId",
+          "List of test suites available in the root test suite folder",
       },
       {
-        description:
-          "Get test suites with custom pagination and auto-resolved viewId",
-        parameters: { tsFolderID: 113557, page: 1, limit: 25 },
+        description: "Get test suites with custom pagination",
+        parameters: {
+          projectKey: "MAC",
+          tsFolderID: 113557,
+          page: 1,
+          limit: 25,
+        },
         expectedOutput: "Paginated list of test suites with 20 items per page",
       },
       {
-        description: "Filter test suites by release with auto-resolved viewId",
+        description: "Filter test suites by release",
         parameters: {
+          projectKey: "MAC",
           tsFolderID: 113557,
           filter: '[{"type":"list","value":[55178],"field":"release"}]',
         },
         expectedOutput: "Test suites associated with Release 8.12 (ID: 55178)",
       },
       {
-        description: "Filter test suites by cycle with auto-resolved viewId",
+        description: "Filter test suites by cycle",
         parameters: {
+          projectKey: "MAC",
           tsFolderID: 113557,
           filter: '[{"type":"list","value":[111577],"field":"cycle"}]',
         },
@@ -463,6 +449,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description: "Get only active (non-archived) test suites",
         parameters: {
+          projectKey: "MAC",
           tsFolderID: 113557,
           filter: '[{"value":[0],"type":"list","field":"isArchived"}]',
         },
@@ -471,6 +458,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter test suites by release and cycle",
         parameters: {
+          projectKey: "MAC",
           tsFolderID: 113557,
           filter:
             '[{"type":"list","value":[55178],"field":"release"},{"type":"list","value":[111577],"field":"cycle"}]',
@@ -480,38 +468,30 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       },
       {
         description: "Get test suites with column information",
-        parameters: { tsFolderID: 113557, getColumns: true },
+        parameters: { projectKey: "MAC", tsFolderID: 113557, getColumns: true },
         expectedOutput:
           "Test suites list with detailed column metadata for better interpretation",
       },
       {
-        description:
-          "Search test suites from specific sub-folder with manual viewId",
-        parameters: { tsFolderID: 42, viewId: 104316 }, // This is an example viewId, must be resolved per project TS viewId
+        description: "Search test suites from specific sub-folder",
+        parameters: { projectKey: "MAC", tsFolderID: 42 },
         expectedOutput:
           "Test suites available in specific folder ID 42 for test case linking",
       },
     ],
     hints: [
       "CRITICAL: tsFolderID is REQUIRED - Test Suite folder ID will be auto-resolved if not provided",
-      "viewId will be AUTOMATICALLY RESOLVED from project info if not provided",
       "HOW TO GET tsFolderID:",
       "1. Call FETCH_PROJECT_INFO tool first to get project configuration",
       "2. From the response, use rootFolders.TS.id for the root test suite folder",
       "3. Example: rootFolders.TS.id = 113557 (MAC project root TS folder)",
       "4. If user doesn't specify tsFolderID, automatically use rootFolders.TS.id from project info",
-      "VIEWID AUTO-RESOLUTION:",
-      "1. System automatically fetches project info using the projectKey",
-      "2. Extracts latestViews.TSFS.viewId automatically",
-      "3. Example: latestViews.TSFS.viewId = 104316 (MAC project TSFS view)", // This is an example viewId, must be resolved per project TSFS viewId
-      "4. Manual viewId only needed if you want to override the automatic resolution",
-      "WORKFLOW: System automatically handles project info if tsFolderID or viewId is not provided",
+      "WORKFLOW: System automatically handles project info if tsFolderID is not provided",
       "PROJECT INFO STRUCTURE: rootFolders.TS.id contains the root test suite folder ID",
-      "PROJECT INFO STRUCTURE: latestViews.TSFS.viewId contains the test suite folder view ID",
       "For sub-folders: Use specific folder IDs if you know them, or call folder listing APIs",
       "FILTER CAPABILITIES: Same as other QMetry list operations",
       "FILTER FIELDS: release, cycle, isArchived, name, status, priority",
-      "RELEASE/CYCLE FILTERING: Use numeric IDs in list format (get from FETCH_RELEASES_AND_CYCLES)",
+      "RELEASE/CYCLE FILTERING: Use numeric IDs in list format (get from tool 'Fetch Releases and Cycles')",
       "ARCHIVE FILTERING: 0=Active, 1=Archived",
       "getColumns=true provides additional metadata for result interpretation",
       "Multiple filter conditions are combined with AND logic",
@@ -544,6 +524,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description: "Link test cases to a test suite",
         parameters: {
+          projectKey: "MAC",
           tsID: 8674,
           tcvdIDs: [5448504, 5448503],
           fromReqs: false,
@@ -555,6 +536,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Link test cases directly to test suites with test cases entityKeys VT-TC-9, VT-TC-10 to test suite id 1487397",
         parameters: {
+          projectKey: "MAC",
           tsID: 1487397,
           tcvdIDs: [5448504, 5448503],
           fromReqs: false,
@@ -566,6 +548,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Link test case VT-TC-4, VT-TC-1,VT-TC-101, VT-TC-22 to test suite VT-TS-3",
         parameters: {
+          projectKey: "MAC",
           tsID: 1487397,
           tcvdIDs: [5448504, 5448503, 5448505, 5448506],
           fromReqs: false,
@@ -602,7 +585,12 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
     examples: [
       {
         description: "VT-RQ-18 Requirements Linked test cases to a test suite",
-        parameters: { tsID: 8674, tcvdIDs: [5448504, 5448503], fromReqs: true },
+        parameters: {
+          projectKey: "MAC",
+          tsID: 8674,
+          tcvdIDs: [5448504, 5448503],
+          fromReqs: true,
+        },
         expectedOutput:
           "Test cases QTM-TC-32 and QTM-TC-35 linked to test suite 8674.",
       },
@@ -610,6 +598,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "VT-RQ-19 Requirements Linked test cases to test suites id 1487397",
         parameters: {
+          projectKey: "MAC",
           tsID: 1487397,
           tcvdIDs: [5448504, 5448503],
           fromReqs: true,
@@ -621,6 +610,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "VT-RQ-20 Requirements Linked test case to test suite VT-TS-3",
         parameters: {
+          projectKey: "MAC",
           tsID: 1487397,
           tcvdIDs: [5448504, 5448503, 5448505, 5448506],
           fromReqs: true,
@@ -658,6 +648,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description: "Link single platform to a test suite",
         parameters: {
+          projectKey: "MAC",
           qmTsId: 1511970,
           qmPlatformId: "63004",
         },
@@ -667,6 +658,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description: "Link multiple platforms to a test suite",
         parameters: {
+          projectKey: "MAC",
           qmTsId: 1511970,
           qmPlatformId: "63004,63005,63006",
         },
@@ -726,26 +718,32 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description:
           "Get all test cases linked to test suite ID 1497291 (default behavior)",
-        parameters: { tsID: 1497291 },
+        parameters: { projectKey: "MAC", tsID: 1497291 },
         expectedOutput:
           "List of test cases linked to the test suite with test case details and metadata",
       },
       {
         description:
           "Get all test cases linked to test suite ID 1497291 (explicit)",
-        parameters: { tsID: 1497291, getLinked: true },
+        parameters: { projectKey: "MAC", tsID: 1497291, getLinked: true },
         expectedOutput:
           "List of test cases linked to the test suite with test case details and metadata",
       },
       {
         description: "Get test cases NOT linked to test suite (gap analysis)",
-        parameters: { tsID: 1497291, getLinked: false },
+        parameters: { projectKey: "MAC", tsID: 1497291, getLinked: false },
         expectedOutput:
           "List of test cases that are NOT linked to the test suite",
       },
       {
         description: "Get linked test cases with custom pagination",
-        parameters: { tsID: 1497291, getLinked: true, page: 1, limit: 25 },
+        parameters: {
+          projectKey: "MAC",
+          tsID: 1497291,
+          getLinked: true,
+          page: 1,
+          limit: 25,
+        },
         expectedOutput:
           "Paginated list of linked test cases with 50 items per page",
       },
@@ -753,6 +751,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Filter linked test cases by priority (using default getLinked=true)",
         parameters: {
+          projectKey: "MAC",
           tsID: 1497291,
           filter: '[{"value":[1,2],"type":"list","field":"priorityAlias"}]',
         },
@@ -762,6 +761,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter linked test cases by status",
         parameters: {
+          projectKey: "MAC",
           tsID: 1497291,
           getLinked: true,
           filter: '[{"value":[1],"type":"list","field":"testCaseStateAlias"}]',
@@ -823,23 +823,23 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
     examples: [
       {
         description: "Get all executions for test suite ID 194955",
-        parameters: { tsID: 194955 },
+        parameters: { projectKey: "MAC", tsID: 194955 },
         expectedOutput:
           "List of executions for the test suite with execution details, status, and metadata",
       },
       {
-        description: "Get executions with test suite folder and view ID",
+        description: "Get executions with test suite folder",
         parameters: {
+          projectKey: "MAC",
           tsID: 194955,
           tsFolderID: 126554,
-          viewId: 41799, // This is an example viewId, must be resolved per project TEL viewId
         },
-        expectedOutput:
-          "Executions filtered by test suite folder and specific view configuration",
+        expectedOutput: "Executions filtered by test suite folder",
       },
       {
         description: "Filter executions by release and cycle",
         parameters: {
+          projectKey: "MAC",
           tsID: 194955,
           filter:
             '[{"type":"list","value":[55178],"field":"releaseID"},{"type":"list","value":[111577],"field":"cycleID"}]',
@@ -850,6 +850,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter executions by platform and automation status",
         parameters: {
+          projectKey: "MAC",
           tsID: 194955,
           filter:
             '[{"type":"list","value":[12345],"field":"platformID"},{"type":"boolean","value":true,"field":"isAutomatedFlag"}]',
@@ -860,6 +861,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description: "Get only active (non-archived) executions",
         parameters: {
+          projectKey: "MAC",
           tsID: 194955,
           filter: '[{"value":[0],"type":"list","field":"isArchived"}]',
         },
@@ -868,6 +870,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description: "Get executions with custom pagination and grid name",
         parameters: {
+          projectKey: "MAC",
           tsID: 194955,
           gridName: "TESTEXECUTIONLIST",
           page: 1,
@@ -878,20 +881,6 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       },
     ],
     hints: [
-      "!MOST IMPORTANT HOW TO GET viewId:",
-      "CRITICAL: Always resolve and use the correct test execution viewId for the current project when calling this tool.",
-      "The viewId parameter must be fetched from the active project's info (latestViews.TEL.viewId).",
-      "Each QMetry project may have a different test execution list viewId, so using a stale or incorrect viewId will result in incomplete or invalid executions list data by test suite id.",
-      "Usage workflow:",
-      "1. Fetch project info for the current project (Admin/Get info Service).",
-      "2. Extract latestViews.TEL.viewId from the response.",
-      "3. Use this viewId in the Fetch Test Case Runs by Test Suite Run API call.",
-      "Example:",
-      "   {",
-      "     tsID: 1533730,",
-      "     viewId: 94194,", // This is an example viewId, must be resolved per project TEL viewId
-      "     gridName: 'TESTEXECUTIONLIST'",
-      "   }",
       "CRITICAL: tsID parameter is REQUIRED - this is the Test Suite numeric ID",
       "HOW TO GET tsID:",
       "1. Call API 'Testsuite/Fetch Testsuite' to get available test suites",
@@ -903,7 +892,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       "3. Example: Test Suite folder might have ID 126554",
       "FILTER CAPABILITIES: Extensive filtering by execution properties",
       "FILTER FIELDS: releaseID (list), cycleID (list), platformID (list), isAutomatedFlag (boolean), isArchived (list)",
-      "RELEASE/CYCLE FILTERING: Use numeric IDs in list format (get from FETCH_RELEASES_AND_CYCLES)",
+      "RELEASE/CYCLE FILTERING: Use numeric IDs in list format (get from tool 'Fetch Releases and Cycles')",
       "PLATFORM FILTERING: Use numeric platform IDs (get from FETCH_PLATFORMS)",
       "AUTOMATION STATUS: Use boolean true/false for isAutomatedFlag field",
       "ARCHIVE STATUS: 0=Active executions, 1=Archived executions",
@@ -1012,7 +1001,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
     examples: [
       {
         description: "Get all test case runs for test suite run ID '107021'",
-        parameters: { tsrunID: "107021", viewId: 6887 },
+        parameters: { projectKey: "MAC", tsrunID: "107021" },
         expectedOutput:
           "Present as ONE unified table — never as a separate type+value breakdown. Example:\n" +
           "| Test Case Key | Test Case Summary        | Executed Version | Execution Status | Tested By | Environments UDF     | Execution Type | Country    |\n" +
@@ -1025,8 +1014,8 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Fetch Test Run UDF values for all executions in test suite run '728995'",
         parameters: {
+          projectKey: "MAC",
           tsrunID: "728995",
-          viewId: 79451,
           start: 0,
           page: 1,
           limit: 20,
@@ -1041,8 +1030,8 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Filter by Test Run UDF list/dropdown field (single-select or multi-select lookup) — runs where UDF '8260LUP' has list item IDs 5108701 or 5108697",
         parameters: {
+          projectKey: "MAC",
           tsrunID: "728995",
-          viewId: 79451,
           tcrUdfFilter:
             '[{"type":"list","value":[5108701,5108697],"field":"8260LUP"}]',
         },
@@ -1053,8 +1042,8 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Filter by Test Run UDF multi-lookup list field — runs where multi-select UDF 'PGTE_MULTILOOKUPLIST' contains list item IDs 5126503 or 5126502",
         parameters: {
+          projectKey: "MAC",
           tsrunID: "728995",
-          viewId: 79451,
           tcrUdfFilter:
             '[{"type":"list","value":[5126503,5126502],"field":"PGTE_MULTILOOKUPLIST"}]',
         },
@@ -1065,8 +1054,8 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Filter by Test Run UDF cascading dropdown field — runs where cascading UDF 'cascade_vK' has list item IDs 5126498 or 5126499 (must set isCascading:true)",
         parameters: {
+          projectKey: "MAC",
           tsrunID: "728995",
-          viewId: 79451,
           tcrUdfFilter:
             '[{"type":"list","value":[5126498,5126499],"field":"cascade_vK","isCascading":true}]',
         },
@@ -1077,8 +1066,8 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Filter by Test Run UDF short text field — runs where text UDF 'TRString' contains the value 'str'",
         parameters: {
+          projectKey: "MAC",
           tsrunID: "728995",
-          viewId: 79451,
           tcrUdfFilter: '[{"type":"string","field":"TRString","value":"str"}]',
         },
         expectedOutput:
@@ -1088,8 +1077,8 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Filter by Test Run UDF large text field — runs where large text UDF 'vk_large_text' contains 'this is large text'",
         parameters: {
+          projectKey: "MAC",
           tsrunID: "728995",
-          viewId: 79451,
           tcrUdfFilter:
             '[{"type":"string","field":"vk_large_text","value":"this is large text"}]',
         },
@@ -1100,8 +1089,8 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Filter by Test Run UDF date field — runs where date UDF 'PGTE_DATEPICKER' is after a specific date (comparison: gt) and before another date (comparison: lt)",
         parameters: {
+          projectKey: "MAC",
           tsrunID: "728995",
-          viewId: 79451,
           tcrUdfFilter:
             '[{"type":"date","field":"PGTE_DATEPICKER","comparison":"gt","value":"06-01-2026"},{"type":"date","field":"PGTE_DATEPICKER","comparison":"lt","value":"06-30-2026"}]',
         },
@@ -1112,8 +1101,8 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Filter by Test Run UDF numeric field — runs where numeric UDF 'NB_number_TR' equals 2",
         parameters: {
+          projectKey: "MAC",
           tsrunID: "728995",
-          viewId: 79451,
           tcrUdfFilter: '[{"type":"numeric","value":2,"field":"NB_number_TR"}]',
         },
         expectedOutput:
@@ -1123,8 +1112,8 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Combine multiple Test Run UDF filters — filter by list UDF AND string UDF AND numeric UDF simultaneously",
         parameters: {
+          projectKey: "MAC",
           tsrunID: "728995",
-          viewId: 79451,
           start: 0,
           page: 1,
           limit: 20,
@@ -1138,8 +1127,8 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Full filter combination — standard field filter + Test Run UDF filter + show only runs with defects",
         parameters: {
+          projectKey: "MAC",
           tsrunID: "728995",
-          viewId: 79451,
           start: 0,
           page: 1,
           limit: 20,
@@ -1156,8 +1145,8 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Get paginated test case runs with standard runStatus filter",
         parameters: {
+          projectKey: "MAC",
           tsrunID: "2362144",
-          viewId: 104123,
           start: 0,
           page: 1,
           limit: 25,
@@ -1170,8 +1159,8 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Show only test case runs with linked defects, filtered by Test Run UDF list value",
         parameters: {
+          projectKey: "MAC",
           tsrunID: "107021",
-          viewId: 6887,
           showTcWithDefects: true,
           tcrUdfFilter: '[{"type":"list","value":[5108701],"field":"8260LUP"}]',
         },
@@ -1278,34 +1267,24 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       "Step 4: Process in batches with progress updates",
       "Step 5: Report completion: 'Successfully updated all 486 test case runs to Failed status.'",
       "",
-      "CRITICAL: tsrunID and viewId parameters are REQUIRED",
+      "CRITICAL: tsrunID parameter is REQUIRED",
       "tsrunID is a STRING identifier for the test suite run execution",
-      "viewId is a NUMERIC identifier for the test execution view",
       "!MOST IMPORTANT HOW TO GET tsrunID:",
       "1. Call API 'Execution/Fetch Executions' (FETCH_EXECUTIONS_BY_TESTSUITE) to get ALL available executions",
       "2. From the response, get value of following attribute -> data[<index>].tsRunID for EVERY execution",
       "3. Example: Test Suite might have multiple executions with IDs '107021', '107022', '107023', etc.",
       "4. NEVER assume there are only 2-3 executions - always fetch to discover the actual count",
-      "!MOST IMPORTANT HOW TO GET viewId:",
-      "CRITICAL: Always resolve and use the correct test execution viewId for the current project when calling this tool.",
-      "The viewId parameter must be fetched from the active project's info (latestViews.TE.viewId).",
-      "Each QMetry project may have a different test execution viewId, so using a stale or incorrect viewId will result in incomplete or invalid test case run data.",
-      "Usage workflow:",
-      "1. Fetch project info for the current project (Admin/Get info Service).",
-      "2. Extract latestViews.TE.viewId from the response.",
-      "3. Use this viewId in the Fetch Test Case Runs by Test Suite Run API call.",
       "Example:",
       "   {",
       '     tsrunID: "2362144",',
-      "     viewId: 104123,",
       "     start: 0,",
       "     page: 1,",
       "     limit: 25",
       "   }",
       "This ensures the tool fetches the proper execution runs data for the selected project context.",
-      "SUPPORTED PARAMETERS: start, page, limit, tsrunID, viewId, filter, udfFilter, tcrUdfFilter, showTcWithDefects",
+      "SUPPORTED PARAMETERS: start, page, limit, tsrunID, filter, udfFilter, tcrUdfFilter, showTcWithDefects",
       "PAGINATION: Use start, page, and limit for result pagination",
-      'PAYLOAD FORMAT: {"start": 0, "page": 1, "limit": 10, "tsrunID": "2362144", "viewId": 104123}',
+      'PAYLOAD FORMAT: {"start": 0, "page": 1, "limit": 10, "tsrunID": "2362144"}',
       "",
       "=== TEST RUN UDF (tcrUdfFilter) — ALL 7 FIELD TYPE FORMATS ===",
       "tcrUdfFilter filters test case RUNS by Test Run UDF values (not test case UDFs — use udfFilter for those).",
@@ -1450,6 +1429,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Update single test case run status to Failed (single execution)",
         parameters: {
+          projectKey: "MAC",
           entityIDs: "66095087",
           entityType: "TCR",
           qmTsRunId: "2720260",
@@ -1463,6 +1443,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Bulk update two test case runs to Pass status (bulk execution)",
         parameters: {
+          projectKey: "MAC",
           entityIDs: "66095069,66095075",
           entityType: "TCR",
           qmTsRunId: "2720260",
@@ -1477,6 +1458,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Bulk update all selected test case runs to Not Run status",
         parameters: {
+          projectKey: "MAC",
           entityIDs:
             "66095069,66095075,66095081,66095087,66095093,66095099,66095105",
           entityType: "TCR",
@@ -1490,6 +1472,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description: "Update test case run with build/drop information",
         parameters: {
+          projectKey: "MAC",
           entityIDs: "66095087",
           entityType: "TCR",
           qmTsRunId: "2720260",
@@ -1504,6 +1487,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Update automated test execution status with automation flag",
         parameters: {
+          projectKey: "MAC",
           entityIDs: "66095069,66095075",
           entityType: "TCR",
           qmTsRunId: "2720260",
@@ -1519,6 +1503,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Update test case run status with Part 11 Compliance authentication",
         parameters: {
+          projectKey: "MAC",
           entityIDs: "66095087",
           entityType: "TCR",
           qmTsRunId: "2720260",
@@ -1534,6 +1519,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Update ALL executions of test suite VKMC-TS-20 to Failed (MULTI-CALL OPERATION)",
         parameters: {
+          projectKey: "MAC",
           entityIDs: "66341841,66342887,66342893,66342899",
           entityType: "TCR",
           qmTsRunId: "2733104",
@@ -1547,6 +1533,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Retry after MANDATORY_TEST_RUN_UDF_MISSING: fill mandatory Test Run UDF 'test_env' per run, then mark both runs Passed",
         parameters: {
+          projectKey: "MAC",
           entityIDs: "66095069,66095075",
           entityType: "TCR",
           qmTsRunId: "2720260",
@@ -1572,12 +1559,11 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       "- Value formats: DATETIMEPICKER 'MM-DD-YYYY'; LOOKUPLIST option id (from lookupOptions[listName][].id); MULTILOOKUPLIST array of ids; CASCADINGLIST { parent, child }.",
       "- Supplied UDF values are written first (Bulk Update Test Run UDFs), then the status is updated. Non-mandatory UDFs can also be set this way.",
       "- entityType 'TCSR' (step runs) skips the gate; 'udfValuesByRun' is rejected for TCSR.",
-      "- viewId is auto-resolved (latestViews.TE.viewId); do not pass it unless you have a specific one.",
       "",
       "CRITICAL - ALWAYS FETCH STATUS IDs FROM PROJECT INFO:",
       "NEVER use hardcoded or memorized status IDs. Status IDs are PROJECT-SPECIFIC and must be fetched dynamically.",
       "MANDATORY WORKFLOW BEFORE USING runStatusID:",
-      "1. Call mcp_smartbear_qmetry_fetch_qmetry_project_info with the current projectKey",
+      "1. Call mcp_smartbear_qmetry_fetch_qmetry_project_info with the same projectKey used for this call",
       "2. Extract the 'allstatus' array from the response",
       "3. Match the desired status NAME to find its corresponding ID",
       "4. Use the fetched ID in the runStatusID parameter",
@@ -1712,7 +1698,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
     examples: [
       {
         description: "Fetch details for test suite with ID 142013",
-        parameters: { id: 142013 },
+        parameters: { projectKey: "MAC", id: 142013 },
         expectedOutput:
           "Full test suite detail object with UDFTypeData, UDF field values, and metadata",
       },

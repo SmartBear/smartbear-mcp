@@ -10,6 +10,7 @@ import {
   fetchIssueDetails,
   fetchIssueExecutions,
   fetchIssues,
+  fetchIssuesLinkedToExecution,
   fetchIssuesLinkedToTestCase,
   linkIssuesToTestcaseRun,
   updateIssue,
@@ -24,12 +25,14 @@ import {
   getProjects,
   getReleasesCycles,
   updateCycle,
+  updateRelease,
 } from "./project";
 import {
   createRequirement,
   fetchRequirementDetails,
   fetchRequirements,
   fetchRequirementsLinkedToTestCase,
+  linkReleaseCycleWithRequirement,
   updateRequirement,
 } from "./requirement";
 import {
@@ -41,6 +44,7 @@ import {
   fetchTestCases,
   fetchTestCasesLinkedToRequirement,
   fetchTestCaseVersionDetails,
+  linkReleaseCycleWithTestCase,
   linkRequirementToTestCase,
   linkTestcaseToIssues,
   updateTestCase,
@@ -86,7 +90,6 @@ type QMetryHandler = (
 
 export const QMETRY_HANDLER_MAP: Record<string, QMetryHandler> = {
   [QMetryToolsHandlers.FETCH_PROJECTS]: getProjects,
-  [QMetryToolsHandlers.SET_PROJECT_INFO]: getProjectInfo,
   [QMetryToolsHandlers.FETCH_PROJECT_INFO]: getProjectInfo,
   [QMetryToolsHandlers.FETCH_RELEASES_CYCLES]: getReleasesCycles,
   [QMetryToolsHandlers.FETCH_BUILDS]: getBuilds,
@@ -95,6 +98,7 @@ export const QMETRY_HANDLER_MAP: Record<string, QMetryHandler> = {
   [QMetryToolsHandlers.CREATE_RELEASE]: createRelease,
   [QMetryToolsHandlers.CREATE_CYCLE]: createCycle,
   [QMetryToolsHandlers.UPDATE_CYCLE]: updateCycle,
+  [QMetryToolsHandlers.UPDATE_RELEASE]: updateRelease,
   [QMetryToolsHandlers.CREATE_TEST_CASE]: createTestCases,
   [QMetryToolsHandlers.UPDATE_TEST_CASE]: updateTestCase,
   [QMetryToolsHandlers.FETCH_TEST_CASES]: fetchTestCases,
@@ -107,8 +111,12 @@ export const QMETRY_HANDLER_MAP: Record<string, QMetryHandler> = {
   [QMetryToolsHandlers.FETCH_TEST_CASE_EXECUTIONS]: fetchTestCaseExecutions,
   [QMetryToolsHandlers.LINK_REQUIREMENT_TO_TESTCASE]: linkRequirementToTestCase,
   [QMetryToolsHandlers.LINK_TESTCASE_TO_ISSUES]: linkTestcaseToIssues,
+  [QMetryToolsHandlers.LINK_RELEASE_CYCLE_WITH_TESTCASE]:
+    linkReleaseCycleWithTestCase,
   [QMetryToolsHandlers.CREATE_REQUIREMENT]: createRequirement,
   [QMetryToolsHandlers.UPDATE_REQUIREMENT]: updateRequirement,
+  [QMetryToolsHandlers.LINK_RELEASE_CYCLE_WITH_REQUIREMENT]:
+    linkReleaseCycleWithRequirement,
   [QMetryToolsHandlers.FETCH_REQUIREMENTS]: fetchRequirements,
   [QMetryToolsHandlers.FETCH_REQUIREMENT_DETAILS]: fetchRequirementDetails,
   [QMetryToolsHandlers.FETCH_TESTCASES_LINKED_TO_REQUIREMENT]:
@@ -139,6 +147,8 @@ export const QMETRY_HANDLER_MAP: Record<string, QMetryHandler> = {
   [QMetryToolsHandlers.FETCH_ISSUES]: fetchIssues,
   [QMetryToolsHandlers.FETCH_ISSUE_DETAILS]: fetchIssueDetails,
   [QMetryToolsHandlers.LINK_ISSUES_TO_TESTCASE_RUN]: linkIssuesToTestcaseRun,
+  [QMetryToolsHandlers.FETCH_ISSUES_LINKED_TO_EXECUTION]:
+    fetchIssuesLinkedToExecution,
   [QMetryToolsHandlers.LINK_PLATFORMS_TO_TESTSUITE]: linkPlatformsToTestSuite,
   [QMetryToolsHandlers.IMPORT_AUTOMATION_RESULTS]: importAutomationResults,
   [QMetryToolsHandlers.FETCH_AUTOMATION_STATUS]: getAutomationStatus,

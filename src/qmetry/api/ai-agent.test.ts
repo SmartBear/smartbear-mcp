@@ -18,6 +18,7 @@ const projectKey = "TEST_PROJECT";
 const mockOk = (data: unknown) => ({
   ok: true,
   json: async () => data,
+  text: async () => JSON.stringify(data),
 });
 
 describe("AI Agent API clients", () => {
@@ -452,6 +453,7 @@ describe("AI Agent API clients", () => {
   describe("ExportHtmlReportArgsSchema fileName validation", () => {
     const parseFileName = (fileName: string) =>
       ExportHtmlReportArgsSchema.safeParse({
+        projectKey: "MAC",
         htmlContent: "<h1>Report</h1>",
         fileName,
       });

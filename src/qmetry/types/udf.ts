@@ -29,17 +29,12 @@ export interface UdfDataEntry {
   defaultValue?: string | number | number[] | null;
   defaultChildValue?: number[];
 }
-export interface FetchUdfFieldTypesPayload {
-  scopeId?: number;
-  orgCode?: string;
-}
-
 export const FetchUdfFieldTypesArgsSchema = z.object({
   projectKey: CommonFields.projectKey,
 });
 
 export const FetchUdfModulesArgsSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional,
+  projectKey: CommonFields.projectKeyRequired,
 });
 
 export interface UdfFieldValue {
@@ -51,12 +46,10 @@ export interface UdfFieldValue {
 export interface BulkUpdateTestRunUdfsPayload {
   tcRunIDs: number[];
   UDF: Record<string, UdfFieldValue>;
-  scopeId?: number;
-  orgCode?: string;
 }
 
 export const BulkUpdateTestRunUdfsArgsSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional,
+  projectKey: CommonFields.projectKeyRequired,
 
   tcRunIDs: z
     .array(z.number().int().positive())
@@ -81,13 +74,8 @@ export const BulkUpdateTestRunUdfsArgsSchema = z.object({
 // Test Run UDF Metadata
 // ---------------------------------------------------------------------------
 
-export interface FetchTestRunUdfMetadataPayload {
-  scopeId?: number;
-  orgCode?: string;
-}
-
 export const FetchTestRunUdfMetadataArgsSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional,
+  projectKey: CommonFields.projectKeyRequired,
 });
 
 // ---------------------------------------------------------------------------
@@ -96,13 +84,10 @@ export const FetchTestRunUdfMetadataArgsSchema = z.object({
 
 export interface FetchTestRunUdfValuesPayload {
   tsrunID?: string;
-  viewId?: number;
   sourceContext?: "testSuiteRun" | "testCaseExecutions";
   sourceRows?: Record<string, unknown>[];
   startIndex?: number;
   size?: number;
-  scopeId?: number;
-  orgCode?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -112,12 +97,10 @@ export interface FetchTestRunUdfValuesPayload {
 export interface FetchCascadeChildValuesPayload {
   id: number;
   isArchReq?: boolean;
-  scopeId?: number;
-  orgCode?: string;
 }
 
 export const FetchCascadeChildValuesArgsSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional,
+  projectKey: CommonFields.projectKeyRequired,
 
   id: z
     .number()
@@ -144,12 +127,10 @@ export const FetchCascadeChildValuesArgsSchema = z.object({
 export interface FetchUdfLayoutPayload {
   entityType: "TC" | "TS" | "IS" | "RQ";
   pageName?: "ADD" | "DETAIL";
-  scopeId?: number;
-  orgCode?: string;
 }
 
 export const FetchUdfLayoutArgsSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional,
+  projectKey: CommonFields.projectKeyRequired,
   entityType: z
     .enum(["TC", "TS", "IS", "RQ"])
     .describe(
@@ -171,7 +152,7 @@ export const FetchUdfLayoutArgsSchema = z.object({
 });
 
 export const FetchTestRunUdfValuesArgsSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional,
+  projectKey: CommonFields.projectKeyRequired,
 
   tsrunID: z.coerce
     .string()
@@ -181,15 +162,6 @@ export const FetchTestRunUdfValuesArgsSchema = z.object({
         "Accepts a string or number (e.g. 731600 or '731600' — both are valid). " +
         "Get this from 'Fetch Executions by Test Suite' → use data[<index>].tsRunID from the response. " +
         "Required when sourceRows is not provided.",
-    ),
-  viewId: z
-    .number()
-    .int()
-    .positive()
-    .optional()
-    .describe(
-      "View ID for the test execution list (latestViews.TE.viewId from project info). " +
-        "Auto-resolved from project info when omitted. Required when sourceRows is not provided.",
     ),
   sourceContext: z
     .enum(["testSuiteRun", "testCaseExecutions"])

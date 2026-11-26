@@ -7,8 +7,16 @@ import {
   getPlatforms,
   getProjectInfo,
   getReleasesCycles,
+  rankProjectSuggestions,
+  resolveProjectFromInfo,
+  suggestProjects,
   updateCycle,
+  updateRelease,
 } from "../client/project.js";
+import {
+  UpdateCycleArgsSchema,
+  UpdateReleaseArgsSchema,
+} from "../types/common.js";
 
 describe("getProjectInfo", () => {
   const token = "fake-token";
@@ -24,6 +32,7 @@ describe("getProjectInfo", () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
+      text: async () => JSON.stringify(mockResponse),
     });
 
     const result = await getProjectInfo(token, baseUrl, projectKey);
@@ -51,7 +60,7 @@ describe("getProjectInfo", () => {
     });
 
     await expect(getProjectInfo(token, baseUrl, projectKey)).rejects.toThrow(
-      /QMetry API request failed \(500\)/,
+      /QMetry API error 500: Server error/,
     );
   });
 
@@ -60,6 +69,7 @@ describe("getProjectInfo", () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
+      text: async () => JSON.stringify(mockResponse),
     });
 
     await getProjectInfo(token, baseUrl);
@@ -80,244 +90,304 @@ describe("getReleasesCycles", () => {
   const baseUrl = "https://qmetry.example";
   const projectKey = "TEST_PROJECT";
 
+  const tree = {
+    text: ".",
+    children: [
+      {
+        projID: 100,
+        type: "Project A",
+        isArchived: false,
+        isLocked: false,
+        iconCls: "ad-project-ico",
+        expanded: true,
+        children: [
+          {
+            relID: 1001,
+            type: "Release A1",
+            isLocked: false,
+            scope: "release",
+            isArchived: false,
+            startdate: "2026-06-09T04:00:00",
+            targetdate: "2026-07-01T04:00:00",
+            iconCls: "ad-release-ico",
+            expanded: true,
+            children: [
+              {
+                cyclID: 5001,
+                type: "Cycle A1.1",
+                isLocked: false,
+                scope: "cycle",
+                isArchived: false,
+                iconCls: "ad-cycle-ico",
+                leaf: true,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        projID: 200,
+        type: "Project B",
+        isArchived: false,
+        isLocked: false,
+        iconCls: "ad-project-ico",
+        expanded: true,
+        children: [
+          {
+            relID: 2001,
+            type: "Release B1",
+            isLocked: false,
+            scope: "release",
+            isArchived: false,
+            iconCls: "ad-release-ico",
+            expanded: true,
+            children: [
+              {
+                cyclID: 6001,
+                type: "Cycle B1.1",
+                isLocked: false,
+                scope: "cycle",
+                isArchived: false,
+                iconCls: "ad-cycle-ico",
+                leaf: true,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+
+  const strippedA = {
+    projID: 100,
+    type: "Project A",
+    isArchived: false,
+    isLocked: false,
+    children: [
+      {
+        relID: 1001,
+        type: "Release A1",
+        isLocked: false,
+        scope: "release",
+        isArchived: false,
+        startdate: "2026-06-09T04:00:00",
+        targetdate: "2026-07-01T04:00:00",
+        children: [
+          {
+            cyclID: 5001,
+            type: "Cycle A1.1",
+            isLocked: false,
+            scope: "cycle",
+            isArchived: false,
+          },
+        ],
+      },
+    ],
+  };
+
+  const strippedB = {
+    projID: 200,
+    type: "Project B",
+    isArchived: false,
+    isLocked: false,
+    children: [
+      {
+        relID: 2001,
+        type: "Release B1",
+        isLocked: false,
+        scope: "release",
+        isArchived: false,
+        children: [
+          {
+            cyclID: 6001,
+            type: "Cycle B1.1",
+            isLocked: false,
+            scope: "cycle",
+            isArchived: false,
+          },
+        ],
+      },
+    ],
+  };
+
+  function okResponse(body: unknown) {
+    return {
+      ok: true,
+      json: async () => body,
+      text: async () => JSON.stringify(body),
+    };
+  }
+
+  /** Routes scope/tree and getinfo to separate responses. */
+  function mockFetch(
+    treeBody: unknown,
+    info: unknown | Error = { currentProjectId: 200, projects: [] },
+  ) {
+    global.fetch = vi.fn().mockImplementation(async (url: string) => {
+      if (url.endsWith("/rest/admin/scope/tree")) return okResponse(treeBody);
+      if (url.endsWith("/rest/admin/project/getinfo")) {
+        if (info instanceof Error) {
+          return { ok: false, status: 500, text: async () => info.message };
+        }
+        return okResponse(info);
+      }
+      throw new Error(`unexpected URL ${url}`);
+    });
+  }
+
+  function treeCalls() {
+    return (global.fetch as any).mock.calls.filter(([url]: [string]) =>
+      url.endsWith("/rest/admin/scope/tree"),
+    );
+  }
+
+  function infoCalls() {
+    return (global.fetch as any).mock.calls.filter(([url]: [string]) =>
+      url.endsWith("/rest/admin/project/getinfo"),
+    );
+  }
+
   beforeEach(() => {
     vi.resetAllMocks();
   });
 
-  it("should call fetch with correct URL and headers for default behavior (showArchive: false)", async () => {
-    const mockResponse = {
-      text: ".",
-      children: [
-        {
-          projID: 12997,
-          type: "Test Project",
-          isArchived: false,
-          children: [
-            {
-              relID: 75414,
-              type: "Default Release",
-              isArchived: false,
-              children: [
-                {
-                  cyclID: 176734,
-                  type: "Default Cycle",
-                  isArchived: false,
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    };
+  it("posts showArchive: false by default with the project header", async () => {
+    mockFetch(tree);
 
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => mockResponse,
+    await getReleasesCycles(token, baseUrl, projectKey);
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      `${baseUrl}/rest/admin/scope/tree`,
+      expect.objectContaining({
+        method: "POST",
+        headers: expect.objectContaining({
+          apikey: token,
+          project: projectKey,
+          "Content-Type": "application/json",
+          "User-Agent": expect.stringContaining("SmartBear MCP Server"),
+        }),
+        body: JSON.stringify({ showArchive: false }),
+      }),
+    );
+  });
+
+  it.each([
+    true,
+    false,
+  ])("sends only showArchive: %s in the body", async (showArchive) => {
+    mockFetch(tree);
+
+    await getReleasesCycles(token, baseUrl, projectKey, {
+      showArchive,
+      projectID: 100,
+      allProjects: false,
     });
+
+    expect(treeCalls()[0][1].body).toBe(JSON.stringify({ showArchive }));
+  });
+
+  it("trims to the current project resolved via getinfo and strips UI fields", async () => {
+    mockFetch(tree, { currentProjectId: 200, projects: [] });
 
     const result = await getReleasesCycles(token, baseUrl, projectKey);
 
-    expect(global.fetch).toHaveBeenCalledWith(
-      `${baseUrl}/rest/admin/scope/tree`,
-      expect.objectContaining({
-        method: "POST",
-        headers: expect.objectContaining({
-          apikey: token,
-          project: projectKey,
-          "Content-Type": "application/json",
-          "User-Agent": expect.stringContaining("SmartBear MCP Server"),
-        }),
-        body: JSON.stringify({ showArchive: false }),
-      }),
-    );
-
-    expect(result).toEqual(mockResponse);
+    expect(infoCalls()).toHaveLength(1);
+    expect(infoCalls()[0][1].headers.project).toBe(projectKey);
+    expect(result).toEqual({ children: [strippedB] });
   });
 
-  it("should call fetch with showArchive: true when explicitly provided", async () => {
-    const mockResponse = {
-      text: ".",
-      children: [
-        {
-          projID: 12997,
-          type: "Test Project",
-          isArchived: false,
-          children: [
-            {
-              relID: 75414,
-              type: "Default Release",
-              isArchived: false,
-              children: [
-                {
-                  cyclID: 176734,
-                  type: "Default Cycle",
-                  isArchived: false,
-                },
-              ],
-            },
-            {
-              relID: 75415,
-              type: "Archived Release",
-              isArchived: true,
-              children: [
-                {
-                  cyclID: 176735,
-                  type: "Archived Cycle",
-                  isArchived: true,
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    };
+  it("matches a string currentProjectId against numeric projID", async () => {
+    mockFetch(tree, { currentProjectId: "100", projects: [] });
 
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => mockResponse,
-    });
+    const result = await getReleasesCycles(token, baseUrl, projectKey);
+
+    expect(result).toEqual({ children: [strippedA] });
+  });
+
+  it("uses the explicit projectID and skips getinfo", async () => {
+    mockFetch(tree);
 
     const result = await getReleasesCycles(token, baseUrl, projectKey, {
-      showArchive: true,
+      projectID: 100,
     });
 
-    expect(global.fetch).toHaveBeenCalledWith(
-      `${baseUrl}/rest/admin/scope/tree`,
-      expect.objectContaining({
-        method: "POST",
-        headers: expect.objectContaining({
-          apikey: token,
-          project: projectKey,
-          "Content-Type": "application/json",
-          "User-Agent": expect.stringContaining("SmartBear MCP Server"),
-        }),
-        body: JSON.stringify({ showArchive: true }),
-      }),
-    );
-
-    expect(result).toEqual(mockResponse);
+    expect(infoCalls()).toHaveLength(0);
+    expect(result).toEqual({ children: [strippedA] });
   });
 
-  it("should call fetch with showArchive: false when explicitly provided", async () => {
-    const mockResponse = {
-      text: ".",
-      children: [
-        {
-          projID: 12997,
-          type: "Test Project",
-          isArchived: false,
-          children: [
-            {
-              relID: 75414,
-              type: "Default Release",
-              isArchived: false,
-              children: [
-                {
-                  cyclID: 176734,
-                  type: "Default Cycle",
-                  isArchived: false,
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    };
-
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => mockResponse,
-    });
+  it("returns every project (stripped) when allProjects is true, without getinfo", async () => {
+    mockFetch(tree);
 
     const result = await getReleasesCycles(token, baseUrl, projectKey, {
-      showArchive: false,
+      allProjects: true,
+      projectID: 100,
     });
 
-    expect(global.fetch).toHaveBeenCalledWith(
-      `${baseUrl}/rest/admin/scope/tree`,
-      expect.objectContaining({
-        method: "POST",
-        headers: expect.objectContaining({
-          apikey: token,
-          project: projectKey,
-          "Content-Type": "application/json",
-          "User-Agent": expect.stringContaining("SmartBear MCP Server"),
-        }),
-        body: JSON.stringify({ showArchive: false }),
-      }),
-    );
-
-    expect(result).toEqual(mockResponse);
+    expect(infoCalls()).toHaveLength(0);
+    expect(result).toEqual({ children: [strippedA, strippedB] });
   });
 
-  it("should use default project key when not provided", async () => {
-    const mockResponse = {
-      text: ".",
-      children: [],
-    };
+  it("falls back to the full tree when getinfo fails", async () => {
+    mockFetch(tree, new Error("boom"));
 
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => mockResponse,
-    });
+    const result = await getReleasesCycles(token, baseUrl, projectKey);
+
+    expect(result).toEqual({ children: [strippedA, strippedB] });
+  });
+
+  it("falls back to the full tree when the resolved project is not in the tree", async () => {
+    mockFetch(tree, { currentProjectId: 999, projects: [] });
+
+    const result = await getReleasesCycles(token, baseUrl, projectKey);
+
+    expect(result).toEqual({ children: [strippedA, strippedB] });
+  });
+
+  it("falls back to the full tree when getinfo has no currentProjectId", async () => {
+    mockFetch(tree, { projects: [] });
+
+    const result = await getReleasesCycles(token, baseUrl, projectKey);
+
+    expect(result).toEqual({ children: [strippedA, strippedB] });
+  });
+
+  it("uses the default project key for both calls when not provided", async () => {
+    mockFetch(tree);
 
     await getReleasesCycles(token, baseUrl);
 
-    expect(global.fetch).toHaveBeenCalledWith(
-      `${baseUrl}/rest/admin/scope/tree`,
-      expect.objectContaining({
-        headers: expect.objectContaining({
-          project: "default", // from QMETRY_DEFAULTS
-        }),
-      }),
-    );
+    expect(treeCalls()[0][1].headers.project).toBe("default");
+    expect(infoCalls()[0][1].headers.project).toBe("default");
   });
 
-  it("should use default base URL when not provided", async () => {
-    const mockResponse = {
-      text: ".",
-      children: [],
-    };
-
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => mockResponse,
-    });
+  it("uses the default base URL when not provided", async () => {
+    mockFetch({ text: ".", children: [] });
 
     await getReleasesCycles(token, "", projectKey);
 
     expect(global.fetch).toHaveBeenCalledWith(
-      "https://testmanagement.qmetry.com/rest/admin/scope/tree", // from QMETRY_DEFAULTS
-      expect.objectContaining({
-        method: "POST",
-      }),
+      "https://testmanagement.qmetry.com/rest/admin/scope/tree",
+      expect.objectContaining({ method: "POST" }),
     );
   });
 
-  it("should handle empty payload object", async () => {
-    const mockResponse = {
-      text: ".",
-      children: [],
-    };
-
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => mockResponse,
-    });
+  it("returns an empty children array unchanged (minus text)", async () => {
+    mockFetch({ text: ".", children: [] });
 
     const result = await getReleasesCycles(token, baseUrl, projectKey, {});
 
-    expect(global.fetch).toHaveBeenCalledWith(
-      `${baseUrl}/rest/admin/scope/tree`,
-      expect.objectContaining({
-        body: JSON.stringify({ showArchive: false }), // default behavior
-      }),
-    );
-
-    expect(result).toEqual(mockResponse);
+    expect(result).toEqual({ children: [] });
   });
 
-  it("should throw error on non-OK response", async () => {
+  it("returns a response without a children array as-is", async () => {
+    mockFetch({ message: "nothing" });
+
+    const result = await getReleasesCycles(token, baseUrl, projectKey, {});
+
+    expect(result).toEqual({ message: "nothing" });
+  });
+
+  it("throws on a non-OK scope/tree response", async () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: false,
       status: 401,
@@ -325,76 +395,16 @@ describe("getReleasesCycles", () => {
     });
 
     await expect(getReleasesCycles(token, baseUrl, projectKey)).rejects.toThrow(
-      /QMetry API Authentication Failed/,
+      /QMetry API error 401/,
     );
   });
 
-  it("should handle network errors", async () => {
+  it("propagates network errors from scope/tree", async () => {
     global.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
 
     await expect(getReleasesCycles(token, baseUrl, projectKey)).rejects.toThrow(
       "Network error",
     );
-  });
-
-  it("should handle complex hierarchical response data", async () => {
-    const mockResponse = {
-      text: ".",
-      children: [
-        {
-          projID: 15266,
-          type: "VK Testi",
-          isArchived: false,
-          isLocked: false,
-          iconCls: "ad-project-ico",
-          expanded: true,
-          children: [
-            {
-              relID: 111840,
-              type: "release 1",
-              isLocked: false,
-              scope: "release",
-              isArchived: false,
-              iconCls: "ad-release-ico",
-              expanded: true,
-              children: [
-                {
-                  cyclID: 226970,
-                  type: "Default Cycle",
-                  isLocked: false,
-                  scope: "cycle",
-                  isArchived: false,
-                  iconCls: "ad-cycle-ico",
-                  leaf: true,
-                },
-                {
-                  cyclID: 226972,
-                  type: "My_Cycle1.1",
-                  isLocked: false,
-                  scope: "cycle",
-                  isArchived: false,
-                  iconCls: "ad-cycle-ico",
-                  leaf: true,
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    };
-
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => mockResponse,
-    });
-
-    const result = await getReleasesCycles(token, baseUrl, projectKey, {
-      showArchive: false,
-    });
-
-    expect(result).toEqual(mockResponse);
-    expect((result as any).children[0].children[0].children).toHaveLength(2);
-    expect((result as any).children[0].children[0].type).toBe("release 1");
   });
 });
 
@@ -425,6 +435,7 @@ describe("getBuilds", () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
+      text: async () => JSON.stringify(mockResponse),
     });
 
     const result = await getBuilds(token, baseUrl, projectKey, {});
@@ -464,6 +475,7 @@ describe("getBuilds", () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
+      text: async () => JSON.stringify(mockResponse),
     });
 
     const customPayload = {
@@ -532,6 +544,7 @@ describe("getApiQuotaStatus", () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
+      text: async () => JSON.stringify(mockResponse),
     });
 
     const result = await getApiQuotaStatus(token, baseUrl, projectKey, {});
@@ -596,6 +609,7 @@ describe("getPlatforms", () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
+      text: async () => JSON.stringify(mockResponse),
     });
 
     const result = await getPlatforms(token, baseUrl, projectKey, {});
@@ -646,6 +660,7 @@ describe("getPlatforms", () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
+      text: async () => JSON.stringify(mockResponse),
     });
 
     const customPayload = {
@@ -711,6 +726,7 @@ describe("createRelease", () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
+      text: async () => JSON.stringify(mockResponse),
     });
 
     const payload = {
@@ -795,6 +811,7 @@ describe("createCycle", () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
+      text: async () => JSON.stringify(mockResponse),
     });
 
     const payload = {
@@ -858,6 +875,7 @@ describe("updateCycle", () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
+      text: async () => JSON.stringify(mockResponse),
     });
 
     const payload = {
@@ -909,5 +927,512 @@ describe("updateCycle", () => {
     ).rejects.toThrow(
       "[updateCycle] Missing or invalid required parameter: 'cycle.buildID'",
     );
+  });
+
+  it("sends only the provided field alongside the IDs", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ success: true }),
+      text: async () => JSON.stringify({ success: true }),
+    });
+
+    await updateCycle(token, baseUrl, projectKey, {
+      cycle: { buildID: 1494, releaseID: 3729, targetDate: "11-11-2018" },
+    });
+
+    const body = JSON.parse((globalThis.fetch as any).mock.calls[0][1].body);
+    expect(body).toEqual({
+      cycle: { buildID: 1494, releaseID: 3729, targetDate: "11-11-2018" },
+    });
+  });
+
+  it("throws a ToolError when cycle is missing", async () => {
+    globalThis.fetch = vi.fn();
+    await expect(
+      updateCycle(token, baseUrl, projectKey, {} as any),
+    ).rejects.toThrow(
+      "[updateCycle] Missing or invalid required parameter: 'cycle'.",
+    );
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  it("throws when releaseID is missing", async () => {
+    globalThis.fetch = vi.fn();
+    await expect(
+      updateCycle(token, baseUrl, projectKey, {
+        cycle: { buildID: 1494, releaseID: undefined as any, name: "C" },
+      }),
+    ).rejects.toThrow(
+      "[updateCycle] Missing or invalid required parameter: 'cycle.releaseID'",
+    );
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  it("throws when no updatable field is provided", async () => {
+    globalThis.fetch = vi.fn();
+    await expect(
+      updateCycle(token, baseUrl, projectKey, {
+        cycle: { buildID: 1494, releaseID: 3729 },
+      }),
+    ).rejects.toThrow("[updateCycle] At least one of");
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  it("throws when name is blank", async () => {
+    globalThis.fetch = vi.fn();
+    await expect(
+      updateCycle(token, baseUrl, projectKey, {
+        cycle: { buildID: 1494, releaseID: 3729, name: "  " },
+      }),
+    ).rejects.toThrow("'cycle.name' must not be empty");
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  it("surfaces QMetry's error message", async () => {
+    const errorBody = {
+      success: false,
+      code: "CO.INVALID_BUILD_ID",
+      message: "Invalid Build ID.",
+    };
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 400,
+      statusText: "Bad Request",
+      json: async () => errorBody,
+      text: async () => JSON.stringify(errorBody),
+    });
+
+    await expect(
+      updateCycle(token, baseUrl, projectKey, {
+        cycle: { buildID: 1, releaseID: 3729, name: "C" },
+      }),
+    ).rejects.toThrow(/Invalid Build ID/);
+  });
+});
+
+describe("UpdateCycleArgsSchema", () => {
+  it("accepts IDs plus one updatable field and coerces string IDs", () => {
+    const parsed = UpdateCycleArgsSchema.parse({
+      projectKey: "MAC",
+      cycle: { buildID: "1494", releaseID: "3729", name: "Sprint 2" },
+    });
+    expect(parsed.cycle).toEqual({
+      buildID: 1494,
+      releaseID: 3729,
+      name: "Sprint 2",
+    });
+  });
+
+  it("rejects a request with only IDs", () => {
+    const result = UpdateCycleArgsSchema.safeParse({
+      projectKey: "MAC",
+      cycle: { buildID: 1494, releaseID: 3729 },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a request without releaseID", () => {
+    const result = UpdateCycleArgsSchema.safeParse({
+      projectKey: "MAC",
+      cycle: { buildID: 1494, name: "C" },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a blank name", () => {
+    const result = UpdateCycleArgsSchema.safeParse({
+      projectKey: "MAC",
+      cycle: { buildID: 1494, releaseID: 3729, name: "   " },
+    });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("updateRelease", () => {
+  const token = "fake-token";
+  const baseUrl = "https://qmetry.example";
+  const projectKey = "TEST_PROJECT";
+
+  const mockOk = (response: unknown) => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => response,
+      text: async () => JSON.stringify(response),
+    });
+  };
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it("sends a PUT to /rest/admin/release with the full release body", async () => {
+    const mockResponse = { success: true, message: "Release updated" };
+    mockOk(mockResponse);
+
+    const payload = {
+      release: {
+        projectID: 347,
+        releaseID: 1631,
+        name: "Q3-25 Performance Benchmarking Test.2",
+        description: "<p><strong>Sprint 53</strong></p>",
+        startDate: "06-25-2025",
+        targetDate: "06-26-2025",
+      },
+    };
+
+    const result = await updateRelease(token, baseUrl, projectKey, payload);
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      `${baseUrl}/rest/admin/release`,
+      expect.objectContaining({
+        method: "PUT",
+        headers: expect.objectContaining({
+          apikey: token,
+          project: projectKey,
+          "Content-Type": "application/json",
+        }),
+      }),
+    );
+    const body = JSON.parse((globalThis.fetch as any).mock.calls[0][1].body);
+    expect(body).toEqual(payload);
+    expect(result).toEqual(mockResponse);
+  });
+
+  it("sends only the provided field alongside the IDs", async () => {
+    mockOk({ success: true });
+
+    await updateRelease(token, baseUrl, projectKey, {
+      release: { projectID: 347, releaseID: 1631, targetDate: "06-26-2025" },
+    });
+
+    const body = JSON.parse((globalThis.fetch as any).mock.calls[0][1].body);
+    expect(body).toEqual({
+      release: { projectID: 347, releaseID: 1631, targetDate: "06-26-2025" },
+    });
+  });
+
+  it("throws when projectID is missing", async () => {
+    globalThis.fetch = vi.fn();
+    await expect(
+      updateRelease(token, baseUrl, projectKey, {
+        release: { projectID: undefined as any, releaseID: 1631, name: "R" },
+      }),
+    ).rejects.toThrow(
+      "[updateRelease] Missing or invalid required parameter: 'release.projectID'",
+    );
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  it("throws when releaseID is missing", async () => {
+    await expect(
+      updateRelease(token, baseUrl, projectKey, {
+        release: { projectID: 347, releaseID: undefined as any, name: "R" },
+      }),
+    ).rejects.toThrow(
+      "[updateRelease] Missing or invalid required parameter: 'release.releaseID'",
+    );
+  });
+
+  it("throws when no updatable field is provided", async () => {
+    globalThis.fetch = vi.fn();
+    await expect(
+      updateRelease(token, baseUrl, projectKey, {
+        release: { projectID: 347, releaseID: 1631 },
+      }),
+    ).rejects.toThrow("[updateRelease] At least one of");
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  it("throws when name is blank", async () => {
+    await expect(
+      updateRelease(token, baseUrl, projectKey, {
+        release: { projectID: 347, releaseID: 1631, name: "  " },
+      }),
+    ).rejects.toThrow("'release.name' must not be empty");
+  });
+
+  it("surfaces QMetry's duplicate release name error", async () => {
+    const errorBody = {
+      success: false,
+      code: "AD.RELEASE_DUPLICATE",
+      message: "Duplicate Release name is not allowed.",
+    };
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 400,
+      statusText: "Bad Request",
+      json: async () => errorBody,
+      text: async () => JSON.stringify(errorBody),
+    });
+
+    await expect(
+      updateRelease(token, baseUrl, projectKey, {
+        release: { projectID: 347, releaseID: 1631, name: "Existing" },
+      }),
+    ).rejects.toThrow(/Duplicate Release name is not allowed/);
+  });
+});
+
+describe("UpdateReleaseArgsSchema", () => {
+  it("accepts IDs plus one updatable field and coerces string IDs", () => {
+    const parsed = UpdateReleaseArgsSchema.parse({
+      projectKey: "MAC",
+      release: { projectID: "347", releaseID: "1631", description: "d" },
+    });
+    expect(parsed.release).toEqual({
+      projectID: 347,
+      releaseID: 1631,
+      description: "d",
+    });
+  });
+
+  it("rejects a request with only IDs", () => {
+    const result = UpdateReleaseArgsSchema.safeParse({
+      projectKey: "MAC",
+      release: { projectID: 347, releaseID: 1631 },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a request without releaseID", () => {
+    const result = UpdateReleaseArgsSchema.safeParse({
+      projectKey: "MAC",
+      release: { projectID: 347, name: "R" },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts a request without projectID (filled from the project)", () => {
+    const parsed = UpdateReleaseArgsSchema.parse({
+      projectKey: "MAC",
+      release: { releaseID: "1631", name: "R" },
+    });
+    expect(parsed.release).toEqual({ releaseID: 1631, name: "R" });
+  });
+
+  it("rejects a blank name", () => {
+    const result = UpdateReleaseArgsSchema.safeParse({
+      projectKey: "MAC",
+      release: { releaseID: 1631, name: "  " },
+    });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("getProjectInfo projects trimming", () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  const respond = (body: unknown) => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => body,
+      text: async () => JSON.stringify(body),
+    });
+  };
+
+  it("trims each projects entry to {id, key, name}", async () => {
+    respond({
+      currentProjectId: 347,
+      currentProjectName: "Pranshu Basic Test",
+      projects: [
+        {
+          projectID: 347,
+          projectKey: "8d7b",
+          name: "Pranshu Basic Test",
+          isArchived: false,
+          rootFolders: { TC: { id: 10 } },
+        },
+        { projectId: 192, key: "QT", projectName: "QTM--to--QTM4J" },
+        { name: "no id or key" },
+      ],
+    });
+
+    const result = await getProjectInfo(
+      "t",
+      "https://qmetry.example",
+      "default",
+    );
+
+    expect(result.projects).toEqual([
+      { id: 347, key: "8d7b", name: "Pranshu Basic Test" },
+      { id: 192, key: "QT", name: "QTM--to--QTM4J" },
+    ]);
+    expect(result.currentProjectId).toBe(347);
+  });
+
+  it("leaves a response without projects unchanged", async () => {
+    respond({ currentProjectId: 1 });
+    const result = await getProjectInfo("t", "https://qmetry.example", "MAC");
+    expect(result).toEqual({ currentProjectId: 1 });
+  });
+});
+
+describe("resolveProjectFromInfo", () => {
+  const info = {
+    currentProjectId: 347,
+    currentProjectName: "Pranshu Basic Test",
+    projects: [
+      { id: 347, key: "8d7b", name: "Pranshu Basic Test" },
+      { id: 192, key: "QT", name: "QTM--to--QTM4J" },
+    ],
+  };
+
+  it("reports the selected project for 'default'", () => {
+    expect(resolveProjectFromInfo(info, "default")).toEqual({
+      key: "8d7b",
+      id: 347,
+      name: "Pranshu Basic Test",
+      source: "qmetry-selected",
+    });
+  });
+
+  it("treats a missing key like 'default'", () => {
+    expect(resolveProjectFromInfo(info, undefined).source).toBe(
+      "qmetry-selected",
+    );
+  });
+
+  it("marks an explicit key as explicit", () => {
+    expect(
+      resolveProjectFromInfo(
+        {
+          ...info,
+          currentProjectId: 192,
+          currentProjectName: "QTM--to--QTM4J",
+        },
+        "QT",
+      ),
+    ).toEqual({
+      key: "QT",
+      id: 192,
+      name: "QTM--to--QTM4J",
+      source: "explicit",
+    });
+  });
+
+  it("matches ids given as strings", () => {
+    expect(
+      resolveProjectFromInfo({ ...info, currentProjectId: "347" }, "default")
+        .key,
+    ).toBe("8d7b");
+  });
+
+  it("omits the key when the selected project is not in projects", () => {
+    expect(
+      resolveProjectFromInfo({ ...info, currentProjectId: 999 }, "default"),
+    ).toEqual({
+      id: 999,
+      name: "Pranshu Basic Test",
+      source: "qmetry-selected",
+    });
+  });
+
+  it("falls back to an explicit key when projects has no match", () => {
+    expect(resolveProjectFromInfo({ currentProjectId: 5 }, "MAC")).toEqual({
+      key: "MAC",
+      id: 5,
+      source: "explicit",
+    });
+  });
+});
+
+describe("rankProjectSuggestions", () => {
+  const projects = [
+    { id: 192, key: "QT", name: "QTM--to--QTM4J" },
+    { id: 347, key: "8d7b", name: "Pranshu Basic Test" },
+    { id: 1, key: "MAC", name: "Mac Project" },
+    { id: 2, key: "QMTX", name: "Other" },
+  ];
+
+  it("ranks a case-insensitive exact key or name first", () => {
+    expect(rankProjectSuggestions("mac", projects)[0].key).toBe("MAC");
+    expect(rankProjectSuggestions("pranshu basic test", projects)[0].key).toBe(
+      "8d7b",
+    );
+  });
+
+  it("suggests close keys for a typo and drops unrelated ones", () => {
+    const keys = rankProjectSuggestions("QMT", projects).map((p) => p.key);
+    expect(keys).toContain("QT");
+    expect(keys).toContain("QMTX");
+    expect(keys).not.toContain("8d7b");
+  });
+
+  it("returns at most three suggestions", () => {
+    const many = Array.from({ length: 10 }, (_, i) => ({
+      id: i,
+      key: `Q${i}`,
+    }));
+    expect(rankProjectSuggestions("Q", many)).toHaveLength(3);
+  });
+
+  it("returns nothing for an empty value", () => {
+    expect(rankProjectSuggestions("  ", projects)).toEqual([]);
+  });
+});
+
+describe("suggestProjects", () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it("reads active projects from the project list and ranks them", async () => {
+    const body = {
+      data: [
+        { projectID: 192, projectKey: "QT", name: "QTM--to--QTM4J" },
+        { projectID: 1, projectKey: "ZZZZZZ", name: "Unrelated" },
+      ],
+      total: 2,
+    };
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => body,
+      text: async () => JSON.stringify(body),
+    });
+
+    const result = await suggestProjects("t", "https://qmetry.example", "QMT");
+
+    expect(result).toEqual([{ id: 192, key: "QT", name: "QTM--to--QTM4J" }]);
+    expect(global.fetch).toHaveBeenCalledOnce();
+    const [url, init] = (global.fetch as any).mock.calls[0];
+    expect(url).toBe("https://qmetry.example/rest/admin/project/list");
+    expect(JSON.parse(init.body).params).toEqual({ showArchive: false });
+  });
+
+  it("pages through the list until it has every project", async () => {
+    const page1 = {
+      data: Array.from({ length: 100 }, (_, i) => ({
+        projectID: i,
+        projectKey: `P${i}`,
+      })),
+      total: 101,
+    };
+    const page2 = { data: [{ projectID: 500, projectKey: "QT" }], total: 101 };
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => page1,
+        text: async () => JSON.stringify(page1),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => page2,
+        text: async () => JSON.stringify(page2),
+      });
+
+    const result = await suggestProjects("t", "https://qmetry.example", "QT");
+
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+    expect(result[0].key).toBe("QT");
+  });
+
+  it("returns no suggestions when the lookup fails", async () => {
+    global.fetch = vi.fn().mockRejectedValue(new Error("down"));
+    await expect(
+      suggestProjects("t", "https://qmetry.example", "QMT"),
+    ).resolves.toEqual([]);
   });
 });

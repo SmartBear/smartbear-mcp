@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   fetchIssueExecutions,
+  fetchIssuesLinkedToExecution,
   fetchIssuesLinkedToTestCase,
 } from "../client/issues.js";
 
@@ -16,6 +17,7 @@ describe("issues API clients", () => {
   const mockOk = (data: any) => ({
     ok: true,
     json: async () => data,
+    text: async () => JSON.stringify(data),
   });
 
   const mockFail = (status = 400, errorText = "Bad Request") => ({
@@ -175,9 +177,7 @@ describe("issues API clients", () => {
 
       await expect(
         fetchIssuesLinkedToTestCase(token, baseUrl, projectKey, payload),
-      ).rejects.toThrow(
-        /QMetry API Invalid URL Error: The API endpoint appears to be incorrect/,
-      );
+      ).rejects.toThrow(/QMetry API error 404/);
     });
 
     it("should throw error when tcID is missing", async () => {
@@ -315,6 +315,109 @@ describe("issues API clients", () => {
       ).rejects.toThrow(
         /Missing or invalid required parameter: 'linkedAssetId'/,
       );
+    });
+  });
+  describe("fetchIssuesLinkedToExecution", () => {
+    const mockResponse = {
+      header: {
+        testSuiteKey: "PT-TS-1",
+        testSuiteSummary: "All Test Cases Suite",
+        release: "Default Release",
+        cycle: "Default Cycle",
+        platform: "No Platform",
+      },
+      total: 1,
+      data: [
+        {
+          dfId: 9719420,
+          entityKey: "PT-IS-1",
+          summary: "Login fails on submit",
+          issuePriority: "Blocker",
+          issueState: "Open",
+          issueType: "Bug",
+          associatedCycle: "",
+          attachmentCount: 0,
+          linkedExecutionCount: 1,
+        },
+      ],
+      filter: [],
+      sort: [],
+    };
+
+    it("should POST to forTsRun with default pagination and empty filter/sort", async () => {
+      global.fetch = vi.fn().mockResolvedValue(mockOk(mockResponse));
+
+      const result = await fetchIssuesLinkedToExecution(
+        token,
+        baseUrl,
+        projectKey,
+        { tsRunID: 819218 } as any,
+      );
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        `${baseUrl}/rest/execution/issue/list/forTsRun`,
+        expect.objectContaining({
+          method: "POST",
+          headers: expect.objectContaining({
+            apikey: token,
+            project: projectKey,
+          }),
+        }),
+      );
+      const body = JSON.parse(
+        (global.fetch as any).mock.calls[0][1].body as string,
+      );
+      expect(body).toEqual({
+        tsRunID: 819218,
+        page: 1,
+        start: 0,
+        limit: 10,
+        filter: "[]",
+        sort: "[]",
+      });
+      expect(result).toEqual(mockResponse);
+    });
+
+    it("should pass custom pagination and ignore filter/sort/extra fields", async () => {
+      global.fetch = vi.fn().mockResolvedValue(mockOk(mockResponse));
+
+      await fetchIssuesLinkedToExecution(token, baseUrl, projectKey, {
+        tsRunID: 819218,
+        page: 2,
+        start: 10,
+        limit: 10,
+        filter: '[{"field":"x"}]',
+        sort: '[{"property":"x"}]',
+        projectKey: "SHOULD_NOT_BE_SENT",
+      } as any);
+
+      const body = JSON.parse(
+        (global.fetch as any).mock.calls[0][1].body as string,
+      );
+      expect(body).toEqual({
+        tsRunID: 819218,
+        page: 2,
+        start: 10,
+        limit: 10,
+        filter: "[]",
+        sort: "[]",
+      });
+    });
+
+    it("should throw when tsRunID is missing", async () => {
+      global.fetch = vi.fn();
+      await expect(
+        fetchIssuesLinkedToExecution(token, baseUrl, projectKey, {} as any),
+      ).rejects.toThrow(/Missing or invalid required parameter: 'tsRunID'/);
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it("should throw when tsRunID is not a number", async () => {
+      await expect(
+        fetchIssuesLinkedToExecution(token, baseUrl, projectKey, {
+          tsRunID: "abc",
+        } as any),
+      ).rejects.toThrow(/Missing or invalid required parameter: 'tsRunID'/);
     });
   });
 });

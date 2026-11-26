@@ -9,6 +9,7 @@ import {
   ProjectListArgsSchema,
   ReleasesCyclesArgsSchema,
   UpdateCycleArgsSchema,
+  UpdateReleaseArgsSchema,
 } from "../../types/common";
 import type { QMetryToolParams } from "./types";
 
@@ -17,17 +18,15 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
     title: "Fetch QMetry list Projects",
     toolset: "Projects",
     summary:
-      "Fetch QMetry projects list including projectID, name, projectKey, isArchived, viewIds and folderPath needed for other operations",
+      "Fetch QMetry projects list including projectID, name, projectKey, isArchived and folderPath needed for other operations",
     handler: QMetryToolsHandlers.FETCH_PROJECTS,
     inputSchema: ProjectListArgsSchema,
     purpose:
-      "Prerequisite tool that provides project list to user that associated to valid API Key. " +
-      "The project key to fetch info for. Use 'default' if not specified. " +
-      "Common project keys include 'UT', 'VT', 'MAC', etc. " +
-      "If user doesn't specify a project key, this tool will use 'default' automatically.",
+      "Prerequisite tool that lists the QMetry projects the API key's user can access. " +
+      "Use it to find the projectKey of a project the user named (by name or key) before passing that key to other QMetry tools.",
     useCases: [
       "Get project list to check user how many project access to particular apikey",
-      "Retrieve available fields of each project list including projectID, name, projectKey, isArchived, viewIds and folderPath needed for other operations",
+      "Retrieve available fields of each project list including projectID, name, projectKey, isArchived and folderPath needed for other operations",
       "Validate project access and permissions",
     ],
     examples: [
@@ -39,7 +38,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
           },
         },
         expectedOutput:
-          "Project active/non archived list including some important fields like projectID, name, projectKey, isArchived, viewIds and folderPath needed for other operations",
+          "Project active/non archived list including some important fields like projectID, name, projectKey, isArchived and folderPath needed for other operations",
       },
       {
         description: "Get projects with custom pagination",
@@ -81,7 +80,12 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
     ],
     hints: [
       "Fetch list of projects available to user",
-      "Use 'default' project key when user doesn't specify one",
+      "Use it to turn what the user said into the projectKey every project-scoped QMetry tool requires",
+      'Project NAME: filter by name, e.g. filter: \'[{"value":"Mobile App","type":"string","field":"name"}]\', and use the matching row\'s projectKey. If several rows or none match, show the candidates and ask the user',
+      "Project ID (numeric): there is no ID filter. Call without a filter, page through the results (start, page, limit) and use the projectKey of the row whose projectID matches. If no row matches, tell the user the ID is not a project they can access",
+      "If nothing matches among active projects, retry with params.showArchive: true and tell the user when the project is archived",
+      "If the user named no project, use this list to ask which project to work in",
+      "projectKey is not needed for this tool; leave it out",
       "Use params.showArchive: true/false to get archived/non-archived projects, default is false when not provided",
       "Pagination supported for large result sets (start, page, limit parameters)",
       "Filter parameter should be a JSON string with filter criteria",
@@ -93,90 +97,44 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
     idempotent: true,
   },
   {
-    title: "Set QMetry Project Info",
-    toolset: "Projects",
-    summary: "Set current QMetry project for your account",
-    handler: QMetryToolsHandlers.SET_PROJECT_INFO,
-    inputSchema: ProjectArgsSchema,
-    purpose:
-      "Switch the active QMetry project context for the current session. " +
-      "This tool sets the default project that will be used for all subsequent QMetry operations. " +
-      "Essential for multi-project QMetry instances where you need to work with specific projects.",
-    useCases: [
-      "Switch to a specific project before performing test case operations",
-      "Set project context for batch operations on test cases",
-      "Configure the default project for the current session",
-      "Validate access to a specific project before proceeding with operations",
-    ],
-    examples: [
-      {
-        description: "Set default project as active",
-        parameters: { projectKey: "default" },
-        expectedOutput:
-          "Project context set to 'default' with confirmation of project details",
-      },
-      {
-        description: "Switch to UT project",
-        parameters: { projectKey: "UT" },
-        expectedOutput:
-          "Project context switched to 'UT' project with available configurations",
-      },
-      {
-        description: "Set MAC project as active for test case operations",
-        parameters: { projectKey: "MAC" },
-        expectedOutput:
-          "Project context set to 'MAC' with viewIds and folder structure",
-      },
-    ],
-    hints: [
-      "Always set the project context before performing test case operations in multi-project environments",
-      "Use the same project key that you'll use in subsequent test case operations",
-      "Common project keys include 'default', 'UT', 'MAC', 'VT' - check with your QMetry admin for available projects",
-      "This operation must be performed before fetching test cases if working with non-default projects",
-      "The project context persists for the current session until changed again",
-    ],
-    outputDescription:
-      "JSON object containing project configuration details, confirmation of project switch, and available project metadata," +
-      "including Version, Build Number(if greater than or equal to 1), Project ID, name, Project Key and Date Format",
-    readOnly: false,
-    idempotent: true,
-  },
-  {
     title: "Fetch QMetry Project Info",
     toolset: "Projects",
     summary:
-      "Fetch QMetry project information including viewId and folderPath needed for other operations",
+      "Fetch QMetry project information including folder details needed for other operations",
     handler: QMetryToolsHandlers.FETCH_PROJECT_INFO,
     inputSchema: ProjectArgsSchema,
     purpose:
-      "Prerequisite tool that provides project configuration data required by other QMetry operations. " +
-      "The project key to fetch info for. Use 'default' if not specified. " +
-      "Common project keys include 'UT', 'VT', 'MAC', etc. " +
-      "If user doesn't specify a project key, this tool will use 'default' automatically.",
+      "Returns configuration of one QMetry project (custom lists, statuses, date format, root folders) for the given projectKey. " +
+      "With projectKey omitted it returns the project currently selected in the QMetry UI for the API key's user " +
+      "(currentProjectId, currentProjectName); do that ONLY when the user asks for the project selected in QMetry. " +
+      "To find a project key from a name or ID, use 'Fetch QMetry list Projects' instead. " +
+      "This tool does not change which project other tools use.",
     useCases: [
       "Get project configuration before fetching test cases",
-      "Retrieve available viewIds for test case listing",
       "Get folderPath information for project navigation",
       "Validate project access and permissions",
+      "Find out which project is selected in the QMetry UI, only when the user asks for it",
     ],
     examples: [
       {
-        description: "Get default project info",
-        parameters: {},
-        expectedOutput:
-          "Project configuration with viewIds, folderPaths, and project details",
-      },
-      {
-        description: "Get specific project info",
+        description:
+          "Get the configuration (custom lists, statuses, date format, root folders) of the project the task works in",
         parameters: { projectKey: "MAC" },
         expectedOutput:
-          "MAC project configuration with available views and folders",
+          "MAC project configuration with custom lists, statuses, date format and root folders",
+      },
+      {
+        description:
+          "Only when the user asks which project is selected in the QMetry UI",
+        parameters: {},
+        expectedOutput:
+          "The selected project (currentProjectId, currentProjectName) and its configuration",
       },
     ],
     hints: [
-      "Always call this first when user doesn't provide viewId or folderPath",
-      "Use 'default' project key when user doesn't specify one",
-      "Extract viewId from latestViews.TC.viewId for test case operations",
+      "Do NOT call this just to pick a project: when the user named no project, ask them and offer the list from 'Fetch QMetry list Projects'",
+      "Omit projectKey only when the user asks for the project selected in QMetry; then tell the user which project it is (currentProjectName) and pass its key explicitly on the following calls",
+      "Calling this tool does not switch projects: every QMetry tool uses its own 'projectKey' argument",
       "Use empty string '' as folderPath for root directory",
       "DATE FORMAT — IMPORTANT: response contains 'dateTimeFormatID' (number) and 'dateTimeFormatNew' (array).",
       "  dateTimeFormatID = active format ID for this project.",
@@ -192,7 +150,9 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
       "  Always parse user-provided dates and reformat them to this pattern before sending to API.",
     ],
     outputDescription:
-      "JSON object containing project details, viewIds, folderPaths, project configuration, " +
+      "JSON object containing project details, folderPaths, project configuration, " +
+      "'currentProjectId' and 'currentProjectName' (the project this response is for), " +
+      "'projects' (short { id, key, name } list of the projects the user can access), " +
       "'dateTimeFormatID' (active date format ID), and 'dateTimeFormatNew' array " +
       "(each entry: { id, name, unique_value } — use unique_value of the matching entry as the date format pattern for all API date fields).",
     readOnly: true,
@@ -201,16 +161,17 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
   {
     title: "Fetch Releases and Cycles",
     toolset: "Projects",
-    summary: "Fetch QMetry releases and cycles from the current project",
+    summary:
+      "Fetch QMetry releases and cycles from the project given by projectKey",
     handler: QMetryToolsHandlers.FETCH_RELEASES_CYCLES,
     inputSchema: ReleasesCyclesArgsSchema,
     purpose:
-      "Retrieve release and cycle information from the current QMetry project. " +
+      "Retrieve release and cycle information from the QMetry project given by projectKey. " +
       "Releases represent major versions or milestones, while cycles represent test execution phases within releases. " +
       "This tool provides the hierarchical structure of releases and their associated cycles.",
     useCases: [
-      "Fetch associated releases and cycles of current project",
-      "Fetch available releases and cycles of current project",
+      "Fetch associated releases and cycles of the project",
+      "Fetch available releases and cycles of the project",
       "Get release and cycle information for test planning",
       "List all releases and cycles in a project",
       "Search for specific releases using release name or ID",
@@ -222,25 +183,44 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
     examples: [
       {
         description: "Get active releases and cycles (default behavior)",
-        parameters: {},
+        parameters: { projectKey: "MAC" },
         expectedOutput:
           "List of active releases and cycles excluding archived ones (showArchive: false sent in payload)",
       },
       {
         description: "Get active/unarchived releases and cycles explicitly",
-        parameters: { showArchive: false },
+        parameters: { projectKey: "MAC", showArchive: false },
         expectedOutput:
           "List of active releases and cycles excluding archived ones (showArchive: false sent in payload)",
       },
       {
         description: "Get not active/archived releases and cycles",
-        parameters: { showArchive: true },
+        parameters: { projectKey: "MAC", showArchive: true },
         expectedOutput:
           "List of all releases and cycles including archived ones (showArchive: true sent in payload)",
       },
+      {
+        description:
+          "Get releases and cycles of a project whose numeric ID is already known",
+        parameters: { projectKey: "MAC", projectID: 12345 },
+        expectedOutput:
+          "Releases and cycles of project 12345 only (skips the project ID lookup)",
+      },
+      {
+        description:
+          "User explicitly asks for releases and cycles of ALL projects",
+        parameters: { allProjects: true },
+        expectedOutput:
+          "Release/cycle tree for every project the user can access",
+      },
     ],
     hints: [
-      "Use 'default' project key when user doesn't specify one",
+      "projectKey is required (the project to read). Leave it out only together with allProjects: true",
+      "By default only the CURRENT project's releases and cycles are returned (children has one project node). " +
+        "Set allProjects: true ONLY when the user explicitly asks for every project's releases/cycles",
+      "Pass projectID (numeric currentProjectId from Fetch QMetry Project Info) when you already know it, to skip the server-side lookup; never put the projectKey in projectID",
+      "If the current project can't be determined, the full tree (all projects) is returned: pick the node whose projID matches the project you want",
+      "RESPONSE SHAPE: { children: [ { projID, type: <project name>, children: [ { relID, type: <release name>, scope: 'release', startdate?, targetdate?, children: [ { cyclID, type: <cycle name>, scope: 'cycle' } ] } ] } ] }",
       "PAYLOAD SCENARIOS:",
       "- No showArchive parameter → payload: {showArchive: false} → Returns only active releases/cycles",
       "- showArchive: false → payload: {showArchive: false} → Returns only active/non-archived releases/cycles",
@@ -258,15 +238,15 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
   {
     title: "Fetch Builds",
     toolset: "Projects",
-    summary: "Fetch QMetry builds from the current project",
+    summary: "Fetch QMetry builds from the project given by projectKey",
     handler: QMetryToolsHandlers.FETCH_BUILDS,
     inputSchema: BuildArgsSchema,
     purpose:
-      "Retrieve builds information from the current QMetry project. " +
+      "Retrieve builds information from the QMetry project given by projectKey. " +
       "Builds represent specific versions or iterations of software that can be associated with test executions. " +
       "This tool provides a list of builds with their metadata for test planning and execution tracking.",
     useCases: [
-      "Fetch all from the current project",
+      "Fetch all from the project given by projectKey",
       "Fetch all available builds for test execution planning",
       "Get build metadata for test run assignments",
       "List builds for reporting and analytics",
@@ -279,18 +259,19 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
     examples: [
       {
         description: "Get all builds (default behavior)",
-        parameters: {},
+        parameters: { projectKey: "MAC" },
         expectedOutput:
           "List of all builds with default pagination (10 items per page)",
       },
       {
         description: "Get builds with custom pagination",
-        parameters: { page: 1, limit: 10, start: 0 },
+        parameters: { projectKey: "MAC", page: 1, limit: 10, start: 0 },
         expectedOutput: "List of builds with custom pagination settings",
       },
       {
         description: "Filter builds by name",
         parameters: {
+          projectKey: "MAC",
           filter: '[{"value":"Build 1.0","type":"string","field":"name"}]',
         },
         expectedOutput: "Filtered list of builds matching the name criteria",
@@ -298,6 +279,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter builds by archive status",
         parameters: {
+          projectKey: "MAC",
           filter: '[{"value":[1,0],"type":"list","field":"isArchived"}]',
         },
         expectedOutput:
@@ -305,7 +287,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
       },
     ],
     hints: [
-      "Use 'default' project key when user doesn't specify one",
+      "projectKey is required: pass the key of the project to read",
       "Default pagination: start=0, page=1, limit=10",
       "Filter parameter should be a JSON string with filter criteria",
       "Common filter fields: 'name' (string), 'isArchived' (list of 0,1)",
@@ -321,16 +303,16 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
   {
     title: "Fetch Platforms",
     toolset: "Projects",
-    summary: "Fetch QMetry platforms from the current project",
+    summary: "Fetch QMetry platforms from the project given by projectKey",
     handler: QMetryToolsHandlers.FETCH_PLATFORMS,
     inputSchema: PlatformArgsSchema,
     purpose:
-      "Retrieve platforms information from the current QMetry project. " +
+      "Retrieve platforms information from the QMetry project given by projectKey. " +
       "Platforms represent testing environments, operating systems, browsers, or devices " +
       "that can be associated with test case execution and reporting. " +
       "This tool provides a list of platforms with their metadata for test planning and execution tracking.",
     useCases: [
-      "Fetch all platforms from the current project",
+      "Fetch all platforms from the project given by projectKey",
       "Get platform metadata for test execution planning",
       "List platforms for test environment selection",
       "Filter platforms by name or properties",
@@ -342,18 +324,19 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
     examples: [
       {
         description: "Get all platforms (default behavior)",
-        parameters: {},
+        parameters: { projectKey: "MAC" },
         expectedOutput:
           "List of all platforms with default pagination (10 items per page)",
       },
       {
         description: "Get platforms with custom pagination",
-        parameters: { page: 1, limit: 10, start: 0 },
+        parameters: { projectKey: "MAC", page: 1, limit: 10, start: 0 },
         expectedOutput: "List of platforms with custom pagination settings",
       },
       {
         description: "Filter platforms by name",
         parameters: {
+          projectKey: "MAC",
           filter: '[{"value":"Chrome","type":"string","field":"name"}]',
         },
         expectedOutput: "Filtered list of platforms matching the name criteria",
@@ -361,6 +344,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter platforms by archive status",
         parameters: {
+          projectKey: "MAC",
           filter: '[{"value":[1,0],"type":"list","field":"isArchived"}]',
         },
         expectedOutput:
@@ -369,6 +353,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
       {
         description: "Get only archived platforms",
         parameters: {
+          projectKey: "MAC",
           filter: '[{"value":[1],"type":"list","field":"isArchived"}]',
         },
         expectedOutput: "List of only archived platforms",
@@ -376,6 +361,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
       {
         description: "Get only active/non-archived platforms",
         parameters: {
+          projectKey: "MAC",
           filter: '[{"value":[0],"type":"list","field":"isArchived"}]',
         },
         expectedOutput: "List of only active/non-archived platforms",
@@ -383,13 +369,14 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
       {
         description: "Get platforms with custom sorting",
         parameters: {
+          projectKey: "MAC",
           sort: '[{"property":"name","direction":"ASC"}]',
         },
         expectedOutput: "List of platforms sorted by name in ascending order",
       },
     ],
     hints: [
-      "Use 'default' project key when user doesn't specify one",
+      "projectKey is required: pass the key of the project to read",
       "Default pagination: start=0, page=1, limit=10",
       "Filter parameter should be a JSON string with filter criteria",
       "Sort parameter should be a JSON string with sort criteria",
@@ -469,6 +456,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
       {
         description: "Create a basic release with just a name",
         parameters: {
+          projectKey: "MAC",
           release: {
             name: "Release 2.0",
           },
@@ -479,6 +467,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
       {
         description: "Create a release with description and dates",
         parameters: {
+          projectKey: "MAC",
           release: {
             name: "Q1 2024 Release",
             description: "First quarter release for 2024",
@@ -492,6 +481,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
       {
         description: "Create a release with an initial cycle",
         parameters: {
+          projectKey: "MAC",
           release: {
             name: "Release 3.0",
             description: "Major product update",
@@ -508,6 +498,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
       {
         description: "Create a release with all details",
         parameters: {
+          projectKey: "MAC",
           release: {
             name: "Summer 2024 Release",
             description: "Summer product release with new features",
@@ -528,8 +519,8 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
       "Date format depends on QMetry instance configuration: DD-MM-YYYY or MM-DD-YYYY",
       "Check your QMetry instance settings to determine the correct date format",
       "If dates are in wrong format, QMetry will return an error - verify format with admin",
-      "projectID is optional in the release object - it will be auto-resolved from the project key if not provided",
-      "To explicitly set projectID, first call FETCH_PROJECT_INFO to get the numeric project ID",
+      "release.projectID is the numeric project ID, not the projectKey. If omitted, the server fills it from the project given by projectKey. Pass projectKey for the target project; do not put the key in projectID",
+      "To set projectID explicitly, use currentProjectId from Fetch QMetry Project Info for the same projectKey",
       "cycle parameter is completely optional - omit it if you only want to create a release",
       "If providing cycle, cycle.name is REQUIRED",
       "cycle.isLocked defaults to false if not provided - set to true to prevent modifications",
@@ -571,6 +562,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
       {
         description: "Create a basic cycle with just a name in a release",
         parameters: {
+          projectKey: "MAC",
           cycle: {
             name: "Sprint 2",
             releaseID: 12345,
@@ -582,6 +574,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
       {
         description: "Create a cycle with description and dates",
         parameters: {
+          projectKey: "MAC",
           cycle: {
             name: "Regression Testing Cycle",
             description: "Full regression testing for release 2.0",
@@ -596,6 +589,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
       {
         description: "Create a locked cycle to prevent modifications",
         parameters: {
+          projectKey: "MAC",
           cycle: {
             name: "Final QA Cycle",
             description: "Locked cycle for final QA testing",
@@ -611,6 +605,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
         description:
           "Create a cycle with all details including project ID and dates",
         parameters: {
+          projectKey: "MAC",
           cycle: {
             name: "Sprint 3 - Feature Testing",
             description: "Testing new features for Sprint 3",
@@ -630,21 +625,21 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
       "CRITICAL: cycle.releaseID is REQUIRED - must provide the release ID to associate this cycle with",
       "CRITICAL: cycle.name is REQUIRED - must provide a name for the cycle",
       "HOW TO GET releaseID:",
-      "1. Call FETCH_RELEASES_CYCLES tool to get all releases and their IDs",
-      "2. From the response, get value from projects.releases[<index>].releaseID",
-      "3. Use that numeric releaseID in the cycle.releaseID parameter",
+      "1. Call 'Fetch Releases and Cycles' (same projectKey) to get the project's releases and their IDs",
+      "2. From the response, get the release node's relID (path: children[<p>].children[<r>].relID; the release name is in its 'type' field)",
+      "3. Use that numeric relID as the cycle.releaseID parameter",
       "Example: Release 'Q1 2024' might have releaseID: 12345",
       "CRITICAL WORKFLOW - IF USER PROVIDES RELEASE NAME:",
       "1. User says: 'Create cycle Sprint 2 in release Q1 2024'",
-      "2. You MUST first call FETCH_RELEASES_CYCLES tool to get all releases",
-      "3. Search the response for release with name 'Q1 2024'",
-      "4. Extract projects.releases[<index>].releaseID from matching release",
-      "5. Use that releaseID in cycle.releaseID parameter",
+      "2. You MUST first call 'Fetch Releases and Cycles' to get all releases",
+      "3. Search the release nodes for one whose 'type' (name) is 'Q1 2024'",
+      "4. Take that release node's relID",
+      "5. Use that relID as the cycle.releaseID parameter",
       "6. If release name not found, inform user and list available releases",
       "Example workflow:",
       "- User request: 'Create cycle Sprint 2 in Release 2.0'",
-      "- Step 1: Call FETCH_RELEASES_CYCLES",
-      "- Step 2: Find release where name = 'Release 2.0', get its releaseID (e.g., 12345)",
+      "- Step 1: Call 'Fetch Releases and Cycles'",
+      "- Step 2: Find the release node where type = 'Release 2.0', get its relID (e.g., 12345)",
       "- Step 3: Call CREATE_CYCLE with cycle.releaseID = 12345",
       "RELEASE NAME RESOLUTION:",
       "- NEVER assume or guess release IDs - always fetch from API",
@@ -652,12 +647,12 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
       "- Release IDs are numeric identifiers assigned by QMetry (e.g., 12345, 67890)",
       "- Match release names case-insensitively when searching",
       "- If multiple releases match the name, ask user to clarify or use the most recent one",
-      "- FETCH_RELEASES_CYCLES returns: projects.releases[] array with name and releaseID fields",
+      "- 'Fetch Releases and Cycles' returns: { children: [ { projID, type: <project name>, children: [ { relID, type: <release name>, children: [ { cyclID, type: <cycle name> } ] } ] } ] }",
       "Date format depends on QMetry instance configuration: DD-MM-YYYY or MM-DD-YYYY",
       "Check your QMetry instance settings to determine the correct date format",
       "If dates are in wrong format, QMetry will return an error - verify format with admin",
-      "projectID is optional in the cycle object - it will be auto-resolved from the project key if not provided",
-      "To explicitly set projectID, first call FETCH_PROJECT_INFO to get the numeric project ID",
+      "cycle.projectID is the numeric project ID, not the projectKey. If omitted, the server fills it from the project given by projectKey. Pass projectKey for the target project; do not put the key in projectID",
+      "To set projectID explicitly, use currentProjectId from Fetch QMetry Project Info for the same projectKey",
       "cycle.isLocked defaults to false if not provided - set to true to prevent modifications",
       "cycle.isArchived defaults to false if not provided - set to true to archive immediately (rare)",
       "Use descriptive cycle names like 'Sprint 2', 'Regression Cycle', 'Alpha Testing' for better organization",
@@ -677,26 +672,24 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
   {
     title: "Update Cycle",
     toolset: "Projects",
-    summary: "Update an existing cycle in QMetry for test execution planning",
+    summary:
+      "Update an existing cycle within a release in QMetry (name, start date or target date)",
     handler: QMetryToolsHandlers.UPDATE_CYCLE,
     inputSchema: UpdateCycleArgsSchema,
     purpose:
-      "Update an existing cycle within a release to modify test execution phase details. " +
-      "Cycles represent specific testing iterations, sprints, or phases within a release. " +
-      "This tool requires buildID and releaseID to identify the cycle to update. " +
-      "Essential for maintaining accurate test planning and sprint-based test execution tracking.",
+      "Update an existing cycle (a testing iteration, sprint or phase within a release). " +
+      "Requires cycle.buildID and cycle.releaseID to identify the cycle, plus at least one of " +
+      "cycle.name, cycle.startDate or cycle.targetDate to change.",
     useCases: [
-      "Update cycle name for better organization",
-      "Modify cycle dates to reflect schedule changes",
-      "Adjust testing phase timelines within a release",
-      "Update cycle metadata for sprint tracking",
-      "Revise milestone dates for test execution planning",
-      "Rename cycles to match updated sprint naming conventions",
+      "Rename a cycle",
+      "Move a cycle's start or target date after a schedule change",
+      "Update a cycle's name and dates in one call",
     ],
     examples: [
       {
         description: "Update cycle name",
         parameters: {
+          projectKey: "MAC",
           cycle: {
             name: "Alpha_v1_Updated",
             buildID: 1494,
@@ -709,6 +702,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
       {
         description: "Update cycle dates",
         parameters: {
+          projectKey: "MAC",
           cycle: {
             startDate: "10-10-2018",
             targetDate: "11-11-2018",
@@ -722,6 +716,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
       {
         description: "Update cycle name and dates together",
         parameters: {
+          projectKey: "MAC",
           cycle: {
             name: "Sprint 2 - Updated",
             startDate: "15-01-2024",
@@ -734,46 +729,100 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
       },
     ],
     hints: [
-      "CRITICAL: cycle.buildID is REQUIRED - must provide the build ID to identify the cycle to update",
-      "CRITICAL: cycle.releaseID is REQUIRED - must provide the release ID to identify the cycle to update",
-      "HOW TO GET buildID and releaseID:",
-      "1. Call FETCH_RELEASES_CYCLES tool (API: 'Cycle/List') to get all cycles",
-      "2. From the response, get buildID from projects.releases[<index>].builds[<index>].buildID",
-      "3. From the response, get releaseID from projects.releases[<index>].releaseID",
-      "4. Use those numeric IDs in cycle.buildID and cycle.releaseID parameters",
-      "Example: Cycle 'Sprint 2' might have buildID: 1494 and releaseID: 3729",
-      "CRITICAL WORKFLOW - IF USER PROVIDES CYCLE NAME:",
-      "1. User says: 'Update cycle Sprint 2 to change dates'",
-      "2. You MUST first call FETCH_RELEASES_CYCLES tool to get all cycles",
-      "3. Search the response for cycle with matching name 'Sprint 2'",
-      "4. Extract buildID and releaseID from the matching cycle",
-      "5. Use those IDs in cycle.buildID and cycle.releaseID parameters",
-      "6. If cycle name not found, inform user and list available cycles",
-      "Example workflow:",
-      "- User request: 'Update cycle Alpha_v1 name to Alpha_v1_Updated'",
-      "- Step 1: Call FETCH_RELEASES_CYCLES",
-      "- Step 2: Find cycle where name = 'Alpha_v1', get its buildID (e.g., 1494) and releaseID (e.g., 3729)",
-      "- Step 3: Call UPDATE_CYCLE with cycle.buildID = 1494 and cycle.releaseID = 3729",
-      "CYCLE IDENTIFICATION:",
-      "- NEVER assume or guess buildID or releaseID - always fetch from API",
-      "- Cycle names are user-defined strings (e.g., 'Sprint 2', 'Alpha_v1', 'Regression Cycle')",
-      "- buildID and releaseID are numeric identifiers assigned by QMetry",
-      "- Match cycle names case-insensitively when searching",
-      "- If multiple cycles match the name, ask user to clarify or use the most recent one",
-      "- FETCH_RELEASES_CYCLES returns: projects.releases[].builds[] array with name, buildID, and releaseID",
-      "Date format depends on QMetry instance configuration: DD-MM-YYYY or MM-DD-YYYY",
-      "Check your QMetry instance settings to determine the correct date format",
-      "NOTE: To verify/update the Date Format - Go to QMetry -> User Profile",
-      "If dates are in wrong format, QMetry will return an error - verify format with admin",
-      "You can update name, startDate, or targetDate independently or together",
-      "Only include the fields you want to update - other fields will remain unchanged",
-      "startDate and targetDate help with sprint planning and milestone tracking",
-      "Cycle hierarchy: Project → Release → Cycle → Test Execution",
-      "After updating a cycle, you can verify changes using FETCH_RELEASES_CYCLES tool",
-      "DIFFERENCE FROM CREATE_CYCLE: This tool updates an EXISTING cycle, while CREATE_CYCLE creates a new one",
+      "CRITICAL: cycle.buildID and cycle.releaseID are REQUIRED",
+      "CRITICAL: provide AT LEAST ONE of cycle.name, cycle.startDate, cycle.targetDate",
+      "cycle.buildID is the cycle's numeric ID - QMetry calls cycles 'builds'. cycle.releaseID is the ID of the release that contains it",
+      "HOW TO GET THE IDs: call Fetch Releases and Cycles, find the release by name, then the cycle by name WITHIN that release (case-insensitively); never guess IDs",
+      "Cycle names can repeat across releases - if the user did not name the release and several cycles match, ask which one to update",
+      "If the cycle is not found, tell the user and list the cycles available in that release",
+      "Before renaming, check the Fetch Releases and Cycles response for another cycle with the same name in that release; if one exists, tell the user instead of calling this tool",
+      "Omit cycle.name when not renaming",
+      "Only include the fields you want to change - omitted fields stay unchanged",
+      "Date format depends on QMetry instance configuration: DD-MM-YYYY or MM-DD-YYYY (check QMetry -> User Profile)",
+      "To update the release itself use Update Release; to create a cycle use Create Cycle",
+      "Verify the change afterwards with Fetch Releases and Cycles",
     ],
     outputDescription:
       "JSON object containing the updated cycle details and confirmation of update",
+    readOnly: false,
+    idempotent: true,
+  },
+  {
+    title: "Update Release",
+    toolset: "Projects",
+    summary:
+      "Update an existing release in QMetry (name, description, start date or target date)",
+    handler: QMetryToolsHandlers.UPDATE_RELEASE,
+    inputSchema: UpdateReleaseArgsSchema,
+    purpose:
+      "Update an existing release to keep release planning accurate. " +
+      "Requires release.releaseID to identify the release, plus at least one of " +
+      "release.name, release.description, release.startDate or release.targetDate to change.",
+    useCases: [
+      "Rename a release",
+      "Update a release description",
+      "Move a release's start or target date after a schedule change",
+      "Update several release fields in one call",
+    ],
+    examples: [
+      {
+        description: "Rename a release (projectID filled from the project)",
+        parameters: {
+          projectKey: "MAC",
+          release: {
+            releaseID: 1631,
+            name: "Q3-25 Performance Benchmarking",
+          },
+        },
+        expectedOutput: "Release 1631 renamed successfully",
+      },
+      {
+        description: "Update release dates",
+        parameters: {
+          projectKey: "MAC",
+          release: {
+            projectID: 347,
+            releaseID: 1631,
+            startDate: "06-25-2025",
+            targetDate: "06-26-2025",
+          },
+        },
+        expectedOutput: "Release 1631 dates updated successfully",
+      },
+      {
+        description: "Update name, description and dates together",
+        parameters: {
+          projectKey: "MAC",
+          release: {
+            projectID: 347,
+            releaseID: 1631,
+            name: "Release 2.1",
+            description: "<p><strong>Sprint 53</strong></p>",
+            startDate: "06-25-2025",
+            targetDate: "06-26-2025",
+          },
+        },
+        expectedOutput:
+          "Release 1631 updated with new name, description and dates",
+      },
+    ],
+    hints: [
+      "CRITICAL: release.releaseID is REQUIRED",
+      "CRITICAL: provide AT LEAST ONE of release.name, release.description, release.startDate, release.targetDate",
+      "release.projectID is the NUMERIC project ID, not the projectKey string. Usually omit it: the server fills it from the project given by projectKey. Pass projectKey for the target project; never put the key in projectID",
+      "HOW TO GET releaseID: call Fetch Releases and Cycles and match the release by name (case-insensitively); never guess IDs",
+      "If several releases match the name, ask the user which one to update",
+      "Release names must be UNIQUE within a project. Before renaming, check the Fetch Releases and Cycles response for an existing release with the same name; " +
+        "if one exists, tell the user instead of calling this tool. QMetry otherwise rejects the update with code AD.RELEASE_DUPLICATE ('Duplicate Release name is not allowed.')",
+      "Omit release.name when not renaming - leaving it out never triggers the duplicate-name check",
+      "Only include the fields you want to change - omitted fields stay unchanged",
+      "Date format depends on QMetry instance configuration: DD-MM-YYYY or MM-DD-YYYY (check QMetry -> User Profile)",
+      "release.description accepts HTML (e.g. '<p>text</p>')",
+      "To update a cycle inside a release use Update Cycle; to create a release use Create Release",
+      "Verify the change afterwards with Fetch Releases and Cycles",
+    ],
+    outputDescription:
+      "JSON object containing the updated release details and confirmation of update",
     readOnly: false,
     idempotent: true,
   },

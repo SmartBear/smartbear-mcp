@@ -1,3 +1,4 @@
+import { ToolError } from "../../common/tools";
 import { QMETRY_PATHS } from "../config/rest-endpoints";
 import {
   type CreateTestCasesPayload,
@@ -17,11 +18,13 @@ import {
   type FetchTestCasesLinkedToRequirementPayload,
   type FetchTestCasesPayload,
   type FetchTestCaseVersionDetailsPayload,
+  type LinkReleaseCycleWithTestCasePayload,
   type LinkTestcaseToIssuesPayload,
   type linkRequirementToTestCasePayload,
   type UpdateTestCasesPayload,
 } from "../types/testcase.js";
 import { qmetryRequest } from "./api/client-api";
+import { buildReleaseCycleScopeBody } from "./release-cycle-scope";
 import { resolveDefaults } from "./utils";
 
 /**
@@ -47,22 +50,22 @@ export async function createTestCases(
   };
 
   if (typeof body.tcFolderID !== "string") {
-    throw new Error(
+    throw new ToolError(
       "[createTestCases] Missing or invalid required parameter: 'tcFolderID'.",
     );
   }
   if (typeof body.name !== "string") {
-    throw new Error(
+    throw new ToolError(
       "[createTestCases] Missing or invalid required parameter: 'name'.",
     );
   }
   if (!skipSteps && (!Array.isArray(body.steps) || body.steps.length === 0)) {
-    throw new Error(
+    throw new ToolError(
       "[createTestCases] Missing or invalid required parameter: 'steps' — must be a non-empty array. Generate steps from context if the user did not provide them.",
     );
   }
   if (skipSteps && Array.isArray(body.steps) && body.steps.length > 0) {
-    throw new Error(
+    throw new ToolError(
       "[createTestCases] Contradictory payload: 'skipSteps' is true but 'steps' contains entries. Remove the steps array or set skipSteps to false.",
     );
   }
@@ -103,12 +106,12 @@ export async function updateTestCase(
   };
 
   if (typeof body.tcID !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[updateTestCase] Missing or invalid required parameter: 'tcID'.",
     );
   }
   if (typeof body.tcVersionID !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[updateTestCase] Missing or invalid required parameter: 'tcVersionID'.",
     );
   }
@@ -125,7 +128,7 @@ export async function updateTestCase(
 
 /**
  * Fetches a list of test cases.
- * @throws If `viewId` or `folderPath` are missing/invalid.
+ * @throws If `folderPath` is missing/invalid.
  */
 export async function fetchTestCases(
   token: string,
@@ -143,13 +146,8 @@ export async function fetchTestCases(
     ...payload,
   };
 
-  if (typeof body.viewId !== "number") {
-    throw new Error(
-      "[fetchTestCases] Missing or invalid required parameter: 'viewId'.",
-    );
-  }
   if (typeof body.folderPath !== "string") {
-    throw new Error(
+    throw new ToolError(
       "[fetchTestCases] Missing or invalid required parameter: 'folderPath'.",
     );
   }
@@ -185,7 +183,7 @@ export async function fetchTestCaseDetails(
   };
 
   if (typeof body.tcID !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[fetchTestCaseDetails] Missing or invalid required parameter: 'tcID'.",
     );
   }
@@ -221,12 +219,12 @@ export async function fetchTestCaseVersionDetails(
   };
 
   if (!body.id) {
-    throw new Error(
+    throw new ToolError(
       "[fetchTestCaseVersionDetails] Missing or invalid required parameter: 'id'.",
     );
   }
   if (typeof body.version !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[fetchTestCaseVersionDetails] Missing or invalid required parameter: 'version'.",
     );
   }
@@ -262,7 +260,7 @@ export async function fetchTestCaseSteps(
   };
 
   if (typeof body.id !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[fetchTestCaseSteps] Missing or invalid required parameter: 'id'.",
     );
   }
@@ -293,7 +291,7 @@ export async function fetchTestCaseStepsWithUdf(
   );
 
   if (typeof payload.tcID !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[fetchTestCaseStepsWithUdf] Missing or invalid required parameter: 'tcID'.",
     );
   }
@@ -305,7 +303,6 @@ export async function fetchTestCaseStepsWithUdf(
     page: payload.page ?? 1,
     version: payload.version ?? 1,
     gridName: payload.gridName ?? "TCSTEPLIST",
-    ...(payload.viewId !== undefined ? { viewId: payload.viewId } : {}),
   };
 
   return qmetryRequest<unknown>({
@@ -340,7 +337,7 @@ export async function fetchTestCasesLinkedToRequirement(
   };
 
   if (typeof body.rqID !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[fetchTestCasesLinkedToRequirement] Missing or invalid required parameter: 'rqID'.",
     );
   }
@@ -378,7 +375,7 @@ export async function fetchTestCaseExecutions(
   };
 
   if (typeof body.tcid !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[fetchTestCaseExecutions] Missing or invalid required parameter: 'tcid'.",
     );
   }
@@ -532,17 +529,17 @@ export async function linkRequirementToTestCase(
   };
 
   if (typeof body.tcID !== "string") {
-    throw new Error(
+    throw new ToolError(
       "[linkRequirementToTestCase] Missing or invalid required parameter: 'tcID'.",
     );
   }
   if (typeof body.tcVersionId !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[linkRequirementToTestCase] Missing or invalid required parameter: 'tcVersionId'.",
     );
   }
   if (typeof body.rqVersionIds !== "string") {
-    throw new Error(
+    throw new ToolError(
       "[linkRequirementToTestCase] Missing or invalid required parameter: 'rqVersionIds'.",
     );
   }
@@ -571,12 +568,12 @@ export async function linkTestcaseToIssues(
   const body: LinkTestcaseToIssuesPayload = { ...payload };
 
   if (typeof body.tcID !== "string" || body.tcID.trim() === "") {
-    throw new Error(
+    throw new ToolError(
       "[linkTestcaseToIssues] Missing or invalid required parameter: 'tcID'.",
     );
   }
   if (!Array.isArray(body.dfIDs) || body.dfIDs.length === 0) {
-    throw new Error(
+    throw new ToolError(
       "[linkTestcaseToIssues] Missing or invalid required parameter: 'dfIDs'.",
     );
   }
@@ -584,6 +581,47 @@ export async function linkTestcaseToIssues(
   return qmetryRequest<unknown>({
     method: "POST",
     path: QMETRY_PATHS.TESTCASE.LINK_ISSUES_TO_TC,
+    token,
+    project: resolvedProject,
+    baseUrl: resolvedBaseUrl,
+    body,
+  });
+}
+
+/**
+ * Links one or more releases (each with one or more of its cycles) to one or
+ * more existing test case versions. Every release/cycle in the mapping is
+ * linked to every test case. QMetry treats a cycle as a build, so cycle
+ * errors come back as CO.INVALID_BUILD_ID.
+ * @throws If a required ID is missing/invalid, a list is empty, or a
+ * releaseId / tcID is repeated.
+ */
+export async function linkReleaseCycleWithTestCase(
+  token: string,
+  baseUrl: string,
+  project: string | undefined,
+  payload: LinkReleaseCycleWithTestCasePayload,
+) {
+  const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
+    baseUrl,
+    project,
+  );
+
+  const body = buildReleaseCycleScopeBody(
+    "linkReleaseCycleWithTestCase",
+    "TC",
+    payload,
+    {
+      field: "testCases",
+      idField: "tcID",
+      versionField: "tcVersionID",
+      label: "Test case",
+    },
+  );
+
+  return qmetryRequest<unknown>({
+    method: "POST",
+    path: QMETRY_PATHS.TESTCASE.LINK_RELEASE_CYCLE,
     token,
     project: resolvedProject,
     baseUrl: resolvedBaseUrl,

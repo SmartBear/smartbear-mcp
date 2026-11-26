@@ -1,6 +1,7 @@
 import { QMetryToolsHandlers } from "../../config/constants";
 import {
   CreateRequirementArgsSchema,
+  LinkReleaseCycleWithRequirementArgsSchema,
   LinkRequirementToTestCaseArgsSchema,
   RequirementDetailsArgsSchema,
   RequirementListArgsSchema,
@@ -36,6 +37,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Create a requirement in the root folder (auto-resolved)",
         parameters: {
+          projectKey: "MAC",
           name: "New login requirement",
         },
         expectedOutput:
@@ -44,6 +46,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Create a requirement with metadata",
         parameters: {
+          projectKey: "MAC",
           name: "New login requirement",
           priority: 688864,
           component: [689030],
@@ -68,7 +71,12 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       "If rqFolderId is not provided, it will be auto-resolved to the root requirement folder using project info (rootFolders.RQ.id).",
       "To get valid values for priority, component, requirementOwner (owner), requirementState (state), call the 'Admin/Get info Service' API (FETCH_PROJECT_INFO tool) and use the returned customListObjs IDs.",
       "If the user provides a name instead of an ID for owner/state/priority/component, fetch project info, find the matching entry by name in the relevant customListObjs list, and use its ID. If not found, skip that field and tell the user it was omitted because the value wasn't available in the current project.",
-      "Release/cycle mapping is optional. If the user wants to associate a release and cycle, set associateRelCyc: true and provide releaseCycleMapping.",
+      "CRITICAL: if the user asks to create a requirement AND link/associate/map it to a release or cycle, include them IN THIS CALL: " +
+        "set associateRelCyc: true and releaseCycleMapping: [{ release: <releaseID>, cycle: [<cycleID>, ...], version: 1 }]. " +
+        "Do NOT create the requirement first and then call 'Link Release Cycle with Requirement' - that tool is only for requirements that existed before this request.",
+      "Release/cycle IDs: use the IDs the user gave, or call 'Fetch Releases and Cycles' and match the release by name, then each cycle by name within that release " +
+        "(release names are unique in a project; cycle names are unique within a release). If a name cannot be matched, ask the user - do not guess.",
+      "releaseCycleMapping: one object per release; 'cycle' lists that release's cycle IDs; 'version' is always 1. Release/cycle mapping is optional - omit both fields when the user asks for none.",
       "HARD GATE (not configurable): before creating, this tool checks project info for isExtTrackerConfigured, extTrackerType, and isRQConfigured. " +
         "If the project has an external tracker configured (isExtTrackerConfigured=true) and isRQConfigured=true, and the tracker is Jira (extTrackerType=1) " +
         "or Azure (extTrackerType=3), the create is refused with an error — do NOT retry or work around this. " +
@@ -111,6 +119,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Update the priority of a requirement",
         parameters: {
+          projectKey: "MAC",
           rqId: 2073,
           rqVersionId: 2087,
           updateWithVersion: false,
@@ -121,6 +130,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Update name, description, owner, and state",
         parameters: {
+          projectKey: "MAC",
           rqId: 2073,
           rqVersionId: 2087,
           name: "Updated login requirement",
@@ -139,7 +149,8 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       "To get valid values for priority, requirementOwner, requirementState, and component, call the 'Admin/Get info Service' API (FETCH_PROJECT_INFO tool) and use the returned customListObjs IDs.",
       "If the user provides a name instead of an ID for owner/state/priority, fetch project info, find the matching entry by name in the relevant customListObjs list, and use its ID. If not found, skip that field and tell the user it was omitted because the value wasn't available in the current project.",
       "attachments (if used) requires both ADD and REMOVE arrays — pass empty arrays when there is nothing to add or remove.",
-      "Only fields explicitly listed in this tool's parameters are supported — releaseCycleMapping and associateRelCyc are create-only and not supported here.",
+      "Only fields explicitly listed in this tool's parameters are supported — releaseCycleMapping and associateRelCyc are create-only and not supported here. " +
+        "To add a release/cycle to an existing requirement, use 'Link Release Cycle with Requirement'.",
       "HARD GATE: before updating, this tool checks project info for isExtTrackerConfigured, extTrackerType, and isRQConfigured. " +
         "If the project has an external tracker configured (isExtTrackerConfigured=true) and isRQConfigured=true, and the tracker is Jira (extTrackerType=1) " +
         "or Azure (extTrackerType=3), the update is refused with an error — do NOT retry or work around this. " +
@@ -164,12 +175,10 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
   {
     title: "Fetch Requirements",
     toolset: "Requirements",
-    summary:
-      "Fetch QMetry requirements - automatically handles viewId resolution based on project",
+    summary: "Fetch QMetry requirements",
     handler: QMetryToolsHandlers.FETCH_REQUIREMENTS,
     inputSchema: RequirementListArgsSchema,
-    purpose:
-      "Get requirements from QMetry. System automatically gets correct requirement viewId from project info if not provided.",
+    purpose: "Get requirements from QMetry.",
     useCases: [
       "List all requirements in a project",
       "Search for specific requirements using filters",
@@ -180,18 +189,14 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
     ],
     examples: [
       {
-        description:
-          "Get all requirements from default project - system will auto-fetch viewId",
-        parameters: {},
-        expectedOutput:
-          "List of requirements from default project with auto-resolved viewId",
+        description: "Get all requirements from project MAC",
+        parameters: { projectKey: "MAC" },
+        expectedOutput: "List of requirements from project MAC",
       },
       {
-        description:
-          "Get all requirements from UT project - system will auto-fetch UT project's viewId",
+        description: "Get all requirements from UT project",
         parameters: { projectKey: "UT" },
-        expectedOutput:
-          "List of requirements from UT project using UT's specific RQ viewId",
+        expectedOutput: "List of requirements from UT project",
       },
       {
         description: "Search for specific requirements by entity key",
@@ -234,6 +239,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter requirements by archive status",
         parameters: {
+          projectKey: "MAC",
           filter: '[{"value":[1,0],"type":"list","field":"isArchived"}]',
         },
         expectedOutput:
@@ -242,6 +248,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Get only archived requirements",
         parameters: {
+          projectKey: "MAC",
           filter: '[{"value":[1],"type":"list","field":"isArchived"}]',
         },
         expectedOutput: "List of only archived requirements",
@@ -320,12 +327,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       },
     ],
     hints: [
-      "CRITICAL WORKFLOW: Always use the SAME projectKey for both project info and requirement fetching",
-      "Step 1: If user specifies projectKey (like 'UT', 'MAC'), use that EXACT projectKey for project info",
-      "Step 2: Get project info using that projectKey, extract latestViews.RQ.viewId",
-      "Step 3: Use the SAME projectKey and the extracted RQ viewId for fetching requirements",
-      "Step 4: If user doesn't specify projectKey, use 'default' for both project info and requirement fetching",
-      "NEVER mix project keys - if user says 'MAC project', use projectKey='MAC' for everything",
+      "PROJECT: pass the same explicit projectKey on every call of the task (never omit it). See the projectKey field for how to find the key from a project name or ID.",
       'For search by requirement key (like MAC-RQ-123), use filter: \'[{"type":"string","value":"MAC-RQ-123","field":"entityKeyId"}]\'',
       'For multiple entity keys, use comma-separated values: \'[{"type":"string","value":"MAC-RQ-123,MAC-RQ-456","field":"entityKeyId"}]\'',
       "Use empty string '' as folderPath for root directory",
@@ -369,7 +371,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
     examples: [
       {
         description: "Get requirement details by numeric ID",
-        parameters: { id: 4791316, version: 1 },
+        parameters: { projectKey: "MAC", id: 4791316, version: 1 },
         expectedOutput:
           "Detailed requirement information including summary, description, status, and all fields",
       },
@@ -406,6 +408,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Link requirements to test case VT-TC-26",
         parameters: {
+          projectKey: "MAC",
           tcID: "VT-TC-26",
           tcVersionId: 5448515,
           rqVersionIds: "5009939,5009937,4970699",
@@ -453,25 +456,26 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
     examples: [
       {
         description: "Get all test cases linked to requirement ID 4791316",
-        parameters: { rqID: 4791316 },
+        parameters: { projectKey: "MAC", rqID: 4791316 },
         expectedOutput:
           "List of test cases that are linked to requirement MAC-RQ-1011",
       },
       {
         description: "Get test cases NOT linked to requirement (gap analysis)",
-        parameters: { rqID: 4791316, getLinked: false },
+        parameters: { projectKey: "MAC", rqID: 4791316, getLinked: false },
         expectedOutput:
           "List of test cases that are NOT linked to requirement MAC-RQ-1011",
       },
       {
         description: "Get linked test cases filtered by specific release",
-        parameters: { rqID: 4791316, releaseID: "55178" },
+        parameters: { projectKey: "MAC", rqID: 4791316, releaseID: "55178" },
         expectedOutput:
           "Linked test cases associated with Release 8.12 (ID: 55178)",
       },
       {
         description: "Get linked test cases filtered by release and cycle",
         parameters: {
+          projectKey: "MAC",
           rqID: 4791316,
           releaseID: "55178",
           cycleID: "111577",
@@ -482,6 +486,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Get linked test cases from specific folder",
         parameters: {
+          projectKey: "MAC",
           rqID: 4791316,
           tcFolderPath: "/Sample Template",
         },
@@ -491,6 +496,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Search linked test cases by entity key",
         parameters: {
+          projectKey: "MAC",
           rqID: 4791316,
           filter:
             '[{"type":"string","value":"MAC-TC-1684,MAC-TC-1685","field":"entityKeyId"}]',
@@ -500,6 +506,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter linked test cases by priority",
         parameters: {
+          projectKey: "MAC",
           rqID: 4791316,
           filter: '[{"type":"list","value":[1,2],"field":"priorityAlias"}]',
         },
@@ -508,6 +515,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter linked test cases by status",
         parameters: {
+          projectKey: "MAC",
           rqID: 4791316,
           filter:
             '[{"type":"list","value":[1,2],"field":"testCaseStateAlias"}]',
@@ -517,6 +525,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter linked test cases by test case type",
         parameters: {
+          projectKey: "MAC",
           rqID: 4791316,
           filter: '[{"type":"list","value":[1],"field":"testCaseTypeAlias"}]',
         },
@@ -525,6 +534,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter linked test cases by testing type (automation)",
         parameters: {
+          projectKey: "MAC",
           rqID: 4791316,
           filter: '[{"type":"list","value":[2],"field":"testingTypeAlias"}]',
         },
@@ -533,6 +543,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Get only parameterized linked test cases",
         parameters: {
+          projectKey: "MAC",
           rqID: 4791316,
           filter: '[{"type":"list","value":[1],"field":"isParameterized"}]',
         },
@@ -542,6 +553,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter linked test cases by archive status",
         parameters: {
+          projectKey: "MAC",
           rqID: 4791316,
           filter: '[{"type":"list","value":[0],"field":"isArchived"}]',
         },
@@ -550,6 +562,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Search linked test cases by summary content",
         parameters: {
+          projectKey: "MAC",
           rqID: 4791316,
           filter: '[{"type":"string","value":"login","field":"summary"}]',
         },
@@ -558,6 +571,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter linked test cases by requirement version",
         parameters: {
+          projectKey: "MAC",
           rqID: 4791316,
           filter: '[{"type":"string","value":"1","field":"rqVersion"}]',
         },
@@ -567,6 +581,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
         description:
           "Complex filter: Active, high priority, automated test cases",
         parameters: {
+          projectKey: "MAC",
           rqID: 4791316,
           filter:
             '[{"type":"list","value":[0],"field":"isArchived"},{"type":"list","value":[1],"field":"priorityAlias"},{"type":"list","value":[2],"field":"testingTypeAlias"}]',
@@ -585,7 +600,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       "showEntityWithReleaseCycle=true: Only show test cases that have the specified release and cycle",
       "showEntityWithReleaseCycle=false (default): Show all test cases regardless of release/cycle",
       "RELEASE/CYCLE FILTERING: Use string IDs, not numeric (e.g., releaseID: '55178', cycleID: '111577')",
-      "Get release/cycle IDs from FETCH_RELEASES_AND_CYCLES tool before filtering",
+      "Get release/cycle IDs from 'Fetch Releases and Cycles' tool before filtering",
       "tcFolderPath: Use empty string '' for root folder or specific path like '/Sample Template'",
       "FILTER CAPABILITIES: Support same filters as regular test case listing",
       "FILTER FIELDS: summary, rqVersion, priorityAlias, testCaseStateAlias, createdByAlias, testCaseTypeAlias, testingTypeAlias, release, cycle, isArchived, isParameterized, componentAlias, entityKeyId",
@@ -633,19 +648,20 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
     examples: [
       {
         description: "Get all requirements linked to test case ID 594294",
-        parameters: { tcID: 594294 },
+        parameters: { projectKey: "MAC", tcID: 594294 },
         expectedOutput:
           "List of requirements that are linked to test case MAC-TC-1684",
       },
       {
         description: "Get requirements NOT linked to test case (gap analysis)",
-        parameters: { tcID: 594294, getLinked: false },
+        parameters: { projectKey: "MAC", tcID: 594294, getLinked: false },
         expectedOutput:
           "List of requirements that are NOT linked to test case MAC-TC-1684",
       },
       {
         description: "Get linked requirements from specific folder",
         parameters: {
+          projectKey: "MAC",
           tcID: 594294,
           rqFolderPath: "/CodeSnippets",
         },
@@ -655,6 +671,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Search linked requirements by entity key",
         parameters: {
+          projectKey: "MAC",
           tcID: 594294,
           filter:
             '[{"type":"string","value":"MAC-RQ-730,MAC-RQ-731","field":"entityKeyId"}]',
@@ -664,6 +681,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter linked requirements by status",
         parameters: {
+          projectKey: "MAC",
           tcID: 594294,
           filter:
             '[{"type":"list","value":[1,2],"field":"requirementStateAlias"}]',
@@ -673,6 +691,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter linked requirements by priority",
         parameters: {
+          projectKey: "MAC",
           tcID: 594294,
           filter: '[{"type":"list","value":[1],"field":"priorityAlias"}]',
         },
@@ -681,6 +700,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter linked requirements by archive status",
         parameters: {
+          projectKey: "MAC",
           tcID: 594294,
           filter: '[{"type":"list","value":[0],"field":"isArchived"}]',
         },
@@ -689,6 +709,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Search linked requirements by name content",
         parameters: {
+          projectKey: "MAC",
           tcID: 594294,
           filter: '[{"type":"string","value":"authentication","field":"name"}]',
         },
@@ -698,6 +719,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter linked requirements by test case version",
         parameters: {
+          projectKey: "MAC",
           tcID: 594294,
           filter: '[{"type":"string","value":"1","field":"tcVersion"}]',
         },
@@ -706,6 +728,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter linked requirements by release and cycle",
         parameters: {
+          projectKey: "MAC",
           tcID: 594294,
           filter:
             '[{"type":"list","value":[55178],"field":"release"},{"type":"list","value":[111577],"field":"cycle"}]',
@@ -733,6 +756,92 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
     outputDescription:
       "JSON object with requirements array, traceability information, and pagination metadata",
     readOnly: true,
+    idempotent: true,
+  },
+  {
+    title: "Link Release Cycle with Requirement",
+    toolset: "Requirements",
+    summary:
+      "Link one or more releases and their cycles to one or more requirements that ALREADY EXISTED before this request. Never use it right after Create Requirement.",
+    handler: QMetryToolsHandlers.LINK_RELEASE_CYCLE_WITH_REQUIREMENT,
+    inputSchema: LinkReleaseCycleWithRequirementArgsSchema,
+    purpose:
+      "ONLY for requirements that existed BEFORE the current request. Update Requirement cannot change a requirement's releases/cycles, " +
+      "so this tool is the only way to add releases and their cycles to existing requirement versions, for release planning and traceability. " +
+      "NOT for new requirements: to create a requirement with a release/cycle, pass associateRelCyc: true and releaseCycleMapping to Create Requirement in ONE call. " +
+      "One call links EVERY release/cycle in releaseCycleMapping to EVERY requirement in requirements, so link several releases and requirements together in a single call.",
+    useCases: [
+      "Link a requirement to a release and one of its cycles",
+      "Link a requirement to several cycles of the same release",
+      "Link several releases, each with its own cycles, to several requirements in one call",
+      "Link requirements identified by key (e.g. MAC-RQ-730) to releases/cycles given by name",
+      "Link a specific (non-latest) version of a requirement to a release/cycle",
+    ],
+    examples: [
+      {
+        description:
+          "Link the latest version of requirement 3976920 to release 92342, cycle 131144",
+        parameters: {
+          projectKey: "MAC",
+          destinationProjectId: 46893,
+          releaseCycleMapping: [{ releaseId: 92342, cycleIds: [131144] }],
+          requirements: [{ rqId: 3976920, rqVersionId: 3987149 }],
+        },
+        expectedOutput:
+          "code CO.REL_CYCLE_LINK_SUCCESS - Release(s) and Cycle(s) associated successfully.",
+      },
+      {
+        description:
+          "Link two releases (each with its own cycles) to three requirements in one call",
+        parameters: {
+          projectKey: "MAC",
+          destinationProjectId: 46893,
+          releaseCycleMapping: [
+            { releaseId: 92342, cycleIds: [131144] },
+            { releaseId: 92341, cycleIds: [131143, 133715] },
+          ],
+          requirements: [
+            { rqId: 3976920, rqVersionId: 3987149 },
+            { rqId: 3976932, rqVersionId: 3987161 },
+            { rqId: 3976933, rqVersionId: 3987162 },
+          ],
+        },
+        expectedOutput:
+          "code CO.REL_CYCLE_LINK_SUCCESS - Release(s) and Cycle(s) associated successfully.",
+      },
+    ],
+    hints: [
+      "CRITICAL: NEVER call this tool right after Create Requirement in the same request. " +
+        "If the user asks to create a requirement AND link/associate a release or cycle, put associateRelCyc: true and releaseCycleMapping " +
+        "in the Create Requirement call itself - one call, no follow-up link.",
+      "Use this tool only when the requirements already existed before this request (the user names existing requirements by key, ID or name).",
+      "CRITICAL: ALL parameters are required (projectKey, destinationProjectId, releaseCycleMapping, requirements). Put ALL releases in releaseCycleMapping and ALL requirements in requirements and make ONE call - " +
+        "every listed release/cycle is linked to every listed requirement. Only split into several calls when different requirements need DIFFERENT releases/cycles.",
+      "STEP 1 - destinationProjectId: the numeric ID of the project you are working in (the projectKey's project). If you don't already have it, call 'Fetch QMetry list Projects' with " +
+        `filter '[{"value":"<projectKey>","type":"string","field":"projectKey"}]' and use projectID of the row whose projectKey EXACTLY matches (the filter can also return similar keys). ` +
+        "If no active project matches, retry with params.showArchive: true. NOT the string projectKey.",
+      "STEP 2 - releaseCycleMapping: one entry per release ({ releaseId, cycleIds }); never repeat a releaseId. Use the IDs the user gave, or call 'Fetch Releases and Cycles', " +
+        "match each release by name, then match each cycle name among THAT release's cycles. " +
+        "Release names are unique in a project and cycle names are unique within a release, so a name match is exact. A cycle must belong to the release it is listed under.",
+      "STEP 3 - requirements[].rqId: use the numeric IDs the user gave, or resolve keys with ONE 'Fetch Requirements' call using a comma-separated filter " +
+        `'[{"type":"string","value":"MAC-RQ-730,MAC-RQ-731","field":"entityKeyId"}]' -> data[].id (set limit to at least the number of keys).`,
+      "STEP 4 - requirements[].rqVersionId (a version ID like 3987149, NOT a visible version number): " +
+        "if the user named NO version, use the LATEST: 'Fetch Requirements' (filter on entityKeyId) -> data[].versionId (data[].associatedVersion is the latest visible number). " +
+        "If you only have a numeric rqId, first call 'Fetch Requirement Details' with id=rqId and version=1 to read entityKey, then use 'Fetch Requirements' as above. " +
+        "If the user named a visible version N for a requirement (e.g. 'version 2'), call 'Fetch Requirement Details' with id=rqId and version=N and use rqVersionID.",
+      "ASK THE USER - do not guess - when a requirement key, requirement version, release name or cycle name cannot be resolved " +
+        "(no match in Fetch Requirements / Fetch Releases and Cycles, or Fetch Requirement Details fails for that version number).",
+      "RESPONSE: code CO.REL_CYCLE_LINK_SUCCESS means the links were made. If 'duplicate_rel_cycle' is also present, the release/cycle pairs listed there were ALREADY linked and were skipped; the rest were linked - tell the user both.",
+      "RESPONSE: success=true with code RQ.REL_CYC_EXIST means EVERY selected release/cycle was already linked - nothing changed; tell the user, do not retry.",
+      "ERRORS: each of these fails the WHOLE request and NOTHING is linked - fix the bad ID and retry with valid IDs only:",
+      "  CO.INVALID_RELEASE_ID: a releaseId is wrong - re-check releases with 'Fetch Releases and Cycles'.",
+      "  CO.INVALID_BUILD_ID ('Invalid Build ID.'): at least one cycle ID is wrong (QMetry calls cycles 'builds') - re-check that every cycleId belongs to the release it is listed under.",
+      "  RQ.ENTITY_NOT_FOUND_ERROR: at least one requirement rqId/rqVersionId is wrong - re-resolve the requirements with 'Fetch Requirements' / 'Fetch Requirement Details'.",
+    ],
+    outputDescription:
+      "JSON object with success, code (CO.REL_CYCLE_LINK_SUCCESS or RQ.REL_CYC_EXIST), message, and duplicate_rel_cycle listing release/cycle pairs that were already linked.",
+    readOnly: false,
+    destructive: false,
     idempotent: true,
   },
 ];

@@ -1,8 +1,11 @@
 import type { z } from "zod";
 import type { ImportAutomationResultsPayloadSchema } from "./common";
 
-export type ImportAutomationResultsPayload = z.infer<
-  typeof ImportAutomationResultsPayloadSchema
+// `projectKey` is a tool-level argument: the client strips it from the payload
+// and sends it as the `project` header instead.
+export type ImportAutomationResultsPayload = Omit<
+  z.infer<typeof ImportAutomationResultsPayloadSchema>,
+  "projectKey"
 >;
 
 /**

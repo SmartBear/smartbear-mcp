@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { QMETRY_HANDLER_MAP } from "../client/handlers.js";
 import {
   createTestCases,
   fetchTestCaseDetails,
@@ -7,8 +8,11 @@ import {
   fetchTestCases,
   fetchTestCasesLinkedToRequirement,
   fetchTestCaseVersionDetails,
+  linkReleaseCycleWithTestCase,
   linkTestcaseToIssues,
 } from "../client/testcase.js";
+import { QMetryToolsHandlers } from "../config/constants.js";
+import { LinkReleaseCycleWithTestCaseArgsSchema } from "../types/common.js";
 import { DEFAULT_FETCH_TESTCASES_PAYLOAD } from "../types/testcase.js";
 
 const token = "fake-token";
@@ -23,6 +27,7 @@ describe("testcase API clients", () => {
   const mockOk = (data: any) => ({
     ok: true,
     json: async () => data,
+    text: async () => JSON.stringify(data),
   });
 
   const mockFail = (status = 400, errorText = "Bad Request") => ({
@@ -35,7 +40,6 @@ describe("testcase API clients", () => {
   it("fetchTestCases should POST with correct URL and headers", async () => {
     const payload = {
       ...DEFAULT_FETCH_TESTCASES_PAYLOAD,
-      viewId: 1,
       folderPath: "/",
     };
     const mockResponse = {
@@ -65,21 +69,21 @@ describe("testcase API clients", () => {
     expect(result).toEqual(mockResponse);
   });
 
-  it("fetchTestCases should throw on missing viewId", async () => {
-    const invalidPayload = {
-      ...DEFAULT_FETCH_TESTCASES_PAYLOAD,
-      folderPath: "/",
-    };
-    const payload = invalidPayload as any;
+  it("fetchTestCases should default folderPath to root and send no viewId", async () => {
+    global.fetch = vi.fn().mockResolvedValue(mockOk({ data: [] }));
 
-    await expect(
-      fetchTestCases(token, baseUrl, projectKey, payload),
-    ).rejects.toThrow(/Missing or invalid required parameter: 'viewId'/);
+    await fetchTestCases(token, baseUrl, projectKey, {} as any);
+
+    const body = JSON.parse((global.fetch as any).mock.calls[0][1].body);
+    expect(body.folderPath).toBe("");
+    expect(body).not.toHaveProperty("viewId");
   });
 
-  it("fetchTestCases should throw on missing folderPath", async () => {
-    const invalidPayload = { ...DEFAULT_FETCH_TESTCASES_PAYLOAD, viewId: 1 };
-    const payload = invalidPayload as any;
+  it("fetchTestCases should throw on invalid folderPath", async () => {
+    const payload = {
+      ...DEFAULT_FETCH_TESTCASES_PAYLOAD,
+      folderPath: 5,
+    } as any;
 
     await expect(
       fetchTestCases(token, baseUrl, projectKey, payload),
@@ -177,11 +181,10 @@ describe("testcase API clients", () => {
     await expect(
       fetchTestCases(token, baseUrl, projectKey, {
         ...DEFAULT_FETCH_TESTCASES_PAYLOAD,
-        viewId: 1,
         folderPath: "/",
         start: 0,
       }),
-    ).rejects.toThrow(/QMetry API request failed \(400\): Invalid request/);
+    ).rejects.toThrow(/QMetry API error 400: Invalid request/);
   });
 
   it("should handle JSON error responses", async () => {
@@ -196,10 +199,9 @@ describe("testcase API clients", () => {
     await expect(
       fetchTestCases(token, baseUrl, projectKey, {
         ...DEFAULT_FETCH_TESTCASES_PAYLOAD,
-        viewId: 1,
         folderPath: "/",
       }),
-    ).rejects.toThrow(/QMetry API request failed \(400\):/);
+    ).rejects.toThrow(/QMetry API error 400/);
   });
 
   describe("fetchTestCasesLinkedToRequirement", () => {
@@ -321,9 +323,7 @@ describe("testcase API clients", () => {
 
       await expect(
         fetchTestCasesLinkedToRequirement(token, baseUrl, projectKey, payload),
-      ).rejects.toThrow(
-        /QMetry API Invalid URL Error: The API endpoint appears to be incorrect/,
-      );
+      ).rejects.toThrow(/QMetry API error 404/);
     });
   });
 
@@ -451,9 +451,7 @@ describe("testcase API clients", () => {
 
       await expect(
         fetchTestCaseExecutions(token, baseUrl, projectKey, payload),
-      ).rejects.toThrow(
-        /QMetry API Invalid URL Error: The API endpoint appears to be incorrect/,
-      );
+      ).rejects.toThrow(/QMetry API error 404/);
     });
 
     it("should throw error when tcid is missing", async () => {
@@ -516,6 +514,7 @@ describe("testcase API clients", () => {
       global.fetch = vi.fn().mockResolvedValue({
         ok: true,
         json: async () => mockResponse,
+        text: async () => JSON.stringify(mockResponse),
       });
 
       const payload = {
@@ -551,6 +550,7 @@ describe("testcase API clients", () => {
       global.fetch = vi.fn().mockResolvedValue({
         ok: true,
         json: async () => mockResponse,
+        text: async () => JSON.stringify(mockResponse),
       });
 
       const payload = {
@@ -570,5 +570,324 @@ describe("testcase API clients", () => {
       );
       expect(result).toEqual(mockResponse);
     });
+  });
+});
+
+describe("linkReleaseCycleWithTestCase", () => {
+  const validPayload = {
+    destinationProjectId: 46893,
+    releaseCycleMapping: [{ releaseId: 92340, cycleIds: [131142] }],
+    testCases: [{ tcID: 4611391, tcVersionID: 4705299 }],
+  };
+
+  const mockResponse = (body: unknown, ok = true, status = 200) => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok,
+      status,
+      statusText: ok ? "OK" : "Bad Request",
+      json: async () => body,
+      text: async () => JSON.stringify(body),
+    });
+  };
+
+  const sentBody = () =>
+    JSON.parse((globalThis.fetch as any).mock.calls[0][1].body);
+
+  const expectRejected = async (payload: unknown, message: string) => {
+    globalThis.fetch = vi.fn();
+    await expect(
+      linkReleaseCycleWithTestCase(token, baseUrl, projectKey, payload as any),
+    ).rejects.toThrow(message);
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  };
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it("maps linkReleaseCycleWithTestCase to its handler", () => {
+    expect(
+      QMETRY_HANDLER_MAP[QMetryToolsHandlers.LINK_RELEASE_CYCLE_WITH_TESTCASE],
+    ).toBe(linkReleaseCycleWithTestCase);
+  });
+
+  it("POSTs the new scope/add body for one release and one test case", async () => {
+    const response = {
+      success: true,
+      code: "CO.REL_CYCLE_LINK_SUCCESS",
+      message: "Release(s) and Cycle(s) associated successfully.",
+      data: [{}],
+    };
+    mockResponse(response);
+
+    const result = await linkReleaseCycleWithTestCase(
+      token,
+      baseUrl,
+      projectKey,
+      validPayload,
+    );
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      `${baseUrl}/rest/testcases/scope/add`,
+      expect.objectContaining({
+        method: "POST",
+        headers: expect.objectContaining({
+          apikey: token,
+          project: projectKey,
+          "Content-Type": "application/json",
+        }),
+      }),
+    );
+    expect(sentBody()).toEqual({
+      sourceScope: "project",
+      entityType: "TC",
+      releaseCycleMapping: [{ release: 92340, cycle: [131142], version: 1 }],
+      destinationProjectId: 46893,
+      entityData: [{ entityId: 4611391, version: 4705299 }],
+    });
+    expect(result).toEqual(response);
+  });
+
+  it("maps several releases and several test cases in order", async () => {
+    mockResponse({ success: true });
+
+    await linkReleaseCycleWithTestCase(token, baseUrl, projectKey, {
+      ...validPayload,
+      releaseCycleMapping: [
+        { releaseId: 92340, cycleIds: [131142] },
+        { releaseId: 92341, cycleIds: [131143, 133715] },
+      ],
+      testCases: [
+        { tcID: 4611391, tcVersionID: 4705299 },
+        { tcID: 4611393, tcVersionID: 4705304 },
+      ],
+    });
+
+    const body = sentBody();
+    expect(body.releaseCycleMapping).toEqual([
+      { release: 92340, cycle: [131142], version: 1 },
+      { release: 92341, cycle: [131143, 133715], version: 1 },
+    ]);
+    expect(body.entityData).toEqual([
+      { entityId: 4611391, version: 4705299 },
+      { entityId: 4611393, version: 4705304 },
+    ]);
+  });
+
+  it("does not send tool-level or extra fields", async () => {
+    mockResponse({ success: true });
+
+    await linkReleaseCycleWithTestCase(token, baseUrl, projectKey, {
+      ...validPayload,
+      projectKey: "SHOULD_NOT_BE_SENT",
+    } as any);
+
+    const body = sentBody();
+    expect(body).not.toHaveProperty("projectKey");
+    expect(body).not.toHaveProperty("testCases");
+    expect(body.releaseCycleMapping[0]).not.toHaveProperty("releaseId");
+  });
+
+  it.each([
+    [
+      "all pairs already linked",
+      {
+        duplicate_rel_cycle: [
+          { release: "Default Release", cycle: "Default Cycle" },
+        ],
+        success: true,
+        code: "TC.REL_CYC_EXIST",
+        message: "The selected Release(s)/Cycle(s) is already linked.",
+      },
+    ],
+    [
+      "some pairs already linked",
+      {
+        duplicate_rel_cycle: [
+          { release: "Releases :- A", cycle: "ABC" },
+          { release: "Releases :- A", cycle: "AC" },
+        ],
+        success: true,
+        code: "CO.REL_CYCLE_LINK_SUCCESS",
+        message: "Release(s) and Cycle(s) associated successfully.",
+      },
+    ],
+  ])("returns the %s response as-is", async (_label, response) => {
+    mockResponse(response);
+
+    await expect(
+      linkReleaseCycleWithTestCase(token, baseUrl, projectKey, validPayload),
+    ).resolves.toEqual(response);
+  });
+
+  it.each([
+    ["missing", undefined],
+    ["a string", "abc"],
+    ["NaN", Number.NaN],
+  ])("throws when destinationProjectId is %s", async (_label, value) => {
+    await expectRejected(
+      { ...validPayload, destinationProjectId: value },
+      "[linkReleaseCycleWithTestCase] Missing or invalid required parameter: 'destinationProjectId'",
+    );
+  });
+
+  it.each([
+    ["missing", undefined],
+    ["empty", []],
+  ])("throws when releaseCycleMapping is %s", async (_label, mapping) => {
+    await expectRejected(
+      { ...validPayload, releaseCycleMapping: mapping },
+      "Missing or invalid required parameter: 'releaseCycleMapping'",
+    );
+  });
+
+  it("throws when a releaseId is invalid", async () => {
+    await expectRejected(
+      {
+        ...validPayload,
+        releaseCycleMapping: [
+          { releaseId: 92340, cycleIds: [131142] },
+          { releaseId: "abc", cycleIds: [131143] },
+        ],
+      },
+      "'releaseCycleMapping[1].releaseId'",
+    );
+  });
+
+  it.each([
+    ["missing", undefined],
+    ["empty", []],
+    ["non-numeric", [131142, "abc"]],
+  ])("throws when a release's cycleIds is %s", async (_label, cycleIds) => {
+    await expectRejected(
+      {
+        ...validPayload,
+        releaseCycleMapping: [{ releaseId: 92340, cycleIds }],
+      },
+      "'releaseCycleMapping[0].cycleIds'",
+    );
+  });
+
+  it("throws when a release is repeated", async () => {
+    await expectRejected(
+      {
+        ...validPayload,
+        releaseCycleMapping: [
+          { releaseId: 92340, cycleIds: [131142] },
+          { releaseId: 92340, cycleIds: [131145] },
+        ],
+      },
+      "Release 92340 appears more than once",
+    );
+  });
+
+  it.each([
+    ["missing", undefined],
+    ["empty", []],
+  ])("throws when testCases is %s", async (_label, testCases) => {
+    await expectRejected(
+      { ...validPayload, testCases },
+      "Missing or invalid required parameter: 'testCases'",
+    );
+  });
+
+  it.each([
+    "tcID",
+    "tcVersionID",
+  ])("throws when a test case's %s is missing", async (field) => {
+    const tc: any = { tcID: 4611393, tcVersionID: 4705304 };
+    delete tc[field];
+    await expectRejected(
+      {
+        ...validPayload,
+        testCases: [{ tcID: 4611391, tcVersionID: 4705299 }, tc],
+      },
+      `'testCases[1].${field}'`,
+    );
+  });
+
+  it("throws when a test case is repeated", async () => {
+    await expectRejected(
+      {
+        ...validPayload,
+        testCases: [
+          { tcID: 4611391, tcVersionID: 4705299 },
+          { tcID: 4611391, tcVersionID: 4705300 },
+        ],
+      },
+      "Test case 4611391 appears more than once in 'testCases'",
+    );
+  });
+
+  it.each([
+    [
+      "invalid cycle (build)",
+      {
+        success: false,
+        code: "CO.INVALID_BUILD_ID",
+        message: "Invalid Build ID.",
+      },
+      /Invalid Build ID/,
+    ],
+    [
+      "invalid release",
+      { success: false, code: "CO.INVALID_RELEASE_ID" },
+      /CO.INVALID_RELEASE_ID/,
+    ],
+    [
+      "unknown test case",
+      { success: false, code: "RQ.ENTITY_NOT_FOUND_ERROR" },
+      /RQ.ENTITY_NOT_FOUND_ERROR/,
+    ],
+  ])("surfaces QMetry's %s error", async (_label, errorBody, expected) => {
+    mockResponse(errorBody, false, 400);
+
+    await expect(
+      linkReleaseCycleWithTestCase(token, baseUrl, projectKey, validPayload),
+    ).rejects.toThrow(expected);
+  });
+});
+
+describe("LinkReleaseCycleWithTestCaseArgsSchema", () => {
+  const base = {
+    destinationProjectId: 46893,
+    releaseCycleMapping: [{ releaseId: 92340, cycleIds: [131142] }],
+    testCases: [{ tcID: 4611391, tcVersionID: 4705299 }],
+  };
+
+  it("rejects a call without destinationProjectId", () => {
+    const { destinationProjectId: _omit, ...rest } = base;
+    const result = LinkReleaseCycleWithTestCaseArgsSchema.safeParse({
+      projectKey: "MAC",
+      ...rest,
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("coerces string IDs to numbers", () => {
+    const parsed = LinkReleaseCycleWithTestCaseArgsSchema.parse({
+      projectKey: "MAC",
+      destinationProjectId: "46893",
+      releaseCycleMapping: [{ releaseId: "92340", cycleIds: ["131142"] }],
+      testCases: [{ tcID: "4611391", tcVersionID: "4705299" }],
+    });
+    expect(parsed).toMatchObject(base);
+  });
+
+  it.each([
+    ["empty releaseCycleMapping", { releaseCycleMapping: [] }],
+    [
+      "a release with no cycles",
+      { releaseCycleMapping: [{ releaseId: 92340, cycleIds: [] }] },
+    ],
+    ["empty testCases", { testCases: [] }],
+    ["a test case without tcVersionID", { testCases: [{ tcID: 1 }] }],
+  ])("rejects %s", (_label, override) => {
+    const result = LinkReleaseCycleWithTestCaseArgsSchema.safeParse({
+      projectKey: "MAC",
+      ...base,
+      ...override,
+    });
+    expect(result.success).toBe(false);
   });
 });

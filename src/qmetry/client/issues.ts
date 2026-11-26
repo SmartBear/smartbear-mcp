@@ -1,13 +1,16 @@
+import { ToolError } from "../../common/tools";
 import { QMETRY_PATHS } from "../config/rest-endpoints";
 import {
   type CreateIssuePayload,
   DEFAULT_CREATE_ISSUE_PAYLOAD,
   DEFAULT_FETCH_ISSUE_EXECUTIONS_PAYLOAD,
+  DEFAULT_FETCH_ISSUES_LINKED_TO_EXECUTION_PAYLOAD,
   DEFAULT_FETCH_ISSUES_LINKED_TO_TESTCASE_PAYLOAD,
   DEFAULT_FETCH_ISSUES_PAYLOAD,
   DEFAULT_LINK_ISSUES_TO_TESTCASE_RUN_PAYLOAD,
   DEFAULT_UPDATE_ISSUE_PAYLOAD,
   type FetchIssueExecutionsPayload,
+  type FetchIssuesLinkedToExecutionPayload,
   type FetchIssuesLinkedToTestCasePayload,
   type FetchIssuesPayload,
   type LinkIssuesToTestcaseRunPayload,
@@ -40,17 +43,17 @@ export async function createIssue(
   };
 
   if (typeof body.issueType !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[createIssue] Missing or invalid required parameter: 'issueType'.",
     );
   }
   if (typeof body.issuePriority !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[createIssue] Missing or invalid required parameter: 'issuePriority'.",
     );
   }
   if (typeof body.summary !== "string") {
-    throw new Error(
+    throw new ToolError(
       "[createIssue] Missing or invalid required parameter: 'summary'.",
     );
   }
@@ -107,7 +110,7 @@ export async function createIssue(
       }
     }
     if (missing.length > 0) {
-      throw new Error(
+      throw new ToolError(
         `[createIssue] Missing mandatory fields: ${missing.join(", ")}. ` +
           "Provide values for these fields before creating the issue.",
       );
@@ -150,7 +153,7 @@ export async function updateIssue(
   };
 
   if (typeof body.DefectId !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[updateIssue] Missing or invalid required parameter: 'DefectId'.",
     );
   }
@@ -166,8 +169,7 @@ export async function updateIssue(
 }
 
 /**
- * Fetches a list of test suites.
- * @throws If `viewId` or `folderPath` are missing/invalid.
+ * Fetches a list of defects or issues.
  */
 export async function fetchIssues(
   token: string,
@@ -184,12 +186,6 @@ export async function fetchIssues(
     ...DEFAULT_FETCH_ISSUES_PAYLOAD,
     ...payload,
   };
-
-  if (typeof body.viewId !== "number") {
-    throw new Error(
-      "[fetchIssues] Missing or invalid required parameter: 'viewId'.",
-    );
-  }
 
   const result = await qmetryRequest<Record<string, unknown>>({
     method: "POST",
@@ -229,7 +225,7 @@ export async function fetchIssuesLinkedToTestCase(
   };
 
   if (typeof body.tcID !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[fetchIssuesLinkedToTestCase] Missing or invalid required parameter: 'tcID'.",
     );
   }
@@ -273,7 +269,7 @@ export async function fetchIssueExecutions(
       : undefined);
 
   if (!resolvedLinkedAsset || typeof resolvedLinkedAsset.id !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[fetchIssueExecutions] Missing or invalid required parameter: 'linkedAssetId'.",
     );
   }
@@ -468,13 +464,13 @@ export async function linkIssuesToTestcaseRun(
   };
 
   if (!Array.isArray(body.issueIds) || body.issueIds.length === 0) {
-    throw new Error(
+    throw new ToolError(
       "[linkIssuesToTestcaseRun] Missing or invalid required parameter: 'issueIds'.",
     );
   }
 
   if (typeof body.tcrId !== "number") {
-    throw new Error(
+    throw new ToolError(
       "[linkIssuesToTestcaseRun] Missing or invalid required parameter: 'tcrId'.",
     );
   }
@@ -490,6 +486,53 @@ export async function linkIssuesToTestcaseRun(
 }
 
 /**
+ * Fetches issues linked to an execution (test suite run).
+ * Filter and sort are out of scope for now (QTM8-24527) and are always sent
+ * as empty arrays.
+ * @throws If `tsRunID` is missing/invalid.
+ */
+export async function fetchIssuesLinkedToExecution(
+  token: string,
+  baseUrl: string,
+  project: string | undefined,
+  payload: FetchIssuesLinkedToExecutionPayload,
+) {
+  const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
+    baseUrl,
+    project,
+  );
+
+  const merged: FetchIssuesLinkedToExecutionPayload = {
+    ...DEFAULT_FETCH_ISSUES_LINKED_TO_EXECUTION_PAYLOAD,
+    ...payload,
+  };
+
+  if (typeof merged.tsRunID !== "number" || Number.isNaN(merged.tsRunID)) {
+    throw new ToolError(
+      "[fetchIssuesLinkedToExecution] Missing or invalid required parameter: 'tsRunID'.",
+    );
+  }
+
+  const body = {
+    tsRunID: merged.tsRunID,
+    page: merged.page,
+    start: merged.start,
+    limit: merged.limit,
+    filter: "[]",
+    sort: "[]",
+  };
+
+  return qmetryRequest<unknown>({
+    method: "POST",
+    path: QMETRY_PATHS.ISSUES.GET_ISSUES_LINKED_TO_EXECUTION,
+    token,
+    project: resolvedProject,
+    baseUrl: resolvedBaseUrl,
+    body,
+  });
+}
+
+/**
  * Fetches full issue detail data including UDF values.
  * @throws If `defectId` is missing/invalid.
  */
@@ -497,7 +540,7 @@ export async function fetchIssueDetails(
   token: string,
   baseUrl: string,
   project: string | undefined,
-  payload: { defectId: number; scopeId?: number; orgCode?: string },
+  payload: { defectId: number },
 ) {
   const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
     baseUrl,
@@ -505,7 +548,7 @@ export async function fetchIssueDetails(
   );
 
   if (typeof payload.defectId !== "number" || payload.defectId <= 0) {
-    throw new Error(
+    throw new ToolError(
       "[fetchIssueDetails] Missing or invalid required parameter: 'defectId'.",
     );
   }
@@ -514,12 +557,6 @@ export async function fetchIssueDetails(
     action: "detail",
     screenname: "ISSUE",
   };
-  if (typeof payload.scopeId === "number") {
-    extraHeaders["scope"] = String(payload.scopeId);
-  }
-  if (typeof payload.orgCode === "string") {
-    extraHeaders["orgcode"] = payload.orgCode;
-  }
   extraHeaders["Content-Type"] = "application/json";
   return qmetryRequest<unknown>({
     method: "GET",

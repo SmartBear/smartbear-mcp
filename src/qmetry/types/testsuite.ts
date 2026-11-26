@@ -41,7 +41,6 @@ export interface FetchTestSuitesForTestCasePayload
   extends PaginationPayload,
     FilterPayload {
   tsFolderID: number; // required - Test Suite folder ID
-  viewId?: number; // optional - Test Suite folder view ID (auto-resolved if not provided)
   getColumns?: boolean; // whether to get column information
 }
 
@@ -49,7 +48,6 @@ export interface FetchTestSuitesPayload
   extends PaginationPayload,
     FilterPayload,
     SortPayload {
-  viewId: number; // required
   folderPath: string; // required
   scope?: string; // optional - scope filter
   getSubEntities?: boolean; // optional - whether to get sub-entities
@@ -92,7 +90,6 @@ export interface FetchExecutionsByTestSuitePayload
   tsID: number; // required - Test Suite ID
   tsFolderID?: number; // optional - Test Suite folder ID
   gridName?: string; // optional - Grid Name to be displayed
-  viewId?: number; // optional - View ID for executions
 }
 
 export const DEFAULT_FETCH_EXECUTIONS_BY_TESTSUITE_PAYLOAD: Omit<
@@ -107,7 +104,6 @@ export const DEFAULT_FETCH_EXECUTIONS_BY_TESTSUITE_PAYLOAD: Omit<
 export interface FetchTestCaseRunsByTestSuiteRunPayload
   extends PaginationPayload {
   tsrunID: string; // required - Test Suite Run ID (STRING format - get from executions API)
-  viewId: number; // required - View ID for test execution (get from project info latestViews.TE.viewId)
   filter?: string; // optional - standard field filter as JSON string (default '[]')
   udfFilter?: string; // optional - test case UDF filter as JSON string (default '[]')
   tcrUdfFilter?: string; // optional - test case run UDF filter as JSON string (default '[]')
@@ -133,7 +129,7 @@ export interface LinkedPlatformsToTestSuitePayload {
 
 export const DEFAULT_FETCH_TESTCASE_RUNS_BY_TESTSUITE_RUN_PAYLOAD: Omit<
   FetchTestCaseRunsByTestSuiteRunPayload,
-  "tsrunID" | "viewId"
+  "tsrunID"
 > = {
   ...DEFAULT_PAGINATION,
 };
@@ -184,10 +180,8 @@ export const DEFAULT_UPDATE_TESTSUITE_PAYLOAD: Omit<
   "entityKey" | "TsFolderID" | "id"
 > = {};
 
-export const DEFAULT_FETCH_TESTSUITES_PAYLOAD: Omit<
-  FetchTestSuitesPayload,
-  "viewId" | "folderPath"
-> = {
+export const DEFAULT_FETCH_TESTSUITES_PAYLOAD: FetchTestSuitesPayload = {
+  folderPath: "", // root folder
   ...DEFAULT_PAGINATION,
   ...DEFAULT_FILTER,
   ...DEFAULT_SORT,
@@ -218,10 +212,7 @@ export interface BulkUpdateExecutionStatusPayload {
   password?: string; // optional - For Part 11 Compliance
   qmRunObj?: string; // optional - Internal run object
   type?: "TCR" | "TCSR"; // optional - For backwards compatibility
-  viewId?: number; // optional - TE view ID, used to read current Test Run UDF values
   udfValuesByRun?: Record<string, Record<string, TestRunUdfInputValue>>; // optional - per-run UDF values applied before status update
-  scopeId?: number; // optional - injected scope header
-  orgCode?: string; // optional - injected orgcode header
 }
 
 export type TestRunUdfInputValue = Omit<UdfFieldValue, "fieldID"> & {
