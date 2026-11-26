@@ -16,8 +16,8 @@ server's calls to PactFlow APIs; these cover what the server offers to MCP clien
 ## Running
 
 ```sh
-npm install -g @pactflow/drift
-drift component install mcp   # the MCP plugin is optional and in beta
+npm install -g @pactflow/drift@2610.0.0   # the version CI pins (DRIFT_VERSION in .github/workflows/drift.yml)
+drift component install mcp --version 2610.0.0   # the MCP plugin is optional and in beta; keep it on the CLI's release
 
 npm run build
 export PACT_BROKER_BASE_URL=... PACT_BROKER_TOKEN=...   # Drift authenticates with PactFlow

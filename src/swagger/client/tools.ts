@@ -316,7 +316,7 @@ export const TOOLS: SwaggerToolParams[] = [
     title: "Validate API",
     toolset: "Registry API",
     summary:
-      "Validate an OpenAPI or AsyncAPI definition using server-side apidom-ls and asyncapi/parser. Returns structured diagnostics with line number, severity, and message for each finding. Supports OpenAPI 2.0, 3.0, 3.1, and AsyncAPI. Provide either the raw definition (JSON or YAML) OR an existing API by owner, apiName, and version. Use this tool when the user asks to validate, lint, or check an API spec for structural errors matching the Studio Validation tab.",
+      "Validate an OpenAPI, AsyncAPI or A2A (Agent2Agent) Agent Card definition using server-side apidom-ls and asyncapi/parser. Returns structured diagnostics with line number, severity, and message for each finding. Supports OpenAPI 2.0, 3.0, 3.1, AsyncAPI, and A2A Agent Cards. MCP, GraphQL and gRPC definitions are not validated yet and are reported as not recognized. Provide either the raw definition (JSON or YAML) OR an existing API by owner, apiName, and version. Use this tool when the user asks to validate, lint, or check an API spec or an A2A Agent Card for structural errors matching the Studio Validation tab.",
     inputSchema: ValidateApiParamsSchema,
     outputSchema: ApidomValidationOutputSchema,
     handler: "validateApi",

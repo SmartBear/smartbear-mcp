@@ -39,10 +39,14 @@ jobs:
       - name: Build
         run: npm run build
 
+      # Install the MCP plugin from the same release as the CLI. By default
+      # `drift component install` takes plugins from the newest release, whose
+      # plugin interface (WIT) can be incompatible with the pinned CLI, which
+      # fails with "Failed to instantiate plugin mcp.plugin".
       - name: Install Drift and its MCP plugin
         run: |
           npm install -g "@pactflow/drift@${DRIFT_VERSION}"
-          drift component install mcp --yes
+          drift component install mcp --version "${DRIFT_VERSION}" --yes
 
       # Don't stop on failure: the results still need publishing, and the job
       # is failed explicitly at the end.
