@@ -49,6 +49,237 @@ const DEFAULT_DOMAIN = "bugsnag.com";
 const HUB_DOMAIN = "bugsnag.smartbear.com";
 const BUGSNAG_CACHE_TTL_SECONDS = 60;
 
+// Hostnames that can never be a real Bugsnag deployment (on-premise or
+// otherwise): Kubernetes' own internal service-discovery DNS. No legitimate
+// `endpoint` configuration would ever name one of these — they only show up
+// when something is being used to reach the cluster's internal API, as in
+// the reported exploit.
+function isKubernetesInternalHostname(hostname: string): boolean {
+  const h = hostname.toLowerCase().replace(/\.$/, "");
+  if (h === "localhost" || h.endsWith(".localhost")) return true;
+  if (h === "metadata.google.internal") return true;
+  if (h === "kubernetes" || h.startsWith("kubernetes.")) return true;
+  if (h === "svc" || h.endsWith(".svc")) return true;
+  if (h.endsWith(".cluster.local")) return true;
+  return false;
+}
+
+function isIPv4Literal(hostname: string): boolean {
+  return /^\d{1,3}(\.\d{1,3}){3}$/.test(hostname);
+}
+
+// Addresses that are never a legitimate remote API target for anyone,
+// on-premise customers included: loopback, the 169.254.0.0/16 link-local
+// block cloud providers use for instance metadata (e.g. 169.254.169.254 —
+// the exact target used in the reported exploit), and the "this network"
+// block. Deliberately NOT blocking RFC1918 private ranges (10/8, 172.16/12,
+// 192.168/16): on-premise Bugsnag installations can legitimately sit on a
+// private address reachable from wherever this server runs, and we have no
+// way to distinguish that from an internal pivot target from the endpoint
+// value alone.
+function isForbiddenIPv4(hostname: string): boolean {
+  const octets = hostname.split(".").map(Number);
+  if (
+    octets.length !== 4 ||
+    octets.some((o) => !Number.isInteger(o) || o < 0 || o > 255)
+  ) {
+    return true; // malformed literal: refuse rather than guess
+  }
+  const [a, b] = octets;
+  if (a === 127) return true; // loopback
+  if (a === 169 && b === 254) return true; // link-local / cloud metadata
+  if (a === 0) return true; // "this" network
+  if (a === 100 && b === 100 && octets[2] === 100 && octets[3] === 200)
+    return true; // Alibaba metadata
+  if (a === 192 && b === 0 && octets[2] === 0 && octets[3] === 192) return true; // Oracle metadata
+  return false;
+}
+
+// Expand an IPv6 literal into its eight 16-bit groups. Works on the canonical
+// form produced by WHATWG URL (which already rewrites any embedded dotted
+// IPv4 tail, e.g. `::ffff:127.0.0.1` -> `::ffff:7f00:1`), but also accepts a
+// trailing dotted quad defensively. Returns undefined for anything malformed.
+function parseIPv6Groups(address: string): number[] | undefined {
+  let addr = address;
+  const dotted = /^(.*:)(\d{1,3}(?:\.\d{1,3}){3})$/.exec(addr);
+  if (dotted) {
+    const octets = dotted[2].split(".").map(Number);
+    if (octets.some((o) => o > 255)) return undefined;
+    addr =
+      dotted[1] +
+      `${((octets[0] << 8) | octets[1]).toString(16)}:` +
+      `${((octets[2] << 8) | octets[3]).toString(16)}`;
+  }
+
+  const halves = addr.split("::");
+  if (halves.length > 2) return undefined;
+  const toGroups = (s: string): string[] => (s === "" ? [] : s.split(":"));
+  const head = toGroups(halves[0]);
+  const tail = halves.length === 2 ? toGroups(halves[1]) : [];
+  const missing = 8 - head.length - tail.length;
+  if (halves.length === 2 ? missing < 1 : missing !== 0) return undefined;
+
+  const groups = [...head, ...Array(missing).fill("0"), ...tail];
+  if (!groups.every((g) => /^[0-9a-f]{1,4}$/.test(g))) return undefined;
+  return groups.map((g) => Number.parseInt(g, 16));
+}
+
+// RFC 6052 section 2.2 layouts for an IPv4 address embedded under a NAT64
+// prefix of the given length, as byte offsets into the 16-byte address. Byte 8
+// (bits 64-71, the "u" octet) is always skipped, so prefixes shorter than /96
+// split the IPv4 address around it.
+const NAT64_IPV4_BYTE_OFFSETS: Record<number, number[]> = {
+  48: [6, 7, 9, 10],
+  56: [7, 9, 10, 11],
+  64: [9, 10, 11, 12],
+  96: [12, 13, 14, 15],
+};
+
+function ipv4FromBytes(bytes: number[], offsets: number[]): string {
+  return offsets.map((i) => bytes[i]).join(".");
+}
+
+// If the IPv6 address embeds an IPv4 address that the network stack (or a
+// translator) may actually deliver to, return every plausible decoding in
+// dotted form so the IPv4 rules above can be applied. Covers:
+//   ::ffff:0:0/96      IPv4-mapped        (::ffff:7f00:1)
+//   ::ffff:0:0:0/96    IPv4-translated    (::ffff:0:7f00:1, RFC 2765)
+//   ::/96              IPv4-compatible    (::7f00:1, deprecated)
+//   64:ff9b::/96       NAT64 well-known   (64:ff9b::a9fe:a9fe, RFC 6052)
+//   64:ff9b:1::/48     NAT64 local-use    (RFC 8215)
+//
+// The local-use block is a /48 out of which operators carve their own
+// translator prefix, which may be any RFC 6052 length >= /48 (/48, /56, /64
+// or /96). We cannot know which one the network in front of this server uses,
+// and each length places the IPv4 bits differently — e.g. under a /64 prefix
+// 64:ff9b:1:0:a9:fea9:fe00:0 reaches 169.254.169.254, while reading only the
+// last 32 bits would yield 254.0.0.0. So return the decoding for every
+// possible length; the caller rejects the address if any of them is forbidden.
+function embeddedIPv4Candidates(groups: number[]): string[] {
+  const zeros = (from: number, to: number) =>
+    groups.slice(from, to).every((g) => g === 0);
+  const bytes = groups.flatMap((g) => [g >> 8, g & 255]);
+
+  const isNat64LocalUse =
+    groups[0] === 0x64 && groups[1] === 0xff9b && groups[2] === 1;
+  if (isNat64LocalUse) {
+    return Object.values(NAT64_IPV4_BYTE_OFFSETS).map((offsets) =>
+      ipv4FromBytes(bytes, offsets),
+    );
+  }
+
+  const isMapped = zeros(0, 5) && groups[5] === 0xffff;
+  const isTranslated = zeros(0, 4) && groups[4] === 0xffff && groups[5] === 0;
+  const isCompatible = zeros(0, 6);
+  const isNat64WellKnown =
+    groups[0] === 0x64 && groups[1] === 0xff9b && zeros(2, 6);
+  if (!(isMapped || isTranslated || isCompatible || isNat64WellKnown)) {
+    return [];
+  }
+  return [ipv4FromBytes(bytes, NAT64_IPV4_BYTE_OFFSETS[96])];
+}
+
+// Known cloud instance-metadata services reachable over IPv6. These live
+// inside fc00::/7 (ULA), but the rest of that range is ordinary private
+// address space — the IPv6 counterpart of RFC1918 — which on-premise Bugsnag
+// installations can legitimately use, so only these exact addresses are
+// blocked rather than the whole range.
+const IPV6_METADATA_ADDRESSES: number[][] = [
+  [0xfd00, 0xec2, 0, 0, 0, 0, 0, 0x254], // AWS IMDS (fd00:ec2::254)
+  [0xfd20, 0xce, 0, 0, 0, 0, 0, 0x254], // GCP metadata (fd20:ce::254)
+];
+
+// IPv6 equivalents of the IPv4 checks above: loopback, unspecified,
+// link-local and known metadata addresses, plus any IPv6 form that embeds an
+// IPv4 address (checked against the IPv4 ranges above). Like RFC1918 for
+// IPv4, private ULA (fc00::/7) addresses are otherwise allowed.
+function isForbiddenIPv6(hostname: string): boolean {
+  // URL.hostname keeps the [brackets] for IPv6 literals; drop any zone id.
+  const h = hostname
+    .toLowerCase()
+    .replace(/^\[|\]$/g, "")
+    .replace(/%.*$/, "");
+  const groups = parseIPv6Groups(h);
+  if (!groups) return true; // malformed literal: refuse rather than guess
+
+  const allZeroUpTo = (n: number) => groups.slice(0, n).every((g) => g === 0);
+  if (allZeroUpTo(7) && (groups[7] === 0 || groups[7] === 1)) return true; // :: / ::1
+  if ((groups[0] & 0xffc0) === 0xfe80) return true; // fe80::/10 link-local
+  if (
+    IPV6_METADATA_ADDRESSES.some((addr) =>
+      addr.every((g, i) => g === groups[i]),
+    )
+  ) {
+    return true; // cloud metadata
+  }
+
+  return embeddedIPv4Candidates(groups).some(isForbiddenIPv4);
+}
+
+// Only called when `endpoint` could have come from an untrusted per-request
+// source (see call site). Without this check it becomes an SSRF primitive:
+// the server would issue authenticated requests to whatever host/IP the
+// caller names, including cloud metadata services and cluster-internal
+// APIs, as demonstrated in the reported exploit.
+//
+// Scope is deliberately narrow — only addresses/hostnames that could never
+// be a legitimate on-premise Bugsnag deployment — to avoid breaking existing
+// on-premise configurations we have no visibility into (this client is used
+// by many customers). It is also a hostname/IP-literal check, not a
+// DNS-resolving one: it does not protect against a public hostname that
+// resolves (now or via later DNS rebinding) to a private address. Closing
+// either gap further should go through `MCP_ALLOWED_ENDPOINTS`
+// (src/common/client-registry.ts), the existing opt-in allowlist already
+// used for this purpose by other clients, rather than a broader hard block
+// here.
+function assertSafeCustomEndpoint(endpoint: string): void {
+  const hostname = new URL(endpoint).hostname;
+  if (isIPv4Literal(hostname)) {
+    if (isForbiddenIPv4(hostname)) {
+      throw new ToolError(
+        `Unsafe Bugsnag endpoint: ${hostname} is a loopback, link-local or metadata address`,
+      );
+    }
+    return;
+  }
+  if (hostname.includes(":")) {
+    if (isForbiddenIPv6(hostname)) {
+      throw new ToolError(
+        `Unsafe Bugsnag endpoint: ${hostname} is a loopback or link-local address`,
+      );
+    }
+    return;
+  }
+  const bare = hostname.toLowerCase().replace(/\.$/, "");
+  if (bare === "localhost" || bare.endsWith(".localhost")) {
+    throw new ToolError("Unsafe Bugsnag endpoint: localhost is not allowed");
+  }
+  if (isKubernetesInternalHostname(hostname)) {
+    throw new ToolError(
+      `Unsafe Bugsnag endpoint: ${hostname} is not an allowed destination`,
+    );
+  }
+}
+
+// The operator's own `BUGSNAG_ENDPOINT` env var is trusted configuration, not
+// caller input. In HTTP mode every configure() runs inside a request context
+// and falls back to that env var when no header is sent, so without this
+// exemption an operator pointing the server at a local or cluster-internal
+// on-premise instance (e.g. http://localhost:9000) would be blocked on every
+// session. Compared by origin so redirects within that same server are also
+// allowed. Mirrors isOperatorToken() for the auth token.
+function isOperatorEndpoint(url: string | URL): boolean {
+  const operatorEndpoint = process.env.BUGSNAG_ENDPOINT;
+  if (!operatorEndpoint) return false;
+  try {
+    const origin = new URL(url).origin;
+    // Non-http(s) URLs all report the opaque origin "null"; never match those.
+    return origin !== "null" && origin === new URL(operatorEndpoint).origin;
+  } catch {
+    return false;
+  }
+}
+
 const cacheKeys = {
   ORG: "bugsnag_org",
   PROJECTS: "bugsnag_projects",
@@ -308,6 +539,15 @@ export class BugsnagClient implements Client {
         "X-Bugsnag-API": "true",
         "X-Version": "2",
       },
+      // Applied to every redirect hop in BaseAPI. Same trust model as the
+      // initial endpoint check in getEndpoint(): only enforced while serving
+      // an HTTP request, where the endpoint may be caller-controlled, and
+      // never for hops within the operator's own BUGSNAG_ENDPOINT server.
+      validateRequestUrl: (url: URL) => {
+        if (getRequestContext() && !isOperatorEndpoint(url)) {
+          assertSafeCustomEndpoint(url.toString());
+        }
+      },
       basePath: this.getEndpoint(
         "api",
         config.project_api_key,
@@ -349,7 +589,22 @@ export class BugsnagClient implements Client {
           subDomainEndpoint = `https://${subdomain}.${DEFAULT_DOMAIN}`;
         }
       } else {
-        // For custom domains, use the endpoint exactly as provided
+        // For custom domains, use the endpoint exactly as provided. Only
+        // validate it against loopback/metadata/cluster-internal addresses
+        // when there's an active request context — i.e. this call could be
+        // serving an HTTP request, where `endpoint` may have come from a
+        // per-request, caller-controlled header (the reported exploit's
+        // vector). Outside a request context (stdio transport, or HTTP
+        // configured once at startup from an operator's own env var) there
+        // is no untrusted caller to defend against, and operators running
+        // this locally or against an on-premise instance on a loopback/
+        // internal address should not be blocked from doing so. The same
+        // applies inside a request when the value is the operator's own
+        // BUGSNAG_ENDPOINT (the HTTP transport's fallback when no header is
+        // sent).
+        if (getRequestContext() && !isOperatorEndpoint(endpoint)) {
+          assertSafeCustomEndpoint(endpoint);
+        }
         subDomainEndpoint = endpoint;
       }
     }

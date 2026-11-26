@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   BaseAPI,
+  buildPaginatedUrl,
   ensureFullUrl,
+  fetchWithValidatedRedirects,
   getNextUrlPathFromHeader,
   getQueryParams,
   pickFields,
@@ -286,6 +288,81 @@ describe("base.ts", () => {
     });
   });
 
+  // Regression coverage for HackerOne #4048125: `nextUrl` is tool input, and
+  // `new URL(nextUrl, basePath)` ignores `basePath` whenever `nextUrl` is
+  // already absolute, letting a caller redirect the request to any host.
+  describe("buildPaginatedUrl", () => {
+    it("should not allow a double-slash path to switch host", () => {
+      const url = buildPaginatedUrl(
+        "http://a//evil.com/x?page=2",
+        "/fallback",
+        "https://api.bugsnag.com",
+      );
+      expect(url.host).toBe("api.bugsnag.com");
+      expect(url.search).toBe("?page=2");
+    });
+
+    const basePath = "https://api.bugsnag.com";
+    const fallbackUrl = "/projects/123/errors";
+
+    it("builds from the fallback URL when nextUrl is absent", () => {
+      const url = buildPaginatedUrl(undefined, fallbackUrl, basePath);
+      expect(url.toString()).toBe(
+        "https://api.bugsnag.com/projects/123/errors",
+      );
+    });
+
+    it("accepts a nextUrl on the configured API origin", () => {
+      const nextUrl = "https://api.bugsnag.com/projects/123/errors?offset=10";
+      const url = buildPaginatedUrl(nextUrl, fallbackUrl, basePath);
+      expect(url.toString()).toBe(nextUrl);
+    });
+
+    it("accepts a relative nextUrl, resolved against basePath", () => {
+      const url = buildPaginatedUrl(
+        "/projects/123/errors?offset=10",
+        fallbackUrl,
+        basePath,
+      );
+      expect(url.toString()).toBe(
+        "https://api.bugsnag.com/projects/123/errors?offset=10",
+      );
+    });
+
+    it("keeps pagination working when the API's own Link header uses a different host (reverse proxy/CDN)", () => {
+      // basePath is what the operator configured; the backend's Link header
+      // can legitimately point at a different externally-visible host. The
+      // path/query should still be honoured, against the configured host.
+      const url = buildPaginatedUrl(
+        "https://internal-bugsnag-api.example.net/projects/123/errors?offset=10",
+        fallbackUrl,
+        basePath,
+      );
+      expect(url.toString()).toBe(
+        "https://api.bugsnag.com/projects/123/errors?offset=10",
+      );
+    });
+
+    it("never lets a nextUrl pointing at a different host (SSRF) escape the configured origin", () => {
+      const url = buildPaginatedUrl(
+        "http://127.0.0.1:3000/admin",
+        fallbackUrl,
+        basePath,
+      );
+      expect(url.origin).toBe("https://api.bugsnag.com");
+      expect(url.toString()).toBe("https://api.bugsnag.com/admin");
+    });
+
+    it("never lets a nextUrl pointing at the cloud metadata address escape the configured origin", () => {
+      const url = buildPaginatedUrl(
+        "http://169.254.169.254/latest/meta-data",
+        fallbackUrl,
+        basePath,
+      );
+      expect(url.origin).toBe("https://api.bugsnag.com");
+    });
+  });
+
   describe("getQueryParams", () => {
     it("should merge nextUrl and options query params", () => {
       const nextUrl = "/test?page=2";
@@ -409,6 +486,7 @@ describe("base.ts", () => {
           {
             method: "GET",
             headers: { "X-Test-Header": "test-value" },
+            redirect: "manual",
           },
         );
         expect(result.status).toBe(200);
@@ -502,6 +580,7 @@ describe("base.ts", () => {
           {
             method: "GET",
             headers: { "X-Test-Header": "test-value" },
+            redirect: "manual",
           },
         );
         expect(result.body).toEqual([
@@ -511,6 +590,43 @@ describe("base.ts", () => {
         expect(result.status).toBe(200);
         expect(result.totalCount).toBeNull();
         expect(result.nextUrl).toBeNull();
+      });
+
+      it("should preserve a basePath path prefix on first and follow-up pages", async () => {
+        const prefixedApi = new BaseAPI(
+          new Configuration({
+            apiKey: "test-token",
+            basePath: "https://bugsnag.example.com/api/v1",
+          }),
+        );
+        const page1Headers = new Headers({
+          Link: '<https://bugsnag.example.com/api/v1/user/organizations?offset=1>; rel="next"',
+        });
+        global.fetch = vi
+          .fn()
+          .mockResolvedValueOnce({
+            ok: true,
+            status: 200,
+            headers: page1Headers,
+            json: vi.fn().mockResolvedValue([{ id: "1" }]),
+          })
+          .mockResolvedValueOnce({
+            ok: true,
+            status: 200,
+            headers: new Headers(),
+            json: vi.fn().mockResolvedValue([{ id: "2" }]),
+          });
+
+        const result = await prefixedApi.requestArray("/user/organizations");
+
+        const calledUrls = vi
+          .mocked(global.fetch)
+          .mock.calls.map(([url]) => String(url));
+        expect(calledUrls).toEqual([
+          "https://bugsnag.example.com/api/v1/user/organizations",
+          "https://bugsnag.example.com/api/v1/user/organizations?offset=1",
+        ]);
+        expect(result.body).toEqual([{ id: "1" }, { id: "2" }]);
       });
 
       it("should handle pagination with fetchAll=true", async () => {
@@ -548,6 +664,42 @@ describe("base.ts", () => {
         expect(result.status).toBe(200);
         expect(result.totalCount).toBeNull();
         expect(result.nextUrl).toBeNull();
+      });
+
+      it("should keep follow-up pages on the configured origin when the Link header names another host", async () => {
+        const headers1 = new Headers();
+        headers1.set(
+          "Link",
+          '<http://169.254.169.254/latest/meta-data?page=2>; rel="next"',
+        );
+        global.fetch = vi
+          .fn()
+          .mockResolvedValueOnce({
+            ok: true,
+            status: 200,
+            headers: headers1,
+            json: vi.fn().mockResolvedValue([{ id: "1" }]),
+            text: vi.fn(),
+          })
+          .mockResolvedValueOnce({
+            ok: true,
+            status: 200,
+            headers: new Headers(),
+            json: vi.fn().mockResolvedValue([{ id: "2" }]),
+            text: vi.fn(),
+          });
+
+        const result = await baseApi.requestArray(
+          "/test",
+          { method: "GET" },
+          true,
+        );
+
+        expect(global.fetch).toHaveBeenCalledTimes(2);
+        expect((global.fetch as any).mock.calls[1][0]).toBe(
+          "http://localhost:3000/latest/meta-data?page=2",
+        );
+        expect(result.body).toEqual([{ id: "1" }, { id: "2" }]);
       });
 
       it("should handle pagination with fetchAll=false", async () => {
@@ -688,6 +840,244 @@ describe("base.ts", () => {
           { id: "123", name: "Test", empty: null },
           { id: "456", name: "Test2", empty: null },
         ]);
+      });
+    });
+
+    describe("redirect handling", () => {
+      const redirect = (status: number, location: string) => ({
+        ok: false,
+        status,
+        headers: new Headers({ location }),
+        json: vi.fn(),
+        text: vi.fn(),
+      });
+      const ok = (body: unknown) => ({
+        ok: true,
+        status: 200,
+        headers: new Headers(),
+        json: vi.fn().mockResolvedValue(body),
+        text: vi.fn(),
+      });
+      const rejectLoopback = (url: URL) => {
+        if (
+          url.hostname === "127.0.0.1" ||
+          url.hostname === "169.254.169.254"
+        ) {
+          throw new Error(`Unsafe Bugsnag endpoint: ${url.hostname}`);
+        }
+      };
+
+      it("should not fetch a redirect target rejected by validateRequestUrl", async () => {
+        const api = new BaseAPI(
+          new Configuration({
+            basePath: "https://bugsnag.example.com",
+            validateRequestUrl: rejectLoopback,
+          }),
+        );
+        global.fetch = vi
+          .fn()
+          .mockResolvedValueOnce(
+            redirect(302, "http://169.254.169.254/latest/meta-data"),
+          );
+
+        await expect(api.requestObject("/test")).rejects.toThrow(
+          /Unsafe Bugsnag endpoint: 169.254.169.254/,
+        );
+        expect(global.fetch).toHaveBeenCalledTimes(1);
+      });
+
+      it("should validate every hop of a redirect chain in requestArray", async () => {
+        const api = new BaseAPI(
+          new Configuration({
+            basePath: "https://bugsnag.example.com",
+            validateRequestUrl: rejectLoopback,
+          }),
+        );
+        global.fetch = vi
+          .fn()
+          .mockResolvedValueOnce(redirect(301, "https://hop.example.com/a"))
+          .mockResolvedValueOnce(redirect(307, "http://127.0.0.1:8080/b"));
+
+        await expect(api.requestArray("/test")).rejects.toThrow(
+          /Unsafe Bugsnag endpoint: 127.0.0.1/,
+        );
+        expect(global.fetch).toHaveBeenCalledTimes(2);
+      });
+
+      it("should follow allowed redirects and strip credentials cross-origin", async () => {
+        global.fetch = vi
+          .fn()
+          .mockResolvedValueOnce(redirect(302, "/moved"))
+          .mockResolvedValueOnce(redirect(302, "https://other.example.com/x"))
+          .mockResolvedValueOnce(ok({ ok: 1 }));
+
+        const response = await fetchWithValidatedRedirects(
+          "https://bugsnag.example.com/start",
+          { headers: { Authorization: "token secret", "X-Other": "1" } },
+          rejectLoopback,
+        );
+
+        expect(response.status).toBe(200);
+        const calls = (global.fetch as any).mock.calls;
+        expect(calls[1][0]).toBe("https://bugsnag.example.com/moved");
+        expect(calls[1][1].headers).toEqual({
+          Authorization: "token secret",
+          "X-Other": "1",
+        });
+        expect(calls[2][0]).toBe("https://other.example.com/x");
+        expect(calls[2][1].headers).toEqual({ "X-Other": "1" });
+        for (const call of calls) expect(call[1].redirect).toBe("manual");
+      });
+
+      it("should rewrite POST to GET on 303 and drop the body", async () => {
+        global.fetch = vi
+          .fn()
+          .mockResolvedValueOnce(redirect(303, "/result"))
+          .mockResolvedValueOnce(ok({}));
+
+        await fetchWithValidatedRedirects("https://bugsnag.example.com/a", {
+          method: "POST",
+          body: "{}",
+        });
+
+        const second = (global.fetch as any).mock.calls[1][1];
+        expect(second.method).toBe("GET");
+        expect(second.body).toBeUndefined();
+      });
+
+      it("should return a 3xx response without a Location header as-is", async () => {
+        const noLocation = {
+          ok: false,
+          status: 302,
+          headers: new Headers(),
+          json: vi.fn(),
+          text: vi.fn().mockResolvedValue("Found"),
+        };
+        global.fetch = vi.fn().mockResolvedValueOnce(noLocation);
+
+        const response = await fetchWithValidatedRedirects(
+          "https://bugsnag.example.com/a",
+          {},
+        );
+
+        expect(response.status).toBe(302);
+        expect(global.fetch).toHaveBeenCalledTimes(1);
+      });
+
+      it("should refuse non-http(s) redirect targets", async () => {
+        global.fetch = vi
+          .fn()
+          .mockResolvedValueOnce(redirect(302, "file:///etc/passwd"));
+
+        await expect(
+          fetchWithValidatedRedirects("https://bugsnag.example.com/a", {}),
+        ).rejects.toThrow(/unsupported protocol/);
+      });
+
+      it("should stop after too many redirects", async () => {
+        global.fetch = vi
+          .fn()
+          .mockResolvedValue(redirect(302, "https://bugsnag.example.com/loop"));
+
+        await expect(
+          fetchWithValidatedRedirects("https://bugsnag.example.com/a", {}),
+        ).rejects.toThrow(/Too many redirects/);
+        expect(global.fetch).toHaveBeenCalledTimes(6);
+      });
+
+      describe("response body cleanup", () => {
+        const withBody = <T extends object>(response: T) => {
+          const cancel = vi.fn().mockResolvedValue(undefined);
+          return { response: { ...response, body: { cancel } }, cancel };
+        };
+
+        it("should cancel the body of each followed redirect but not the final response", async () => {
+          const hop1 = withBody(redirect(302, "/moved"));
+          const hop2 = withBody(redirect(307, "/moved-again"));
+          const final = withBody(ok({}));
+          global.fetch = vi
+            .fn()
+            .mockResolvedValueOnce(hop1.response)
+            .mockResolvedValueOnce(hop2.response)
+            .mockResolvedValueOnce(final.response);
+
+          const response = await fetchWithValidatedRedirects(
+            "https://bugsnag.example.com/a",
+            {},
+          );
+
+          expect(response).toBe(final.response);
+          expect(hop1.cancel).toHaveBeenCalledTimes(1);
+          expect(hop2.cancel).toHaveBeenCalledTimes(1);
+          expect(final.cancel).not.toHaveBeenCalled();
+        });
+
+        it("should not cancel a 3xx response without a Location header", async () => {
+          const noLocation = withBody({
+            ok: false,
+            status: 302,
+            headers: new Headers(),
+          });
+          global.fetch = vi.fn().mockResolvedValueOnce(noLocation.response);
+
+          const response = await fetchWithValidatedRedirects(
+            "https://bugsnag.example.com/a",
+            {},
+          );
+
+          expect(response).toBe(noLocation.response);
+          expect(noLocation.cancel).not.toHaveBeenCalled();
+        });
+
+        it.each([
+          ["a rejected destination", "http://169.254.169.254/", /Unsafe/],
+          ["an unsupported protocol", "file:///etc/passwd", /unsupported/],
+        ])("should cancel the body before throwing for %s", async (_, location, error) => {
+          const hop = withBody(redirect(302, location));
+          global.fetch = vi.fn().mockResolvedValueOnce(hop.response);
+
+          await expect(
+            fetchWithValidatedRedirects(
+              "https://bugsnag.example.com/a",
+              {},
+              rejectLoopback,
+            ),
+          ).rejects.toThrow(error);
+          expect(hop.cancel).toHaveBeenCalledTimes(1);
+        });
+
+        it("should cancel the body before throwing on too many redirects", async () => {
+          const cancels: ReturnType<typeof vi.fn>[] = [];
+          global.fetch = vi.fn().mockImplementation(async () => {
+            const hop = withBody(
+              redirect(302, "https://bugsnag.example.com/loop"),
+            );
+            cancels.push(hop.cancel);
+            return hop.response;
+          });
+
+          await expect(
+            fetchWithValidatedRedirects("https://bugsnag.example.com/a", {}),
+          ).rejects.toThrow(/Too many redirects/);
+          expect(cancels).toHaveLength(6);
+          for (const cancel of cancels) expect(cancel).toHaveBeenCalledTimes(1);
+        });
+
+        it("should ignore a failure to cancel the body", async () => {
+          const hop = withBody(redirect(302, "/moved"));
+          hop.cancel.mockRejectedValue(new TypeError("stream is locked"));
+          global.fetch = vi
+            .fn()
+            .mockResolvedValueOnce(hop.response)
+            .mockResolvedValueOnce(ok({}));
+
+          const response = await fetchWithValidatedRedirects(
+            "https://bugsnag.example.com/a",
+            {},
+          );
+
+          expect(response.status).toBe(200);
+        });
       });
     });
   });

@@ -2,6 +2,7 @@ interface ConfigurationParameters {
   apiKey?: string | ((name: string) => string);
   basePath: string;
   headers?: Record<string, string>; // Additional headers for API requests
+  validateRequestUrl?: (url: URL) => void;
 }
 
 export class Configuration {
@@ -24,10 +25,17 @@ export class Configuration {
    * @memberof Configuration
    */
   headers?: Record<string, string>;
+  /**
+   * Optional guard run against every redirect destination before it is
+   * fetched. Throw to refuse the redirect (e.g. loopback / metadata targets).
+   * @memberof Configuration
+   */
+  validateRequestUrl?: (url: URL) => void;
 
   constructor(param: ConfigurationParameters) {
     this.apiKey = param.apiKey;
     this.basePath = param.basePath;
     this.headers = param.headers;
+    this.validateRequestUrl = param.validateRequestUrl;
   }
 }

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- [BugSnag] Fixed direct SSRF through the `nextUrl` pagination argument and API `Link` headers: they now only contribute their path and query to the configured API base URL, keeping each pagination request initially on the configured origin. Redirects can still change origin, subject to the endpoint checks below.
+- [BugSnag] Mitigated SSRF through a caller-supplied `endpoint` (the `Bugsnag-Endpoint` header or query parameter) over HTTP: loopback, link-local/cloud metadata, `*.localhost` and Kubernetes-internal host names are refused, including on redirects. The check only looks at the URL as written, so private network addresses and host names that resolve to internal addresses are still allowed. `MCP_ALLOWED_ENDPOINTS` currently does not enforce an allowlist for BugSnag's endpoint configuration or redirect destinations, and does not validate resolved IP addresses; do not rely on it for complete SSRF protection. The operator's own `BUGSNAG_ENDPOINT` and stdio setups are exempt from these endpoint checks.
+
 ### Changed
 
 - [Swagger] `validate_api` tool description now lists A2A Agent Cards as supported and says that MCP, GraphQL and gRPC definitions are not validated yet, so LLM clients call the tool for A2A.
