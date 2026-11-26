@@ -113,7 +113,7 @@ export const ValidateApiParamsSchema = z
       .string()
       .optional()
       .describe(
-        "API definition content (OpenAPI/AsyncAPI in JSON or YAML). Provide this or owner/apiName/version, not both.",
+        "API definition content (OpenAPI, AsyncAPI or A2A Agent Card in JSON or YAML). Provide this or owner/apiName/version, not both.",
       ),
     owner: z
       .string()
@@ -452,7 +452,9 @@ export const ApidomValidationOutputSchema = z.looseObject({
   recognized: z
     .boolean()
     .optional()
-    .describe("True if the spec was recognized as OpenAPI/AsyncAPI"),
+    .describe(
+      "True if the spec was recognized as OpenAPI, AsyncAPI or an A2A Agent Card",
+    ),
   spec: z
     .looseObject({
       namespace: z.string().optional().describe("Detected spec namespace"),

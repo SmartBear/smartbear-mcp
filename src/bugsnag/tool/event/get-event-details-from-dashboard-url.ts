@@ -7,7 +7,7 @@ const inputSchema = z.object({
   link: z
     .string()
     .describe(
-      "Full URL to the event details page in the BugSnag dashboard (web interface), containing project slug and event_id parameter.",
+      "Full URL of an event in the BugSnag dashboard (web interface), e.g. https://app.bugsnag.com/<org-slug>/<project-slug>/errors/<errorId>?event_id=<eventId>. It must contain the project slug in the path and the event_id query parameter.",
     ),
 });
 
@@ -39,6 +39,7 @@ export class GetEventDetailsFromDashboardUrl extends Tool<BugsnagClient> {
     hints: [
       "The URL must contain both project slug in the path and event_id in query parameters",
       "This is useful when users share BugSnag dashboard URLs and you need to extract the event data",
+      "The project slug in the URL is resolved to a project for you - you do not need to look up the project ID first",
     ],
   };
 

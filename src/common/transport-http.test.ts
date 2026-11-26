@@ -1,6 +1,8 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { clientRegistry } from "./client-registry";
+import { getRequestHeader, withRequestHeaders } from "./request-context";
+import { registerShutdownHandler } from "./shutdown";
 import {
   attachSessionAnalytics,
   drainHttpTransport,
@@ -8,12 +10,21 @@ import {
   getBaseUrl,
   getHeaderName,
   getQueryStringName,
+  getSessionIdleTimeoutMs,
   handleHealthRequest,
+  handleLegacyMessageRequest,
+  handleLegacySseRequest,
+  handleMcpEndpoint,
   handleReadyRequest,
   handleSessionMessage,
   handleStreamableHttpRequest,
+  hasExpiredBearerJwt,
   newServer,
   newServerFromWebRequest,
+  reapIdleSessions,
+  rejectExpiredBearerToken,
+  resolveCredentialIdentity,
+  runHttpMode,
 } from "./transport-http";
 import type { Client } from "./types";
 
@@ -30,11 +41,20 @@ function fakeResponse(): ServerResponse & {
   _status: number | null;
   _headers: Record<string, string>;
   _body: string;
+  _close: () => void;
 } {
+  const closeListeners: Array<() => void> = [];
   const res = {
     _status: null as number | null,
     _headers: {} as Record<string, string>,
     _body: "",
+    once(event: string, cb: () => void) {
+      if (event === "close") closeListeners.push(cb);
+      return res;
+    },
+    _close() {
+      for (const cb of closeListeners.splice(0)) cb();
+    },
     writeHead(status: number, headers?: Record<string, string>) {
       res._status = status;
       if (headers) {
@@ -49,6 +69,7 @@ function fakeResponse(): ServerResponse & {
     _status: number | null;
     _headers: Record<string, string>;
     _body: string;
+    _close: () => void;
   };
 }
 
@@ -136,6 +157,7 @@ vi.mock("./analytics", async (importOriginal) => ({
 vi.mock("./shutdown", async (importOriginal) => ({
   ...(await importOriginal<typeof import("./shutdown")>()),
   isDraining: vi.fn().mockReturnValue(false),
+  registerShutdownHandler: vi.fn(),
 }));
 
 describe("transport-http helpers", () => {
@@ -847,6 +869,71 @@ describe("handleStreamableHttpRequest (session routing)", () => {
     }
   });
 
+  it("runs session cleanup in onclose only when it unregisters the session", async () => {
+    let transport: any;
+    const cleanupSession = vi.fn();
+    const testClient = createTestClient({
+      name: "CloseTest",
+      configPrefix: "CloseTest",
+      hasGetAuthToken: false,
+    });
+    clientRegistry.getAll = () => [testClient];
+    const { SmartBearMcpServer } = await import("./server.js");
+    vi.mocked(SmartBearMcpServer).mockImplementation(
+      () =>
+        ({
+          getCache: () => ({ get: vi.fn(), set: vi.fn(), del: vi.fn() }),
+          addClient: vi.fn(),
+          getClients: () => [testClient],
+          connect: vi.fn(async (t: any) => {
+            transport = t;
+          }),
+          setElicitationSupported: vi.fn(),
+          cleanupSession,
+          getAnalyticsSession: () => undefined,
+          server: { elicitInput: vi.fn() },
+          isClientEnabled: () => true,
+        }) as any,
+    );
+    const { NodeStreamableHTTPServerTransport: Transport } = await import(
+      "@modelcontextprotocol/node"
+    );
+    const spy = vi
+      .spyOn(Transport.prototype, "handleRequest")
+      .mockResolvedValue(undefined);
+    try {
+      const transports = new Map<string, any>();
+      const req = fakeStreamRequest({
+        method: "POST",
+        headers: { host: "localhost:3000" },
+        body: {
+          jsonrpc: "2.0",
+          method: "initialize",
+          id: 1,
+          params: {
+            protocolVersion: "2025-06-18",
+            capabilities: {},
+            clientInfo: { name: "test", version: "0.0.0" },
+          },
+        },
+      });
+      await handleStreamableHttpRequest(req, fakeResponse(), transports);
+      expect(transport).toBeDefined();
+      Object.defineProperty(transport, "sessionId", { value: "s1" });
+
+      // Already unregistered (the reaper's case): onclose must not clean up.
+      transport.onclose();
+      expect(cleanupSession).not.toHaveBeenCalled();
+
+      // Still registered (client DELETE, shutdown): onclose cleans up once.
+      transports.set("s1", { server: {}, transport });
+      transport.onclose();
+      expect(cleanupSession).toHaveBeenCalledTimes(1);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
   it("routes to existing transport when session id is known", async () => {
     const transports = new Map();
     const handleRequest = vi.fn().mockResolvedValue(undefined);
@@ -876,6 +963,377 @@ describe("handleStreamableHttpRequest (session routing)", () => {
 
     expect(handleRequest).toHaveBeenCalledTimes(1);
     expect(res._status).toBeNull();
+  });
+
+  describe("credential enforcement on established sessions", () => {
+    const b64 = (v: unknown) =>
+      Buffer.from(JSON.stringify(v)).toString("base64url");
+    const jwt = (payload: unknown) =>
+      `${b64({ alg: "none" })}.${b64(payload)}.sig`;
+
+    // Resolves the credential the way Bugsnag does: from the request headers only.
+    function headerClient(): Client {
+      const client: any = createTestClient({ name: "Bugsnag" });
+      client.getAuthToken = () => {
+        const value = getRequestHeader("Bugsnag-Auth-Token");
+        if (value) return `token ${value}`;
+        const bearer = getRequestHeader("Authorization");
+        return bearer ? (bearer as string) : null;
+      };
+      client.analytics = { userId: ["sub"] };
+      return client;
+    }
+
+    // Strips the `Bearer ` prefix like Swagger, Reflect and BearQ, but reads only
+    // the request headers; their stored-token fallback is covered by the
+    // "falls back to its configured token" tests below.
+    function strippingClient(): Client {
+      const client: any = createTestClient({ name: "Swagger" });
+      client.getAuthToken = () => {
+        const value = getRequestHeader("Authorization") as string | undefined;
+        if (!value) return null;
+        return value.startsWith("Bearer ") ? value.substring(7) : value;
+      };
+      return client;
+    }
+
+    async function sessionWith(
+      ownerHeaders: Record<string, string>,
+      handleRequest = vi.fn().mockResolvedValue(undefined),
+      clients: () => Client[] = () => [headerClient()],
+    ) {
+      const { NodeStreamableHTTPServerTransport } = await import(
+        "@modelcontextprotocol/node"
+      );
+      const transport = Object.create(
+        NodeStreamableHTTPServerTransport.prototype,
+      );
+      transport.handleRequest = handleRequest;
+      const server = {
+        getMcpClientIdentity: () => ({ name: undefined }),
+        getClients: clients,
+      } as any;
+      const identity = withRequestHeaders(ownerHeaders, () =>
+        resolveCredentialIdentity(server),
+      );
+      const transports = new Map<string, any>();
+      transports.set("sess-1", { server, transport, identity });
+      return { transports, handleRequest, identity };
+    }
+
+    it.each([
+      "POST",
+      "GET",
+      "DELETE",
+    ])("rejects a credential-less %s carrying only the session id", async (method) => {
+      const { transports, handleRequest, identity } = await sessionWith({
+        "bugsnag-auth-token": "owner-pat",
+      });
+      expect(identity).toEqual(expect.any(String));
+
+      const req = fakeStreamRequest({
+        method,
+        headers: { "mcp-session-id": "sess-1", host: "localhost:3000" },
+        body: method === "POST" ? { jsonrpc: "2.0", id: 1 } : undefined,
+      });
+      const res = fakeResponse();
+
+      await handleStreamableHttpRequest(req, res, transports);
+
+      expect(res._status).toBe(401);
+      expect(res._headers["WWW-Authenticate"]).toContain(
+        "/.well-known/oauth-protected-resource",
+      );
+      expect(handleRequest).not.toHaveBeenCalled();
+    });
+
+    it("answers a credential for a different identity as an unknown session", async () => {
+      const { transports, handleRequest } = await sessionWith({
+        "bugsnag-auth-token": "owner-pat",
+      });
+      const mismatched = fakeResponse();
+      await handleStreamableHttpRequest(
+        fakeStreamRequest({
+          method: "DELETE",
+          headers: {
+            "mcp-session-id": "sess-1",
+            "bugsnag-auth-token": "someone-else",
+          },
+        }),
+        mismatched,
+        transports,
+      );
+      const unknown = fakeResponse();
+      await handleStreamableHttpRequest(
+        fakeStreamRequest({
+          method: "DELETE",
+          headers: {
+            "mcp-session-id": "no-such-session",
+            "bugsnag-auth-token": "someone-else",
+          },
+        }),
+        unknown,
+        transports,
+      );
+
+      expect(mismatched._status).toBe(404);
+      expect(mismatched._headers).toEqual(unknown._headers);
+      expect(mismatched._body).toBe(unknown._body);
+      expect(handleRequest).not.toHaveBeenCalled();
+    });
+
+    it("leaves the owner's session in place after a mismatched request", async () => {
+      const { transports, handleRequest } = await sessionWith({
+        "bugsnag-auth-token": "owner-pat",
+      });
+      await handleStreamableHttpRequest(
+        fakeStreamRequest({
+          method: "DELETE",
+          headers: {
+            "mcp-session-id": "sess-1",
+            "bugsnag-auth-token": "someone-else",
+          },
+        }),
+        fakeResponse(),
+        transports,
+      );
+      expect(transports.has("sess-1")).toBe(true);
+
+      const res = fakeResponse();
+      await handleStreamableHttpRequest(
+        fakeStreamRequest({
+          method: "POST",
+          headers: {
+            "mcp-session-id": "sess-1",
+            "bugsnag-auth-token": "owner-pat",
+          },
+          body: { jsonrpc: "2.0", method: "tools/list", id: 1 },
+        }),
+        res,
+        transports,
+      );
+
+      expect(res._status).toBeNull();
+      expect(handleRequest).toHaveBeenCalledTimes(1);
+    });
+
+    it("accepts the owner's credential", async () => {
+      const { transports, handleRequest } = await sessionWith({
+        "bugsnag-auth-token": "owner-pat",
+      });
+      const req = fakeStreamRequest({
+        method: "POST",
+        headers: {
+          "mcp-session-id": "sess-1",
+          "bugsnag-auth-token": "owner-pat",
+        },
+        body: { jsonrpc: "2.0", method: "tools/list", id: 1 },
+      });
+      const res = fakeResponse();
+
+      await handleStreamableHttpRequest(req, res, transports);
+
+      expect(res._status).toBeNull();
+      expect(handleRequest).toHaveBeenCalledTimes(1);
+    });
+
+    async function expectUnknownSession(
+      transports: Map<string, any>,
+      headers: Record<string, string>,
+    ) {
+      const res = fakeResponse();
+      await handleStreamableHttpRequest(
+        fakeStreamRequest({
+          method: "POST",
+          headers: { "mcp-session-id": "sess-1", ...headers },
+          body: { jsonrpc: "2.0", method: "tools/list", id: 1 },
+        }),
+        res,
+        transports,
+      );
+      const unknown = fakeResponse();
+      await handleStreamableHttpRequest(
+        fakeStreamRequest({
+          method: "POST",
+          headers: { "mcp-session-id": "no-such-session", ...headers },
+          body: { jsonrpc: "2.0", method: "tools/list", id: 1 },
+        }),
+        unknown,
+        transports,
+      );
+      expect(res._status).toBe(404);
+      expect(res._body).toBe(unknown._body);
+    }
+
+    it.each([
+      ["keeps the Bearer prefix", () => [headerClient()]],
+      ["strips the Bearer prefix", () => [strippingClient()]],
+      ["is one of several clients", () => [headerClient(), strippingClient()]],
+    ])("sends a client that %s back to initialize after an OAuth token refresh", async (_, clients) => {
+      const { transports, handleRequest } = await sessionWith(
+        {
+          authorization: `Bearer ${jwt({ iss: "idp", sub: "u1", jti: "a" })}`,
+        },
+        undefined,
+        clients,
+      );
+
+      await expectUnknownSession(transports, {
+        authorization: `Bearer ${jwt({ iss: "idp", sub: "u1", jti: "b" })}`,
+      });
+      expect(handleRequest).not.toHaveBeenCalled();
+      expect(transports.has("sess-1")).toBe(true);
+    });
+
+    it("rejects a forged JWT that copies the owner's subject", async () => {
+      const { transports, handleRequest } = await sessionWith({
+        authorization: `Bearer ${jwt({ iss: "idp", sub: "u1" })}.real-signature`,
+      });
+
+      await expectUnknownSession(transports, {
+        authorization: `Bearer ${jwt({ iss: "idp", sub: "u1" })}`,
+      });
+      expect(handleRequest).not.toHaveBeenCalled();
+    });
+
+    it("binds a bearer token by exact value whether or not the prefix is kept", () => {
+      const server = {
+        getClients: () => [headerClient(), strippingClient()],
+      } as any;
+      const identity = (token: string) =>
+        withRequestHeaders({ authorization: `Bearer ${token}` }, () =>
+          resolveCredentialIdentity(server),
+        );
+
+      expect(identity("opaque-1")).toBe(identity("opaque-1"));
+      expect(identity("opaque-1")).not.toBe(identity("opaque-2"));
+    });
+
+    describe("with a client that falls back to its configured token", () => {
+      // Resolves the credential the way Swagger does: the Swagger-Api-Key or
+      // Authorization header (prefix stripped), else the api_key it stored at
+      // configure time, which for an HTTP session came from the opener's headers.
+      function storedTokenClient(apiKey?: string): Client {
+        const client: any = createTestClient({ name: "Swagger" });
+        client.getAuthToken = () => {
+          const value = (getRequestHeader("Swagger-Api-Key") ||
+            getRequestHeader("Authorization")) as string | undefined;
+          if (value) {
+            return value.startsWith("Bearer ") ? value.substring(7) : value;
+          }
+          return apiKey || null;
+        };
+        return client;
+      }
+
+      async function swaggerSessionWith(
+        ownerHeaders: Record<string, string>,
+        config: { api_key?: string } = {},
+      ) {
+        const swagger = storedTokenClient(config.api_key);
+        return sessionWith(ownerHeaders, undefined, () => [swagger]);
+      }
+
+      async function send(
+        transports: Map<string, any>,
+        headers: Record<string, string>,
+      ) {
+        const res = fakeResponse();
+        await handleStreamableHttpRequest(
+          fakeStreamRequest({
+            method: "POST",
+            headers: { "mcp-session-id": "sess-1", ...headers },
+            body: { jsonrpc: "2.0", method: "tools/list", id: 1 },
+          }),
+          res,
+          transports,
+        );
+        return res;
+      }
+
+      it("accepts the owner's API key", async () => {
+        const { transports, handleRequest } = await swaggerSessionWith(
+          { "swagger-api-key": "alice-key" },
+          { api_key: "alice-key" },
+        );
+
+        const res = await send(transports, { "swagger-api-key": "alice-key" });
+
+        expect(res._status).toBeNull();
+        expect(handleRequest).toHaveBeenCalledTimes(1);
+      });
+
+      it("answers a different API key as an unknown session", async () => {
+        const { transports, handleRequest } = await swaggerSessionWith(
+          { "swagger-api-key": "alice-key" },
+          { api_key: "alice-key" },
+        );
+
+        await expectUnknownSession(transports, {
+          "swagger-api-key": "mallory-key",
+        });
+        expect(handleRequest).not.toHaveBeenCalled();
+      });
+
+      it("rejects a credential-less request on an OAuth session", async () => {
+        const { transports, handleRequest } = await swaggerSessionWith({
+          authorization: `Bearer ${jwt({ iss: "idp", sub: "u1" })}`,
+        });
+
+        const res = await send(transports, {});
+
+        expect(res._status).toBe(401);
+        expect(handleRequest).not.toHaveBeenCalled();
+      });
+
+      // Like SwaggerClient, the client still falls back to the key it stored at
+      // configure time, so a request carrying only the session id resolves to
+      // the owner. Flip to `it` once header tokens are no longer kept per session.
+      it.fails("rejects a credential-less request on an API key session", async () => {
+        const { transports, handleRequest } = await swaggerSessionWith(
+          { "swagger-api-key": "alice-key" },
+          { api_key: "alice-key" },
+        );
+
+        const res = await send(transports, {});
+
+        expect(res._status).toBe(401);
+        expect(handleRequest).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  it("holds the session open while the exchange is in flight, then restarts the idle clock", async () => {
+    const transports = new Map<string, any>();
+    const { NodeStreamableHTTPServerTransport: StreamableHTTPServerTransport } =
+      await import("@modelcontextprotocol/node");
+    const fakeTransport = Object.create(
+      StreamableHTTPServerTransport.prototype,
+    );
+    let during: { inFlight?: number } | undefined;
+    fakeTransport.handleRequest = vi.fn(async () => {
+      during = { inFlight: transports.get("s")?.inFlight };
+    });
+    transports.set("s", {
+      server: { getMcpClientIdentity: () => ({ name: undefined }) } as any,
+      transport: fakeTransport,
+      lastActivity: 0,
+    });
+    const req = fakeStreamRequest({
+      method: "GET",
+      headers: { "mcp-session-id": "s" },
+      body: undefined,
+    });
+    const res = fakeResponse();
+
+    await handleStreamableHttpRequest(req, res, transports);
+    expect(during?.inFlight).toBe(1);
+    expect(transports.get("s").inFlight).toBe(1); // stream still open
+    expect(await reapIdleSessions(transports, 1, Date.now() + 10_000)).toBe(0);
+
+    res._close();
+    expect(transports.get("s").inFlight).toBe(0);
+    expect(transports.get("s").lastActivity).toBeGreaterThan(0);
   });
 });
 
@@ -993,5 +1451,387 @@ describe("handleSessionMessage", () => {
     });
 
     expect(trackToolsListed).not.toHaveBeenCalled();
+  });
+});
+
+describe("idle session reaping", () => {
+  const entry = (lastActivity: number, close = vi.fn(async () => {})) =>
+    ({
+      server: { getAnalyticsSession: () => undefined, cleanupSession: vi.fn() },
+      transport: { close },
+      lastActivity,
+    }) as any;
+
+  it("closes and removes only sessions idle beyond the threshold", async () => {
+    const stale = vi.fn(async () => {});
+    const fresh = vi.fn(async () => {});
+    const sessions = new Map<string, any>([
+      ["stale", entry(0, stale)],
+      ["fresh", entry(9_000, fresh)],
+    ]);
+    const reaped = await reapIdleSessions(sessions, 5_000, 10_000);
+    expect(reaped).toBe(1);
+    expect(stale).toHaveBeenCalled();
+    expect(fresh).not.toHaveBeenCalled();
+    expect([...sessions.keys()]).toEqual(["fresh"]);
+  });
+
+  it("never reaps a session with an open exchange, however old", async () => {
+    const close = vi.fn(async () => {});
+    const open = { ...entry(0, close), inFlight: 1 };
+    const sessions = new Map<string, any>([["open", open]]);
+    expect(await reapIdleSessions(sessions, 5_000, 1_000_000)).toBe(0);
+    expect(close).not.toHaveBeenCalled();
+    // Once the exchange ends the idle clock restarts, then it can be reaped.
+    open.inFlight = 0;
+    open.lastActivity = 1_000_000;
+    expect(await reapIdleSessions(sessions, 5_000, 1_001_000)).toBe(0);
+    expect(await reapIdleSessions(sessions, 5_000, 1_010_000)).toBe(1);
+  });
+
+  it("runs session cleanup in the backstop when close() throws", async () => {
+    const e = entry(
+      0,
+      vi.fn(async () => {
+        throw new Error("boom");
+      }),
+    );
+    const sessions = new Map<string, any>([["s", e]]);
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    await reapIdleSessions(sessions, 1, 10_000);
+    expect(e.server.cleanupSession).toHaveBeenCalledWith("s");
+  });
+
+  it("logs and continues when per-client cleanup rejects", async () => {
+    const failing = entry(0);
+    failing.server.cleanupSession = vi.fn(async () => {
+      throw new Error("disconnect failed");
+    });
+    const other = entry(0);
+    const sessions = new Map<string, any>([
+      ["bad", failing],
+      ["ok", other],
+    ]);
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    await expect(reapIdleSessions(sessions, 1, 10_000)).resolves.toBe(2);
+    expect(sessions.size).toBe(0);
+    expect(other.server.cleanupSession).toHaveBeenCalledWith("ok");
+    expect(errorSpy).toHaveBeenCalledWith(
+      "[MCP] Error cleaning up idle session:",
+      expect.any(Error),
+    );
+  });
+
+  it("still removes the session when close() throws", async () => {
+    const sessions = new Map<string, any>([
+      [
+        "s",
+        entry(
+          0,
+          vi.fn(async () => {
+            throw new Error("boom");
+          }),
+        ),
+      ],
+    ]);
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    await reapIdleSessions(sessions, 1, 10_000);
+    expect(sessions.size).toBe(0);
+  });
+
+  it("unregisters the session before close() so new requests get a 404", async () => {
+    let presentDuringClose: boolean | undefined;
+    const sessions = new Map<string, any>();
+    sessions.set(
+      "s",
+      entry(
+        0,
+        vi.fn(async () => {
+          presentDuringClose = sessions.has("s");
+        }),
+      ),
+    );
+    await reapIdleSessions(sessions, 1, 10_000);
+    expect(presentDuringClose).toBe(false);
+  });
+
+  it("cleans up once when overlapping runs target the same session", async () => {
+    const close = vi.fn(async () => {
+      await new Promise((r) => setTimeout(r, 10));
+    });
+    const e = entry(0, close);
+    const sessions = new Map<string, any>([["s", e]]);
+    await Promise.all([
+      reapIdleSessions(sessions, 1, 10_000),
+      reapIdleSessions(sessions, 1, 10_000),
+    ]);
+    expect(close).toHaveBeenCalledTimes(1);
+    expect(e.server.cleanupSession).toHaveBeenCalledTimes(1);
+  });
+
+  it("reads SESSION_IDLE_TIMEOUT_MS, defaulting to 4 hours", () => {
+    delete process.env.SESSION_IDLE_TIMEOUT_MS;
+    expect(getSessionIdleTimeoutMs()).toBe(4 * 60 * 60 * 1000);
+    process.env.SESSION_IDLE_TIMEOUT_MS = "0";
+    expect(getSessionIdleTimeoutMs()).toBe(0);
+    for (const bad of ["junk", "4h", "1.5", "-5", " ", "\t\n"]) {
+      process.env.SESSION_IDLE_TIMEOUT_MS = bad;
+      expect(getSessionIdleTimeoutMs()).toBe(4 * 60 * 60 * 1000);
+    }
+    process.env.SESSION_IDLE_TIMEOUT_MS = " 5000 ";
+    expect(getSessionIdleTimeoutMs()).toBe(5000);
+    delete process.env.SESSION_IDLE_TIMEOUT_MS;
+  });
+});
+
+describe("runHttpMode idle reaper wiring", () => {
+  afterEach(() => {
+    delete process.env.PORT;
+    delete process.env.SESSION_IDLE_TIMEOUT_MS;
+    vi.mocked(registerShutdownHandler).mockClear();
+    vi.restoreAllMocks();
+  });
+
+  async function startAndStop(idleMs: string) {
+    process.env.PORT = "0";
+    process.env.SESSION_IDLE_TIMEOUT_MS = idleMs;
+    const setIntervalSpy = vi.spyOn(globalThis, "setInterval");
+    const clearIntervalSpy = vi.spyOn(globalThis, "clearInterval");
+    await runHttpMode();
+    const shutdown = vi
+      .mocked(registerShutdownHandler)
+      .mock.calls.find(([name]) => name === "http-transport")?.[1];
+    expect(shutdown).toBeDefined();
+    await shutdown?.();
+    return { setIntervalSpy, clearIntervalSpy };
+  }
+
+  it("starts the reaper at half the idle timeout and clears it on shutdown", async () => {
+    const { setIntervalSpy, clearIntervalSpy } = await startAndStop("4000");
+    expect(setIntervalSpy.mock.calls.some(([, ms]) => ms === 2000)).toBe(true);
+    expect(clearIntervalSpy).toHaveBeenCalled();
+  });
+
+  it("does not start the reaper when SESSION_IDLE_TIMEOUT_MS is 0", async () => {
+    const { setIntervalSpy } = await startAndStop("0");
+    expect(setIntervalSpy.mock.calls.some(([, ms]) => ms === 2000)).toBe(false);
+  });
+});
+
+describe("expired bearer tokens", () => {
+  const NOW = Date.UTC(2026, 10, 5, 12, 0, 0);
+  const b64 = (v: unknown) =>
+    Buffer.from(JSON.stringify(v)).toString("base64url");
+  const jwt = (payload: unknown) =>
+    `${b64({ alg: "RS256" })}.${b64(payload)}.signature`;
+  const expired = jwt({ sub: "u1", exp: NOW / 1000 - 60 });
+  const valid = jwt({ sub: "u1", exp: NOW / 1000 + 3600 });
+
+  beforeEach(() => {
+    vi.useFakeTimers({ now: NOW, toFake: ["Date"] });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    delete process.env.BASE_URL;
+  });
+
+  describe("hasExpiredBearerJwt", () => {
+    it.each([
+      ["a JWT whose exp has passed", `Bearer ${expired}`, true],
+      [
+        "a JWT expiring exactly now",
+        `Bearer ${jwt({ exp: NOW / 1000 })}`,
+        true,
+      ],
+      ["a JWT that has not expired", `Bearer ${valid}`, false],
+      ["a JWT without an exp claim", `Bearer ${jwt({ sub: "u1" })}`, false],
+      ["a non-numeric exp claim", `Bearer ${jwt({ exp: "soon" })}`, false],
+      ["an opaque bearer token", "Bearer opaque-token", false],
+      ["a payload that is not JSON", "Bearer aaa.bm90LWpzb24.ccc", false],
+      ["a lowercase bearer scheme", `bearer ${expired}`, true],
+      ["a mixed-case bearer scheme", `BeArEr ${expired}`, true],
+      ["a scheme followed by several spaces", `Bearer   ${expired}`, true],
+      ["a scheme with no token", "Bearer ", false],
+      ["a scheme without a separating space", `Bearer${expired}`, false],
+      ["a non-Bearer scheme", `token ${expired}`, false],
+      ["no Authorization header", undefined, false],
+    ])("returns %s -> %s", (_, authorization, result) => {
+      expect(hasExpiredBearerJwt(fakeRequest({ authorization }))).toBe(result);
+    });
+
+    it("reads the first value when the header is repeated", () => {
+      const req = fakeRequest({
+        authorization: [`Bearer ${expired}`, `Bearer ${valid}`],
+      });
+      expect(hasExpiredBearerJwt(req)).toBe(true);
+    });
+
+    it("takes the current time as a parameter", () => {
+      const req = fakeRequest({ authorization: `Bearer ${valid}` });
+      expect(hasExpiredBearerJwt(req, NOW + 7200 * 1000)).toBe(true);
+    });
+  });
+
+  describe("rejectExpiredBearerToken", () => {
+    it("sends a 401 with an RFC 6750 invalid_token challenge", () => {
+      process.env.BASE_URL = "https://mcp.example.com";
+      const req = fakeStreamRequest({
+        headers: { authorization: `Bearer ${expired}` },
+      });
+      const resume = vi.spyOn(req, "resume");
+      const res = fakeResponse();
+
+      expect(rejectExpiredBearerToken(req, res)).toBe(true);
+
+      expect(res._status).toBe(401);
+      expect(res._headers["Content-Type"]).toBe("application/json");
+      expect(res._headers["WWW-Authenticate"]).toBe(
+        'Bearer error="invalid_token", error_description="The access token expired", resource_metadata="https://mcp.example.com/.well-known/oauth-protected-resource"',
+      );
+      expect(JSON.parse(res._body)).toEqual({
+        error: "invalid_token",
+        error_description: "The access token expired",
+      });
+      expect(resume).toHaveBeenCalled();
+    });
+
+    it("leaves a request with a valid token alone", () => {
+      const req = fakeStreamRequest({
+        headers: { authorization: `Bearer ${valid}` },
+      });
+      const res = fakeResponse();
+
+      expect(rejectExpiredBearerToken(req, res)).toBe(false);
+      expect(res._status).toBeNull();
+    });
+  });
+
+  describe("route handlers", () => {
+    const expectInvalidToken = (res: ReturnType<typeof fakeResponse>) => {
+      expect(res._status).toBe(401);
+      expect(res._headers["WWW-Authenticate"]).toContain(
+        'error="invalid_token"',
+      );
+    };
+
+    it("rejects a sessionless 2026-07-28 request before the modern handler runs", async () => {
+      const modern = vi.fn();
+      const req = fakeStreamRequest({
+        headers: { authorization: `Bearer ${expired}`, host: "localhost" },
+        body: {
+          jsonrpc: "2.0",
+          id: 1,
+          method: "tools/list",
+          params: {
+            _meta: {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+            },
+          },
+        },
+      });
+      const res = fakeResponse();
+
+      await handleMcpEndpoint(req, res, new Map(), modern as any);
+
+      expectInvalidToken(res);
+      expect(modern).not.toHaveBeenCalled();
+    });
+
+    it("rejects a request on an established session before the session lookup", async () => {
+      const handleRequest = vi.fn();
+      const transports = new Map<string, any>([
+        ["sess-1", { server: {}, transport: { handleRequest } }],
+      ]);
+      const req = fakeStreamRequest({
+        headers: {
+          authorization: `Bearer ${expired}`,
+          "mcp-session-id": "sess-1",
+          host: "localhost",
+        },
+        body: { jsonrpc: "2.0", id: 1, method: "tools/list" },
+      });
+      const res = fakeResponse();
+
+      await handleMcpEndpoint(req, res, transports, vi.fn() as any);
+
+      expectInvalidToken(res);
+      expect(handleRequest).not.toHaveBeenCalled();
+    });
+
+    it("rejects before reporting an unknown session, so the client refreshes first", async () => {
+      const req = fakeStreamRequest({
+        headers: {
+          authorization: `Bearer ${expired}`,
+          "mcp-session-id": "no-such-session",
+          host: "localhost",
+        },
+      });
+      const res = fakeResponse();
+
+      await handleStreamableHttpRequest(req, res, new Map());
+
+      expectInvalidToken(res);
+    });
+
+    it("rejects a legacy SSE connection before creating a server", async () => {
+      const { SmartBearMcpServer } = await import("./server.js");
+      vi.mocked(SmartBearMcpServer).mockClear();
+      const req = fakeStreamRequest({
+        method: "GET",
+        headers: { authorization: `Bearer ${expired}`, host: "localhost" },
+      });
+      const res = fakeResponse();
+
+      await handleLegacySseRequest(req, res, new Map());
+
+      expectInvalidToken(res);
+      expect(SmartBearMcpServer).not.toHaveBeenCalled();
+    });
+
+    it("rejects an expired token sent with a lowercase bearer scheme", async () => {
+      const modern = vi.fn();
+      const req = fakeStreamRequest({
+        headers: { authorization: `bearer ${expired}`, host: "localhost" },
+        body: { jsonrpc: "2.0", id: 1, method: "tools/list" },
+      });
+      const res = fakeResponse();
+
+      await handleMcpEndpoint(req, res, new Map(), modern as any);
+
+      expectInvalidToken(res);
+      expect(modern).not.toHaveBeenCalled();
+    });
+
+    it("rejects a legacy POST /message before the session lookup", async () => {
+      const req = fakeStreamRequest({
+        headers: { authorization: `Bearer ${expired}`, host: "localhost" },
+        body: { jsonrpc: "2.0", id: 1, method: "tools/list" },
+      });
+      const res = fakeResponse();
+
+      await handleLegacyMessageRequest(
+        req,
+        res,
+        new URL("http://localhost/message?sessionId=no-such-session"),
+        new Map(),
+      );
+
+      expectInvalidToken(res);
+    });
+
+    it("lets a valid token through to normal routing", async () => {
+      const req = fakeStreamRequest({
+        headers: {
+          authorization: `Bearer ${valid}`,
+          "mcp-session-id": "no-such-session",
+        },
+      });
+      const res = fakeResponse();
+
+      await handleMcpEndpoint(req, res, new Map(), vi.fn() as any);
+
+      expect(res._status).toBe(404);
+    });
   });
 });

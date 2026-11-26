@@ -29,12 +29,17 @@ const inputSchema = z.object({
   errorId: toolInputParameters.errorId,
   operation: z
     .enum(PERMITTED_UPDATE_OPERATIONS)
-    .describe("The operation to apply to the error"),
+    .describe(
+      "The operation to apply: 'open' reopens the error; 'fix' marks it fixed; 'ignore' ignores it until manually reopened; " +
+        "'snooze' ignores it until the condition in reopenRules is met; 'discard' stops storing new events for it and 'undiscard' resumes; " +
+        "'override_severity' changes its severity (the user will be asked to choose the value); " +
+        "'link_issue' links it to an external issue (requires issue_url) and 'unlink_issue' removes that link",
+    ),
   issue_url: z
     .string()
     .optional()
     .describe(
-      "The URL of the issue to link to the error - required when operation is 'link_issue'",
+      "The URL of the issue (e.g. a Jira issue) to link to the error - required when operation is 'link_issue'",
     ),
   reopenRules: z
     .object({
@@ -75,7 +80,7 @@ const inputSchema = z.object({
         .min(1)
         .optional()
         .describe(
-          "or n_additional_occurrences reopen rules, the number of additional occurrences allowed before reopening.",
+          "for n_additional_occurrences reopen rules, the number of additional occurrences allowed before reopening.",
         ),
     })
     .optional()
@@ -181,6 +186,7 @@ export class UpdateError extends Tool<BugsnagClient> {
       "For 'n_occurrences_in_m_hours' reopen rules, specify both 'occurrences' and 'hours' parameters",
       "For 'n_additional_occurrences' reopen rules, specify 'additionalOccurrences' parameter",
       "Snoozing temporarily silences an error until the specified reopen condition is met",
+      "This changes the error's workflow state in the BugSnag dashboard for the whole team - confirm with the user before any state-changing operation, including snoozing, fixing, ignoring, discarding, reopening, severity changes or issue links",
     ],
     readOnly: false,
     idempotent: false,

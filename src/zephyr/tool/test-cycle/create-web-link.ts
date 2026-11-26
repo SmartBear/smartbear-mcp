@@ -16,8 +16,22 @@ export class CreateTestCycleWebLink extends Tool<ZephyrClient> {
     // a plain object instead of `allOf`, which older MCP clients don't understand.
     inputSchema: CreateTestCycleWebLinkParams.extend(
       CreateTestCycleWebLinkBody.partial().shape,
-    ),
+    ).extend({
+      description: CreateTestCycleWebLinkBody.shape.description.describe(
+        "The web link description, shown as the link text in Zephyr. Optional; defaults to the URL.",
+      ),
+    }),
     examples: [
+      {
+        description:
+          "Add a web link 'https://www.atlassian.com' to test cycle 'SA-R15' without a description",
+        parameters: {
+          testCycleIdOrKey: "SA-R15",
+          url: "https://www.atlassian.com",
+        },
+        expectedOutput:
+          "The newly created Web Link with its ID and self link; the URL is used as the link text",
+      },
       {
         description:
           "Create a link between the specified test cycle by Id '100001' and generic URL 'https://www.atlassian.com' with description 'Atlassian homepage'",
@@ -54,7 +68,11 @@ export class CreateTestCycleWebLink extends Tool<ZephyrClient> {
     const parsed = CreateTestCycleWebLinkParams.and(
       CreateTestCycleWebLinkBody,
     ).parse(args);
-    const { testCycleIdOrKey, ...body } = parsed;
+    const { testCycleIdOrKey, description, url } = parsed;
+    const body = {
+      url,
+      description: description?.trim() ? description : url,
+    };
     const response = await this.client
       .getApiClient()
       .post(`/testcycles/${testCycleIdOrKey}/links/weblinks`, body);

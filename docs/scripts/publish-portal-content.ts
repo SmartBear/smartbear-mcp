@@ -402,15 +402,31 @@ async function getTocItems(sectionId: string): Promise<TocItem[]> {
   return data?.items ?? [];
 }
 
-function findInToc(items: TocItem[], title: string): TocItem | null {
+function findInTocBy(
+  items: TocItem[],
+  match: (item: TocItem) => boolean,
+): TocItem | null {
   for (const item of items) {
-    if (item.title === title) return item;
+    if (match(item)) return item;
     if (item.children?.length) {
-      const found = findInToc(item.children, title);
+      const found = findInTocBy(item.children, match);
       if (found) return found;
     }
   }
   return null;
+}
+
+// Slugs are unique within a section and stay stable when a page is renamed, so
+// match on slug first. Fall back to title for entries created before slugs
+// were set from the manifest.
+function findInToc(
+  items: TocItem[],
+  { slug, title }: { slug: string; title: string },
+): TocItem | null {
+  return (
+    findInTocBy(items, (item) => item.slug === slug) ??
+    findInTocBy(items, (item) => item.title === title)
+  );
 }
 
 async function upsertTocMarkdown(
@@ -430,7 +446,7 @@ async function upsertTocMarkdown(
   },
 ): Promise<{ tocId: string | null; documentId: string | null }> {
   info(`Upserting markdown TOC: "${title}"...`);
-  const existing = findInToc(await getTocItems(sectionId), title);
+  const existing = findInToc(await getTocItems(sectionId), { slug, title });
 
   if (!existing) {
     const data = (await portalFetch(
@@ -460,7 +476,10 @@ async function upsertTocMarkdown(
   });
 
   // PATCH response doesn't include documentId; re-fetch to find it
-  const updated = findInToc(await getTocItems(sectionId), title);
+  const updated = findInTocBy(
+    await getTocItems(sectionId),
+    (item) => item.id === existing.id,
+  );
   return {
     tocId: existing.id,
     documentId: updated?.content?.documentId ?? null,
@@ -484,7 +503,7 @@ async function upsertTocApiRef(
   },
 ): Promise<string | null> {
   info(`Upserting API reference TOC: "${title}"...`);
-  const existing = findInToc(await getTocItems(sectionId), title);
+  const existing = findInToc(await getTocItems(sectionId), { slug, title });
   const content = { type: "apiUrl", url: apiUrl };
 
   if (!existing) {

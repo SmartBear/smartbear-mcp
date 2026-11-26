@@ -40,6 +40,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [QMetry] Failed QMetry tool calls are now reported as errors. Previously every exception was caught and returned as an ordinary result, so clients never saw `isError`, usage analytics counted failures as successes, and genuine bugs never reached BugSnag. QMetry API errors and invalid-input errors are now `ToolError`s, returned to the model as `isError: true` results (and not reported to BugSnag); unexpected exceptions are reported. The Create Test Case and Create Test Suite mandatory-field checks and the mandatory Test Run UDF check in Bulk Update Test Case Execution Status also return `isError: true`. Tool result content blocks no longer carry a non-standard `success` property.
 - [QMetry] A successful (2xx) QMetry response that is not JSON, such as an SSO sign-in page, a corporate proxy notice, a maintenance page, or a base URL pointing at a web app, now returns an `isError` result explaining the likely causes and quoting the start of the page, instead of a raw `Unexpected token '<'` JSON parse error that was treated as a server bug and reported to BugSnag. A 2xx response with an empty body (e.g. 204 No Content) is now treated as success (`{ "success": true }`) instead of failing with `Unexpected end of JSON input`. Applies to all QMetry tools, including Import Automation Test Results.
 - [QMetry] Create Test Case, Create/Update Requirement, Link Requirements to Testcase, Link Test Case to Issues, Create/Update Test Suite, Link Test Cases to Test Suite, Requirements Linked Test Cases to Test Suite, Update Issue and Import Automation Test Results now accept a `projectKey` argument. Previously their schemas had none, so any `projectKey` was dropped and they used the project last set with `Set QMetry Project Info`, which on 2026-07-28 HTTP is always `default`.
+### Changed
+
+- [Swagger] `validate_api` tool description now lists A2A Agent Cards as supported and says that MCP, GraphQL and gRPC definitions are not validated yet, so LLM clients call the tool for A2A.
+
+## [0.45.0] - 2026-11-24
+
+### Changed
+
+- [BugSnag] Improved tool descriptions for errors, events, projects, releases and performance so LLM clients use them correctly. Each parameter now says what it is, where to get its value and what its default does. The shared schemas in `input-schemas.ts` carry most of this wording, including project IDs vs. names/slugs, `direction`, `sort`, `releaseStage`, `spanGroupId`, and the filter defaults and the `eq`, `ne` and `empty` filter types.
+- [BugSnag] Tool hints now point to the next tool to call (for example error ID to Get Error or Get Events, span trace ID to Get Trace) and explain how to widen the default filters when results are empty. Added hints for Get Event and Get Event Details From Dashboard URL (dashboard URLs), pagination and payload size for List Error Events, and the `span.since=7d` default and trace time-window requirements for the performance tools.
+- [BugSnag] `update_error` now says it changes workflow state (snooze, fix, discard and similar) for the whole team and should be confirmed with the user first, and documents each operation.
+- [BugSnag] Get Error and Get Events on an Error no longer apply `event.since=30d` and `error.status=open` by default, because the caller has already picked a specific error. They now return all events unless filters are passed. List Project Errors and other list tools keep those defaults.
+- [Zephyr] `get-test-cases` tool accepts optional `nameOrKey` parameter to filter results by the Test Case names or keys. This parameter requires `projectKey` parameter to also be provided.
+- [Zephyr] Update Zephyr Schemas.
+
+### Fixed
+
+- [Common] The HTTP transport now rejects a request whose `Authorization` bearer JWT has expired with `401` and an RFC 6750 challenge (`WWW-Authenticate: Bearer error="invalid_token"`, with `resource_metadata` pointing to the Protected Resource Metadata endpoint). Previously the expired token only failed inside the tool call and reached the client as a tool error in an HTTP `200`, so OAuth clients never used their refresh token. The check covers `/mcp` for both the 2025-11-25 and 2026-07-28 protocol revisions, the legacy `GET /sse` and `POST /message`, and runs before session lookup, so the client refreshes its token before starting a new session. Opaque tokens and tokens sent in product-specific headers are not checked. [PLAT-17333](https://smartbear.atlassian.net/browse/PLAT-17333)
+- [BugSnag] List Project Errors now documents its default `event.since=30d` and `error.status=open` filters, so fixed, ignored, snoozed or older errors no longer look like they don't exist.
+- [BugSnag] The pagination fields described for List Project Errors now match what the tool returns (`data_count`, `total_count`), and the Get Build hint no longer refers to a non-existent "List builds" tool.
+- [BugSnag] `Get Release` no longer fails with `Expected response to be an array`. The builds in a release are now listed from `/release_groups/{id}/releases` instead of the release group endpoint, which returns a single object.[PLAT-17136](https://smartbear.atlassian.net/browse/PLAT-17136)
+- [Common] HTTP transport: sessions abandoned by clients (no `DELETE`, SSE stream never closed) were never freed, so memory grew until the process ran out of heap. Sessions idle for longer than `SESSION_IDLE_TIMEOUT_MS` (default 4 hours, `0` disables) are now closed; sessions with an open stream or a request in flight are never reaped. A client returning with a reaped session id receives 404 and must re-initialize. stdio mode is unaffected. Per-server caches no longer run node-cache's sweep timer, which kept each cache reachable after its server was gone.
+
+## [0.44.0] - 2026-11-13
+
+### Added
+
+- [Common] The server now sends a short instructions text when an assistant connects(stdio and HTTP). It says that only tools for configured products are registered and points to `smartbear_list_integrations`.
+- [Common] Added the `smartbear_list_integrations` tool. It is always available, takes no input and needs no credentials. It lists every product with a short description and whether it is configured. For configured products it shows the tool count and which toolsets are enabled. For products that are not configured it shows the environment variable and HTTP header each setting needs. Only products allowed by `MCP_CLIENTS` are listed, and BearQ, Reflect and QMetry always show as configured because they accept per-request OAuth tokens.
+- [PactFlow] Added a `Drift MCP Tests` GitHub Actions workflow (`.github/workflows/drift.yml`) that runs `npm run test:drift` in CI, and `scripts/ci/drift-publish-provider-contract`, which publishes the MCP definition and the Drift results to PactFlow as a provider contract.
+- [PactFlow] Added Drift test cases for the PactFlow MCP tools (hand-written cases in `src/pactflow/drift/pactflow.testcases.yaml` and generated calls in `pactflow.tools.testcases.yaml`) and `npm run test:drift` (`scripts/drift-verify.mjs`), which runs them against the mock PactFlow API using the Drift CLI and its MCP plugin. Results are written to `drift-results/`, which is gitignored.
+- [PactFlow] Added a mock PactFlow API (`src/pactflow/drift/mock-pactflow.mjs`) that serves learned fixtures for every PactFlow tool, and `npm run drift:generate` (`scripts/drift-generate-definition.mjs`), which regenerates the MCP definition and the generated tool-call fixtures from the tools the built server advertises.
+- [PactFlow] Added Drift MCP plugin tests for the PactFlow integration in `src/pactflow/drift/`, run with `npm run test:drift` (needs the Drift CLI and its MCP plugin). They verify the PactFlow tools and prompt the server advertises against a generated MCP definition (`src/pactflow/drift/pactflow.mcp.yaml`, regenerate with `npm run drift:generate`) and invoke every PactFlow tool against a mock PactFlow API, validating each result against its output schema, with hand-written cases for results, tool errors and invalid arguments. A `Drift MCP Tests` workflow runs them in CI and publishes the definition and results to PactFlow as a provider contract.
+
+### Fixed
+
+- [BugSnag] `Pentest - MCP Session ID Acts as a Bearer Token Due to Cached-Credential Fallback` Now The session id no longer grants any authority on the Bugsnag path.
+- [Common] Pentest: an MCP session id alone no longer acts as the session owner's credential on the HTTP transport. Every `POST`, `GET` (event stream) and `DELETE` on `/mcp`, and every legacy `POST /message`, must now carry a credential for the identity that opened the session.
+- [Zephyr] Default weblink description if not provided is set to url value.
+
+### Changed
+
+- [Common] With the stdio transport and no product configured, the server no longer registers every product's tools. Only `smartbear_list_integrations` is available, and it tells the assistant what each product needs. Set the credentials for at least one product to get its tools.
+- [Common] HTTP sessions are now bound to the exact credential that opened them, for every product. A refreshed OAuth access token no longer matches its existing session, so the client starts a new session with the new token. Clients that follow the MCP Streamable HTTP spec do this automatically, without the user logging in again. Session-scoped state, such as an open Reflect recording, does not carry over to the new session.
 
 ## [0.43.0] - 2026-11-02
 
