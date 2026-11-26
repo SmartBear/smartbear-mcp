@@ -1,4 +1,5 @@
 import type {
+  CollaboratorApiView,
   OrganizationApiView,
   ProjectApiView,
   ReleaseApiView,
@@ -42,3 +43,21 @@ export interface Build extends ReleaseApiView {
 export interface Release extends ReleaseGroup {
   id: string; // ID is always present
 }
+
+export interface Collaborator extends CollaboratorApiView {
+  id: string; // ID is always present
+}
+
+// A collaborator as returned by the List Project Collaborators tool: account
+// security fields are dropped and project_roles is reduced to this project's role.
+export type ProjectCollaborator = Pick<
+  Collaborator,
+  | "id"
+  | "name"
+  | "email"
+  | "is_admin"
+  | "pending_invitation"
+  | "last_request_at"
+> & {
+  project_role?: string;
+};
