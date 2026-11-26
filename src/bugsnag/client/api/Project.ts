@@ -2,8 +2,10 @@ import { type FilterObject, toUrlSearchParams } from "../filters";
 import { type ApiResponse, BaseAPI, getQueryParams } from "./base";
 import {
   type Build,
+  type Collaborator,
   type EventField,
   type Project,
+  type ProjectCollaborator,
   type ProjectNetworkGroupingRuleset,
   ProjectsApiFetchParamCreator,
   type Release,
@@ -54,6 +56,21 @@ export class ProjectAPI extends BaseAPI {
     "accumulative_daily_users_seen",
     "accumulative_daily_users_with_unhandled",
   ];
+  // Excludes account-security fields such as 2FA state, recovery codes and
+  // password change dates, which collaborator records also carry.
+  // project_roles is reduced to the single project_role for the listed project.
+  static collaboratorFields: (keyof Collaborator)[] = [
+    "id",
+    "name",
+    "email",
+    "is_admin",
+    "pending_invitation",
+    "last_request_at",
+    "project_roles",
+  ];
+  // Largest page the Data Access API serves, so fetching every collaborator
+  // takes as few round trips as possible.
+  static collaboratorsPerPage = 100;
 
   /**
    * List the Event Fields for a Project
@@ -497,5 +514,46 @@ export class ProjectAPI extends BaseAPI {
       localVarFetchArgs.url,
       localVarFetchArgs.options,
     );
+  }
+
+  /**
+   * List the collaborators in a Project
+   * GET /projects/{project_id}/collaborators
+   * @param projectId The project ID
+   * @param collaboratorNameEmailOrId Optional filter: an exact collaborator ID,
+   *   or part of a name or email address (case-insensitive)
+   * @returns A promise that resolves to the list of collaborators, each with
+   *   its role on this project as project_role
+   */
+  async listProjectCollaborators(
+    projectId: string,
+    collaboratorNameEmailOrId?: string,
+  ): Promise<ApiResponse<ProjectCollaborator[]>> {
+    const localVarFetchArgs = ProjectsApiFetchParamCreator(
+      this.configuration,
+    ).listProjectCollaborators(projectId, ProjectAPI.collaboratorsPerPage);
+    const collaborators = await this.requestArray<Collaborator>(
+      localVarFetchArgs.url,
+      localVarFetchArgs.options,
+      true,
+      ProjectAPI.collaboratorFields,
+    );
+    let matching = collaborators.body ?? [];
+    if (collaboratorNameEmailOrId) {
+      const filterValue = collaboratorNameEmailOrId.toLowerCase();
+      matching = matching.filter(
+        (c) =>
+          c.id === collaboratorNameEmailOrId ||
+          c.name?.toLowerCase().includes(filterValue) ||
+          c.email?.toLowerCase().includes(filterValue),
+      );
+    }
+    return {
+      ...collaborators,
+      body: matching.map(({ project_roles, ...rest }) => ({
+        ...rest,
+        project_role: project_roles?.[projectId],
+      })),
+    };
   }
 }

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- [BugSnag] Added `bugsnag_list_project_collaborators` tool to list the people with access to a project. Each collaborator includes `id`, `name`, `email`, `project_role` (their role on this project), `is_admin` (organization admin), `pending_invitation` and `last_request_at`. The optional `collaboratorNameEmailOrId` parameter filters by exact ID or by part of a name or email address, ignoring case. Account security fields (two-factor status, recovery codes, password change dates) are never returned. [#696](https://github.com/SmartBear/smartbear-mcp/pull/696)
+
 ### Changed
 
 - [Swagger] `validate_api` tool description now lists A2A Agent Cards as supported and says that MCP, GraphQL and gRPC definitions are not validated yet, so LLM clients call the tool for A2A.
